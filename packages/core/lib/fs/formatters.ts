@@ -30,7 +30,7 @@ export interface ByteFormatterOptions {
  *
  * - {@linkcode ByteFormatter.formatIEC} for anything a MACHINE measured — heap, file size on disk, buffer length.
  * - {@linkcode ByteFormatter.formatSI} for a size a VENDOR reports. Disk capacity, download sizes and GitHub's own API
- *   are quoted in powers of ten; rendering GitHub's `41.3 GB` as `38.5 GiB` is correct arithmetic and the wrong
+ *   are quoted in powers of ten. rendering GitHub's `41.3 GB` as `38.5 GiB` is correct arithmetic and the wrong
  *   answer.
  *
  * Rendering goes through `Intl.NumberFormat`, so the unit and the decimal separator follow the locale. Pass an explicit

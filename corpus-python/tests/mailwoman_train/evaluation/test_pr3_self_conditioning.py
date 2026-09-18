@@ -208,7 +208,7 @@ def test_cross_pollution_counts_city_start_as_postcode():
     b_reg = LABEL_TO_ID["B-region"]
     b_pc = LABEL_TO_ID["B-postcode"]
     o = LABEL_TO_ID["O"]
-    # 4 gold city/region-start tokens; 1 predicted as postcode → 25%.
+    # 4 gold city/region-start tokens. 1 predicted as postcode → 25%.
     labels = torch.tensor([[b_loc, o, b_reg, o], [b_loc, o, b_reg, o]])
     preds = torch.tensor([[b_pc, o, b_reg, o], [b_loc, o, b_reg, o]])
     row_locale = torch.tensor([LOCALE_TO_ID["US"], LOCALE_TO_ID["DE"]])

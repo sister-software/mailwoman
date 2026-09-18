@@ -15,7 +15,7 @@ length delta, a span containing the edit grows/shrinks at its end, and a span bo
 strictly inside the edited token is impossible to re-target (the replaced surface no longer exists)
 and raises loudly. Yielding a mutated raw with the source row's spans would corrupt the labels
 silently. Rows without spans (frozen pre-v0.5.0 corpora) pass through the legacy token path
-unchanged; a PARTIAL triple raises.
+unchanged. a PARTIAL triple raises.
 """
 
 from __future__ import annotations
@@ -31,7 +31,7 @@ def row_span_triple(row: dict[str, Any]) -> tuple[list[int], list[int], list[str
     """Return the row's char-offset span triple (#519), or None for a legacy (token-only) row.
 
     A PARTIAL triple — some keys present/non-null, others missing/null — is a corrupt row and
-    raises loudly; it must never silently fall back to the token path (the labels it would fall
+    raises loudly. it must never silently fall back to the token path (the labels it would fall
     back TO are not the labels the row was built with).
     """
     values = [row.get(k) for k in SPAN_KEYS]
@@ -56,7 +56,7 @@ def splice_expansion(row: dict[str, Any], idx: int, expansion: str) -> dict[str,
     """Return a copy of ``row`` with token ``idx``'s surface in ``raw`` replaced by ``expansion``
     via character splicing — never a ``" ".join(tokens)`` rebuild, which would destroy whatever
     raw carries that the tokens don't (PR #534 open question 3). Tokens + labels are updated by
-    the matching ``_expand_token`` arithmetic; everything else in raw (commas, dots, newlines,
+    the matching ``_expand_token`` arithmetic. everything else in raw (commas, dots, newlines,
     double spaces) survives verbatim.
 
     Char-offset spans (#519) are re-targeted by the same splice arithmetic, mirroring
@@ -174,7 +174,7 @@ def glue_region_postcode(row: dict[str, Any], idx: int) -> dict[str, Any]:
 
 
 def lowercase_row(row: dict[str, Any]) -> dict[str, Any] | None:
-    """Return a copy of ``row`` with ``raw`` + ``tokens`` lowercased; labels + char-offset spans
+    """Return a copy of ``row`` with ``raw`` + ``tokens`` lowercased. labels + char-offset spans
     pass through unchanged. Lowercasing is length-preserving char-by-char, so every offset still
     lands on the same (now-lowercased) character — no splice, no re-target, the simplest augmentation.
 
@@ -200,7 +200,7 @@ DROP_PUNCT: frozenset[str] = frozenset(",\"'")
 
 def drop_separator_punct(row: dict[str, Any], drop_chars: frozenset[str] = DROP_PUNCT) -> dict[str, Any] | None:
     """Return a copy of ``row`` with SEPARATOR punctuation (gap commas/quotes) removed from ``raw`` —
-    the delimiter-free / whitespace-only form (#1101; whitespace-only is 64% of the parity gold).
+    the delimiter-free / whitespace-only form (#1101. whitespace-only is 64% of the parity gold).
 
     GAP-ONLY by construction: a punct char is dropped only when it falls in a gap between entity spans
     (no char-offset span [s, e) covers it), so entity surfaces — including interior apostrophes like
@@ -210,10 +210,10 @@ def drop_separator_punct(row: dict[str, Any], drop_chars: frozenset[str] = DROP_
     - char-offset spans (#519): remapped by ``new = old − (dropped chars strictly before old)``. A
       span's start is always a COVERED char (never a drop position), and its exclusive end shifts only
       by the drops before it — so entity boundaries land exactly on the same characters in the new raw.
-    - ``tokens`` / ``labels``: each token is rebuilt from its char range minus the drop positions; a
+    - ``tokens`` / ``labels``: each token is rebuilt from its char range minus the drop positions. a
       token that was only separator punct (a standalone ``","``) is dropped along with its label. This
       keeps ``whitespace_spans`` able to relocate every token in the mutated raw (the glue augmentation
-      can leave tokens intact because it never alters a token's own characters; punct-drop does).
+      can leave tokens intact because it never alters a token's own characters. punct-drop does).
 
     Returns ``None`` for a legacy (span-less) row — without spans we can't tell a separator comma from
     one inside an entity, so we skip rather than risk corrupting a label. Also ``None`` when the row has
@@ -236,7 +236,7 @@ def drop_separator_punct(row: dict[str, Any], drop_chars: frozenset[str] = DROP_
 
     # old offset -> count of dropped chars strictly before it (for the span remap).
     def shifted(offset: int) -> int:
-        # bisect without importing: dropped positions are sorted; count those < offset.
+        # bisect without importing: dropped positions are sorted. count those < offset.
         lo, hi = 0, len(drop_positions)
         while lo < hi:
             mid = (lo + hi) // 2
@@ -271,10 +271,10 @@ def drop_separator_punct(row: dict[str, Any], drop_chars: frozenset[str] = DROP_
 
 
 def upper_case_row(row: dict[str, Any]) -> dict[str, Any] | None:
-    """Return a copy of ``row`` with ``raw`` + ``tokens`` upper-cased; labels + char-offset spans pass
+    """Return a copy of ``row`` with ``raw`` + ``tokens`` upper-cased. labels + char-offset spans pass
     through unchanged — the exact mirror of :func:`lowercase_row` (#829) for the ALL-CAPS direction.
 
-    Registry corpora (NPPES, Kartverket, state boards) arrive ALL-CAPS; the shipped pipeline handles
+    Registry corpora (NPPES, Kartverket, state boards) arrive ALL-CAPS. the shipped pipeline handles
     them with a pre-model case-normalize shim (#690). This augmentation is the punct-drop-pattern
     (#1101) retirement path for that shim: teach the case in training so the shim can be deleted.
 

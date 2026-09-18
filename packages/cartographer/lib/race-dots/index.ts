@@ -9,7 +9,7 @@
  *
  *   - Tippecanoe), colored by 2020 P.L. 94-171 race/ethnicity category.
  *
- *   The PMTiles ships a single `dots` source-layer carrying a `cat` property; we expose each category
+ *   The PMTiles ships a single `dots` source-layer carrying a `cat` property. we expose each category
  *   as its own default-off circle layer (filtered on `cat`) so the demo's LayerToggleControl gives
  *   each its own checkbox — show the full mosaic, or isolate one group's geography, no extra UI.
  *   Same idiom as the coverage overlay.

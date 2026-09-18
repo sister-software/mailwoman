@@ -8,7 +8,7 @@
  *   The permit registry is a NOISY source: a clerk typed each address, in both address systems, with no validation. So
  *   nothing in a permit string is taken on its own word. The region must be a 시도 the register lists, the 시군구 one
  *   that region lists, the road one that 시군구 lists, the 동 one that 시군구 lists, the 리 one that 동 lists. A string
- *   that satisfies the whole key becomes a training row; one that does not is a BOARD row — an address the model will
+ *   that satisfies the whole key becomes a training row. one that does not is a BOARD row — an address the model will
  *   be read on and never trained on.
  *
  *   Built by one pass over the LABEL rows, which is why it lives beside them rather than inside the aligner.

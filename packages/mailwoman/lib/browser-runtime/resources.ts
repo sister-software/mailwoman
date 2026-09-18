@@ -16,7 +16,7 @@ import type { FSTMatcherLike, FSTProvenanceLike } from "#browser-runtime/types"
  * All demo assets are served from our Cloudflare R2 bucket (nexus-public) on a custom domain. R2 + Cloudflare gives a
  * stable clean URL, raw byte ranges (no gzip mangling), configurable CORS, low RTT, and free egress — the combination
  * GitHub Pages (force-gzips ranges) and HF (per-request presigned redirect) couldn't. The DBs are range-loaded via
- * sql.js-httpvfs from here; the rest is one-shot full-fetch. Mirrors the old HF key layout, so this was a base-URL
+ * sql.js-httpvfs from here. the rest is one-shot full-fetch. Mirrors the old HF key layout, so this was a base-URL
  * swap.
  */
 const ASSET_BASE_URL = "https://public.mailwoman.ai/mailwoman/"
@@ -84,7 +84,7 @@ export const NATIONAL_STREET_FALLBACK_SLUG = "fr" as const
 export const ADMIN_GAZETTEER_VERSION = "2026-08-25b"
 
 /**
- * Byte-ranged global "candidate" gazetteer (`candidate-global.db`, ~2.88 GB; US + intl postcodes + the GeoNames fold
+ * Byte-ranged global "candidate" gazetteer (`candidate-global.db`, ~2.88 GB. US + intl postcodes + the GeoNames fold
  * across 244 countries) — the single-B-tree-probe lookup that replaces the slim per-model-version `wof-hot.db` and the
  * full-DB FTS. A resolve touches a handful of contiguous pages (~12 range fetches/session vs 243 on the full DB), with
  * GLOBAL coverage and no `SLIM_COUNTRIES` upkeep. It now also carries a co-located FTS5-trigram fuzzy index, consulted
@@ -113,7 +113,7 @@ export function poiLayerURL(): string {
  * Slugs we host street extracts for (byte-range on R2). A state not in this set falls through to the WOF admin
  * centroid. National rollout (#735, 2026-06-21): the 50-state situs (#476/#567, 124.9M US address points) + TIGER
  * interp extracts are hosted, so any US address resolves to its building (`address_point`, ≤10 m) or a calibrated
- * interp estimate — not a city centroid. `vi` = US Virgin Islands. (`il` is the whole state incl. Cook; the separate
+ * interp estimate — not a city centroid. `vi` = US Virgin Islands. (`il` is the whole state incl. Cook. the separate
  * `il-cook` build extract is not hosted.)
  */
 export const HOSTED_STREET_SLUGS = new Set([
@@ -283,7 +283,7 @@ export const PAIR_INDEX_COUNTRIES = ["gb", "nz"] as const
  * The binaries carry the same `public, max-age=604800, immutable` Cache-Control as every other bucket object, so a
  * rebuilt index needs a FRESH URL — the discipline {@link ADMIN_GAZETTEER_VERSION}, {@link POI_LAYER_VERSION} and
  * {@link NATIONAL_STREET_EXTRACT_VERSION} already follow. Bump this the same commit the binaries are rebuild and
- * re-uploaded; the mutable pointer is this constant inside the (revalidated) Pages bundle, never the binaries.
+ * re-uploaded. the mutable pointer is this constant inside the (revalidated) Pages bundle, never the binaries.
  *
  * Why a site-side constant rather than a `releases.json` field: the PIX reader that consumes these binaries
  * (`@mailwoman/neural`'s `pair-index-resolver`) is bundled into the SITE, not fetched per model release, and it THROWS
@@ -343,10 +343,10 @@ export async function loadFSTGazetteer(
 /**
  * Load the locale-general street-morphology FST (`fst-street-morphology.bin`) for a release — the #1315 street-context
  * check's signal source, shipped as a weights-package sibling (so it rides the same per-version R2 asset layout as the
- * model). Node runtimes rebuild this matcher from the bundled libpostal dictionaries when the artifact is absent; the
+ * model). Node runtimes rebuild this matcher from the bundled libpostal dictionaries when the artifact is absent. the
  * browser cannot, which is exactly the node/browser behavior fork the sealed artifact closes. Returns `null` when the
  * release predates the artifact (HTTP 404) — the demo then parses without the check, exactly as before. A
- * present-but-corrupt binary throws; the caller's tolerant catch treats that as absent too.
+ * present-but-corrupt binary throws. the caller's tolerant catch treats that as absent too.
  */
 export async function loadStreetMorphologyFST(locale: string, version: string): Promise<FSTMatcherLike | null> {
 	const res = await fetchWithRetry(assetURL(locale, version, "fst-street-morphology.bin"))

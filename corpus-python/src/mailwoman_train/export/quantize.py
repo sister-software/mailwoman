@@ -21,7 +21,7 @@ then REJECTS with ``[ShapeInferenceError] ... (384) vs (768)``. The annotations 
 (onnx re-infers them), so we strip ``graph.value_info`` before quantizing — onnx then infers
 clean shapes and quantization succeeds. This is why the Jun-6 v0.9.3 int8 built fine on the
 older toolchain but a Jun-8 re-export of the same checkpoint did not (drift, not a model change).
-Pinning the export/quant deps is the deeper fix; this strip makes quantization resilient to the drift.
+Pinning the export/quant deps is the deeper fix. this strip makes quantization resilient to the drift.
 """
 
 from __future__ import annotations
@@ -35,7 +35,7 @@ from onnxruntime.quantization import QuantType, quantize_dynamic
 def _strip_value_info(src: Path, dst: Path) -> Path:
     """Drop intermediate ``value_info`` so onnx re-infers shapes cleanly at quantize time.
 
-    Graph inputs, outputs, and initializers are untouched; only the (redundant, possibly
+    Graph inputs, outputs, and initializers are untouched. only the (redundant, possibly
     stale) intermediate shape annotations are cleared. See module docstring for why.
     """
     model = onnx.load(str(src))
@@ -60,7 +60,7 @@ def quantize_dynamic_int8(
         model_input=str(cleaned),
         model_output=str(int8_path),
         weight_type=weight_type,
-        # MatMul is the dominant op family; default optype filter covers it.
+        # MatMul is the dominant op family. default optype filter covers it.
     )
     cleaned.unlink(missing_ok=True)
     return int8_path

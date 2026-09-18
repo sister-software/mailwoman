@@ -43,7 +43,7 @@ export interface CapitalTable {
 }
 
 /**
- * Create the table on a build in progress. Async because Kysely's schema-builder is; called from the candidate build's
+ * Create the table on a build in progress. Async because Kysely's schema-builder is. called from the candidate build's
  * DDL phase alongside the other typed builders.
  */
 export async function createCapitalTable<DB extends { capital: CapitalTable }>(db: Kysely<DB>): Promise<void> {

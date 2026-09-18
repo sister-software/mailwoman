@@ -67,7 +67,7 @@ const PLACETYPE_TO_KEY: Record<string, keyof NominatimAddressDetails> = {
 }
 
 /**
- * A real address fits comfortably; anything longer is malformed input (and would exceed the model's input window). Cap
+ * A real address fits comfortably. anything longer is malformed input (and would exceed the model's input window). Cap
  * defensively so a giant query returns no results instead of faulting.
  */
 const MAX_QUERY_LEN = 512
@@ -148,12 +148,12 @@ async function serve(engineStamp: ResolvedEngineStamp): Promise<void> {
 				params.q ?? joinNonEmpty(params.street, params.city, params.state, params.postalcode, params.country)
 			)?.trim()
 
-			// Empty/whitespace → no query; absurdly long → not an address (and would blow the model's input).
+			// Empty/whitespace → no query. absurdly long → not an address (and would blow the model's input).
 			if (!query || query.length > MAX_QUERY_LEN) return []
 			// A caller-supplied `countrycodes` is an explicit hard restriction (Nominatim semantics): honor
 			// it as the country constraint, even to the point of no result. It doubles as the manual override
 			// for the #822 placer frontier — `countrycodes=au` lands Sydney in Australia. One country is the
-			// common (geopy) case; for a list we apply the first.
+			// common (geopy) case. for a list we apply the first.
 			const userCountry = params.countrycodes?.[0]?.toUpperCase()
 
 			const result = await geocodeAddress(query, {

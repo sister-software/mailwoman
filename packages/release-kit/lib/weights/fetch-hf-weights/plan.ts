@@ -8,11 +8,11 @@
  *   half of the #1894 preflight, and the recipe `.github/workflows/publish.yml` now calls in place of
  *   the curl-and-cp block it used to carry inline. One recipe, two callers: the preflight points it at
  *   a staging tree, the publish job points it at the checkout. `copy-weights.ts` is the same shape for
- *   the operator's data root; both take a destination root and touch nothing else.
+ *   the operator's data root. both take a destination root and touch nothing else.
  *
  *   WHAT IS FETCHED IS DERIVED, NOT LISTED. A `neural-weights-<locale>` package's `files` array is its
  *   author stating which artifacts the tarball carries, and `git ls-files` says which of those a
- *   checkout already has; the difference is exactly the set something must materialize — the same
+ *   checkout already has. the difference is exactly the set something must materialize — the same
  *   predicate `verify-tarball.ts` refuses a publish over (`literalFilesEntries`, shared with it). The
  *   v9.2.0 release published 49 of 51 workspaces before that audit refused
  *   `@mailwoman/neural-weights-en-au`, whose four declared lexicons the YAML's hand-maintained copy
@@ -215,7 +215,7 @@ export async function readBaseModelVersion(repoRoot: string): Promise<string> {
  * Fisher consolidation pair (`fisher_artifact.file` + its `.sidecar`).
  *
  * The bundle contract says a weights release ships its Fisher, so every fine-tune off that base can apply the EWC
- * brake; the runtime never reads it and npm never carries it, which is exactly why nothing else would notice its
+ * brake. the runtime never reads it and npm never carries it, which is exactly why nothing else would notice its
  * absence. HEAD-probed with the rest so a half-staged release is refused before it publishes. Both halves are probed:
  * the YAML this replaces checked only `file`, and a declared sidecar that never uploaded would have passed.
  */
@@ -233,7 +233,7 @@ export async function distributionOnlyRemoteNames(repoRoot: string, baseLocale: 
  * The versioned bucket directory for `version`.
  *
  * `$private.HF_BUCKET_RESOLVE_URL` replaces the `<host>/<bucket>/resolve` prefix wholesale, for a mirror or a local
- * fixture server; unset, the prefix is built from `release.config.json`'s `assets.hfBucket`. Nothing about either path
+ * fixture server. unset, the prefix is built from `release.config.json`'s `assets.hfBucket`. Nothing about either path
  * needs a token — the bucket is public, and a credential here would only hide the day it stops being public.
  */
 export async function hfVersionBase(repoRoot: string, version: string): Promise<string> {

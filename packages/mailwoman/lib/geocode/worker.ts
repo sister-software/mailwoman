@@ -44,7 +44,7 @@ const geoDeps = {
 
 // Parse once per address (the ~3 ms/row inference is the dominant cost): share the tree between the PostalAddress
 // (decodeAsJSON) and the geocode (parsedTree). Coordinates are byte-identical to the two-parse path — geocodeAddress
-// would have produced this exact tree internally; only the PostalAddress now reflects the normalized parse.
+// would have produced this exact tree internally. only the PostalAddress now reflects the normalized parse.
 const geocodeForIngest = geocodeAddressVia({
 	parseAndGeocode: async (raw) => {
 		const tree = await parseForGeocode(raw, geoDeps)

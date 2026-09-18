@@ -65,7 +65,7 @@ describe("fr-fragment: the split", () => {
 	})
 
 	it("skips every reserved surface, accent- and case-insensitively", async () => {
-		// The list is normalized; the tuple is not. They must still match.
+		// The list is normalized. the tuple is not. They must still match.
 		const { rows } = await run(TUPLES, ["rue montmartre", "allee du 11 novembre 1918"])
 		const streets = rows.map((r) => String(r.raw))
 

@@ -100,7 +100,7 @@ export function radiusCircleGeometry(lat: number, lon: number, radiusM: number):
 /**
  * Bounding box of a Polygon / MultiPolygon, for `fitBounds`. Walks the nested coordinate arrays, so it handles both a
  * single-ring polygon and a multi-part polygon uniformly. Antimeridian-crossing geometry is not normalized (the naive
- * min/max is returned) — matching the ported behavior; callers that need a wrapped bbox must handle it upstream.
+ * min/max is returned) — matching the ported behavior. callers that need a wrapped bbox must handle it upstream.
  */
 export function geomBounds(geometry: PlaceGeometry): PlaceBBox {
 	let minLon = Infinity

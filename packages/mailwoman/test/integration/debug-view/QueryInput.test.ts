@@ -52,7 +52,7 @@ describe("wordStart", () => {
 	})
 
 	it("is whitespace-delimited, so punctuation inside a token is not a boundary", () => {
-		// The addresses this field edits are full of commas; stopping at one would make ⌥⌫ take half a word.
+		// The addresses this field edits are full of commas. stopping at one would make ⌥⌫ take half a word.
 		expect(wordStart("3215 SE Clinton St, Portland", 28)).toBe(20)
 		// A trailing space is skipped first, so this takes `St,` whole — comma included, not stopping before it.
 		expect(wordStart("3215 SE Clinton St, ", 20)).toBe(16)

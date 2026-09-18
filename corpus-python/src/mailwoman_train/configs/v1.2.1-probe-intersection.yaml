@@ -1,7 +1,7 @@
 # === v1.2.1-probe-intersection (#487 solo probe) ================================================
 # SINGLE-VARIABLE vs the shipped v1.1.0: corpus v0.4.12 -> v0.4.13-intersection (the REAL-TIGER
 # intersection recipe output, PR #515, 40K rows verbatim-overlaid) + synth-intersection weight 0.2 -> 1.0
-# (the recipe output exists now; 1.0 per the builder's recommendation — over-fire is the risk, not
+# (the recipe output exists now. 1.0 per the builder's recommendation — over-fire is the risk, not
 # starvation). Resume v1.1.0 step-040000, +4k. PRE-REGISTERED READ: intersection_a/b alive on
 # intersection-real (P >= 90 — zero venue false fires is the bar that matters) and spine flat
 # (street/locality/postcode within 1pp). Fail -> hard-negative stratum before any re-probe.

@@ -9,12 +9,12 @@
  *   `styleframe dtcg import` is a one-shot code generator rather than a build step.
  *
  *   THREE LAYERS, and a component rule may read only the middle one. Primitives are raw values with no opinion about
- *   use; semantics say what a value is FOR; the few component tokens exist where a component needs a name of its own.
+ *   use. semantics say what a value is FOR. the few component tokens exist where a component needs a name of its own.
  *   `styles.css` reading raw primitives is the defect this file replaces: it read 22 Infima names it did not own, and
  *   eight of them were undefined in production, so those rules silently took Infima's LIGHT fallbacks inside a dark
  *   app.
  *
- *   THEMES. Light is the docs site; dark is the three map apps, which set `data-theme="dark"` on `<html>` themselves.
+ *   THEMES. Light is the docs site. dark is the three map apps, which set `data-theme="dark"` on `<html>` themselves.
  *   Every semantic token is defined in both, so a value can never resolve to nothing.
  */
 
@@ -32,12 +32,12 @@ const { variable, theme, ref } = s
 //#region Primitives
 
 /*
- * Raw values with no opinion about use. Only the semantic layer below may reference them; a component rule that
+ * Raw values with no opinion about use. Only the semantic layer below may reference them. a component rule that
  * reaches one has skipped the layer that says what the value is for.
  */
 
 /**
- * The brand anchors, carried verbatim from the design system. `#ff00b0` is the primary; Earth shipped a drifted
+ * The brand anchors, carried verbatim from the design system. `#ff00b0` is the primary. Earth shipped a drifted
  * `#e0367c` for as long as it read Infima's palette, and that value is retired.
  */
 const brandMagenta = variable("brand-magenta", "#ff00b0")
@@ -77,7 +77,7 @@ const infoBase = variable("info-base", "oklch(65% 0.13 230)")
 //#region Type
 
 /*
- * Two axes. A rule names a scale role; a scale role names a face role; only a face role names a family.
+ * Two axes. A rule names a scale role. a scale role names a face role. only a face role names a family.
  */
 
 /**
@@ -307,7 +307,7 @@ theme("dark", ({ variable: themeVariable }) => {
 
 //#endregion
 
-// Referenced by name from `styles.css` and the app stylesheets; listed here so the compiler keeps them.
+// Referenced by name from `styles.css` and the app stylesheets. listed here so the compiler keeps them.
 void [
 	brandBlue,
 	brandNavy,

@@ -24,7 +24,7 @@
  *
  *   - OA rows (`partial:true`) grade ONLY {locality, region, postcode} — the tags OA gold carries. A
  *       predicted tag OA can't see is unlabelable and skipped (OA's silence is not a negative).
- *   - Corpus rows (`partial:false`) grade every predicted span against the full BIO gold; a predicted
+ *   - Corpus rows (`partial:false`) grade every predicted span against the full BIO gold. a predicted
  *       tag the address lacks is a hallucination → wrong.
  *   - The street family {street, street_prefix, street_suffix} is one equivalence class so the model's
  *       street decomposition isn't penalized against the corpus's coarse `street` gold.
@@ -97,7 +97,7 @@ const STREET_FAMILY = new Set(["street", "street_prefix", "street_suffix"])
 const OA_GRADABLE = new Set(["locality", "region", "postcode"])
 
 /**
- * Collapse the street decomposition into one matching class; everything else maps to itself.
+ * Collapse the street decomposition into one matching class. everything else maps to itself.
  */
 function tagClass(tag: string): string {
 	return STREET_FAMILY.has(tag) ? "street" : tag
@@ -178,7 +178,7 @@ async function main(): Promise<void> {
 		}
 
 		// onnxruntime-node accumulates native tensor memory across runs faster than JS GC reclaims it
-		// (~380-parse SIGKILL on the lab box). Periodic forced GC reclaims it; run with `node
+		// (~380-parse SIGKILL on the lab box). Periodic forced GC reclaims it. run with `node
 		// --expose-gc` for full calibration sets (8000 rows). No-op without the flag. (#787 pattern.)
 		if (i % 50 === 0) {
 			;(globalThis as { gc?: () => void }).gc?.()

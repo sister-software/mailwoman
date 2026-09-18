@@ -409,7 +409,7 @@ describe("a plural affordance", () => {
 	})
 
 	// Every member carries the same confidence, so nothing in the set can be ranked off the value the query surface
-	// reads. The number selects a query KIND; it orders no candidate.
+	// reads. The number selects a query KIND. it orders no candidate.
 	it("gives every member of the set the same confidence", () => {
 		const confidences = new Set(committedRoute.lookup("prescription", "en-US").map((hit) => hit.confidence))
 
@@ -476,7 +476,7 @@ describe("a plural affordance", () => {
 	})
 
 	// The route narrows the set by nothing. The committed drugstore assertion is US-scoped, and that scope is carried
-	// on the match for the intent stage to bind against the anchor's country; here France reaches both and every
+	// on the match for the intent stage to bind against the anchor's country. here France reaches both and every
 	// observation reports the whole set. Strip the scope off the record and the only thing that changes is that the
 	// match stops carrying it.
 	it("carries the assertion's country scope on the match instead of applying it", async () => {
@@ -593,7 +593,7 @@ describe("the assertion's country scope", () => {
 	})
 
 	// Only the LOCALE scope is read inside the phrase search. The longer phrase wins recognition under every caller and
-	// carries its assertion's scope; whether that claim holds where the anchor is, is the intent stage's question, and
+	// carries its assertion's scope. whether that claim holds where the anchor is, is the intent stage's question, and
 	// a set it empties abstains rather than falling back to a phrase the user did not use.
 	it("takes the longer phrase under every caller and carries the scope for the stage to bind", async () => {
 		const route = await scratchRoute((model, lexicon) => {

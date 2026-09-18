@@ -167,7 +167,7 @@ export interface PoBoxSynthesisOpts {
 }
 
 function defaultPickNumber(random: () => number): string {
-	// 70% of real PO boxes are 1-5 digits; long ones exist (USPS allows up to ~6 digits).
+	// 70% of real PO boxes are 1-5 digits. long ones exist (USPS allows up to ~6 digits).
 	// Bands: 1-99, 100-999, 1000-9999, 10000-99999 (span 90_000 — the street generator's 89_999 is its own).
 	return tieredNumber(random, [
 		{ cutoff: 0.3, base: 1, span: 99 },

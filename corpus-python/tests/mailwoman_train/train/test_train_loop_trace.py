@@ -88,7 +88,7 @@ def _probe_config(root: Path) -> Config:
     save_char_vocab(vocab, vocab_path)
 
     cfg = load_config(PROBE_2K)
-    # The shipped weights name the full corpus's sources; a two-row stand-in has none of those
+    # The shipped weights name the full corpus's sources. a two-row stand-in has none of those
     # rows, and the loader refuses a positive weight with nothing behind it. Sampling the two
     # rows uniformly is what this test wants anyway.
     cfg.data.source_weights = None
@@ -171,7 +171,7 @@ def test_the_csv_carries_a_log_row_and_an_eval_row_per_interval(tmp_path: Path) 
         *(f"f1.{t}" for t in tags),
     ]
 
-    # A log row leaves the val cells blank; an eval row fills them. Both exist for steps 2 and 4.
+    # A log row leaves the val cells blank. an eval row fills them. Both exist for steps 2 and 4.
     by_kind = [(row[0], "eval" if row[4] else "log") for row in rows]
     assert by_kind == [("2", "log"), ("2", "eval"), ("4", "log"), ("4", "eval")], by_kind
     for row in rows:

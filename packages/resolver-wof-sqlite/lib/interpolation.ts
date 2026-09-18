@@ -88,7 +88,7 @@ export interface InterpolationQuery {
 	street: string
 	number: string
 	/**
-	 * ZIP scope — strongly preferred; without it common street names abstain (see module doc).
+	 * ZIP scope — strongly preferred. without it common street names abstain (see module doc).
 	 */
 	postcode?: string
 	/**
@@ -127,7 +127,7 @@ interface SegmentRow {
 /**
  * The postcode group nearest `near`, under the {@link NEAR_MAX_KM} dominance geometry — or null when no group qualifies
  * (out of range, or the runner-up is too close to call). A group's distance is its closest segment's first polyline
- * vertex; a segment whose geometry fails to parse prices as unreachable rather than aborting the tie-break.
+ * vertex. a segment whose geometry fails to parse prices as unreachable rather than aborting the tie-break.
  */
 function nearestPostcodeGroup(pool: readonly SegmentRow[], near: { lat: number; lon: number }): SegmentRow[] | null {
 	const groups = new Map<string, { rows: SegmentRow[]; km: number }>()
@@ -247,7 +247,7 @@ export class StreetInterpolator<
 		// Key-variant ladder (see `streetKeyVariants`): the literal key first, then the doubled-type
 		// collapse and the saint↔st register swap. A variant advances the ladder when it produces no
 		// ANSWER, not merely no rows — a wrong-register key can cover the number in far-away towns and
-		// then fail the ambiguity check ("saint pauls place" reaches Nassau's rows; the Brooklyn answer
+		// then fail the ambiguity check ("saint pauls place" reaches Nassau's rows. the Brooklyn answer
 		// lives under "st pauls place"), and stopping at rows would eclipse the right variant.
 		for (const variant of streetKeyVariants(query.street)) {
 			const streetNorm = canonicalizeRouteKey(variant)

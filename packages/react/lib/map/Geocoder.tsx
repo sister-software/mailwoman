@@ -111,7 +111,7 @@ function GeocoderInner({
 	// handle also puts it in state — one poll, two consumers.
 	const [map, setMap] = useState<ReturnType<MapRef["getMap"]> | null>(null)
 
-	// The map announces itself; nothing polls for it. `onLoad` carries the instance, so the compass and the layer
+	// The map announces itself. nothing polls for it. `onLoad` carries the instance, so the compass and the layer
 	// control render on the frame the map is ready rather than up to an interval later.
 	//
 	// Test injection point: the e2e viewport-bias suite drives the real map (pan + zoom past the bias threshold)

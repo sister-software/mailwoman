@@ -13,7 +13,7 @@
  *      which is why an empty answer inside the footprint is a designation rather than a gap.
  *   3. `unknown` — no coverage row for this location. The EA's statement covers England and says nothing
  *      about Wales, Scotland or Northern Ireland, each of which has a different authority and a different
- *      zone scheme; the England border strip is unknown too, because the footprint's interior test drops
+ *      zone scheme. the England border strip is unknown too, because the footprint's interior test drops
  *      any cell not wholly inside the outline.
  *
  *   READINGS 2 AND 3 ARE THE SAME EMPTY ANSWER FROM THE GEOMETRY AND OPPOSITE ANSWERS FROM THE READER.
@@ -26,7 +26,7 @@
  *   — `limits` carries the authority's own exclusions on every answer.
  *
  *   THE PROBE IS STRUCTURE FIRST, GEOMETRY LAST. `cellToParent` up the compacted whole-cell chain answers
- *   an interior point with primary-key probes alone; only a cell the boundary crosses reaches the ray
+ *   an interior point with primary-key probes alone. only a cell the boundary crosses reaches the ray
  *   cast, and then only against the polygons `flood_zone_cell_area` already named for that cell. That is
  *   SCOPE invariant 6's division: containment precomputed at build time, spatial math kept to the
  *   irreducibly geometric edge.
@@ -81,11 +81,11 @@ export type FloodReadingKind = (typeof FloodReadingKind)[keyof typeof FloodReadi
  */
 export const FloodContainmentPath = {
 	/**
-	 * The cell lies wholly inside the zone; no geometry was read.
+	 * The cell lies wholly inside the zone. no geometry was read.
 	 */
 	WholeCell: "whole_cell",
 	/**
-	 * The cell is crossed by a boundary; the point was ray-cast against a named polygon.
+	 * The cell is crossed by a boundary. the point was ray-cast against a named polygon.
 	 */
 	RayCast: "ray_cast",
 	/**
@@ -102,7 +102,7 @@ export type FloodContainmentPath = (typeof FloodContainmentPath)[keyof typeof Fl
 export interface FloodZoneReading {
 	kind: FloodReadingKind
 	/**
-	 * The authority's zone code, verbatim. Present on a `designated` reading; absent on the other two.
+	 * The authority's zone code, verbatim. Present on a `designated` reading. absent on the other two.
 	 */
 	zoneCode?: string
 	/**
@@ -235,7 +235,7 @@ export class FloodZoneLookup implements Disposable {
 		const zone = this.#resolveZone(indexCell, latitude, longitude)
 
 		// COVERAGE QUALIFIES THE ABSENCE AND NOTHING ELSE — the same asymmetry `supportsExclusion` carries. A polygon
-		// containing the point is the authority's determination at that location, and needs no coverage row to be true;
+		// containing the point is the authority's determination at that location, and needs no coverage row to be true.
 		// an empty answer needs one, because without it the emptiness is a statement about our map rather than theirs.
 		if (zone.zoneCode) {
 			const definition = this.#definitions.get(zone.zoneCode)

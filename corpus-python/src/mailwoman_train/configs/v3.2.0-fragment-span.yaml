@@ -14,7 +14,7 @@
 # corpus — the exact distribution T1c named as the cause and T2 replaced. T1a diagnosed the span
 # decode as MISCALIBRATED (over-eager to emit/extend a street segment: 19/54 street-free rows got a
 # street vs the shipped 12/54); T1c showed the BIO head carried the same miscalibration from the
-# other side; T2 fixed it at the distribution and the BIO side recovered (bare-locality held at
+# other side. T2 fixed it at the distribution and the BIO side recovered (bare-locality held at
 # 0.980, contextful guards improved). Nobody has ever trained a span head on a corpus that teaches
 # bare streets. THIS RUN IS THAT, and it is the only remaining question the arc can ask.
 #
@@ -41,7 +41,7 @@
 # If check 1 fails, the span head is done. Close it, do not flag it, do not tune span_loss_weight and
 # re-run — that is the treadmill the arc's own guard forbids. The four phases still paid for
 # themselves: oracle@k and the k-best decode are the instruments that REVEALED the headroom and drove
-# T1a -> T1c -> T2. The arc found the answer; the answer was data.
+# T1a -> T1c -> T2. The arc found the answer. the answer was data.
 #
 # ⚠ conventions loss-mask is off in this lineage (inherited). Do not turn it on — the synth-fr-fragment source teaches FR
 # street_prefix and the mask would -inf those labels (the v1.6.0 ~7M-loss blow-up).
@@ -154,7 +154,7 @@ model: # Verbatim from v2.4.1.
   use_country_anchor: true
   country_feature_dim: 2
   # #1104 homograph-guard SOFTENER — the one variable vs v263. Scales the country_ambiguous dim by 0.5
-  # before the country_projection (bakes into the exported ONNX; no lexicon/inference change). v263's
+  # before the country_projection (bakes into the exported ONNX. no lexicon/inference change). v263's
   # hard guard (scale 1.0) over-suppressed homograph countries Georgia/Jordan (country-homograph F1
   # 89.8->82.6); softening should recover homograph recall without giving back the country F1 the
   # WOF-admin rows produced.
@@ -204,7 +204,7 @@ model: # Verbatim from v2.4.1.
 
 train: # Same-vocab init_from fine-tune off the shipped v261 (fresh optimizer; --resume none on a fresh
   # output_dir honors init_from, weights only). The new country_projection starts random and learns to
-  # route the cue; the encoder keeps v261's span-boundary + street grammar.
+  # route the cue. the encoder keeps v261's span-boundary + street grammar.
   output_dir: /data/output-v320-fragment-span-s42/checkpoints
   seed: 42
   init_from: /data/output-v310-fr-fragment-s42/checkpoints/step-008000

@@ -10,17 +10,17 @@
  *
  *   - `numero` → `house_number`
  *   - `rep` → repetition index ("bis", "ter") appended to house_number
- *   - `nom_voie` → `street` (full road name; includes the prefix "Rue", "Avenue", etc.)
+ *   - `nom_voie` → `street` (full road name. includes the prefix "Rue", "Avenue", etc.)
  *   - `code_postal` → `postcode`
  *   - `nom_commune` → `locality`
  *
- *   `region` and `country` are not in BAN. The adapter stamps `country: "FR"` on every row; region is
- *   left for the wof-postalcode + wof-admin cross-reference at corpus build time (a future pass;
+ *   `region` and `country` are not in BAN. The adapter stamps `country: "FR"` on every row. region is
+ *   left for the wof-postalcode + wof-admin cross-reference at corpus build time (a future pass.
  *   for Phase 1 the row's region is simply absent).
  *
  *   License: the official BAN (adresse.data.gouv.fr) is DUAL-licensed — Licence Ouverte 2.0 (Etalab,
  *   attribution-only) OR ODbL (share-alike). We ELECT Licence Ouverte 2.0 (issue #26 Tier B:
- *   allowed for training with attribution; the ODbL option's share-alike obligation would defeat
+ *   allowed for training with attribution. the ODbL option's share-alike obligation would defeat
  *   the proprietary-weights goal). Stamped onto every row as `Licence Ouverte 2.0` — NOT the older
  *   conservative `ODbL-1.0` label, which wrongly read as Tier-C-denied in the corpus license audit.
  *   The model card must carry the BAN attribution (Tier B obligation).
@@ -45,7 +45,7 @@ import type { AdapterOptions, CanonicalRow, CorpusAdapter } from "#types"
 export const BAN_ADAPTER_ID = "ban"
 
 /**
- * Subset of BAN CSV columns the adapter consults. Everything else is ignored; declaring the shape explicitly catches
+ * Subset of BAN CSV columns the adapter consults. Everything else is ignored. declaring the shape explicitly catches
  * column-name drift early if BAN evolves its schema.
  */
 interface BanRow {

@@ -15,7 +15,7 @@
  *   deliberately absent: that surface is the bare-toponym class with its own rules, and teaching it
  *   here as `region` would fight the locality/region ambiguity the dominance race arbitrates.
  *
- *   The recipe is country-agnostic; the country tail surface comes from the tuple's `country`
+ *   The recipe is country-agnostic. the country tail surface comes from the tuple's `country`
  *   field ("Spain", "United Kingdom") so one recipe serves every extraction.
  *
  *   POSTCODE-PREFIXED FORMS (2026-08-20, #1748). The two bare forms above were the whole recipe, and the
@@ -63,7 +63,7 @@
  *   A handful of localities act as catch-all parents: `Schwedt/Oder` claims 9,222 postcodes, `Korb`
  *   4,846, against a p50 of 1 and a p99 of 53. Eight such hubs held 47% of the join. Capping at the p99
  *   drops them and keeps 17,908 triples. The house number is synthetic because a house number asserts no
- *   fact about a place; the postcode is not, because it does.
+ *   fact about a place. the postcode is not, because it does.
  */
 
 import { lookupCanadianProvince } from "@mailwoman/codex/ca"
@@ -76,7 +76,7 @@ import { alignAndWrite, type PostcodePlacement, readTuples, type CorpusRecipe, r
  * The code an address line in this country writes the region as, or null where the name is written out.
  *
  * A subdivision belongs here only when its code is a posted surface. A Canadian province code is (`ca/province.ts`
- * states the contrast with Germany and France in its own header), and so is a US state's; a Bundesland or a région is
+ * states the contrast with Germany and France in its own header), and so is a US state's. a Bundesland or a région is
  * not, and teaching `BY` for Bayern would attest a form nobody writes.
  *
  * Several Canadian codes collide with ISO alpha-2 country codes — `NL` with the Netherlands, `PE` with Peru — so a code
@@ -159,7 +159,7 @@ export const trailingRegionRecipe: CorpusRecipe = {
 			}
 
 			const placement = (t.postcodePlacement as PostcodePlacement | undefined) ?? "leading"
-			// Both trailing placements put the code inside the ADMIN tail; they differ in which segment carries it.
+			// Both trailing placements put the code inside the ADMIN tail. they differ in which segment carries it.
 			const bareLocality = postcode && placement === "after_locality" ? `${locality} ${postcode}` : locality
 
 			const localitySegment =
@@ -180,7 +180,7 @@ export const trailingRegionRecipe: CorpusRecipe = {
 				? `${localitySegment}, ${regionSegment}, ${country}`
 				: `${localitySegment}, ${regionSegment}`
 
-			// A leading postcode joins the head, ahead of the locality; the other two are already in the tail, so the
+			// A leading postcode joins the head, ahead of the locality. the other two are already in the tail, so the
 			// head carries at most the house number.
 			const leadingPostcode = postcode && placement === "leading" ? `${postcode} ` : ""
 			const head = withHouseNumber ? `${houseNumber}, ${leadingPostcode}` : leadingPostcode

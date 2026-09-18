@@ -108,7 +108,7 @@ describe("Phase 4.1 source provenance", () => {
 				sourceID: "neural-v0.3.1-en-us",
 			})
 
-			// Locality is wrapped by region per containment rules; walk both.
+			// Locality is wrapped by region per containment rules. walk both.
 			const all = [...tree.roots, ...tree.roots.flatMap((r) => r.children)]
 
 			for (const node of all) {

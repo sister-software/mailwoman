@@ -251,7 +251,7 @@ describe("DebugFrame", () => {
 		const cellCount = cellSize.columns * cellSize.rows
 		// Every cell inked with a distinctive marker char, so a dropped frame row is visible directly (a naive
 		// total-line-count check can't tell "rendered" from "silently clipped" — Ink doesn't grow a Box past its
-		// declared `height` when children overflow it; it drops rows to fit, which keeps the outer line count
+		// declared `height` when children overflow it. it drops rows to fit, which keeps the outer line count
 		// unchanged and would pass a line-count-only assertion).
 		const MARKER_CODEPOINT = "#".codePointAt(0)!
 

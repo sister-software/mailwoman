@@ -102,7 +102,7 @@ describe("browser-safety scope — locale-hint + query-shape are node-free (#127
 						offenders.push(`${file}: runtime import of "${spec}"`)
 					}
 
-					// A VALUE import of @mailwoman/core would drag the ~9MB data package into the bundle;
+					// A VALUE import of @mailwoman/core would drag the ~9MB data package into the bundle.
 					// only a type-only re-export (erased) is allowed.
 					if (spec.startsWith("@mailwoman/core")) {
 						offenders.push(
@@ -140,7 +140,7 @@ describe("detectPairIndexCountry — structural country from the input shape", (
 	test("bitter-lesson-safe: a bare place name with NO postcode is NOT read as gb — it falls through to the us fallback", () => {
 		// locale-hint keys off structural cues (postcode/script) only, never place-name dictionaries, so
 		// "Shoreditch London" — a real GB dependent_locality/locality pair — detects `us`, not `gb`. The pair
-		// prior is additive, so a conservative miss (no bias) is the safe failure mode; a caller who knows the
+		// prior is additive, so a conservative miss (no bias) is the safe failure mode. a caller who knows the
 		// posture uses the `{ country }` override on resolvePairIndexForText.
 		expect(detectPairIndexCountry("Shoreditch London")).toBe("us")
 	})

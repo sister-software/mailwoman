@@ -46,7 +46,7 @@ describe("toMapHTML", () => {
 
 	it("inlines a real Protomaps basemap (many generated layers) plus the entity circle layer", () => {
 		const html = toMapHTML(fc([point(0, 0, { entityID: "e1", recordCount: 1, sources: ["x"], name: null })]))
-		// @protomaps/basemaps generates ~70 layer specs; they + our layer are inlined in the style.
+		// @protomaps/basemaps generates ~70 layer specs. they + our layer are inlined in the style.
 		expect(html).toContain('"id":"mw-entities"')
 		expect(html).toContain('"id":"earth"')
 		expect(html).toContain('"basemap-v4"')

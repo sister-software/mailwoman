@@ -5,13 +5,13 @@
  *
  *   `mwops`: the private operator CLI. Two verbs, each a view over a registry — `release <operation>` over
  *   `@mailwoman/release-kit` and `health <check>|all` over `@mailwoman/repo-health`. It parses arguments, hands them to
- *   the registered capability, and prints the result; every decision about what happens belongs to the operation or the
+ *   the registered capability, and prints the result. every decision about what happens belongs to the operation or the
  *   check. Kept free of `process` so it is unit-testable: the bin wrapper supplies argv, stdout, and the exit code.
  *
  *   The health verb performs two mutations, and neither is a check: `health baseline debt` rewrites
  *   `packages/repo-health/baseline.json` from the current readings, and `health fix <check>` applies the mechanical
  *   repair a check's diagnostics describe. Both are exported by repo-health and left out of the check registry, whose
- *   type admits nothing that writes; this is the only caller of either.
+ *   type admits nothing that writes. this is the only caller of either.
  */
 
 import { prettyJSON, stringifyJSON } from "@mailwoman/core/json"
@@ -157,7 +157,7 @@ async function runOperation(
 
 /**
  * `mwops health baseline <counter-set>` — rewrite a baseline from the current readings. `debt` is the only counter set
- * with a baseline; the target is named so a second one has a place to go.
+ * with a baseline. the target is named so a second one has a place to go.
  */
 async function runBaseline(
 	targets: readonly string[],
@@ -356,7 +356,7 @@ async function runHealth(args: readonly string[], io: DispatchIO): Promise<numbe
 }
 
 /**
- * Route one invocation. Returns the exit code; never touches `process`.
+ * Route one invocation. Returns the exit code. never touches `process`.
  */
 export async function dispatch(args: readonly string[], io: DispatchIO): Promise<number> {
 	const [verb, ...rest] = args

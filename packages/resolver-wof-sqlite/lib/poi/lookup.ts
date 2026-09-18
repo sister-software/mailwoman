@@ -9,15 +9,15 @@
  *
  *   - **Category**: `latLngToCell(center, 9)` → `gridDisk` ring-by-ring expansion, probing each
  *     cell's clustered `(h3_cell, category_id, neg_rank, …)` range. Rings accumulate until `limit`
- *     rows are on hand after a completed ring, or `maxRings` is exhausted; the pool is sorted by
+ *     rows are on hand after a completed ring, or `maxRings` is exhausted. the pool is sorted by
  *     haversine distance from `center` after every ring.
- *   - **Brand**: not a k-ring walk. Brand rows are globally sparse (~0.31% of poi.db; median nearest
+ *   - **Brand**: not a k-ring walk. Brand rows are globally sparse (~0.31% of poi.db. median nearest
  *     tagged instance ~110 km), so ring expansion could never reach them. Instead a single brand-wide
  *     indexed fetch on `brand_wikidata` (the partial `poi_brand_wikidata` index) pulls every row for
  *     the QID — category unconstrained — then haversine-sorts from `center` and takes the nearest
  *     `limit`, bounded by a `BRAND_MAX_DISTANCE_KM` sanity radius.
  *   - **Name**: FTS5 `MATCH` against the `poi_search` virtual table, hydrated back to full rows by
- *     `name_key`. No center required; if one is given, hits are still distance-sorted.
+ *     `name_key`. No center required. if one is given, hits are still distance-sorted.
  *
  *   `latLngToCell`/`gridDisk` come from `h3-js`; the 48-bit short-cell packing that turns a raw H3
  *   cell into the integer `poi.h3_cell` stores is `@mailwoman/spatial`'s `shortCellToInt` — that math
@@ -72,7 +72,7 @@ export interface POISearchQuery {
 	/**
 	 * Fan-out category ids — the Overture `taxonomy.primary` leaves a single canonical category rolls up into (e.g.
 	 * `supermarket` → `grocery_store`, `organic_grocery_store`, …). When set, the k-ring walk probes every resolvable
-	 * leaf per cell and unions the rows; unknown leaves are skipped. Supersedes `categoryID` (which is treated as a
+	 * leaf per cell and unions the rows. unknown leaves are skipped. Supersedes `categoryID` (which is treated as a
 	 * one-element list `[categoryID]` when this is absent). Ignored when `brandWikidata` is set — brand wins.
 	 */
 	categoryIDs?: string[]
@@ -105,7 +105,7 @@ export interface POISearchHit {
 	country: string
 	confidence: number
 	/**
-	 * Overture GERS id — nullable METADATA ONLY, never a key (the #470 rule; see `POITable.gers_id`).
+	 * Overture GERS id — nullable METADATA ONLY, never a key (the #470 rule. see `POITable.gers_id`).
 	 */
 	gersID: string | null
 	distanceM?: number
@@ -288,7 +288,7 @@ export class POILookup<DB extends POIDatabase = POIDatabase> implements Disposab
 	}
 
 	/**
-	 * Name path: FTS5 MATCH → hydrate by name_key. No center required; distance-sorts if one is given anyway.
+	 * Name path: FTS5 MATCH → hydrate by name_key. No center required. distance-sorts if one is given anyway.
 	 *
 	 * Hydration is one batched `WHERE name_key IN (...)` query over the FTS hits' unique `name_key`s, not a per-hit probe
 	 * — with up to `limit` FTS hits, a per-hit probe was up to `limit` full table scans before `createPOINameKeyIndex`

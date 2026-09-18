@@ -30,7 +30,7 @@ import type { AddressNode, AddressTree } from "@mailwoman/core/decoder"
 import type { CountryBBoxFact } from "@mailwoman/core/resolver"
 
 /**
- * Resolution granularity, coarse → fine. A resolved node's {@link AddressNode.tag} places it on this ladder; the
+ * Resolution granularity, coarse → fine. A resolved node's {@link AddressNode.tag} places it on this ladder. the
  * geocode a caller serves comes from the FINEST resolved node. Tags absent here (unit, po_box, intersection halves, …)
  * are treated as street-tier specificity when resolved.
  */
@@ -96,13 +96,13 @@ export function finestResolvedCoordinate(tree: AddressTree): ResolvedCoordinate 
  * Coarse per-country bounding boxes `[latMin, latMax, lonMin, lonMax]` for the cross-country guard (guard B). These are
  * deliberately rough — a guard needs "obviously the wrong country", not cartography — and they mirror the boxes the
  * 2026-07-15 coordinate-parity receipt harness measured with (`scratchpad/coord-parity.mjs`). The US box spans Alaska →
- * the mainland east coast; continental FR only; etc. A country absent here simply never trips the guard (fail-open).
+ * the mainland east coast. continental FR only. etc. A country absent here simply never trips the guard (fail-open).
  *
  * FALLBACK ROLE (survey candidate #2): these boxes are also baked into the candidate gazetteer's `country_bbox`
  * manifest table at build time (`mailwoman/gazetteer-pipeline/coverage-manifest.ts` owns the measured record). When a
  * caller supplies artifact-declared boxes ({@link PlausibilityOpts.countryBBoxes}), those REPLACE this table wholesale
  * — the artifact speaks for itself, and a country absent from the artifact's table fails open exactly like an absent
- * key here. This constant is the fallback for artifacts predating the manifest; grow the manifest record, not this.
+ * key here. This constant is the fallback for artifacts predating the manifest. grow the manifest record, not this.
  *
  * A box bounds the country's outlying territory, not its populated core: one trimmed to the mainland refuses the
  * Kermadecs for NZ, Minamitorishima for JP, Lampedusa for IT. A country whose extent crosses the antimeridian cannot be
@@ -187,14 +187,14 @@ export interface PlausibilityOpts {
 	 * ISO-2 country the resolution is EXPECTED to land in, when the caller knows it (a locale hint, a parsed country, a
 	 * fixture's gold country). Enables guard B: a coordinate outside this country's coarse bbox is implausible — the
 	 * cross-country-jump class guard A structurally cannot catch (`1210a IA 10 W IA` → a coordinate ~10,000 km from the
-	 * US was country-centroid-free and sailed through until guard B landed here, 2026-07-17; previously the check lived
+	 * US was country-centroid-free and sailed through until guard B landed here, 2026-07-17. previously the check lived
 	 * only in the receipt harness, so the shipped residual read 5/321 while the receipt said 3/321).
 	 */
 	expectedCountry?: string
 	/**
 	 * Artifact-declared guard-B boxes (the loaded gazetteer's `country_bbox` manifest, via
 	 * `resolver.artifactCoverage?.countryBBoxes`). When supplied they replace the built-in {@link COUNTRY_BBOX} table
-	 * wholesale; omitted → the constant (byte-identical fallback for artifacts predating the manifest).
+	 * wholesale. omitted → the constant (byte-identical fallback for artifacts predating the manifest).
 	 */
 	countryBBoxes?: ReadonlyMap<string, CountryBBoxFact>
 }

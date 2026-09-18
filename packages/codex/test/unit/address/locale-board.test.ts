@@ -7,7 +7,7 @@
  *
  *   This board exists because the engine it replaces got five of these eleven wrong, and nothing measured it. The
  *   OpenCage templates are written for OpenStreetMap's tag vocabulary and are correct for the anglophone and
- *   German-order locales; they insert a comma into Spain's street line, drop Italy's province, reorder India's tail,
+ *   German-order locales. they insert a comma into Spain's street line, drop Italy's province, reorder India's tail,
  *   and print BOTH CJK locales backwards with commas inserted — `1-9-1, 丸の内, 千代田区, 東京都 100-0005` where the
  *   convention is `〒100-0005 東京都千代田区丸の内1-9-1`.
  *

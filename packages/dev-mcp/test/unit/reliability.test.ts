@@ -23,7 +23,7 @@ function at(confidence: number, n: number, correct: number): Observation[] {
 
 describe("reliabilityCurve", () => {
 	it("reports a perfectly calibrated sample as ECE 0", () => {
-		// 0.95-confident and right 95% of the time; 0.25-confident and right 25% of the time.
+		// 0.95-confident and right 95% of the time. 0.25-confident and right 25% of the time.
 		const curve = reliabilityCurve([...at(0.95, 100, 95), ...at(0.25, 100, 25)], 10)
 
 		expect(curve.ece).toBeCloseTo(0, 10)

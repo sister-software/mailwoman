@@ -7,7 +7,7 @@
  *
  *   Two people both named "Vijayan" is far stronger evidence of a match than two both named "Smith",
  *   because "Smith" agreements happen by chance all the time and "Vijayan" agreements don't. The
- *   Fellegi-Sunter `m` (how often a true match agrees) is roughly the same either way; what differs
+ *   Fellegi-Sunter `m` (how often a true match agrees) is roughly the same either way. what differs
  *   is `u` — the chance a _non_-match agrees — which for an exact agreement on value `v` is just
  *   how common `v` is. So we leave `m`, and replace the level's average `u` with `frequency(v)`,
  *   adding `log2(u_level / frequency(v))` to the weight: a big positive bump for rare values, a
@@ -38,7 +38,7 @@ export interface TermFrequencyTable {
 	readonly distinct: number
 }
 
-// Local by design: `@mailwoman/record`'s per-field normalizers are the shared home; match takes no record dependency.
+// Local by design: `@mailwoman/record`'s per-field normalizers are the shared home. match takes no record dependency.
 const defaultNormalize = (value: string): string => value.trim().toLowerCase().replaceAll(/\s+/g, " ")
 
 /**
@@ -77,7 +77,7 @@ export function buildTermFrequencyTable(
 
 /**
  * Attach a term-frequency adjustment to a comparison. By default it applies to the exact level (index 0) and looks up
- * the value via `value(a, b)` — usually the agreeing field extracted from one side. Returns a new comparison; the
+ * the value via `value(a, b)` — usually the agreeing field extracted from one side. Returns a new comparison. the
  * underlying `assess` and levels are untouched, so this composes with EM (which re-estimates the base `m`/`u` the
  * adjustment sits on top of).
  */

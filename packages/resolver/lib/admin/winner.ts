@@ -5,7 +5,7 @@
  * @file Which resolved admin place answers the query — the one ordering whose postcode rung is not a constant.
  *
  *   `postalcode` is the only placetype whose specificity depends on the hit rather than the name. An NL PC6 or a GB unit
- *   postcode covers ~8 and ~15 addresses, categorically tighter than any locality centroid; a US ZIP, a French code
+ *   postcode covers ~8 and ~15 addresses, categorically tighter than any locality centroid. a US ZIP, a French code
  *   postal or a German PLZ covers a delivery AREA. `PLACETYPE_SPECIFICITY` answers "which placetype covers less ground"
  *   and cannot express that split, so a consumer that sorts by it alone promotes every postcode.
  *

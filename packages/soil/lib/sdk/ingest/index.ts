@@ -108,7 +108,7 @@ export interface SoilIngestOptions {
 	fidFrom?: number
 	fidTo?: number
 	/**
-	 * Stop after this many features. The fixture and smoke rungs use it; a full build does not set it.
+	 * Stop after this many features. The fixture and smoke rungs use it. a full build does not set it.
 	 */
 	limit?: number
 }

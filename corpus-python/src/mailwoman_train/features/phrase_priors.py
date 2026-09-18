@@ -9,7 +9,7 @@ This module defines:
 
 - ``PHRASE_KINDS``: the 7-kind taxonomy mirrored from the TS contract
   (``core/pipeline/types.ts``'s ``PhraseKind`` union). The Python-side enum is a tuple
-  in declaration order; the order must match the TS union — the i-th kind in this tuple
+  in declaration order. the order must match the TS union — the i-th kind in this tuple
   is the same kind as the i-th branch of ``PhraseKind`` in TS, because that's the same
   index used to one-hot encode per-token features.
 
@@ -19,7 +19,7 @@ This module defines:
 
 Why mirror the TS taxonomy here instead of importing? The classifier trains in Python
 on parquet files that don't carry the TS-side ``PhraseProposal`` value type. The corpus
-build (forthcoming, alongside corpus-v0.4.0) is what produces per-token feature tensors;
+build (forthcoming, alongside corpus-v0.4.0) is what produces per-token feature tensors.
 its bridge to the TS-side phrase grouper lives there, not here. This file is just the
 shared vocabulary.
 
@@ -34,7 +34,7 @@ from dataclasses import dataclass
 from typing import Final
 
 # Mirror of the TS-side ``PhraseKind`` union (see core/pipeline/types.ts in Thread E).
-# Order is the encoding contract; never reorder, only append.
+# Order is the encoding contract. never reorder, only append.
 PHRASE_KINDS: Final[tuple[str, ...]] = (
     "NUMERIC",
     "STREET_PHRASE",
@@ -86,7 +86,7 @@ class PhraseFeatureEncoding:
 
 
 def phrase_kind_id(kind: str) -> int:
-    """Look up a ``PhraseKind`` by name; raises ``KeyError`` on unknown kinds.
+    """Look up a ``PhraseKind`` by name. raises ``KeyError`` on unknown kinds.
 
     Unknown kinds are a corpus-version skew (TS-side added a kind, Python-side didn't).
     Fail loudly here rather than silently mapping to a default — the resulting model

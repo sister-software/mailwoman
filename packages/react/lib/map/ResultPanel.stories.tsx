@@ -5,7 +5,7 @@
  *
  *   `<ResultPanel>` over a fake parse result — the resolved case (component table + resolved place +
  *   candidate picker, switchable) and the no-resolve case (the injected `failure` slot). Reuses the shared
- *   pipeline units; no maplibre.
+ *   pipeline units. no maplibre.
  */
 
 import type { Meta, StoryObj } from "@storybook/react-vite"

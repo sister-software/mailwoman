@@ -10,7 +10,7 @@ following authored suffix span) is assembled into surface words;
 - ``terminal-contrast`` — the trailing word itself is name-prone ('Sutton Hollow').
 
 Correct after the load-time relabel = the group's last word carries ``street_suffix`` and the
-word before it carries ``street``. Classification always uses the v2 (classify) lexicon; the
+word before it carries ``street``. Classification always uses the v2 (classify) lexicon. the
 RELABEL lexicon is the variable under test — v1 reproduces the 2026-08-09 baseline behavior
 (ordinary monolithic carriers stay wrong), v2 licenses the positional split.
 """

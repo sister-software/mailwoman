@@ -15,19 +15,19 @@
 #
 # SOURCE PROVENANCE (eval-honesty): train rows = real non-Vermont US OA streets, split via the codex
 # (directionals + USPS suffixes), prefixes partly injected. Held-out VT golden measures affix
-# recognition on held-out addresses; the REAL-in-the-wild check is data/eval/external/
+# recognition on held-out addresses. the REAL-in-the-wild check is data/eval/external/
 # street-affix-real.jsonl (30 curated real addresses, naturally-occurring affixes — the TRUSTWORTHY
 # lens, mirroring the unit-real-designators eval). Read the real-affix eval at the check, not the VT #.
 #
 # PRE-REGISTERED CHECK (stop at 20k):
 #   - street_suffix F1 >= 70% AND street_prefix F1 >= 60% on the real-affix eval (both were ~0%).
-#   - `street` F1 >= v4.1.0 (no loss; ideally +; negative space) on golden US + the real-affix eval.
+#   - `street` F1 >= v4.1.0 (no loss. ideally +. negative space) on golden US + the real-affix eval.
 #   - RETAIN unit: `unit` >= 88% on data/eval/external/unit-real-designators.jsonl (was 92.3%).
 #   - NO-REGRESSION (within ~1pp vs v4.1.0 / v0.9.7, fp32-to-fp32): US house_number / postcode /
-#     locality / region; FR per-class floors; DE native-order locality (de-order-eval.ts).
+#     locality / region. FR per-class floors. DE native-order locality (de-order-eval.ts).
 #   DECISION: affixes clear + street holds + unit retained + no regression check → promote candidate.
 #     If street/house_number slips or affixes over-fire: lower synth-affix 2.0 -> 1.5 + rerun
-#     (the unit-v3 remedy). If affixes move but `street` drops: negative space refuted here — keep
+#     (the unit-v3 action). If affixes move but `street` drops: negative space refuted here — keep
 #     the affix result, note it.
 # Measure: per-locale-f1.ts (US/FR golden) + the street-affix-real + unit-real-designators evals
 #   (fp32) + de-order-eval.ts (DE 2x2 regression check).

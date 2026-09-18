@@ -12,7 +12,7 @@
  *   })` (CLI `--exclude-licenses` / `--exclude-share-alike`). Nothing is dropped on a license
  *   string unless the operator named it. This avoids the trap of silently dropping allowed data
  *   mis-stamped with a conservative license (e.g. BAN, which is dual-licensed Licence Ouverte OR
- *   ODbL — we elect Licence Ouverte; a default-deny on the old `ODbL` stamp would have wrongly
+ *   ODbL — we elect Licence Ouverte. a default-deny on the old `ODbL` stamp would have wrongly
  *   dropped 48M allowed rows).
  *
  *   Tier reference (#26): A = PD/CC0 (allowed); B = CC-BY / Licence Ouverte (allowed with attribution

@@ -4,7 +4,7 @@
  * Our 376-assertion suite is a Pelias/addressit port (v0's lineage), so it can't reveal where neural beats rules. This
  * builds an UNBIASED arena from ground truth WE OWN: take golden v0.1.2 (already labeled in our schema) and apply rule-
  * defeating perturbations while keeping the component labels intact. Rule-based parsers lean on delimiters /
- * capitalization / canonical spacing; a contextual neural model should degrade more gracefully. The three-bucket
+ * capitalization / canonical spacing. a contextual neural model should degrade more gracefully. The three-bucket
  * harness then shows whether that's true (the methodology-vindication test).
  *
  * Perturbation classes (each preserves the expected components — only the surface changes, and the harness matcher

@@ -1,6 +1,6 @@
 """Strict parquet-path resolution contract (#480 — the v0.7.1 trap).
 
-A manifest that declares parquet files the resolver cannot find is a BROKEN corpus; partial
+A manifest that declares parquet files the resolver cannot find is a BROKEN corpus. partial
 resolution must raise with the missing list, never train on the survivors.
 
 Every fixture below writes the manifest key the CURRENT code prefers, and that is exactly how this
@@ -41,7 +41,7 @@ def test_rerooting_still_works(tmp_path: Path) -> None:
     part = corpus / "train" / "part-0000.parquet"
     part.write_bytes(b"x")
     # A manifest written on another machine: the path is absolute and wrong here, which is the
-    # whole point. Any absolute path that does not exist serves; it need not be a real one.
+    # whole point. Any absolute path that does not exist serves. it need not be a real one.
     stale = "/build-machine/corpus/train/part-0000.parquet"
     (corpus / "MANIFEST.json").write_text(json.dumps({"slices": [{"split": "train", "path": stale}]}))
     assert _parquet_paths(corpus, "train") == [part]
@@ -175,7 +175,7 @@ def test_a_base_part_never_resolves_to_the_overlays_same_numbered_one(tmp_path: 
     Part files are named by position, so a base corpus and the overlay layered on it both hold `val/part-0000.parquet`.
     Re-rooting a base path under the overlay on tail alone finds the OVERLAY's part and resolves — no error, and the
     loader reports the base file as read while it holds the overlay's rows. Here the base is absent, so the only way
-    to resolve is by taking the wrong file; the guard must raise instead.
+    to resolve is by taking the wrong file. the guard must raise instead.
     """
     versioned = tmp_path / "corpus" / "versioned"
     overlay = versioned / "v8-cjk-regs"

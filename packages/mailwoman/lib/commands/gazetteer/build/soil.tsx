@@ -15,7 +15,7 @@
  *
  *   `--measure-resolutions` DOES NOT BUILD. The index resolution is a measurement this layer takes rather
  *   than a number argued to, and running it is a mode of its own because it produces a table, not an
- *   artifact. It reports the `partial` share and the mean delineations per cell; the second number §4.7 asks
+ *   artifact. It reports the `partial` share and the mean delineations per cell. the second number §4.7 asks
  *   for — the share of cells whose top class holds under half the cell — needs the attribute join and the
  *   area weighting, so it comes off the built artifact instead and rides in the build summary.
  *

@@ -105,7 +105,7 @@ export const PAIR_INDEX_TRANSITION_BETA = 5
 
 /**
  * The WHOLE-EDGE parent-bias magnitude (#46, default-on 2026-08-04) at the verdict's recommended δ=5 — see
- * `docs/records/evals/2026-08-04-pix1-whole-edge-verdict.md`. Only the measured locales (us/gb/nz/fr) pass it; the
+ * `docs/records/evals/2026-08-04-pix1-whole-edge-verdict.md`. Only the measured locales (us/gb/nz/fr) pass it. the
  * D-rule's answer to an unmeasured locale is a per-locale absence, not an inherited magnitude.
  */
 export const PAIR_INDEX_PARENT_DELTA = 5
@@ -218,7 +218,7 @@ const MD5_HEX_LENGTH = 32
 /**
  * Md5 of `path`, cached in a standard `md5sum`-format sidecar (`<hash> <filename>`) beside it so a multi-gigabyte
  * source is hashed once per change rather than once per linker run. The sidecar is trusted only when at least as new as
- * the source; a missing or stale sidecar recomputes and rewrites, so the cache self-heals.
+ * the source. a missing or stale sidecar recomputes and rewrites, so the cache self-heals.
  *
  * The shared home for the copies the base linkers (`en-us`, `en-gb`, `en-nz`) each carry — new callers import this one.
  */
@@ -260,7 +260,7 @@ export interface PairIndexCalibration {
 
 /**
  * Why an existing `pair-index-*.bin` is stale against `expected`, or `undefined` when its header matches. Covers the
- * FORMAT (schemaVersion) and every calibrated magnitude; source-md5 freshness stays with the caller, because each base
+ * FORMAT (schemaVersion) and every calibrated magnitude. source-md5 freshness stays with the caller, because each base
  * linker passes a different set of sources and only it knows what they are.
  *
  * One place so a magnitude added to the header cannot be checked by some linkers and not others — which is exactly how
@@ -290,7 +290,7 @@ export function pairIndexStaleReason(
 /**
  * The PIX1 schema this tree's reader requires. Must equal `KNOWN_SCHEMA_VERSION` in `neural/pair-index-resolver.ts` —
  * they are two ends of one fact, and this copy exists only because a data-only overlay must not gain a dependency on
- * `@mailwoman/neural` (onnxruntime-node) to read one header field. Bump both in the same commit; a schema bump that
+ * `@mailwoman/neural` (onnxruntime-node) to read one header field. Bump both in the same commit. a schema bump that
  * leaves this behind makes every dev checkout rebuild-loop or serve an artifact the runtime refuses.
  *
  * The freshness guard must compare it: a guard that checks only delta + source md5 reads a format-obsolete binary as
@@ -536,7 +536,7 @@ export async function buildPairIndexOverlay(overlay: PairIndexOverlay): Promise<
 
 /**
  * A soft-feed sibling an overlay links: where it comes from, the name it takes in the overlay, and the consequence line
- * printed when the source is missing (the link is warn-and-continue; the channel resolves off).
+ * printed when the source is missing (the link is warn-and-continue. the channel resolves off).
  */
 export interface SoftFeedLink {
 	source: string
@@ -546,7 +546,7 @@ export interface SoftFeedLink {
 
 /**
  * The committed soft-feed lexicons as links, by channel, read from `release.config.json` so the filename a manifest
- * links is the one the release ships. `streetType` is offered for completeness; the manifests link the evidence
+ * links is the one the release ships. `streetType` is offered for completeness. the manifests link the evidence
  * lexicons by the generation their CARD names instead (`evidenceLexiconsFromCard`).
  */
 export async function committedSoftFeedLinks(): Promise<{
@@ -604,7 +604,7 @@ export interface DevOverlayManifest {
 	 * `release.config.json`'s `weights` block names under the data root (`$MAILWOMAN_DEV_MODEL` /
 	 * `$MAILWOMAN_DEV_TOKENIZER` override them), and when `digestCard` names a workspace the linked default bytes must
 	 * match that workspace's card `files_md5` — the #397 drift guard, which fails loud instead of grading the wrong
-	 * model; an override skips the check and says so. `inherit`: the package declares `mailwoman.baseWeights`, so any
+	 * model. an override skips the check and says so. `inherit`: the package declares `mailwoman.baseWeights`, so any
 	 * local pair is REMOVED — a stale local file shadows the base fallback and silently serves outdated bytes. Omitted:
 	 * the pair is left to `packages/release-kit/lib/weights/link-weights-overlay.ts`, the recipe writer.
 	 */
@@ -672,7 +672,7 @@ async function readWeightsCard(workspace: string): Promise<WeightsCard | undefin
 
 /**
  * Link the base model pair from the release recipe and, when a digest card is named, hold the linked default bytes to
- * that card's `files_md5`. The recipe and the card are the two registers a ship bumps in lockstep; a path bumped
+ * that card's `files_md5`. The recipe and the card are the two registers a ship bumps in lockstep. a path bumped
  * without the card, or the reverse, fails here rather than after an eval shift graded against the wrong weights.
  */
 /**

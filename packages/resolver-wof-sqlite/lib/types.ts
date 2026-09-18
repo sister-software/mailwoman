@@ -14,7 +14,7 @@
  * The placetype taxonomy used by Who's On First. Ordered roughly from coarsest (country) to finest (address). See
  * https://github.com/whosonfirst/whosonfirst-placetypes for the authoritative definitions of each.
  *
- * Phase 4.2 only emits the ones we actually look up; the union is open enough to extend later.
+ * Phase 4.2 only emits the ones we actually look up. the union is open enough to extend later.
  */
 export type WOFPlacetype =
 	| "country"
@@ -64,7 +64,7 @@ export interface PlaceCandidate {
 	 * It is what lets a consumer see that two candidates in one answer denote one settlement at two admin tiers. The
 	 * gazetteer carries 285,478 populated localities that share a folded name with a `localadmin` within 5 km, and
 	 * 264,523 of those (92.7%) name that twin as their depth-1 ancestor — so the pair is legible from this field alone.
-	 * The backend reports the containment; whether two rows are one place is the consumer's call, because a `localadmin`
+	 * The backend reports the containment. whether two rows are one place is the consumer's call, because a `localadmin`
 	 * sometimes covers hamlets the settlement does not.
 	 */
 	parent_id?: number
@@ -79,7 +79,7 @@ export interface PlaceCandidate {
 	exactMatch?: boolean
 	/**
 	 * Combined prominence (population term + best proximity-bias term, same additive units) — populated by the FTS
-	 * lookup; the exact-tier sort orders by this instead of raw population when the query carried proximity hints
+	 * lookup. the exact-tier sort orders by this instead of raw population when the query carried proximity hints
 	 * (`near`/`bias`).
 	 */
 	prominence?: number
@@ -109,7 +109,7 @@ export interface PlaceCandidate {
 	 * neither is 0. The BLENDED prior the ranking reads is {@link PlaceCandidate.importance}.
 	 *
 	 * Saint-Denis is why this is not a ranking key: the Seine-Saint-Denis suburb (pop 96,128) scores 0.1173 while the
-	 * Aude hamlet (pop 418) scores 0.5683. Consumers that want to display salience read this; the ranking never does.
+	 * Aude hamlet (pop 418) scores 0.5683. Consumers that want to display salience read this. the ranking never does.
 	 */
 	encyclopedic?: number
 	/**
@@ -123,7 +123,7 @@ export interface PlaceCandidate {
 	/**
 	 * Bounding box from WOF's `spr.{min,max}_{latitude,longitude}` columns. Coarse outline for the place — a city's bbox
 	 * is the city's full extent, a postcode's is roughly the postcode polygon's envelope. Optional because not all
-	 * callers ask for it; implementations are free to omit when the underlying schema lacks the columns.
+	 * callers ask for it. implementations are free to omit when the underlying schema lacks the columns.
 	 */
 	bbox?: GeoBbox
 	/**
@@ -137,7 +137,7 @@ export interface PlaceCandidate {
 	/**
 	 * Admin-containment stamp (#1717 stage 2) — TRI-STATE, mirroring `ResolvedPlace.containedByQualifier` in
 	 * `@mailwoman/core`: `true` = the ancestors sidecar vouches this candidate sits under the query's
-	 * {@link FindPlaceQuery.regionQualifier}; `false` = evaluated and not vouched for; absent = never evaluated (no
+	 * {@link FindPlaceQuery.regionQualifier}. `false` = evaluated and not vouched for. absent = never evaluated (no
 	 * qualifier on the query, or an artifact without the sidecar). Absence is required — the resolver walk reads it as
 	 * `unavailable`, never as "not contained".
 	 */
@@ -172,12 +172,12 @@ export interface GeoBbox {
 /**
  * Query against the resolver.
  *
- * `text` is the only required field; everything else narrows the search. When `country` and `parentID` are both set,
+ * `text` is the only required field. everything else narrows the search. When `country` and `parentID` are both set,
  * `parentID` wins (it's more specific).
  *
  * `near` and `bbox` are independent. `near` is a soft signal — candidates close to the point get a ranking boost but
  * distant candidates aren't dropped. `bbox` is a hard filter — only candidates whose bbox intersects the query bbox are
- * returned (uses the package-built R*Tree index when present; if the index is missing the option is silently ignored to
+ * returned (uses the package-built R*Tree index when present. if the index is missing the option is silently ignored to
  * preserve backwards compatibility).
  *
  * `near` may carry `maxDistanceKm` to escalate from a boost to a hard filter — candidates further than that distance
@@ -205,7 +205,7 @@ export interface FindPlaceQuery {
 	primaryOnly?: boolean
 	/**
 	 * Alias-row NAME ROLES the probe refuses to answer through (#1730) — the bare-toponym side races pass `abbr`/`gloss`.
-	 * Role-NULL alias rows (the exonym tier) stay open; backends/artifacts without a role column ignore it.
+	 * Role-NULL alias rows (the exonym tier) stay open. backends/artifacts without a role column ignore it.
 	 */
 	excludeNameRoles?: readonly string[]
 	/**

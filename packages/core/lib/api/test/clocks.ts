@@ -169,7 +169,7 @@ export class VirtualClock implements ClockLike {
 	 * a paced client whose limit sits downstream of an on-disk cache spends several real event-loop turns in `readFile`
 	 * before it ever registers its `sleep()`. A caller that drains once and then advances finds nothing pending, jumps
 	 * the clock past the deadlines that are registered a moment later, and the test hangs. This polls instead: drain, and
-	 * if any sleep is pending, advance to the earliest deadline; if none is, yield and look again.
+	 * if any sleep is pending, advance to the earliest deadline. if none is, yield and look again.
 	 *
 	 * Throws rather than hanging when the work neither settles nor schedules anything for {@linkcode IDLE_BUDGET_MS} of
 	 * real time — a diagnosable failure beats a test-timeout stack trace pointing at the `it()`.
@@ -190,7 +190,7 @@ export class VirtualClock implements ClockLike {
 			}
 		)
 
-		// Keep the rejection from surfacing as an unhandled rejection while we drive the clock; the real
+		// Keep the rejection from surfacing as an unhandled rejection while we drive the clock. the real
 		// one is still delivered to whoever awaits the returned promise.
 		observed.catch(() => undefined)
 

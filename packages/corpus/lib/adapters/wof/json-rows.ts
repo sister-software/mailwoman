@@ -58,7 +58,7 @@ function renderHierarchy(
  * to its output (e.g. `"United States"` → `"United States of America"`). If `components.country` and the formatted
  * `raw` disagree, alignment will fail downstream. Keying off the canonical form keeps the two in lockstep.
  *
- * Phase 1 US + FR only; extend as new locales come online. Missing countries fall back to the country row's `wof:name`,
+ * Phase 1 US + FR only. extend as new locales come online. Missing countries fall back to the country row's `wof:name`,
  * accepting the alignment risk for non-canonicalized names.
  */
 export const COUNTRY_DISPLAY_NAME: Record<string, string> = {
@@ -92,7 +92,7 @@ export interface WOFVariantSpec {
 
 export interface NameSlotOptions {
 	/**
-	 * Canonical surface for the record's own `"default"` slot. Default `rec.name` verbatim; the admin adapter substitutes
+	 * Canonical surface for the record's own `"default"` slot. Default `rec.name` verbatim. the admin adapter substitutes
 	 * the OpenCage-canonical {@link COUNTRY_DISPLAY_NAME} for country records.
 	 */
 	canonicalName?: (rec: WOFRecord) => string

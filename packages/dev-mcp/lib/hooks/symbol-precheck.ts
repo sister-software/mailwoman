@@ -12,7 +12,7 @@
  *   `yarn health:knip`) already find duplication, but only after it is written and committed. This is the same
  *   question asked at the moment it can still be answered cheaply.
  *
- *   It never blocks. Exit 0 always, with `additionalContext` when there is something to say and silence otherwise; a
+ *   It never blocks. Exit 0 always, with `additionalContext` when there is something to say and silence otherwise. a
  *   hint that can interrupt an edit is a hint that gets switched off. Every failure path is also silence, for the same
  *   reason — a hook that throws on an unanticipated payload is a broken editor rather than a missing hint.
  *

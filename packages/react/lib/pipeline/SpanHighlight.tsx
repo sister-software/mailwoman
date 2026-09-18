@@ -20,7 +20,7 @@ export interface SpanHighlightProps {
 	 */
 	input: string
 	/**
-	 * Flattened parse nodes; only those with numeric `start`/`end` are rendered.
+	 * Flattened parse nodes. only those with numeric `start`/`end` are rendered.
 	 */
 	nodes: ParsedComponent[]
 }

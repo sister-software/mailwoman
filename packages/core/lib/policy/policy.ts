@@ -5,7 +5,7 @@
  *
  *   Classifier policy types (per #6). A `ClassifierPolicy` declares which classifier family (rule /
  *   neural / both / preferred) has authority for each `ComponentTag`, optionally narrowed by
- *   locale. The default table starts every component in `rule_only` mode; migrations to
+ *   locale. The default table starts every component in `rule_only` mode. migrations to
  *   neural-backed modes happen one component at a time, conditioned on golden-set metrics.
  */
 
@@ -26,7 +26,7 @@ import type { ClassificationProposal } from "#types"
 export type PolicyMode = "rule_only" | "neural_only" | "both" | "neural_preferred" | "rule_preferred"
 
 /**
- * A single policy entry. Locale-less entries are the global default; locale-scoped entries override the global default
+ * A single policy entry. Locale-less entries are the global default. locale-scoped entries override the global default
  * for that locale.
  */
 export interface ClassifierPolicy {
@@ -50,13 +50,13 @@ export interface ClassifierPolicy {
  */
 export interface PolicyRegistry {
 	/**
-	 * Look up the effective policy for a (component, locale) pair. A locale-specific entry wins over a global one; if
+	 * Look up the effective policy for a (component, locale) pair. A locale-specific entry wins over a global one. if
 	 * neither exists, the registry-wide default (`rule_only`, no threshold) is returned.
 	 */
 	lookup(component: ComponentTag, locale?: string): ClassifierPolicy
 
 	/**
-	 * Apply policy filtering to a flat list of proposals. Output is a new array; the input is not mutated.
+	 * Apply policy filtering to a flat list of proposals. Output is a new array. the input is not mutated.
 	 */
 	apply(proposals: readonly ClassificationProposal[], locale?: string): ClassificationProposal[]
 }

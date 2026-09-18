@@ -100,7 +100,7 @@ test("links the locality → region → country ancestry so parentID scoping rea
 	const region = db.prepare("SELECT id FROM spr WHERE placetype='region' AND country='GE'").get() as Row
 	const country = db.prepare("SELECT id FROM spr WHERE placetype='country' AND country='GE'").get() as Row
 
-	// Locality is parented to its region; the ancestor chain carries both region and country.
+	// Locality is parented to its region. the ancestor chain carries both region and country.
 	expect(loc.parent_id).toBe(region.id)
 
 	const ancestorIDs = db
@@ -184,7 +184,7 @@ test("recognizes a PCLS special-administrative-region as the country (HK/MO/PS)"
 	hk.exec(`CREATE TABLE place_population (id INTEGER PRIMARY KEY, population INTEGER)`)
 	await ingestGeonamesAliases(hk, ["HK"], d, () => {}, { adminForCountries: new Set(["HK"]) })
 
-	// PCLS is a country-level code; the fold must seat Hong Kong as the country (not skip it like pre-PCL*).
+	// PCLS is a country-level code. the fold must seat Hong Kong as the country (not skip it like pre-PCL*).
 	expect((hk.prepare("SELECT name FROM spr WHERE placetype='country' AND country='HK'").get() as Row)?.name).toBe(
 		"Hong Kong"
 	)

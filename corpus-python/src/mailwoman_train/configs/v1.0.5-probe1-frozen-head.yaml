@@ -13,7 +13,7 @@
 # === v1.0.0-consolidation (#466) — the v0-PARITY FLAG-PLANT ======================================
 # One model carrying every PROVEN parity change, at a LARGER step budget (the cumulative-dilution
 # lesson: never stack N sources into a fixed 20k budget — give them room). This is not a single-variable
-# experiment; it's the integration run. Changes folded in:
+# experiment. it's the integration run. Changes folded in:
 #   - unit          (shipped v4.1.0)                      → synth-unit 1.5
 #   - affix         (multi-locale reroll, #469)           → synth-affix 2.0  (corpus v0.4.11-affix-ml)
 #   - country       (balanced recipe output, #464)        → synth-country 2.0 (corpus v0.4.10-country-bal)
@@ -22,13 +22,13 @@
 # po_box/cedex DEFERRED (matcher-proven 100%; coverage recipes are a follow-up, not in this flag-plant).
 #
 # Corpus v0.4.12-consolidation = the v0.4.11-affix-ml parquet files (base+unit+german+deepseek+MULTI-LOCALE affix)
-# + the v0.4.10-country-bal balanced country parquet file, referenced verbatim (pure manifest concat; every
+# + the v0.4.10-country-bal balanced country parquet file, referenced verbatim (pure manifest concat. every
 # parquet already on the volume). Recipe inherits v0.9.13 (gazetteer anchor + country class-weight 3.5).
 #
 # Two deliberate changes vs v0.9.13:
 #   1. max_steps 20k → 40k. The solo affix reroll (v0.9.14) showed fixed-budget dilution (FR
 #      house_number 92→87, US street 80.4→79.0) when 40K balance rows competed for 20k steps. A larger
-#      budget is the prescribed fix; 40k ≈ 2x exposure per source.
+#      budget is the prescribed fix. 40k ≈ 2x exposure per source.
 #   2. gazetteer_curriculum is off and gazetteer_choreography is on. The curriculum (random clue zero-out) only
 #      recovered +0.6 of the −3.7 US-postcode dip in v0.9.13. The choreography (zero the clue on tokens
 #      ADJACENT to a postcode-anchor hit, train+inference paired) is the targeted, DeepSeek-diagnosed
@@ -42,9 +42,9 @@
 #   - US postcode back to baseline (≥ 97, fp32) — the choreography must absorb the v0.9.12 −3.7.
 #   - FR postcode ≥ 99.5 AND FR house_number ≥ 91 (the v0.9.14 watch-item — confirm the bigger budget
 #     recovers it).
-#   - US spine (street/locality/region/house_number) ≥ v0.9.8; DE native-order locality ≥ 83.8.
-#   DECISION: all hold → v0-parity FLAG-PLANT; ship candidate (int8 → v4.2.0). Any tag short → the
-#     dilution isn't budget-bound; fall back to weight-merge (#466's titled approach) or raise that
+#   - US spine (street/locality/region/house_number) ≥ v0.9.8. DE native-order locality ≥ 83.8.
+#   DECISION: all hold → v0-parity FLAG-PLANT. ship candidate (int8 → v4.2.0). Any tag short → the
+#     dilution isn't budget-bound. fall back to weight-merge (#466's titled approach) or raise that
 #     source's weight/budget. Measure: score-country-homograph.ts + score-affix.ts (incl. unit) +
 #     per-locale-f1.ts (US/FR, --tokenizer + --model-anchor-lookup + --gazetteer-lexicon) +
 #     de-order-eval.ts, all fp32.
@@ -86,9 +86,9 @@ data:
     # Every proven change rides at its solo-validated weight.
     synth-unit: 1.5
     # Run C (the resume-fix): affix at the exact value the diagnostic hit prefix 75 with — synth-affix
-    # 20.0. Run A (10.0, RESUME) → 65; Run B (17.0, init_from) → 65 (the init_from fresh-optimizer was
+    # 20.0. Run A (10.0, RESUME) → 65. Run B (17.0, init_from) → 65 (the init_from fresh-optimizer was
     # the confound — momentum is required to slide the CRF into the prefix→street→suffix basin). This is
-    # RESUME (output_dir below = consolidation dir, --resume auto finds clean step-040000; Run A's
+    # RESUME (output_dir below = consolidation dir, --resume auto finds clean step-040000. Run A's
     # 042k-060k deleted). NOTE: 20.0, NOT DeepSeek's "40.0" — its "20×" arithmetic mislabeled the
     # diagnostic, which actually used 20.0. Run to convergence (15k) so suffix asymptotes past 64.
     synth-affix: 20.0
@@ -102,7 +102,7 @@ data:
   gazetteer_lexicon_path: /data/gazetteer/anchor-lexicon-v1.json
   # The v0.9.12 US-postcode fix (#468): zero the gazetteer clue on tokens adjacent to a postcode-anchor
   # hit, at train time (paired with classifier.suppressGazetteerNearPostcode at inference). First trained here.
-  gazetteer_choreography: true  # kept ON — match the deployed distribution; probe 0 cleared it as the decay driver
+  gazetteer_choreography: true  # kept ON — match the deployed distribution. probe 0 cleared it as the decay driver
 
 model:
   use_affix_head: true  # 492 frozen-encoder probe

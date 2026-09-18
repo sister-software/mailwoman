@@ -58,7 +58,7 @@ describe("countryFromPostcodeFormat (#928)", () => {
 	})
 
 	it("GB / CA / IE formats never collide", () => {
-		// GB inward is 3 chars (\d[A-Z]{2}); CA ends \d[A-Z]\d; IE unique part is 4 alnum. Mutually exclusive.
+		// GB inward is 3 chars (\d[A-Z]{2}). CA ends \d[A-Z]\d. IE unique part is 4 alnum. Mutually exclusive.
 		expect(countryFromPostcodeFormat("E4 9AZ")).toBe("GB")
 		expect(countryFromPostcodeFormat("K2P 1L4")).toBe("CA")
 		expect(countryFromPostcodeFormat("D02 AF30")).toBe("IE")
@@ -124,7 +124,7 @@ describe("extractGeocodeResult — resolved-place surfacing (#1014)", () => {
 
 describe("extractGeocodeResult — a component the answer did not follow (#2301)", () => {
 	// `Nawāda, 744301`: 744301 is an Andaman and Nicobar Islands code, the walk selects Nawada in Bihar, and the
-	// resolver refuses to relocate the coordinate 1,914 km onto Port Blair. Both components are still in the result;
+	// resolver refuses to relocate the coordinate 1,914 km onto Port Blair. Both components are still in the result.
 	// without this field nothing in it says they name different places.
 	const refused = (): AddressTree => ({
 		raw: "Nawāda, 744301",
@@ -232,7 +232,7 @@ describe("extractGeocodeResult — ranked candidates for limit>1 (#1016)", () =>
 		}
 
 		const r = extractGeocodeResult("springfield", tree)
-		expect(r.candidates).toHaveLength(2) // primary + the distinct MA one; the coincident township is dropped
+		expect(r.candidates).toHaveLength(2) // primary + the distinct MA one. the coincident township is dropped
 		expect(r.candidates.map((c) => c.placeID)).toEqual(["wof:100", "wof:201"])
 	})
 
@@ -474,7 +474,7 @@ describe("extractGeocodeResult — unit-grade postcodes lead the admin ladder (#
 
 describe("extractGeocodeResult — street-tier locality from the register commune (#1058)", () => {
 	// "Rue Sainte-Catherine, Bordeaux": the street-centroid tier matched the register's (street,
-	// commune) pair and stamped `street_locality: "Bordeaux"` on the street node; span-rescore's
+	// commune) pair and stamped `street_locality: "Bordeaux"` on the street node. span-rescore's
 	// speculative locality ("Rue", the street's first token — a real commune in the Somme) was
 	// dropped by the resolver for contradicting the register.
 	const streetTierTree = (): AddressTree => ({

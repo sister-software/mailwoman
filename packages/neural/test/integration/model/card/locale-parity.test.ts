@@ -92,7 +92,7 @@ const OVERLAYS_WITH_CARDS = ["fr-fr", "en-gb", "en-au", "en-nz", "de-de", "es-es
 const EVIDENCE_CHANNELS = ["locality_surface", "street_type"] as const
 
 /**
- * Drop the `$`-prefixed annotation keys before comparing. They carry per-card history and are expected to differ; the
+ * Drop the `$`-prefixed annotation keys before comparing. They carry per-card history and are expected to differ. the
  * declaration they annotate is what has to match.
  */
 function semanticFields(channel: EvidenceChannel | undefined): Record<string, unknown> | undefined {

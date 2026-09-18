@@ -6,7 +6,7 @@
  *   Shared scaffolding for the synthetic-corpus RECIPES — the common bits the 16 root-level build
  *   scripts each re-implemented: the seeded LCG PRNG, the tuple reader, and the
  *   canonical → `alignRow` → `LabeledRow` JSONL emit step. A recipe ({@link CorpusRecipe}) supplies
- *   only its synthesis + filter; the `mailwoman corpus slice <recipe>` command supplies the I/O.
+ *   only its synthesis + filter. the `mailwoman corpus slice <recipe>` command supplies the I/O.
  */
 
 import { pathExists } from "@mailwoman/core/fs/readers"
@@ -91,7 +91,7 @@ export type CSVRecord = Record<string, string | undefined>
  *
  * A quote-aware parse is the first thing able to return a value CONTAINING a line break — `us/ia/statewide.csv` has 12,
  * all unit designators like `"#2\n#2"` — and every consumer synthesizes one-line address text from these cells with no
- * guard, because until that parse landed no value could carry one. Collapsing keeps the record (the address is fine;
+ * guard, because until that parse landed no value could carry one. Collapsing keeps the record (the address is fine.
  * the source's line break is not part of it) without emitting a training row with a newline inside it.
  *
  * Only `\r` and `\n`, deliberately — NOT `\s`. Runs of spaces and tabs pass through exactly as the source wrote them
@@ -120,7 +120,7 @@ export function withoutLineBreaks(record: CSVRecord): CSVRecord {
  *
  * Returns the spliterator's own {@linkcode AsyncSequence}, so a caller composes `take`/`drop`/`filter` onto it — those
  * ops fuse into one pull loop, and a `take` that is satisfied closes the source's file handle on the way out. Wrapping
- * this in an `async function*` costs an async frame per row and takes those ops away; don't.
+ * this in an `async function*` costs an async frame per row and takes those ops away. don't.
  *
  * A source at or below the spliterator's 128 KiB bulk threshold is read whole and parsed by the synchronous engine, so
  * this is also the right reader for small sources — there is no buffered variant to reach for.
@@ -137,7 +137,7 @@ export function readCSVRecords(source: AsyncDataResource | AsyncChunkIterator): 
  * A source a checkout has not cached yields nothing, after saying so. A lab holds the archives for the countries it has
  * built, so a recipe naming ten sources routinely finds three, and the `unzip -p` subprocesses these replaced behaved
  * the same way by accident — a non-zero exit warned and returned no rows. A recipe that ends up with no tuples at all
- * still throws; that is the case where the cache, not the recipe, is the problem.
+ * still throws. that is the case where the cache, not the recipe, is the problem.
  *
  * @category CSV
  */
@@ -166,7 +166,7 @@ export const SYNTHETIC_TUPLE_LICENSE = "Synthetic — derived from CC-BY / publi
  * fr-fragment's norm strips them (NFD + combining-mark removal), which is right for French but would collapse
  * `Tømmerlien` → `tommerlien` here, so a recipe's exclusion check would never match the board's reserved `tømmerlien`
  * and the train/eval split would leak silently. Diacritic street heads (…vegen/…veien with ø/å/æ) are the whole point
- * of those recipes' boundary; folding them away is not an option.
+ * of those recipes' boundary. folding them away is not an option.
  */
 export const foldNOSurface = (value: string): string =>
 	value.normalize("NFC").toLowerCase().replaceAll(/\s+/g, " ").trim()
@@ -348,7 +348,7 @@ export interface RecipeOptions {
 	 */
 	commaFreeFraction?: number
 	/**
-	 * `german`: fraction of rows that carry a WOF Ortsteil of the tuple's locality as `dependent_locality`. Default 0.3;
+	 * `german`: fraction of rows that carry a WOF Ortsteil of the tuple's locality as `dependent_locality`. Default 0.3.
 	 * 0 when no admin database is readable.
 	 */
 	ortsteilFraction?: number

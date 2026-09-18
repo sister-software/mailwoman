@@ -8,7 +8,7 @@
  *   from primary data, and that split is the point:
  *
  *   - **Coordinates + place names** come from the WOF admin DB by place id, so a row's truth is never a
- *       hand-typed decimal. The curator picks the ID; the builder reads the point.
+ *       hand-typed decimal. The curator picks the ID. the builder reads the point.
  *   - **`popBias` / `impBias`** come from walking the two FST binaries themselves and collapsing the
  *       accepting entries exactly as `neural/fst-prior.ts`'s `applyBias` does (max per BIO tag, and only the
  *       four placetypes `PLACETYPE_TO_BIO` maps — `localadmin`/`county`/`borough`/`neighbourhood` reach no

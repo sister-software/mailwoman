@@ -256,7 +256,7 @@ describe("findRescoreCandidate", () => {
 	})
 
 	it("prefers the LONGEST exact match (specific name beats its own prefix)", async () => {
-		const raw = "Tomaszów Mazowiecki" // gold is the longer name; shortest-wins would grab "Tomaszów"
+		const raw = "Tomaszów Mazowiecki" // gold is the longer name. shortest-wins would grab "Tomaszów"
 		const hit = await findRescoreCandidate(raw, [], await makeBackend(), { country: "PL", thresholdKm: 0 })
 		expect(hit?.text).toBe("Tomaszów Mazowiecki")
 		expect(hit?.place.id).toBe(3)
@@ -353,7 +353,7 @@ describe("findRescoreCandidate", () => {
 	})
 
 	it("flags a recovery CONDITIONAL when the postcode resolves and the match is within range", async () => {
-		// 97-200 resolves (fixture) near Tomaszów Mazowiecki; the longest match lands within 50km → conditional.
+		// 97-200 resolves (fixture) near Tomaszów Mazowiecki. the longest match lands within 50km → conditional.
 		const hit = await findRescoreCandidate("Tomaszów Mazowiecki", [], await makeBackend(), {
 			country: "PL",
 			postcode: "97-200",
@@ -409,7 +409,7 @@ describe("findRescoreCandidate", () => {
 		// The live Moscow board: the backend returns Moscow RU FIRST (exactMatch via the "Moscow" alias
 		// row), but the old filter re-checked only the PRIMARY name folded to [a-z0-9 ] — norm("Москва")
 		// is "" and could never equal "moscow", so Moscow, Idaho won by default among the Latin-named
-		// bearers. Population-first ranking was starved, not violated; recall fixes it with no ranking
+		// bearers. Population-first ranking was starved, not violated. recall fixes it with no ranking
 		// change.
 		const hit = await findRescoreCandidate("Moscow", [], await makeBackend(), { thresholdKm: 0 })
 		expect(hit?.place.id).toBe(30)
@@ -420,7 +420,7 @@ describe("findRescoreCandidate", () => {
 	it("#1546: the postcode check still rejects the non-Latin namesake when it is far from the anchor", async () => {
 		// "Moscow, ID 83843": the postcode anchors next to the Idaho bearer (id 31); Moscow RU is
 		// thousands of km away, so the check excludes it and the Idaho winner is unchanged. Admission is
-		// recall; the check still decides.
+		// recall. the check still decides.
 		const hit = await findRescoreCandidate("Moscow", [], await makeBackend(), {
 			country: "US",
 			postcode: "83843",
@@ -666,7 +666,7 @@ describe("multi-token name interiors (#1678 thread 3)", () => {
 
 		await findRescoreCandidate(raw, roots, backend, {})
 
-		// The whole span may be probed; its interior tokens may not.
+		// The whole span may be probed. its interior tokens may not.
 		expect(probed).not.toContain("New")
 		expect(probed).not.toContain("Papua")
 		expect(probed).not.toContain("Guinea")

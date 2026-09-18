@@ -12,7 +12,7 @@ import type { SECDocumentClient } from "#sdk/exhibit21/index"
 
 /**
  * One document {@linkcode parseFilingDocuments} reads out of a filing's SGML manifest — `type` and `filename` exactly
- * as EDGAR's own `&lt;TYPE&gt;`/`&lt;FILENAME&gt;` manifest lines spell them (never normalized/uppercased — see
+ * as EDGAR's own `&lt.TYPE&gt.`/`&lt.FILENAME&gt.` manifest lines spell them (never normalized/uppercased — see
  * {@linkcode EXHIBIT_21_TYPE_PATTERN} for why matching stays case-insensitive instead of relying on a canonical
  * spelling), plus the absolute archive `url` this module derives ({@linkcode accessionArchiveURL} + `filename`).
  */
@@ -25,7 +25,7 @@ export interface ExhibitDocument {
 /**
  * Builds the archive folder URL for one accession. Uses `cik` UNPADDED (`Number(cik)` is what strips the zero-padding
  * `CIK` always carries) — EDGAR's archive paths spell the CIK bare (`.../data/18926/...`), the opposite convention from
- * {@linkcode submissionsURL} above, which zero-pads. Both are real EDGAR conventions and both appear in this file; a
+ * {@linkcode submissionsURL} above, which zero-pads. Both are real EDGAR conventions and both appear in this file. a
  * caller reaching for the wrong one gets a 404, not a wrong-but-plausible document. `accessionNumber` is accepted
  * either dashed (`"0000018926-26-000014"`, the form every EDGAR-facing field spells it) or already undashed — the
  * archive path itself never carries the dashes.
@@ -45,7 +45,7 @@ const EXHIBIT_21_TYPE_PATTERN = /^ex-?21(\.\d+)?$/i
 /**
  * One `<TAG>value` line of EDGAR's SGML manifest, which is a tag-per-line header format rather than nested markup —
  * `<TYPE>`, `<SEQUENCE>` and `<FILENAME>` have no closing tags at all. Matched against recovered text, never against
- * markup: {@linkcode parseFilingDocuments} reads the index page first, which is what turns `&lt;TYPE&gt;` back into
+ * markup: {@linkcode parseFilingDocuments} reads the index page first, which is what turns `&lt.TYPE&gt.` back into
  * `<TYPE>` and removes the page's own `<a>`/`<br>` elements.
  */
 const MANIFEST_FIELD_PATTERN = /^<([a-z][a-z-]*)>(.*)$/i
@@ -54,7 +54,7 @@ const MANIFEST_FIELD_PATTERN = /^<([a-z][a-z-]*)>(.*)$/i
  * Reads every document out of one accession's SGML manifest (`headerHTML`, the `…-index-headers.html` body) — not only
  * the exhibits, so a caller wanting a different document type later doesn't need a second parser.
  *
- * The manifest is EDGAR's own SGML, HTML-ESCAPED inside the index page (`<DOCUMENT>` is written `&lt;DOCUMENT&gt;`) and
+ * The manifest is EDGAR's own SGML, HTML-ESCAPED inside the index page (`<DOCUMENT>` is written `&lt.DOCUMENT&gt.`) and
  * interleaved with that page's `<a>` and `<br>` elements — the Lumen 2025 accession states 163 of them across 161
  * documents. Reading the page as text decodes the manifest back to itself and drops the page markup, so the field
  * patterns below never have to match one markup language through another's escaping.
@@ -116,7 +116,7 @@ export function parseFilingDocuments(cik: CIK, accessionNumber: string, headerHT
  * latest 10-Ks both carry none), not an upstream contract break. This is the opposite posture from
  * {@linkcode parseCompanyTickers}/{@linkcode parseTenKFilings} above, which throw on a malformed payload — those parse
  * SEC's own documented API shapes, so a mismatch there means the upstream contract changed. A manifest with no Exhibit
- * 21 hasn't broken any contract; it's just a filer that didn't file one this cycle.
+ * 21 hasn't broken any contract. it's just a filer that didn't file one this cycle.
  */
 export function findExhibit21Documents(cik: CIK, accessionNumber: string, headerHTML: string): ExhibitDocument[] {
 	return parseFilingDocuments(cik, accessionNumber, headerHTML).filter((document) =>

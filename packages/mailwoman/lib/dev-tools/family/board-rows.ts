@@ -4,7 +4,7 @@
  * @author Teffen Ellis, et al.
  *
  *   The curated rows of the four target families that had no board (#1931 task 6), each authored from the set its
- *   issue attests. The SELECTION is by hand and every row says which family it pins; the POINTS are never typed: a row
+ *   issue attests. The SELECTION is by hand and every row says which family it pins. the POINTS are never typed: a row
  *   that names a place carries the gazetteer lookup (`name`, `country`, `parent`) and `family-board.run.ts` reads the
  *   coordinate off the admin gazetteer, refusing a name it cannot find or finds twice.
  *
@@ -16,7 +16,7 @@
  *     New Zealand and South Africa write the same order, so the family is attested on three countries, each row
  *     asserting the postcode and the locality, at the locality's 25 km. `Auckland` is also a region 42 km from the city.
  *   - **F7, the possessive qualifier (#1754).** `St Mary's, Oxford` decodes to one component and answers Georgia. The
- *     issue's own hierarchy (`locality=Oxford › dependent_locality=St Mary's`) is asserted against Oxford's point; the
+ *     issue's own hierarchy (`locality=Oxford › dependent_locality=St Mary's`) is asserted against Oxford's point. the
  *     other rows are possessives the gazetteer knows: neighbourhoods of London and New York, and towns whose own name
  *     carries the apostrophe (`King's Lynn`, `Lee's Summit`, `St. John's`).
  *   - **F9, Commonwealth and military po_box (#517).** The postal arena's last 0% class, parse-only: `GPO Box`,
@@ -60,7 +60,7 @@ export interface FamilyRow {
 }
 
 /**
- * The district is the truth; the parent city's point is the defect's answer.
+ * The district is the truth. the parent city's point is the defect's answer.
  */
 const DISTRICT_TOLERANCE_M = 2000
 

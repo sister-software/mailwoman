@@ -9,9 +9,9 @@
  *   shape) becomes a point via its centroid — we don't hit the pure-JS "ways need a node-location
  *   cache" wall.
  *
- *   Address tags live in the driver's `other_tags` hstore; we pull them with OGRSQL `hstore_get_value`
+ *   Address tags live in the driver's `other_tags` hstore. we pull them with OGRSQL `hstore_get_value`
  *   over the `points` (nodes) and `multipolygons` (building ways/relations) layers. `addr:interpolation`
- *   ways are intentionally not read here — the rooftop tier is point-first; explicit interpolation is a
+ *   ways are intentionally not read here — the rooftop tier is point-first. explicit interpolation is a
  *   separate, confidence-restricted tier (never synthesize a number line from scattered points).
  */
 
@@ -28,7 +28,7 @@ export interface OSMAddrRecord {
 	 */
 	housenumber: string
 	/**
-	 * `addr:street` — null when the point carries no street tag (the association gap; counted, not written).
+	 * `addr:street` — null when the point carries no street tag (the association gap. counted, not written).
 	 */
 	street: string | null
 	postcode: string | null
@@ -60,7 +60,7 @@ export interface OSMAddrRecord {
 }
 
 /**
- * The `addr:*` tags the extract projects, in the order the record names them. The rooftop builder reads the first five;
+ * The `addr:*` tags the extract projects, in the order the record names them. The rooftop builder reads the first five.
  * the corpus JSONL carries them all.
  */
 const ADDR_TAGS = [

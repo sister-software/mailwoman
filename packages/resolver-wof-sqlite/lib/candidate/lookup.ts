@@ -203,7 +203,7 @@ export class WOFCandidateTableLookup implements PlaceLookup, Disposable {
 	readonly #variantAliasExemption: boolean
 	/**
 	 * `", name_role"` when the artifact carries the column — the probe SELECT rides it so the #1882 exemption can read
-	 * the stamp off the row; empty on a pre-role build.
+	 * the stamp off the row. empty on a pre-role build.
 	 */
 	readonly #roleSelect: string
 	/**
@@ -269,7 +269,7 @@ export class WOFCandidateTableLookup implements PlaceLookup, Disposable {
 		}
 
 		// FTS5-trigram fuzzy fallback: prepare the `MATCH` probe only if the index is present (the unified
-		// gazetteer carries it; an older candidate.db doesn't → the fuzzy path is skipped, byte-stable).
+		// gazetteer carries it. an older candidate.db doesn't → the fuzzy path is skipped, byte-stable).
 		if (hasTable(this.#db, CANDIDATE_FTS_TABLE)) {
 			this.#ftsProbe = this.#db.prepare(
 				`SELECT name_key FROM ${CANDIDATE_FTS_TABLE} WHERE ${CANDIDATE_FTS_TABLE} MATCH ? ORDER BY bm25(${CANDIDATE_FTS_TABLE}) LIMIT ?`
@@ -297,7 +297,7 @@ export class WOFCandidateTableLookup implements PlaceLookup, Disposable {
 		}
 
 		// Admin-containment re-rank (#1717 stage 2): conditioned on the interval half of the sidecar (built in
-		// the same pass as the closure rows; probed separately so a hand-degraded artifact degrades
+		// the same pass as the closure rows. probed separately so a hand-degraded artifact degrades
 		// truthfully) and on the placetype dictionary carrying the qualifier band at all.
 		if (this.#ancestorsProbe && hasTable(this.#db, CANDIDATE_INTERVAL_TABLE)) {
 			this.#intervalProbe = this.#db.prepare(`SELECT pre, post FROM ${CANDIDATE_INTERVAL_TABLE} WHERE spr_id = ?`)
@@ -373,7 +373,7 @@ export class WOFCandidateTableLookup implements PlaceLookup, Disposable {
 	 * of the qualifier's {@link regionQualifierProbeKeys} expansions. Alias keys participate — `Thüringen` finds the row
 	 * stored as `Thuringia` through the artifact's own alias keying, which is precisely the variant-form bridge the
 	 * admin-coherence verdicts' fold-equality bound cannot offer (its stated v1 bound). Empty = the qualifier names
-	 * nothing the artifact knows; the caller then stamps `false` everywhere and reorders nothing.
+	 * nothing the artifact knows. the caller then stamps `false` everywhere and reorders nothing.
 	 */
 	#qualifierRegionIDs(qualifier: string, country: string | undefined): Set<number> {
 		const ids = new Set<number>()
@@ -419,7 +419,7 @@ export class WOFCandidateTableLookup implements PlaceLookup, Disposable {
 	 *    under the SHAPE conds only, appends contained rows not already present, and never removes anything — recall can
 	 *    only widen. The typo-fuzzy tier is deliberately not probed: a qualifier cannot vouch for a name the gazetteer
 	 *    does not carry.
-	 * 3. Partition contained-first — the SHARED {@link partitionByContainment} (tier-safe, stable; the resolver walk runs
+	 * 3. Partition contained-first — the SHARED {@link partitionByContainment} (tier-safe, stable. the resolver walk runs
 	 *    the same function after its fame re-rank, one function at both deciding sites per the #861 rule) — then
 	 *    re-window to `limit`.
 	 *
@@ -669,7 +669,7 @@ export class WOFCandidateTableLookup implements PlaceLookup, Disposable {
 		// is a token taken out of a longer classified span never NAMED an alias, so alias-keyed rows must not
 		// answer it — 'Savile Row''s token 'Row' resolved Rhu, Scotland (585 km) through the village's
 		// historical-name alias key. Whole-input bare probes never set this, keeping the exonym recall the
-		// #1546 note protects (Москва's alias rows answer 'Moscow').
+		// #1546 note guards (Москва's alias rows answer 'Moscow').
 		if (query.primaryOnly) {
 			shapeFilters.push("is_primary = 1")
 		}
@@ -722,7 +722,7 @@ export class WOFCandidateTableLookup implements PlaceLookup, Disposable {
 			// `importance` (#28) rides along on the same terms, and there is deliberately no `ORDER BY` on it:
 			// the fame prior is applied by the resolver (`resolver/toponym-prior.ts`), which alone knows
 			// whether the query was bare enough to deserve it. A backend that pre-sorted by fame would apply
-			// it to every lookup, including the qualified addresses the D-rule guard exists to protect.
+			// it to every lookup, including the qualified addresses the D-rule guard exists to guard.
 			const sql =
 				"SELECT spr_id, name, country_id, placetype_id, latitude, longitude, min_lat, min_lon, max_lat, max_lon, neg_rank, is_primary, population" +
 				`${this.#importanceSelect}${this.#roleSelect} FROM candidate WHERE ${conds.join(" AND ")} ORDER BY neg_rank ASC LIMIT ?`
@@ -741,7 +741,7 @@ export class WOFCandidateTableLookup implements PlaceLookup, Disposable {
 			if (!rows.length) {
 				// Query-side qualifier-strip fallback: an OA locality with a qualifier the gazetteer's
 				// canonical name omits ("Lenk im Simmental" → "Lenk", "Roche VD"). Tried only on an exact
-				// miss; the cascade's region bbox disambiguates any base-name ambiguity.
+				// miss. the cascade's region bbox disambiguates any base-name ambiguity.
 				const strippedKey = normalizeLocalityForKey(stripLocalityQualifier(text))
 
 				if (strippedKey && strippedKey !== nameKey) {
@@ -757,7 +757,7 @@ export class WOFCandidateTableLookup implements PlaceLookup, Disposable {
 			}
 
 			// Typo-tolerant fallback (the unified gazetteer's fuzzy mode): an exact + strip miss may be a
-			// misspelling the normalized key can't reach. FTS5-trigram fetches a loose set; we re-rank by
+			// misspelling the normalized key can't reach. FTS5-trigram fetches a loose set. we re-rank by
 			// trigram-Jaccard (the admin backend's measure) and probe the best name_keys, so a typo resolves
 			// the same on either backend. The country/placetype/bbox/region filters still apply via `probe`.
 			// Skipped when the index is absent (byte-stable for an older candidate.db).
@@ -796,7 +796,7 @@ export class WOFCandidateTableLookup implements PlaceLookup, Disposable {
 					const ranked = hits
 						.map((h) => ({ nk: String(h.name_key), s: wordFuzzySimilarity(nameKey, String(h.name_key)) }))
 						.filter((h) => h.s >= WORD_FUZZY_MIN)
-						// oxlint-disable-next-line unicorn/no-array-sort -- sorts a freshly-built array; toSorted would double-allocate on a hot path
+						// oxlint-disable-next-line unicorn/no-array-sort -- sorts a freshly-built array. toSorted would double-allocate on a hot path
 						.sort((a, b) => b.s - a.s)
 
 					const seen = new Set<string>()
@@ -837,7 +837,7 @@ export class WOFCandidateTableLookup implements PlaceLookup, Disposable {
 		// holds 75001, not the one that holds a 75001-free namesake). The resolver sends this flag on locality
 		// lookups when `ResolveOpts.postcodeContainmentCoherence` is on. Strictly beneath the #741 postal-city
 		// short-circuit above — an exact (name, postcode) hit is the answer and outranks any re-rank — and after
-		// the region-scope fallback, so it sees the final row set. Rows within the radius sort by distance first;
+		// the region-scope fallback, so it sees the final row set. Rows within the radius sort by distance first.
 		// the out-of-radius tail keeps its original population-first order. No in-radius row, or no postcode row in
 		// the candidate table → unchanged (byte-identical to the flag-off path).
 		if (
@@ -863,7 +863,7 @@ export class WOFCandidateTableLookup implements PlaceLookup, Disposable {
 				}
 
 				if (insideThreshold.length) {
-					// oxlint-disable-next-line unicorn/no-array-sort -- sorts a freshly-built array; toSorted would double-allocate on a hot path
+					// oxlint-disable-next-line unicorn/no-array-sort -- sorts a freshly-built array. toSorted would double-allocate on a hot path
 					insideThreshold.sort((a, b) => a.distanceKm - b.distanceKm)
 					rows = [...insideThreshold.map(({ row }) => row), ...outsideThreshold]
 				}

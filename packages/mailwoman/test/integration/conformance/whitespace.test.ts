@@ -6,7 +6,7 @@
  *   The whitespace law against the LIVE pipeline — the leg that actually geocodes.
  *
  *   It lives in `test/integration/` because that is the suite the `mailwoman-data` runner runs, with
- *   `MAILWOMAN_DATA_ROOT` set and the weights materialized; the fast leg is portable by construction and a
+ *   `MAILWOMAN_DATA_ROOT` set and the weights materialized. the fast leg is portable by construction and a
  *   data-dependent test placed there would skip its way to green. The guard is the resolver-based
  *   `weightsPresent()` idiom the other integration suites use: ASK THE RESOLVER for the model the loader will
  *   open, never a path literal, because a skip-guard that stops matching does not fail — it skips, and the

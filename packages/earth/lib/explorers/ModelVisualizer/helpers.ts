@@ -42,7 +42,7 @@ export function isMasked(value: number): boolean {
 }
 
 /**
- * Diverging heat color: positive → teal, negative → orange, 0 → transparent. `value` is clamped to ±absMax; intensity
+ * Diverging heat color: positive → teal, negative → orange, 0 → transparent. `value` is clamped to ±absMax. intensity
  * rides the alpha channel so the cell text stays legible.
  */
 export function emissionColor(value: number, absMax: number): string {

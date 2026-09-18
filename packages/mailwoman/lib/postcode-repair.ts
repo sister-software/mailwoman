@@ -16,7 +16,7 @@
  *   families (us_zip / fr / de) are deliberately excluded — `12345` in `12345 Main St` is a house number, and a
  *   repair that could eat it would trade a GB fix for a US regression. Positive evidence only: the rung ADDS a
  *   postcode node derived from the shape span and removes only the street/house-number-family nodes that sat wholly
- *   inside that span; any node extending beyond the span vetoes the repair.
+ *   inside that span. any node extending beyond the span vetoes the repair.
  */
 
 import type { AddressNode, AddressTree } from "@mailwoman/core/decoder"

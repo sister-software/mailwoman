@@ -8,7 +8,7 @@
 #   - All 93 FR house_number misses are "47110 Sainte-Livrade-sur-Lot, XX..." (postcode-first)
 #     — model still predicts the leading 47110 as house_number (BAN canonical-order prior too strong)
 #   - Recipe output is correct (0 oob spans, 199/199 reversed-order span check passed) — signal, not quality
-#   - German synth at weight=6.0 fully works; the FR source needs equivalent signal strength
+#   - German synth at weight=6.0 fully works. the FR source needs equivalent signal strength
 #   - Bridge retirement held (po_box 90.3), DE order held (native 90.8%), all US/FR floors passed
 #
 # GOAL / CHECK: same as v1.5.0 — fr.house_number ≥95 (actual-vs-v4.4.0 benchmark) and bridge
@@ -42,7 +42,7 @@ data:
     synth-german: 6.0
     # THE #560 recovery change: reversed-order (postcode-first) FR. Weight bumped 3.0 → 6.0 (matching
     # synth-german) after v1.5.0 re-check showed +32.9pp improvement but still missed fr.house_number
-    # floor (87.4% vs 91 floor). Recipe output correct; BAN canonical-order prior dominates at 3.0 weight.
+    # floor (87.4% vs 91 floor). Recipe output correct. BAN canonical-order prior dominates at 3.0 weight.
     synth-fr-order: 6.0
     synth-unit: 1.5
     synth-po-box-cedex: 1.5

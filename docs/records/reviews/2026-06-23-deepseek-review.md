@@ -59,7 +59,7 @@ The change is backend-agnostic. After the admin resolution walk, it finds the re
 - Default-off + byte-stable when unset.
 - Composes correctly with postcode coverage (#193): only fires where the postcode resolved to a point; a no-postcode tree is untouched.
 
-**One concern:** The `alternatives` cast is technically a layer-escape. The resolver types module can't be imported from the decoder types module without a dependency cycle, and the `unknown[]` type is a deliberate firewall. The cast works because `decorateNode` in the same file is the only writer. But if another code path ever writes to `node.alternatives` in a different shape, this cast becomes a runtime bug with no compile error. The resolver's test coverage protects against this within the resolver path, but not against external writers. Low risk given the repo's conventions; worth a comment in `decoder/types.ts` next to the `alternatives` field noting the contract.
+**One concern:** The `alternatives` cast is technically a layer-escape. The resolver types module can't be imported from the decoder types module without a dependency cycle, and the `unknown[]` type is a deliberate firewall. The cast works because `decorateNode` in the same file is the only writer. But if another code path ever writes to `node.alternatives` in a different shape, this cast becomes a runtime bug with no compile error. The resolver's test coverage guards against this within the resolver path, but not against external writers. Low risk given the repo's conventions; worth a comment in `decoder/types.ts` next to the `alternatives` field noting the contract.
 
 ### 4. `#370` span-rescore — raw-text locality recovery + production wiring
 

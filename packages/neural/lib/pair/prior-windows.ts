@@ -19,9 +19,9 @@ import type { WordGroup } from "#fst-prior"
 import type { TokenLike } from "#query-shape-prior"
 
 /**
- * P99 of the GB PPD `CITY` word-length distribution (measured 2026-07-22; see the module docstring's table). A
+ * P99 of the GB PPD `CITY` word-length distribution (measured 2026-07-22. see the module docstring's table). A
  * dependent_locality-shaped candidate almost never spans more than 3 words in the source register that motivated this
- * prior; the observed max was 5 (287 of 9,031,691 rows).
+ * prior. the observed max was 5 (287 of 9,031,691 rows).
  */
 export const WINDOW_MAX_WORDS = 3
 
@@ -106,7 +106,7 @@ export interface CandidateWindow {
 	key: string
 	/**
 	 * The bare-concatenation fold (no separator) — see the module docstring's "dual-key probe" note. Identical to
-	 * {@link key} for a single-word candidate; only diverges for a genuine multi-word one.
+	 * {@link key} for a single-word candidate. only diverges for a genuine multi-word one.
 	 */
 	concatKey: string
 	/**
@@ -158,7 +158,7 @@ export function buildWindows(nonEmptyGroups: readonly WordGroup[], maxWords: num
  * fall strictly before each group's first piece's start offset (offsets, not piece-text inspection, so this is robust
  * to however the tokenizer happened to attach a comma piece to its neighboring word group — `groupPiecesIntoWords`
  * absorbs trailing punctuation into the preceding word's `pieceIndices`, so a comma's own piece span can land inside
- * either group depending on tokenization; counting commas strictly before a group's own start offset sidesteps that
+ * either group depending on tokenization. counting commas strictly before a group's own start offset sidesteps that
  * ambiguity entirely). Shared by {@link buildSegmentWindows} (to know where segment boundaries fall) and
  * {@link isMarkerSuppressed} (to know whether a candidate's successor word is in the same segment or has already crossed
  * into the next one — see the module docstring's "Marker suppression" section).
@@ -280,7 +280,7 @@ export function trailingSegmentPostcodeTake(tokens: readonly string[], shape: Re
  * {@link LEADING_POSTCODE_COUNTRIES}).
  *
  * Anchored full-match against the country shape exactly like the trailing form, so this can only ever remove a run that
- * is a postcode for that country — never an ordinary leading word. Only the probe key changes; the segment itself and
+ * is a postcode for that country — never an ordinary leading word. Only the probe key changes. the segment itself and
  * every emitted span are untouched.
  */
 export function leadingSegmentPostcodeTake(tokens: readonly string[], shape: RegExp | undefined): number {
@@ -304,7 +304,7 @@ export function leadingSegmentPostcodeTake(tokens: readonly string[], shape: Reg
  * `parentPostcodeShape` (the index's country trailing-postcode shape, #1308) strips a trailing postcode from the
  * segment's key forms only (see {@link trailingSegmentPostcodeTake}) — `startPos`/`endPos`/`pieceIndices` still span the
  * whole segment, so disjointness, marker suppression, the identity-repeat check, and the child bias write are all
- * byte-identical to pre-#1308 behavior; only the probe key of a parent-candidate segment carrying a same-field postcode
+ * byte-identical to pre-#1308 behavior. only the probe key of a parent-candidate segment carrying a same-field postcode
  * changes.
  *
  * The one consumer that needs the narrower span is the whole-edge PARENT write (#46), which is why the stripped range

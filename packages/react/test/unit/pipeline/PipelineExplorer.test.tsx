@@ -19,7 +19,7 @@ test("parses on submit and renders components + resolved place", async () => {
 		<PipelineExplorer runtime={makePipelineRuntime()} defaultAddress="350 5th Ave" />
 	)
 
-	// ClientOnly mounts asynchronously; wait for the form.
+	// ClientOnly mounts asynchronously. wait for the form.
 	await vi.waitFor(() => expect(container.querySelector("#mw-pipeline-input")).toBeTruthy())
 
 	await userEvent.click(container.querySelector('button[type="submit"]') as HTMLButtonElement)

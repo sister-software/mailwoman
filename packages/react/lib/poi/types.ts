@@ -4,7 +4,7 @@
  * @author Teffen Ellis, et al.
  *
  *   Types for the POI explorer. The intent path (classification → subject → OverpassQL) is fully
- *   self-contained over the pure `@mailwoman/*` packages; the live poi.db path is expressed only as an
+ *   self-contained over the pure `@mailwoman/*` packages. the live poi.db path is expressed only as an
  *   INJECTED async function ({@link POILiveSearch}) so the httpvfs/worker implementation stays out of this
  *   package's browser graph (it lives in the docs site, which knows where the layer is served).
  */
@@ -111,7 +111,7 @@ export type POILiveSearchResult =
  * fetches by that QID instead of a category k-ring (`categoryID`/`overtureCategoryIDs` are then the brand name / empty
  * and unused). The category path is byte-identical to before. A probe that can't serve brands simply leaves brand live
  * search unwired at the call site (see `usePOISearch`'s `brandLiveSearch` option) — the docs' httpvfs probe does
- * exactly that, brand-wide row hydration being pathological over byte-range (measured; the brand path is server-side
+ * exactly that, brand-wide row hydration being pathological over byte-range (measured. the brand path is server-side
  * only).
  */
 export type POILiveSearch = (params: {

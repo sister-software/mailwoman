@@ -51,7 +51,7 @@ export function wholeCommunes(flags: ReadonlyMap<string, number | null>): Readon
 
 /**
  * Fold the register's points into coverage cells. A cell is `designated` only when every point in it belongs to a whole
- * commune; one point from a partial or unflagged commune makes the cell `source_present`, because a designated basis
+ * commune. one point from a partial or unflagged commune makes the cell `source_present`, because a designated basis
  * licenses an exclusion and one uncertified street inside the cell is exactly the address such an exclusion would
  * deny.
  */

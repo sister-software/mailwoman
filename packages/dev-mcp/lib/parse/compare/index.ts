@@ -20,7 +20,7 @@
  *   not agreement on a TAG, and the mailwoman side carries its original tag beside the mapped label rather than
  *   letting the collapse pass for consensus.
  *
- *   Values are compared case-folded because libpostal lowercases its output and mailwoman preserves the input's case;
+ *   Values are compared case-folded because libpostal lowercases its output and mailwoman preserves the input's case.
  *   comparing raw would report a disagreement on every populated row and hide the real ones.
  *
  *   No winner is declared. Two parsers disagreeing says where to look, and the truth an input set carries is in
@@ -49,7 +49,7 @@ export interface LabelledSpan {
 }
 
 /**
- * How the two readings related on one label. `agree` and `value-differs` both mean both parsers produced the label; the
+ * How the two readings related on one label. `agree` and `value-differs` both mean both parsers produced the label. the
  * `*-only` pair means one did not, which is a different kind of disagreement and never blended with the other.
  */
 export const SpanVerdict = {

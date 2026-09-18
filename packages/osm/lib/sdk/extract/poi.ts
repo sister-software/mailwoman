@@ -8,7 +8,7 @@
  *   `.osm.pbf` extract via GDAL/ogr2ogr, matched against an AND/OR tag-rule table, and yielded as
  *   {@link POISourceRow}s ready for `buildPOIDatabase`'s injected `rows` point
  *   (`mailwoman/gazetteer-pipeline/poi/build-poi.ts:341`) — DuckDB bypassed entirely (decision 3).
- *   Mirrors `extract.ts`'s process-spawn + GeoJSONSeq-over-stdout idiom exactly; the two differences
+ *   Mirrors `extract.ts`'s process-spawn + GeoJSONSeq-over-stdout idiom exactly. the two differences
  *   are the predicate (telecom tags, not `addr:housenumber`) and the match fan-out (a feature can only
  *   satisfy the first rule in table order — `man_made` alone appears in four rules and `telecom` in
  *   two, but every rule sharing a key requires a different value for it, so a real feature, which
@@ -18,7 +18,7 @@
  *   is a single scalar the Overpass emitter consumes (`poi-taxonomy/overpass.ts` hard-splits on one
  *   `=`), so a disjunction across two tags (telephone exchange) or a conjunction with a qualifier tag
  *   (street cabinet, comms mast) can't live there. {@link OSMPOITagRule.all} is a conjunction of
- *   `[key, value]` pairs; a disjunction is expressed as multiple rules sharing a `categoryID` — see
+ *   `[key, value]` pairs. a disjunction is expressed as multiple rules sharing a `categoryID` — see
  *   {@link TELECOM_TAG_RULES}.
  *
  *   Promoted vs. hstore tag columns: GDAL's default `osmconf.ini` (`/usr/share/gdal/osmconf.ini` on
@@ -29,13 +29,13 @@
  *   `extract.ts` reads `addr:*`. {@link PROMOTED_KEYS_BY_LAYER} carries both lists, because reading a
  *   promoted key through `hstore_get_value` returns NULL for every feature of that layer — a silent
  *   empty result rather than an error. A custom `OSM_CONFIG_FILE` that un-promotes a key on either
- *   list would break the bare-column assumption; not a concern for the shipped default.
+ *   list would break the bare-column assumption. not a concern for the shipped default.
  *
  *   `POISourceRow` is declared LOCALLY here (structurally identical to the exported interface of the
  *   same name in `mailwoman/gazetteer-pipeline/poi/build-poi.ts`) rather than imported: `@mailwoman/osm`
  *   is a dependency OF the top-level `mailwoman` package (which owns the gazetteer pipeline), never the
  *   reverse — importing it here would invert the workspace dependency graph. `build-poi.ts`'s `--source osm`
- *   build branch sits on the correct side of that edge; TS structural typing
+ *   build branch sits on the correct side of that edge. TS structural typing
  *   accepts this row with no cast, so the two are wired together directly.
  *
  *   `country` has no representation on a bare OSM feature (a Geofabrik extract's country isn't a

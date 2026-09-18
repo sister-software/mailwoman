@@ -6,7 +6,7 @@
  *   Convert a JSONL of LabeledRow objects to a Parquet file matching the v0.5.0 schema.
  *
  *   Ported faithfully from scripts/jsonl-to-parquet.py. The Python original wrote Parquet through
- *   PyArrow; this writes it through DuckDB (`@duckdb/node-api`) — `read_json` with an EXPLICIT
+ *   PyArrow. this writes it through DuckDB (`@duckdb/node-api`) — `read_json` with an EXPLICIT
  *   `columns` type map projects the validated rows to the v0.5.0 schema, then `COPY … TO … (FORMAT
  *   PARQUET, COMPRESSION SNAPPY, ROW_GROUP_SIZE …)` emits the file. DuckDB reproduces the exact
  *   logical schema PyArrow did — `VARCHAR` (UTF8) scalars, `VARCHAR[]` (LIST<UTF8>) for the string
@@ -172,7 +172,7 @@ export async function jsonlToParquet(
 		if (!line) continue
 		const row = parseJSONStrict<Record<string, unknown>>(line)
 		assertSpanTriple(row, lineNo)
-		// Write the validated line verbatim; DuckDB's `read_json` projects to the explicit `columns`
+		// Write the validated line verbatim. DuckDB's `read_json` projects to the explicit `columns`
 		// map below (extra keys dropped, absent keys → NULL — matching the Python `row.get(c)`).
 		stage.write(line + "\n")
 

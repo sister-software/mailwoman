@@ -13,7 +13,7 @@ import { basename } from "path-ts"
  *
  *   The naive `SELECT … FROM pc.place_search WHERE pc.place_search MATCH ?` fails — SQLite parses the
  *   schema-qualified table on the left of `MATCH` as "column place_search of table pc". Discovered in
- *   the spike at PR review time; documented as `_EXTRACT_RULE.md` should it ever bite again.
+ *   the spike at PR review time. documented as `_EXTRACT_RULE.md` should it ever bite again.
  *
  *   The working form: schema-qualified in `FROM`, bare table name in `MATCH`:
  *
@@ -199,7 +199,7 @@ export function pickExtractForPlacetype(
 		 * #920: the query's country constraint, when the caller has one. With MULTIPLE extracts matching a placetype
 		 * (postalcode-us + postalcode-geonames-tail), first-match routing sent every postcode query to the first extract
 		 * and starved the rest — a FI postcode could never reach the tail extract. When `country` is given and a matching
-		 * extract's probed country set contains it, that extract wins; extracts without the country are skipped; the
+		 * extract's probed country set contains it, that extract wins. extracts without the country are skipped. the
 		 * placetype-match order remains the tiebreak when no extract claims the country (or none was probed).
 		 */
 		country?: string

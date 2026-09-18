@@ -1,9 +1,9 @@
 """Per-config label sets (v8 CJK Phase 2 — the 33→47 JP schema activation).
 
 Pins the activation contract: the JP set exists and is exactly STAGE3 + the seven SCHEMA.mdx JP
-tags; the default stays byte-identical STAGE3; the char encode path maps JP labels under the JP
+tags. the default stays byte-identical STAGE3. the char encode path maps JP labels under the JP
 set and collapses them to O under the default (no silent cross-set leakage); a JP-headed model
-persists and restores ITS OWN label map; and the SP path refuses a non-default set loudly.
+persists and restores ITS OWN label map. and the SP path refuses a non-default set loudly.
 """
 
 from __future__ import annotations
@@ -40,7 +40,7 @@ def test_jp_set_is_stage3_plus_the_seven() -> None:
 
 
 def test_cn_set_is_stage3_plus_locality_unit() -> None:
-    # #2034: one tag for the whole ordinal chain; the rung is read off the generic after decode.
+    # #2034: one tag for the whole ordinal chain. the rung is read off the generic after decode.
     cn = resolve_label_set("stage3-cn")
     assert CN_FINE_TAGS == ("locality_unit",)
     assert cn.tags == STAGE3_TAGS + CN_FINE_TAGS

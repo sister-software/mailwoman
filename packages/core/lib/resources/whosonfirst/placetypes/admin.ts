@@ -28,7 +28,7 @@ export interface WOFBaseProperties {
 	"wof:concordances"?: Record<string, string | number>
 	/**
 	 * Every ancestor chain the place belongs to, coarsest key first — `[{ country_id, region_id, locality_id }, …]`. More
-	 * than one entry means the place has multiple parents, which is what `wof:parent_id` records as the `-4` sentinel;
+	 * than one entry means the place has multiple parents, which is what `wof:parent_id` records as the `-4` sentinel.
 	 * the keys present vary by branch, so a missing rung is absent rather than null.
 	 */
 	"wof:hierarchy"?: Array<Record<string, number>>

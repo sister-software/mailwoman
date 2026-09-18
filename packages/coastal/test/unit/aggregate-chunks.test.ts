@@ -7,7 +7,7 @@
  *   produces a well-formed artifact.
  *
  *   A CHUNK HERE IS ONE SCENARIO, AND EVERY SCENARIO COVERS THE SAME COAST. So a coverage cell appears in
- *   twelve chunks and the counts must ADD; taking the last chunk's value would report a cell as holding one
+ *   twelve chunks and the counts must ADD. taking the last chunk's value would report a cell as holding one
  *   scenario's polygons, which is a twelfth of what is there — a number that looks entirely plausible on a
  *   receipt.
  */

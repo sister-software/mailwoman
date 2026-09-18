@@ -118,7 +118,7 @@ const GazetteerBuildCoastal: CommandComponent<typeof spec> = ({ options }) => {
 		console.error(`▸ product vintage: ${sourceVintage}`)
 
 		// OGL v3.0 makes the attribution statement a licence CONDITION, so a change in it changes what a re-user has to
-		// publish. Read from the structured record and compared against the constant the artifact is stamped with; the
+		// publish. Read from the structured record and compared against the constant the artifact is stamped with. the
 		// abstract's copy is doubled and its first copy carries no year, which is why the parse refuses a yearless one.
 		if (!options.offline) {
 			assertAttributionUnchanged(await client.readAttributionStatement())
@@ -190,7 +190,7 @@ const GazetteerBuildCoastal: CommandComponent<typeof spec> = ({ options }) => {
 		}
 
 		const result = await buildCoastalDatabase({
-			// A `--limit` run is the smoke rung and reads a PREFIX in one process; a full build is BATCHED, one child
+			// A `--limit` run is the smoke rung and reads a PREFIX in one process. a full build is BATCHED, one child
 			// process per scenario layer plus one for the two ground-instability layers. The reason is reproducibility
 			// rather than speed — see `@mailwoman/coastal/sdk/ingest-chunk`.
 			...(options.limit

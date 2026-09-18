@@ -10,7 +10,7 @@
  *   this asks "is this harness measuring what it thinks it is". An eval spec's floors are one-sided
  *   (higher is better, fail below); a baseline is TWO-SIDED — a metric 40% ABOVE its registered
  *   value is as loud a signal as 40% below, because the usual cause is that the number changed
- *   meaning, not that the model got better. That two-sidedness is the whole point; a one-sided
+ *   meaning, not that the model got better. That two-sidedness is the whole point. a one-sided
  *   check would have passed both incidents below.
  *
  *   Why it exists — two verdicts nearly went out wrong in a single arc, both from a harness
@@ -21,7 +21,7 @@
  *       ("5thAve"). The number was reported before the cause was found.
  *   - Phase 4a measured a resolver rerank while the resolver reached street tier 0/267 times —
  *       no street databases were wired. The instrument was dark and the report read as a finding.
- *       The verdict was VOID; see `2026-07-16-phase4a-rerank-invalid-measurement.md`.
+ *       The verdict was VOID. see `2026-07-16-phase4a-rerank-invalid-measurement.md`.
  *
  *   A registered baseline covers both shapes, because instrument-health preconditions register the
  *   same way headline metrics do — `paris.resolver.street_evidence_rate@ban-street-centroids` is a
@@ -144,7 +144,7 @@ export interface BaselineViolation {
 	observed: number
 	expected?: number
 	/**
-	 * Signed relative deviation; negative means the observation read low.
+	 * Signed relative deviation. negative means the observation read low.
 	 */
 	deviationRel?: number
 	tolerance?: number
@@ -245,7 +245,7 @@ export async function assertBaselines(observations: BaselineObservation[]): Prom
 
 		// An absolute tolerance wins when declared. Small-count metrics (a street-evidence rate of
 		// 1/63) have a meaningless relative band — one fixture moves it 100% — so those rows opt out
-		// of relative checking entirely. A zero-valued row must declare one; relative is undefined.
+		// of relative checking entirely. A zero-valued row must declare one. relative is undefined.
 		if (baseline.tolerance_abs !== undefined || baseline.value === 0) {
 			const toleranceAbs = baseline.tolerance_abs ?? 0
 			const drift = Math.abs(observation.observed - baseline.value)

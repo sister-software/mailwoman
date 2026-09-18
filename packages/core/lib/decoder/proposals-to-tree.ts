@@ -50,7 +50,7 @@ export function proposalsToTree(raw: string, proposals: readonly ClassificationP
  * @param tree The parsed tree (e.g. the neural argmax tree).
  * @param source Provenance stamped on every emitted proposal (`"neural"` here).
  * @param opts.sourceID Optional stable id surfaced as `source_id`.
- * @param opts.emits Optional tag allow-list; when set, only nodes with these tags are emitted.
+ * @param opts.emits Optional tag allow-list. when set, only nodes with these tags are emitted.
  */
 export function treeToProposals(
 	tree: AddressTree,

@@ -5,7 +5,7 @@
  *
  *   Shared helpers for the `registry/tools` probe battery.
  *
- *   The rule: anything reused by two or more probes belongs here; anything a single probe needs
+ *   The rule: anything reused by two or more probes belongs here. anything a single probe needs
  *   stays with that probe.
  */
 
@@ -168,7 +168,7 @@ export const NPPES_COLUMNS = {
 	isSubpart: "Is Organization Subpart",
 	parentLBN: "Parent Organization LBN",
 	parentTIN: "Parent Organization TIN",
-	// #625 taxonomy discriminator: the 15 taxonomy slots; collected as a set (any shared code = agreement).
+	// #625 taxonomy discriminator: the 15 taxonomy slots. collected as a set (any shared code = agreement).
 	taxonomy: Array.from({ length: 15 }, (_, i) => `Healthcare Provider Taxonomy Code_${i + 1}`),
 }
 
@@ -525,7 +525,7 @@ export interface GBTHyperparameters {
 const CROSS_SOURCE_HYPERPARAMS: GBTHyperparameters = { rounds: 120, depth: 3, lr: 0.3, minLeaf: 20 }
 
 /**
- * Share of join keys assigned to fit during calibration; the rest are held out.
+ * Share of join keys assigned to fit during calibration. the rest are held out.
  */
 const FIT_SPLIT_FRACTION = 0.8
 

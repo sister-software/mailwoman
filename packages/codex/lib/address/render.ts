@@ -16,7 +16,7 @@
  *   layout dropped from one whose value happens to sit inside another.
  *
  *   ONE RULE, from `@mailwoman/codex/address-layout`: a node that renders nothing removes itself, and its connector
- *   goes with it. A connector between two slots needs a rendered slot on each side; a connector at a line's edge has
+ *   goes with it. A connector between two slots needs a rendered slot on each side. a connector at a line's edge has
  *   one side, so it binds to the slot it touches. Adjacent survivors collapse to the first, so the layout's stronger
  *   separator wins — an absent region gives `New York, 10118`, which is what the engine this replaces produced.
  */
@@ -97,7 +97,7 @@ function evaluateAtom(atom: AddressAtom, components: ComponentDict): readonly Ad
  * A run forms when the slots between two connectors all render nothing, so what is left is several separators with no
  * values between them. The STRONGEST wins: a connector carrying punctuation is a harder boundary than a space, and
  * printing the space would join two values the layout meant to separate. `Calle Mayor, 12` keeps its comma when the
- * street suffix is absent, and `New York, 10118` keeps its comma when the region is; the space forms of both would read
+ * street suffix is absent, and `New York, 10118` keeps its comma when the region is. the space forms of both would read
  * as one value.
  */
 function strongestConnector(run: readonly string[]): string {
@@ -121,7 +121,7 @@ function evaluateLine(atoms: readonly AddressAtom[], components: ComponentDict):
 			const left = results.slice(0, index)
 			const right = results.slice(index + 1)
 
-			// A connector at an edge binds to the one slot it touches; between slots it needs one on each side.
+			// A connector at an edge binds to the one slot it touches. between slots it needs one on each side.
 			const survives = !left.length
 				? rendered(results[index + 1] ?? null)
 				: !right.length

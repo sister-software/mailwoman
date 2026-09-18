@@ -41,7 +41,7 @@ export const GLOSS_EXCLUDED_PLACETYPES: ReadonlySet<string> = new Set([
 
 /**
  * Pass 3c — the #1730 name-role prototype: two independent detectors over the staged rows, WRITE-ONLY in this
- * generation (no ranking consumer; the rank penalty is its own D-rule-conditional step with the `gloss_key` board as
+ * generation (no ranking consumer. the rank penalty is its own D-rule-conditional step with the `gloss_key` board as
  * regression check). Both stamp `is_primary = 0` rows only — a place's canonical name and the `place_abbr` region
  * abbreviations are never a gloss or a variant.
  *
@@ -104,7 +104,7 @@ export function stampNameRoles(ctx: {
 
 		// Two provenance routes into the same stamp: WOF's abbreviation/short name KINDS arrive in the
 		// LANGUAGE column ('abbr'/'short' — 280 rows, measured 2026-08-18, Toledo's 'TO' among them) and
-		// qualify by kind alone; everything else qualifies as a variant in an official language.
+		// qualify by kind alone. everything else qualifies as a variant in an official language.
 		for (const r of src
 			.prepare("SELECT id, name, language FROM names WHERE privateuse = 'variant' OR language IN ('abbr', 'short')")
 			.iterate()) {
@@ -144,7 +144,7 @@ export function stampNameRoles(ctx: {
 
 	// Detect aliases that are the holder's own primary name in another variant.
 	// orthography — romanization, spacing/diacritic variant, or abbreviation expansion. The verdict
-	// is per (alias key, primary key) pair, so it runs in JS over the still-unstamped alias rows;
+	// is per (alias key, primary key) pair, so it runs in JS over the still-unstamped alias rows.
 	// an uncovered script answers no-verdict and stamps nothing (own-name.ts owns the predicate and
 	// its measured threshold). Runs before gloss on purpose: a surface that is the place's own name
 	// is not a translation, whatever the key volume says.

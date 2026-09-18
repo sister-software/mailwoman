@@ -94,7 +94,7 @@ export function openAPICommand<Engine>(
 /**
  * Load the en-US neural classifier, failing FRIENDLY (#1009).
  *
- * `resolveWeights` (`neural/weights.ts`) already names the exact fix command; this guard only keeps that message from
+ * `resolveWeights` (`neural/weights.ts`) already names the exact fix command. this guard only keeps that message from
  * being buried under an unhandled-rejection stack trace. Eager, so a missing-weights boot fails at startup rather than
  * on the first request.
  */
@@ -218,7 +218,7 @@ export interface DropInCLI {
 	 */
 	usage: string[]
 	/**
-	 * Boot the listener and resolve once it is bound; the engine stamp is the process's, resolved here so every drop-in
+	 * Boot the listener and resolve once it is bound. the engine stamp is the process's, resolved here so every drop-in
 	 * carries it the same way and the license notice prints after the listening banner.
 	 */
 	serve: (engineStamp: ResolvedEngineStamp) => Promise<void>
@@ -229,7 +229,7 @@ export interface DropInCLI {
  * Dispatch a drop-in CLI's subcommand off the first positional.
  *
  * `strict: false` because the per-command parsers own their own flags — this pass only reads the positional. An unknown
- * command exits 1; a bare invocation prints usage and exits 0.
+ * command exits 1. a bare invocation prints usage and exits 0.
  */
 export async function runDropInCLI({ binaryName, openapi, serve, usage }: DropInCLI): Promise<void> {
 	const command = parseArguments({ strict: false, allowPositionals: true }).positionals[0]

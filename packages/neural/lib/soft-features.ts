@@ -153,12 +153,12 @@ export function buildSoftFeatures(
 		? buildGazetteerFeatures(text, pieces, sources.streetTypeLexicon)
 		: undefined
 
-	// STREET-CONTEXT CHECK for the locality channel (2026-07-29, the 8.2.0 pre-ship gauntlet catch;
+	// STREET-CONTEXT CHECK for the locality channel (2026-07-29, the 8.2.0 pre-ship gauntlet catch.
 	// precedent: the #1315 FST street-context check). Locality-surface evidence feeds only when the
 	// street painter found context on this input. On a bare place-name lookup ("Melbourne",
 	// "Sydney, Australia") homograph-flagged locality evidence ROTATES the parse (locality → region/
 	// street — the Washington-DC class, surviving in the fragment register on world-city homographs)
-	// while the resolver already owns that register outright; withholding = the curriculum-trained
+	// while the resolver already owns that register outright. withholding = the curriculum-trained
 	// absence identity, the same declared-ablation semantics as formatted mode. street-containing
 	// fragments — every measured win class (homonym/bare-street/particle rows all carry a street-type
 	// word) — keep the full bundle. The street channel itself needs no check: it paints nothing on a

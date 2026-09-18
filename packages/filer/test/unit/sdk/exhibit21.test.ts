@@ -172,7 +172,7 @@ describe("parseExhibit21 — header-mapped columns and the indented corporate tr
 	 * Telephone and Data Systems indents each subsidiary one column to the RIGHT of its parent, and 132 of its 183
 	 * subsidiaries sit on such a row. The name is not in doubt on those rows — the header says the jurisdiction is to its
 	 * right, so the only non-blank column between the two is the name — and the nesting depth is discarded, since an
-	 * Exhibit 21 row is a registrant→subsidiary edge either way. TDS's own filing is 176 KB and is not vendored; this is
+	 * Exhibit 21 row is a registrant→subsidiary edge either way. TDS's own filing is 176 KB and is not vendored. this is
 	 * its shape.
 	 */
 	it("reads an indented child row's name from the column between the header's name and jurisdiction columns", () => {
@@ -330,7 +330,7 @@ const FIXTURE_FILES = [
  * The six C1-C4/I1/I2 findings above are all CONCATENATION/mis-segmentation bugs — merging two real fragments, or
  * truncating at the wrong boundary. Every fragment they fabricate remains, structurally, a literal substring of the
  * same normalized whole document (it's built from real source text via the identical strip/decode/collapse pipeline the
- * invariant check itself uses) — so the substring check alone does not independently catch any of those six; the
+ * invariant check itself uses) — so the substring check alone does not independently catch any of those six. the
  * case-specific behavioral tests above do (mutation-proven: reverting `htmlToLayoutText`'s adjacent-whitespace check
  * kills the C4 test, reverting the plain-text block-boundary line-break kills the C2 test). What the substring
  * invariant does catch is the other real risk it's meant to guard against: a jurisdiction/name fabricated from nothing

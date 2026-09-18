@@ -10,12 +10,12 @@
  *   `placetype-census-<country>.bin`.
  *
  *   Fold collisions SUM. Two distinct raw parents that fold together ("St Helens" / "St. Helens") are
- *   one census node whose counts are the union of both; the serializer refuses duplicate parents, so a
+ *   one census node whose counts are the union of both. the serializer refuses duplicate parents, so a
  *   merge bug surfaces as a throw rather than a silently halved count.
  *
  *   `--delta` is deliberately optional and unset by default, unlike the pair index's required one: R4c
  *   ships the census as data + loader + offline probe with no decode wiring. A calibrated delta is a
- *   later rung's output; writing one now would put an unmeasured bias into a shipped artifact.
+ *   later rung's output. writing one now would put an unmeasured bias into a shipped artifact.
  *
  *   Self-verifying (the sealed-artifact spirit): after writing, the command re-reads its own bytes
  *   through a fresh `PlacetypeCensusResolver` and probes known parents, printing PROBE OK/MISS with the

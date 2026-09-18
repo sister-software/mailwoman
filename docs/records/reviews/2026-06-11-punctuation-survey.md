@@ -397,7 +397,7 @@ both a parse that kept an annotation and a query that dropped punctuation the ca
 has. Provenance-tracked rows (each variant points at its source name + transform), consistent
 with the no-make-or-break-trivia rule.
 **Quadrant:** bracketed + apostrophe, at the resolver layer — it converts residual parser
-misses into resolver saves, and protects against Nominatim-#3754-style asymmetry between our
+misses into resolver saves, and guards against Nominatim-#3754-style asymmetry between our
 data normalization and query reality.
 **Lives in:** resolver normalization / wof-build.
 **Evidence:** Nominatim `strip-brace-terms` + `split-name-list` are shipped, battle-tested

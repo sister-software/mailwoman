@@ -77,7 +77,7 @@ export function nationalAddressPointsPath(dataRoot: string, countryCode: string)
 
 /**
  * Opens and caches the national Overture rooftop lookups by country. `warm` probes the disk once for every registered
- * country so `for` never touches the filesystem; prefer {@link OvertureNationalDatabaseProvider.create}, which warms
+ * country so `for` never touches the filesystem. prefer {@link OvertureNationalDatabaseProvider.create}, which warms
  * before answering.
  */
 export class OvertureNationalDatabaseProvider implements Disposable {

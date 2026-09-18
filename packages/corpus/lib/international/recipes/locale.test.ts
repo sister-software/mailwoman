@@ -95,7 +95,7 @@ describe("readTuples (OA CSV parse)", () => {
 		await writeLocalTextFile(
 			[
 				OA_HEADER,
-				// Quoted street with an embedded comma; populated REGION.
+				// Quoted street with an embedded comma. populated REGION.
 				'22.6,49.3,12,"Main St, West",,Springfield,dist,Bayern,38-710,id1,hash1',
 				// Empty REGION cell → must fall back to part.region.
 				"22.7,49.2,5,Elm Ave,,Shelbyville,dist,,38-711,id2,hash2",

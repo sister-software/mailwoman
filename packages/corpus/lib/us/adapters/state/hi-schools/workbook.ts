@@ -17,7 +17,7 @@ export const STATE_HI_SCHOOL_SHEETS = ["HIDOE", "PCS"] as const
 export const STATE_HI_SCHOOL_REQUIRED_COLUMNS = ["code", "name", "address", "city", "zip"] as const
 
 /**
- * Workbook row fields consumed by the adapter. XLSX cells are typed; the legacy CSV path supplies strings.
+ * Workbook row fields consumed by the adapter. XLSX cells are typed. the legacy CSV path supplies strings.
  */
 export interface HiSchoolRow {
 	code: XLSXCellValue | undefined

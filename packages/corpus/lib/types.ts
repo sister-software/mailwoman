@@ -21,7 +21,7 @@ import type { BIOLabel, ComponentTag } from "@mailwoman/codex/component"
 /**
  * Provenance + augmentation metadata that travels with every corpus row.
  *
- * `synth` is `undefined` for natural (un-augmented) rows; present only when a row was produced by the synthesis
+ * `synth` is `undefined` for natural (un-augmented) rows. present only when a row was produced by the synthesis
  * pipeline (see `synthesize.ts`).
  */
 export interface SourceProvenance {
@@ -31,7 +31,7 @@ export interface SourceProvenance {
 	source: string
 
 	/**
-	 * Stable id within the adapter's source. For SQLite-backed adapters this is the row's primary key; for CSV/GeoJSON, a
+	 * Stable id within the adapter's source. For SQLite-backed adapters this is the row's primary key. for CSV/GeoJSON, a
 	 * hash of the canonical components. Must be stable across reruns so that dedup and holdout manifests are
 	 * reproducible.
 	 */
@@ -75,7 +75,7 @@ export interface SynthMarker {
  * ground-truth tagging: every `ComponentTag` present in the source data, mapped to its surface form _as it appears in
  * `raw`_. Alignment uses this to assign BIO labels.
  *
- * Country is ISO 3166-1 alpha-2 (`"US"`, `"FR"`). Locale is BCP-47 (`"en-US"`, `"fr-FR"`) and is optional; adapters
+ * Country is ISO 3166-1 alpha-2 (`"US"`, `"FR"`). Locale is BCP-47 (`"en-US"`, `"fr-FR"`) and is optional. adapters
  * that can't be sure leave it empty and let the runner default by country.
  */
 export interface CanonicalRow extends SourceProvenance {
@@ -132,7 +132,7 @@ export interface LabeledRow extends CanonicalRow {
 	 * Invariants — enforced loudly by `alignRow`, documented for every other producer: sorted ascending by start,
 	 * non-overlapping. `raw` must be NFC-normalized or the offsets are ambiguous (also enforced by `alignRow`).
 	 *
-	 * Optional during the v0.4.x → v0.5.0 transition only: alignment always emits the triple; frozen historical corpora
+	 * Optional during the v0.4.x → v0.5.0 transition only: alignment always emits the triple. frozen historical corpora
 	 * and not-yet-migrated synthesis paths may lack it. Required once v0.5.0 lands and the token path is deleted.
 	 */
 	span_starts?: readonly number[]
@@ -151,8 +151,8 @@ export interface LabeledRow extends CanonicalRow {
 /**
  * A row that alignment refused to label. Lands in `/data/corpus/quarantine/` for human review.
  *
- * The `reason` is human-readable; common values are `"component-not-found:<tag>"`, `"edit-distance-exceeded:<tag>"`,
- * `"raw-empty"`. Re-running alignment after a fix should re-emit the quarantined rows; the runner keys them by
+ * The `reason` is human-readable. common values are `"component-not-found:<tag>"`, `"edit-distance-exceeded:<tag>"`,
+ * `"raw-empty"`. Re-running alignment after a fix should re-emit the quarantined rows. the runner keys them by
  * `source_id`.
  */
 export interface QuarantinedRow {
@@ -167,10 +167,10 @@ export interface QuarantinedRow {
  * URL. Each adapter documents its own expected shape in its README.
  *
  * `country` filters to a single ISO 3166-1 alpha-2 country _at the adapter level_. Adapters that hold multi-country
- * data (OSM PBF, OpenAddresses) must honor this; single-country adapters (BAN) may ignore it but should reject
+ * data (OSM PBF, OpenAddresses) must honor this. single-country adapters (BAN) may ignore it but should reject
  * mismatches.
  *
- * `limit` is a soft cap on rows emitted; useful for fixture-driven tests and smoke runs.
+ * `limit` is a soft cap on rows emitted. useful for fixture-driven tests and smoke runs.
  *
  * `signal` allows the runner to cancel a long-running scan cleanly.
  */

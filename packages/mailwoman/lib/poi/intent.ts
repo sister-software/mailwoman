@@ -35,7 +35,7 @@ interface POINameSearch {
 }
 
 /**
- * Adapt a POI FTS reader into positive, exact-name evidence for the kind classifier. FTS supplies candidates; the
+ * Adapt a POI FTS reader into positive, exact-name evidence for the kind classifier. FTS supplies candidates. the
  * normalized equality check is the check, so a fuzzy/token-overlap result can never reroute an address.
  */
 export function createPOINameLookup(searcher: POINameSearch): POIPhraseLookup {
@@ -61,13 +61,13 @@ export function createPOINameLookup(searcher: POINameSearch): POIPhraseLookup {
  * fr-FR/fr-CA/fr-BE) chained through `resolveBrandName` to recover the QID.
  *
  * Precedence on a phrase that matches both a category and a brand: the category wins. Deterministic, and intentional —
- * `@mailwoman/poi-taxonomy`'s categories are the curated set; a brand phrase collision (none observed in the shipped
+ * `@mailwoman/poi-taxonomy`'s categories are the curated set. a brand phrase collision (none observed in the shipped
  * table as of the 2026-07-20 build) would be a data quality bug in the brand table, not a case to special-case here.
  */
 export const poiTaxonomyLookup: POIPhraseLookup = (phrase, locale) => {
 	let categoryHits = lookupPOICategory(phrase, locale)
 
-	// The taxonomy stays exact-phrase; this adapter supplies a deliberately small English morphology layer for query
+	// The taxonomy stays exact-phrase. this adapter supplies a deliberately small English morphology layer for query
 	// heads. Positive evidence is still required: the singularized phrase must itself hit the taxonomy.
 	if (!categoryHits.length && (!locale || locale.toLowerCase().startsWith("en"))) {
 		const words = phrase.trim().split(/\s+/)

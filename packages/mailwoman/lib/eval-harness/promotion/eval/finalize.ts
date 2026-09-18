@@ -5,7 +5,7 @@
  * @file The battery's last step: fold both promotion locks into one exit code, then narrate the ledger append.
  *
  *   Separate from `verdict.ts` because the two answer different questions. The assembler there reads the battery's
- *   artifacts and decides whether every floor was met; this file decides what the process returns, which also depends
+ *   artifacts and decides whether every floor was met. this file decides what the process returns, which also depends
  *   on the mask-regression check the runner ran outside the assembler's view.
  */
 

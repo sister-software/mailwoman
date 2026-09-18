@@ -8,7 +8,7 @@
 /**
  * The verdict for one deletion variant under the expectation model.
  *
- * `held` / `degraded` / `correctlyAbstained` are passes; the rest are failures, kept as distinct classes because they
+ * `held` / `degraded` / `correctlyAbstained` are passes. the rest are failures, kept as distinct classes because they
  * ask the operator for different things. `lost` is a recall bug, `overconfident` is a calibration bug, `coarser` is a
  * precision bug (it stayed on the ladder but gave up more than the surviving evidence justified), `wrong` is a
  * resolution bug (it left the ladder — a different place), `substituted` is a slot-hazard bug, and `homonymTakeover` is

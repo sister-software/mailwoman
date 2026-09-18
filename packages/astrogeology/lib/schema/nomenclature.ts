@@ -4,7 +4,7 @@
  * @author Teffen Ellis, et al.
  *
  *   One nomenclature feature as every artifact carries it: east-positive longitude in −180..180, latitude in −90..90,
- *   the stable id from the source's feature link. The schema is the contract between the build and the app; a value
+ *   the stable id from the source's feature link. The schema is the contract between the build and the app. a value
  *   outside it never leaves the build.
  */
 
@@ -12,7 +12,7 @@ import { blankAsAbsent } from "@mailwoman/core/env/utils"
 import { z } from "zod"
 
 /**
- * The feature record every artifact carries. The optional strings take the shapefile's `""` as absence; the coordinates
+ * The feature record every artifact carries. The optional strings take the shapefile's `""` as absence. the coordinates
  * are the normalized ones (east-positive, −180..180), never the source's 0..360.
  */
 export const PlanetaryNomenclatureFeatureSchema = z.object({

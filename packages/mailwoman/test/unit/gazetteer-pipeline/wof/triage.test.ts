@@ -75,7 +75,7 @@ function buildFixtureAdmin(path: string): void {
 }
 
 /**
- * GeoNames dump lines: 19 tab-separated columns; the pass reads 1 name, 2 ascii, 4 lat, 5 lon, 6 class, 14 population.
+ * GeoNames dump lines: 19 tab-separated columns. the pass reads 1 name, 2 ascii, 4 lat, 5 lon, 6 class, 14 population.
  */
 function geonamesLine(id: number, name: string, lat: number, lon: number, fclass: string, pop: number): string {
 	const f = new Array(19).fill("")
@@ -217,7 +217,7 @@ describe("triageWOFCurrency", () => {
 
 		const deprecated = summary.find((s) => s.currencyClass === CurrencyClass.DeprecatedNoSuccessor)
 
-		// Three deprecated GB rows in the fixture; Swansea is cross-band, so only Rochester + Gillingham are
+		// Three deprecated GB rows in the fixture. Swansea is cross-band, so only Rochester + Gillingham are
 		// uncovered, and only Rochester is attested (Gillingham's dump row is S-class).
 		expect(deprecated).toMatchObject({
 			country: "GB",

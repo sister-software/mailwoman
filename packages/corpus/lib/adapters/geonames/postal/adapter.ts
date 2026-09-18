@@ -19,7 +19,7 @@
  *
  *   1. `{ postcode, locality }` → "AD100 Canillo"
  *   2. `{ postcode, locality, region }` → "AD100 Canillo, Canillo" Prefer configuring this adapter for
- *        non-US countries; for US, the postcode-last sources are the right order. License:
+ *        non-US countries. for US, the postcode-last sources are the right order. License:
  *        `"CC-BY-4.0"` per row (attribute "GeoNames").
  */
 

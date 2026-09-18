@@ -12,13 +12,13 @@
  *   Same additive-matrix contract as every other prior in this file (`fst-prior.ts`,
  *   `street-morphology-prior.ts`, `query-shape-prior.ts`'s `addEmissionMatrix`) — a `[seqLen][numLabels]`
  *   matrix the caller folds into the decoder's emissions before Viterbi. The encoder + the other
- *   priors still get the final vote; this one only proposes.
+ *   priors still get the final vote. this one only proposes.
  *
  *   Evidence: the rung-3 promotion eval (2026-07-22) measured 100% recall / 0.0% false-positive rate at δ=6.0 on the
  *   probe set that motivated this prior. **Superseded by the shipped δ calibration** (2026-07-22, a
  *   held-out register-row + venue-confound sweep) — the real
  *   `pair-index-gb.bin` artifact ships δ=5.0 in its header (feed-8k's calibrated
- *   optimum; feed-2k calibrates to 4.5 but fails the FR-fragment
+ *   optimum. feed-2k calibrates to 4.5 but fails the FR-fragment
  *   bare-locality bar).
  *
  *   **Disable semantics.** This
@@ -30,12 +30,12 @@
  *     ships no `pair-index-*.bin` sibling to auto-wire) — genuinely no prior at all: `opts` is
  *     `undefined` all the way down.
  *   - **A config default is auto-wired** (`loadFromWeights` for an en-gb-shaped cache) and the
- *     caller passes nothing per-call — the prior is on, not off; omitting the per-call field does not
+ *     caller passes nothing per-call — the prior is on, not off. omitting the per-call field does not
  *     recover the no-prior path in this case (see `ParseOpts.placetypePair`'s own doc comment for
  *     the exact resolution order).
  *   - **A config default is auto-wired and the caller wants it off for this call** — pass an explicit
  *     `placetypePair: false` per-call (typed disable, same shape as `spanProposer`). There is no
- *     config-level "null-index override" mechanism; the typed `false` on `ParseOpts` is the real
+ *     config-level "null-index override" mechanism. the typed `false` on `ParseOpts` is the real
  *     mechanism.
  *
  *   **Probe mode — the 2026-07-22 venue-confound falsifier verdict, extended by the 2026-07-24 anchored
@@ -52,7 +52,7 @@
  *   - `"segment"` (the v1 default, still available as an explicit override) — a candidate is a whole
  *     comma-delimited segment of the input, folded as one unit. See "Segment mode" below for the full
  *     contract. Comma-free input = one segment = zero matrix, the documented v1 trade-off.
- *   - `"anchored"` — the anchored adjacent-pair path alone (harness use; the chain reaches it only on
+ *   - `"anchored"` — the anchored adjacent-pair path alone (harness use. the chain reaches it only on
  *     comma-free input). See "Anchored mode" below.
  *   - `"window"` — the sliding 1..{@link WINDOW_MAX_WORDS}-word behavior (see "Window mode"
  *     below), opt-in only.
@@ -81,7 +81,7 @@
  *   **Segment mode.** A candidate is an entire comma-delimited segment of the input — not a sliding
  *   sub-window. Segments are reconstructed from the tokenizer pieces' own character offsets against the raw
  *   input text (`opts.inputText`, mirroring `query-shape-prior.ts`'s `BuildPriorsOpts.inputText` — the caller
- *   supplies the same raw text it already has in hand; see {@link buildSegmentWindows}): every literal `,`
+ *   supplies the same raw text it already has in hand. see {@link buildSegmentWindows}): every literal `,`
  *   character in the input increments the segment counter, and each non-punctuation word group is assigned
  *   to the segment its first piece's start offset falls into. A segment's key is the whole segment folded —
  *   both the space-joined form (each word's own fold, joined with `" "`) and the concat form (joined with no
@@ -115,7 +115,7 @@
  *   probes the other successfully, both receive the bias, and the parse fuses/mis-tags what should be
  *   dependent_locality("Mangawhai") + locality("Mangawhai"). The rule: when a segment's IMMEDIATELY
  *   PRECEDING segment folds to an identical key (any fold form — space-join or concat, so a cross-spelling
- *   repeat like "Stockton-on-Tees, Stockton on Tees" also counts; see {@link sharesFoldForm}), that segment
+ *   repeat like "Stockton-on-Tees, Stockton on Tees" also counts. see {@link sharesFoldForm}), that segment
  *   is a REPEAT and draws no bias from any identical-key partner — the model's own (typically strong
  *   locality) read stands. The head of the run keeps today's behavior and takes the identity bias. In a run
  *   of ≥3 identical adjacent segments ("X, X, X"), only the first overall is biased: every non-head member
@@ -136,7 +136,7 @@
  *   feed-2k checkpoint): (1) a residual FP class survives — when a non-venue FIELD (e.g. the venue-confound
  *   board's synthetic `street` field) happens to equal a bare census child verbatim as its own segment (e.g.
  *   `"Moelfre B & B, Moelfre, Abergele, …"` — the street segment is literally "Moelfre"), segment mode still
- *   fires, because the mechanism is purely textual/segmental, not semantic; this is not a bug in the segment
+ *   fires, because the mechanism is purely textual/segmental, not semantic. this is not a bug in the segment
  *   restriction, it is the segment restriction doing exactly what it's specified to do. (2) recall on a
  *   comma-FREE input degrades toward inert, because a comma-free string is one giant segment with no
  *   internal split — which is what the `"auto"` chain's anchored path exists to cover. Window mode remains
@@ -149,7 +149,7 @@
  *   79% venue-confound FP at δ=10 — see the brainstorm doc's FP anatomy), candidates are pinned to the
  *   register-style GB suffix geometry: the PARENT (post-town position) is a 1..{@link WINDOW_MAX_WORDS}-word
  *   window immediately LEFT of a postcode-shaped span (shape per `postcode-repair.ts`'s
- *   {@link collectMatches} — the same family the repair pass and postcode-anchor path run; the anchor
+ *   {@link collectMatches} — the same family the repair pass and postcode-anchor path run. the anchor
  *   sits left of the whole span, GB outward+inward included), or the string-FINAL window when no
  *   postcode shape is present. The CHILD is a 1..{@link ANCHORED_CHILD_MAX_WORDS}-word window
  *   immediately left of the parent (`child.endPos + 1 === parent.startPos`). Candidates are tried
@@ -179,7 +179,7 @@
  *   | 5     |       287 | <0.01% |
  *
  *   p50=1, p90=2, **p99=3**, max=5. Going to the observed max (5) provides negligible additional recall
- *   against real over-matching risk on short common words — 3 is the frozen scale; widening it is a
+ *   against real over-matching risk on short common words — 3 is the frozen scale. widening it is a
  *   future tunable, not a free lunch.
  *
  *   **The folded window key is a SPACE-JOIN of each word's own fold**, not a joint fold of the
@@ -252,7 +252,7 @@
  *   span's first piece (see {@link TransitionAdjustment} and `viterbi.ts`'s `ViterbiTransitionAdjustment`).
  *   This is the path-fusion recovery change the transition-level probe measured: the emission δ can
  *   win the per-token argmax at the child-start piece while the global Viterbi still routes through a
- *   fused street/locality run; the entry-transition bonus pays the structural continuation toll directly
+ *   fused street/locality run. the entry-transition bonus pays the structural continuation toll directly
  *   (β=5: 13/17 comma-free GB misses recovered, zero measured collateral). No hit / no `transitionBeta` →
  *   an empty adjustment list, byte-identical decode to the emission-only behavior. One refinement
  *   (2026-07-24, the v2 battery's single named-row regression): a child immediately preceded by a
@@ -282,7 +282,7 @@
  *
  *   One interaction worth naming: in segment/window mode every candidate takes the X (child) role in its own iteration,
  *   so a chain `A, B, C` where both (A,B) and (B,C) fire writes a CHILD bias and a PARENT bias onto B, toward different
- *   tags. They compose by `Math.max` per label like any other overlapping write; the decoder arbitrates.
+ *   tags. They compose by `Math.max` per label like any other overlapping write. the decoder arbitrates.
  *
  *   **PCN1 census observability (2026-08-05, the observability rung).** `opts.census` rides this module's probe chain
  *   without touching a single emission. Every time a candidate is probed as the PARENT half of a (child, parent) pair —
@@ -290,7 +290,7 @@
  *   against the PCN1 placetype census (`placetype-census.ts`), and a hit is recorded on the trace out-record as a
  *   {@link PlacetypeCensusObservation}. Nothing reads it back: no delta, no matrix write, no transition adjustment. The
  *   census header deliberately carries no `delta` (see `PlacetypeCensusHeader.delta`), and the 2026-08-04 wiring
- *   assessment ruled that no decode wiring ships before a calibration rung measures one; this rung exists so that
+ *   assessment ruled that no decode wiring ships before a calibration rung measures one. this rung exists so that
  *   calibration has real traces to read. Zero-cost when off: `opts.census` (or the trace out-record) absent means the
  *   recorder is never constructed and the probe never runs, so the decode is byte-identical either way — asserted in
  *   `placetype-census-observability.test.ts`.
@@ -335,8 +335,8 @@ import type { TokenLike } from "#query-shape-prior"
  *   segment boundaries (see {@link PlacetypePairPriorOpts.inputText}); without it, the entire input is treated as one
  *   segment (matches the documented comma-free-input degradation, not a distinct failure mode).
  * - `"anchored"` — the anchored adjacent-pair path alone (see the module docstring's "Anchored mode" section). Explicit
- *   value for harness use; the chain reaches it only on comma-free input.
- * - `"window"` — the sliding 1..{@link WINDOW_MAX_WORDS}-word behavior. Opt-in only; re-enabling as a default requires a
+ *   value for harness use. the chain reaches it only on comma-free input.
+ * - `"window"` — the sliding 1..{@link WINDOW_MAX_WORDS}-word behavior. Opt-in only. re-enabling as a default requires a
  *   venue-aware suppression mechanism and a re-measured venue-confound FP=0 (see the module docstring).
  */
 type PlacetypePairProbeMode = "auto" | "segment" | "anchored" | "window"
@@ -356,7 +356,7 @@ export interface PlacetypeCensusObservation {
 	parent: string
 	/**
 	 * Which child KINDS this parent has at all, in the artifact's own descending-count order. Presence is the census's
-	 * actual claim; the counts behind it are deliberately not copied here (a share is ~100% for the dominant class
+	 * actual claim. the counts behind it are deliberately not copied here (a share is ~100% for the dominant class
 	 * everywhere, so the number a consumer would read is a constant — `lift` is the part that varies).
 	 */
 	childTagsPresent: ComponentTag[]
@@ -423,12 +423,12 @@ export interface PlacetypePairPriorOpts {
 	inputText?: string
 	/**
 	 * Optional out-record: which probe path actually produced a bias (see {@link PlacetypePairProbeTrace}). Supplied by
-	 * the classifier's trace path; mutated in place, never read by this module.
+	 * the classifier's trace path. mutated in place, never read by this module.
 	 */
 	probeTrace?: PlacetypePairProbeTrace
 	/**
 	 * OBSERVABILITY ONLY — the PCN1 placetype census to probe alongside each parent candidate (see the module docstring's
-	 * "PCN1 census observability" section). Writes nothing to the emission matrix or the transition adjustments; its sole
+	 * "PCN1 census observability" section). Writes nothing to the emission matrix or the transition adjustments. its sole
 	 * effect is filling {@link PlacetypePairProbeTrace.censusObservations}, so it does nothing at all without
 	 * `probeTrace`. There is no `censusDelta` sibling to `parentDelta` here, and adding one is not a small change: the
 	 * 2026-08-04 wiring assessment ruled that a decode-time census bias needs a calibration δ first, and this rung is the
@@ -437,11 +437,11 @@ export interface PlacetypePairPriorOpts {
 	census?: PlacetypeCensusLike
 	/**
 	 * WHOLE-EDGE bias magnitude for the PARENT window (issue #46 — see the module docstring's "Whole-edge parent bias"
-	 * section). OVERRIDES the loaded index's own `parentDelta` header field; omit it to use the artifact's calibrated
+	 * section). OVERRIDES the loaded index's own `parentDelta` header field. omit it to use the artifact's calibrated
 	 * value. Both absent = child-only, byte-identical to every pre-#46 build.
 	 *
 	 * Deliberately its own number rather than reusing `index.delta`. The child δ was sized to clear a ~7.0-logit TRAINING
-	 * deficit on a tag the shipped lineage never learned; the parent bias instead argues with a normal, healthy model
+	 * deficit on a tag the shipped lineage never learned. the parent bias instead argues with a normal, healthy model
 	 * read (4.21 nats on "new york" in `brooklyn, new york, ny`), so inheriting the child's δ would be an uncalibrated
 	 * guess. Bar B-4 calibrated it independently and landed on 5.
 	 */
@@ -557,7 +557,7 @@ function makeCensusParentRecorder(
 /**
  * Probe `index` for the `(x, y)` pair under every combination of their space-joined/concatenated key forms — see the
  * module docstring's "dual-key probe" section. Tries space/space, space/concat, concat/space, concat/concat in that
- * order and returns the first hit; a window's two forms collapse to one string when it's a single word, so this is a
+ * order and returns the first hit. a window's two forms collapse to one string when it's a single word, so this is a
  * single probe (not four) for the common case.
  *
  * `recordCensusParent` (observability rung) is called with `y` — the PARENT half of the pair — before the index is
@@ -760,7 +760,7 @@ function writeSpanBias(
  * WHOLE-EDGE parent bias (issue #46 — see the module docstring's "Whole-edge parent bias" section).
  *
  * A pair hit asserts a typed (child, parent) hierarchical edge. Biasing only the child asserts half of it, on the
- * unchecked assumption that the parent already reads as the child's containing level; where that assumption fails the
+ * unchecked assumption that the parent already reads as the child's containing level. where that assumption fails the
  * mechanism removes an admin level instead of adding one (`brooklyn, new york, ny` → `dependent_locality` + no locality
  * at all, worse than the pre-prior tree). This writes the other half: `+parentDelta` on the record's own `parentTag`
  * over the PARENT window.
@@ -782,7 +782,7 @@ function applyParentTagBias(
 	parentDelta: number
 ): void {
 	// The KEY's span, not the whole segment — see `CandidateWindow.keyPieceIndices` for the FR measurement that forced
-	// the distinction. The child write keeps the whole segment; only the parent needs the narrower one, because only
+	// the distinction. The child write keeps the whole segment. only the parent needs the narrower one, because only
 	// the parent's segment carries a same-field postcode.
 	writeSpanBias(matrix, labelToCol, parent.keyPieceIndices ?? parent.pieceIndices, parentTag, parentDelta)
 }
@@ -830,7 +830,7 @@ function applyWindowBias(
 
 /**
  * Build a `[seqLen][numLabels]` bias matrix from placetype-pair index matches, plus the position-scoped transition
- * adjustments (TRANSITION-BETA build — empty unless the index carries `transitionBeta` and a hit fired; see
+ * adjustments (TRANSITION-BETA build — empty unless the index carries `transitionBeta` and a hit fired. see
  * {@link PlacetypePairPriorResult}). See the module docstring for the full windowing/matching/suppression contract.
  */
 export function buildPlacetypePairPriors(
@@ -928,7 +928,7 @@ export function buildPlacetypePairPriors(
 	const windows = probeMode === "window" ? buildWindows(nonEmptyGroups, WINDOW_MAX_WORDS) : segmentWindows!
 
 	// Segment mode collapses to one giant candidate on comma-free input (or a missing inputText) — no
-	// second, disjoint candidate to pair against. Bail before the O(n²) loop below; this is the
+	// second, disjoint candidate to pair against. Bail before the O(n²) loop below. this is the
 	// documented comma-free-input degradation, not a bug.
 	if (windows.length < 2) return { matrix, transitionAdjustments }
 

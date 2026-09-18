@@ -4,7 +4,7 @@
  * @author Teffen Ellis, et al.
  *
  *   `mailwoman eval fragment-dev` — probe-1 separator metrics on the held-out fragment split
- *   (span-exact vs tag-accuracy; trailing-number→postcode rate). See eval-harness/fragment-dev.ts.
+ *   (span-exact vs tag-accuracy. trailing-number→postcode rate). See eval-harness/fragment-dev.ts.
  */
 
 import { type CommandSpec, harnessCommand } from "#cli-kit"

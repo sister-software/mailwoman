@@ -23,7 +23,7 @@ export interface SearchBoxProps {
 
 export function SearchBox({ search, placeholder, onSelect }: SearchBoxProps) {
 	const [text, setText] = useState("")
-	// The hook picks by suggestion VALUE, a string; the hits behind the last answer are kept here so a pick maps back
+	// The hook picks by suggestion VALUE, a string. the hits behind the last answer are kept here so a pick maps back
 	// to the feature it named.
 	const lastHits = useRef<Map<string, SearchHit>>(new Map())
 
@@ -54,7 +54,7 @@ export function SearchBox({ search, placeholder, onSelect }: SearchBoxProps) {
 
 	return (
 		<div className="search-box">
-			{/* `type="search"` brings its own clear button; a second cross beside it is two controls for one job. */}
+			{/* `type="search"` brings its own clear button. a second cross beside it is two controls for one job. */}
 			<MapSearchBar label="Search named features" leading={<span aria-hidden="true">⌕</span>}>
 				<input
 					{...autocomplete.inputProps}

@@ -48,8 +48,8 @@ import { type CommandSpec, CommandTaskResult, type CommandComponent, useCommandT
  * merges punctuation-variant duplicates the raw census counts separately (e.g. "St Helens" vs "St. Helens" fold to the
  * same `(child, parent)` key). The collision receipt: 221 merge groups — 220 groups where 2 raw census lines collapse
  * to 1 production entry (220 × 1 collapsed line = 220) plus 1 group where 3 raw lines collapse to 1 entry (1 × 2
- * collapsed lines = 2) — 220 + 2 = 222 raw lines absorbed; 19,431 − 222 = 19,209. A mismatch AGAINST 19,209 on a real
- * rebuild means this build's fold diverged from the adjudicated baseline, not that 19,209 is wrong; investigate before
+ * collapsed lines = 2) — 220 + 2 = 222 raw lines absorbed. 19,431 − 222 = 19,209. A mismatch AGAINST 19,209 on a real
+ * rebuild means this build's fold diverged from the adjudicated baseline, not that 19,209 is wrong. investigate before
  * trusting the artifact.
  */
 const EXPECTED_GB_PAIR_COUNT = 19_209
@@ -65,7 +65,7 @@ const RUNG3_PRE_FOLD_CENSUS_LINE_COUNT = 19_431
  * The US instance's cross-check (hierarchy campaign R5), measured 2026-08-01 against the shipped
  * `admin-global-priority.db`. Unlike GB there is no postal register in the mix — every pair is WOF-sourced (borough +
  * neighbourhood children under locality/localadmin/borough parents, see `PAIR_PLACETYPES_BY_COUNTRY`), so this number
- * tracks the WOF snapshot alone. A snapshot refresh legitimately moves it; re-anchor the constant deliberately, after
+ * tracks the WOF snapshot alone. A snapshot refresh legitimately moves it. re-anchor the constant deliberately, after
  * inspecting the diff, rather than relaxing the check.
  */
 const EXPECTED_US_PAIR_COUNT = 47_878
@@ -277,7 +277,7 @@ const GazetteerPairIndex: CommandComponent<typeof spec> = ({ options }) => {
 			)
 		}
 
-		// R3: generic secondary pairs (ONSPD-derived London ward pairs; future NI/IE sources) — the
+		// R3: generic secondary pairs (ONSPD-derived London ward pairs. future NI/IE sources) — the
 		// same fold/dedupe path, counted into the cross-check delta alongside the boroughs.
 		if (options.pairsJSONL) {
 			for (const path of splitPathList(options.pairsJSONL)) {
@@ -381,7 +381,7 @@ const GazetteerPairIndex: CommandComponent<typeof spec> = ({ options }) => {
 		// "BLOCKED") under holdout. Check against `built.entries.length` (pre-holdout) instead in that case.
 		const preHoldoutCount = built.entries.length
 		// Pre-fold context suffix — the raw rung-3 census line count, for provenance/debugging (e.g. diffing a
-		// future source refresh against this cycle's raw count). Not the cross-check target; see
+		// future source refresh against this cycle's raw count). Not the cross-check target. see
 		// `EXPECTED_GB_PAIR_COUNT`'s doc comment for the 221-group collision receipt that separates the two numbers.
 		const preFoldSuffix = ` (pre-fold rung-3 census: ${RUNG3_PRE_FOLD_CENSUS_LINE_COUNT.toLocaleString()} lines)`
 

@@ -8,7 +8,7 @@
  *   superseded one without the page author hand-editing a banner.
  *
  *   Docs with a `status:` frontmatter field from the maintained vocabulary (`active-decision`,
- *   `superseded`) render a status line; an optional `superseded-by:` field (a site-relative URL, or
+ *   `superseded`) render a status line. an optional `superseded-by:` field (a site-relative URL, or
  *   an external URL such as a GitHub blob link for a page that has left the published tree) renders
  *   as a link when present. Free-text `status:` values deliberately render nothing.
  *
@@ -46,7 +46,7 @@ const STATUS_TAGLINES: Record<string, string> = {
 
 function DocRecordChrome(): ReactNode {
 	const { frontMatter } = useDoc()
-	// `DocFrontMatter` types only the Docusaurus-owned fields; the record-class fields are
+	// `DocFrontMatter` types only the Docusaurus-owned fields. the record-class fields are
 	// site-specific pass-throughs, so they're read as `unknown` and narrowed.
 	const status: unknown = (frontMatter as Record<string, unknown>).status
 

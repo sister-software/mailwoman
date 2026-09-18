@@ -76,7 +76,7 @@ export async function changedFiles(repoRoot: PathBuilderLike, base: string, head
 
 /**
  * Every tracked path, repo-relative, optionally narrowed by git pathspecs. Read NUL-delimited so a path with a newline
- * or a non-ASCII byte survives; the 64 MiB buffer covers this repository's listing several times over.
+ * or a non-ASCII byte survives. the 64 MiB buffer covers this repository's listing several times over.
  */
 export async function trackedFiles(repoRoot: PathBuilderLike, pathspecs: string[] = []): Promise<string[]> {
 	const output = await git(repoRoot, ["ls-files", "-z", ...pathspecs], 64 * 1024 * 1024)

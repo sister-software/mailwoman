@@ -15,7 +15,7 @@ export function clientAddress(c: Context): string {
 }
 
 /**
- * Whether every key is within its allowance. Each key is charged; a request that trips one key still counts against the
+ * Whether every key is within its allowance. Each key is charged. a request that trips one key still counts against the
  * others, which is what keeps one exhausted key from becoming a free retry on the rest.
  */
 export async function withinLimits(limiter: RateLimit, keys: readonly string[]): Promise<boolean> {

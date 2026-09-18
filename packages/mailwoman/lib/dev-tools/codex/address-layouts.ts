@@ -14,7 +14,7 @@
  *   2. **`street-orders.ts`**, beside this file, supplies the street ORDER, because libaddressinput models the street
  *      address as one opaque `%A` field and says nothing about whether the house number leads or follows. That table
  *      was read once from the OpenCage `address-formatting` templates and committed as data, so this generator needs no
- *      third-party package; its own header says how to refresh it.
+ *      third-party package. its own header says how to refresh it.
  *
  *   The hand-authored layouts in `codex/lib/address/layouts/index.ts` take precedence for the locales this project
  *   publishes weights for: those are checked against real addresses on a board, and a generated skeleton is a starting
@@ -83,7 +83,7 @@ const HAND_AUTHORED = new Set(Object.keys(ADDRESS_LAYOUTS))
  * Whether the lines rendered so far print the largest unit first — the region ahead of the street.
  *
  * Read off the skeleton rather than from a country list. The generator runs before the layout it is writing exists, so
- * it cannot consult `@mailwoman/codex`'s `LARGEST_FIRST_SYSTEMS`, which derives from those layouts; the `fmt` in hand
+ * it cannot consult `@mailwoman/codex`'s `LARGEST_FIRST_SYSTEMS`, which derives from those layouts. the `fmt` in hand
  * carries the same statement. A hand-kept list here held JP, CN, TW and KR while the dataset printed largest-first for
  * IR, KP and KZ as well, and those three took a trailing country line.
  */
@@ -158,7 +158,7 @@ function layoutSource(
 	//
 	// "Above" is the envelope's sense — nearer the street than the locality is — and which side of the locality line
 	// that is depends on the skeleton's direction. A smallest-first skeleton prints the street before the locality, so
-	// the line goes before the locality; a largest-first one prints the locality before the street, so the line goes
+	// the line goes before the locality. a largest-first one prints the locality before the street, so the line goes
 	// after it — and after the whole line, since a skeleton like `%S%C` keeps the region and the locality together,
 	// and a district spliced ahead of that line would print above the region. A skeleton that puts the street and the
 	// locality on one line (`%A %C`) takes the slot inside that line, between the two, for the same reason.

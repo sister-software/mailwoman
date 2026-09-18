@@ -132,7 +132,7 @@ export class PlacetypeDataSource implements Disposable {
 	}
 
 	public prepareTables(): void {
-		// Raw DDL by design: this runs in a synchronous construction path; Kysely's schema-builder is
+		// Raw DDL by design: this runs in a synchronous construction path. Kysely's schema-builder is
 		// async, so migrating would force an async-factory refactor across every consumer. See AGENTS.md.
 		this.#db.exec(/* sql */ `
 
@@ -171,7 +171,7 @@ export class PlacetypeDataSource implements Disposable {
 			? new DatabaseClient<PlacetypeRecordDatabase>(databasePath.toString(), dbOptions)
 			: new DatabaseClient<PlacetypeRecordDatabase>(databasePath.toString())
 
-		// node:sqlite has no .pragma() helper; pragmas are executed as plain SQL.
+		// node:sqlite has no .pragma() helper. pragmas are executed as plain SQL.
 		this.#db.exec("PRAGMA busy_timeout = 10000")
 		this.#db.exec("PRAGMA journal_mode = WAL")
 		this.#db.exec("PRAGMA synchronous = OFF")

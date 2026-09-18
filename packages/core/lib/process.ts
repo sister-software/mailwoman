@@ -82,7 +82,7 @@ export function isProcessError(error: unknown): error is ProcessError {
 }
 
 /**
- * Options for {@linkcode runFile}: the builtin's. Output is always decoded as UTF-8; an `encoding` here is accepted for
+ * Options for {@linkcode runFile}: the builtin's. Output is always decoded as UTF-8. an `encoding` here is accepted for
  * the callers that spell it and changes nothing.
  */
 export type RunFileOptions = ExecFileOptions & { cwd?: PathBuilderLike }
@@ -115,7 +115,7 @@ export interface RunFileSyncOptions extends Omit<ExecFileSyncOptions, "cwd"> {
 }
 
 /**
- * {@linkcode runFile} for a synchronous slot. Answers stdout; throws on a non-zero exit, with the builtin's error.
+ * {@linkcode runFile} for a synchronous slot. Answers stdout. throws on a non-zero exit, with the builtin's error.
  *
  * When `stdio` inherits the parent's streams there is nothing to capture and the answer is the empty string.
  */

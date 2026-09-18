@@ -3,7 +3,7 @@
 # Check-failed: the metamorphic layer introduced 2 casing/whitespace regressions
 # (DC-zip-lowercase, Damrak-whitespace). The #834 drop-in normalize fix already covers most
 # of the case-robustness gap, so the retrain isn't worth the GPU + the regressions. Kept as
-# the recipe record; revisit only with a recipe that clears the metamorphic check.
+# the recipe record. revisit only with a recipe that clears the metamorphic check.
 # See docs/articles/evals/2026-06-29-night-postmortem.md.
 # =========================================================================================
 #
@@ -172,7 +172,7 @@ train: # Verbatim from v1.9.3a3 except output_dir + run_name + max_steps. RESUME
   warmup_steps: 1000
   grad_clip_norm: 1.0
   # FULL RUN: --resume auto picks the probe's step-082000 (latest in output_dir); max_steps 92000 → +10k.
-  # Constant LR 1.5e-4; anchor-dropout curriculum at full strength. Eval every 2k → check 84/86/88/90/92k and
+  # Constant LR 1.5e-4. anchor-dropout curriculum at full strength. Eval every 2k → check 84/86/88/90/92k and
   # ship the best (FR street-intact up, US floors held).
   max_steps: 102000
   eval_every_steps: 2000

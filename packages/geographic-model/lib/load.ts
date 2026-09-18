@@ -17,7 +17,7 @@
  *      NAMES and their contents. `readdir` order, and therefore the filesystem, is out of the answer.
  *   2. **Every issue names the file it came from.** The document validator addresses a record by its
  *      position in the merged table (`$.concepts[7].kind`), which is the one thing an author cannot
- *      see; the loader keeps a per-record origin and re-addresses each issue to its source file. A
+ *      see. the loader keeps a per-record origin and re-addresses each issue to its source file. A
  *      duplicate identifier names both files — the one that claimed it and the one that claimed it
  *      first — because "already used" is unactionable without the other half.
  *
@@ -69,7 +69,7 @@ const RECORD_PATH_PATTERN = /^\$\.([A-Za-z]+)\[(\d+)\](?:\.assertions\[(\d+)\])?
 export const LoadIssueCode = {
 	...ValidationIssueCode,
 	/**
-	 * A source file could not be parsed as JSON. Emitted by the loader alone; the document validator is handed values,
+	 * A source file could not be parsed as JSON. Emitted by the loader alone. the document validator is handed values,
 	 * never text.
 	 */
 	MalformedJSON: "malformed_json",
@@ -307,7 +307,7 @@ function attribute(state: MergeState, issue: ValidationIssue): SourcedIssue {
  * Merge authoring files into one document, then validate the merged document.
  *
  * The files are sorted by path before anything is read, so any enumeration order produces the same tables in the same
- * order. Throws {@link GeographicModelLoadError} with every issue, each addressed to its source file; returns nothing
+ * order. Throws {@link GeographicModelLoadError} with every issue, each addressed to its source file. returns nothing
  * partial.
  */
 export function mergeGeographicModelFiles(files: readonly GeographicModelSourceFile[]): GeographicModelDocument {

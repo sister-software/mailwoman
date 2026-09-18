@@ -105,7 +105,7 @@ class BoardTallies:
 
     The board holds out whole municipalities, and one of them carries 823 of 20,000 rows, so a
     row-weighted number moves 2 pp on a single name. The macro over municipalities is reported
-    beside the blended fraction; the pre-registered check stays the blended one.
+    beside the blended fraction. the pre-registered check stays the blended one.
     """
 
     def __init__(self) -> None:

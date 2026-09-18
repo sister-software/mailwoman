@@ -11,7 +11,7 @@
  *   The k-ring walk + h3 packing REPLICATE `resolver-wof-sqlite/poi-lookup.ts`'s Node reader exactly
  *   — `latLngToCell` → `shortCellToInt` (the SHARED `@mailwoman/spatial` 48-bit packer, never
  *   reimplemented), then the same per-cell probe SQL, ring-by-ring dedup, and a final haversine sort.
- *   Keep the two readers in lockstep; a probe-semantics cross-check against the Node reader lives in
+ *   Keep the two readers in lockstep. a probe-semantics cross-check against the Node reader lives in
  *   the PR description, not in this tree (throwaway verification script, not shipped).
  *
  *   CATEGORY-ONLY, matching the runbook: no FTS name search, no brand search — the multi-hop demo
@@ -77,7 +77,7 @@ export interface POISearchOpts {
 	/**
 	 * Fan-out leaves — the Overture `taxonomy.primary` ids this canonical category rolls up into (`supermarket` →
 	 * `grocery_store`, …), from `@mailwoman/poi-taxonomy`'s `resolveOvertureCategories`. When set, every resolvable leaf
-	 * is probed per cell and the rows are unioned; unknown leaves are skipped. Absent ⇒ probe `categoryID` alone
+	 * is probed per cell and the rows are unioned. unknown leaves are skipped. Absent ⇒ probe `categoryID` alone
 	 * (identity) — matching the Node reader's back-compat.
 	 */
 	categoryIDs?: string[]
@@ -139,7 +139,7 @@ export async function searchPOICategory(worker: POIHTTPVFSWorker, opts: POISearc
 			// Country is appended to the per-cell probe (beyond the spec's literal 4-column SQL) so the
 			// tester's results list can show it — same WHERE/ORDER/LIMIT + packing, one extra column.
 			// `category_id IN (…)` unions the fan-out leaves in one probe per cell (the ids are dictionary ints, never
-			// user input — no injection surface). LIMIT still caps the per-cell pull; the outer ring loop + final sort
+			// user input — no injection surface). LIMIT still caps the per-cell pull. the outer ring loop + final sort
 			// trim to the nearest `limit`.
 			const sql =
 				`SELECT name, latitude, longitude, confidence, country FROM poi ` +

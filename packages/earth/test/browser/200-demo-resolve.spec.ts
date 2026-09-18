@@ -19,7 +19,7 @@ test.describe("Demo — resolution cascade", () => {
 		await demo.submit()
 
 		const { resolved, markerCount } = await demo.readResult()
-		// 90210 is the example; should land somewhere in CA. The cascade may resolve via postcode
+		// 90210 is the example. should land somewhere in CA. The cascade may resolve via postcode
 		// or fall back to locality if the postcode has placeholder coords. Either way: a marker.
 		expect(markerCount).toBeGreaterThan(0)
 		expect(resolved["coords"]).toBeTruthy()
@@ -97,7 +97,7 @@ test.describe("Demo — resolution cascade", () => {
 		lon: number
 		tolDeg: number
 		/**
-		 * A measured defect the case documents until it is fixed; the test is expected to fail while it stands.
+		 * A measured defect the case documents until it is fixed. the test is expected to fail while it stands.
 		 */
 		knownFailure?: string
 	}[] = [
@@ -143,7 +143,7 @@ test.describe("Demo — resolution cascade", () => {
 	}
 
 	test("White House default — surfaces no fail-pattern errors even when resolver returns nothing", async ({ demo }) => {
-		// Postcode 20500 has lat=0/lon=0 in WOF; cascade filters it; raw text + locality may also
+		// Postcode 20500 has lat=0/lon=0 in WOF. cascade filters it. raw text + locality may also
 		// miss. The test isn't asserting the resolution succeeds — it's asserting that the
 		// "Style is not done loading" race + bbox-on-empty-result paths stay clean.
 		await demo.goto()

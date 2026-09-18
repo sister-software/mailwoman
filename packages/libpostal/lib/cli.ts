@@ -52,14 +52,14 @@ async function serve(engineStamp: ResolvedEngineStamp): Promise<void> {
 			const tree = await classifier.parse(query, { postcodeRepair: true, inputMode: "formatted" })
 
 			// `treeToParseMatches` collapses the street-name family into one `road`-bound match and
-			// yields reading-order `{ classification, value }` pairs; the app maps them to libpostal labels.
+			// yields reading-order `{ classification, value }` pairs. the app maps them to libpostal labels.
 			return treeToParseMatches(tree)
 		},
 		async expand(address) {
 			const normalized = normalize(address).normalized
 			const expanded = expandAbbreviations(normalized).text
 
-			// Deterministic forms only; dedup while preserving order.
+			// Deterministic forms only. dedup while preserving order.
 			return [...new Set([address, normalized, expanded])]
 		},
 	}

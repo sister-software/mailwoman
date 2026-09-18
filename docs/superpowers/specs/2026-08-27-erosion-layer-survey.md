@@ -158,7 +158,7 @@ September 2025 — a three-year lag. Sample: over 800,000 points, ~71,000–72,0
 **license.** No NRI-specific statement exists. The governing text is USDA-wide
 ([usda.gov/policies-and-links](https://www.usda.gov/policies-and-links), HTTP 200): "Most information
 presented on the USDA Web site is considered public domain information… Some materials on the USDA Web
-site are protected by copyright, trademark, or patent, and/or are provided for personal use only." Moot
+site are guarded by copyright, trademark, or patent, and/or are provided for personal use only." Moot
 here, because there is nothing to redistribute.
 
 ### 2.3 United States, soil — what SSURGO carries, and what it does not

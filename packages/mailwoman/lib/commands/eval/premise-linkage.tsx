@@ -168,7 +168,7 @@ const EvalPremiseLinkage: CommandComponent<typeof spec> = ({ options }) => {
 }
 
 /**
- * Import a private run configuration from outside this repository. The specifier is the operator's; nothing here
+ * Import a private run configuration from outside this repository. The specifier is the operator's. nothing here
  * inspects it beyond handing it to the loader, and `resolve` decides whether what came back is usable.
  */
 async function loadControlledConfig<T>(

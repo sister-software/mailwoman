@@ -80,7 +80,7 @@ import { normalizeComponent } from "#eval-harness/per/tag-f1"
 
 /**
  * Default anchor + gazetteer feed paths — the same ones `score-country-homograph.ts` and the verdict `oa-resolver-eval`
- * runs use. The current 33-label STAGE3 models (v1.5.x, v1.7.x; ONNX inputs `anchor_features`/`gazetteer_features`)
+ * runs use. The current 33-label STAGE3 models (v1.5.x, v1.7.x. ONNX inputs `anchor_features`/`gazetteer_features`)
  * were trained with these channels live, so honest inference must feed them. The lookup is keyed by the input's own
  * postcode — always available at eval time. Why this is a DEFAULT, not opt-in (the bug this file used to have): when
  * these are omitted, the ONNXRunner falls back to the `confidence = 0` zero-feed (its "anchor-off identity"). That's
@@ -415,7 +415,7 @@ export async function perLocaleF1(
 	} else if (args.modelPath || args.tokenizerPath || args.modelCardPath) {
 		// misuse check: if any custom-model flag is set, all three are required. Previously a missing
 		// --tokenizer silently fell back to the DEFAULT shipped weights, so --model was ignored and two
-		// different checkpoints scored byte-identical. Refuse to guess; fail loud.
+		// different checkpoints scored byte-identical. Refuse to guess. fail loud.
 		if (!args.modelPath || !args.tokenizerPath || !args.modelCardPath) {
 			throw new Error(
 				"--model requires --tokenizer AND --model-card together (refusing to silently fall back to " +
@@ -432,7 +432,7 @@ export async function perLocaleF1(
 
 		// Anchor + gazetteer feed. DEFAULT-ON (the standard paths) so an anchor-trained model is scored
 		// in-distribution — see the DEFAULT_* note above for why omitting these silently collapses the
-		// admin tags. `--no-anchor` opts out; an explicit `--model-anchor-lookup`/`--gazetteer-lexicon`
+		// admin tags. `--no-anchor` opts out. an explicit `--model-anchor-lookup`/`--gazetteer-lexicon`
 		// overrides the default path. The runner harmlessly skips inputs a plainer ONNX doesn't declare.
 		const anchorLookupPath = args.noAnchor ? undefined : (args.modelAnchorLookupPath ?? DEFAULT_ANCHOR_LOOKUP)
 		const gazetteerLexiconPath = args.noAnchor ? undefined : (args.gazetteerLexiconPath ?? DEFAULT_GAZETTEER_LEXICON)
@@ -499,7 +499,7 @@ export async function perLocaleF1(
 		const t0 = performance.now()
 		// MAILWOMAN_DUMP_MISS_TAG=<tag>: print every row where gold has <tag> but the prediction
 		// differs (false-neg or mislabel). A diagnostic lens for "which surfaces does the model drop"
-		// — added for the #560 fr.house_number investigation; harmless when the env is unset.
+		// — added for the #560 fr.house_number investigation. harmless when the env is unset.
 		const dumpTag = $public.MAILWOMAN_DUMP_MISS_TAG
 
 		for (const row of rows) {
@@ -508,7 +508,7 @@ export async function perLocaleF1(
 			// PRODUCTION-CONFIG parity (2026-07-17, the M1 check-fidelity fix): production parses feed the
 			// query-shape prior + postcodeRepair on every path (safeClassify, geocode-core since #981), but
 			// this battery historically fed neither — so the check scored a config production doesn't run.
-			// M1 measured that gap at +2.3 micro on golden-us (the battery flattered production; the entire
+			// M1 measured that gap at +2.3 micro on golden-us (the battery flattered production. the entire
 			// delta was the since-scoped locality bias, PR #1148). Score what ships.
 			const tree = await neural.parse(row.raw, {
 				postcodeRepair: true,

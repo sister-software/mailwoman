@@ -14,12 +14,12 @@
  *   FOUR MEASURED CLIENT BEHAVIORS ARE ENCODED HERE RATHER THAN WRITTEN DOWN SOMEWHERE ELSE.
  *
  *   1. The Hub download job answers with a `resultUrl` that 302s. `…/api/download/v1/items/<id>/geojson?
- *      redirect=false&layers=0` returns `{"status":"Completed","resultUrl":…}` in 249 bytes; the result URL
+ *      redirect=false&layers=0` returns `{"status":"Completed","resultUrl":…}` in 249 bytes. the result URL
  *      itself redirects, so the transfer needs `redirect: "follow"`. A client that took the first response as
  *      the file writes a redirect page to disk and reports a successful download.
  *   2. THE BULK EXPORT IS EPSG:2157 UNDER A `crs` MEMBER RFC 7946 REMOVED. The file's own header carries
  *      `"crs":{"type":"name","properties":{"name":"EPSG:2157"}}` and its coordinates are Irish Transverse
- *      Mercator metres. A strict RFC 7946 reader ignores the member and places Ireland at latitude 735,435;
+ *      Mercator metres. A strict RFC 7946 reader ignores the member and places Ireland at latitude 735,435.
  *      GDAL honours it, which is why `sdk/ingest.ts` reads the archive through ogr2ogr and asserts the
  *      reprojected result falls inside the Department's own declared extent.
  *   3. THE PUBLISHER'S OWN AREA STATISTIC IS NOT IN THE ARCHIVE. `Shape__Area` is a service field and the
@@ -66,7 +66,7 @@ export const GZT_MIN_REQUEST_INTERVAL_MS = 500
  * How long a cached metadata response stays fresh.
  *
  * Six hours, chosen against the product's own cadence rather than a wall-clock intuition. The Department publishes no
- * maintenance-frequency statement at all; what is observable is that the item's `modified` date and the data's latest
+ * maintenance-frequency statement at all. what is observable is that the item's `modified` date and the data's latest
  * `UPLOAD_DATE` move a handful of times a year, so a shorter TTL adds nothing.
  */
 const GZT_CACHE_TTL_MS = 6 * 60 * 60 * 1000
@@ -306,7 +306,7 @@ export class GZTClient extends APIClient<APIClientConfig> {
 /**
  * Refuse an attribution the published item no longer matches.
  *
- * READ AT BUILD TIME RATHER THAN TRUSTED FROM THE CONSTANT. The constant is what the artifact is stamped with offline;
+ * READ AT BUILD TIME RATHER THAN TRUSTED FROM THE CONSTANT. The constant is what the artifact is stamped with offline.
  * this is the live value it is reconciled with when the network is available. The check is on the DEPARTMENT'S CREDIT
  * LINE and on the Tailte Éireann clause separately, because they are two different statements and the second is the one
  * that holds this layer at `build-local`: an item that dropped it would be a licence change worth hearing about, and an

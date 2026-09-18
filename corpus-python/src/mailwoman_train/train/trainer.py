@@ -71,7 +71,7 @@ def _eval_val(
     cross-pollution regression check and the aux locale-head accuracy when self-conditioning is on.
 
     ``tokenizer`` is None on the char path (``char_mode: char`` skips SentencePiece entirely) and
-    ``iter_batches`` encodes per character in that case; the val eval runs there like the train loop
+    ``iter_batches`` encodes per character in that case. the val eval runs there like the train loop
     does. A guard that refused a None tokenizer here stopped every char-mode run at its first eval."""
     model.eval()
     loss_total = 0.0
@@ -128,7 +128,7 @@ def train(
     callbacks: list[TrainCallback] | None = None,
 ) -> None:
     _set_seed(cfg.train.seed)
-    # MLM pre-training is a different objective + loop; route there (lazy import avoids a
+    # MLM pre-training is a different objective + loop. route there (lazy import avoids a
     # train<->pretrain module cycle). pretrain() writes from_pretrained-loadable checkpoints.
     if getattr(cfg.train, "objective", "supervised") == "mlm":
         from .pretrain import pretrain

@@ -12,7 +12,7 @@
  *
  *   Intersection handling is intentionally coarse: the legacy `intersection` tag becomes
  *   `intersection_a` by default. Producing `intersection_a` vs `intersection_b` requires positional
- *   reasoning that the legacy classifiers don't expose; deferred to the neural model where the
+ *   reasoning that the legacy classifiers don't expose. deferred to the neural model where the
  *   schema natively distinguishes them.
  */
 

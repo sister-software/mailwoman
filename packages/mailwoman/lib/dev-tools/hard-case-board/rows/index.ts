@@ -8,7 +8,7 @@
  *   Split out of `build/hard-case-board.run.ts` because the two halves change for different reasons and
  *   at different rates: the builder is implementation (read a WOF point, walk two FST binaries, emit JSONL),
  *   while this file is the editorial content — which inputs pin which discrimination case, and why. A row
- *   here carries no coordinates and no bias numbers on purpose; those are measured at build time from
+ *   here carries no coordinates and no bias numbers on purpose. those are measured at build time from
  *   primary data, so the only thing a curator can get wrong is the choice, which is the thing worth
  *   reviewing.
  *
@@ -24,7 +24,7 @@
 import type { HardCaseClass } from "#eval-harness/hard-case-board"
 
 /**
- * A curated row before its numbers are filled in. `expectID` is a WOF place id; the builder reads the point.
+ * A curated row before its numbers are filled in. `expectID` is a WOF place id. the builder reads the point.
  */
 export interface Curated {
 	id: string

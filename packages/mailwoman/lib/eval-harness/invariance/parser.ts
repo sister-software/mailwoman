@@ -46,7 +46,7 @@ export interface ModelSelectOptions {
 }
 
 /**
- * The suite's fixture rows are keyed by ISO country code; the production pipeline wants a BCP-47 locale tag. These are
+ * The suite's fixture rows are keyed by ISO country code. the production pipeline wants a BCP-47 locale tag. These are
  * the tags for the four countries `suite.jsonl` carries (DE, FR, GB, US), and nothing more: the gauntlet's
  * `OVERLAY_LOCALE_BY_COUNTRY` lists the overlay locales (GB, NZ, DE, IN, ES, IT) and this table lists the suite's, and
  * they overlap on GB and DE only. An unlisted country falls back to en-US, so a row added for a country that ships an

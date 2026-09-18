@@ -1,7 +1,7 @@
 """The two measuring passes: what the register holds, and what the permits align to.
 
 Neither draws from the RNG and neither writes a row. Pass 1 reads the register to count eligible
-rows per 시도 and to BUILD THE KEY INDEX; pass 2 reads the permits, which can only be aligned once
+rows per 시도 and to BUILD THE KEY INDEX. pass 2 reads the permits, which can only be aligned once
 that index exists, and averages their coordinates per 시군구. Everything the selecting half needs
 from the sources comes back in the two records below.
 

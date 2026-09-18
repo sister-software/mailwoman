@@ -25,7 +25,7 @@
  *   ```
  *
  *   Each adapter under `corpus/src/adapters/<adapter>/README.md` documents the specific URL its
- *   input was pulled from; these modules mirror those URLs in a single executable place.
+ *   input was pulled from. these modules mirror those URLs in a single executable place.
  *
  *   ## Coverage
  *
@@ -54,7 +54,7 @@
  *       family built on `APIClient` — see its docstring for why.
  *   - `state-sources` — NY/TX/DE/OR notaries, IA contractors, WA health providers, HI lobbyists.
  *       Tier A (state PD-equivalent).
- *   - `state-hi-schools` — Hawaii DOE school directory (original XLSX; HIDOE + PCS sheets). Tier A
+ *   - `state-hi-schools` — Hawaii DOE school directory (original XLSX. HIDOE + PCS sheets). Tier A
  *       (state PD-equivalent).
  *   - `tiger-full` — US Census TIGER 2024 ADDRFEAT, all US counties. Tier A (US PD).
  *   - `juso-kr` — the Korean road-name address register (주소DB, plus the English road-name DB) from
@@ -74,12 +74,12 @@
  *   `docs/docs/projects/mailwoman/licensing-strategy.md`). `openaddresses` is a **Tier-mixed**
  *   source: the downloaded collection includes CC0, CC-BY, OGL, and ODbL/CC-BY-SA rows. The per-row
  *   `LICENSE` filter in the `openaddresses` adapter is essential — Tier-C (ODbL, CC-BY-SA) rows are
- *   dropped at ingest by default to protect proprietary-weights training.
+ *   dropped at ingest by default to guard proprietary-weights training.
  *
  *   ### OpenAddresses authentication (as of 2026-05-18)
  *
  *   `batch.openaddresses.io` now requires a free registered account for bulk downloads (auth check
- *   prevents CDN abuse; data remains openly licensed). `fetchOpenAddresses` reads `OA_BATCH_TOKEN`
+ *   prevents CDN abuse. data remains openly licensed). `fetchOpenAddresses` reads `OA_BATCH_TOKEN`
  *   from the environment:
  *
  *   ```sh

@@ -8,7 +8,7 @@ generic (あつぎ市 for 厚木市), which is both a surface people type and th
 
 The readings come from WOF through the admin DB: for a JP locality or localadmin, ``names`` carries the official kanji
 as ``jpn preferred`` and the hiragana readings as ``jpn variant`` — a stem (あつぎ) and a full form (あつぎし). The stem
-is what the register wants; the generic stays kanji.
+is what the register wants. the generic stays kanji.
 """
 
 from __future__ import annotations
@@ -23,7 +23,7 @@ _HIRAGANA = range(0x3041, 0x3097)
 
 
 def is_hiragana(text: str) -> bool:
-    """True when every character is hiragana (the prolonged-sound mark ー counts; it appears inside readings)."""
+    """True when every character is hiragana (the prolonged-sound mark ー counts. it appears inside readings)."""
     return bool(text) and all(ord(ch) in _HIRAGANA or ch == "ー" for ch in text)
 
 

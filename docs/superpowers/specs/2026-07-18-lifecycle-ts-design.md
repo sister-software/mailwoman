@@ -244,11 +244,11 @@ registry.register(IIndexer, Indexer)
 | `E_DEPENDENCY_CYCLE`   | Constructor-resolved dependency cycle (path in message) |
 | `E_DISPOSED`           | Operation on a disposed registry or service             |
 
-## Bug ledger — review findings → design remedy
+## Bug ledger — review findings → design action
 
 Traceability from the 2026-07-18 `core/lifecycle` review:
 
-| #   | Finding (old module)                                                                                          | Remedy in this design                            |
+| #   | Finding (old module)                                                                                          | Action in this design                            |
 | --- | ------------------------------------------------------------------------------------------------------------- | ------------------------------------------------ |
 | 1   | `markAsDisposed` set string key `"AsyncDisposedSymbol"`, guards inert                                         | `markDisposed` sets the real `disposed` symbol   |
 | 2   | `Object.hasOwn` predicates missed prototype chain (crash on inherited ctor; `APIClient` cache never disposed) | All guards use `in` + class sniff                |

@@ -19,7 +19,7 @@
  *   - And — the lesson that propagates to `postcode-area.ts` — it does **NOT align with administrative
  *       geography**. A postcode area is a Royal Mail routing construct named after a sorting town
  *       (`SW` = south-west London, `EH` = Edinburgh), not a county or a constituent country. You
- *       cannot read a county off a UK postcode the way you read a département off a French one; the
+ *       cannot read a county off a UK postcode the way you read a département off a French one. the
  *       postcode→country mapping in `postcode-area.ts` exists precisely _because_ there is no clean
  *       hierarchy to inherit.
  *
@@ -79,7 +79,7 @@ export function isUkPostcode(input: unknown): input is Postcode {
 
 /**
  * The OUTWARD code — the part before the space (area + district), e.g. `SW1A 1AA` → `SW1A`, `M1 1AE` → `M1`. Normalizes
- * first so an un-spaced input still cleaves correctly; null if invalid.
+ * first so an un-spaced input still cleaves correctly. null if invalid.
  */
 export function outwardCode(pc: unknown): string | null {
 	const normalized = normalizeUkPostcode(pc)

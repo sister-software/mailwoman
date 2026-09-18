@@ -1,8 +1,8 @@
 # === v4.3.3-cooldown46k — WSD-style decay branch of the v4.3.3 step-040000 checkpoint ===
 #
 # HYPOTHESIS (2026-08-10 recipe review, change 11): every graded v4.3.3 checkpoint sat mid-cosine
-# at 26-93% of peak LR; the schedule literature (Chinchilla schedule-matching; Hagele 2024
-# arXiv:2405.18392; MiniCPM arXiv:2404.06395) says such reads understate the finished model, and
+# at 26-93% of peak LR. the schedule literature (Chinchilla schedule-matching. Hagele 2024
+# arXiv:2405.18392. MiniCPM arXiv:2404.06395) says such reads understate the finished model, and
 # that decaying a mid-run checkpoint's LR to zero over a short branch recovers approximately the
 # matched-schedule endpoint. This branch reads out the 40k checkpoint's finished-schedule score.
 #
@@ -14,7 +14,7 @@
 # exactly — no spike in either direction.
 #
 # EVERYTHING ELSE IS v4.3.3 VERBATIM — same corpus (v0.18.1), same v1 affix lexicon (the label
-# contradiction is deliberately retained: this branch isolates the SCHEDULE variable; the
+# contradiction is deliberately retained: this branch isolates the SCHEDULE variable. the
 # corrected v2-lexicon feed belongs to the next fresh base, not here). The loader is the
 # repaired substrate (stationary sampler, clean val) — noted, unavoidable, and strictly
 # better-defined than the parent's non-stationary epochs.
@@ -24,7 +24,7 @@
 #     --config v4.3.3-cooldown46k.yaml \
 #     --resume /data/output-v433-suffix-boundary-base-s42/checkpoints/step-040000
 #
-# CHECKS (fp32, unchanged): B1 >=116/128, B2 >=34/48, B4 tokens >=3/7; B3 only after all three.
+# CHECKS (fp32, unchanged): B1 >=116/128, B2 >=34/48, B4 tokens >=3/7. B3 only after all three.
 # Grade the FINAL 46k checkpoint (decay complete); 42k/44k saves are curve receipts only.
 # If 46k still sits in the 72-85 B1 band, the plateau was not a schedule artifact and the
 # data-contradiction fix carries the full weight. No recipe iteration on this branch.

@@ -47,7 +47,7 @@ const SCORERS: ReadonlyArray<KindScorer> = [
 	{ kind: "structured_address", score: scoreStructuredAddress },
 	// ROAD_TO_V9 §4. Ordinary members of the same list — intent is vocabulary, not a stage. `bare_toponym` and
 	// `route_pair` are scored under `locality_only` on purpose (see `intent-rules.ts`), so their position here is
-	// cosmetic; the sort below is what decides.
+	// cosmetic. the sort below is what decides.
 	{ kind: "bare_toponym", score: scoreBareToponym },
 	{ kind: "route_pair", score: scoreRoutePair },
 	{ kind: "near_me", score: scoreNearMe },

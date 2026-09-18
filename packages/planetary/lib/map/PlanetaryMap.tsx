@@ -5,7 +5,7 @@
  *
  *   The globe: the body's style over `MapCanvas`, a click on a label selecting the feature beneath it, the selection
  *   ring bound to the selected id, and the camera framing a selection by its diameter. The style is composed once
- *   per config; the selection changes a layer filter, never the style.
+ *   per config. the selection changes a layer filter, never the style.
  */
 
 import {

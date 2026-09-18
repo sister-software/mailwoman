@@ -124,7 +124,7 @@ function placetypeFromKey(key: string): string | null {
 /**
  * Insert missing ancestor rows for every place whose ancestry chain dead-ended before reaching a country, by reading
  * `wof:hierarchy` from its source geojson under `geojsonRoots` (see {@link discoverAdminDataRoots}). Runs inside a
- * single transaction; caller owns connection lifecycle (open, WAL checkpoint, close).
+ * single transaction. caller owns connection lifecycle (open, WAL checkpoint, close).
  *
  * `opts.maxID` bounds the candidate scan to ids below it — pass the synthetic-id base (`OVERTURE_ID_BASE`, 8e12) so the
  * backfill considers only real WOF places. Overture/GeoNames rows carry synthetic ids and have no `wof:hierarchy`

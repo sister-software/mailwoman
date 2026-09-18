@@ -1,5 +1,5 @@
 # === v3.23.0-bundle-guard-8k — PRODUCTION BUNDLE CANDIDATE, INCREMENT 5 (Option-A Phase 3). ===
-# (Claude-owned; operator go 2026-07-28 "Sounds right, pre-register it and go".)
+# (Claude-owned. operator go 2026-07-28 "Sounds right, pre-register it and go".)
 #
 # What v3.22.0 settled (record: .superpowers/sdd/progress.md): feed-passenger diagnosis confirmed
 # (ablated 16/17 floors, us.street healed 75.3->80.1); the fr.cedex floor was MISCALIBRATED (the
@@ -9,28 +9,28 @@
 # house-number classes fail at every save (alnum-hn -0.325 lower+heal at the 4k peak) — evidence
 # painted beside a digit swallows the number into the span. The P0 fixture classes separate
 # PERFECTLY on digit presence: every win class (homonym/bare-street/particle/bare-locality) is
-# 100% digit-free; every damage class (alnum-hn/street-hn/date-name) is 100% digit-carrying.
+# 100% digit-free. every damage class (alnum-hn/street-hn/date-name) is 100% digit-carrying.
 #
 # TWO NAMED DELTAS vs v3.22.0:
-#   1. DIGIT-GUARD LEXICONS (street v3 + locality v6; entries unchanged from v2/v5 — only
+#   1. DIGIT-GUARD LEXICONS (street v3 + locality v6. entries unchanged from v2/v5 — only
 #      rules.digit_guard added): a matched span paints nothing when any span word or nearest
-#      non-empty neighbor carries a Unicode-Nd digit; guarded matches still consume their span.
+#      non-empty neighbor carries a Unicode-Nd digit. guarded matches still consume their span.
 #      Carried in the artifact rules so both painters apply it (17-case parity fixture v2, 24/24
-#      byte-equal; precedent: suppress-gaz-near-postcode). PREDICTION: win classes untouched
+#      byte-equal. precedent: suppress-gaz-near-postcode). PREDICTION: win classes untouched
 #      (digit-free rows keep painting), damage classes -> ON~OFF (withheld evidence = the
 #      curriculum-trained zero identity); date-name gives back its small rise (accepted).
-#   2. synth-po-box-cedex 1.5 -> 3.0 (fine-tune replay boost; independent instrument, measured on
+#   2. synth-po-box-cedex 1.5 -> 3.0 (fine-tune replay boost. independent instrument, measured on
 #      the ablated-column cedex read + the us.po_box_real overfit watch).
 #
 # PRE-REGISTERED CHECKS (Decision-A shape, v3.22 wording):
 #   G1 fragment bars (P0 grid, --lexicon locality-surface-lexicon-v6.json
 #      --street-lexicon street-type-lexicon-v3.json, every save): homonym ON-OFF >= +0.050 asis
-#      and >= +0.25 lower+heal; house-number classes >= -0.020 asis raw; lowercase-heal ALL >= +0.015.
+#      and >= +0.25 lower+heal. house-number classes >= -0.020 asis raw. lowercase-heal ALL >= +0.015.
 #   G2 ablation vs the v385 same-grader reference.
 #   G3 invariance (int8, --baseline v385): zero new classes.  G4 gauntlet x3.
 #   G5 golden ABLATED: all floors incl. the re-anchored fr.cedex_real 84.6 — delta-2 must close
-#      ~-4.1 from 80.5; if cedex alone still misses, the verdict names fine-tune forgetting as
-#      UNSOLVED-BY-REPLAY and the options (longer runs / LR-protect / accept-with-re-anchor) go to
+#      ~-4.1 from 80.5. if cedex alone still misses, the verdict names fine-tune forgetting as
+#      UNSOLVED-BY-REPLAY and the options (longer runs / LR-guard / accept-with-re-anchor) go to
 #      the operator.  G5b golden FED recorded (misroute-cost input).  G6 canary zero-flip in
 #      formatted mode.
 #   VERDICT: G1-G5 + G6-formatted => promotion battery + the inputMode implementation arc.
@@ -87,7 +87,7 @@ data:
     synth-fr-order: 3.0
     synth-fr-admin-split: 6.0
     synth-unit: 1.5
-    synth-po-box-cedex: 3.0 # v3.23 DELTA-2: fine-tune replay boost (2x v385 share). Cedex forgetting is CONTINUED-TRAINING damage (every fine-tune ~80 vs shipped 85.6 same-harness; CA-specific, us.po_box IMPROVES). Watch us.po_box_real for overfit.
+    synth-po-box-cedex: 3.0 # v3.23 DELTA-2: fine-tune replay boost (2x v385 share). Cedex forgetting is CONTINUED-TRAINING damage (every fine-tune ~80 vs shipped 85.6 same-harness. CA-specific, us.po_box IMPROVES). Watch us.po_box_real for overfit.
     synth-affix: 2.0
     synth-country: 2.0
     overture: 3.0
@@ -133,7 +133,7 @@ data:
 model: # Verbatim from v2.4.1.
   hidden_size: 384
   use_span_boundary_head: true
-  use_deploc_head: false # P-A: the deploc head is off — orthogonal to P-B's head experiment; don't confound the street-type read.
+  use_deploc_head: false # P-A: the deploc head is off — orthogonal to P-B's head experiment. don't confound the street-type read.
   span_boundary_loss_weight: 0.5
   num_hidden_layers: 6
   num_attention_heads: 6
@@ -165,7 +165,7 @@ model: # Verbatim from v2.4.1.
   use_locality_surface_anchor: true
   locality_surface_feature_dim: 2
   # #1104 homograph-guard SOFTENER — the one variable vs v263. Scales the country_ambiguous dim by 0.5
-  # before the country_projection (bakes into the exported ONNX; no lexicon/inference change). v263's
+  # before the country_projection (bakes into the exported ONNX. no lexicon/inference change). v263's
   # hard guard (scale 1.0) over-suppressed homograph countries Georgia/Jordan (country-homograph F1
   # 89.8->82.6); softening should recover homograph recall without giving back the country F1 the
   # WOF-admin rows produced.

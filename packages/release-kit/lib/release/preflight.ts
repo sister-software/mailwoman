@@ -6,7 +6,7 @@
  *   `mwops release preflight` — the #1894 dispatch-free release exercise: stage the tracked tree in an
  *   isolated root, materialize the weights artifacts there, then pack and audit all release
  *   workspaces with the same `packWorkspaceForPublish` + `verifyTarball` path CI publishes with.
- *   Performs zero git, GitHub, npm-registry, R2, or Hugging Face writes; an interrupted run leaves
+ *   Performs zero git, GitHub, npm-registry, R2, or Hugging Face writes. an interrupted run leaves
  *   every tracked file byte-identical because nothing ever writes into the checkout (see
  *   `stage.ts` for why staging, not try/finally, is the mechanism).
  *
@@ -63,7 +63,7 @@ export interface ReleasePreflightReport {
 }
 
 /**
- * Stage, materialize, pack and audit every release workspace. Answers the report; the verdict is `FAIL` when any
+ * Stage, materialize, pack and audit every release workspace. Answers the report. the verdict is `FAIL` when any
  * release workspace does not pack to a tarball honoring its manifest, or when the release list's named-absence identity
  * does not hold.
  */

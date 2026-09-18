@@ -152,7 +152,7 @@ by its end). A noisy 0.623 reading near step 20k was a transient. The check is t
   country-context addition to the extract recover it? **Operator call: worth a v1.7.1 to clear this one floor?**
 - **The boundary targets are stuck (1/4).** The extract at weight 1.0 rebalanced but didn't ADVANCE the four
   shapes. The confidence probe said signal-not-capacity, so the next change is more boundary signal — sweep
-  the extract weight up (the recipe's pre-registered 1.5), now that the guardrail is protected by the bare-locality
+  the extract weight up (the recipe's pre-registered 1.5), now that the guardrail is guarded by the bare-locality
   balance. Or accept that 29.6M params caps these shapes (the #492 ceiling) and bank the regression fix.
 
 ## 6. Concrete next steps

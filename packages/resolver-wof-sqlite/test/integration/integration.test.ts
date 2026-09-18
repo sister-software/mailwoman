@@ -6,7 +6,7 @@
  *   Integration tests for `WOFSQLitePlaceLookup` against a real Who's On First SQLite distribution.
  *
  *   These are conditioned on the WOF DB being present on disk — the suite SKIPS (with a clear stderr
- *   message) if the path doesn't exist. CI runs against the fixture-only suites; operators with the
+ *   message) if the path doesn't exist. CI runs against the fixture-only suites. operators with the
  *   real DB locally get an extra layer of validation.
  *
  *   Resolution order for the DB path:
@@ -30,7 +30,7 @@ const wofPath = $public.MAILWOMAN_WOF_DB ?? DEFAULT_WOF_PATH
 const hasWOFDB = await pathExists(wofPath)
 
 // vitest's describe.skipIf prints a helpful message at suite runtime.
-// oxlint-disable-next-line vitest/valid-title, vitest/valid-describe-callback -- an aliased describe; the title and callback arrive where it is invoked
+// oxlint-disable-next-line vitest/valid-title, vitest/valid-describe-callback -- an aliased describe. the title and callback arrive where it is invoked
 const describeIfWOF = describe.skipIf(!hasWOFDB)
 
 describeIfWOF(`WOFSQLitePlaceLookup integration against ${wofPath}`, () => {

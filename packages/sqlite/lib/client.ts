@@ -24,7 +24,7 @@ import { SqliteDialect } from "#dialect/index"
  * A SQLite client for one database file: a Kysely query builder over `node:sqlite`, plus the two raw statements Kysely
  * cannot express.
  *
- * The client opens the file. A caller says which file and which schema; it never builds the connection itself.
+ * The client opens the file. A caller says which file and which schema. it never builds the connection itself.
  *
  * ```ts
  * using kdb = new DatabaseClient<MySchema>("db.sqlite", { readOnly: true })
@@ -112,7 +112,7 @@ export class DatabaseClient<DB = Database> extends Kysely<DB> implements Disposa
 	 * A prepared statement on this client's connection, for the bulk-write path.
 	 *
 	 * Kysely compiles per call, which a positional insert loop over millions of rows cannot afford. Reach for this only
-	 * there and in the other cases `AGENTS.md` lists as deliberately raw; everything cold goes through the query builder,
+	 * there and in the other cases `AGENTS.md` lists as deliberately raw. everything cold goes through the query builder,
 	 * where the schema is checked.
 	 */
 	prepare(sql: string): StatementSync {

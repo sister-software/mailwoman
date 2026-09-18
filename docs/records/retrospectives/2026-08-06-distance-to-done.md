@@ -266,19 +266,19 @@ serves `/` and `/openapi.json`.
 
 ### 2.6 Per-surface summary
 
-| Surface              | Where we sit                                                                                                                                                      |
-| -------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Parse (US)           | Check pass on all floors. Street-name span F1 **75.2** against a standing 0.90 target                                                                             |
-| Parse (FR)           | Check pass. `fr.region` 44.1 → 81.2, `fr.cedex_real` 99.8. Held-out BAN beats production z=2.85                                                                   |
-| Parse (GB)           | The v9 cure landed: gb-golden 318/318 with the anchor fed; dependent_locality 0 → 205/207. **GB is not a declared tier** — it has capability without a tier claim |
-| Parse (JP)           | 0.9928 @15 km on a 20k held-out board, bar was 0.70. **No serving path.** No `neural-weights-ja-jp` workspace exists                                              |
-| Geocode              | 71% on the 393-row oracle sweep; 27 rows resolve to nothing; last competitor measurement had Pelias ahead 88 to 80                                                |
-| Drop-in APIs         | Routes ship, zero upstream parity tests, named parameter gaps in all three                                                                                        |
-| Demo                 | Structurally pinned to the shipped weights package (invariant 2 enforced by construction, not by memory)                                                          |
-| npm                  | Clean. 48 workspaces at 9.0.0, lockstep, Trusted Publishing                                                                                                       |
-| Docs                 | Site ships; the repo-root documents have drifted (§5.4)                                                                                                           |
-| Record matching      | Parked pending funding or a pilot, with measured evidence banked (NPPES coord-blocked F1 68.1%)                                                                   |
-| Spatial layers / POI | 13.68M-row `poi.db`, read-time ancestry and `gersID` landed 2026-07-19                                                                                            |
+| Surface              | Where we sit                                                                                                                                                     |
+| -------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Parse (US)           | Check pass on all floors. Street-name span F1 **75.2** against a standing 0.90 target                                                                            |
+| Parse (FR)           | Check pass. `fr.region` 44.1 → 81.2, `fr.cedex_real` 99.8. Held-out BAN beats production z=2.85                                                                  |
+| Parse (GB)           | The v9 fix landed: gb-golden 318/318 with the anchor fed; dependent_locality 0 → 205/207. **GB is not a declared tier** — it has capability without a tier claim |
+| Parse (JP)           | 0.9928 @15 km on a 20k held-out board, bar was 0.70. **No serving path.** No `neural-weights-ja-jp` workspace exists                                             |
+| Geocode              | 71% on the 393-row oracle sweep; 27 rows resolve to nothing; last competitor measurement had Pelias ahead 88 to 80                                               |
+| Drop-in APIs         | Routes ship, zero upstream parity tests, named parameter gaps in all three                                                                                       |
+| Demo                 | Structurally pinned to the shipped weights package (invariant 2 enforced by construction, not by memory)                                                         |
+| npm                  | Clean. 48 workspaces at 9.0.0, lockstep, Trusted Publishing                                                                                                      |
+| Docs                 | Site ships; the repo-root documents have drifted (§5.4)                                                                                                          |
+| Record matching      | Parked pending funding or a pilot, with measured evidence banked (NPPES coord-blocked F1 68.1%)                                                                  |
+| Spatial layers / POI | 13.68M-row `poi.db`, read-time ancestry and `gersID` landed 2026-07-19                                                                                           |
 
 ---
 
@@ -452,7 +452,7 @@ gb-op3-odyssey-w4-belfast       BT3 9QQ -> "W4"               (part of the venue
 
 A confidently wrong postcode is more expensive than an absent one, because every downstream
 coherence pass trusts it. The postcode arc's shape-exclusion mechanism (bars B1-1 through B1-3) is
-the designed cure and **none of those three bars has been run**.
+the designed fix and **none of those three bars has been run**.
 
 ### 5.3 The venue-name-reads-as-structure class
 
@@ -481,7 +481,7 @@ The fixes are landing fast, and the class is not closed.
 
 Four PR/VG/VI rows were demoted from blocking because they pass under the old model _"by margins their
 own notes call accidental."_ Puerto Rico has TIGER coverage the corpus never ingested. This is a
-known, bounded data cure (ROAD_TO_V9 §5-C) that has not started.
+known, bounded data fix (ROAD_TO_V9 §5-C) that has not started.
 
 ### 5.6 Documentation drift at the repo root
 
@@ -525,7 +525,7 @@ killed by its own premise check. That discipline is rare and it is the reason th
 written at all — almost everything asked for was already measured by someone who wrote down what
 they measured.
 
-**The v9 anchor cure.** The #1467 root cause — every training config used a 67,708-key anchor lookup
+**The v9 anchor fix.** The #1467 root cause — every training config used a 67,708-key anchor lookup
 with _zero letter-containing keys_, so the GB slot never took gradient — was found, cured, and proven
 with Fisher mass on the GB slot at 11.28% against CA/JP exact-zero controls. gb-golden went 294 → 318
 of 318 across three registers; GB `dependent_locality` went 0 → 205/207. That is a real capability

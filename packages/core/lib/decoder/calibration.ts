@@ -63,7 +63,7 @@ export function createCalibrator(table: CalibrationTable | CalibrationBin[]): Ca
 	}
 
 	// Sort by center and extract parallel arrays for interpolation.
-	// oxlint-disable-next-line unicorn/no-array-sort -- sorts a freshly-built array; toSorted would double-allocate on a hot path
+	// oxlint-disable-next-line unicorn/no-array-sort -- sorts a freshly-built array. toSorted would double-allocate on a hot path
 	const sorted = [...bins].sort((a, b) => a.center - b.center)
 	const centers = sorted.map((b) => b.center)
 	const cals = sorted.map((b) => clampConfidence(b.calibrated))

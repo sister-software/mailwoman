@@ -11,7 +11,7 @@ imports don't load when the train loop just wants to encode.
 
 Why a new module (not extending ``scripts/train_tokenizer.py``)?
 
-- The legacy script is stdin-or-file driven; the harness contract is "give me a corpus
+- The legacy script is stdin-or-file driven. the harness contract is "give me a corpus
   version + vocab budget, do the sampling and training and measurement end-to-end."
 - The harness writes a richer ``model_card.json`` (sentencepiece flags, UDS preview,
   byte-fallback rate per script) the legacy ``META.json`` doesn't carry.
@@ -19,7 +19,7 @@ Why a new module (not extending ``scripts/train_tokenizer.py``)?
 
 Default sampling strategy: per-country reservoir over the train split, taking ``raw``
 strings only (whitespace tokens / BIO labels are irrelevant to SP training). Countries
-default to ``US`` + ``FR`` to match corpus-v0.3.0's mass; pass ``--countries`` to widen
+default to ``US`` + ``FR`` to match corpus-v0.3.0's mass. pass ``--countries`` to widen
 once Thread B's adversarial transliteration corpus is in the mix.
 """
 
@@ -154,11 +154,11 @@ def mine_postcode_literals(
     """Return the top-``top_k`` postcode literals in the train split by frequency.
 
     Reads each parquet file's ``labels`` column and pulls out tokens whose BIO label endswith
-    ``-postcode``. The unigram trainer will not always keep these whole on its own; adding
+    ``-postcode``. The unigram trainer will not always keep these whole on its own. adding
     them as UDS guarantees one piece per common postcode literal.
 
     ``countries``: when given, only count postcodes from rows whose ``country`` matches.
-    ``max_files``: for unit tests; in production leave ``None`` to scan everything.
+    ``max_files``: for unit tests. in production leave ``None`` to scan everything.
     """
     counter: Counter[str] = Counter()
     files = iter_train_files(corpus_dir)
@@ -257,10 +257,10 @@ def build_model_card(
 ) -> dict[str, Any]:
     """The card that travels with the model, carrying what would otherwise be unrecoverable."""
     # Drop the absolute ``input`` path from sp_flags before writing so the card stays portable
-    # across machines; keep everything else.
+    # across machines. keep everything else.
     portable_flags = {k: v for k, v in sp_flags.items() if k not in ("input",)}
     portable_flags["user_defined_symbols_count"] = len(uds)
-    # Keep a preview of the UDS list; the full list is mostly mined postcodes, redundant in
+    # Keep a preview of the UDS list. the full list is mostly mined postcodes, redundant in
     # the card. The full list is recoverable from ``tokenizer.vocab`` (UDS shows up as
     # `<surface>\t0` entries adjacent to the special tokens).
     portable_flags["user_defined_symbols_preview"] = uds[:64]

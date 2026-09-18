@@ -106,7 +106,7 @@ const DEFAULT_WAIT_INTERVAL = 50
 /**
  * Poll `callback` until it stops throwing (or `timeout` elapses), advancing React inside act() between tries. Each
  * iteration awaits a full `act()` (draining that round's microtasks + a timer tick), so effect chains flush a step at a
- * time; the callback then runs SYNCHRONOUSLY outside act — the only out-of-act code, and being sync it offers no point
+ * time. the callback then runs SYNCHRONOUSLY outside act — the only out-of-act code, and being sync it offers no point
  * for a stray update to escape the act scope.
  *
  * Drop-in for `vi.waitFor` over this suite's usage (synchronous assertion callbacks). An async callback is still

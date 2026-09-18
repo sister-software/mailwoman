@@ -58,7 +58,7 @@ const PLACETYPE_TO_KEY: Record<string, keyof PhotonProperties> = {
 }
 
 /**
- * A real address fits comfortably; longer is malformed input (and would exceed the model's window).
+ * A real address fits comfortably. longer is malformed input (and would exceed the model's window).
  */
 const MAX_QUERY_LEN = 512
 
@@ -98,7 +98,7 @@ async function serve(engineStamp: ResolvedEngineStamp): Promise<void> {
 
 	const engine: PhotonEngine = {
 		async search(params) {
-			// Empty/whitespace → no query; absurdly long → not an address (and would blow the model's input).
+			// Empty/whitespace → no query. absurdly long → not an address (and would blow the model's input).
 			const query = params.q?.trim()
 
 			if (!query || query.length > MAX_QUERY_LEN) return photonCollection([])
@@ -142,7 +142,7 @@ async function serve(engineStamp: ResolvedEngineStamp): Promise<void> {
 			// hierarchy carries no locality/postcode — the register ATTESTS the rooftop's commune and
 			// postcode even when the query never named them, and #1014's decorate-from-the-resolved-place
 			// doctrine covers register attestations exactly as it covers gazetteer rows. The key form is
-			// normalized; title-case it for display (the extracts store no display-cased locality).
+			// normalized. title-case it for display (the extracts store no display-cased locality).
 			const places = result.hierarchy.map((h) => ({ tag: h.tag, name: h.name }))
 
 			if (result.rooftop?.localityNorm && !places.some((p) => p.tag === "locality")) {
@@ -178,7 +178,7 @@ async function serve(engineStamp: ResolvedEngineStamp): Promise<void> {
 				...(streetGrade ? { street: { name: result.street } } : {}),
 			}
 
-			// #1016: candidates[0] is the primary itself; its ranked alternatives (Springfield MA/IL/…) become the
+			// #1016: candidates[0] is the primary itself. its ranked alternatives (Springfield MA/IL/…) become the
 			// extra features, up to the requested `limit`. Each alternative is a single resolved place.
 			const alternatives = result.candidates.slice(1).map((c) => {
 				const cc = matchCountry(c.countryCode)

@@ -13,9 +13,9 @@
  *   against the NPI grouping (pairwise P/R/F1 + adjusted Rand).
  *
  *   Honest reading (per the epic): NPI-as-truth is CONSERVATIVE. A cluster that merges two NPIs is a
- *   candidate "same entity, two NPIs" surfaced for review, not an error we adjudicate; and a single
+ *   candidate "same entity, two NPIs" surfaced for review, not an error we adjudicate. and a single
  *   NPI split across two genuinely-distant addresses is geo-first behaving correctly, counted here
- *   as a recall miss. We resolve and report; interpretation is the consumer's.
+ *   as a recall miss. We resolve and report. interpretation is the consumer's.
  *
  *   Sample: a tractable, variation-rich subset — providers in one state (default TX) that have ≥1
  *   alternate name, so every entity has ≥2 records and the dedup is non-trivial. Streams the 4.8 GB
@@ -109,7 +109,7 @@ export interface NPPESDedupBenchmarkOptions {
 	h3Res?: number
 	/**
 	 * Geocode the sample across a worker pool ({@linkcode geocodeStream}) instead of the serial in-process path. Heavy
-	 * per-row work (ONNX parse + WOF SQLite) → threading pays; measured ~1.5× at 2 workers, coordinates identical.
+	 * per-row work (ONNX parse + WOF SQLite) → threading pays. measured ~1.5× at 2 workers, coordinates identical.
 	 */
 	parallelGeocode?: boolean
 	/**
@@ -152,7 +152,7 @@ export async function nppesDedupBenchmark(
 
 	// Geocode and ingest records, carrying the held-out NPI in record.id.
 	// geocoder is injected (see ./eval-geocoder.ts); model-swap for a multi-version curve rides the
-	// command's factory config (--model/--tokenizer/--model-card; modelCardPath is MANDATORY when
+	// command's factory config (--model/--tokenizer/--model-card. modelCardPath is MANDATORY when
 	// modelPath is set — without it a STAGE3 model silently mis-decodes into empty parses). ---
 	report?.("[C] building the geocoder + geocoding records…")
 
@@ -190,7 +190,7 @@ export async function nppesDedupBenchmark(
 			}
 		}
 
-		// geocodeStream yields in completion order; restore input order so downstream cluster tie-breaks are byte-stable.
+		// geocodeStream yields in completion order. restore input order so downstream cluster tie-breaks are byte-stable.
 		geocoded.sort((a, b) => (order.get(a.id) ?? 0) - (order.get(b.id) ?? 0))
 		records = geocoded
 	} else {
@@ -234,7 +234,7 @@ export async function nppesDedupBenchmark(
 	const orgNameCoordLabel = buildOrgNameCoordGrain(npiPrimary, npiCoord)
 	const geocodedNpis = [...npiPrimary.keys()].filter((n) => npiCoord.has(n)).length
 
-	const H3_RES = options.h3Res ?? 11 // res 11 ≈ 25 m edge; res 10 ≈ 65 m (block scale)
+	const H3_RES = options.h3Res ?? 11 // res 11 ≈ 25 m edge. res 10 ≈ 65 m (block scale)
 	const orgNameH3Label = buildOrgNameH3Grain(npiPrimary, npiCoord, H3_RES)
 
 	// Progressively enable comparison-model settings at the default threshold.
@@ -244,7 +244,7 @@ export async function nppesDedupBenchmark(
 
 	// learnedScorer:false throughout — this benchmark studies the FS COMPARISON-MODEL settings (#617/#625).
 	// The learned scorer is now default-on, so it must be pinned off here or every row would silently be the
-	// GBT; the learned scorer is measured separately (learned-scorer-clustering-eval / -crossstate-eval).
+	// GBT. the learned scorer is measured separately (learned-scorer-clustering-eval / -crossstate-eval).
 	const progression = buildSettings(addressFrequency).map((l) => {
 		const res = resolveEntities(records, { learnedScorer: false, trainEM: TRAIN_EM, threshold: 0, ...l.config })
 
@@ -257,7 +257,7 @@ export async function nppesDedupBenchmark(
 	// input-scoped address-frequency table + collapsed spatial. On this deliberately-sub-sampled corpus the
 	// auto table is sparse (few repeats), so the inverse-frequency signal is near-inert and F1 collapses to
 	// ≈baseline — not a regression, just the honest truth that IDF is a corpus statistic you can't synthesize
-	// from a sample. On a full-dataset dedup the input is the corpus and this default reaches the baseline; the
+	// from a sample. On a full-dataset dedup the input is the corpus and this default reaches the baseline. the
 	// CLI passes a corpus-wide table built from the full source files so even a geocoded sub-sample benefits.
 	const defaultRes = resolveEntities(records, { learnedScorer: false, trainEM: TRAIN_EM, threshold: 0 })
 	const defaultOutOfBox = score(defaultRes.entities, npiLabel)

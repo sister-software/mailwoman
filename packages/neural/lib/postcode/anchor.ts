@@ -187,7 +187,7 @@ export function gbOutwardCode(normalized: string): string | null {
 }
 
 /**
- * `1 - log2(k)/log2(MAX_COUNTRIES)`, clamped to [0, 1]. k=1 → 1.0; k=2 → ~0.70; k≥MAX_COUNTRIES → 0.
+ * `1 - log2(k)/log2(MAX_COUNTRIES)`, clamped to [0, 1]. k=1 → 1.0. k=2 → ~0.70. k≥MAX_COUNTRIES → 0.
  */
 function confidenceFromCountryCount(k: number): number {
 	if (k <= 0) return 0
@@ -203,7 +203,7 @@ function confidenceFromCountryCount(k: number): number {
  * postcode are the same shape, so membership alone can't separate `12345 Main St` (house number that happens to be a
  * real ZIP elsewhere) from `San Francisco 94105` (postcode). The structural tell is cheap and locale-general: house
  * numbers sit beside the street, postcodes beside the city. We scale rather than zero — the gazetteer still vouches for
- * the shape, so a lone code in a street-only line stays usable; the penalty just lets a real trailing postcode out-rank
+ * the shape, so a lone code in a street-only line stays usable. the penalty just lets a real trailing postcode out-rank
  * it.
  */
 const HOUSE_NUMBER_PENALTY = 0.2
@@ -314,7 +314,7 @@ export function extractPostcodeAnchors(
 		const spanText = text.slice(match.start, match.end)
 		const normalized = normalizePostcode(spanText)
 
-		// Exact first; then the GB outward fallback (structural, not a guess); then edit-distance-1.
+		// Exact first. then the GB outward fallback (structural, not a guess). then edit-distance-1.
 		let hits = resolver.lookup(normalized)
 		let matchType: PostcodeAnchor["matchType"] = hits.length ? "exact" : "none"
 
@@ -347,7 +347,7 @@ export function extractPostcodeAnchors(
 		}
 
 		// Membership: distinct countries the postcode exists in (regardless of whether we have a centroid).
-		// oxlint-disable-next-line unicorn/no-array-sort -- sorts a freshly-built array; toSorted would double-allocate on a hot path
+		// oxlint-disable-next-line unicorn/no-array-sort -- sorts a freshly-built array. toSorted would double-allocate on a hot path
 		const countries = [...new Set(hits.map((h) => h.country))].sort()
 		const k = countries.length
 
@@ -370,7 +370,7 @@ export function extractPostcodeAnchors(
 
 		// Restrict the street-word check to the systems this code plausibly belongs to: its gazetteer
 		// membership when known (precise — a US-only ZIP never checks the German vocab), else the
-		// format-shape candidates from codex (for a code in no gazetteer; its confidence is 0 anyway).
+		// format-shape candidates from codex (for a code in no gazetteer. its confidence is 0 anyway).
 		const systems = countries.length
 			? new Set(countries.map((c) => c.toLowerCase()))
 			: new Set<string>(candidateSystemsForPostcode(normalized))

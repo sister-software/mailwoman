@@ -131,7 +131,7 @@ export async function putRun(run: StoredRun, dir: PathBuilderLike = RUN_STORE_DI
 /**
  * Persist a run and apply retention, or say why it could not be done.
  *
- * A failure here must not fail the measurement that produced it. The store is a cache; the queries have already been
+ * A failure here must not fail the measurement that produced it. The store is a cache. the queries have already been
  * issued, and for a billed arm already paid for, so throwing away a completed comparison because a disk was full would
  * cost more than the cache is worth. The caller carries the returned sentence into its warnings, so the loss is
  * reported rather than discovered later as a run_id that "was pruned".

@@ -206,7 +206,7 @@ def test_glue_requires_adjacency():
 
 def test_glue_default_off_preserves_rng_stream():
     # glue_prob=0 must not consume an rng draw — existing recipes stay bit-identical.
-    # (directional + region each always draw once; glue must not add a third.)
+    # (directional + region each always draw once. glue must not add a third.)
     ref = random.Random(7)
     ref.random(), ref.random()
     expected = ref.random()
@@ -387,7 +387,7 @@ def test_punct_drop_removes_separator_commas_and_retargets_spans():
 
 
 def test_punct_drop_preserves_interior_apostrophe():
-    """A gap comma is dropped; an apostrophe inside the venue span is kept (drop is gap-only)."""
+    """A gap comma is dropped. an apostrophe inside the venue span is kept (drop is gap-only)."""
     row = {
         "raw": "Ben & Jerry's, Burlington",
         "tokens": ["Ben", "&", "Jerry's,", "Burlington"],
@@ -415,7 +415,7 @@ def test_punct_drop_removes_standalone_punct_token():
     }
     dropped = drop_separator_punct(row)
     assert dropped is not None
-    assert dropped["raw"] == "Portland  OR"  # the comma char removed; its surrounding spaces remain
+    assert dropped["raw"] == "Portland  OR"  # the comma char removed. its surrounding spaces remain
     assert dropped["tokens"] == ["Portland", "OR"]
     assert dropped["labels"] == ["B-locality", "B-region"]
     assert _span_texts(dropped) == [("locality", "Portland"), ("region", "OR")]
@@ -489,7 +489,7 @@ def _dotted_po_box_row() -> dict:
     # raw:  P.O. Box 123, Buffalo NY 14201
     #       0         1         2
     #       0123456789012345678901234567890
-    # The po_box span [0, 12) excludes the trailing comma; the comma rides inside the "123,"
+    # The po_box span [0, 12) excludes the trailing comma. the comma rides inside the "123,"
     # whitespace token. A token-label re-derive would absorb it into the span.
     return {
         "raw": "P.O. Box 123, Buffalo NY 14201",

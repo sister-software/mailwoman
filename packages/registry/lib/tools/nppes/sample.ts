@@ -64,7 +64,7 @@ export interface NPPESSampleOptions {
 	registryPath: string
 	otherNamesPath: string
 	/**
-	 * Already upper-cased; compared against the practice-location state column.
+	 * Already upper-cased. compared against the practice-location state column.
 	 */
 	state: string
 	maxNpis: number
@@ -77,7 +77,7 @@ export interface NPPESMultiSampleOptions {
 	registryPath: string
 	otherNamesPath: string
 	/**
-	 * Already upper-cased; compared against the practice-location state column.
+	 * Already upper-cased. compared against the practice-location state column.
 	 */
 	states: readonly string[]
 	maxNpisPerState: number
@@ -167,7 +167,7 @@ export async function buildNPPESStateSamples(
 
 				// the NPI's registrant — shared across its records
 				// #625: the taxonomy-code set (up to 15 slots), whitespace-joined — identical across the NPI's
-				// records by construction (it's a per-NPI registry attribute), so it never splits one entity;
+				// records by construction (it's a per-NPI registry attribute), so it never splits one entity.
 				// it only separates co-located distinct providers whose sets are disjoint.
 				const taxonomy = C.taxonomy
 					.map((col) => norm(r[col]))
@@ -176,7 +176,7 @@ export async function buildNPPESStateSamples(
 
 				// Entity-level (site) truth: same org + same physical address. Subparts (NPPES
 				// "Is Organization Subpart" + parent LBN/TIN) collapse to their PARENT, so the matcher isn't
-				// charged for correctly fusing one org's many subpart-NPIs at a site; an NPI's mailing-vs-
+				// charged for correctly fusing one org's many subpart-NPIs at a site. an NPI's mailing-vs-
 				// practice records stay DISTINCT sites. orgKey = parent identity for subparts, else the NPI
 				// (independent orgs sharing an address stay distinct — the conservative choice).
 				const isSubpart = norm(r[C.isSubpart]).toUpperCase() === "Y"

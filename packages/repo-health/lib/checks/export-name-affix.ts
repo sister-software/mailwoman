@@ -32,7 +32,7 @@ export const AFFIX_IGNORE_MARKER = "repo-health-ignore export-name-affix --"
 
 /**
  * How many camelCase components a shared run must carry. One-component runs are the vocabulary of the tree — `read`,
- * `build`, `file` — so a floor of one reports nearly every name against nearly every other; measured over this
+ * `build`, `file` — so a floor of one reports nearly every name against nearly every other. measured over this
  * repository's exported function names, the floor is the difference between 417 pairs and 130.
  */
 const COMPONENT_FLOOR = 2

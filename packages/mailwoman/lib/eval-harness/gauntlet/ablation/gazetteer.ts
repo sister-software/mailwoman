@@ -8,7 +8,7 @@
  *
  *   - `wof/admin-global-priority.db` — `spr` + `ancestors`. The LADDER comes from here: a resolved place id → its
  *       containment chain, with each ancestor's centroid and bbox. The walk is `ancestorLineage`'s (shared with the
- *       reverse geocoder, `resolver-wof-sqlite/ancestry.ts`), extended with the bbox columns this model needs; both
+ *       reverse geocoder, `resolver-wof-sqlite/ancestry.ts`), extended with the bbox columns this model needs. both
  *       probes are PK / `ancestors_by_id` lookups.
  *   - `wof/candidate.db` — the byte-range candidate gazetteer. The AMBIGUITY count comes from here, keyed by the same
  *       `normalizeLocalityForKey` the resolver probes with, so "how many places share this name" is asked of the exact
@@ -116,7 +116,7 @@ export function collapseCoincident(places: readonly AblationPlace[]): AblationPl
 
 /**
  * How many candidate rows one name probe reads before collapsing. The probe is a contiguous scan of one `name_key` on
- * the clustered B-tree, so the cost is bounded by the namesake cluster itself; the cap only guards the pathological
+ * the clustered B-tree, so the cost is bounded by the namesake cluster itself. the cap only guards the pathological
  * keys (`San José` carries 886 rows worldwide). Sized well above the corpus's worst (886) so no corpus name is
  * truncated — a truncated list would UNDERSTATE ambiguity, which is the direction that turns an abstain into a false
  * expectation.
@@ -124,7 +124,7 @@ export function collapseCoincident(places: readonly AblationPlace[]): AblationPl
 const NAME_PROBE_LIMIT = 2000
 
 /**
- * The two-database probe. Construct once per run; disposal releases both handles.
+ * The two-database probe. Construct once per run. disposal releases both handles.
  */
 export class AblationGazetteer implements AblationGazetteerProbe {
 	readonly available: boolean
@@ -211,7 +211,7 @@ export class AblationGazetteer implements AblationGazetteerProbe {
 		)
 
 		// The `ancestorLineage` walk (resolver-wof-sqlite/ancestry.ts) plus the bbox columns — same join, same
-		// `ancestors_by_id` index; ordering is done in JS below, deepest first.
+		// `ancestors_by_id` index. ordering is done in JS below, deepest first.
 		this.#lineageStatement = this.#ancestry.prepare(
 			`SELECT s.id AS id, a.ancestor_placetype AS placetype, s.name AS name, s.country AS country,
 				s.latitude AS latitude, s.longitude AS longitude,
@@ -263,7 +263,7 @@ export class AblationGazetteer implements AblationGazetteerProbe {
 					lat: row.latitude,
 					lon: row.longitude,
 					bbox: bboxOf(row.min_latitude, row.max_latitude, row.min_longitude, row.max_longitude),
-					// `spr` carries no population column; the ranking margin is only ever taken over
+					// `spr` carries no population column. the ranking margin is only ever taken over
 					// candidate-table rows, so a lineage place's rank is never read.
 					negRank: 0,
 					population: null,
@@ -307,7 +307,7 @@ export class AblationGazetteer implements AblationGazetteerProbe {
 	containingChain(lat: number, lon: number): AblationPlace[] {
 		if (!this.#reverse) return []
 
-		// The reverse hierarchy is already deepest-first; re-read each id off `spr` so every rung carries the bbox
+		// The reverse hierarchy is already deepest-first. re-read each id off `spr` so every rung carries the bbox
 		// (the reverse candidate shape does not).
 		return this.#reverse
 			.reverseGeocodeSync(lat, lon)

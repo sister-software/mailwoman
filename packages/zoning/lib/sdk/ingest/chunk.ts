@@ -11,7 +11,7 @@
  *   510,000 and 798,000 features on geometry that classifies in milliseconds in a fresh process. A build that
  *   completes only when fragmentation happens to stay low is not a reproducible build, so the classification
  *   is bounded BY CONSTRUCTION — one process per range of the authority's own feature ids. This product's
- *   85,330 features fit inside the default bound; the bound ships anyway, because determinism by construction
+ *   85,330 features fit inside the default bound. the bound ships anyway, because determinism by construction
  *   is not the same fact as determinism by luck.
  *
  *   THE VOCABULARY IS A CENSUS, NOT A CHECK. The declared generic-type domain is closed and the source

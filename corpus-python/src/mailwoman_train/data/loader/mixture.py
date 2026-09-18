@@ -70,7 +70,7 @@ def _index_by_source(paths: list[Path]) -> dict[str, list[Path]]:
     guard, and to the epoch audit alike. Measured on `v0.31.0-region-code-and-unit`: 8 of 718 train files carry
     more than one source, one carries four, and two sources appear in no other file.
 
-    A file that is missing or unreadable is skipped and named; one with a non-string source raises, because that is
+    A file that is missing or unreadable is skipped and named. one with a non-string source raises, because that is
     a --golden (label-less) file used as a train file and it used to fail later with a cryptic "'<' not supported
     between NoneType and str" from `sorted()`.
     """
@@ -262,7 +262,7 @@ def _raw_row_stream(
     # identifies a file's source from its first row and filters every row to it — correct for
     # the source-segregated train corpus, but a mixed-source validation file silently loses
     # every later-source row (the inherited val files are mixed, so "3 val files" was never a
-    # coverage receipt). Held-out streams have no source mixture to steer; yield every
+    # coverage receipt). Held-out streams have no source mixture to steer. yield every
     # filter-accepted row of every file, file order shuffled.
     if split != "train":
         yield from _stream_held_out(

@@ -7,14 +7,14 @@
  *   postcode "1012 LG" as a house number + a 2-letter street ("1012 LG Amsterdam" → house_number
  *   1012 / street "LG" / locality Amsterdam), and that spurious street context then pulls the
  *   locality into the US situs tier (Amsterdam → Amsterdam, NY). Letters-first postcodes (UK
- *   "SW1A 1AA") parse natively; the `\d{4} [A-Z]{2}` shape does not, and the soft query-shape prior
+ *   "SW1A 1AA") parse natively. the `\d{4} [A-Z]{2}` shape does not, and the soft query-shape prior
  *   (0.9 log-odds) can't overcome the strong house-number reading of a leading 4-digit token.
  *
  *   This is the model-first fix as DATA (the #723/#901 discipline — teach the boundary, don't
  *   override the decoder): real NL (street, number, postcode, city) tuples in the orders Dutch
  *   addresses actually use, with the full postcode tagged as one postcode span. Both the SPACED
  *   ("1012 LG", the failing form — a 2-token span) and UNSPACED ("1012LG", 1 token) forms are
- *   emitted so the model learns the digits-first postcode regardless of spacing; the three orders
+ *   emitted so the model learns the digits-first postcode regardless of spacing. the three orders
  *   keep polarity balanced (the v1.9.9 lesson).
  */
 
@@ -23,7 +23,7 @@ import { mulberry32 as makeMulberry32 } from "@mailwoman/core/utils"
 import { alignAndWrite, readTuples, type CorpusRecipe, recipeSourceID } from "#recipes/scaffold"
 
 /**
- * "1012LG" → "1012 LG". The tuples carry the unspaced OA form; the spaced form is the failing case.
+ * "1012LG" → "1012 LG". The tuples carry the unspaced OA form. the spaced form is the failing case.
  */
 function spacePostcode(pc: string): string {
 	return pc.replace(/^(\d{4})([A-Z]{2})$/, "$1 $2")
@@ -61,12 +61,12 @@ export const nlPostcodeRecipe: CorpusRecipe = {
 				continue
 			}
 
-			// Spacing rotates so the model sees both the failing spaced form and the unspaced form; the
+			// Spacing rotates so the model sees both the failing spaced form and the unspaced form. the
 			// components.postcode value must match the raw form so alignment tags the right span.
 			const spaced = read % 2 === 0
 			const postcode = spaced ? spacePostcode(rawPostcode) : rawPostcode
 
-			// The three orders Dutch addresses use. `street number, postcode city` is canonical; the
+			// The three orders Dutch addresses use. `street number, postcode city` is canonical. the
 			// pc-first form is where the leading digits most strongly mis-read as a house number.
 			const order = read % 3
 			let raw: string

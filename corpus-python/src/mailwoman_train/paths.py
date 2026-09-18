@@ -1,7 +1,7 @@
 """Every path this package builds starts here.
 
 The counterpart of `@mailwoman/core/data-root` and `@mailwoman/core/paths`. A path assembled from a
-string literal encodes one machine's layout; these functions read the roots the environment names,
+string literal encodes one machine's layout. these functions read the roots the environment names,
 so the same code answers correctly on a lab checkout, a Modal container and a fresh clone.
 
 Pick the root by what the file IS, not by where it happens to sit today:
@@ -43,7 +43,7 @@ def temp_root_path(*parts: str) -> Path:
     """A path under `$MAILWOMAN_TEMP_ROOT`, for a named intermediate worth keeping.
 
     Not a replacement for `tempfile`. A scratch file nothing reads afterwards should clean itself
-    up; this is for output a human goes looking for.
+    up. this is for output a human goes looking for.
     """
     return public().temp_root.joinpath(*parts)
 

@@ -36,7 +36,7 @@ test("departementInfo: trims surrounding whitespace", () => {
 test("departementInfo: unknown / malformed / non-string → null", () => {
 	// 20 was split into 2A/2B and is no longer a valid département code
 	expect(departementInfo("20")).toBeNull()
-	// 96 is unassigned; 975/977/978 overseas collectivities are not DOM and not in the table
+	// 96 is unassigned. 975/977/978 overseas collectivities are not DOM and not in the table
 	expect(departementInfo("96")).toBeNull()
 	expect(departementInfo("975")).toBeNull()
 	expect(departementInfo("00")).toBeNull()

@@ -41,7 +41,7 @@ export interface PostcodeShape {
 }
 
 /**
- * Every postcode shape, in priority order. Compiled once at module load; each `RegExp` carries the `g` flag because
+ * Every postcode shape, in priority order. Compiled once at module load. each `RegExp` carries the `g` flag because
  * callers scan a whole line, and `u` as well where the row declares it.
  */
 export const POSTCODE_SHAPES: readonly PostcodeShape[] = postcodeShapeData.shapes.map((shape) => ({

@@ -134,7 +134,7 @@ const PLACES: ResolvedPlace[] = [
 		prominence: 3.3606,
 		exactMatch: true,
 	},
-	// A postcode → point for the not-bare guard; sits on Berlin, Wisconsin (id 5) so the check ADMITS it.
+	// A postcode → point for the not-bare guard. sits on Berlin, Wisconsin (id 5) so the check ADMITS it.
 	{ id: 900, name: "54923", placetype: "postalcode", country: "US", lat: 43.97, lon: -88.95, score: 1 },
 ]
 
@@ -391,7 +391,7 @@ describe("importance key in the admin walk (#17)", () => {
  *   placetype, prominence arbitrates.
  * - Even a CORRECT `country` tag failed under the locale-inferred default scope: the hard filter can only admit the scope
  *   country itself, so bare `Germany` under en-US filtered out the DE row and fell to Camp Dennison, Ohio (an FTS alias
- *   — its historical name is "Germany"). Fix: an INFERRED scope is withheld from `country`-placetype lookups; an
+ *   — its historical name is "Germany"). Fix: an INFERRED scope is withheld from `country`-placetype lookups. an
  *   explicit scope stays supreme.
  */
 describe("bare-country class", () => {
@@ -497,7 +497,7 @@ describe("bare-country class", () => {
 		expect(out.roots[0]?.metadata?.["bare_country_repick"]).toBe(true)
 	})
 
-	// #1678 thread 2 — the parse half. The race finds the right PLACE; before this the node kept the wrong
+	// #1678 thread 2 — the parse half. The race finds the right PLACE. before this the node kept the wrong
 	// TAG, so a bare country answered with a correct coordinate under `{"locality": …}`. That label misleads
 	// the moment the same toponym sits inside a longer address rather than alone.
 	it("retags a country repick to `country`", async () => {
@@ -569,7 +569,7 @@ describe("bare-country class", () => {
 
 	it("scopes the country race by the inferred filter's own query country only when explicit", async () => {
 		// Under the inferred posture the caller (the #912 guard) has already withheld the scope for the
-		// bare-locality shape, so the race runs worldwide; nothing here asserts an inferred locality
+		// bare-locality shape, so the race runs worldwide. nothing here asserts an inferred locality
 		// filter, because that combination does not reach the resolver in production.
 		const calls: Array<{ text: string; placetype?: unknown; country?: string }> = []
 

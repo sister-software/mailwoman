@@ -9,7 +9,7 @@
  *   configured — the trace carries no record of it), **silent** (fed, and fed all zeros — the retrieval side had
  *   nothing to say about any token), or **fired** (fed at least one nonzero feature). Collapsing absent into silent is
  *   the standing meaning-of-zero mistake: one is a fact about the configuration, the other about this input, and the
- *   remedies are different (wire the mechanism vs. extend its data).
+ *   actions are different (wire the mechanism vs. extend its data).
  *
  *   The predicate that matters downstream: a parse where every present channel is silent was decided by the token
  *   embeddings alone. That is often correct behaviour — the Weimar case parsed correctly with all channels silent —

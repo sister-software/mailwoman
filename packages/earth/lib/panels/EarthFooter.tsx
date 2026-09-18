@@ -36,7 +36,7 @@ const ATTRIBUTION = [
 
 export interface EarthFooterProps {
 	/**
-	 * What is loading right now, beside the identity. The bar across the top of the viewport says how far along it is;
+	 * What is loading right now, beside the identity. The bar across the top of the viewport says how far along it is.
 	 * this says which artifact it is fetching, which is the part a number cannot carry. Absent on the canned runtime,
 	 * which loads nothing.
 	 */

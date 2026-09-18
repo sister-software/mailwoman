@@ -44,7 +44,7 @@ const { values } = parseArguments({
 		"out-json": { type: "string" },
 		"weights-cache": { type: "string" },
 		eval: { type: "string", default: String(dataRootPath("eval", "coord", "us.jsonl")) },
-		// Which codex layout the three well-formed arms are written through. The default matches the default panel; a
+		// Which codex layout the three well-formed arms are written through. The default matches the default panel. a
 		// different panel needs its own country, because a layout is what makes the surface idiomatic rather than a
 		// template that happens to suit one country.
 		country: { type: "string", default: "US" },
@@ -117,7 +117,7 @@ const ARMS = [
 ] as const
 
 /**
- * Misses printed per arm. Enough to read what the wrong answers look like; the rate above them is the measurement.
+ * Misses printed per arm. Enough to read what the wrong answers look like. the rate above them is the measurement.
  */
 const EXAMPLES_PER_ARM = 5
 
@@ -139,7 +139,7 @@ interface RowOutcome {
 	words: number
 }
 
-// A probe written to price a corpus change has to be able to point at the model that change produced; without this it
+// A probe written to price a corpus change has to be able to point at the model that change produced. without this it
 // can only ever grade the installed one, which is the arm the change is measured AGAINST.
 const deps = await buildGauntletDeps(values["weights-cache"] ? { weightsCacheRoot: values["weights-cache"] } : {})
 const report: Record<string, { matched: number; noLocality: number; total: number; examples: string[] }> = {}

@@ -2,7 +2,7 @@
 
 The third of three country builders, and the last without a seeded reference. `build` threads one
 `random.Random` through the selection masks, the register draw and the country-prefix fraction, so
-moving a draw re-renders the corpus; and nothing in the suite ran this path, because it reads an
+moving a draw re-renders the corpus. and nothing in the suite ran this path, because it reads an
 Overture-TW parquet no test has.
 
 The fixture is not a sample of that source. It is the shapes the renderers branch on: a village

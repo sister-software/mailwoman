@@ -314,7 +314,7 @@ function refusalRow(run: GeocodeRun): string[] {
 
 	if (!markers?.length) return []
 
-	// `evidence` is the marker's MEASUREMENT (`Record<string, unknown>`), so it is serialized rather than interpolated;
+	// `evidence` is the marker's MEASUREMENT (`Record<string, unknown>`), so it is serialized rather than interpolated.
 	// a template literal renders it `[object Object]` and the line then names a refusal it cannot justify. `mechanism`
 	// is the `family:rule` that fired and is what a reader acts on — the kind alone does not say which rule refused.
 	const named = markers

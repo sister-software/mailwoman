@@ -111,7 +111,7 @@ const PARTIAL_PATTERNS = [/\u001BO?$/y, /\u001B\[[\d;<>?]*[\u0020-\u002F]*$/y, /
 /* oxlint-enable no-control-regex */
 
 /**
- * Wheel reports set bit 6 of the button field; the low bit then separates up (0) from down (1).
+ * Wheel reports set bit 6 of the button field. the low bit then separates up (0) from down (1).
  */
 const WHEEL_FLAG = 64
 
@@ -212,7 +212,7 @@ function mouseInput(button: number, column: number, row: number, final: string):
 }
 
 /**
- * Decodes one raw-mode stdin chunk into input events. Unrecognized bytes are dropped; an unresolved trailing escape
+ * Decodes one raw-mode stdin chunk into input events. Unrecognized bytes are dropped. an unresolved trailing escape
  * fragment is returned rather than decoded, and the caller passes it back as `pending` with the next chunk.
  */
 export function decodeInputChunk(chunk: string, pending = ""): DecodedInput {

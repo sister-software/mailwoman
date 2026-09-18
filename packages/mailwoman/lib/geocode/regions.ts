@@ -244,7 +244,7 @@ export class RegionDatabaseProvider implements Disposable {
 
 	/**
 	 * Re-read the manifest, re-probe the database paths, and atomically swap any cached database whose resolved path
-	 * changed. New requests see the new version immediately; the old handles are RETIRED and closed on the next reload
+	 * changed. New requests see the new version immediately. the old handles are RETIRED and closed on the next reload
 	 * (one-generation grace — safe because find() is synchronous, so no in-flight query can still hold a handle once a
 	 * request yields). Returns the new version map.
 	 */

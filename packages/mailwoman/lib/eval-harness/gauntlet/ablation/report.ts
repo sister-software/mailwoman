@@ -192,7 +192,7 @@ export function renderAblationMarkdown(
 		const byReason = new Map<string, number>()
 
 		for (const s of meta.skips) {
-			// Reasons carry the offending value inline; bucket by the leading clause so the report counts CLASSES.
+			// Reasons carry the offending value inline. bucket by the leading clause so the report counts CLASSES.
 			const cls = s.reason.split(":")[0]!.split(" inside")[0]!
 
 			byReason.set(cls, (byReason.get(cls) ?? 0) + 1)

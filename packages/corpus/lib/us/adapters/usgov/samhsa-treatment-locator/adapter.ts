@@ -21,7 +21,7 @@
  *   for it). Operators wanting a different join policy can subclass the factory.
  *
  *   Column names below match the canonical SAMHSA Behavioral Health Treatment Services Locator CSV
- *   export header. Operators substituting a closely-related extract should rename columns to match;
+ *   export header. Operators substituting a closely-related extract should rename columns to match.
  *   the README has the mapping cheatsheet.
  *
  *   License: stamped `"Public Domain"` per the SAMHSA Open Data Foundry's federal-government

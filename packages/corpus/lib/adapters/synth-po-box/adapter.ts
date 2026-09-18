@@ -89,7 +89,7 @@ export function createSynthPoBoxAdapter(opts: SynthPoBoxAdapterOptions = {}): Co
 		async *rows(options: AdapterOptions): AsyncIterable<CanonicalRow> {
 			const random = makeLcg(opts.seed ?? Date.now())
 
-			// TextSpliterator streams string lines; the per-line tryParsingJSON below keeps this reader
+			// TextSpliterator streams string lines. the per-line tryParsingJSON below keeps this reader
 			// tolerant of malformed rows (skipped++), so TextSpliterator + a non-throwing parse — not
 			// JSONSpliterator, which would throw on the first bad line.
 			const lines = TextSpliterator.fromAsync(options.inputPath)
@@ -116,7 +116,7 @@ export function createSynthPoBoxAdapter(opts: SynthPoBoxAdapterOptions = {}): Co
 				}
 
 				// Region is required EXCEPT for region-less locales (NZ: `Private Bag 12, Auckland 1010`
-				// has no region token, #517). synthesizePoBoxRow handles region absence; the guard just
+				// has no region token, #517). synthesizePoBoxRow handles region absence. the guard just
 				// must not discard those tuples as "missing region".
 				const regionOptional = input.country ? REGION_OPTIONAL_LOCALES.has(poBoxTemplateLocale(input.country)) : false
 
@@ -133,7 +133,7 @@ export function createSynthPoBoxAdapter(opts: SynthPoBoxAdapterOptions = {}): Co
 
 					if (!synth) continue
 
-					// Include `v` in dependent_locality slot to vary the digest across variants;
+					// Include `v` in dependent_locality slot to vary the digest across variants.
 					// stableSourceID only accepts ComponentTag keys.
 					const sourceID = stableSourceID(SYNTH_PO_BOX_ADAPTER_ID, {
 						locality: `${input.locality}#${v}`,

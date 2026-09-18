@@ -26,7 +26,7 @@ export function normalizePlacetypes(p: FindPlaceQuery["placetype"]): WOFPlacetyp
  *
  * - Strip all punctuation except trailing `*` from each whitespace-separated token.
  * - **Trailing `*`** is preserved as FTS5 **prefix syntax** — `627*` becomes the literal `627*` (unquoted). The caller
- *   signaled they want a prefix; respect that.
+ *   signaled they want a prefix. respect that.
  * - All other tokens are wrapped in `"..."` as a single-word phrase. Conservative — handles apostrophes, parens, accented
  *   input, etc. safely.
  * - Multiple tokens join with implicit `AND`.
@@ -36,7 +36,7 @@ export function normalizePlacetypes(p: FindPlaceQuery["placetype"]): WOFPlacetyp
  * - `"Paris"` → `"Paris"` (phrase)
  * - `"627*"` → `627*` (prefix)
  * - `"St. (Petersburg)"` → `"St" "Petersburg"` (two phrases, AND-joined)
- * - `"Thiron-Gardais"` → `"Thiron" "Gardais"` (intra-token punctuation SPLITS — #945; fusing to `ThironGardais` matched
+ * - `"Thiron-Gardais"` → `"Thiron" "Gardais"` (intra-token punctuation SPLITS — #945. fusing to `ThironGardais` matched
  *   nothing because the FTS doc tokenizes the hyphenated name as two terms)
  * - `"110 00"` with `fuseTokens` (postcode-typed) → `"110" "00"` per-token fused — the #920 name law
  * - `"Pari* TX"` → `Pari* "TX"` (mixed prefix + phrase)
@@ -65,7 +65,7 @@ export function sanitizeFTSQuery(text: string, opts?: { fuseTokens?: boolean }):
 		// Everything else SPLITS on intra-token punctuation — the behavior the docstring always
 		// promised ("St. (Petersburg)" → two phrases). The old code DELETED punctuation instead,
 		// fusing "Thiron-Gardais" into the unmatchable single term `ThironGardais` while the FTS
-		// doc holds two terms (#945 — the entire hyphenated-name class missed at the raw lookup;
+		// doc holds two terms (#945 — the entire hyphenated-name class missed at the raw lookup.
 		// masked for years because pre-splice tokenizers never emitted hyphen-preserved values).
 		const parts = trimmed.split(/[^\p{L}\p{N}]+/u).filter((part) => part.length)
 

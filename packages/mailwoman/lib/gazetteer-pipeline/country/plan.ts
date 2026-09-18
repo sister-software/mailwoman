@@ -8,7 +8,7 @@
  *   Every failure in the thread that produced this was a COORDINATION failure rather than a hard one. A
  *   repository name landed in a destination slot and 65 GB arrived. A filter went missing. The recipe has
  *   to be edited in the same change as the clone, and nothing checked it. Each step is individually
- *   simple; what is hard is that they must agree, and the agreement was held by prose.
+ *   simple. what is hard is that they must agree, and the agreement was held by prose.
  *
  *   So this reads the CURRENT state from the artifact rather than from the lists. The lists are a
  *   declaration and the WOF leg is presence-driven, so the artifact is the only place the two are already
@@ -91,7 +91,7 @@ export function servingSources(census: SourceCensus): AdminSource[] {
 }
 
 /**
- * GitHub reports PACKED size; a WOF repo unpacks to millions of small GeoJSON files.
+ * GitHub reports PACKED size. a WOF repo unpacks to millions of small GeoJSON files.
  *
  * Measured on a `--countries tr` sync: three repositories reported as 83.4 MB occupied 633 MB once cloned. The ratio is
  * stated here rather than at each call site because the number a caller is about to show an operator is the checkout

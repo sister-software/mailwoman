@@ -6,7 +6,7 @@
 # encoder keeps v263's country channel + span-boundary grammar and only relearns to trust homograph
 # country surfaces (Georgia/Jordan) a little more. The scale multiplies the country_ambiguous feature dim
 # before country_projection (a registered buffer that bakes into the exported ONNX — no lexicon or
-# inference change; inference feeds the raw [surface, ambiguous] and the graph scales it). Corpus + lexicon
+# inference change. inference feeds the raw [surface, ambiguous] and the graph scales it). Corpus + lexicon
 # unchanged from v263. CHECK (package-shaped, eval check --weights-cache): country-homograph F1 recovers
 # toward 89.8 from v263's 82.6 WHILE golden WOF-admin country recall holds ~89.3% and the held-out US/FR
 # coordinate stays flat (the #566 ship check) + the real-postal board does not regress. Grade PACKAGE-SHAPED, never
@@ -111,7 +111,7 @@ model: # Verbatim from v2.4.1.
   use_country_anchor: true
   country_feature_dim: 2
   # #1104 homograph-guard SOFTENER — the one variable vs v263. Scales the country_ambiguous dim by 0.5
-  # before the country_projection (bakes into the exported ONNX; no lexicon/inference change). v263's
+  # before the country_projection (bakes into the exported ONNX. no lexicon/inference change). v263's
   # hard guard (scale 1.0) over-suppressed homograph countries Georgia/Jordan (country-homograph F1
   # 89.8->82.6); softening should recover homograph recall without giving back the country F1 the
   # WOF-admin rows produced.
@@ -155,7 +155,7 @@ model: # Verbatim from v2.4.1.
 
 train: # Same-vocab init_from fine-tune off the shipped v261 (fresh optimizer; --resume none on a fresh
   # output_dir honors init_from, weights only). The new country_projection starts random and learns to
-  # route the cue; the encoder keeps v261's span-boundary + street grammar.
+  # route the cue. the encoder keeps v261's span-boundary + street grammar.
   output_dir: /data/output-v265-country-softguard-025-s42/checkpoints
   seed: 42
   init_from: /data/output-v263-country-channel-s42/checkpoints/step-008000

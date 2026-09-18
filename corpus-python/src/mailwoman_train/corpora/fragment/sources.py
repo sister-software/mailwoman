@@ -55,7 +55,7 @@ def collect_oa_pairs(
     The city names feed bare-locality POLARITY rows: the #511 spread-scan measured the recipe's street
     surfaces as ~46% street-family / ~54% admin in the base (European street names are place
     names), so a street-only fragment recipe would teach "context-free name = street". The
-    established family (si-bare-village / fr-bare-street) balances polarity; fragments balance
+    established family (si-bare-village / fr-bare-street) balances polarity. fragments balance
     with bare-locality twins so the discriminant the model can learn is morphology/lexical
     identity, not fragment-ness.
     """
@@ -125,7 +125,7 @@ def span_rows_from_corpus(
 
     ``max_parts`` bounds the scan: without it, a REQUESTED country that is SPARSE in the corpus (e.g. DE
     streets) never hits ``cap*2``, so the ``done`` break never fires and the loop walks all ~700 parts
-    (263M rows) — a 90+ min hang measured 2026-07-14. Bound the scan for such calls; the source-ordered
+    (263M rows) — a 90+ min hang measured 2026-07-14. Bound the scan for such calls. the source-ordered
     corpus surfaces enough of the common countries in the first N parts.
     """
     rng = random.Random(f"{SEED}:corpus")
@@ -137,7 +137,7 @@ def span_rows_from_corpus(
         if done:
             break
 
-        # iter_batches().to_pylist() is row-aligned by construction; zipping multiple ChunkedArrays
+        # iter_batches().to_pylist() is row-aligned by construction. zipping multiple ChunkedArrays
         # is not (chunk-boundary iteration artifacts silently misalign columns — measured).
         for batch in pq.ParquetFile(path).iter_batches(
             columns=["raw", "span_starts", "span_ends", "span_tags", "country"], batch_size=8192

@@ -5,9 +5,9 @@
  *
  *   ZCTA + GeoNames centroid fills (#525) — contract tests for three fills:
  *
- *   - ZCTA: placeholder with ZCTA → filled; real coord → untouched; no-ZCTA → placeholder.
- *   - GeoNames: placeholder covered by GeoNames (but not ZCTA) → filled; real coord → untouched;
- *       no-GeoNames → placeholder; no-overwrite: ZCTA-already-filled row stays ZCTA, not geonames.
+ *   - ZCTA: placeholder with ZCTA → filled. real coord → untouched. no-ZCTA → placeholder.
+ *   - GeoNames: placeholder covered by GeoNames (but not ZCTA) → filled. real coord → untouched.
+ *       no-GeoNames → placeholder. no-overwrite: ZCTA-already-filled row stays ZCTA, not geonames.
  */
 
 import type { WOFDatabase } from "@mailwoman/resolver-wof-sqlite/schema"
@@ -33,7 +33,7 @@ const GAZETTEER_FIXTURE = [
 	"123\t0\t0\t0\t0\t34.1\t-118.4",
 ].join("\n")
 
-// GeoNames fixture (no header; country(0), postcode(1), place(2), ...adm..., lat(9), lon(10), acc(11)).
+// GeoNames fixture (no header. country(0), postcode(1), place(2), ...adm..., lat(9), lon(10), acc(11)).
 // 21638 appears here but not in the ZCTA file — covers the PO-box/unique ZIP residual case.
 // 90210 appears here too, to verify no-overwrite after ZCTA fill.
 // Two rows for 21638 with different place names → averaged centroid.
@@ -140,7 +140,7 @@ describe("fillGeonamesPlaceholders", () => {
 		const zcta = parseZCTACentroids(GAZETTEER_FIXTURE)
 		expect(fillPlaceholderCentroids(db, zcta)).toBe(1)
 
-		// Now run GeoNames fill on the residual (21638 is still placeholder; 90210 is already filled).
+		// Now run GeoNames fill on the residual (21638 is still placeholder. 90210 is already filled).
 		const geo = parseGeonamesCentroids(GEONAMES_FIXTURE)
 		const filled = fillGeonamesPlaceholders(db, geo)
 		expect(filled).toBe(1)

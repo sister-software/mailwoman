@@ -95,7 +95,7 @@ function sameGermanLabel(left: string, right: string): boolean {
 /**
  * The surface an Ortsteil is written with in an address, from WOF's rows for it.
  *
- * `spr.name` for a DE neighbourhood is the ASCII-folded label; the `names` rows in `deu` carry the German spelling
+ * `spr.name` for a DE neighbourhood is the ASCII-folded label. the `names` rows in `deu` carry the German spelling
  * beside unrelated labels for co-located features (`Bocklemuend` → `Bocklemünd`, `Jüdischer Friedhof Bocklemünd`,
  * `Menara-Garten`). The German name is the one that spells the same label as `spr.name` under either of WOF's ASCII
  * folds ({@link foldGerman}); with none, `spr.name` stands. WOF also prefixes some Ortsteile with their city
@@ -113,7 +113,7 @@ export function ortsteilSurface(sprName: string, deuNames: readonly string[], lo
 
 /**
  * Every current DE neighbourhood with a locality ancestor, keyed by the folded locality name → Ortsteil surfaces. Empty
- * when the admin database is not readable; the recipe then emits no Ortsteil rows and says so, rather than failing a
+ * when the admin database is not readable. the recipe then emits no Ortsteil rows and says so, rather than failing a
  * build over an optional register.
  */
 async function readOrtsteilPool(adminDB: string): Promise<Map<string, string[]>> {

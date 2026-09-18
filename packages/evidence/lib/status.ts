@@ -12,7 +12,7 @@
 
 /**
  * The five claims the evidence can license about a value, ordered from the strongest authority to none. Each result
- * carries exactly one; the constants are the wire values.
+ * carries exactly one. the constants are the wire values.
  */
 export const EpistemicStatus = {
 	/**
@@ -28,7 +28,7 @@ export const EpistemicStatus = {
 	 */
 	Derived: "derived",
 	/**
-	 * No row matched; the value is the intersection of stated constraints. Never presentable as retrieved.
+	 * No row matched. the value is the intersection of stated constraints. Never presentable as retrieved.
 	 */
 	Inferred: "inferred",
 	/**

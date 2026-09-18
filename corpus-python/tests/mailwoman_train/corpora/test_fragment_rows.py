@@ -100,7 +100,7 @@ def test_each_field_opens_with_b_and_continues_with_i(name: str) -> None:
 
 @pytest.mark.parametrize("name", sorted(CASES))
 def test_every_span_tag_has_a_matching_label_run(name: str) -> None:
-    """The span triple and the BIO labels are two descriptions of one row; they must name the same
+    """The span triple and the BIO labels are two descriptions of one row. they must name the same
     fields in the same order, or the char path and the token path train different things."""
     row = CASES[name]
     from_labels = [label.split("-", 1)[1] for label in row["labels"] if label.startswith("B-")]

@@ -30,7 +30,7 @@ test.each(["moon", "mars"] as const)(
 		expect("sprite" in style).toBe(false)
 		expect(style.glyphs).toMatch(/protomaps\/fonts/u)
 
-		// MapLibre 6 reads the projection from the style; as a map option it is ignored and the body renders flat.
+		// MapLibre 6 reads the projection from the style. as a map option it is ignored and the body renders flat.
 		expect(style.projection).toEqual({ type: "globe" })
 
 		const labels = style.layers.find((layer) => layer.id === "planetary/nomenclature-labels")
@@ -51,7 +51,7 @@ test.each(["moon", "mars"] as const)(
 		})
 
 		// Under globe projection a background layer paints the SPHERE, so this is the body's surface tone rather than
-		// the field around it; the app's stylesheet paints that behind a transparent canvas.
+		// the field around it. the app's stylesheet paints that behind a transparent canvas.
 		const surface = style.layers.find((layer) => layer.id === "planetary/space")
 		expect(surface).toMatchObject({ type: "background", paint: { "background-color": PALETTES[body].space } })
 

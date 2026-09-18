@@ -36,7 +36,7 @@ describe("the CLI launcher", () => {
 	})
 
 	it("passes a command's own flags through instead of rejecting them", () => {
-		// The launcher declares three options; every other flag in the CLI belongs to a command. Parsing strictly here
+		// The launcher declares three options. every other flag in the CLI belongs to a command. Parsing strictly here
 		// makes `mw parse … --json` throw ERR_PARSE_ARGS_UNKNOWN_OPTION before dispatch — the whole CLI, for any flag.
 		const output = runCLI("nosuchcommand", "--json")
 

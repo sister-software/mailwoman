@@ -53,7 +53,7 @@ export interface SerializeJSONOpts {
 	includeUnknown?: boolean
 	/**
 	 * Add a `dropped` array naming every span first-occurrence-wins discarded (#1755). Default false, keeping the output
-	 * libpostal-compatible; the geocode path opts in, because a silently deleted component is the one thing a caller
+	 * libpostal-compatible. the geocode path opts in, because a silently deleted component is the one thing a caller
 	 * cannot recover for itself.
 	 */
 	includeDropped?: boolean

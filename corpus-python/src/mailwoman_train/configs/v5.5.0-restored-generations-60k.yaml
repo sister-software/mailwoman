@@ -14,7 +14,7 @@
 #
 # So 115,159 rows never reached training, and the 12.0 weights landed entirely on the superseded vintages.
 # v4.6.0-admin-surfaces-smoke-500.yaml already names every generation and zeroes the superseded ones,
-# with `# SUPERSEDED by -v22` beside each; the v5 lineage lost that block at v5.0.0 and has trained CZ
+# with `# SUPERSEDED by -v22` beside each. the v5 lineage lost that block at v5.0.0 and has trained CZ
 # postcode-first and FR bare-street on the old vintages ever since.
 #
 # WHAT IT COST, MEASURED. Of 685,187,151 corpus rows, the bare two-token `NNN NN` shape appears zero
@@ -26,7 +26,7 @@
 #
 # The epoch-mixture audit was reporting this from the other side the whole time: 12.0 over 8,501 rows is 8.3
 # reps/row, which it flags as a REPS OUTLIER against a 0.2 median. Over the full 59,538-row generation
-# the same weight is 1.2 reps/row. Expect the outlier list to lose both entries; that is the fix landing,
+# the same weight is 1.2 reps/row. Expect the outlier list to lose both entries. that is the fix landing,
 # not a mixture change to explain away.
 #
 # WEIGHTS UNCHANGED, DELIBERATELY. Both families keep 12.0 — the number v4.6.0 also gives `-v21`. Only
@@ -35,7 +35,7 @@
 # PRE-REGISTERED WATCH. Grade these before any target metric:
 #
 #   1. The held-out spaced-postcode sweep — 32 CZ/SK `NNN NN` and 24 NL `NNNN LL` codes, none on the
-#      board. v5.3.0 reads 31/32 and 24/24; v5.4.0 reads 0/32 and 15/24. This arm must recover CZ/SK
+#      board. v5.3.0 reads 31/32 and 24/24. v5.4.0 reads 0/32 and 15/24. This arm must recover CZ/SK
 #      without losing NL, and a partial recovery is a partial result, not a pass.
 #   2. `fr.bare_street_intact` in the promotion battery, which reads 95 against a floor of 75 while
 #      64,122 of its rows sit out. FR is tier 1, so a drop here disqualifies the arm outright even
@@ -230,7 +230,7 @@ data:
   # Reps per row, not weights (#1677). 60,000 steps x batch 128 = 7,680,000 samples, so the six
   # sources below demand 1.0*142083 + 1.0*80081 + 8.0*4551 + 8.0*4944 + 8.0*5279 + 0.5*153965 =
   # 417,339 draws, 5.4% of the run. The big register sources take one pass each because they carry
-  # their diversity in the rows; the four-to-five-thousand-row sources take eight, which is the
+  # their diversity in the rows. the four-to-five-thousand-row sources take eight, which is the
   # exposure `synth-suffix-boundary` already draws at weight 2.5.
   source_reps:
     synth-sg-register: 1.0

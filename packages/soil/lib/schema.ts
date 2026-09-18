@@ -14,8 +14,8 @@
  *   weights change silently.
  *
  *   THE REDUCTION STORES A DISTRIBUTION, NEVER A WINNER, AND THAT IS FORCED BY MEASUREMENT RATHER THAN
- *   PREFERENCE. 84.0% of the 339,191 national map units hold two or more components; in 16.8% the largest
- *   component covers under half the map unit; and 85.4% of `IA153`'s 17,966 delineations are smaller than
+ *   PREFERENCE. 84.0% of the 339,191 national map units hold two or more components. in 16.8% the largest
+ *   component covers under half the map unit. and 85.4% of `IA153`'s 17,966 delineations are smaller than
  *   one resolution-9 cell, so no affordable cell size removes the mixture. NRCS itself ships
  *   `muaggatt.niccdcd` — its own dominant-condition capability class — beside `niccdcdpct`, the share that
  *   class actually covers, with an observed minimum of 2%. This table reproduces that pattern at cell grain
@@ -28,7 +28,7 @@
  *   which is what the four shares exist to make impossible.
  *
  *   `WITHOUT ROWID` ON THE CELL TABLES AND NEVER ON THE GEOMETRY TABLE. Small fixed-width rows probed by
- *   their exact primary key belong in the B-tree; a row carrying a geometry blob does not — clustering it
+ *   their exact primary key belong in the B-tree. a row carrying a geometry blob does not — clustering it
  *   into the B-tree makes every index page a geometry page.
  */
 
@@ -45,7 +45,7 @@ export const SoilCellContainment = {
 	 */
 	Whole: "whole",
 	/**
-	 * The delineation's boundary crosses the cell. The index has narrowed the candidates; the point test decides.
+	 * The delineation's boundary crosses the cell. The index has narrowed the candidates. the point test decides.
 	 */
 	Partial: "partial",
 } as const
@@ -201,7 +201,7 @@ export interface SoilCapabilityCellTable {
 	h3_cell: number
 	/**
 	 * JSON: the authority's class codes mapped to their area-weighted share, sorted by descending share. Shares above the
-	 * declared truncation floor only; the remainder is in `other_share`.
+	 * declared truncation floor only. the remainder is in `other_share`.
 	 */
 	class_shares: string
 	/**
@@ -369,7 +369,7 @@ export async function createSoilMapUnitCellTable(db: SoilSchemaHandle): Promise<
 
 	await addCellIndexColumns(table, "area_id")
 		.addPrimaryKeyConstraint("soil_map_unit_cell_pk", ["h3_cell", "area_id"])
-		// `WITHOUT ROWID` has no first-class builder; the raw modifier is the idiomatic fallback.
+		// `WITHOUT ROWID` has no first-class builder. the raw modifier is the idiomatic fallback.
 		.modifyEnd(sql`without rowid`)
 		.execute()
 }

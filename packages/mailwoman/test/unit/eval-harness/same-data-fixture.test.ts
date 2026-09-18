@@ -9,7 +9,7 @@
  *   1. EQUAL EVIDENCE IS CHECKED OVER WHAT THE ARMS READ. Every arm's observation of a row must agree on
  *      the digest, the pool size, the candidate ids and the candidate field names — and the check must
  *      fail when one arm is handed a row the others were not.
- *   2. A REPLAY MISS RAISES. The backend answers only from the fixture; a key it does not hold is an
+ *   2. A REPLAY MISS RAISES. The backend answers only from the fixture. a key it does not hold is an
  *      error, never `[]`, because the resolver absorbs `[]` silently and the arm would then report an
  *      abstention the fixture produced.
  *   3. THE WITHHELD VERDICTS STAY OUT. A candidate carrying `containedByQualifier` and its four siblings

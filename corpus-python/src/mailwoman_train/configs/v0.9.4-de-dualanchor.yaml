@@ -19,7 +19,7 @@
 # ONNX captures it (4-input, unchanged inference). De-risked: corpus-python test_anchor_channel.py
 # (c=0 identity + position-0 signal + save/load + export-equivalent to the per-token-only baseline).
 #
-# PRE-REGISTERED CHECK (DeepSeek-signed; stop at 20k):
+# PRE-REGISTERED CHECK (DeepSeek-signed. stop at 20k):
 #   - anchor-ON international >= anchor-ON native - 10pp (gap <= 10pp) — SUCCESS: dual-injection works,
 #     the first-token cue lets the anchor help international order too.
 #   - NATIVE-order DE locality >= 80% (hold ~83) · US/FR within ~1pp · cross_pollution < 1% — no
@@ -69,7 +69,7 @@ data:
     deepseek-kryptonite: 3.0
     synth-po-box: 1.5
     synth-intersection: 0.2
-    # German at ~18% of the mix — same weight as v0.9.1; the only change is the `synth-german` rows now carry both
+    # German at ~18% of the mix — same weight as v0.9.1. the only change is the `synth-german` rows now carry both
     # orders. The key tunable if a check lags: raise for more DE, lower if US/FR slip the 1pp regression check.
     synth-german: 6.0
   train_rows_per_epoch: 1000000

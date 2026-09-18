@@ -104,7 +104,7 @@ export async function bareCountryCandidate(
  * the US-state class (bare "Georgia"/"Texas" the parser tags `locality`). Same contract: the locality query's own
  * country filter bounds it, exact matches only with abbreviation/gloss rows excluded, and the placetype check guards
  * partial backends. (The `place_abbr`-staged region abbreviations — bare "TX"/"CA" — are role-NULL primaries and stay
- * fully reachable; the exclusion removes only the names-table abbreviation ALIASES like Toledo's "TO".)
+ * fully reachable. the exclusion removes only the names-table abbreviation ALIASES like Toledo's "TO".)
  */
 export async function bareRegionCandidate(
 	backend: ResolverBackend,

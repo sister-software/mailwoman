@@ -294,7 +294,7 @@ export interface Phase2Thresholds {
 /**
  * The artifacts every measurement was registered against. Recorded, compared, and reported — never a decision input.
  *
- * A run on a rebuilt `poi.db` or a bumped weights package is still a run; it is just not comparable to the receipts
+ * A run on a rebuilt `poi.db` or a bumped weights package is still a run. it is just not comparable to the receipts
  * this ruler names as baselines, and {@linkcode Phase2Verdict.comparability} is where a reader sees that.
  */
 export interface Phase2ArtifactPins {

@@ -62,7 +62,7 @@ const rows = await JSONSpliterator.fromAsync<{ raw: string; components: Record<s
  * else: the alphanumeric shape patterns require UPPERCASE letters by design, so on the raw text a lowercased GB unit
  * yields no shaped span at all and the channel is silently dead. `normalizeInputCase` is what saves it — it restores
  * postcode casing in both the all-caps and all-lower registers. Probing the raw text would report a register asymmetry
- * that production does not have; probing the normalized text is the serving truth.
+ * that production does not have. probing the normalized text is the serving truth.
  */
 const NORMALIZE_CASE = true
 

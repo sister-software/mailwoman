@@ -10,7 +10,7 @@
  *   ── WHY OVERTURE AT ALL, when the OSM extractor already exists ────────────────────────────────────
  *   Wave 1 measured `concourse` at 21 real Overture rows against 4 in the whole Great Britain OSM
  *   extract, 3 of which are a street called CONCOURSE WAY. Overture's `airport_terminal` category is
- *   curated venue-interior naming; OSM's `aeroway=terminal` is a building footprint that usually
+ *   curated venue-interior naming. OSM's `aeroway=terminal` is a building footprint that usually
  *   carries the AIRPORT's name. The two sources fail differently, so both are read.
  *
  *   ── THE CATEGORY SET IS MEASURED, NOT GUESSED ────────────────────────────────────────────────────
@@ -19,7 +19,7 @@
  *   predicts — `gas_station` leads the whole table with 12,996 hits, every one of them the token
  *   `station` inside "Holiday Station" / "Chevron Station Seward", and `shoe_store` contributes 708
  *   hits of `wing` because Red Wing sells boots. {@link OVERTURE_SUBVENUE_CATEGORIES} is the four
- *   categories whose hits survived reading the distribution; the rejects are listed below it so nobody
+ *   categories whose hits survived reading the distribution. the rejects are listed below it so nobody
  *   re-proposes them.
  *
  *   ── poi.db IS FOUR COUNTRIES ─────────────────────────────────────────────────────────────────────
@@ -27,9 +27,9 @@
  *   shipped layer is not a world gazetteer, so Overture can attest en-US, en-CA, fr-FR and es-MX
  *   surfaces and NOTHING ELSE. Every non-Latin designator the corpus task asks for — `ターミナル`,
  *   `Halle`, `Flügel` — has to come from the OSM leg. Do not read a zero count here as evidence of
- *   absence in the world; it is evidence of absence in four countries.
+ *   absence in the world. it is evidence of absence in four countries.
  *
- *   ── The row shape fits; the PROVENANCE STAMP did not ─────────────────────────────────────────────
+ *   ── The row shape fits. the PROVENANCE STAMP did not ─────────────────────────────────────────────
  *   Wave 1's `OSMSubVenueRow` was written to accept a non-OSM row, and it does: an Overture row is
  *   `{ designatorID, name }` with no `ref` and no `localizedNames`. What did not fit is
  *   `extractAttestedPhrases`, which hardcoded `osm:name` as the surface's `source`. Feeding Overture
@@ -69,7 +69,7 @@ export const OVERTURE_SUBVENUE_CATEGORIES: Readonly<Record<string, string>> = {
 	airport_terminal: "terminal",
 	// 7,366 rows / 3,382 hits — hall 2,134, building 1,019, campus 209. US academic halls and numbered
 	// campus buildings: "UAA Cuddy Hall", "UAA Science Building". The row is a building on a campus, so
-	// `campus` is its context designator; the phrase found inside the name decides the record it
+	// `campus` is its context designator. the phrase found inside the name decides the record it
 	// attests, which for these rows is mostly `hall`.
 	campus_building: "campus",
 	// 443 rows / 301 hits — pier 282, terminal 17.

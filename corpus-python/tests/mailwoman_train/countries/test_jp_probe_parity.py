@@ -54,7 +54,7 @@ REFERENCE_README = [
 ]
 
 #: The parquet column layout the builder reads. `address_levels` is Overture's list of
-#: `{value: ...}` structs; the builder takes level 0 as the prefecture and level 1 as the
+#: `{value: ...}` structs. the builder takes level 0 as the prefecture and level 1 as the
 #: municipality.
 FIXTURE_SCHEMA = pa.schema(
     [

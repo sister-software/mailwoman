@@ -16,7 +16,7 @@ import {
 import type { Kysely } from "kysely"
 
 /**
- * Jitter-stable address/POI join cell; matches @mailwoman/address-id.
+ * Jitter-stable address/POI join cell. matches @mailwoman/address-id.
  */
 export const OSM_ADDRESS_H3_RESOLUTION = 9
 

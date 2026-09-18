@@ -106,10 +106,10 @@ export async function linkWeightsOverlay(options: LinkWeightsOverlayOptions): Pr
 		// and `resolveFromPackageDir` reads it from whichever directory answered. Without it in the overlay the loader
 		// falls back to STAGE2_BIO_LABELS (21) against a 33-logit model and the first parse throws in
 		// `assertEmissionWidth` — so its absence is not a lean install, it is a broken one. Linking it does couple the
-		// overlay to the checkout that wrote it; the writer is idempotent, so re-running from another checkout re-points it.
+		// overlay to the checkout that wrote it. the writer is idempotent, so re-running from another checkout re-points it.
 		const cardSource = resolvePath(workspacePath(`neural-weights-${locale}`), "model-card.json")
 
-		// COPIED, not linked. Every other overlay entry points at the data root, which outlives any checkout; a
+		// COPIED, not linked. Every other overlay entry points at the data root, which outlives any checkout. a
 		// symlink to the card would make the whole overlay depend on one working tree still existing at that
 		// path — and a worktree removed after linking would leave the overlay resolving a dangling card, which
 		// degrades to STAGE2_BIO_LABELS against a 33-logit model rather than to an error.
@@ -160,7 +160,7 @@ export async function linkWeightsOverlay(options: LinkWeightsOverlayOptions): Pr
 		// overlay, and that inverted the whole point: the per-locale linkers then wrote THROUGH the symlink and
 		// their artifacts landed back in the tracked package. It is the `fs.copyFile`-follows-a-symlink hazard
 		// AGENTS.md documents for the publish path, reappearing one directory over. The per-locale
-		// `link-dev-weights.ts` scripts build these into the overlay directly; this only says whether they have.
+		// `link-dev-weights.ts` scripts build these into the overlay directly. this only says whether they have.
 		const buildable: BuildableArtifact[] = recipe.buildableFor(locale)
 
 		for (const { shippedName, buildCommand, inputPath } of buildable) {

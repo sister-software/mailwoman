@@ -6,7 +6,7 @@
  *   The register of law suites, checked against the directory it claims to describe.
  *
  *   THE CHECK THAT MATTERS IS THE DIRECTORY WALK. Everything else here restates something a suite's own test
- *   already asserts; the walk is the only one that can see a suite file nobody registered, and an unregistered
+ *   already asserts. the walk is the only one that can see a suite file nobody registered, and an unregistered
  *   suite does not run unaudited — it never runs at all, which reports as an absence rather than a failure.
  *   That is the shape a law suite exists to refuse, so the register gets the same treatment.
  *

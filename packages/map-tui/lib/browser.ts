@@ -330,7 +330,7 @@ export class MapBrowser {
 
 	/**
 	 * Zooms one or more whole levels. With an anchor cell (the wheel's pointer), the center shifts so whatever was under
-	 * the pointer stays under it; without one, the pane center holds.
+	 * the pointer stays under it. without one, the pane center holds.
 	 */
 	private zoomBy(delta: number, anchor: { column: number; row: number } | null): void {
 		const next = clamp(this.zoom + delta, this.source.minZoom, this.source.maxZoom)
@@ -478,7 +478,7 @@ export class MapBrowser {
 		try {
 			const frame = await this.renderer.renderFrame(viewport)
 
-			// The terminal may have been restored while the tiles were in flight; writing then would paint over the
+			// The terminal may have been restored while the tiles were in flight. writing then would paint over the
 			// user's shell.
 			if (this.restored) return
 

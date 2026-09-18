@@ -8,7 +8,7 @@
  *   other way is never written to, so the flag parses, validates, and does nothing.
  *
  *   Both halves are asserted against one list of expected property names — the type through `expectTypeOf`, the
- *   runtime through `optionPropertyName`. Either drifting breaks this file, which is the point; matched tables in
+ *   runtime through `optionPropertyName`. Either drifting breaks this file, which is the point. matched tables in
  *   two modules would not catch it, because they diverge at the points a constant cannot express.
  */
 

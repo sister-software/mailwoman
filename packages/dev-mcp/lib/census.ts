@@ -19,7 +19,7 @@
  *   - **L1 signaled** — it produced nonzero input to the next stage: a channel fed a nonzero feature, a prior's own
  *     `applied` contract ("moved anything") held, a repair changed labels. This file computes L0 and L1 from one
  *     traced run.
- *   - **L2 moved an outcome** — needs ablation pairs and is not computed here; the gauntlet's ablation layer is the
+ *   - **L2 moved an outcome** — needs ablation pairs and is not computed here. the gauntlet's ablation layer is the
  *     home for it. Reported as explicitly unmeasured so a reader cannot mistake L1 coverage for outcome relevance.
  *
  *   A mechanism at zero L1 across the whole set is reported as INERT with the standing rule attached: every zero needs

@@ -4,7 +4,7 @@
  * @author Teffen Ellis, et al.
  *
  *   `mailwoman gazetteer build poi-brands` — the POI brand lexicon builder, part 1 of 2 (part 2 wires
- *   `lookupPOIBrand` into the runtime pipeline; no pipeline wiring here). Thin wiring only: the read +
+ *   `lookupPOIBrand` into the runtime pipeline. no pipeline wiring here). Thin wiring only: the read +
  *   aggregate + write logic lives in `gazetteer-pipeline/poi/build-brands.ts`, mirroring `build/poi.tsx`'s
  *   thin-command style. Reads a BUILT `poi.db` READ-ONLY — never writes one.
  *

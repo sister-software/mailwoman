@@ -22,14 +22,14 @@ export { inferRequiredChannelsFromInputs } from "#ort-feeds"
 /**
  * The structured `requires` block of a `model-card.json` (#718) — the declared SHIP-CONFIG the model was trained
  * against. The ProductionScorer reads this and FAILS CLOSED when a declared channel isn't actually fed (silent OOD is
- * the #566/#685 trap). Each channel is optional; a missing channel means "not declared" (treated as not-required).
+ * the #566/#685 trap). Each channel is optional. a missing channel means "not declared" (treated as not-required).
  */
 export interface RequiredChannels {
 	/**
 	 * Postcode-anchor channel (#239/#240). `span_mode` declares which substrings the runtime should look up — omit (or
 	 * `alnum-run`) for every model trained before 2026-08-05, `shaped` for a model trained against a lookup with
 	 * letter-containing keys (see `neural/anchor-inference.ts`'s `AnchorSpanMode`). Declaring `shaped` on a model that
-	 * never saw those keys changes the encoder's input for nothing; declaring `alnum-run` on one that did leaves its
+	 * never saw those keys changes the encoder's input for nothing. declaring `alnum-run` on one that did leaves its
 	 * GB/NL postcodes unanchored.
 	 */
 	anchor?: { required: boolean; span_mode?: AnchorSpanMode }
@@ -224,7 +224,7 @@ export function unfedChannelWarner(weightsPackage: string): (channel: UnfedChann
  * The condition the #1516 fix turns on, in one place because it is the whole substance of the fix. The old test was
  * `requires.anchor.required && nothing loaded`, and `requires` describes the trained ENCODER — shared by every overlay
  * that inherits the base model. So the en-gb overlay, which ships no `postcode-gb.bin` on purpose under the #1476
- * mitigation, warned on every load; the line named no package and fired once per PROCESS, so an operator whose
+ * mitigation, warned on every load. the line named no package and fired once per PROCESS, so an operator whose
  * `postcode-us.bin` was present and feeding read it as the primary locale's binary having gone missing.
  *
  * Declared-and-missing is a broken package and stays loud. Declared-nothing is a supported posture and is silent —

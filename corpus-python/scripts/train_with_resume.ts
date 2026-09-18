@@ -39,10 +39,10 @@ const CONFIG = $public.CONFIG ?? "src/mailwoman_train/configs/stage1-coarse.yaml
  */
 const ADDITIONAL_COMMAND_LINE_ARGS = passThroughCLIArguments()
 
-// Open the log once in append mode; every attempt appends to the same file (bash did `>>"$LOG" 2>&1` per invocation).
+// Open the log once in append mode. every attempt appends to the same file (bash did `>>"$LOG" 2>&1` per invocation).
 const logFd = await open(LOG, "a")
 
-// zx prints the command to stderr by default; the bash wrapper kept python output in $LOG only, so stay quiet.
+// zx prints the command to stderr by default. the bash wrapper kept python output in $LOG only, so stay quiet.
 $.verbose = false
 
 // Match the bash trap: on SIGINT/SIGTERM, log a line and exit 130.

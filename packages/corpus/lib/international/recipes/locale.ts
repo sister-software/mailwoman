@@ -92,9 +92,9 @@ export interface LocaleCountrySource {
 /**
  * Per-country OA sources + the source name used in the corpus. DE/FR read their historical build inputs, the cached
  * zips under `$MAILWOMAN_DATA_ROOT/oa-cache` — materialize them there to regenerate. ES/NL read the extracted
- * countrywide CSVs and IT the cached national zip under `$MAILWOMAN_DATA_ROOT` (#241; the fresh ES extract is
+ * countrywide CSVs and IT the cached national zip under `$MAILWOMAN_DATA_ROOT` (#241. the fresh ES extract is
  * OA-conformed, so the old raw-CNIG conform map is gone). DE carries a per-part `region` fallback (its REGION column is
- * empty; the international-order tail needs it, #327). FR/NL/IT/ES REGION is populated per-row (ES = comunidad
+ * empty. the international-order tail needs it, #327). FR/NL/IT/ES REGION is populated per-row (ES = comunidad
  * autónoma, IT = regione, NL = province).
  */
 const COUNTRY_SOURCES: Record<string, LocaleCountrySource> = {
@@ -144,14 +144,14 @@ const COUNTRY_SOURCES: Record<string, LocaleCountrySource> = {
 		source: "synth-nz",
 		corpusVersion: "0.9.9",
 		// Eval holdout: a probe build excludes ~12% of NZ localities (a locality-bucket split) for a source-disjoint
-		// coord board; that split is a BUILD-TIME concern (scratchpad), so the committed recipe reads the full CSV.
+		// coord board. that split is a BUILD-TIME concern (scratchpad), so the committed recipe reads the full CSV.
 		parts: [{ path: dataRootPath("openaddresses", "extracted", "nz", "countrywide.csv"), districtAsLocality: true }],
 	},
 	GB: {
 		// HM Land Registry Price Paid Data tuples (25.67M rows out of the PPD ingest). PPD's DISTRICT is the
 		// postal town (locality) and CITY is the dependent locality — legitimately empty on the majority of rows
 		// (most GB addresses have no dependent locality). `districtAsLocality` maps DISTRICT→locality and, when
-		// present, CITY→dependent_locality; the `readTuples` check above only drops a row when both are empty, so
+		// present, CITY→dependent_locality. the `readTuples` check above only drops a row when both are empty, so
 		// the majority empty-CITY rows survive.
 		source: "synth-gb",
 		corpusVersion: "0.9.9",
@@ -175,7 +175,7 @@ const ES_SPACE_JOIN_FRACTION = 0.5
 
 /**
  * Fraction of NL rows whose postcode keeps OA's glued shape (`1187LM`) instead of the spaced national convention (`1187
- * LM`). The eval sample is 100% glued; the conventional spaced form is the `1012 LM` two-letter-suffix shape the model
+ * LM`). The eval sample is 100% glued. the conventional spaced form is the `1012 LM` two-letter-suffix shape the model
  * currently glues onto the city (#241). 0.5 teaches both.
  */
 const NL_GLUED_POSTCODE_FRACTION = 0.5
@@ -189,7 +189,7 @@ const NL_GLUED_POSTCODE_FRACTION = 0.5
  *
  * 1. Drop pseudo-localities — the ES cadastral aggregates (`Comunidad de 09076, 09150 y 09578`, `Ledanía de …`; 0.06% of
  *    ES rows): any CITY containing a comma or a ≥4-digit run is a land-register aggregate, not a renderable city.
- *    Structural, locale-safe — NL's genuine `2e Valthermond` (one digit) survives; IT/NL have zero hits.
+ *    Structural, locale-safe — NL's genuine `2e Valthermond` (one digit) survives. IT/NL have zero hits.
  * 2. STRIP a trailing parenthesized 1–3-letter admin code — the NL BAG province disambiguator (`Bergen (NH)`, `Rijswijk
  *    (GLD)` → `Bergen`, `Rijswijk`; 0.13% of NL rows). The analogue of the German Kreis/region-suffix class (#241 names
  *    `Rabenau Sachs` / `Weißwasser /O.L.`): an admin-region gloss glued onto the locality value that dirties locality
@@ -229,13 +229,13 @@ interface ColumnIndex {
  * Stream real tuples out of an OA source part and reservoir-sample to {@link RESERVOIR_CAP}. Reads the CSV row-by-row —
  * `readZipEntry | CSVSpliterator` for zip parts, `createReadStream | CSVSpliterator` for extracted parts (both bounded
  * memory) — and keeps a uniform random sample (Algorithm R) seeded by `rng`, separate from the emit loop's PRNG. No
- * global dedup (a 25M-key Set would OOM; OA rows are near-unique). The city passes through {@link cleanCityNoise}; the
+ * global dedup (a 25M-key Set would OOM. OA rows are near-unique). The city passes through {@link cleanCityNoise}. the
  * region falls back to `part.region` when the row's REGION cell is empty (DE).
  *
  * Exported for {@link locale.test.ts} — the CSV read path (quote handling, CRLF, region fallback) has no other test.
  */
 export async function readTuples(part: LocalePart, rng: () => number): Promise<LocaleBaseTuple[]> {
-	// No `encoding` on the file path — CSVSpliterator delimits raw bytes and decodes utf-8 itself; a string stream
+	// No `encoding` on the file path — CSVSpliterator delimits raw bytes and decodes utf-8 itself. a string stream
 	// (from `{ encoding: "utf8" }`) would defeat its byte-range scanner.
 	const input: NodeJS.ReadableStream | AsyncIterable<Uint8Array> = part.path
 		? openReadStream(part.path)

@@ -41,7 +41,7 @@ export interface WOFWasmPlaceLookupOpts {
 /**
  * One `sqlite_master` probe behind the lazy aux-table checks below.
  */
-// repo-health-ignore private-name-shadows-export -- the same probe over a synchronous sqlite-wasm handle; the httpvfs export answers a worker round trip and the sqlite one a node:sqlite client, and no adapter unifies the three handles
+// repo-health-ignore private-name-shadows-export -- the same probe over a synchronous sqlite-wasm handle. the httpvfs export answers a worker round trip and the sqlite one a node:sqlite client, and no adapter unifies the three handles
 function tableExists(db: Database, name: string): boolean {
 	return db.selectObjects(`SELECT 1 FROM sqlite_master WHERE type='table' AND name=? LIMIT 1`, [name]).length > 0
 }
@@ -102,7 +102,7 @@ export class WOFWasmPlaceLookup implements PlaceLookup {
 
 		if (!text) return []
 
-		// Postcode-typed queries keep the #920 fused name-law shape; everything else splits on
+		// Postcode-typed queries keep the #920 fused name-law shape. everything else splits on
 		// intra-token punctuation so hyphenated names reach the FTS as their real terms (#945) —
 		// parity with the resolver-wof-sqlite implementation.
 		const ftsQuery = sanitizeFTSQuery(text, {
@@ -201,7 +201,7 @@ export class WOFWasmPlaceLookup implements PlaceLookup {
 			.map((row) => {
 				// Alias tier: `alt_names` is the FTS row's alias bag (the slim DB's only surviving alias
 				// source), aliases joined on the boundary-preserving ALIAS_SEPARATOR (#523). The shared
-				// parser does a true per-alias equality check, unrestricted; on a LEGACY bag (pre-#523 slim
+				// parser does a true per-alias equality check, unrestricted. on a LEGACY bag (pre-#523 slim
 				// artifact, boundaries lost) it falls back to padded containment conditioned on "no strictly
 				// exact candidate" so interior fragments ("York" inside "New York City") can't be
 				// false-promoted. Mirrors the Node resolver's alias tier

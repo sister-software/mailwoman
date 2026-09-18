@@ -16,12 +16,12 @@
 #
 # Identical to v0_4_0-stableLR-cw-only.yaml in every field EXCEPT:
 #   - output_dir: /data/models/checkpoints/v0_4_0-final (smoke checkpoints preserved)
-#   - max_steps: 50000 (full schedule; smoke ran 3000 then cosine-tail saturated)
+#   - max_steps: 50000 (full schedule. smoke ran 3000 then cosine-tail saturated)
 #
 # Hand off after this completes:
 #   CHECKPOINT=/data/models/checkpoints/v0_4_0-final/step-XXXXX \
 #     scripts/ship_v0_4_0.sh
-#   (where XXXXX is the best-eval checkpoint; do not npm publish per operator rule)
+#   (where XXXXX is the best-eval checkpoint. do not npm publish per operator rule)
 
 data:
   corpus_dir: /data/corpus/versioned/v0.3.0/corpus-v0.3.0

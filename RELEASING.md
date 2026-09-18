@@ -803,7 +803,7 @@ where someone remembers to check. Nothing in `publish.yml` ever reaches a regist
 (#1892). The job carries no `continue-on-error`, so its failure is the workflow run's conclusion. The
 npm packages are already published when it runs (`needs: publish`, and published versions are
 immutable), so read that conclusion as "the release shipped; the generated Python + Rust surface for
-it did not". The remedy is to fix the generator and dispatch `publish-clients.yml` — never to
+it did not". The action is to fix the generator and dispatch `publish-clients.yml` — never to
 unpublish or republish the release. This was ambient for two releases: the job had been failing on every
 run since the workspace regroup, and the workflow comment beside it said its failure could not turn a
 release red.
@@ -849,7 +849,7 @@ independently of the engine release) — one fewer version scheme to track, in e
 constraint: **a client-only fix (a generator bug, a hand-written ergonomics change in
 `mailwoman_client/__init__.py` or `src/lib.rs`) cannot ship at a patch version of its own.** PyPI and
 crates.io both permanently reject re-publishing an already-used version number, exactly like npm, so
-there is no "5.10.1, republished" override. The remedy is to ride the next scheduled release
+there is no "5.10.1, republished" override. The action is to ride the next scheduled release
 train — run an ordinary `yarn release` / `publish.yml` dispatch (code-only is fine) and the client fix
 goes out at that version alongside everything else. If this constraint ever becomes a real bottleneck
 (a client-only bug that can't wait), that's the trigger to revisit the sync decision, not a workaround

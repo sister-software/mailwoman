@@ -19,7 +19,7 @@ import { stringifyJSON } from "@mailwoman/core/json"
  *   empty and the mapping lives per polygon.
  *
  *   THE DECLARED DOMAIN IS CLOSED AND THE SOURCE ALREADY BREAKS IT. The service declares 54 generic types in
- *   its own coded-value domain; the data uses 55. `N/A` appears on 4 rows and in no domain. So the ingest
+ *   its own coded-value domain. the data uses 55. `N/A` appears on 4 rows and in no domain. So the ingest
  *   carries the declared domain PLUS the values observed in the data and records the difference
  *   (`zoning_vocabulary.declared`) rather than coercing an undeclared value to a neighbour or to null —
  *   either of which turns "the source changed" into "there is nothing here".
@@ -30,7 +30,7 @@ import { stringifyJSON } from "@mailwoman/core/json"
  *   read, and it is carried on `zoning_plan` for that reason.
  *
  *   `LA_CODE` IS DIRTY AND IS NEVER REPAIRED. Fingal's code is `Fl` with a lowercase second letter against
- *   `CL`, `CO`, `DU` and the rest. It is the publisher's key; repairing it would put this package's spelling
+ *   `CL`, `CO`, `DU` and the rest. It is the publisher's key. repairing it would put this package's spelling
  *   into an artifact that claims to repeat the authority's.
  */
 
@@ -69,7 +69,7 @@ export const GZT_MAP_VIEWER_URL = "https://www.myplan.ie/zoning-map-viewer/"
  * The attribution the item's `accessInformation` field carries, plus the licensor its `licenseInfo` names.
  *
  * BOTH HALVES RIDE, because the second is the half that holds this layer at `build-local`. The Department's own credit
- * line is the first; the all-rights-reserved clause naming Tailte Éireann as an upstream licensor is the second, and a
+ * line is the first. the all-rights-reserved clause naming Tailte Éireann as an upstream licensor is the second, and a
  * re-user who saw only the first would not know it exists.
  */
 export const GZT_ATTRIBUTION =
@@ -82,7 +82,7 @@ export const GZT_ATTRIBUTION =
  * `NOASSERTION` IS THE HONEST VALUE AND IT IS NOT A PLACEHOLDER. Three published statements disagree about the grant —
  * see {@link GZT_LICENSE_CONTRADICTION} — and the manifest column is a string a consumer reads as the terms it may rely
  * on. Writing `CC-BY-4.0` there while an all-rights-reserved clause names a licensor would be this program asserting a
- * grant nobody made; leaving the column empty would read as a layer whose licence nobody looked at. `NOASSERTION` is
+ * grant nobody made. leaving the column empty would read as a layer whose licence nobody looked at. `NOASSERTION` is
  * SPDX's own token for a determination that has not been made, which is exactly the state.
  *
  * {@linkcode assertTierMatchesLicense} refuses a `shipped` build while this holds, so moving the tier takes a
@@ -230,7 +230,7 @@ export const GZT_DECLARED_CODES: ReadonlyArray<ZoningTermDefinition> = [
 export const GZT_DECLARED_CODE_SET: ReadonlySet<string> = new Set(GZT_DECLARED_CODES.map((term) => term.code))
 
 /**
- * The `PLAN_LEVEL` domain, verbatim. `SDZ` is declared and used on no row of the current edition; it is carried anyway,
+ * The `PLAN_LEVEL` domain, verbatim. `SDZ` is declared and used on no row of the current edition. it is carried anyway,
  * because the domain is the Department's statement of what a plan may be rather than a census of what it is.
  */
 export const GZT_PLAN_LEVELS: ReadonlyArray<ZoningTermDefinition> = [
@@ -261,7 +261,7 @@ export const GZT_CURRENT_PLAN_VALUES: ReadonlyMap<number, string> = new Map([
  * observation, a community mapping project or a research assembly: OpenStreetMap `landuse` is inferred, and so is
  * Overture's `base/land_use`, because it is the same data.
  *
- * NEITHER GRADE IS BETTER; THEY ANSWER DIFFERENT QUESTIONS. The rule is that a query answered from an `inferred` row
+ * NEITHER GRADE IS BETTER. THEY ANSWER DIFFERENT QUESTIONS. The rule is that a query answered from an `inferred` row
  * may never be presented as the authority's designation. Measured in one jurisdiction on one day: of 1,652
  * OpenStreetMap `landuse=residential` polygons in South Dublin, only 558 — 33.8% — sit on land the authority zones
  * residential, and the two largest wrong answers are agriculture (23.4%) and conservation (19.6%).

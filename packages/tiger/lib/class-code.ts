@@ -28,14 +28,14 @@ export const TIGERClassCode = {
 	Levee: "C3024",
 
 	/**
-	 * A durable, permanent structure, extending into a body of water, built to protect a shoreline from erosion, to form
-	 * a protected coastal marina/harbor, or to create stable channels for navigation. Unlike piers and docks, water does
-	 * not flow under it. Alternatively referred to as a groyne, groin, seawall, or bulwark.
+	 * A durable, permanent structure, extending into a body of water, built to guard a shoreline from erosion, to form a
+	 * guarded coastal marina/harbor, or to create stable channels for navigation. Unlike piers and docks, water does not
+	 * flow under it. Alternatively referred to as a groyne, groin, seawall, or bulwark.
 	 */
 	JettyBreakwater: "C3025",
 
 	/**
-	 * An area from which commercial minerals are or were removed from the Earth; not including an oilfield or gas field.
+	 * An area from which commercial minerals are or were removed from the Earth. not including an oilfield or gas field.
 	 */
 	QuarryOpenPitMine: "C3026",
 
@@ -440,7 +440,7 @@ export const TIGERClassCode = {
 	OceanSea: "H2053",
 
 	/**
-	 * A body of ice moving outward and down slope from an area of accumulation; an area of relatively permanent snow or
+	 * A body of ice moving outward and down slope from an area of accumulation. an area of relatively permanent snow or
 	 * ice on the top or side of a mountain or mountainous area. [includes ice field and ice patch]
 	 */
 	Glacier: "H2081",
@@ -511,7 +511,7 @@ export const TIGERClassCode = {
 	NursingHomeRetirementHomeHomeForTheAged: "K1233",
 
 	/**
-	 * A facility (correctional or non-correctional) where groups of juveniles reside; this includes training schools,
+	 * A facility (correctional or non-correctional) where groups of juveniles reside. this includes training schools,
 	 * detention centers, residential treatment centers and orphanages.
 	 */
 	JuvenileInstitution: "K1235",
@@ -689,7 +689,7 @@ export const TIGERClassCode = {
 	OtherEmploymentCenter: "K2366",
 
 	/**
-	 * A facility where one or more modes of transportation can be accessed by people or for the shipment of goods;
+	 * A facility where one or more modes of transportation can be accessed by people or for the shipment of goods.
 	 * examples of such a facility include marine terminal, bus station, train station, airport and truck warehouse.
 	 */
 	TransportationTerminal: "K2400",
@@ -788,7 +788,7 @@ export const TIGERClassCode = {
 	Zoo: "K2586",
 
 	/**
-	 * A sanctified place or structure where people gather for religious worship; examples include church, synagogue,
+	 * A sanctified place or structure where people gather for religious worship. examples include church, synagogue,
 	 * temple, and mosque.
 	 */
 	PlaceOfWorship: "K3544",

@@ -63,7 +63,7 @@ export type { RepairResult } from "#span/repair"
  */
 export interface PostcodeMatch extends SpanMatch {
 	/**
-	 * "alnum" shapes may ADD over container labels; "numeric" shapes may only SNAP an existing span; a "designated" shape
+	 * "alnum" shapes may ADD over container labels. "numeric" shapes may only SNAP an existing span. a "designated" shape
 	 * (the digits behind a postal marker) may overwrite any label.
 	 */
 	kind: "alnum" | "numeric" | "designated"
@@ -128,7 +128,7 @@ export function repairPostcodeLabels(text: string, input: readonly DecoderToken[
 		const hasPostcode = overlap.some((i) => isTagLabel(tokens[i]!.label, "postcode"))
 
 		if (!hasPostcode) {
-			// ADD path — a designated shape over any label; an alphanumeric shape only over safe labels; a numeric shape
+			// ADD path — a designated shape over any label. an alphanumeric shape only over safe labels. a numeric shape
 			// never.
 			if (m.kind === "numeric") continue
 
@@ -185,7 +185,7 @@ export function repairPostcodeLabels(text: string, input: readonly DecoderToken[
 // house_number under conventions=auto (US) — an OVERRIDE that contradicted the model's own label,
 // which the project's repair discipline forbids (a repair may add spans on O-tokens or snap
 // boundaries, never re-classify a token from one entity to another). Net on the US golden set it was
-// −302 postcode / +16 house_number; an anchor-ablation probe showed the model is 100% correct on the
+// −302 postcode / +16 house_number. an anchor-ablation probe showed the model is 100% correct on the
 // target rows once the binary postcode anchor (which fires on a leading number that is a valid ZIP
 // elsewhere) is removed. The disambiguation is being absorbed model-side: a region-congruence anchor
 // upgrade + augmented postcode-leading extracts. See the 2026-06-24 postmortem + DeepSeek consult 019ef789.

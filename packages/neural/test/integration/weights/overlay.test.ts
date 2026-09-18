@@ -9,7 +9,7 @@
  *   the package and finds it empty. Before the overlay rung that was terminal: the package rung threw and
  *   the later rungs were unreachable, which is why a git worktree could not geocode at all.
  *
- *   The rung's own hazard is what most of this file tests. Only `model` and `tokenizer` throw; the ~11
+ *   The rung's own hazard is what most of this file tests. Only `model` and `tokenizer` throw. the ~11
  *   sibling artifacts resolve `existsSync → undefined` by design, so a checkout that finds the two binaries
  *   now PARSES while missing every lexicon and FST — scoring worse and saying nothing. The artifact report
  *   is the answer, and a rung that shipped without it would trade a loud failure for a quiet one.

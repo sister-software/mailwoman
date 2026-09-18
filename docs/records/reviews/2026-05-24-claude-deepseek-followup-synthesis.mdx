@@ -158,7 +158,7 @@ Knobs that scale loss values cannot fix asymmetric curvature.
 
 ### The actual repair
 
-Drop the CRF NLL loss term entirely during training. Keep the CRF as an inference-time structural decoder (frozen transition mask + Viterbi). The structural benefits that protect against orphan I-tags + BIO-invalid spans come from the **mask**, which is hand-encoded — not from the trained transition matrix. The training-side NLL was layered on as a learned refinement and that refinement is what fights with CE.
+Drop the CRF NLL loss term entirely during training. Keep the CRF as an inference-time structural decoder (frozen transition mask + Viterbi). The structural benefits that guard against orphan I-tags + BIO-invalid spans come from the **mask**, which is hand-encoded — not from the trained transition matrix. The training-side NLL was layered on as a learned refinement and that refinement is what fights with CE.
 
 One-line model.py change, blocked on `crf_loss_weight > 0`. Backward-compatible: existing recipes ship CRF; the new behaviour activates only when a recipe explicitly sets `crf_loss_weight: 0.0`.
 

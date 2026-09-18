@@ -6,7 +6,7 @@
  *   The sub-venue curation ledger (#35 wave 2) — every decision taken about whether a designator
  *   surface may be used for parsing IN A GIVEN LOCALE, with the census that backs it.
  *
- *   This file is HAND-AUTHORED. `sub-venue-lexicon.ts` is a pure function of its sources; nothing in it
+ *   This file is HAND-AUTHORED. `sub-venue-lexicon.ts` is a pure function of its sources. nothing in it
  *   can decide that Spanish `terminal` is safe and British `hall` is not, because that judgement is
  *   about the confounds a token has in a language, and a confound is a fact about the world rather than
  *   about the data. What the builder does is APPLY these decisions — {@link SUBVENUE_PROMOTIONS} is the
@@ -29,7 +29,7 @@
  *     not a census; "3,274 hits" told nobody that 3,205 of them were bus stops named after a village
  *     hall.
  *
- *   The instrument is `context` on {@link SubVenueSurface} plus the name-shape split; both are
+ *   The instrument is `context` on {@link SubVenueSurface} plus the name-shape split. both are
  *   reproducible from the committed extracts, and `PROVENANCE.md` records the commands.
  *
  *   ── A rejection is a deliverable ─────────────────────────────────────────────────────────────────
@@ -83,7 +83,7 @@ export interface SubVenuePromotion {
 }
 
 /**
- * The ledger. Sorted by designator, then locale, then phrase in the emitted artifact; source order here is grouped by
+ * The ledger. Sorted by designator, then locale, then phrase in the emitted artifact. source order here is grouped by
  * designator for reading.
  *
  * ── A rejection of a shipped designator is advisory ──────────────────────────────────────────────
@@ -140,7 +140,7 @@ export const SUBVENUE_PROMOTIONS: readonly SubVenuePromotion[] = [
 	},
 
 	// ── hall ────────────────────────────────────────────────────────────────────────────────────────
-	// Wave 1 flagged `hall` as per-locale poison on a GB number alone. Two locales measured; both
+	// Wave 1 flagged `hall` as per-locale poison on a GB number alone. Two locales measured. both
 	// reject, and for different reasons, which is the part worth keeping.
 	{
 		designatorID: "hall",

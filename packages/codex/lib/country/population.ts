@@ -5,7 +5,7 @@
  *
  *   GENERATED — do not edit by hand. Per-country population, derived from GeoNames countryInfo.txt
  *   (https://download.geonames.org/export/dump/countryInfo.txt, CC-BY-4.0). Estimates are
- *   census-vintage; a prominence race reads the magnitude, not the currency. Countries GeoNames
+ *   census-vintage. a prominence race reads the magnitude, not the currency. Countries GeoNames
  *   declines to estimate are absent, never zero.
  *   Regenerate with: mailwoman dev generate country-population
  */

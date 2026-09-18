@@ -8,17 +8,17 @@
  *
  *   The plan an agent keeps in its head — or in a session todo list — dies with the session, and the operator's
  *   window into an autonomous session is GitHub, not the transcript. The `task-intake` skill creates an issue whose
- *   `## Task list` section carries a marker-delimited block; this hook rewrites that block on every `TodoWrite`, so
+ *   `## Task list` section carries a marker-delimited block. this hook rewrites that block on every `TodoWrite`, so
  *   the issue stays a live mirror of the working plan without the agent spending a turn on bookkeeping.
  *
  *   It never blocks, on the same reasoning as `symbol-precheck.ts`: every failure path is silence, and the sync work
  *   itself runs in a detached worker so the hook adds no latency to the turn. Three conditions check the worker, each
  *   making a no-op explicit rather than accidental:
  *
- *   - `.claude/state/linked-issue` must exist (the skill writes it; no link, no sync — most sessions have none).
+ *   - `.claude/state/linked-issue` must exist (the skill writes it. no link, no sync — most sessions have none).
  *   - The tool must be `TodoWrite`, whose payload carries the whole list. `TaskCreate`/`TaskUpdate` carry deltas a
  *     stateless hook cannot fold into a list, so those sessions keep the issue current by hand at milestones.
- *   - The issue body must already carry both markers. The hook never invents structure in an issue it did not shape;
+ *   - The issue body must already carry both markers. The hook never invents structure in an issue it did not shape.
  *     absent markers mean the issue was not created by the skill, and rewriting it would clobber someone's prose.
  *
  *   Concurrency: rapid TodoWrite bursts atomically replace one payload file (last write wins). A worker holds a lock
@@ -156,7 +156,7 @@ export async function workerMain(
 	const dir = join(stateDir(cwd), "todo-sync")
 	const lock = join(dir, "lock")
 
-	// A worker that loses the lock must wait for its own turn. Its payload can arrive after the lock holder's final read;
+	// A worker that loses the lock must wait for its own turn. Its payload can arrive after the lock holder's final read.
 	// exiting here would leave that payload unpublished until another TodoWrite happened.
 	if (!(await acquireLock(lock, wait))) return
 

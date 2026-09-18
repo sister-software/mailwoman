@@ -74,7 +74,7 @@ describe.skipIf(!canRun)("runStaticDebug", () => {
 
 		const text = stripAnsi(await runStaticDebug("3215 SE Clinton St, Portland OR", options))
 
-		// The resolved tier line — street-level when the database is present, admin centroid otherwise; either is a
+		// The resolved tier line — street-level when the database is present, admin centroid otherwise. either is a
 		// legitimate resolve for this environment, so the assertion accepts both.
 		expect(text).toMatch(/address_point|admin/)
 

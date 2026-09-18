@@ -7,7 +7,7 @@
  *   (#374). Multiply the raw claimed radius (half the matched TIGER segment length) by the region's
  *   factor to get a calibrated ~90%-coverage interval.
  *
- *   #569 shipped a single 1.70 measured on Texas; the multi-region recalibration (#584) found the
+ *   #569 shipped a single 1.70 measured on Texas. the multi-region recalibration (#584) found the
  *   factor is regional — Q̂ rises monotonically with rurality, 1.44 (DC, densest) → 3.12 (AZ,
  *   sprawl). This wires the per-region selection the seed table anticipated.
  *
@@ -31,7 +31,7 @@ export interface InterpCalibrationTable {
 }
 
 /**
- * Measured 12-state seed table (a partial sweep; the full 50 was abandoned at the >85 °C heat ceiling). Mirrors
+ * Measured 12-state seed table (a partial sweep. the full 50 was abandoned at the >85 °C heat ceiling). Mirrors
  * `data/calibration/interp-radius-conformal.json` (#584).
  */
 export const INTERP_RADIUS_CALIBRATION: InterpCalibrationTable = {

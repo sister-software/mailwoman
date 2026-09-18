@@ -103,7 +103,7 @@ describe("compareReferential — the zero-delta guarantee", () => {
 	})
 
 	it("takes no encyclopedic input at all", () => {
-		// Ranking on encyclopedic is what §2 forbids; the comparator cannot express it.
+		// Ranking on encyclopedic is what §2 forbids. the comparator cannot express it.
 		const aude = { population: 418, referential: referentialFromPopulation(418), encyclopedic: 0.5683 }
 		const suburb = { population: 96_128, referential: referentialFromPopulation(96_128), encyclopedic: 0.1173 }
 

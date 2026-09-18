@@ -8,14 +8,14 @@
  *   A model card is what a consumer, the release preflight and a future maintainer all read to learn
  *   what an artifact IS. Nothing else compares the two, and a card can drift across several
  *   increments without any check noticing — leaving it not merely absent but confidently wrong. The
- *   artifact is the arbiter here; the card is graded against it.
+ *   artifact is the arbiter here. the card is graded against it.
  *
  *   WHAT IT CHECKS, AND WHAT IT DELIBERATELY DOES NOT. Pair COUNT and the calibrated `delta` /
  *   `transitionBeta` are compared, because those are properties of the CONTENT and a rebuild from
  *   the same sources reproduces them exactly. The card's `md5` is not compared: a PIX1 header
  *   embeds `buildDate`, so identical sources produce different bytes on every rebuild, and asserting
  *   on it would fail constantly for a reason that is not a defect. The md5 documents the artifact
- *   STAGED for a release; the release-side check in `packages/release-kit/lib/release/verify-metadata.ts` is where
+ *   STAGED for a release. the release-side check in `packages/release-kit/lib/release/verify-metadata.ts` is where
  *   staged bytes get checked.
  *
  *   Skips per-package when the binary is absent — these are derived artifacts, gitignored and built
@@ -112,7 +112,7 @@ describe("pair-index ↔ model-card parity", () => {
 				facts.pairs
 			)
 
-			// The calibrated magnitudes ride the header; a card claiming a delta the binary does not carry would
+			// The calibrated magnitudes ride the header. a card claiming a delta the binary does not carry would
 			// misdescribe the shipped behaviour, not just the shipped size.
 			const cardDelta = String(block!.delta_calibration ?? "")
 

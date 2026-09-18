@@ -5,7 +5,7 @@
  * @file Graceful-degradation expectation model for gauntlet component ablations.
  *
  * Builds a non-circular resolution ladder from the asserted coordinate, derives the honest rung from only the evidence
- * remaining after deletion, and grades from the undeleted answer’s achieved rung. Every rung carries an explicit radius;
+ * remaining after deletion, and grades from the undeleted answer’s achieved rung. Every rung carries an explicit radius.
  * ambiguous names abstain. See `ablation-expectation.md` for the design, measurements, and threshold rationale.
  */
 
@@ -50,7 +50,7 @@ export type RungRadiusSource = "row-tolerance" | "bbox" | "placetype-floor"
  */
 export interface AblationRung {
 	/**
-	 * 0 = the undeleted case's own answer; higher = coarser.
+	 * 0 = the undeleted case's own answer. higher = coarser.
 	 */
 	depth: number
 	/**
@@ -104,12 +104,12 @@ export type ExpectedRung =
 /**
  * The expectation for a variant whose surviving evidence includes a handle THIS MODEL CANNOT EVALUATE — a venue name
  * (POI resolution lives in `poi.db`, build-local and not a dependency of this layer) or a street name (no street index
- * here). Any rung, including abstention, passes; only leaving the ladder entirely fails.
+ * here). Any rung, including abstention, passes. only leaving the ladder entirely fails.
  *
  * It exists because the alternative is a confident wrong expectation. `Daniel's Head Beach Park, Scotts Hill` survives
  * a country deletion: `Scotts Hill` alone is a 3-way tie whose top-ranked place is in Austria, so the name cascade
  * would demand abstention — and the pipeline correctly answers Bermuda, off the venue. Declining to constrain that row
- * is honest; demanding abstention would have scored a correct answer as overconfident.
+ * is honest. demanding abstention would have scored a correct answer as overconfident.
  *
  * It is not a free pass. The Springfield case keeps its teeth: `742 Evergreen Terrace, Springfield` may answer anywhere
  * on the Springfield-IL ladder or abstain, and answering Springfield MA — 428 km away, off the ladder — is still
@@ -126,7 +126,7 @@ export {
 
 /**
  * Placetype → fallback rung radius (km): that placetype's MEASURED p90 bbox radius in `admin-global-priority.db`
- * (2026-08-05; sampled `is_current = 1` rows carrying a non-degenerate bbox, every table under 50k rows scanned whole
+ * (2026-08-05. sampled `is_current = 1` rows carrying a non-degenerate bbox, every table under 50k rows scanned whole
  * and the rest sampled `id % 97`).
  *
  * | placetype     | rows      | degenerate bbox | p50 km | p90 km  |
@@ -380,7 +380,7 @@ export function isDecisive(places: readonly AblationPlace[]): boolean {
 /**
  * A per-case hand-pin, for the rows where the derived ladder is wrong.
  *
- * Keyed by the deleted component; the value is `"abstain"`, `"base"`, or a WOF placetype naming the rung the deletion
+ * Keyed by the deleted component. the value is `"abstain"`, `"base"`, or a WOF placetype naming the rung the deletion
  * should degrade to (`"region"`, `"country"`, …). Absent component = the derived ladder decides, which is the default
  * and should stay the common case: a corpus full of hand-pins is a model nobody can trust.
  *
@@ -471,7 +471,7 @@ export function deriveExpectedRung(
 	//  - No index here. A venue resolves from `poi.db` (build-local, not a dependency of this layer) and a street from
 	//    the address-point / street-centroid databases.
 	//  - A constraint that did not resolve. `cr-op3-san-jose` asserts the region as "San José Province" and WOF calls it
-	//    "San José", so the region lookup misses; the surviving region is real evidence the pipeline will use, and
+	//    "San José", so the region lookup misses. the surviving region is real evidence the pipeline will use, and
 	//    demanding abstention because this model could not look it up would be scoring the model's gap as the parser's.
 	//  - Untyped words the corpus never asserted (`residualWords`) — the row said less than its input carries.
 	const unevaluable = [
@@ -585,7 +585,7 @@ export function ladderComponentDisagreement(
 	ladder: AblationLadder,
 	gz: AblationGazetteerProbe
 ): string | null {
-	// Only a row that names a city-or-finer place can be checked; one that names only a country has nothing to
+	// Only a row that names a city-or-finer place can be checked. one that names only a country has nothing to
 	// disagree about.
 	const namesFinePlace = Boolean(
 		components["locality"]?.trim() || components["dependent_locality"]?.trim() || components["postcode"]?.trim()
@@ -900,7 +900,7 @@ export function expectFor(input: {
 	gz: AblationGazetteerProbe
 	/**
 	 * The variant's input text — read only to find words no surviving component accounts for ({@linkcode residualWords}).
-	 * Not the variant's output; the expectation stays non-circular.
+	 * Not the variant's output. the expectation stays non-circular.
 	 */
 	ablatedInput: string
 }): ExpectedRungDescription {

@@ -9,7 +9,7 @@
  *   committed; `clients-build/` is gitignored. This is the local proof the conditional CI job (Phase 5 Task
  *   4) replays on dispatch.
  *
- *   Salvaged from the superseded `origin/feat/api-clients` branch (unmerged, left in place; see
+ *   Salvaged from the superseded `origin/feat/api-clients` branch (unmerged, left in place. see
  *   `docs/articles/api.mdx` "Client libraries"): the package/crate name (`mailwoman-client` on both
  *   PyPI and crates.io), the Python module layout (`mailwoman_client.{photon,nominatim,libpostal}`,
  *   now with a fourth `mailwoman` module for the native `/v1/*` surface), and the Rust crate pattern
@@ -59,7 +59,7 @@ export const CLIENT_SURFACES = ["photon", "nominatim", "libpostal", "mailwoman"]
 type ClientSurface = (typeof CLIENT_SURFACES)[number]
 
 /**
- * OpenAPI flavors the emitters print. 3.1 is the published document; 3.0 is progenitor's diet (openapiv3 only
+ * OpenAPI flavors the emitters print. 3.1 is the published document. 3.0 is progenitor's diet (openapiv3 only
  * understands 3.0.x).
  */
 const FLAVORS = ["3.1", "3.0"] as const
@@ -71,7 +71,7 @@ const FLAVORS = ["3.1", "3.0"] as const
  * stale twice: once when the 2026-08-14 regroup moved the workspaces, and again when the prefix-directory pass moved
  * `mailwoman`'s `lib/cli.ts` to `lib/cli/index.ts`, so its emit became `out/cli/index.js` while the other three kept
  * the flat name. Both times a clean, successful compile read as a missing emitter, and the second time it failed inside
- * a release run. `bin` is the manifest's declaration of where the entry point is; the emit layout underneath it is free
+ * a release run. `bin` is the manifest's declaration of where the entry point is. the emit layout underneath it is free
  * to move.
  *
  * Resolved through `workspacePath`, never by treating the workspace name as a repo-root segment — that was the first

@@ -7,7 +7,7 @@
 #
 #   v4.8.0   9.4%   7/25 regressed, 12 venue-led   "Ye Three Lords, 27 Minories, London EC3N 1DE"
 #                                                    -> locality "Ye Three Lords", venue and street gone
-#   v4.9.0   9.4%  11/31 regressed, 15 venue-led   binding moved to dependent_locality; bare streets broke
+#   v4.9.0   9.4%  11/31 regressed, 15 venue-led   binding moved to dependent_locality. bare streets broke
 #   v4.10.0  3.1%   9/22 regressed,  9 venue-led   damage scales with exposure, sub-linearly, and does not vanish
 #
 # `house-venue` was already emitting the surface those recipes were built to teach. Its default tail is
@@ -16,7 +16,7 @@
 # taught with its alternatives present rather than against them.
 #
 # WHAT IS ADDED: 18,000 rows, IN/PT/MX, REAL (postcode, locality, region) triples from the GeoNames
-# postal exports with the corrected column mapping (admin2 is the city; column 3 is a street or a
+# postal exports with the corrected column mapping (admin2 is the city. column 3 is a street or a
 # colonia and becomes the dependent locality). Measured on the emitted rows: venue 100%, street 100%,
 # house_number 100%.
 #
@@ -29,7 +29,7 @@
 # stream on its own.
 #
 # STEPS: 4,000 rather than 8,000. The change is small and additive to a proven bucket, and the wall
-# clock is real; if it needs longer it can resume.
+# clock is real. if it needs longer it can resume.
 #
 # PRE-REGISTERED CHECK:
 #   1. the 12 venue-led rows v4.8.0 regressed must all hold — that is the defect this design fixes;
@@ -206,7 +206,7 @@ data:
     synth-fr-bare-street: 0.0 # SUPERSEDED (vintages must never co-feed)
     synth-fr-bare-street-v20: 0.0 # SUPERSEDED
     synth-fr-bare-street-v21: 0.0 # SUPERSEDED by -v22
-    synth-fr-bare-street-v22: 6.0 # weight held at v4.5.1's value; the v22 counter-forms are the run's one variable
+    synth-fr-bare-street-v22: 6.0 # weight held at v4.5.1's value. the v22 counter-forms are the run's one variable
     synth-si-bare-village: 12.0
     synth-no-street-led: 0.0
     synth-cz-pcfirst-preposition: 0.0 # SUPERSEDED (vintages must never co-feed)

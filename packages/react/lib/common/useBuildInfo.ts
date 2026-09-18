@@ -7,7 +7,7 @@
  *
  *   It answers WHICH BUILD a visitor is looking at, which is the question a bug report cannot answer from the URL: the
  *   apps deploy from `main` on every push, so "the site" is whatever commit was HEAD at build time. The production
- *   smoke already fetches this file; this is the same record, read by the page that was built from it.
+ *   smoke already fetches this file. this is the same record, read by the page that was built from it.
  *
  *   Absence is not an error. A dev server has no `build.json`, and a page must not show an error strip because it is
  *   running locally — so a failed fetch resolves to `null` and the caller renders nothing.
@@ -51,7 +51,7 @@ export function useBuildInfo(url = "/build.json"): BuildInfoRecord | null {
 
 				const record = (await response.json()) as BuildInfoRecord
 
-				// A record without a revision is not a build record; rendering half of one would put an empty
+				// A record without a revision is not a build record. rendering half of one would put an empty
 				// link in the footer rather than saying nothing.
 				if (!controller.signal.aborted && record?.revision) {
 					setInfo(record)

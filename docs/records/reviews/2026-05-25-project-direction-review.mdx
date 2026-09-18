@@ -216,6 +216,6 @@ The thesis is sound. The architecture is the best version of this idea that exis
 
 The project's primary risk is not architectural — it's that five things changed at once, training destabilized, and the integration that would validate the architecture got deferred behind the training problem. The fix is mechanical: stabilize training, wire the pipeline end-to-end, measure the architectural thesis, then expand scope.
 
-The thing to protect is the decomposition: rules for high-precision bounded problems, a small neural model for contextual ambiguity, structural priors from the phrase grouper, joint coherence from the reconciler, world hierarchy from the gazetteer. That decomposition is correct, and nothing in the current evidence contradicts it.
+The thing to guard is the decomposition: rules for high-precision bounded problems, a small neural model for contextual ambiguity, structural priors from the phrase grouper, joint coherence from the reconciler, world hierarchy from the gazetteer. That decomposition is correct, and nothing in the current evidence contradicts it.
 
 The thing to fix is scope bundling. Ship one training-side change per release, validate it end-to-end before accepting more variables, and document what you know and don't know in a status page that everyone can find.

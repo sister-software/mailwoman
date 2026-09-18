@@ -42,7 +42,7 @@ const GLOBAL_EXTENT_TOLERANCE = 0.005
 const WHOLE_BODY_ULLR = ["-180", "90", "180", "-90"] as const
 
 /**
- * Pixels along a tile edge; at zoom z the whole-body grid is 2^z tiles wide and 2^(z−1) tall in EPSG:4326.
+ * Pixels along a tile edge. at zoom z the whole-body grid is 2^z tiles wide and 2^(z−1) tall in EPSG:4326.
  */
 const TILE_PIXELS = 256
 
@@ -90,7 +90,7 @@ export interface HillshadeBuildOptions {
 	demPath: PathBuilderLike
 	outPath: PathBuilderLike
 	/**
-	 * The deepest zoom the archive carries; overviews run from it down to zoom 0.
+	 * The deepest zoom the archive carries. overviews run from it down to zoom 0.
 	 */
 	maxZoom: number
 }
@@ -259,7 +259,7 @@ export async function buildHillshadePMTiles(
 
 	await runFile("gdal_translate", tile)
 
-	// The driver's zoom is read back rather than assumed; the resample above is what makes it the requested one.
+	// The driver's zoom is read back rather than assumed. the resample above is what makes it the requested one.
 	const zoom = await readMBTilesZoom(mbtiles)
 
 	if (zoom !== options.maxZoom) {

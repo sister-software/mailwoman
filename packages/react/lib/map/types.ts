@@ -47,7 +47,7 @@ export interface MapBias {
 
 /**
  * A host-supplied overlay: one map `<Source>` plus one or more `<Layer>`s laid over the basemap (coverage "fog of war",
- * race-dots, …). The host composes the specs; the package renders them declaratively in a later phase.
+ * race-dots, …). The host composes the specs. the package renders them declaratively in a later phase.
  */
 export interface OverlaySpec {
 	/**
@@ -99,7 +99,7 @@ export interface VersionOption {
 	 */
 	version: string
 	/**
-	 * Display label; falls back to `version`.
+	 * Display label. falls back to `version`.
 	 */
 	label?: string
 }
@@ -137,7 +137,7 @@ export interface GeocoderRuntime extends PipelineRuntime {
 
 	// ── Parse extras layered over PipelineRuntime.runParse ──────────────────
 	/**
-	 * A bias-aware parse. The geocoder feeds the current viewport center as a soft prior; when absent the host falls back
+	 * A bias-aware parse. The geocoder feeds the current viewport center as a soft prior. when absent the host falls back
 	 * to the base {@link PipelineRuntime.runParse}. Kept separate so the shared `runParse` contract is unchanged.
 	 */
 	runParseWithBias?: (
@@ -157,7 +157,7 @@ export interface GeocoderRuntime extends PipelineRuntime {
 	 * Enrich the selected candidate into the richer {@link ResolvedMapPlace} the declarative map render consumes (bbox,
 	 * street tier + uncertainty, a pre-fetched crisp polygon) — the fields that live on the host's `ResolvedHit` but not
 	 * on the shared {@link ResolvedPlaceView}. The host owns this because those extras (and the async polygon fetch in the
-	 * real runtime) are host/gazetteer concerns; the package keeps {@link ParseResult} unpolluted. Absent → the candidate
+	 * real runtime) are host/gazetteer concerns. the package keeps {@link ParseResult} unpolluted. Absent → the candidate
 	 * renders as a bare point (marker + a mid-zoom fly-to). Returning `null` also renders nothing.
 	 */
 	resolveMapPlace?: (candidate: ResolvedPlaceView, result: ParseResult) => ResolvedMapPlace | null
@@ -211,7 +211,7 @@ export interface CompareContext {
 /**
  * The state a {@link GeocoderPanels.result} render-prop receives, so a host can render its own result block (a
  * `<ResultPanel>` with its span-highlight / timing / hierarchy / precision detail) in place of the package's default
- * {@link ResultPanel}. Everything the default panel needs is passed through; the candidate-selection state stays owned
+ * {@link ResultPanel}. Everything the default panel needs is passed through. the candidate-selection state stays owned
  * by the package (`useGeocode`).
  */
 export interface ResultContext {
@@ -291,7 +291,7 @@ export interface GeocoderPanels {
 	compare?: (context: CompareContext) => ReactNode
 	/**
 	 * The model-visualizer / debug drawer, mounted beside the map (host's ModelVisualizer). A render-prop so the host can
-	 * trace the CURRENT result (its input) — the package passes the live parse result; the host decides on its own
+	 * trace the CURRENT result (its input) — the package passes the live parse result. the host decides on its own
 	 * dev-mode state and returns `null` when the drawer is closed.
 	 */
 	debugDrawer?: (context: { result: ParseResult | null }) => ReactNode

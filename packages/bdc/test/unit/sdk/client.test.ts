@@ -26,7 +26,7 @@ import type { FCCAsOfDateEntry } from "@mailwoman/bdc/sdk/filing-dates"
 import { createFakeClock, maxCountInSlidingWindow, VirtualClock } from "@mailwoman/core/api/test-clocks"
 import { type StubOutcome, stubTransport, type StubTransport } from "@mailwoman/core/api/test-transport"
 // `ResourceError` is used both as a VALUE (`toBeInstanceOf`) and as a TYPE (`as ResourceError`). The value
-// arrives via the post-reset dynamic import below; a `const` carries no type side, so the type position
+// arrives via the post-reset dynamic import below. a `const` carries no type side, so the type position
 // needs its own static import. Type-only, so it never evaluates the mocked module chain.
 import type { ResourceError as ResourceErrorShape } from "@mailwoman/core/errors"
 import { crc32 } from "@mailwoman/core/fs/compression"
@@ -318,7 +318,7 @@ describe("createBDCClient: the throttle meter", () => {
 		// Deliberately UNDER `BDC_DEFAULT_REQUESTS_PER_MINUTE`, so only the interval limit fires and `waits` is exactly
 		// one per call after the first. At 12 this also crossed the per-minute budget, and once that limit's cooldown was
 		// corrected to a full window (it had been releasing N back to back every `60000/N` ms — a 10x overrun) the extra
-		// budget waits made the count ambiguous. Union-vs-sum is what this test is for; isolate it.
+		// budget waits made the count ambiguous. Union-vs-sum is what this test is for. isolate it.
 		const FAN_OUT = 8
 
 		const clock = new VirtualClock()
@@ -335,7 +335,7 @@ describe("createBDCClient: the throttle meter", () => {
 	})
 
 	it("counts a per-minute budget cooldown once the budget is spent", async () => {
-		// The BUDGET limit (`requestsPerMinute`) is declared alongside the interval limit; this is what proves
+		// The BUDGET limit (`requestsPerMinute`) is declared alongside the interval limit. this is what proves
 		// it is actually wired, since the interval limit alone produces identical arrival spacing.
 		const BUDGET = 2
 

@@ -39,7 +39,7 @@ using lookup = new POILookup({ database })
 const shippedRung = createPOINameLookup(lookup)
 
 // A complete key scan rather than a ranked read — see `CensusPOIReader` for the measurement that made the ranked one
-// inadmissible. `LIKE` is a superset filter; the census applies whole-token containment to what comes back. One scan
+// inadmissible. `LIKE` is a superset filter. the census applies whole-token containment to what comes back. One scan
 // for the whole probe set: the predicate is unindexable either way, so the cost is the 13.68M-row pass, not the
 // number of terms in it.
 function candidates(probes: ReadonlyArray<string>): CensusVenue[] {

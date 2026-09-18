@@ -1,6 +1,6 @@
 # Smoke-test config — tiny step budget for CPU-only verification of the full pipeline.
 # Used by `python -m mailwoman_train smoke` to prove data → train → eval → ONNX → quantize.
-# Do not use this for production weights; the model will be undertrained.
+# Do not use this for production weights. the model will be undertrained.
 
 data:
   corpus_dir: /data/corpus/versioned/v0.1.1/corpus-v0.1.1

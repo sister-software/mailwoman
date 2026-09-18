@@ -62,7 +62,7 @@ export function applyCjkNormalization(input: string, opts: { postalMark?: "strip
 		if (code === POSTAL_MARK && stripPostalMark) {
 			stripped += 1
 
-			continue // drop — no addressing content; whitespace collapse later tidies any gap
+			continue // drop — no addressing content. whitespace collapse later tidies any gap
 		}
 
 		if (code >= FULLWIDTH_START && code <= FULLWIDTH_END) {

@@ -29,7 +29,7 @@ import { verifyTarball } from "#pack/verify-tarball"
 
 /**
  * The root workspaces that sit outside `.release-it.json`'s publish list, each with the reason a reader can state. The
- * identity check below fails on any absence not in this record — "expected 51, found 50" sends someone counting; naming
+ * identity check below fails on any absence not in this record — "expected 51, found 50" sends someone counting. naming
  * the unexpected workspace is the actionable version, and this record is the data the check owns.
  */
 export const SANCTIONED_RELEASE_ABSENCES: Readonly<Record<string, string>> = {
@@ -116,11 +116,11 @@ export async function checkReleaseListIdentity(repoRoot: PathBuilderLike): Promi
  * Materialize the release tree into `stagingRoot`:
  *
  * 1. `git archive HEAD` — tracked files only, so the staging tree can never leak uncommitted work into an audit and the
- *    source checkout is never written to;
- * 2. Each release workspace's compiled `out/` copied in — tarballs ship compiled JS + `.d.ts`, and `out/` is gitignored;
+ *    source checkout is never written to.
+ * 2. Each release workspace's compiled `out/` copied in — tarballs ship compiled JS + `.d.ts`, and `out/` is gitignored.
  * 3. The checkout's `node_modules` symlinked in — `yarn pack` needs the project context, reads it, and never writes it.
  *
- * The caller owns `stagingRoot`'s lifecycle; an existing tree at that path is replaced.
+ * The caller owns `stagingRoot`'s lifecycle. an existing tree at that path is replaced.
  */
 export async function stageReleaseTree(repoRoot: string, stagingRoot: string): Promise<void> {
 	await removePathIfPresent(stagingRoot)
@@ -140,7 +140,7 @@ export async function stageReleaseTree(repoRoot: string, stagingRoot: string): P
 }
 
 /**
- * One workspace's pack-and-audit outcome. `failures` is empty on a clean pack; a pack that could not even produce a
+ * One workspace's pack-and-audit outcome. `failures` is empty on a clean pack. a pack that could not even produce a
  * tarball reports the thrown message as its single failure rather than aborting the sweep.
  */
 export interface WorkspaceAuditResult {

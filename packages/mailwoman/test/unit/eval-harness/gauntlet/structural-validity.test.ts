@@ -11,7 +11,7 @@
  *   never asked for. #1747 repaired one instance after finding the diagnosis had sat unread.
  *
  *   THE PROPERTY THAT MAKES THIS WORTH RESTRICTING is that the verdict needs no truth. Every other board assertion compares
- *   against an expected component or coordinate; this one reads the tree against its own contract, so it can fail a row
+ *   against an expected component or coordinate. this one reads the tree against its own contract, so it can fail a row
  *   nobody has labelled and it cannot be satisfied by pinning a new expectation. Measured over 854 rows it flags four,
  *   and all four are rows the board independently tracks as failing — no false positives.
  *
@@ -43,7 +43,7 @@ async function weightsPresent(): Promise<boolean> {
 /**
  * Rows whose tree is structurally invalid TODAY, each with the issue that owns it.
  *
- * An entry is a debt with a name. Removing one because it started passing is the good outcome; adding one needs the
+ * An entry is a debt with a name. Removing one because it started passing is the good outcome. adding one needs the
  * defect written down first, because a row added here silently is a defect converted into a permanent exemption.
  */
 const SG_GENERIC_FIRST_STREET =

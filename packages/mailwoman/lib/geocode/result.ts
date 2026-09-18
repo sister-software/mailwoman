@@ -23,10 +23,10 @@ import { assembleStreetName } from "#street/name-assembly"
 /**
  * The resolution tier that produced the coordinate. `address_point` > `interpolated` > `street` > `admin`.
  *
- * - `address_point` — rooftop / parcel centroid; uncertainty_m is a small floor (~1 m)
- * - `interpolated` — house-number estimate; uncertainty_m is honest (calibrated bracket span)
+ * - `address_point` — rooftop / parcel centroid. uncertainty_m is a small floor (~1 m)
+ * - `interpolated` — house-number estimate. uncertainty_m is honest (calibrated bracket span)
  * - `street` — street centroid for a street-only query (#1042); uncertainty_m is half the street's bbox diagonal
- * - `admin` — admin centroid; uncertainty_m is null (no sub-locality estimate available)
+ * - `admin` — admin centroid. uncertainty_m is null (no sub-locality estimate available)
  */
 export type ResolutionTier = "address_point" | "interpolated" | "street" | "admin" | "venue" | "plus_code"
 
@@ -96,7 +96,7 @@ export interface GeocodeResult {
 	/**
 	 * The entity the fork→entity probe resolved (#1585's entity half) — present only when the `venue` tier answered: the
 	 * decoder declared a fork, the incumbent path produced no coordinate, and exactly one poi.db entity bears the query's
-	 * exact name (see `fork-entity.ts` for the three checks). Positive evidence only; absent everywhere else.
+	 * exact name (see `fork-entity.ts` for the three checks). Positive evidence only. absent everywhere else.
 	 */
 	entity?: { name: string; categoryID: string | null; confidence: number; country: string }
 	/**
@@ -143,7 +143,7 @@ export interface GeocodeResult {
 	 * Surfaced 2026-08-05 for the same reason `venue` was in 2026-08-01, and found the same way: the gauntlet's sub-venue
 	 * cases (added 2026-08-01) assert `unit`, no result field carried it, and `componentOf`'s deliberately-loud
 	 * unknown-key throw meant the whole regression layer died the moment the corpus was rebuilt from its own seed. The
-	 * committed corpus had been ungradeable since the day those cases landed; only the staleness of the built artifact
+	 * committed corpus had been ungradeable since the day those cases landed. only the staleness of the built artifact
 	 * hid it.
 	 */
 	unit: string | null
@@ -207,7 +207,7 @@ export interface GeocodeResult {
 	 * answer. **Always present**; an empty array is this path stating that the vocabulary looked and found nothing, which
 	 * is a different claim from a missing field (the {@link `PipelineResult.faults`} discipline).
 	 *
-	 * Nothing here changed the answer. Three of the four markers are raised by the kind classifier from the string alone;
+	 * Nothing here changed the answer. Three of the four markers are raised by the kind classifier from the string alone.
 	 * the fourth (`declared_ambiguity`) is raised after the resolve by reading the ranked candidate list's dominance
 	 * margin and comparing it to the measured 0.5-log10 decisive threshold — a read, never a re-rank. This is the same
 	 * narrow-channel posture {@link postcode_country_scope} set: an advisory RECEIPT inside a resolution contract, not a
@@ -341,7 +341,7 @@ export function extractGeocodeResult(input: string, tree: AddressTree): GeocodeO
 		// the rung the result reported 0,0 despite a resolved coordinate (the proximity-bias feature's 48026 case).
 		// And a unit-grade hit has to LEAD it: `29 Brecknock Road, London, N7 0BT` resolves its unit postcode to
 		// 51.5500/-0.1307, 38 m from the rooftop truth, against a London centroid 5.6 km away — on all 15 GB
-		// rooftop rows of the 2026-08-09 panel run. Nothing was missing from the gazetteer and no lookup failed;
+		// rooftop rows of the 2026-08-09 panel run. Nothing was missing from the gazetteer and no lookup failed.
 		// the answer was on the tree and this list did not ask for it.
 		const adminPriority = adminLadderForNodes(allNodes)
 

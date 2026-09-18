@@ -93,7 +93,7 @@ export function choosePoint(geom: PointPair, lbl: PointPair, anchor: PointPair |
 }
 
 /**
- * GeoNames tab-separated column offsets (the standard country-file dump layout): id first, then name fields; latitude
+ * GeoNames tab-separated column offsets (the standard country-file dump layout): id first, then name fields. latitude
  * and longitude sit at columns 4 and 5.
  */
 const GN_COLUMN_ID = 0
@@ -103,7 +103,7 @@ const GN_COLUMN_LON = 5
 /**
  * Build a lazy per-country anchor lookup over a GeoNames country-file directory (`<dir>/<CC>.txt`).
  *
- * A country file loads on the first anchor request for that country and is cached as an id → point map; a country whose
+ * A country file loads on the first anchor request for that country and is cached as an id → point map. a country whose
  * file is absent caches an empty map, so a data root without GeoNames extracts degrades to "no anchor anywhere" — the
  * label preference, byte-identical to a build without this module. Loading is lazy by design: the consult fires only
  * for the rare wide-disagreement records, so the cost is one asynchronous file read per country that has such a

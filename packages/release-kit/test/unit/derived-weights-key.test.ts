@@ -75,7 +75,7 @@ describe("derivedWeightsKeyFrom", () => {
 		await writeLocalTextFile("export const delta = 1", generator)
 		const before = await derivedWeightsKeyFrom([at(config), at(generator)])
 
-		// The config is untouched; only the code that produces the binaries changed.
+		// The config is untouched. only the code that produces the binaries changed.
 		await writeLocalTextFile("export const delta = 2", generator)
 
 		expect(await derivedWeightsKeyFrom([at(config), at(generator)])).not.toBe(before)

@@ -5,7 +5,7 @@
  *
  *   Reserved bare-postcode capability cases. These strings are excluded from every country in the
  *   training recipe and are read only by evaluation. Reservation is by normalized input string,
- *   because `NNN NN` is shared by CZ, SK, SE and GR; excluding a Czech row alone could still train
+ *   because `NNN NN` is shared by CZ, SK, SE and GR. excluding a Czech row alone could still train
  *   the model on the identical Swedish input.
  */
 

@@ -8,7 +8,7 @@
  *   FOUR THINGS ARE PINNED HERE AND EACH IS SILENT WHEN WRONG.
  *
  *   1. THE MEANING-OF-ZERO RULE, checked three ways rather than asserted once. Every coverage row must fail
- *      `supportsExclusion`; a builder handing a stronger basis to the coverage writer must be refused; and an
+ *      `supportsExclusion`. a builder handing a stronger basis to the coverage writer must be refused. and an
  *      artifact carrying one must be refused at OPEN time. The sibling flood layer reports a point inside its
  *      footprint and outside every polygon as the authority's Zone 1 DESIGNATION. This layer must report the
  *      same geometry as `unknown` with no designation, because a location with no zoning polygon is one of at

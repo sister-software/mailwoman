@@ -43,7 +43,7 @@ interface VocabularyLine {
 	characters: number
 	byteFallbacks: number
 	/**
-	 * Pieces per character. Latin text against this tokenizer runs around 0.4; a figure near or above 1.0 means the
+	 * Pieces per character. Latin text against this tokenizer runs around 0.4. a figure near or above 1.0 means the
 	 * string is being spelled out rather than tokenized.
 	 */
 	piecesPerCharacter: number
@@ -115,7 +115,7 @@ function total(lines: readonly VocabularyLine[]): VocabularyReport["totals"] {
  * Which letters in `texts` the vocabulary can express on their own.
  *
  * Judged one character at a time on purpose. A character that falls back inside a word might merely be an unlucky
- * segmentation; a character that falls back ALONE is absent from the vocabulary, which is the fact a vocabulary
+ * segmentation. a character that falls back ALONE is absent from the vocabulary, which is the fact a vocabulary
  * decision needs.
  */
 function characterCoverage(

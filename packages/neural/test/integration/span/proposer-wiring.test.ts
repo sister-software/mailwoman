@@ -6,7 +6,7 @@
  *   Contract tests for the Stage 2.7 consumption wiring: the codex-backed lexicon builder and the
  *   span-proposal emission priors. Essential properties: the lexicon derives strictly from codex
  *   tables (no invented designators, no bare "MS" in the scan); the priors are soft additive biases
- *   with B-/I- structure; annotation O-bias respects its confidence floor; QUOTED_SPAN contributes
+ *   with B-/I- structure. annotation O-bias respects its confidence floor. QUOTED_SPAN contributes
  *   no bias at all.
  */
 

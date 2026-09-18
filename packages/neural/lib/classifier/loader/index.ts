@@ -4,7 +4,7 @@
  * @author Teffen Ellis, et al.
  * @file The Node-only classifier factory: resolve the weights package, load the tokenizer and ONNX runner, wire every
  *   evidence channel, and hand back a ready `NeuralAddressClassifier`. Split from `classifier.ts` so the class stays
- *   browser-bundlable; the class's `loadFromWeights` static reaches this module through a `webpackIgnore` dynamic
+ *   browser-bundlable. the class's `loadFromWeights` static reaches this module through a `webpackIgnore` dynamic
  *   import, which is the same crossing the module itself uses for `onnxruntime-node`.
  */
 
@@ -79,7 +79,7 @@ export async function loadClassifierFromWeights(
 		 *
 		 * A DECLARED ABLATION for measurement, never a production setting: the choreography pairs with the train-time half,
 		 * so a model trained with it and served without it is a mismatch. `createScorer` has carried the same override
-		 * since the channel shipped; this makes the package-shaped path able to answer the same question.
+		 * since the channel shipped. this makes the package-shaped path able to answer the same question.
 		 */
 		suppressGazetteerNearPostcode?: boolean
 	} = {}
@@ -112,7 +112,7 @@ export async function loadClassifierFromWeights(
 
 	// The vocabulary belongs to the MODEL, so an overlay that shares a base model inherits it rather than
 	// restating it. A carrier package's own card describes the overlay — its version, its own artifacts —
-	// and omitting `labels` there is correct; copying them in would be a second copy to go stale on the
+	// and omitting `labels` there is correct. copying them in would be a second copy to go stale on the
 	// next retrain. Falling back is what keeps the two facts in one place.
 	const labels =
 		(await readLabelsFromModelCard(resolved.modelCardPath)) ??
@@ -120,7 +120,7 @@ export async function loadClassifierFromWeights(
 
 	const crf = await readCRFTransitions(resolved.crfTransitionsPath)
 	// #727 stage-2: parse the span head's segment-transition grammar when the bundle ships it (v3+). Failure to parse
-	// is non-fatal — the model still classifies; only the phase-4c k-best rerank goes unavailable (spanGrammar stays
+	// is non-fatal — the model still classifies. only the phase-4c k-best rerank goes unavailable (spanGrammar stays
 	// undefined).
 	let semiCRFGrammar: SemiCRFTransitions | undefined
 
@@ -157,7 +157,7 @@ export async function loadClassifierFromWeights(
 			// each claim the whole machine — the multiplier behind the CLI spawn-test timeouts. Measured
 			// 2026-08-03 over 120 parses: 1 thread costs 18.3 ms/parse against 9.3 for all-cores (a 97%
 			// regression — the parallelism is doing work), 2 costs 12.5, and 4 is 9.2 — flat against the
-			// default while claiming a quarter of the threads. So the cap is free at 4 and expensive at 1;
+			// default while claiming a quarter of the threads. So the cap is free at 4 and expensive at 1.
 			// do not "simplify" it downward without re-running that curve.
 			// Explicit opt > deployment env > compromise default. The env layer exists because the right
 			// value is a property of how many processes share the host, which this library cannot see.
@@ -168,7 +168,7 @@ export async function loadClassifierFromWeights(
 	// Feed the channels the shipped model was trained against.
 	// The anchor-trained en-us model goes OOD when scored anchor-OFF (the #566/#685 crater: country
 	// ~0, region 71, locality 57 vs the server-tier 68/90/77). The browser loader already feeds the
-	// channels from URLs; this is the Node-side mirror so every consumer (ResolveRouter,
+	// channels from URLs. this is the Node-side mirror so every consumer (ResolveRouter,
 	// GeocodeRouter, geocode.tsx, the CLI) transparently gains them with no callsite change.
 	//
 	// SOFT: each channel is best-effort. A caller-passed `postcodeAnchorLookup` always wins. When
@@ -205,7 +205,7 @@ export async function loadClassifierFromWeights(
 
 	// One loop for the four lexicon channels — the gazetteer/country/street-type/locality-surface reads
 	// share one parse-and-warn shape (the two evidence lexicons reuse the gazetteer's JSON schema). The
-	// declared-required warning runs only for the channels whose artifact has a fixed name; the evidence
+	// declared-required warning runs only for the channels whose artifact has a fixed name. the evidence
 	// channels' `requires`-declared enforcement arrives with the first bundle-trained card. Pocket tier is
 	// anchor-only: `resolveWeights` already withholds the gazetteer/country paths there, so a
 	// declared-required channel is EXPECTED to be unfed — don't warn.
@@ -281,7 +281,7 @@ export async function loadClassifierFromWeights(
 				// `transitionBeta` do — the prior reads `PairIndexResolver.parentDelta` off the header, so a
 				// calibrated locale (us/gb/nz/fr at 5) is default-on and an unmeasured one (de/in/es/it, no header
 				// field) stays off, with no code here knowing which is which. The env is an OVERRIDE for eval
-				// sweeps only and wins when set; see `MAILWOMAN_PAIR_PARENT_DELTA` in `neural/lib/env.ts`.
+				// sweeps only and wins when set. see `MAILWOMAN_PAIR_PARENT_DELTA` in `neural/lib/env.ts`.
 				placetypePair = {
 					index: new PairIndexResolver(pairIndexBytes),
 					...($public.MAILWOMAN_PAIR_PARENT_DELTA === undefined
@@ -341,7 +341,7 @@ export async function loadClassifierFromWeights(
 		modelPath: resolved.modelPath,
 		weightsSource: resolved.source,
 		...(suppressGazetteerNearPostcode ? { suppressGazetteerNearPostcode } : {}),
-		// The card's `mode` is an open string; a non-SystemCode value degrades to a null conventions row
+		// The card's `mode` is an open string. a non-SystemCode value degrades to a null conventions row
 		// downstream (`conventionsForSystem` on an unknown code), never a throw — so the widening cast is
 		// runtime-safe. An overlay card may pin a concrete system here (en-gb pins "gb", #1275) when the
 		// locale head's auto detection under-fires for the bundle's own locale.

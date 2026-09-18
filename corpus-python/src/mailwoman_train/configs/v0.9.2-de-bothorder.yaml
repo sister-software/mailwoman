@@ -14,14 +14,14 @@
 # `synth-german` recipe output is built with `--intl-fraction 0.4` (≈40% international order, ≈60% native). Any
 # delta is attributable to the order mix, not the recipe.
 #
-# PRE-REGISTERED CHECK (stop at 20k, the early check; extend to 100k only if it holds):
-#   - NATIVE-order DE locality >= 80% — hold the 83.8% we already have; do not regress native.
+# PRE-REGISTERED CHECK (stop at 20k, the early check. extend to 100k only if it holds):
+#   - NATIVE-order DE locality >= 80% — hold the 83.8% we already have. do not regress native.
 #   - INTERNATIONAL-order DE locality >> 45.5% (target >= 65%) — the gap this run exists to close.
 #   - US/FR within ~1pp of v0.7.2 (no regression on the incumbents).
 #   - cross_pollution < 1% per locale (live regression check).
 # Measure both orders explicitly via the two committed eval assets:
 #   data/eval/external/openaddresses-de-sample.jsonl                (US/international order, as shipped)
-#   data/eval/external/openaddresses-de-sample-native-order.jsonl   (native German order; render-de-native-order.ts)
+#   data/eval/external/openaddresses-de-sample-native-order.jsonl   (native German order. render-de-native-order.ts)
 #
 # FOLLOW-UP (not this run): once both-orders holds, A/B dropping the anchor (use_postcode_anchor:false)
 # to learn whether order-robust training alone closes it — the anchor may have been rescuing a symptom
@@ -68,7 +68,7 @@ data:
     deepseek-kryptonite: 3.0
     synth-po-box: 1.5
     synth-intersection: 0.2
-    # German at ~18% of the mix — same weight as v0.9.1; the only change is the `synth-german` rows now carry both
+    # German at ~18% of the mix — same weight as v0.9.1. the only change is the `synth-german` rows now carry both
     # orders. The key tunable if a check lags: raise for more DE, lower if US/FR slip the 1pp regression check.
     synth-german: 6.0
   train_rows_per_epoch: 1000000

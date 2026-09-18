@@ -473,7 +473,7 @@ describe("evaluateFloors — breach detection", () => {
 	})
 
 	it("breaches on a single abstain miss (100% floor is hard) even when overall clears 90%", () => {
-		// 7/8 abstain is a single false-positive; overall 50/51 still ≥ 90%, but the abstain floor is 100%.
+		// 7/8 abstain is a single false-positive. overall 50/51 still ≥ 90%, but the abstain floor is 100%.
 		const evaluation = evaluateFloors(
 			report({
 				results: { total: 37, pass: 37 },
@@ -657,7 +657,7 @@ describe("the promoted semantic-utility family (#1960)", () => {
 			expect(fixture.bugRef, fixture.id).toMatch(/^#\d+$/u)
 		}
 
-		// The route-dependent three await the phase-2 decision that would reach them on the default path; the French row is
+		// The route-dependent three await the phase-2 decision that would reach them on the default path. the French row is
 		// tracked as a defect, because its baseline is a confident wrong answer rather than a miss.
 		const byRef = new Map(promoted.map((f) => [f.id, f]))
 

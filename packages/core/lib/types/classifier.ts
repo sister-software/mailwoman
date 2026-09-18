@@ -13,7 +13,7 @@
  *
  *   The neural classifier implements this interface natively. The rule classifiers that once
  *   also implemented it (via a `wrapLegacyClassifier` adapter) were removed in v7.0.0 with the
- *   `@mailwoman/classifiers` workspace; this contract now describes the neural path only.
+ *   `@mailwoman/classifiers` workspace. this contract now describes the neural path only.
  */
 
 import type { ComponentTag } from "@mailwoman/codex/component"
@@ -31,7 +31,7 @@ export type Section = Span
  *
  * - `rule`: emitted by a legacy rule classifier through the adapter.
  * - `neural`: emitted by an ONNX-backed sequence classifier.
- * - `merged`: synthetic source for a merger that fused proposals from multiple classifiers (rare; mostly for telemetry on
+ * - `merged`: synthetic source for a merger that fused proposals from multiple classifiers (rare. mostly for telemetry on
  *   `merged` ids).
  */
 export type ClassificationProposalSource = "rule" | "neural" | "merged"
@@ -106,7 +106,7 @@ export interface ClassifierContext {
 /**
  * Plug-in contract every classifier implements.
  *
- * Construction must be cheap; per-classification work runs in {@link classify}. Pre-flight work (loading dictionaries,
+ * Construction must be cheap. per-classification work runs in {@link classify}. Pre-flight work (loading dictionaries,
  * warming up an ONNX session) belongs in the optional `ready()` step.
  */
 export interface ProposalClassifier {

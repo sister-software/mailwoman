@@ -6,7 +6,7 @@
  *   The lockstep pin for #1732: dev-mcp's effective defaults are production's, field by field.
  *
  *   The incident this guards: `resolveConfig` carried a hand-copied default table that drifted on three values
- *   (postcode shape/containment coherence true where production ships false; placer threshold 0.5 where production
+ *   (postcode shape/containment coherence true where production ships false. placer threshold 0.5 where production
  *   ships 0.9), so every unset-pin measurement graded a configuration nobody ships. A copied constant cannot be kept
  *   honest by review — the #861 rule — so `resolveConfig` now derives from `createGeocodeCommandOptions()` itself, and
  *   this test exists to fail if anyone re-introduces a literal.

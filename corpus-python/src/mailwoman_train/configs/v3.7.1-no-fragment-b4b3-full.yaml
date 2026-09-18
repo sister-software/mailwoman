@@ -2,11 +2,11 @@
 # The 8k ESCALATION of the v370 2k probe — knob 3 was the first purely-additive change (target +4.7pp,
 # FR +3.4pp, golden check passed with 0 regressions). This run answers whether more steps cross the strict bar.
 #
-# PRE-REGISTERED READ (written before the numbers exist; graded on the Norway digit board, board 3,
+# PRE-REGISTERED READ (written before the numbers exist. graded on the Norway digit board, board 3,
 # scratchpad/run-digit-board.run.ts, package-shaped int8, vs the registered SHIPPED-v310 baselines).
 #
 # THE ONE VARIABLE vs v3.3.0: --long-number-boost 4 (min 3 digits). bare-street-prob is back at 0.30
-# (knob 1 at 0.70 was FALSIFED — it starved the street+number rows and CAUSED street-absorption; see
+# (knob 1 at 0.70 was FALSIFED — it starved the street+number rows and CAUSED street-absorption. see
 # scratchpad/deepparse-cmp/B4B-verdict.md). This knob does the OPPOSITE: it emits 4 copies of each
 # street+number row whose number has >=3 digits. Composition: street-hn 59% (of which 2,768 rows are
 # >=3-digit, oversampled 4x), bare-street 17% (measured, scratchpad/build-no-fragment-b4b3.run.ts).
@@ -28,7 +28,7 @@
 # GUARD : street-led-hn / city-first-hn / pc-first-hn do not regress from 0.94-0.968.
 # GUARD : the FR fragment board (board 2) does not re-drift below FR OVERALL ~0.725 (v310 0.733).
 # GUARD : GOLDEN (post-numsplice lesson — an on-board win can hide an off-board cost). If board 3 passes,
-#         run the golden check delta vs v310; fr.house_number / us.unit_real must not regress >2pp.
+#         run the golden check delta vs v310. fr.house_number / us.unit_real must not regress >2pp.
 #
 # SHIP CANDIDATE. On a pass: export int8, run board 3 + FR fragment + the golden check, then operator promotes.
 #
@@ -143,7 +143,7 @@ model: # Verbatim from v2.4.1.
   use_country_anchor: true
   country_feature_dim: 2
   # #1104 homograph-guard SOFTENER — the one variable vs v263. Scales the country_ambiguous dim by 0.5
-  # before the country_projection (bakes into the exported ONNX; no lexicon/inference change). v263's
+  # before the country_projection (bakes into the exported ONNX. no lexicon/inference change). v263's
   # hard guard (scale 1.0) over-suppressed homograph countries Georgia/Jordan (country-homograph F1
   # 89.8->82.6); softening should recover homograph recall without giving back the country F1 the
   # WOF-admin rows produced.
@@ -187,7 +187,7 @@ model: # Verbatim from v2.4.1.
 
 train: # Same-vocab init_from fine-tune off the shipped v261 (fresh optimizer; --resume none on a fresh
   # output_dir honors init_from, weights only). The new country_projection starts random and learns to
-  # route the cue; the encoder keeps v261's span-boundary + street grammar.
+  # route the cue. the encoder keeps v261's span-boundary + street grammar.
   output_dir: /data/output-v371-no-fragment-b4b3-full-s42/checkpoints
   seed: 42
   init_from: /data/output-v310-fr-fragment-s42/checkpoints/step-008000

@@ -6,7 +6,7 @@
  *   `mailwoman dev lint corpus-slice --database <parquet> --stats <stats.json>` — corpus linter:
  *   compares a new recipe-output parquet against pre-computed corpus statistics (see `mailwoman corpus
  *   stats`) and flags the v0.6.2 "5th Avenue Theatre" class of poisoning patterns. Markdown report on
- *   stdout; exits 1 when any error-severity flag fires (warnings don't check).
+ *   stdout. exits 1 when any error-severity flag fires (warnings don't check).
  *
  *   The command keeps its name: the router resolves a command by its file path, and a renamed command has no
  *   `deprecatedName` the way a flag does, so the scripts and runbooks that type it would break silently.

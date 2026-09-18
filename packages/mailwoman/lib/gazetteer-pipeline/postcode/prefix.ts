@@ -47,7 +47,7 @@
  *   `postalcode-us.db` has no `meta` table, so the coverage rule above cannot run — and inferring
  *   "complete" from a table that does not exist is the meaning-of-zero error the rule was written to
  *   avoid. The US arm therefore never consults it. Its database is a per-unit enumeration (42,318
- *   distinct names over 42,319 rows), so thin sampling is not the failure mode; contaminated
+ *   distinct names over 42,319 rows), so thin sampling is not the failure mode. contaminated
  *   COORDINATES are, and unlike thin sampling they have a computable signature:
  *
  *   - 414 units sit on null island;

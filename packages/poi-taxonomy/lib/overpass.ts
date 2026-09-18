@@ -5,7 +5,7 @@ import { stringifyJSON } from "@mailwoman/core/json"
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   OverpassQL EXPORT emitter over a POI intent (spec §1: "we print the query; we never run it").
+ *   OverpassQL EXPORT emitter over a POI intent (spec §1: "we print the query. we never run it").
  *   Overpass is not a serving backend — this exists so users who live in Overpass-turbo can take
  *   a mailwoman intent there. The category→OSM-tag mapping is the caller's input (from
  *   `@mailwoman/poi-taxonomy`'s `osmTag`); the emitter is a pure string builder.
@@ -73,7 +73,7 @@ export interface EmitOverpassOpts {
 
 /**
  * Render an OverpassQL query for the intent. Category subjects need `opts.osmTags`; name/brand subjects render a
- * case-insensitive name regex. A resolved anchor locality becomes an area scope; otherwise the query is global
+ * case-insensitive name regex. A resolved anchor locality becomes an area scope. otherwise the query is global
  * (Overpass-turbo users add their own bbox).
  *
  * Several filters become an OverpassQL union block — `( … ; … ; );` — which is the language's own way of saying "the

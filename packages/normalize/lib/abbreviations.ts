@@ -8,7 +8,7 @@
  *   which has to expand before the parse that would establish the locale. Others added as needed.
  *
  *   This is the INVERSE of the corpus synthesis pass (which produces `Ave` from `Avenue` for
- *   augmentation). Both sides should eventually share dictionaries; for v1 this dict is duplicated
+ *   augmentation). Both sides should eventually share dictionaries. for v1 this dict is duplicated
  *   intentionally — refactoring sharing is a separate task.
  */
 
@@ -180,7 +180,7 @@ export function expandAbbreviations(input: string, locale?: string): Abbreviatio
 			continue
 		}
 
-		// Emit expansion; map every char back to start of source token.
+		// Emit expansion. map every char back to start of source token.
 		for (let k = 0; k < expansion.length; k++) {
 			out.push(expansion[k]!)
 			map.push(start + Math.min(k, token.length - 1))

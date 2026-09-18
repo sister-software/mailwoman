@@ -28,7 +28,7 @@
  *   `importance-fanout.ts` documents one layer up, re-introduced at the join. So the group is
  *   disambiguated GEOGRAPHICALLY: the nearest centroid wins, and only within
  *   {@link IMPORTANCE_JOIN_RADIUS_KM}. Two artifacts describing the same settlement put its centroid in
- *   almost the same place; two same-named towns in one country do not.
+ *   almost the same place. two same-named towns in one country do not.
  *
  *   ## What lands in the column
  *
@@ -119,7 +119,7 @@ export class ImportanceIndex {
 	 * so it is a different place wearing the same name.
 	 *
 	 * This is the number worth watching across rebuilds. A jump means the score source and the admin source have drifted
-	 * apart and the join is being asked to guess; it does not mean the radius is too tight.
+	 * apart and the join is being asked to guess. it does not mean the radius is too tight.
 	 */
 	refused = 0
 
@@ -177,7 +177,7 @@ export class ImportanceIndex {
  * carries, and letting it win the nearest-centroid contest would hand a live place a dead one's fame.
  *
  * The whole table is held in memory on purpose. The 2026-08-10 source holds 676,790 scored places in 544,823 groups,
- * and the build probes it once for every one of its ~4.8 M places; the alternative is a prepared statement per place
+ * and the build probes it once for every one of its ~4.8 M places. the alternative is a prepared statement per place
  * against a 3.7 GB database. Measured end to end, loading the index plus probing all 4.48 M locality-tier places takes
  * 25 s.
  */

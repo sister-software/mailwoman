@@ -38,7 +38,7 @@ export type LayerTier = (typeof LayerTier)[keyof typeof LayerTier]
  */
 export const LayerFreshnessPolicy = {
 	/**
-	 * Immutable artifact; updates are full rebuilds (the gazetteer discipline).
+	 * Immutable artifact. updates are full rebuilds (the gazetteer discipline).
 	 */
 	Sealed: "sealed",
 	/**
@@ -163,7 +163,7 @@ export async function createLayerCoverageTable(db: LayerContractHandle): Promise
 		// `readLayerCoverage` resolves to `source_present` — what they were in fact recording.
 		.addColumn("basis", "text")
 		.addColumn("observed_rows", "integer", (c) => c.notNull())
-		// `WITHOUT ROWID` has no first-class builder; the raw modifier is the idiomatic fallback.
+		// `WITHOUT ROWID` has no first-class builder. the raw modifier is the idiomatic fallback.
 		.modifyEnd(sql`without rowid`)
 		.execute()
 }

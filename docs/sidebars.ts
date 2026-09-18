@@ -26,9 +26,9 @@ import type { SidebarsConfig } from "@docusaurus/plugin-content-docs"
 // navbar links it directly at /docs/pricing.
 const sidebars: SidebarsConfig = {
 	// Evaluation order, and every page here routes rather than instructs: a reader arrives
-	// deciding whether Mailwoman fits, not building against it. Overview defines the thing;
-	// capabilities answers what it does; deployment options answers where it runs; drop-in
-	// replacements answers what it can stand in for; data products answers what you carry.
+	// deciding whether Mailwoman fits, not building against it. Overview defines the thing.
+	// capabilities answers what it does. deployment options answers where it runs. drop-in
+	// replacements answers what it can stand in for. data products answers what you carry.
 	// Each page hands off into the `developers` door, so this sidebar is the shallow end
 	// rather than a parallel set of instructions.
 	//
@@ -192,7 +192,7 @@ const sidebars: SidebarsConfig = {
 					// Reading order, and it builds the same way the postal shelf does. The first page
 					// defines the job (forward and reverse, place against coordinate, precision tiers);
 					// the second is the shelf's argument — the two ways the job is built, and what each
-					// costs to run; the third is the place database both designs sit on. Those three are
+					// costs to run. the third is the place database both designs sit on. Those three are
 					// the implementation. The last three are the judgment calls that follow from it: how to
 					// decide whether a coordinate is good enough, how to choose among the shapes on the
 					// market, and why the parsing half resists rules in the first place.
@@ -211,7 +211,7 @@ const sidebars: SidebarsConfig = {
 					type: "category",
 					label: "Address intelligence",
 					// Reading order, and it follows one parse from end to end. The first page is the
-					// whole chain on one messy input; the next three take a stage each in the order the
+					// whole chain on one messy input. the next three take a stage each in the order the
 					// parse runs them (pieces and labels, the gazetteer prior on the scores, the decode
 					// that picks a reading). Calibration comes fifth because it is about the number the
 					// first four produce, and training sixth because it explains where all of it was

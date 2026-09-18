@@ -1,15 +1,15 @@
 """MLM pre-training wiring smoke: masking + forward_mlm correctness.
 
-The supervised trainer learns BIO classification from scratch; this checks the new
+The supervised trainer learns BIO classification from scratch. this checks the new
 self-supervised PRE-training surface (masking.py + MailwomanCoarseEncoder.forward_mlm),
 which produces an encoder checkpoint a later supervised run fine-tunes from. Runs in
-seconds on CPU; no real corpus, no backward, no optimizer — those are exercised by the
+seconds on CPU. no real corpus, no backward, no optimizer — those are exercised by the
 manual end-to-end smoke. Geometry + invariants only.
 
 Covered:
-- mask_tokens: ~mask_prob of ATTENDED tokens selected; pad positions never masked; targets
-  are the ORIGINAL ids at masked positions and -100 elsewhere; unselected inputs unchanged.
-- forward_mlm: returns (B, S, vocab) logits + a finite scalar loss; uses the TIED token-
+- mask_tokens: ~mask_prob of ATTENDED tokens selected. pad positions never masked. targets
+  are the ORIGINAL ids at masked positions and -100 elsewhere. unselected inputs unchanged.
+- forward_mlm: returns (B, S, vocab) logits + a finite scalar loss. uses the TIED token-
   embedding head so it adds no parameters (state_dict key-identical to a supervised model);
   the supervised forward path still works unchanged.
 """
@@ -63,7 +63,7 @@ def test_mask_tokens_respects_padding_and_targets() -> None:
     # selection rate is roughly mask_prob over attended tokens
     rate = float(selected.sum()) / float(am.sum())
     assert 0.08 < rate < 0.22, rate
-    # unselected inputs are unchanged; targets at selected positions equal the original id
+    # unselected inputs are unchanged. targets at selected positions equal the original id
     assert bool((masked[~selected] == ids[~selected]).all())
     assert bool((labels[selected] == ids[selected]).all())
 
@@ -103,7 +103,7 @@ def test_forward_mlm_adds_no_parameters_vs_supervised() -> None:
     from_pretrained for fine-tuning)."""
     model = _build_encoder()
     keys_before = set(model.state_dict().keys())
-    # touch forward_mlm; it must not have lazily created any module/parameter
+    # touch forward_mlm. it must not have lazily created any module/parameter
     _ = model.forward_mlm(
         input_ids=torch.randint(2, VOCAB_SIZE, (2, 8)), attention_mask=torch.ones(2, 8, dtype=torch.long)
     )

@@ -1,9 +1,9 @@
 # === v1.9.9-bare-street-si (#901 run 2 — fr-bare-street + the SI no-street counter source) ===
 # NIGHT-31. v1.9.8 was falsified at its full check: US/CZ/PL/SK ni pass but SI ni fails at 6k and 10k
-# (resolve -3.4pp; 37 rows lost, all the Slovenian no-street "Village N, Postcode Village" form —
+# (resolve -3.4pp. 37 rows lost, all the Slovenian no-street "Village N, Postcode Village" form —
 # "Apače 108" split into street "Apače 10" + house "8"). The bare-street boundary lesson generalizes
 # onto a form where the leading name must keep its number whole and the trailing mention must stay
-# locality-bound. Per the falsified-change rule nothing from v1.9.8 ships; this run pairs the source
+# locality-bound. Per the falsified-change rule nothing from v1.9.8 ships. this run pairs the source
 # with its counter-distribution: synth-si-bare-village (6,285 real OA SI village tuples, 3 orders,
 # gold = street:V / house_number:n / postcode:pc / locality:V-trailing).
 # One compositional change vs v1.9.8 (corpus overlay v0.9.9 = v0.9.4 + the SI recipe output, weight 6.0).
@@ -25,11 +25,11 @@
 # CASE-AUG DELIBERATELY EXCLUDED (schedule adjustment vs the night plan): v1.9.6-surface-aug-full was
 # SHELVED 2026-06-30 (#261) — the metamorphic layer introduced 2 casing/whitespace regressions, and the
 # deterministic fix (#834 normalize + #895 normalizeCase default-ON, landed 2026-07-02) covers the gap.
-# Revisit only with a recipe that clears the metamorphic check; not tonight, not as a second variable.
+# Revisit only with a recipe that clears the metamorphic check. not tonight, not as a second variable.
 #
 # INIT: init_from /data/models/bsplice-expanded (the v5.1.0 surgery export: v1.9.3a3 weights + 10,582
 # mean-init rows). resume is IMPOSSIBLE here — the export carries no optimizer state and the old moments
-# would not match the expanded embedding shape; the skill's resume-rule presumes a resumable ckpt. The
+# would not match the expanded embedding shape. the skill's resume-rule presumes a resumable ckpt. The
 # v1.9.7 fine-tune block is the precedented idiom (fresh optimizer, lr 5e-5, warmup 200, constant).
 #
 # SEQUENCE: PROBE = 2k steps (this file as-is). Probe check (pre-registered, check-v193/RESULTS.md):
@@ -206,7 +206,7 @@ train: # v1.9.7 init_from idiom (fresh optimizer over the surgery export); data 
   warmup_steps: 200
   grad_clip_norm: 1.0
   # FULL RUN: --resume auto picks the probe's step-082000 (latest in output_dir); max_steps 92000 → +10k.
-  # Constant LR 1.5e-4; anchor-dropout curriculum at full strength. Eval every 2k → check 84/86/88/90/92k and
+  # Constant LR 1.5e-4. anchor-dropout curriculum at full strength. Eval every 2k → check 84/86/88/90/92k and
   # ship the best (FR street-intact up, US floors held).
   max_steps: 6000
   eval_every_steps: 2000

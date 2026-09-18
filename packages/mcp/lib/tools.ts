@@ -15,7 +15,7 @@
  *   - `mailwoman_parse` — the runtime pipeline's parse (optionally POI-aware).
  *   - `mailwoman_geocode` — the street-level geocode cascade (`mailwoman/geocode-core`).
  *   - `mailwoman_poi_search` — POI-intent extraction + (when a poi.db is wired) execution.
- *   - `mailwoman_overpass_export` — OverpassQL EXPORT emitter (`mailwoman/poi-overpass`) — "we print the query;
+ *   - `mailwoman_overpass_export` — OverpassQL EXPORT emitter (`mailwoman/poi-overpass`) — "we print the query.
  *     we never run it".
  *   - `mailwoman_layer_manifest` — read a spatial-layer database's provenance manifest + coverage summary
  *     (`@mailwoman/core/layers`).
@@ -71,7 +71,7 @@ export interface MCPToolDeps {
  * One MCP tool. `inputSchema` is a plain Zod object (not `any` — this repo's oxlint config errors on
  * `typescript/no-explicit-any`) — `z.ZodRawShape` is zod's own umbrella type for "any object shape", so this stays
  * generic over the concrete per-tool schemas without reaching for `any`. `handler` re-parses `args` through the same
- * schema (cheap; zod objects are small here) rather than trusting an unchecked cast, so the array of heterogeneous
+ * schema (cheap. zod objects are small here) rather than trusting an unchecked cast, so the array of heterogeneous
  * tools stays type-safe internally despite the necessarily-uniform external shape.
  */
 export interface MCPToolDef {

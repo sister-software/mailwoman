@@ -27,7 +27,7 @@ const FAIL_PATTERNS: RegExp[] = [
  * Noise — never causes a failure, never appears in the captured event list.
  */
 const IGNORE_PATTERNS: RegExp[] = [
-	// The data origin resets a long download now and then and the runtime retries it once; the browser logs the first
+	// The data origin resets a long download now and then and the runtime retries it once. the browser logs the first
 	// attempt regardless. A reset the retry does not recover from surfaces as a loader error or a missing result, which
 	// the readiness wait and the result assertions catch.
 	/net::ERR_CONNECTION_RESET/,

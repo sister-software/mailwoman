@@ -179,7 +179,7 @@ const GazetteerBuildFlood: CommandComponent<typeof spec> = ({ options }) => {
 		const buildSHA = resolveBuildSHA(repoRootPath().toString())
 
 		const result = await buildFloodDatabase({
-			// A `--limit` run is the smoke rung and reads a PREFIX in one process; a full build is BATCHED, one child
+			// A `--limit` run is the smoke rung and reads a PREFIX in one process. a full build is BATCHED, one child
 			// process per range of the authority's own feature ids. The reason is reproducibility rather than speed — see
 			// `@mailwoman/flood/sdk/ingest-chunk`.
 			...(options.limit

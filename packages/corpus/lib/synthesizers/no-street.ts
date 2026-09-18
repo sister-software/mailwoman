@@ -20,7 +20,7 @@
  *   1. **Plain venue + locality + region + postcode** `"Bob's Pizza, Boston, MA 02101"`
  *   2. **Adversarial venue (containing street-typing words)** `"Wall Street Industries, NY 10005"`,
  *        `"5th Avenue Theater, Seattle, WA"`, `"Highway 61 Diner, Memphis TN"`. These are the rows
- *        that v0.6.1's decompose-mode would mis-tag as street_prefix/suffix; explicit negative
+ *        that v0.6.1's decompose-mode would mis-tag as street_prefix/suffix. explicit negative
  *        training kills that signal.
  *   3. **Locality + region + postcode (minimal)** — `"Boston, MA 02101"`
  *   4. **Locality + region** — `"Boston, MA"`
@@ -121,7 +121,7 @@ const PLAIN_VENUES: ReadonlyArray<string> = [
  * **No leading digit+ordinal venues** (e.g. "5th Avenue Theatre", "7th Street Bistro"). The v0.6.2 2026-05-29 step-20K
  * eval showed that synthesized rows starting with `<digits><ordinal>` confused the model about house_number recognition
  * — tokens like "5th" (which should be `B-house_number` in real addresses) were being labeled `B-venue` because
- * adversarial venues placed them in venue position. v0.6.3 omits these patterns; the `synth-house-venue` source
+ * adversarial venues placed them in venue position. v0.6.3 omits these patterns. the `synth-house-venue` source
  * separately teaches that house_number and venue coexist.
  */
 const ADVERSARIAL_VENUES: ReadonlyArray<string> = [
@@ -182,7 +182,7 @@ const COUNTRY_NAMES = new Map<string, ReadonlyArray<string>>([
 
 /**
  * Generate one no-street counter-example row for a base (locality, region, postcode, country) tuple. Picks a template
- * by weighted random; the venue templates are the critical counter-distribution against synth-street's decompose-mode
+ * by weighted random. the venue templates are the critical counter-distribution against synth-street's decompose-mode
  * pressure.
  */
 export function synthesizeNoStreetRow(
@@ -239,7 +239,7 @@ export function synthesizeNoStreetRow(
 		case "venue-adversarial": {
 			// The venue-adversarial template name is descriptive — when selected, this branch
 			// always draws from the adversarial pool. The `adversarialVenueRatio` opt is what
-			// the OUTER template picker uses to bias toward this template versus the plain one;
+			// the OUTER template picker uses to bias toward this template versus the plain one.
 			// once we're inside this branch the choice is already made.
 			return render({ venue: sample(ADVERSARIAL_VENUES, random) }, { locality: true, region: true, postcode: true })
 		}

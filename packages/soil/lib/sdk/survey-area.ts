@@ -242,7 +242,7 @@ function isNoMapping(musym: string, muname: string, componentCount: number): boo
 /**
  * Refuse a value outside the authority's own declared domain.
  *
- * An unknown code is a source-schema change, which is the event a reader most needs to hear about; coercing it to a
+ * An unknown code is a source-schema change, which is the event a reader most needs to hear about. coercing it to a
  * nearest neighbour or to NULL converts "the source changed" into "there is nothing here". A BLANK is not a violation:
  * NULL is a real state in every one of these columns and means something specific — for `nirrcapcl` it means the survey
  * did not rate the component, which is not class 8.
@@ -359,7 +359,7 @@ function readSourceCitations(xml: string): Array<{ date: string; title: string; 
 	const citations: Array<{ date: string; title: string; scale: number | null }> = []
 
 	for (const body of elementBlocks(xml, "srcinfo")) {
-		// `caldate` for a single date, `begdate` for a range. A range's END is when the source stopped being collected;
+		// `caldate` for a single date, `begdate` for a range. A range's END is when the source stopped being collected.
 		// its BEGINNING is when the ground was first looked at, which is the fact this layer is carrying.
 		const date = elementText(body, "caldate") ?? elementText(body, "begdate")
 

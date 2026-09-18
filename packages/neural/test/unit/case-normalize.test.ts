@@ -70,7 +70,7 @@ test("normalizeInputCase: the #690 hook — title-case iff all-caps, else unchan
 
 test("titleCaseInput: a run whose lowercase form changes length is kept as typed (offsets never move)", () => {
 	// U+0130 lowercases to two code units. In `CADDESİ` it sits inside the lowered tail, so that run stays shouting
-	// rather than shifting every later offset; in `İSTANBUL` it is the untouched first letter, so the run title-cases.
+	// rather than shifting every later offset. in `İSTANBUL` it is the untouched first letter, so the run title-cases.
 	const input = "İSTANBUL CADDESİ"
 	const out = titleCaseInput(input)
 

@@ -7,7 +7,7 @@
  *   point test that reads it without materializing them.
  *
  *   THE GEOMETRY IS THE TRUTH TABLE. An H3 index above it answers a cell that lies wholly inside one
- *   feature; a cell a boundary crosses falls through to a ray cast against the few features the index
+ *   feature. a cell a boundary crosses falls through to a ray cast against the few features the index
  *   already named. A rooftop answer at a boundary — which is where the answer usually matters most — has
  *   no other source, so the rings are stored at the resolution the authority published them and never
  *   simplified.
@@ -384,7 +384,7 @@ export interface EncodedArea {
 /**
  * A point inside one stored polygon, for a verification sampler.
  *
- * The bounding-box centre is tried first; where it is not inside — a crescent, a band hugging a river, a polygon with a
+ * The bounding-box centre is tried first. where it is not inside — a crescent, a band hugging a river, a polygon with a
  * hole through its middle — a small deterministic grid over the box is scanned. A polygon no grid point lands inside is
  * refused (`undefined`) rather than approximated, because a sample point that is not actually inside the polygon turns
  * an agreement check into a check on the sampler.

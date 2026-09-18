@@ -133,7 +133,7 @@ function canonicalizeMap(components: Record<string, string>): Record<string, str
 /**
  * Compare two component maps for a given transform id. `abbreviation-swap` canonicalizes both sides to long-form first
  * (see `canonicalizeAbbreviations`'s doc comment) so the transform's own intended text change isn't misread as a
- * violation; every other transform compares verbatim.
+ * violation. every other transform compares verbatim.
  */
 function compareForTransform(
 	transformID: string,
@@ -200,7 +200,7 @@ export async function runInvarianceSuite(options: RunInvarianceOptions): Promise
 		// #1516 gained-capability class (row-level): the baseline's ORIGINAL parse carries no
 		// CRITICAL_TAGS value while the candidate's does — the baseline never had the row's core
 		// capability (measured: v4.0.1 never emits street/dependent_locality for the quoted venue in
-		// any register; v4.2.0 does in 7/8). Every violation on such a row is "gained but not
+		// any register. v4.2.0 does in 7/8). Every violation on such a row is "gained but not
 		// register-flat": reported non-blocking, and never counted as pre-existing — the baseline did
 		// not "already violate", it could not.
 		const gainedCapabilityRow =

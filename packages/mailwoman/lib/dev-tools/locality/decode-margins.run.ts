@@ -12,7 +12,7 @@
  *
  *   The margin is `max(locality labels) - max(every label)` at the pieces covering the expected locality, so `0` means
  *   a locality label won and a negative number is how far behind it came. A margin says how far the locality came
- *   behind; the winning label beside it says what it came behind, which is the difference between a model that is
+ *   behind. the winning label beside it says what it came behind, which is the difference between a model that is
  *   unsure and one that has learned another reading.
  *
  *   `--swap-region` and `--swap-postcode` re-render each subject under a different region code or postcode, so the
@@ -21,7 +21,7 @@
  *
  *   `--by` chooses what the rows are grouped into, which is what lets #2308's word effect and #2311's region effect be
  *   read in the same units on the same panel. `region-shape` is the crossed one: within each region, the three name
- *   shapes side by side. Two effects reported as pass rates cannot be compared; two margins in logits can be added.
+ *   shapes side by side. Two effects reported as pass rates cannot be compared. two margins in logits can be added.
  *
  *   Group by a region-crossed axis whenever the claim is about shape. A pooled `--by shape` run takes its rows in panel
  *   order, panel order is region order, and the rarer shape therefore spans more states than the common one — measured
@@ -183,7 +183,7 @@ function isLocalityLabel(label: string): boolean {
 
 /**
  * The margin of the locality reading at one token: the best locality label's score minus the best score of any label.
- * Zero when a locality label already wins; negative by how far it lost.
+ * Zero when a locality label already wins. negative by how far it lost.
  */
 function localityMargin(row: readonly number[], labels: readonly string[]): number {
 	let best = Number.NEGATIVE_INFINITY
@@ -222,7 +222,7 @@ interface GroupMargins {
 	decodedMargin: number
 	priorsApplied: Map<string, number>
 	/**
-	 * What won at the first locality piece instead. A margin says how far the locality came behind; this says what it
+	 * What won at the first locality piece instead. A margin says how far the locality came behind. this says what it
 	 * came behind, which is the difference between a model that is unsure and one that has learned another reading.
 	 */
 	decodedAs: Map<string, number>
@@ -265,7 +265,7 @@ for (const [group, bucket] of [...byGroup].toSorted()) {
 
 		const input = renderAdmin(place)
 		// `caseCountry`, not `defaultCountry`: the first selects the weights overlay the classifier loads with, which is
-		// what a trace is about; the second is a resolver prior `diagnoseParse` never reaches.
+		// what a trace is about. the second is a resolver prior `diagnoseParse` never reaches.
 		const { trace } = await deps.diagnoseParse(input, { caseCountry: place.country })
 		const start = input.indexOf(place.locality)
 

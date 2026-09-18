@@ -26,7 +26,7 @@ export type PlacetypeMap = Partial<Record<ComponentTag, string>>
  * The JP tiers are present because the candidate gazetteer keys them: 91.3% of Japanese records carry a kanji or kana
  * key (49,255 of 53,920), a prefecture is a WOF `region`, a municipality a `locality` (its filter group admits the
  * `borough` wards and `localadmin`), and a district (大字 / 町名) sits in the `locality` band beside the neighbourhoods.
- * Measured on 300 JP board rows: with these entries and the JP rungs on the admin ladder, 271 resolve within 15 km;
+ * Measured on 300 JP board rows: with these entries and the JP rungs on the admin ladder, 271 resolve within 15 km.
  * without them, 0. Only the character-path CJK model emits the tags, so no Latin parse reaches these rows.
  */
 export const DEFAULT_PLACETYPE_MAP: PlacetypeMap = {
@@ -46,7 +46,7 @@ export const DEFAULT_PLACETYPE_MAP: PlacetypeMap = {
 
 /**
  * Where a country's WOF typing of a tier departs from {@link DEFAULT_PLACETYPE_MAP}, the entries that differ. The map
- * names the tier by tag; WOF names it by placetype, and the two agree for most countries and not for all.
+ * names the tier by tag. WOF names it by placetype, and the two agree for most countries and not for all.
  *
  * - **TW** — 鄉鎮市區, the tier below the 縣市 that the parse tags `subregion`, is `locality` or `localadmin` in WOF for 164 of
  *   the 178 held-out districts the candidate table carries and `county` for 14 (the census in
@@ -76,7 +76,7 @@ export function placetypeMapForCountry(countryCode: string | null | undefined): 
  * an address's span can name any of them. A backend that filters to the one "obvious" placetype makes the equivalents
  * unreachable, so a fuzzy same-name place in the wrong tier wins instead.
  *
- * Three tiers are affected (the value of each entry is the set the SQL filter should accept; the first entry is the
+ * Three tiers are affected (the value of each entry is the set the SQL filter should accept. the first entry is the
  * canonical/requested type, which extract routing keys off):
  *
  * - **`locality`** — `locality` (most cities), `borough` (Brooklyn, the Paris arrondissements, the London boroughs), and

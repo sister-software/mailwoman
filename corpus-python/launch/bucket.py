@@ -30,7 +30,7 @@ def _prefixes(path: str) -> list[str]:
     )
     names: list[str] = []
     for line in result.stdout.splitlines():
-        # `lsd` prints size, count, date, time, then the name; only the name is wanted.
+        # `lsd` prints size, count, date, time, then the name. only the name is wanted.
         parts = line.split(maxsplit=4)
         if len(parts) == 5:
             names.append(parts[4])

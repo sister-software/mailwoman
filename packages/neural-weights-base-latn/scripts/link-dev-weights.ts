@@ -5,7 +5,7 @@
  * @author Teffen Ellis, et al.
  *
  *   Materialize the base-latn overlay's dev artifacts (FST-distribution arc precedent — the same shape as the locale
- *   weights packages, but it carries only the shared model + tokenizer + calibration + lexicons; locale-specific data
+ *   weights packages, but it carries only the shared model + tokenizer + calibration + lexicons. locale-specific data
  *   stays in each overlay). The steps live in `@mailwoman/resolver-wof-sqlite/weights-overlay-linker`; this file is
  *   the manifest.
  *

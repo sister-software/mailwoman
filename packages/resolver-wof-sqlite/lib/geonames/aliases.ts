@@ -53,7 +53,7 @@ const FOLD_OWNED_TABLES = ["spr", "names", "place_population", "ancestors"] as c
  *
  * Measured on the live 2026-08-05 artifact: a 14-country re-fold over the 161-country fold baked into
  * `admin-global-priority.db` put 522,184 of 2,110,096 name rows in the range (24.7 %) on a place from a different
- * country. Gaborone/BW at id 9000000121151 became Aichegg/AT and kept all 26 of its names; Kinshasa's 16,000,000
+ * country. Gaborone/BW at id 9000000121151 became Aichegg/AT and kept all 26 of its names. Kinshasa's 16,000,000
  * population landed on a Lithuanian hamlet.
  *
  * The upper bound is not the end of the id space. Each later extract owns a range above this one — GeoNames-postal @
@@ -138,7 +138,7 @@ async function parseAlternateNamesV2(
 	// isHistoric=1, to=1973). Officialness must see the flags from every row for the spelling, or the
 	// colonial-era name sails through on the language-tagged row (the #936 review's Malabo finding).
 	// Do not condition on isPreferredName instead — it's sparse annotation, not a signal (Turku's sv "Åbo"
-	// is unflagged; FI has 1,746 flags across the whole dump).
+	// is unflagged. FI has 1,746 flags across the whole dump).
 	//
 	// Both passes stream the file rather than sharing one materialized array: Norway's V2 dump is 33 MB,
 	// and a second read off the page cache costs less than holding half a million line strings.
@@ -161,7 +161,7 @@ async function parseAlternateNamesV2(
 		if (!wanted.has(gid)) continue
 		const lang = f[2] ?? ""
 
-		// ISO 639 codes are 2-3 letters; GeoNames' pseudo-codes (post, link, iata, wkdt, …) are 4+.
+		// ISO 639 codes are 2-3 letters. GeoNames' pseudo-codes (post, link, iata, wkdt, …) are 4+.
 		if (!/^[a-z]{2,3}$/.test(lang)) continue
 		const alt = (f[3] ?? "").trim()
 
@@ -221,7 +221,7 @@ export async function ingestGeonamesAliases(
 		 * alias rows gain their language tag, `privateuse` ("preferred" from `isPreferredName`), and the `official` bit
 		 * (language is CLDR-official for the country, colloquial/historic excluded — the rule the #936 risk probe measured
 		 * at 7 new name-exact collisions globally). The main dump's bare `alternatenames` list still decides which rows
-		 * exist; V2 only decorates them. Missing file = the pre-#936 untagged behavior, not an error.
+		 * exist. V2 only decorates them. Missing file = the pre-#936 untagged behavior, not an error.
 		 */
 		alternateDir?: PathBuilderLike
 	}
@@ -232,7 +232,7 @@ export async function ingestGeonamesAliases(
 
 	/**
 	 * The DISPLAY rule, for `spr.name` and the A-class admin names. A row's display name stays in one script because
-	 * consumers render it beside Latin siblings; which names are REACHABLE is `cleanAlias`'s question, and the two are
+	 * consumers render it beside Latin siblings. which names are REACHABLE is `cleanAlias`'s question, and the two are
 	 * separate on purpose.
 	 */
 	const clean = (s: string): string | null => {
@@ -243,7 +243,7 @@ export async function ingestGeonamesAliases(
 
 	/**
 	 * GeoNames packs parenthesized asides, pipe-joined lists and bracketed qualifiers into `alternatenames`. Refusing
-	 * those is what the display rule's character class was doing that still needs doing; refusing a SCRIPT is not. This
+	 * those is what the display rule's character class was doing that still needs doing. refusing a SCRIPT is not. This
 	 * fold is the only path by which a place in a fold country acquires a name in its own script, so a script test here
 	 * decides whether a country is reachable in its own writing at all — Hong Kong carried six Han lookup keys, all of
 	 * them the country row's, and every one of its eighteen districts was reachable only in romanization.
@@ -255,7 +255,7 @@ export async function ingestGeonamesAliases(
 
 	/**
 	 * The length band, carried over from the display rule unchanged. Two characters is a real place name in a Han script
-	 * (上海) and noise in none; sixty is longer than any name in the dumps and refuses a field that ran together.
+	 * (上海) and noise in none. sixty is longer than any name in the dumps and refuses a field that ran together.
 	 */
 	const NAME_MIN_LENGTH = 2
 	const NAME_MAX_LENGTH = 60
@@ -367,7 +367,7 @@ export async function ingestGeonamesAliases(
 				if (f[7]?.startsWith("PCL")) {
 					// Any country-level political entity — PCLI (independent), PCLD (dependent territory),
 					// PCLF (freely associated), PCLS (special administrative region: HK/MO/PS). All are the
-					// country tier; restricting to PCLI left those ~17 territories without a country row.
+					// country tier. restricting to PCLI left those ~17 territories without a country row.
 					if (countryID >= 0) continue // one country row
 					countryID = id++
 					sprInsert.run(countryID, -1, aname, "country", cc, lat, lon, lat, lon, lat, lon, 1, 0, 0, 0, 0, 0)
@@ -405,7 +405,7 @@ export async function ingestGeonamesAliases(
 			// #267: link to the locality's region (else country) for gap countries; -1 (orphan) otherwise.
 			const regionID = addAdmin ? (adminMap.get(f[10] ?? "") ?? -1) : -1
 			const parentID = regionID >= 0 ? regionID : addAdmin && countryID >= 0 ? countryID : -1
-			// Point bbox — a GeoNames row is a centroid; the candidate's region-bbox disambiguation just
+			// Point bbox — a GeoNames row is a centroid. the candidate's region-bbox disambiguation just
 			// sees it as contained in itself, fine for a locality.
 			sprInsert.run(nid, parentID, name, "locality", cc, lat, lon, lat, lon, lat, lon, 1, 0, 0, 0, 0, 0)
 			namesInsert.run(nid, name, "locality", cc, "", "", 0, 0)

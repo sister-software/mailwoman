@@ -9,9 +9,9 @@
  *   The measured basis (2026-08-19, the graded scope compare + witness traces):
  *
  *   - `Nanjing Road, Huangpu, Shanghai` under the inferred en-US scope answered a zero-prominence West Virginia
- *     namesake 11,899 km off; the head read GB 1.00 (emphatically not-US — the head cannot say CN).
- *   - `12 Rue du Chat-qui-Pêche, Paris` answered Paris Township, Michigan; the head read FR 1.00.
- *   - `75008` reads US 1.00 — the check never fires, keeping the Dallas ZIP the locale prior exists to protect.
+ *     namesake 11,899 km off. the head read GB 1.00 (emphatically not-US — the head cannot say CN).
+ *   - `12 Rue du Chat-qui-Pêche, Paris` answered Paris Township, Michigan. the head read FR 1.00.
+ *   - `75008` reads US 1.00 — the check never fires, keeping the Dallas ZIP the locale prior exists to guard.
  *   - `Sacremento` reads FR 0.53 — under the head's action threshold, the check never fires, and the fuzzy tier keeps
  *     answering Sacramento CA.
  *
@@ -35,7 +35,7 @@ import type { AddressTree } from "@mailwoman/core/decoder"
  *    — the format evidence only reached the postalcode probe, never the walk's own scope, so `Gander` resolved to a US
  *    alias ghost. The format signal only speaks on DISTINCTIVE shapes: `countriesFromPostcodeFormat("75008")` is the
  *    empty set (a bare 5-digit string is ambiguous many ways), so every such postcode keeps the scope via the empty-set
- *    silence below, and the Dallas ZIP the locale prior exists to protect never reaches the exclusion test.
+ *    silence below, and the Dallas ZIP the locale prior exists to guard never reaches the exclusion test.
  *
  * An absent verdict on both signals keeps the scope: unknown is not foreign.
  */

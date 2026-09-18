@@ -290,7 +290,7 @@ describe("buildDiskStorage: a failed cache write is a cache miss, not a request 
 		// The contract, end to end: `axios-cache-interceptor` awaits `storage.set` inside its response
 		// `onFulfilled`, so a throwing write rejects a request whose HTTP response already succeeded. It
 		// escapes as a bare `Error` — no `status` — which `isTransientResourceError` reads as FALSE, so a
-		// caller is told the failure is permanent and drops the work. Any filesystem error does this;
+		// caller is told the failure is permanent and drops the work. Any filesystem error does this.
 		// reproduced here with a `0o500` parent.
 		if (!(await makeUnwritable())) {
 			await restore()

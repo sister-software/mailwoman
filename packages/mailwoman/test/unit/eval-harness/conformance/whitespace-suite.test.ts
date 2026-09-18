@@ -12,7 +12,7 @@
  *   then reports on a transformation nobody declared — so the suite is re-derived here rather than trusted.
  *
  *   AND THAT NO ARM IS MISSING BY ACCIDENT. The cross product of thirteen board rows and six transformations
- *   is what the law claims to state; every absent arm has to name the applicability rule that refuses it, and
+ *   is what the law claims to state. every absent arm has to name the applicability rule that refuses it, and
  *   both declared rules have to refuse at least one real arm. A suite that could quietly drop the arms it
  *   fails would report a smaller violation count, and a smaller count is indistinguishable from a law that
  *   holds.

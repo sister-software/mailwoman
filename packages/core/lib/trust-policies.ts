@@ -5,7 +5,7 @@
  *
  *   The one sanctioned route from an untrusted string to an HTML sink: DOMPurify behind Trusted
  *   Types policies. Under a CSP with `require-trusted-types-for 'script'`, a sink refuses a plain
- *   string; every injection site must go through a named policy, and these three are the named
+ *   string. every injection site must go through a named policy, and these three are the named
  *   policies.
  *
  *   The sanitizer is `isomorphic-dompurify`, so the same engine answers in a browser (plain
@@ -38,7 +38,7 @@ export function sanitizeHTML(untrustedHTML: string): string {
 const STRIP_CONFIG: DOMPurifyConfig = { ALLOWED_TAGS: [], ALLOWED_ATTR: [] }
 
 /**
- * Every tag and attribute removed; only text content survives, entity-ENCODED for an HTML sink. For decoded plain text
+ * Every tag and attribute removed. only text content survives, entity-ENCODED for an HTML sink. For decoded plain text
  * — comparison, storage — use {@link stripHTMLToText}.
  */
 export function stripHTML(untrustedHTML: string): string {

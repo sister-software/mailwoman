@@ -9,7 +9,7 @@
  *   as `place.geometry`) and returns a declarative render spec: the marker position(s), the outline
  *   geometry to draw, and the camera target. No map instance, no DOM, no `react-map-gl` — so it is
  *   node-testable (see `place-render.node.test.ts`). The declarative components in this folder render
- *   the spec; a controlled-viewport consumer applies the camera.
+ *   the spec. a controlled-viewport consumer applies the camera.
  *
  *   The decision cascade is a faithful, side-effect-free transcription of the imperative effect:
  *     1. street tier (situs / interp)  → exact-radius circle, fly to a tight zoom
@@ -37,7 +37,7 @@ export type PlaceTier = "address_point" | "interpolated"
 /**
  * The resolved-place shape the map render consumes — the pipeline {@link ResolvedPlaceView} plus the map-only extras the
  * demo's `ResolvedHit` carries (bbox, street tier + uncertainty), and an optional PRE-FETCHED crisp polygon. Extending
- * `ResolvedPlaceView` keeps the map render aligned with the shared parse result; the extras are additive.
+ * `ResolvedPlaceView` keeps the map render aligned with the shared parse result. the extras are additive.
  */
 export interface ResolvedMapPlace extends ResolvedPlaceView {
 	/**
@@ -49,12 +49,12 @@ export interface ResolvedMapPlace extends ResolvedPlaceView {
 	 */
 	tier?: PlaceTier
 	/**
-	 * Honest uncertainty radius in meters for a street-level tier (10 m situs floor; calibrated interp).
+	 * Honest uncertainty radius in meters for a street-level tier (10 m situs floor. calibrated interp).
 	 */
 	uncertaintyM?: number
 	/**
 	 * The crisp admin polygon, when the host has already fetched it from the sibling polygon DB. Its presence drives the
-	 * polygon path; the async fetch itself stays out of this pure function (a runtime concern in a later phase).
+	 * polygon path. the async fetch itself stays out of this pure function (a runtime concern in a later phase).
 	 */
 	geometry?: PlaceGeometry
 }
@@ -73,7 +73,7 @@ export type MapCameraTarget =
  */
 export interface MapPlaceRenderSpec {
 	/**
-	 * Marker position(s) as `[lon, lat]`. Single-element today; an array leaves room for multi-marker later.
+	 * Marker position(s) as `[lon, lat]`. Single-element today. an array leaves room for multi-marker later.
 	 */
 	markers: LngLat[]
 	/**

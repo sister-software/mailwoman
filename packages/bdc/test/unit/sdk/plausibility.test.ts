@@ -4,7 +4,7 @@
  * @author Teffen Ellis, et al.
  *
  *   Tests for {@link plausibilityCheck} (decisions 4, 6, 8). The four §7-2b acceptance criteria get their
- *   own `describe("§7-2b criteria")` block at the bottom of this file; every suite above it exercises the
+ *   own `describe("§7-2b criteria")` block at the bottom of this file. every suite above it exercises the
  *   composition logic itself — claim resolution, the tech→category mapping, filing/physical evidence
  *   assembly, the abstain precedent, and the `coverage_confidence` combination — so each criterion can assert
  *   its own specific claim against a module already known to compose correctly in isolation.

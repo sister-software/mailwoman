@@ -17,13 +17,13 @@
 const ATTEMPTS = 3
 
 /**
- * The pause before the second attempt; each later attempt doubles it.
+ * The pause before the second attempt. each later attempt doubles it.
  */
 const FIRST_RETRY_DELAY_MS = 500
 
 /**
  * `fetch` rejects with a `TypeError` for a network failure (a reset, a refused connection, a CORS refusal) and never
- * for an HTTP status; a body read that loses its connection rejects the same way. Anything else (an abort, a bad URL)
+ * for an HTTP status. a body read that loses its connection rejects the same way. Anything else (an abort, a bad URL)
  * is not retried.
  */
 function isNetworkFailure(error: unknown): boolean {

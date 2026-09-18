@@ -70,7 +70,7 @@ export const CODEPOINT_LICENSE_URL = "https://www.nationalarchives.gov.uk/doc/op
  * only the OS line — the common mistake, and the one GeoNames' readme makes in reverse by naming only Royal Mail — is
  * not compliance.
  *
- * `year` is the year of YOUR publication, not the year of the OS release; OGL attribution tracks the redistribution.
+ * `year` is the year of YOUR publication, not the year of the OS release. OGL attribution tracks the redistribution.
  * That is the whole reason this is a function. The archive's own `Doc/licence.txt` in the 2026-05 extract reads `2026`
  * on all three lines.
  */
@@ -133,9 +133,9 @@ export interface CodePointProduct {
  * Code-Point Open covers **England, Scotland and Wales only**. It does not cover Northern Ireland, and it does not
  * cover the Isle of Man or the Channel Islands. The country codes on the 2026-05 rows are exactly three — `E92000001`,
  * `S92000003`, `W92000004` — with no `N92000002` among 1,747,841 rows. NI postcodes (the `BT` area) are administered by
- * Land & Property Services and are not in any OS OpenData product; ONS's OGL grant for postcode products explicitly
+ * Land & Property Services and are not in any OS OpenData product. ONS's OGL grant for postcode products explicitly
  * excludes NI data. So a database built from this source has a real, permanent `BT` hole, and the hole is a licensing
- * fact rather than a data-quality one. Report it; do not fill it from an unlicensed source.
+ * fact rather than a data-quality one. Report it. do not fill it from an unlicensed source.
  */
 export const CODEPOINT_COVERAGE_NOTE =
 	"Code-Point Open covers England, Scotland and Wales only (country codes E92000001/S92000003/W92000004). " +
@@ -170,7 +170,7 @@ export const CODEPOINT_COVERAGE_NOTE =
  * So the real options are three, and only one of them is free:
  *
  * (a) Licence Pointer from LPS. The authoritative NI address database, ~1 M points with UPRNs. The OSNI mapshop lists
- * full NI coverage at £9,224 excl. VAT; orders over £3,000 need a formal licence application with a ≥12-month term.
+ * full NI coverage at £9,224 excl. VAT. orders over £3,000 need a formal licence application with a ≥12-month term.
  * This is the only route to complete NI centroids in a permissively-licensed package. (b) Ship NI as ODbL from
  * OpenStreetMap `addr:postcode`. Coverage is partial and uneven, and ODbL's share-alike would infect the artifact — the
  * same posture `@mailwoman/osm` already sits in, awaiting counsel. Note the OSM community explicitly forbids importing

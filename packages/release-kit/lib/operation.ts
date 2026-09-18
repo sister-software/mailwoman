@@ -16,7 +16,7 @@ import type { ZodType } from "zod"
  */
 export const OperationEffect = {
 	/**
-	 * Reads the checkout, the data root, or a registry; changes nothing.
+	 * Reads the checkout, the data root, or a registry. changes nothing.
 	 */
 	Read: "read",
 	/**

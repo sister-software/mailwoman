@@ -68,7 +68,7 @@ describe("normalizeReleasesManifest — the single wire boundary", () => {
 })
 
 describe("no consumer reads raw legacy wire keys outside the boundary", () => {
-	// Every other consumer reads through `ReleaseInfo`, which carries no legacy key, so a raw read there is a type error;
+	// Every other consumer reads through `ReleaseInfo`, which carries no legacy key, so a raw read there is a type error.
 	// these two are the writer and the loader, whose string literals the type cannot see.
 	for (const rel of ["lib/browser-runtime/load-assets.ts", "lib/release-tools/publish-hf.ts"]) {
 		test(`${rel} is house-cased only`, async () => {

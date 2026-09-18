@@ -10,7 +10,7 @@
  *   in 10 trials rules out only rates above 25.9%; the true rate was 2.9%, so that panel had roughly a three-in-four
  *   chance of showing exactly what it showed and licensing the opposite of the truth.
  *
- *   The repair is placement. A bound in a `power` field is a bound that can be dropped on the way to the operator; a
+ *   The repair is placement. A bound in a `power` field is a bound that can be dropped on the way to the operator. a
  *   clause inside the sentence being quoted cannot be, without the quoter noticing they are editing it. So
  *   {@link describeObservedRate} returns prose that carries its own limits, and every measuring tool puts it in
  *   `summary`.
@@ -62,7 +62,7 @@ const ABSENCE_CLAIM_MAX_UPPER_BOUND = 0.01
  * denominator, and a declared subset carries the predicate that chose it.
  *
  * `random-draw` is separate from `subset` because the two support opposite claims. A declared subset is chosen by a
- * predicate and generalizes to nothing beyond it; a random draw from a 26-million-row register is the one subset here
+ * predicate and generalizes to nothing beyond it. a random draw from a 26-million-row register is the one subset here
  * whose rate estimates the population's. Collapsing them would print "declared-subset" over the only sample in this
  * file that is not one.
  */
@@ -70,7 +70,7 @@ export type Selection = "full" | "subset" | "hand-picked" | "random-draw"
 
 /**
  * How each selection reads inside the observed-rate sentence. A full board says nothing — its denominator already is
- * the population — so it contributes an empty string; every other kind names itself where a reader will trip over it.
+ * the population — so it contributes an empty string. every other kind names itself where a reader will trip over it.
  */
 const SELECTION_ADJECTIVE: Record<Selection, string> = {
 	full: "",

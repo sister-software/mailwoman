@@ -106,7 +106,7 @@ def parameter_checksums(model: MailwomanCoarseEncoder) -> dict[str, float]:
     Most of these are constants rather than RNG state, and the artifact's README says which and
     why: `_init_weights` zeroes biases and cue vectors, resets every LayerNorm gamma to 1.0, and
     zeroes `locale_film` last so conditioning starts as a no-op. A constant moving means that
-    policy changed; a drawn weight moving means construction order did.
+    policy changed. a drawn weight moving means construction order did.
     """
     return {name: round(float(p.detach().sum()), 6) for name, p in model.named_parameters()}
 

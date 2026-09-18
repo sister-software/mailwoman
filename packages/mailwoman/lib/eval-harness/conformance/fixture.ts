@@ -37,7 +37,7 @@ import { JSONSpliterator } from "spliterator"
 import type { GauntletGeocodeOpts } from "#eval-harness/gauntlet/harness"
 
 /**
- * The closed set of outcome comparators. Each names an observable contract a law can preserve; adding one is a reviewed
+ * The closed set of outcome comparators. Each names an observable contract a law can preserve. adding one is a reviewed
  * instrument in `comparators.ts`, never an inline callback in a fixture.
  *
  * - `resolution_identity` — which entity was resolved, read from the namespaced place ids and nothing else. It never
@@ -170,7 +170,7 @@ export interface ConformanceFixture {
 	 */
 	status?: ConformanceStatus
 	/**
-	 * Issue or record this row's tracked status points at, e.g. `#1919`. Free-form and never graded; it exists so a
+	 * Issue or record this row's tracked status points at, e.g. `#1919`. Free-form and never graded. it exists so a
 	 * tracked row names where its diagnosis lives.
 	 */
 	bugRef?: string
@@ -262,7 +262,7 @@ function readContext(raw: unknown, label: string): ConformanceContext | undefine
 /**
  * Validate one fixture record and return it typed, or throw naming the fixture.
  *
- * `origin` is the file (and row) the record came from; it is prefixed to every message so a refusal points at the line
+ * `origin` is the file (and row) the record came from. it is prefixed to every message so a refusal points at the line
  * to edit even when the record has no usable id of its own.
  */
 export function parseConformanceFixture(raw: unknown, origin: string): ConformanceFixture {
@@ -439,7 +439,7 @@ export function invarianceExpectProblem(fixture: ConformanceFixture, lawNoun: st
 /**
  * The per-fixture frame every law-suite audit opens with: the label a problem line names the row by, and the refusal of
  * a row filed under another suite's law. Suite-specific clauses run in `auditFixture`, in the order the suite states
- * them; a clause that disqualifies the rest of a row's checks returns early.
+ * them. a clause that disqualifies the rest of a row's checks returns early.
  */
 export function auditCommonFixtureFields(
 	fixtures: readonly ConformanceFixture[],

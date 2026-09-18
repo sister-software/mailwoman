@@ -127,7 +127,7 @@ describe("bash-write-guard: the work a session actually does", () => {
 		["a probe writing to stdout", `node -e "process.stdout.write('hi')"`],
 		// oxlint-disable-next-line mailwoman/prefer-home -- a fixture command string, not this file reading git state.
 		["git staging", `git add -A && git status --porcelain`],
-		// A patch is an artifact the author produced and can dry-run; it fails rather than clobbering when the context
+		// A patch is an artifact the author produced and can dry-run. it fails rather than clobbering when the context
 		// does not match, and it is the only exact way to land a bulk deletion without retyping every removed line.
 		["applying a patch", `git apply /tmp/prune.patch`],
 		["dry-running a patch", `git apply --check /tmp/prune.patch`],
@@ -190,7 +190,7 @@ describe("bash-write-guard: the work a session actually does", () => {
 		// value that carries `$PWD` or a space is how anyone writes one.
 		["an environment assignment with a quoted value", `MAILWOMAN_DATA_ROOT="/mnt/playpen/x" yarn test`],
 		["a quoted PATH before a node script", `PATH="$PWD/node_modules/.bin:$PATH" node config/vale/check-rules.ts`],
-		// A quote nested inside another kind of quote. The pair must be read as one span; mis-pairing it leaves a stray
+		// A quote nested inside another kind of quote. The pair must be read as one span. mis-pairing it leaves a stray
 		// delimiter that swallows the rest of the command, and the head then comes from inside someone's `-e` script.
 		["a grep pattern quoting a JSON key", `grep -rc '"spliterator": "^6.5.0"' package.json packages/*/package.json`],
 		[

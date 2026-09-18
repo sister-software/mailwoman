@@ -133,7 +133,7 @@ describe("placetype-pair prior — decode-order integration", () => {
 
 		// STRONG, already-consistent baseline for "shoreditch": B-street / I-street / I-street at
 		// magnitude 20 — a realistic "the encoder is sure" margin (softmax-saturating relative to the
-		// prior's 6.0 delta; documented here since the brief calls for the exact magnitudes used). The
+		// prior's 6.0 delta. documented here since the brief calls for the exact magnitudes used). The
 		// placetypePair prior below would bias the same window toward `dependent_locality` at its real
 		// artifact's calibrated delta (6.0) — 20 > 6, so the encoder's reading must win.
 		const logits = [zeroRow(), zeroRow(), zeroRow(), zeroRow()]

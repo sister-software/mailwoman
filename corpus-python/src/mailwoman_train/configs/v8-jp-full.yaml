@@ -2,7 +2,7 @@
 #
 # The recipe the Leg-1 PASS unlocked. Leg 1 (v8-jp-probe, 200k rows, STAGE3 33-label head) scored
 # coordinate-acceptability 0.9925 against the pre-registered >= 0.70 check (verdict on #1176,
-# 2026-07-29; scorer pre-registered at 34c7b6c2). This config keeps the probe's proven geometry and
+# 2026-07-29. scorer pre-registered at 34c7b6c2). This config keeps the probe's proven geometry and
 # changes exactly three things: the corpus (200k -> 2M), the label head (33 -> 47, `stage3-jp`), and
 # the char vocab (1,918 -> 2,237 sealed from the train split).
 #
@@ -60,7 +60,7 @@
 #
 # `data_loader.iter_encoded` RAISES if any channel path (anchor / gazetteer / country / street-type /
 # locality-surface) is set alongside `char_mode` — the channels project per SP-piece and their
-# per-unit re-alignment is Phase 4 by the encoder design. The loader enforces the ordering; this
+# per-unit re-alignment is Phase 4 by the encoder design. The loader enforces the ordering. this
 # config respects it. Do not "finish the job" by adding `anchor_lookup_path` here.
 #
 # --- Watch items (things this config chose, that the 2k probe should read) -----------------------
@@ -93,7 +93,7 @@ data:
   coarse_filter: false
   # The corpus's val split is exactly 20,000 rows — take all of it (the probe took 4,096 of 4,000).
   val_rows: 20000
-  # The JP 47-label head. Supported only on the char path; the SP path raises (#1349's lesson).
+  # The JP 47-label head. Supported only on the char path. the SP path raises (#1349's lesson).
   label_set: stage3-jp
   # --- The char path (D1/D3/D6): one unit per character, window = char +/- 3 neighbors. ---
   char_mode: char

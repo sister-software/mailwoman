@@ -2,7 +2,7 @@
 
 Opened 2026-08-06 from the operator's directive, immediately downstream of the distance-to-done
 review's finding that bar (b) — Pelias parity — is _unknown, last known behind_, on a 45-day-old
-measurement of a four-majors-old model. The cure is a reproducible, pinned, LOCAL Pelias via Docker
+measurement of a four-majors-old model. The fix is a reproducible, pinned, LOCAL Pelias via Docker
 Compose at the scope of the data we hold, plus a three-arm controlled comparison against
 mailwoman 9.0.0 and same-day hosted geocode.earth.
 

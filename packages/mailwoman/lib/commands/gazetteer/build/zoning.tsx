@@ -222,7 +222,7 @@ const GazetteerBuildZoning: CommandComponent<typeof spec> = ({ options }) => {
 					}
 
 		const result = await buildZoningDatabase({
-			// A narrowed run is the smoke rung and reads a subset in one process; a full build is BATCHED, one child process
+			// A narrowed run is the smoke rung and reads a subset in one process. a full build is BATCHED, one child process
 			// per range of the authority's own feature ids. The reason is reproducibility rather than speed — see
 			// `@mailwoman/zoning/sdk/ingest-chunk`.
 			...(narrowed

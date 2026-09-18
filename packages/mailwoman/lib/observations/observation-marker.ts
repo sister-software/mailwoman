@@ -8,7 +8,7 @@
  *   private path of its own.
  *
  *   THE MARKER CONTRACT IS THE WHOLE REASON THIS IS THE CARRIER, and it is inviolable here. A marker is
- *   additive, attributed, and always accompanied by the ordinary answer; it never changes which answer wins.
+ *   additive, attributed, and always accompanied by the ordinary answer. it never changes which answer wins.
  *   That is exactly what an observation is — the authority behind an answer the pipeline had already
  *   reached — so nothing in this module reads or returns a candidate, a coordinate, or an ordering. The
  *   `mechanism` field names the rule in the `family:rule` form the vocabulary uses, and `evidence` carries
@@ -23,7 +23,7 @@
  *
  *   A MARKER MUST NAME A KIND THE VERDICT CARRIES. `QueryIntentMarker.kind` is documented as a kind present
  *   in the result as either the top kind or an alternative, and a marker naming one that is in neither is a
- *   producer bug. So the conversion is handed the verdict and finds the POI kind in it; a verdict carrying
+ *   producer bug. So the conversion is handed the verdict and finds the POI kind in it. a verdict carrying
  *   none yields no marker rather than an invented one. That silence is a real reading — the observation was
  *   recorded on a query the classifier did not route as a POI query — and it is not the same as there being
  *   nothing to say.
@@ -211,10 +211,10 @@ export function absenceObservationMarker(
  * Turn one authority designation into a marker on a geocode verdict.
  *
  * THE KIND IS THE VERDICT'S OWN TOP KIND, and that is the settled answer to the survey's open question rather than an
- * omission. `QueryIntentMarker.kind` is contractually a kind the verdict carries; a designation is not raised by intent
+ * omission. `QueryIntentMarker.kind` is contractually a kind the verdict carries. a designation is not raised by intent
  * at all — nothing about "10 Downing Street" asks for a flood zone — so there is no kind of its own to name and naming
  * the top kind satisfies the contract literally. `declared_ambiguity` is the precedent for a marker raised at resolve
- * time rather than by the classifier; this one goes one step further and names no kind of its own, which is why the
+ * time rather than by the classifier. this one goes one step further and names no kind of its own, which is why the
  * distinction is written down here and in the layer contract instead of being inferred from the code.
  *
  * The message reports WHAT THE AUTHORITY'S MAP ASSIGNS, never whether the location will flood. The authority itself
@@ -264,7 +264,7 @@ export function authorityDesignationMarker(
  * Turn one soil-capability reading into a marker on a geocode verdict.
  *
  * SAME CODE, SAME FAMILY, DIFFERENT RULE. It shares `authority_designation` and the `layer` mechanism family with the
- * flood marker, because both report what an authority designates at a resolved coordinate; the rule half names the
+ * flood marker, because both report what an authority designates at a resolved coordinate. the rule half names the
  * layer, so a reader meeting two designation markers on one answer can tell which authority spoke.
  *
  * THE CLASS NEVER TRAVELS WITHOUT THE SHARE IT RESTS ON. NRCS's own map-unit aggregation ships its dominant-condition
@@ -322,7 +322,7 @@ export function soilCapabilityMarker(
  * names the layer, so a reader meeting several designation markers on one answer can tell which authority spoke.
  *
  * THE SCENARIO TRAVELS IN THE MESSAGE, NOT ONLY IN THE EVIDENCE. NCERM publishes twelve erosion-zone layers and they
- * answer twelve different questions; a message reading "at erosion risk" without naming which one would let a 2105
+ * answer twelve different questions. a message reading "at erosion risk" without naming which one would let a 2105
  * projection under a 95th-percentile sea-level-rise allowance be read as a present-day designation. So the scenario key
  * and its plain-language label are in the sentence itself.
  *
@@ -442,7 +442,7 @@ export function zoningDesignationMarker(
  * route type, its field, its docstring and its entry in the marker list — and none at the call site.
  *
  * EVERY FIELD IS OPTIONAL AND PRESENCE IS THE SWITCH. A boolean would make the consumer resolve a data-root path and
- * open a sealed database on the default construction path; what arrives here instead is a route the caller already
+ * open a sealed database on the default construction path. what arrives here instead is a route the caller already
  * built, so the consumer never learns where the artifact lives. Absent — the default everywhere — leaves the geocode
  * result byte-identical to a run without the field existing: the layer is never opened, the coordinate is never
  * re-asked, and no marker appears.

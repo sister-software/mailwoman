@@ -38,7 +38,7 @@ function filesGlobMatches(pattern: string, path: string): boolean {
 			const segment = segments[s]
 
 			if (segment === "**") {
-				// `**` consumes zero or more whole path segments; try every split.
+				// `**` consumes zero or more whole path segments. try every split.
 				for (let skip = p; skip <= parts.length; skip++) {
 					if (matchFrom(s + 1, skip)) return true
 				}
@@ -70,7 +70,7 @@ function segmentMatches(glob: string, segment: string): boolean {
 
 		if (found === -1) return false
 
-		// A literal after the leading `*` may start anywhere; a leading literal must anchor at 0.
+		// A literal after the leading `*` may start anywhere. a leading literal must anchor at 0.
 		if (i === 0 && found !== 0) return false
 		at = found + piece.length
 	}

@@ -9,8 +9,8 @@ affix recipe's split semantics (its ``parseStreet``), so the whole mix makes one
 - Trailing USPS Pub-28 suffix -> ``B-street_suffix``   (required for any split)
 - Leading directional        -> ``B-street_prefix``    (only if >2 words, i.e. room for name+suffix)
 - The remaining name must be non-empty and not itself affix-shaped (``W Park Ave`` gets no split
-  because "Park" is a suffix variant — the builder rejects it, so we must too; a looser pass here
-  would introduce a THIRD labeling and re-create the disease it cures).
+  because "Park" is a suffix variant — the builder rejects it, so we must too. a looser pass here
+  would introduce a THIRD labeling and re-create the disease it removes).
 
 Runs after augmentation (see data_loader) so label-inheriting directional expansions
 ("N"->"North", still street) are caught and split too.
@@ -19,7 +19,7 @@ Runs after augmentation (see data_loader) so label-inheriting directional expans
 get their street SPANS split too — pure char arithmetic on the span's whitespace words (the
 builder's exact word-splitting: ``street.trim().split(/\\s+/)``), no token indirection. The token
 labels keep their existing relabel for the transition. The two can diverge only on surfaces where
-the corpus tokenizer dropped punctuation ("Main St." — tokens see "St" and split; the span path
+the corpus tokenizer dropped punctuation ("Main St." — tokens see "St" and split. the span path
 sees the word "St.", which is not in the lexicon, and conservatively leaves the span whole,
 exactly like the builder's parseStreet). The span path is the v0.5.0 source of truth: when a row
 has spans, encode_row trains from the spans.
@@ -110,7 +110,7 @@ def split_street_span(words: list[str], lex: AffixRelabelLexicon) -> tuple[int, 
 
     Returns ``(prefix_count, suffix_count)`` — how many leading tokens become street_prefix
     (0 or 1) and trailing tokens become street_suffix (0 or 1) — or None for no relabel.
-    Mirrors the affix recipe's ``parseStreet`` exactly; see module docstring.
+    Mirrors the affix recipe's ``parseStreet`` exactly. see module docstring.
     """
     if len(words) < 2:
         return None
@@ -129,7 +129,7 @@ def split_street_span(words: list[str], lex: AffixRelabelLexicon) -> tuple[int, 
         # made suffix-shape a property of the WORD, so every ordinary-source 'Menlo Park Road'
         # kept a monolithic street label and ~78% of terminal-only carriers taught the model to
         # absorb the true suffix in real contexts. Mirror of the TS recipe's allowNameProneTail
-        # (street-affix.ts; the golden truth already encodes these splits): a name of >= 2 words
+        # (street-affix.ts. the golden truth already encodes these splits): a name of >= 2 words
         # whose FINAL word is merely a name-prone head noun (PARK/HILL/CREEK...) is licensed by
         # the TRUE suffix that follows it. Single-word names ('W Park Ave' -> name ['Park']) and
         # non-name-prone suffix-shaped tails ('Old Avenue Road') stay refused. `lex.name_prone`
@@ -143,7 +143,7 @@ def split_street_span(words: list[str], lex: AffixRelabelLexicon) -> tuple[int, 
 
 
 def relabel_row(row: dict[str, Any], lex: AffixRelabelLexicon) -> bool:
-    """Relabel every street span in ``row`` (mutates ``row['labels']`` in place; replaces the
+    """Relabel every street span in ``row`` (mutates ``row['labels']`` in place. replaces the
     char-offset span arrays when the row carries them — #519).
 
     Returns True if any span was split. Rows whose street spans don't meet the builder's
@@ -196,7 +196,7 @@ def relabel_spans(row: dict[str, Any], lex: AffixRelabelLexicon) -> bool:
     positions within the original span. Sortedness/non-overlap are preserved by construction —
     every replacement lies inside the original span's range.
 
-    No-op (returns False) on rows without the triple; replaces the three arrays with fresh lists
+    No-op (returns False) on rows without the triple. replaces the three arrays with fresh lists
     when it splits, so callers holding the source row's lists are never mutated through.
     """
     triple = row_span_triple(row)

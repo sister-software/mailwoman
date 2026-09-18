@@ -217,7 +217,7 @@ def run_pretrain_loop(
 
 
 def pretrain(cfg: Config, *, resume_from: str | Path | None = None) -> None:
-    """Run MLM pre-training; write encoder checkpoints to ``cfg.train.output_dir``."""
+    """Run MLM pre-training. write encoder checkpoints to ``cfg.train.output_dir``."""
     if cfg.train.objective != "mlm":
         raise ValueError(f"pretrain() needs objective='mlm', got {cfg.train.objective!r}")
     force_math_sdpa()

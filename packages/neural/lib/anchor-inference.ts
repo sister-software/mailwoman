@@ -14,7 +14,7 @@
  *   model garbage. `anchor-inference.test.ts` pins both `LOCALE_ORDER` and the vector to values
  *   emitted by the Python `anchor_feature_vector` — any drift fails the test.
  *
- *   The layout matched; the SPAN COLLECTION did not (2026-08-05,
+ *   The layout matched. the SPAN COLLECTION did not (2026-08-05,
  *   `docs/records/evals/2026-08-05-en-gb-anchor-off.md`). Train keys a postcode as
  *   `raw[begin:end].replace(" ", "").upper()` over a shape-detected span, so a GB unit enters the
  *   lookup as `SW1A2AA`. Inference scanned `[A-Za-z0-9]+` runs, which can never produce a key
@@ -108,7 +108,7 @@ export function parseAnchorLookup(
  *   keys are all five digits, so this never mattered — no space-containing postcode had a key.
  * - `shaped` — the postcode-SHAPED spans from {@linkcode collectMatches} (`neural/postcode-repair.ts`), keyed the way
  *   `mailwoman_train/tokenizer.py::_paint_anchor_chars` keys them: `span.replace(" ", "").toUpperCase()`. This is the
- *   TRAIN-PARITY mode. Pair it with a lookup that has letter-containing keys and a model trained on both; on its own
+ *   TRAIN-PARITY mode. Pair it with a lookup that has letter-containing keys and a model trained on both. on its own
  *   against a shipped model it is a no-op, because no shaped GB/NL span will resolve. The shape SCAN runs over an
  *   ASCII-uppercased copy of the text ({@linkcode asciiUpper}) — see #1512 there — so the register cannot silently cost
  *   the channel. The KEY is unchanged.
@@ -192,7 +192,7 @@ export function mergeAnchorLookups(lookups: readonly AnchorLookup[]): AnchorLook
 				existing.posterior[country] = 1
 			}
 
-			// Average a real centroid in; ignore (0,0) placeholders.
+			// Average a real centroid in. ignore (0,0) placeholders.
 			if (entry.lat !== 0 || entry.lon !== 0) {
 				if (existing.lat === 0 && existing.lon === 0) {
 					existing.lat = entry.lat
@@ -223,7 +223,7 @@ export function countShapedOnlyKeys(lookup: AnchorLookup): number {
 }
 
 /**
- * Scan cap for {@linkcode countShapedOnlyKeys}. The answer is used as "any, and roughly how many" in an error message;
+ * Scan cap for {@linkcode countShapedOnlyKeys}. The answer is used as "any, and roughly how many" in an error message.
  * walking all 1,749,839 keys of the GB lookup to distinguish 1,000 from 1,746,976 adds nothing.
  */
 export const SHAPED_ONLY_KEY_SCAN_LIMIT = 1000

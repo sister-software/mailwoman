@@ -43,7 +43,7 @@ export function toCIK(value: string | number): CIK | null {
 /**
  * The subset of `SECClient` (`sec-client.ts`) this module needs — {@linkcode fetchCompanyTickers}/
  * {@linkcode fetchTenKFilings} take this rather than the concrete class so a test can substitute a trivial stub instead
- * of building a full axios harness. A real `createSECClient()` instance already satisfies this structurally; the
+ * of building a full axios harness. A real `createSECClient()` instance already satisfies this structurally. the
  * production caller always passes one, so this stays "go through the existing SEC client", never a second fetcher.
  */
 export interface SECGetClient {
@@ -122,7 +122,7 @@ export async function fetchCompanyTickers(client: SECGetClient): Promise<Company
  *
  *     COMPANY NAME:0001234567:
  *
- * There is no ticker column (the empty third field is always blank). ~1,054,085 entries covering 40 MB; read the file
+ * There is no ticker column (the empty third field is always blank). ~1,054,085 entries covering 40 MB. read the file
  * once and keep the result rather than reparsing it per query.
  *
  * An entry whose CIK won't parse is skipped without throwing — this is a flat file, not SEC's documented API shape, and
@@ -131,7 +131,7 @@ export async function fetchCompanyTickers(client: SECGetClient): Promise<Company
  *
  * **1,054,085 entries → one `resolveCIKCandidates` call scores all of them.** The function does a single O(n) pass with
  * a cheap `nameSimilarity` call per entry, which is fast enough for a tool that runs once per vintage. A caller running
- * thousands of queries should build a prefix index instead; that is not this.
+ * thousands of queries should build a prefix index instead. that is not this.
  */
 export function parseCIKLookupData(text: string): CompanyTickerEntry[] {
 	const entries: CompanyTickerEntry[] = []
@@ -233,7 +233,7 @@ function canonicalOf(name: string): string {
  * times, each scoring 1.0, and the same phantom tie appeared for Comcast, AT&T, T-Mobile and Telephone and Data
  * Systems. Left uncollapsed those duplicates trip the tie rule, which then suppresses `limit` and hands a caller the
  * same company back N times as though it were an unresolved ambiguity. The rule exists for a collision between
- * different companies; one company's share classes are not one. Per CIK the highest-scoring row wins (first seen wins
+ * different companies. one company's share classes are not one. Per CIK the highest-scoring row wins (first seen wins
  * within an exact score tie, so the result is deterministic in ticker-file order), which is what keeps the reported
  * `companyName`/`ticker` the ones that actually matched.
  */

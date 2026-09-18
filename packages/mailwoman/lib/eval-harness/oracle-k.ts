@@ -176,7 +176,7 @@ export function segmentDecodeKBest(
 		return row.map((value) => value - z)
 	})
 
-	// Group pieces into words; pure-punctuation pieces are their own word.
+	// Group pieces into words. pure-punctuation pieces are their own word.
 	const words: number[][] = []
 	let current: number[] = []
 
@@ -326,7 +326,7 @@ function extractSurface(
 }
 
 /**
- * Run the oracle-recall@k eval; narrates the per-floor table on stdout. Informational — always exits 0.
+ * Run the oracle-recall@k eval. narrates the per-floor table on stdout. Informational — always exits 0.
  */
 export async function runOracleK(options: OracleKOptions = {}): Promise<OracleKOutcome> {
 	const k = options.k ?? 10

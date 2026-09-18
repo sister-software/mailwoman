@@ -29,7 +29,7 @@ test("legacyClassificationToComponentTag: 'dependency' renames to 'dependent_loc
 })
 
 test("legacyClassificationToComponentTag: bare 'intersection' coarsely maps to 'intersection_a'", () => {
-	// intersection_b requires positional reasoning the legacy path can't supply; A is the default.
+	// intersection_b requires positional reasoning the legacy path can't supply. A is the default.
 	expect(legacyClassificationToComponentTag("intersection")).toBe("intersection_a")
 })
 

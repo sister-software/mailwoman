@@ -5,7 +5,7 @@
  *
  *   The access-state rules, platform-free: what a license reads given what Stripe has said, and what the public routes
  *   answer for each state. The webhook handlers and the reconciliation pass supply the observations and the ledger
- *   functions persist the decision; neither holds a rule of its own.
+ *   functions persist the decision. neither holds a rule of its own.
  *
  *   Precedence, highest first. A revocation (a full refund, a dispute opened) stands until a dispute is ruled won, when
  *   the subscription decides again. A review (a partial refund) stands until an operator resolves it, whatever the
@@ -31,11 +31,11 @@ export function publicLicenseStatus(state: LicenseState): PublicLicenseStatus {
 
 export interface SubscriptionObservation {
 	/**
-	 * `customer.subscription.deleted` arrived; the status alone may still read otherwise.
+	 * `customer.subscription.deleted` arrived. the status alone may still read otherwise.
 	 */
 	deleted?: boolean
 	/**
-	 * The current token's `expires`, a UTC calendar date; absent when no token has been minted.
+	 * The current token's `expires`, a UTC calendar date. absent when no token has been minted.
 	 */
 	graceUntil?: string
 	/**
@@ -65,7 +65,7 @@ export function licenseStateAfterSubscription(
 }
 
 /**
- * What a refund says: a full refund revokes; a partial one is the operator's to review, and the license reads active
+ * What a refund says: a full refund revokes. a partial one is the operator's to review, and the license reads active
  * meanwhile.
  */
 export function licenseStateAfterRefund(charge: Pick<Stripe.Charge, "amount" | "amount_refunded">): LicenseState {

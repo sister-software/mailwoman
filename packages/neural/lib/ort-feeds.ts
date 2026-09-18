@@ -5,7 +5,7 @@
  *
  *   Pure channel packing + output decode shared by the two ONNX runners (`onnx-runner.ts`,
  *   `web-onnx-runner.ts`). Both hosts feed the same fixed-length tensors and read the same
- *   `logits`/`locale_logits`/`span_scores` outputs; this module owns that contract once so the two
+ *   `logits`/`locale_logits`/`span_scores` outputs. this module owns that contract once so the two
  *   cannot drift — the #727 span read was previously duplicated across hosts and held together only
  *   by a parity test. No `onnxruntime-*` import: the runners construct their own `ort.Tensor`s from
  *   the packed `{data, dims}` pairs, which is the only host-specific step.
@@ -205,7 +205,7 @@ function packChannelFeed(
  * missing required input. The anchor channel historically skipped the declared-input check on the supplied path — an
  * undeclared feed — and now takes the same check as every other channel.
  *
- * `supplied` dims read the channel's own rows; the fallback dim covers the zero-fill path (and, for the evidence
+ * `supplied` dims read the channel's own rows. the fallback dim covers the zero-fill path (and, for the evidence
  * channels, a supplied channel with no rows).
  */
 export function packSoftChannelFeeds(
@@ -294,7 +294,7 @@ export function decodeInferOutput(
 		maxSpan = spanLen
 		spanScores = []
 
-		// Only the first `seqLen` token rows are real; the rest is the fixed-length pad tail.
+		// Only the first `seqLen` token rows are real. the rest is the fixed-length pad tail.
 		for (let t = 0; t < seqLen; t++) {
 			const perLength: number[][] = new Array(spanLen)
 
@@ -325,7 +325,7 @@ export function decodeInferOutput(
  * Back-compat inference of the required soft-feature channels from an ONNX model's declared input names (#718). A model
  * that exports `anchor_features` / `gazetteer_features` declared those channels mandatory at train time — feeding zeros
  * is the channel-off identity, but a model TRAINED with the channel is OOD when scored without it. Cards without a
- * `requires` block (every pre-#718 bundle) route through here so the fail-closed guard still protects them.
+ * `requires` block (every pre-#718 bundle) route through here so the fail-closed guard still guards them.
  * Conventions/bridge are not graph-observable (no dedicated input), so they're left undeclared here — only the card
  * declares them.
  */

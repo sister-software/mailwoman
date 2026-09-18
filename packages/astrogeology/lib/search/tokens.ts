@@ -25,7 +25,7 @@ import type { BuildableBodyID } from "#bodies"
  * index signature that makes an optional property assignable to one. An interface fails to assign once `diameterKm` is
  * present.
  */
-// oxlint-disable-next-line typescript/consistent-type-definitions -- see the note above; an interface does not assign to `JSONValue`
+// oxlint-disable-next-line typescript/consistent-type-definitions -- see the note above. an interface does not assign to `JSONValue`
 export type NomenclatureSearchPayload = {
 	id: string
 	body: BuildableBodyID

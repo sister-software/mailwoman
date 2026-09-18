@@ -21,8 +21,8 @@ const MAX_POI_SEGMENTS = 3
  */
 export interface POIPhraseMatch {
 	/**
-	 * The matched subject's identifier string. For `kind: "category"`, a `@mailwoman/poi-taxonomy` category id; for
-	 * `kind: "brand"` or `kind: "name"`, the canonical display name. `matchPOISubject` treats it opaquely; the caller
+	 * The matched subject's identifier string. For `kind: "category"`, a `@mailwoman/poi-taxonomy` category id. for
+	 * `kind: "brand"` or `kind: "name"`, the canonical display name. `matchPOISubject` treats it opaquely. the caller
 	 * (`mailwoman`'s `poi-intent.ts`) interprets it per `kind`.
 	 */
 	categoryID: string
@@ -61,13 +61,13 @@ export interface POIPhraseMatch {
 	 *
 	 * A scope is a statement about ESTABLISHMENTS, so it is judged against the country of the place being searched, not
 	 * the caller's locale: the locale is the lens the phrase is read through, and it says nothing about where the claim
-	 * holds. `matchPOISubject` carries the value untouched; the POI intent stage binds it once the anchor has resolved.
+	 * holds. `matchPOISubject` carries the value untouched. the POI intent stage binds it once the anchor has resolved.
 	 */
 	countryScope?: readonly string[]
 }
 
 /**
- * Injected phrase→category lookup. Exact-phrase, locale-aware; returns [] on miss.
+ * Injected phrase→category lookup. Exact-phrase, locale-aware. returns [] on miss.
  */
 export type POIPhraseLookup = (phrase: string, locale?: string) => ReadonlyArray<POIPhraseMatch>
 
@@ -267,7 +267,7 @@ export function createScorePOIQuery(
 /**
  * Confidence band for a bare category. One notch above `poi_query`'s whole-input band (0.92) so the anchorless subset
  * takes the top slot from it, and only from it — every anchored POI query keeps scoring `poi_query` exactly as before.
- * The coordinator's POI branch accepts both kinds, so the routing is identical either way; the split exists so the
+ * The coordinator's POI branch accepts both kinds, so the routing is identical either way. the split exists so the
  * marker can say "you named a category and no place", which is a different thing to tell a caller.
  */
 const POI_CATEGORY_CONFIDENCE = 0.93

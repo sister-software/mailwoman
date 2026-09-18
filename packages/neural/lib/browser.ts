@@ -10,7 +10,7 @@
  *   and oxlint holds the rest to a no-`node:*` rule.
  *
  *   The soft-feature channels below are not optional decoration. A gazetteer-, country-, or
- *   pair-trained model requires its channel fed at inference; a zero-filled clue is a train/inference
+ *   pair-trained model requires its channel fed at inference. a zero-filled clue is a train/inference
  *   mismatch, not a neutral default (see CONTRIBUTING_MODEL_WORK.mdx, "zero-fill trap"). A browser
  *   caller fetches each lexicon alongside the model and feeds it.
  */

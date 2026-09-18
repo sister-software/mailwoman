@@ -56,7 +56,7 @@ export function fixtureFeature(
 		zoneCode,
 		zoneSource: "river",
 		origin: "modelled",
-		// The real source's figure comes from GDAL; a fixture's comes from the same ring maths the build checks against,
+		// The real source's figure comes from GDAL. a fixture's comes from the same ring maths the build checks against,
 		// so the fixture exercises the comparison rather than the tolerance.
 		sourceAreaM2: ringAreaReadings(polygons).nested,
 		polygons,

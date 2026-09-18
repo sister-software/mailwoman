@@ -50,7 +50,7 @@
  *       --status docs/articles/developers/status.mdx
  *
  *   The path overrides exist so the surfaces can be pointed at doctored copies when exercising the
- *   failure modes; the defaults are the real repo files. Wired into `.github/workflows/publish.yml`
+ *   failure modes. the defaults are the real repo files. Wired into `.github/workflows/publish.yml`
  *   as a step after the HF preflight and before release-it publishes.
  */
 
@@ -88,7 +88,7 @@ interface MatrixRow {
 export interface VerifyReleaseMetadataOptions {
 	repoRoot: string
 	/**
-	 * Repo-relative (or absolute) overrides for each surface; the defaults are the real repo files.
+	 * Repo-relative (or absolute) overrides for each surface. the defaults are the real repo files.
 	 */
 	card?: string
 	ledger?: string
@@ -182,7 +182,7 @@ async function checkLedger(version: string, ledgerPath: string): Promise<Surface
 
 /**
  * Parse the releases.mdx version matrix into ordered data rows. A data row is a `|`-delimited table line whose first
- * cell carries a version-like token; the header and `---` separator rows are skipped. The "## The matrix" table is the
+ * cell carries a version-like token. the header and `---` separator rows are skipped. The "## The matrix" table is the
  * only one whose rows look like this, so a global scan is safe.
  */
 function parseMatrixRows(markdown: string): MatrixRow[] {

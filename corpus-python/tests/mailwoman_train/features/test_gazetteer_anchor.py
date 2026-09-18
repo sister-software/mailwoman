@@ -99,7 +99,7 @@ def test_po_box_and_cedex_clues():
     words = painted_words("PO Box 1234, Springfield")
     assert words["PO"] == BITS["po_box"]
     assert words["Box"] == BITS["po_box"]
-    # The clue fires on "Box Canyon Rd" too — by design. The model reads context; the clue only
+    # The clue fires on "Box Canyon Rd" too — by design. The model reads context. the clue only
     # marks lexicon membership (model-first: a hint, never a verdict).
     assert painted_words("12 Box Canyon Rd")["Box"] == BITS["po_box"]
     assert painted_words("75008 PARIS CEDEX 02")["CEDEX"] == BITS["cedex"]

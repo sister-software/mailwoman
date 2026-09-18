@@ -7,7 +7,7 @@
  *   candidate.db (via `buildCandidateTable`) with Nashville (high pop) + a far Antioch, CA
  *   distractor, attaches a `postal_city_candidate` row (`antioch`, 37013 → Nashville), and pins the
  *   probe's behaviour: an exact `(name_key, postcode)` hit resolves the postal city to its
- *   geographic locality; a bare query (no postcode), a postcode miss, a non-locality request, and a
+ *   geographic locality. a bare query (no postcode), a postcode miss, a non-locality request, and a
  *   candidate.db without the side-index are all untouched (byte-stable).
  */
 

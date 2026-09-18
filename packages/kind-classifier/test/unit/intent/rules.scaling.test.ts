@@ -75,7 +75,7 @@ function bestOf(run: () => void): number {
  * all large trials (even as best-of-N) leaves the ratio exposed to a load burst that arrives between the two blocks —
  * on a host that also runs the CI fleet, that is the common case, and it fired the 3x bar three times in one night at
  * 3.19–3.25x with both arms individually healthy. Pairing puts any burst into both arms of the affected pair, and the
- * median sheds the corrupted pairs in either direction; a genuinely quadratic run still shows ~4x in every clean pair.
+ * median sheds the corrupted pairs in either direction. a genuinely quadratic run still shows ~4x in every clean pair.
  */
 function medianPairedRatio(small: () => void, large: () => void): { ratio: number; smallMs: number; largeMs: number } {
 	small()
@@ -122,7 +122,7 @@ test("the intent rules stay linear in input length", () => {
 	// Sizes chosen so the absolute timings clear a millisecond: at 50k/100k the whole measurement lands under 0.3 ms,
 	// where scheduler noise on a parallel test runner is larger than the signal and the ratio flakes (measured: 3.25x on
 	// a run where both arms were sub-millisecond). The work being timed is a `trim` + `toLowerCase` + two anchored
-	// regexes over the full string, which is linear; the length check rejects everything else at 30 characters.
+	// regexes over the full string, which is linear. the length check rejects everything else at 30 characters.
 	const { ratio, smallMs, largeMs } = medianPairedRatio(runAt(500_000), runAt(1_000_000))
 
 	expect(
@@ -215,7 +215,7 @@ test("intent adds a bounded fraction to the per-query classify cost", () => {
 	// unstable half of the pair: the baseline arm is a bare score-and-max with no allocation, which V8 optimizes
 	// aggressively and inconsistently — measured at 0.354, 0.585 and 0.663 us/query across three consecutive runs of
 	// this file, moving the ratio from 1.94x to 3.48x while the numerator barely moved (1.185-1.284 us/query). Asserting
-	// on the ratio measures the JIT's mood; asserting on the absolute measures Stage 2.5.
+	// on the ratio measures the JIT's mood. asserting on the absolute measures Stage 2.5.
 	//
 	// 10 us is ~8x the measured cost. It is set to catch an ORDER-OF-MAGNITUDE regression (someone adding a lexicon
 	// load, a gazetteer probe, or an unbounded scan to an intent rule), not to police a microsecond, and it sits far

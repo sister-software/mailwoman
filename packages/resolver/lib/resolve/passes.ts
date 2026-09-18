@@ -210,12 +210,12 @@ export interface ResolutionState {
 	postcode?: string
 	/**
 	 * Postcode-containment coherence (#31, Mechanism 2) — forwarded to locality lookups so a coordinate-first backend can
-	 * re-rank name candidates by proximity to the postcode's own centroid. Opt-in; off by default.
+	 * re-rank name candidates by proximity to the postcode's own centroid. Opt-in. off by default.
 	 */
 	postcodeContainmentCoherence: boolean
 	/**
 	 * Postcode-prefix prior (#31, Mechanism 3) — on a `postalcode` miss, derive the code's prefix and probe
-	 * `postcodePrefixIndex`. Opt-in; off by default.
+	 * `postcodePrefixIndex`. Opt-in. off by default.
 	 */
 	postcodePrefixPrior: boolean
 	/**
@@ -227,7 +227,7 @@ export interface ResolutionState {
 	postcodeFormatCountries?: readonly string[]
 	/**
 	 * #1585 — the locale hint's country, forwarded to the backend as `fuzzyCountry` on every primary lookup. Scopes the
-	 * typo-fuzzy tier only; exact matches stay worldwide. See `ResolveOpts.fuzzyCountryScope`.
+	 * typo-fuzzy tier only. exact matches stay worldwide. See `ResolveOpts.fuzzyCountryScope`.
 	 */
 	fuzzyCountryScope?: string
 	/**
@@ -310,7 +310,7 @@ export interface ResolutionState {
 /**
  * Pick the completion locality when an admin maps to several coincident same-name candidates (#405). REFERENTIAL
  * likelihood is the PRIMARY signal — the principal city is the populous one, and it can sit FARTHER from the admin
- * centroid than a tiny same-name hamlet (the Niigata case from #403). Nearest centroid breaks a referential tie; a
+ * centroid than a tiny same-name hamlet (the Niigata case from #403). Nearest centroid breaks a referential tie. a
  * genuine tie (same population and distance) abstains rather than guess.
  *
  * ROAD_TO_V9 §2: `compareReferential` is referential DESC with raw population as its own tiebreak, which is the SAME
@@ -325,7 +325,7 @@ export function pickCompletion(candidates: readonly CoincidentLocality[]): Coinc
 
 	const ranked = [...candidates]
 		.map((c) => ({ c, referential: referentialFromPopulation(c.population), population: c.population }))
-		// oxlint-disable-next-line unicorn/no-array-sort -- sorts a freshly-built array; toSorted would double-allocate on a hot path
+		// oxlint-disable-next-line unicorn/no-array-sort -- sorts a freshly-built array. toSorted would double-allocate on a hot path
 		.sort((a, b) => compareReferential(a, b) || a.c.distanceKm - b.c.distanceKm)
 		.map((x) => x.c)
 
@@ -337,7 +337,7 @@ export function pickCompletion(candidates: readonly CoincidentLocality[]): Coinc
 }
 
 /**
- * Find the first postcode value anywhere in the tree (a one-shot pre-scan; postcode and locality are siblings, so the
+ * Find the first postcode value anywhere in the tree (a one-shot pre-scan. postcode and locality are siblings, so the
  * top-down walk wouldn't otherwise let the locality lookup see it).
  */
 export function firstPostcodeValue(roots: readonly AddressNode[]): string | undefined {
@@ -353,7 +353,7 @@ export function firstPostcodeValue(roots: readonly AddressNode[]): string | unde
 /**
  * Span-rescore tier (#370): opt-in last-resort locality recovery. Runs only when the tree resolved nothing (the #685
  * brake — never disturb a working coordinate). Enumerates raw-token spans, exact- matches the same-country gazetteer
- * (longest-wins + postcode-consistency check; see `span-rescore.ts`), and on a hit INJECTS a resolved `locality` node
+ * (longest-wins + postcode-consistency check. see `span-rescore.ts`), and on a hit INJECTS a resolved `locality` node
  * decorated exactly like a normally-resolved one. Default-ON (#370, promoted 2026-06-25); byte-stable opt-out via
  * `opts.spanRescore: false`. Async (it queries the backend), so it's awaited.
  */
@@ -365,7 +365,7 @@ export async function applySpanRescore(
 ): Promise<void> {
 	// Already resolved — never second-guess a working coordinate. `spanRescoreWeakResolution` narrows what counts as
 	// working: a pick the gazetteer recorded no population for, or one that failed the query's own containment check,
-	// is not a coordinate the brake was written to protect.
+	// is not a coordinate the brake was written to guard.
 	if (hasResolvedPlace(roots, opts.spanRescoreWeakResolution ?? false)) return
 	// Default-ON since 2026-06-25, so this runs on every unresolved tree — a backend hiccup here must
 	// degrade to no-rescore, never crash the resolve (the same fall-through the main walk gives).
@@ -405,7 +405,7 @@ export async function applySpanRescore(
 		value: hit.text,
 		start: hit.start,
 		end: hit.end,
-		// No model confidence for a post-hoc recovery; a mid-tier value marks it as recovered, not asserted.
+		// No model confidence for a post-hoc recovery. a mid-tier value marks it as recovered, not asserted.
 		confidence: 0.5,
 		children: [],
 	}
@@ -418,7 +418,7 @@ export async function applySpanRescore(
 	decorateNode(node, hit.place, hit.alternatives)
 	// `rescore_postcode_verified` carries the check's precision signal as an EXPLICIT handle — NOT folded into the
 	// calibrated `confidence`, which would break the isotonic guarantee (a true calibrated 0.83 must not
-	// be confused with a rescore plug-in estimate; DeepSeek 2026-06-23). true = postcode check fired
+	// be confused with a rescore plug-in estimate. DeepSeek 2026-06-23). true = postcode check fired
 	// (high-precision); false = unrestricted (no postcode→point coverage for this country, ~83%-precision).
 	node.metadata = { ...node.metadata, span_rescore: true, rescore_postcode_verified: hit.postcodeVerified }
 	roots.push(node)
@@ -550,11 +550,11 @@ export function applyPostcodeConsistency(
 			.filter((a) => a.lat !== 0 || a.lon !== 0)
 			.map((a) => ({ a, d: haversineKm(anchor!.lat, anchor!.lon, a.lat, a.lon) }))
 			.filter((x) => x.d <= thresholdKm)
-			// oxlint-disable-next-line unicorn/no-array-sort -- sorts a freshly-built array; toSorted would double-allocate on a hot path
+			// oxlint-disable-next-line unicorn/no-array-sort -- sorts a freshly-built array. toSorted would double-allocate on a hot path
 			.sort((x, y) => x.d - y.d)[0]
 
 		if (reconciling) {
-			// Swap to the consistent instance; the displaced winner becomes an alternative.
+			// Swap to the consistent instance. the displaced winner becomes an alternative.
 			const displaced: ResolvedPlace = {
 				id: 0,
 				name: String(node.metadata?.["resolver_name"] ?? node.value),
@@ -580,7 +580,7 @@ export function applyPostcodeConsistency(
 			continue
 		}
 
-		// No same-named instance near the postcode → the town is unreliable; trust the postcode's area.
+		// No same-named instance near the postcode → the town is unreliable. trust the postcode's area.
 		node.lat = anchor.lat
 		node.lon = anchor.lon
 		node.metadata = { ...node.metadata, postcode_city_mismatch: true, coordinate_source: "postcode_fallback" }

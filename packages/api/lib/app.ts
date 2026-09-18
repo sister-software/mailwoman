@@ -53,7 +53,7 @@ export interface MailwomanAPIOptions {
 
 	/**
 	 * The engine stamp to carry on every response: `engine` in each `/v1` body and the `Server` + `Link: rel="license"`
-	 * headers everywhere. Absent when an embedding application builds the app without the `mailwoman` package; the
+	 * headers everywhere. Absent when an embedding application builds the app without the `mailwoman` package. the
 	 * `mailwoman serve` command always passes one.
 	 */
 	engine?: EngineStamp

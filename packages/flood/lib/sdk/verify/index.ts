@@ -13,13 +13,13 @@
  *
  *   NEGATIVE HALF, AND IT MATTERS AS MUCH. A sample of points in Wales and Scotland must come back
  *   `unknown` — no coverage row at all — and never Zone 1. Wales is a different authority under a
- *   four-zone TAN15 scheme that is not interchangeable with England's, and Scotland is a third; reporting
+ *   four-zone TAN15 scheme that is not interchangeable with England's, and Scotland is a third. reporting
  *   either as the EA's low-probability zone would be the exact defect this layer was built to make
  *   impossible. The positive half alone would pass on an artifact that answered Zone 1 for the whole
  *   planet.
  *
  *   THE CHANNELS DIFFER IN COORDINATE PRECISION AND THAT IS WHY A BOUNDARY POINT IS NOT A FAILURE. The
- *   geodatabase publishes nine decimals through this package's ingest; the OGC service publishes six. Six
+ *   geodatabase publishes nine decimals through this package's ingest. the OGC service publishes six. Six
  *   decimals is about 10 cm, so a point within roughly a metre of a zone boundary can land on opposite
  *   sides of two renderings of the same edge. Those are reported as `boundary_tolerance` rather than as
  *   disagreements, with their distance to the nearest edge, and the count is part of the receipt.
@@ -194,7 +194,7 @@ export async function verifyFloodDatabase(options: VerifyFloodOptions): Promise<
 /**
  * What zone the SERVICE's own geometry assigns at a point, decided here with the same even-odd rule the artifact's
  * reader uses — so what is compared is a verdict against a verdict. `zone` is `null` only when no returned polygon
- * contains the point; a containing polygon with no `flood_zone` sets `insideUnlabelled` instead, so the two readings
+ * contains the point. a containing polygon with no `flood_zone` sets `insideUnlabelled` instead, so the two readings
  * never share a value.
  */
 async function readServiceZone(

@@ -60,7 +60,7 @@ def _join_runs(text: str, offsets: list[tuple[int, int]], selected: list[int]) -
     """Take the substring under each maximal contiguous run of selected pieces, join with ' ' — mirrors the JS harness.
 
     The JS side emits one NODE per span (street, street_suffix, …) and joins their values with a
-    space; a contiguous run of pieces is exactly one such node.
+    space. a contiguous run of pieces is exactly one such node.
     """
     if not selected:
         return ""

@@ -18,7 +18,7 @@
  *       harness exercises this file.
  *
  *   Tensor shape + I/O contract matches `ONNXRunner` exactly: the packing and the output decode are
- *   the same functions (`ort-feeds.ts`), so the two hosts cannot drift; only the `ort.Tensor`
+ *   the same functions (`ort-feeds.ts`), so the two hosts cannot drift. only the `ort.Tensor`
  *   construction is host-specific.
  */
 
@@ -48,7 +48,7 @@ export interface WebONNXRunnerOpts {
 	fixedSeqLen?: number
 	/**
 	 * Optional override for where onnxruntime-web should load its `.wasm` assets from. Defaults to the package's CDN
-	 * paths; bundlers usually want to point this at a self-hosted copy.
+	 * paths. bundlers usually want to point this at a self-hosted copy.
 	 *
 	 * Example: `setWASMPaths("/static/ort/")` and put the .wasm files at /static/ort/.
 	 */

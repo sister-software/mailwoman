@@ -86,7 +86,7 @@ export interface ReadOGRLayerIdentityOptions {
 }
 
 /**
- * A summary is small; the ceiling only guards against a pathological driver.
+ * A summary is small. the ceiling only guards against a pathological driver.
  */
 const OGRINFO_MAX_BUFFER = 32 * 1024 * 1024
 

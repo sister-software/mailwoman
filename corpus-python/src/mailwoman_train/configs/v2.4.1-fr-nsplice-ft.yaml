@@ -6,27 +6,27 @@
 # with abundant FR `é→O`, so `é` carries a strong, well-trained O-signal. FVT mean-init of a merged FR
 # piece — E(▁René) = mean(E[▁Ren], E[é]) — INHERITS that O pull, so the whole merged token tags O and
 # the word drops (`Place René Cassin` → `place cassin`), NET-worse than the baseline dropping just the é
-# (mangle 23.5%→26.4%). Mean-init-only can't teach the merged pieces; that needs GRADIENT STEPS. This
+# (mangle 23.5%→26.4%). Mean-init-only can't teach the merged pieces. that needs GRADIENT STEPS. This
 # config supplies them: init_from the mean-init candidate, fine-tune on the v0.8.0-fr-nsplice vocab.
 #
 # THE RECIPE = v2.3.0-nl-postcode-full (the shipped v5.4.0 lineage) verbatim, with exactly these deltas:
-#   1. tokenizer_dir  → v0.8.0-fr-nsplice (v0.7.1's 63913 + 2406 FR diacritic pieces; md5 04995524…,
+#   1. tokenizer_dir  → v0.8.0-fr-nsplice (v0.7.1's 63913 + 2406 FR diacritic pieces. md5 04995524…,
 #      #900 overlap check passed, US byte-identical by construction).
 #   2. init_from      → /data/models/fr-nsplice-expanded — the v230-nl-postcode (v5.4.0) step-005000
 #      checkpoint's token_embeddings FVT mean-init-expanded 63913→66319 (mean_init_fr_nsplice, the
-#      pytorch-checkpoint twin of the onnx-mean-init that produced the staged v240 candidate; same FVT
+#      pytorch-checkpoint twin of the onnx-mean-init that produced the staged v240 candidate. same FVT
 #      math, so the init is numerically the v240 mean-init candidate as a trainable checkpoint).
 #   3. SCHEDULE → the vocab-splice fine-tune schedule established across v1.9.7/v1.9.8/v1.9.9/v2.1.0
 #      (init_from a mean-init-expanded ckpt, fresh optimizer): constant lr 5.0e-5, warmup 200, 12000
 #      steps, eval/save every 2000. Not v230's same-vocab lr 1e-5 (that fine-tune had no new rows to
 #      move); the new FR rows must overcome the inherited O-signal, and 5e-5 is the splice-adaptation LR.
-#   4. output_dir/run name → v241 (fresh dir; init_from reads v230's checkpoints, never overwrites).
+#   4. output_dir/run name → v241 (fresh dir. init_from reads v230's checkpoints, never overwrites).
 # Everything else — the v0.10.1-nl-postcode corpus (699 parquet files), all source/country weights, the model
-# config (crf_loss_weight 0.0; conventions loss-mask absent=OFF), anchor/gaz knobs, class_weights, seed
+# config (crf_loss_weight 0.0. conventions loss-mask absent=OFF), anchor/gaz knobs, class_weights, seed
 # 42, batch 128, bf16 — is v230-VERBATIM, so the SPLICED VOCAB + its gradient steps are the only variable.
 #
-# CHECK when it lands (operator reviews; do not auto-promote): mangle rate < 23.5% baseline (the #444
-# metric, scripts/eval/fr-accent-mangle-rate.ts); Honoré + René repros flip to HIT; gauntlet held-out FR
+# CHECK when it lands (operator reviews. do not auto-promote): mangle rate < 23.5% baseline (the #444
+# metric, scripts/eval/fr-accent-mangle-rate.ts). Honoré + René repros flip to HIT. gauntlet held-out FR
 # + US z-tests via --candidate + --candidate-tokenizer v0.8.0-fr-nsplice (a model-only swap leaves the
 # new rows dormant); non-FR byte-stability. NaN protocol: if the first checkpoints are NaN/inf, stop.
 data:
@@ -171,7 +171,7 @@ train: # #444 vocab-splice INIT_FROM FINE-TUNE (the v1.9.7/v2.1.0 idiom: fresh o
   eval_batch_size: 128
   grad_accum_steps: 1
   # 5.0e-5 = the vocab-splice fine-tune LR (v1.9.7/v1.9.8/v1.9.9/v2.1.0), 5× v230's same-vocab 1e-5 —
-  # the mean-init FR rows must MOVE off the inherited O-signal; drift on the trained encoder/US is
+  # the mean-init FR rows must MOVE off the inherited O-signal. drift on the trained encoder/US is
   # guarded by the US byte-identity + non-inferiority check. Constant schedule, warmup 200.
   learning_rate: 5.0e-5
   weight_decay: 0.01

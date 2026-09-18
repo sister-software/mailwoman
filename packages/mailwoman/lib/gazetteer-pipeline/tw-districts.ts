@@ -16,7 +16,7 @@
  *   CDLA-Permissive-2.0), whose rows come from the 15 civil-affairs bureaus' registers under the Open Government Data
  *   License, Taiwan, v1.0 — the same input and the same license expression as the rooftop tier
  *   (`situs address-points --country TW`). `address_levels[1]` is the 縣市 and `address_levels[2]` the 鄉鎮市區,
- *   the register's own administrative pair; there is no free-text grouping here, so no thin-group threshold either —
+ *   the register's own administrative pair. there is no free-text grouping here, so no thin-group threshold either —
  *   every pair is a real unit, and the smallest (金門縣烏坵鄉, 3 points) is reported rather than dropped.
  *
  *   SHAPE: one `spr` row per (縣市, 鄉鎮市區), placetype `locality` — the tier `placetypeMapForCountry("tw")` maps a
@@ -68,7 +68,7 @@ export interface TaiwanRegionName {
  * The 縣市 → WOF region match. Three rungs, each answering only when it names exactly one region:
  *
  * 1. The official `zho` name (`新竹市` → Hsinchu City, never Hsinchu County, which also lists `新竹市` as a variant);
- * 2. Any Han name, when only one region carries it;
+ * 2. Any Han name, when only one region carries it.
  * 3. The name minus its 縣/市 suffix against rung 1 and 2 (`桃園市` → `桃園`, the only name WOF gives the region that became a
  *    special municipality after the record was written).
  *
@@ -154,7 +154,7 @@ export interface BuildTWDistrictsResult {
 	out: string
 	inserted: number
 	/**
-	 * Rows whose 縣市 matched a WOF region and carry an `ancestors` row; the remainder folded unscoped.
+	 * Rows whose 縣市 matched a WOF region and carry an `ancestors` row. the remainder folded unscoped.
 	 */
 	scoped: number
 	/**
@@ -190,7 +190,7 @@ function readTaiwanRegions(admin: DatabaseClient<WOFDatabase>): TaiwanRegionName
 
 /**
  * Aggregate the parquet into one group per (縣市, 鄉鎮市區). DuckDB's `quantile_cont` gives the median and the p5/p95
- * envelope in one scan; BigInt counts are narrowed at the boundary.
+ * envelope in one scan. BigInt counts are narrowed at the boundary.
  */
 async function readDistrictGroups(parquetPath: string, threads: number | undefined): Promise<TaiwanDistrictGroup[]> {
 	let DuckDBInstance: typeof import("@duckdb/node-api").DuckDBInstance

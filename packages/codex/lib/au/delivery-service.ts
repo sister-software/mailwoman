@@ -7,7 +7,7 @@
  *   vocabulary the US-only `us/po-box.ts` cannot see: `GPO Box 2890`, `Locked Bag 1797`, `Private
  *   Bag 7`, plus the rural/community legacy tail (`RMB 4600`, `RSD`, `CMB`).
  *
- *   Sourcing (accessed 2026-06-11; the underlying urban/rural addressing standard is AS/NZS 4819,
+ *   Sourcing (accessed 2026-06-11. the underlying urban/rural addressing standard is AS/NZS 4819,
  *   which governs street addressing — the delivery-service designators below are Australia Post's
  *   own, from its addressing guidance):
  *
@@ -29,7 +29,7 @@
  *       can manage your mail securely with a Private Bag"), and the business "PO Boxes and Locked
  *       Bags" page (GPO Box: "Lease a single GPO Box, or the same box number in each capital city
  *       with our Common Box service"; Common Box numbers run 9800–9999). PO Box, GPO Box, Locked
- *       Bag, and Private Bag appear on those current pages; the rural/community types (RSD, RMB,
+ *       Bag, and Private Bag appear on those current pages. the rural/community types (RSD, RMB,
  *       RMS, MS, CMB, CMA, CPA, Care PO) appear only in the AMAS table and are flagged `legacy` —
  *       the parser must still recognize them on older addresses.
  *
@@ -53,14 +53,14 @@ export interface AuDeliveryServiceDesignator {
 	 */
 	abbreviation: string
 	/**
-	 * Whether the designator "must have an associated number for a match to occur" (AMAS rule; exceptions are Care of
+	 * Whether the designator "must have an associated number for a match to occur" (AMAS rule. exceptions are Care of
 	 * Post Office, Community Mail Agent, Community Postal Agent, and Community Mail Bag).
 	 */
 	requiresNumber: boolean
 	/**
 	 * True when the designator is recognized by the AMAS Postal Delivery Type table but absent from every current
 	 * auspost.com.au addressing/product page (accessed 2026-06-11) — the rural and community forms superseded by rural
-	 * street addressing under AS/NZS 4819. The parser must still RECOGNIZE these on old addresses; synthesis should
+	 * street addressing under AS/NZS 4819. The parser must still RECOGNIZE these on old addresses. synthesis should
 	 * weight them low.
 	 */
 	legacy: boolean
@@ -68,7 +68,7 @@ export interface AuDeliveryServiceDesignator {
 
 /**
  * The verbatim Postal Delivery Type table (see the module header for the per-row provenance). Multiple names can share
- * an abbreviation (ROADSIDE MAIL BAG and ROADSIDE MAIL BOX are both RMB; POSTE RESTANTE is addressed as CARE PO).
+ * an abbreviation (ROADSIDE MAIL BAG and ROADSIDE MAIL BOX are both RMB. POSTE RESTANTE is addressed as CARE PO).
  */
 export const AU_DELIVERY_SERVICE_DESIGNATORS = [
 	{ name: "GENERAL POST OFFICE BOX", abbreviation: "GPO BOX", requiresNumber: true, legacy: false },

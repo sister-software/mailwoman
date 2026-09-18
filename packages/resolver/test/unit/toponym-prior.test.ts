@@ -9,7 +9,7 @@
  *
  *   The measurement these pin (2026-08-10, shipped `candidate.db`): the panel's bare GB rows resolve to
  *   a more-POPULOUS foreign namesake — Whitby CA 128,377 over Whitby GB 13,130 — while the importance
- *   artifact ranks them the other way (GB 0.5496 over CA 0.5089). Population cannot separate them;
+ *   artifact ranks them the other way (GB 0.5496 over CA 0.5089). Population cannot separate them.
  *   importance can. The country prior covers the other half: bare `Zürich` under an en-US locale is
  *   hard-scoped to US and lands on Zurich, Kansas (pop 81) 8,043 km off.
  */
@@ -76,7 +76,7 @@ describe("rankByImportance", () => {
 
 	it("leaves UNSCORED candidates on their population rank and permutes only the scored slots", () => {
 		// The live shape: `Whitby` has 7 candidates in candidate.db and the importance artifact scores 2
-		// of them. Abstaining on that throws the only usable signal away; zero-filling would let a scored
+		// of them. Abstaining on that throws the only usable signal away. zero-filling would let a scored
 		// hamlet leapfrog an unscored metropolis. Neither — the unscored rows simply sit still.
 		const live = [
 			place({ id: 1, name: "Whitby", country: "CA", prominence: 5.1085, importance: 0.5089 }),
@@ -110,7 +110,7 @@ describe("rankByImportance", () => {
 	})
 
 	it("never crosses the exact/partial boundary", () => {
-		// Tier is the primary key everywhere in this resolver; a soft prior re-orders within a tier only.
+		// Tier is the primary key everywhere in this resolver. a soft prior re-orders within a tier only.
 		const mixed = [
 			place({ id: 1, name: "Whitby", country: "CA", importance: 0.2, exactMatch: true }),
 			place({ id: 2, name: "Whitby Bay", country: "GB", importance: 0.9, exactMatch: false }),
@@ -224,7 +224,7 @@ describe("rankByImportance same-country tie band (Springfield decision, 2026-08-
 
 	it("#2272: the partition is SAME-COUNTRY — an uncounted foreign bearer still wins on fame", () => {
 		// Scoped deliberately. Across borders an article-only score is the only evidence there is, which
-		// is why `blendImportance` leaves that branch uncapped; the cap's own docstring protects it.
+		// is why `blendImportance` leaves that branch uncapped. the cap's own docstring guards it.
 		const crossBorder: ResolvedPlace[] = [
 			place({ id: 1, name: "Whitby", country: "CA", prominence: 5.1085, population: 128_377, importance: 0.5089 }),
 			place({ id: 2, name: "Whitby", country: "GB", prominence: 4.1183, importance: 0.5496 }),
@@ -347,7 +347,7 @@ describe("promoteCapitals (#1880 — bounded capital promotion after the fame ke
 	it("never promotes an admin-1 seat — the ratified referential decisions hold (Springfield stays MO)", () => {
 		// Bare `Springfield` is ratified (2026-08-11) to the referential answer: a seat margin of even 1
 		// log10 unit flipped it to Springfield, Illinois, and sent bare `Hamilton` to the Waikato seat.
-		// Both measured on the shipped candidate.db; level 1 therefore promotes nothing.
+		// Both measured on the shipped candidate.db. level 1 therefore promotes nothing.
 		const seat = (p: { lat: number }): number => (p.lat === 39.8 ? 1 : 0)
 
 		const ranked = promoteCapitals(

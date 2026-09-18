@@ -65,7 +65,7 @@ def test_spanless_model_export_is_unchanged(tmp_path):
 
 
 def test_fetching_only_logits_from_a_span_graph_works(tmp_path):
-    # The browser path: never asks for span_scores; must be able to ignore it entirely.
+    # The browser path: never asks for span_scores. must be able to ignore it entirely.
     from mailwoman_train.export.onnx import export_to_onnx
 
     torch.manual_seed(5)

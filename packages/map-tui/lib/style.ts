@@ -16,7 +16,7 @@ export type RGB = readonly [red: number, green: number, blue: number]
 
 /**
  * Fields shared by every style entry. `featureKinds` scopes an entry to features whose `kind` tile attribute is in the
- * list; an entry without it is the layer's catch-all. Entries are consulted in table order and the first match wins, so
+ * list. an entry without it is the layer's catch-all. Entries are consulted in table order and the first match wins, so
  * kind-scoped entries precede the catch-all.
  */
 interface StyleBase {

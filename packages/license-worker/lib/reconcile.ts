@@ -3,11 +3,11 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   The scheduled pass. Stripe is the authority on what was paid and what stands; this ledger is the authority on what
+ *   The scheduled pass. Stripe is the authority on what was paid and what stands. this ledger is the authority on what
  *   was minted and sent. Three sweeps, each safe to repeat: a paid invoice with no token is minted through the path the
- *   webhook takes; a token whose email is not confirmed sent goes again under the same invoice id; and a license whose
+ *   webhook takes. a token whose email is not confirmed sent goes again under the same invoice id. and a license whose
  *   state disagrees with its subscription is corrected, including a dispute Stripe has since ruled in the customer's
- *   favour. One item's failure is recorded against that item and the sweep goes on; a listing that cannot be completed
+ *   favour. One item's failure is recorded against that item and the sweep goes on. a listing that cannot be completed
  *   is recorded as such, so an empty sweep is never mistaken for a clean one. The report names ids only.
  *
  *   What the pass recovers, and what it does not. A subscription the ledger knows is read whole on every pass, and its
@@ -15,7 +15,7 @@
  *   webhook, or a renewal refused while issuance was off, is minted on the next pass with issuance on. A subscription
  *   the ledger has never seen (its checkout webhook lost and its success page never visited) is found only through
  *   the invoice list, which Stripe filters by creation time, so it is recovered while its first invoice was created
- *   within `sinceSeconds`; past that the remedy is to resend the `invoice.paid` event from the Stripe dashboard.
+ *   within `sinceSeconds`; past that the action is to resend the `invoice.paid` event from the Stripe dashboard.
  */
 
 import type Stripe from "stripe"
@@ -51,7 +51,7 @@ export interface ReconcileReport {
 	refused: Array<{ invoiceID: string; reason: string }>
 	corrected: Array<{ lid: string; from: LicenseState; to: LicenseState }>
 	/**
-	 * Items that failed on their own; each is retried by the next pass.
+	 * Items that failed on their own. each is retried by the next pass.
 	 */
 	failed: ReconcileFailure[]
 	/**
@@ -179,7 +179,7 @@ export async function reconcileLedger(
 }
 
 /**
- * Mint one listed invoice unless the ledger already holds its token; a failure is this invoice's alone.
+ * Mint one listed invoice unless the ledger already holds its token. a failure is this invoice's alone.
  */
 async function mintIfUnminted(
 	env: LicenseWorkerEnv,
@@ -236,7 +236,7 @@ async function fullyRefunded(stripe: Stripe, invoiceID: string): Promise<boolean
  * refund is final, and it is read from the charge rather than the subscription, which a refund leaves `active`: a
  * license minted by the missed-invoice sweep, or one whose `charge.refunded` event never arrived, is revoked here at
  * the cost of two Stripe reads per active license per pass. A dispute that Stripe has ruled `won` hands the license
- * back to its subscription's state; any other dispute outcome leaves it revoked.
+ * back to its subscription's state. any other dispute outcome leaves it revoked.
  */
 async function stateStripeSays(
 	stripe: Stripe,

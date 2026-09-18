@@ -13,7 +13,7 @@
  *   3. Applies filters that drop candidates unlikely to be human-typed:
  *
  *        - Components-glued-without-commas (5+ components but <2 separators → freeform jumble)
- *        - Postcode-at-start with many other components (US/UK conventions put postcode last; FR puts it
+ *        - Postcode-at-start with many other components (US/UK conventions put postcode last. FR puts it
  *                 before locality only)
  *        - Suspicious-token signals (unmatched brackets, control chars, etc.)
  *   4. Dedupes by normalized raw (case-insensitive, whitespace-collapsed)

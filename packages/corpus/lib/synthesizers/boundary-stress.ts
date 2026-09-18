@@ -21,7 +21,7 @@
  *        the #1 wobble: the model keeps the suffix in the street.
  *   2. `comma-less-city-state` — no comma between street / locality / region (`100 Main St Springfield
  *        IL 62701`), the #694 family: concatenated input loses the segmentation cue. US-only (US
- *        zips are base-consistent; the boundary is locale-agnostic).
+ *        zips are base-consistent. the boundary is locale-agnostic).
  *   3. `fr-prefix` — FR street-type prefix split from the name (`Rue Jean-Baptiste Lebas` →
  *        street_prefix
  *
@@ -227,12 +227,12 @@ const SUFFIXES = [
 	"Walk",
 ] as const
 
-// Vocabulary compile-checked against the codex; the ORDER stays this literal's. `Object.values(DirectionalAbbreviation)`
+// Vocabulary compile-checked against the codex. the ORDER stays this literal's. `Object.values(DirectionalAbbreviation)`
 // runs N,E,S,W,… — deriving the array from it would re-map every sample() draw and change shipped recipe-output bytes.
 const DIRECTIONALS = ["N", "S", "E", "W", "NE", "NW", "SE", "SW"] as const satisfies readonly DirectionalAbbreviation[]
 
 /**
- * FR street-type prefixes + hyphenated honorific street names (the hyphen is incidental; the boundary stress is the
+ * FR street-type prefixes + hyphenated honorific street names (the hyphen is incidental. the boundary stress is the
  * prefix↔name split + the number-after-street order).
  */
 const FR_PREFIXES = [
@@ -348,9 +348,9 @@ const US_TUPLES: ReadonlyArray<BoundaryStressBaseTuple> = [
 /**
  * FR localities DERIVED from the FR (ban) parquet files specifically — where these famous cities are 95–99%
  * locality-DOMINANT (Paris 515605/24789, Marseille 247014/1752, Lyon 106239/3114). NB: the all-files scan falsely
- * flagged them street-dominant by undersampling the FR block (parts 180–209) and mixing in US street-contexts; the
+ * flagged them street-dominant by undersampling the FR block (parts 180–209) and mixing in US street-contexts. the
  * FR-block scan is the honest distribution. Dept-diverse (28 depts), region empty (French addresses carry no region
- * token; the generator's region-optional path handles it).
+ * token. the generator's region-optional path handles it).
  */
 const FR_TUPLES: ReadonlyArray<BoundaryStressBaseTuple> = [
 	{ locality: "Paris", region: "", postcode: "75003", country: "FR" },
@@ -390,7 +390,7 @@ const ALL_TEMPLATES: readonly BoundaryStressTemplate[] = [
 
 /**
  * Synthesize one boundary-stress row. `base` is optional — when omitted, a locale-appropriate tuple is drawn from the
- * internal pools (so the generator is self-contained; a build script can pass real tuples for scale + diversity). Every
+ * internal pools (so the generator is self-contained. a build script can pass real tuples for scale + diversity). Every
  * component value is a verbatim substring of `raw`, so `alignRow` locates + BIO-labels it.
  */
 export function synthesizeBoundaryStressRow(
@@ -408,7 +408,7 @@ export function synthesizeBoundaryStressRow(
 		const b = base ?? (random() < 0.3 ? sample(FR_TUPLES, random) : sample(US_TUPLES, random))
 		const venue = random() < 0.45 ? sample(VENUES, random) : ""
 		// ~12% carry a trailing country token — the v1.7.1 country patch (DeepSeek 2026-06-18). The pure
-		// "City, STATE" bare rows carry no country token, which cost ~4pp on us.country_homograph in v1.7.0;
+		// "City, STATE" bare rows carry no country token, which cost ~4pp on us.country_homograph in v1.7.0.
 		// teaching "…, USA"/"…, France" recovers it as a single-variable additive without diluting locality.
 		const withCountry = random() < 0.12
 
@@ -432,7 +432,7 @@ export function synthesizeBoundaryStressRow(
 		const withZip = random() < 0.5
 		const comma = random() < 0.6 ? "," : "" // include the comma-LESS "City STATE" form too
 		// "United States" (United 98% / States 98% country in the base), not "USA" — the #511 lint found
-		// "USA" is locality-dominant (75%, only 6% country) in the base; labeling it country would contradict.
+		// "USA" is locality-dominant (75%, only 6% country) in the base. labeling it country would contradict.
 		const countryName = "United States"
 		const core = `${b.locality}${comma} ${b.region}${withZip ? ` ${b.postcode}` : ""}${withCountry ? `, ${countryName}` : ""}`
 
@@ -455,7 +455,7 @@ export function synthesizeBoundaryStressRow(
 		template === "house-number-after-street" ||
 		template === "house-number-before-street"
 	) {
-		// FR-only (no base-consistent DE locality vocab; see the DE_TUPLES note above).
+		// FR-only (no base-consistent DE locality vocab. see the DE_TUPLES note above).
 		const b = base ?? sample(FR_TUPLES, random)
 		const name = sample(FR_NAMES, random)
 		const hn = houseNumber(random)
@@ -507,7 +507,7 @@ export function synthesizeBoundaryStressRow(
 	}
 
 	// en-US street shapes (street-eats-affix + comma-less). US-only — US zips are base-consistent and
-	// the boundary these teach is locale-agnostic; no need to introduce a non-base locale.
+	// the boundary these teach is locale-agnostic. no need to introduce a non-base locale.
 	const b = base ?? sample(US_TUPLES, random)
 	const hn = houseNumber(random)
 	const dir = random() < 0.4 ? sample(DIRECTIONALS, random) : ""

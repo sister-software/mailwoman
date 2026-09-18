@@ -8,7 +8,7 @@
  *
  *   THE ROW READER READS ATTRIBUTES, NOT GEOMETRY. The shapefile's CRS is the body's own (`GCS_Moon_2000`,
  *   `GCS_Mars_2000`), PROJ refuses to relate it to WGS84, and the GeoJSON writer insists on WGS84 output. So the
- *   transport declares the source as WGS84 on both sides, which makes the writer copy the numbers through untouched;
+ *   transport declares the source as WGS84 on both sides, which makes the writer copy the numbers through untouched.
  *   the label is on the transport only. The values the build reads are the row's `center_lon`, `center_lat` and the
  *   bounding box, in the source's own convention, which the manifest records and `normalize.ts` converts.
  */

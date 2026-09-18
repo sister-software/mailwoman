@@ -62,7 +62,7 @@ export interface AdminManifestInput {
 	 */
 	buildSHA: string
 	/**
-	 * What each contributing source was AT. Keys that no source contributed are ignored; a contributing source with no
+	 * What each contributing source was AT. Keys that no source contributed are ignored. a contributing source with no
 	 * recorded vintage is reported as `unknown` rather than omitted, because a vintage nobody captured is a fact about
 	 * the build and not a field to leave blank.
 	 */
@@ -91,7 +91,7 @@ export function adminLayerManifest(input: AdminManifestInput): LayerManifest {
 		version: input.version,
 		schemaVersion: 1,
 		// Never `shipped`: WOF's ODbL is share-alike, which is the same reason `packages/osm` is held out of the
-		// release list. The builder ships; the artifact is built locally.
+		// release list. The builder ships. the artifact is built locally.
 		tier: LayerTier.BuildLocal,
 		license: contributing.map((key) => SOURCE_TERMS[key].license).join(" AND "),
 		attribution: contributing.map((key) => SOURCE_TERMS[key].name).join(", "),

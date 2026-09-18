@@ -14,7 +14,7 @@
  *
  *   The hook is generic over `TAssets` (the opaque bundle the host's `loadAssets` returns — classifier,
  *   FST, WOF lookup, calibrator, …) and `TRelease` (the host's release-manifest entry). The package
- *   never inspects either; it just holds, reveals, and re-loads them across version/backend switches.
+ *   never inspects either. it just holds, reveals, and re-loads them across version/backend switches.
  */
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react"
@@ -28,7 +28,7 @@ export interface ReleaseBase {
 	 */
 	version: string
 	/**
-	 * Optional display label a version picker shows; falls back to `version`.
+	 * Optional display label a version picker shows. falls back to `version`.
 	 */
 	label?: string
 }
@@ -188,7 +188,7 @@ export interface ReleaseLoaderState<TAssets, TRelease extends ReleaseBase = Rele
 /**
  * Drive the shared version → asset-bundle load state machine over a host-injected loader.
  *
- * Sequence: on mount `loadManifest` runs and its `defaultVersion` becomes the selection; each version (or `forceWASM`)
+ * Sequence: on mount `loadManifest` runs and its `defaultVersion` becomes the selection. each version (or `forceWASM`)
  * change reloads the bundle via `loadAssets`, the previous load aborted first. The assets are revealed ATOMICALLY when
  * `loadAssets` resolves (so `ready` flips exactly once per load), and consumers wait on `ready`.
  */

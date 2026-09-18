@@ -17,10 +17,10 @@
  *   - `domestic`  — the panel's own country as `defaultCountry`. Any override is a border crossing, i.e. a FALSE
  *       POSITIVE, because the address really is in the panel's country.
  *   - `rescue`    — a deliberately mis-scoped `defaultCountry` (the demo/CLI reality: locale `en-US` → `US` on every
- *       query). An override BACK to the panel's country is a correct rescue; an override anywhere else is a false positive.
+ *       query). An override BACK to the panel's country is a correct rescue. an override anywhere else is a false positive.
  *   - `regime`    — the same pass under an impossible default (`ZZ`), which forces step 1 to fail and reports what the
  *       alternative countries alone decide. A row whose regime probe returns the panel country was coherent under its
- *       own default and would have taken the cheap exit in the domestic leg; everything else FELL THROUGH and had every
+ *       own default and would have taken the cheap exit in the domestic leg. everything else FELL THROUGH and had every
  *       candidate country actually tried. Without that column a zero false-positive count means nothing — it reads the
  *       same whether the mechanism refused to cross a border or never ran.
  *
@@ -113,7 +113,7 @@ if (!panel || (backendName !== "fts" && backendName !== "candidate")) {
 const limit = limitArg ? Number(limitArg) : Infinity
 
 /**
- * The two roots the pass reads. The real tree carries a street too; it is never consulted here (the pass keys on the
+ * The two roots the pass reads. The real tree carries a street too. it is never consulted here (the pass keys on the
  * postcode string the caller passes plus the first locality node), so the minimal pair is faithful.
  */
 function rootsFor(pair: Pair): AddressNode[] {

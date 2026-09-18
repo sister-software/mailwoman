@@ -205,7 +205,7 @@ describe("stampNameRoles: the gloss anomaly detector", () => {
 			[]
 		)
 
-		// Both are in the tail the detector reports on; neither is stamped.
+		// Both are in the tail the detector reports on. neither is stamped.
 		expect(keyTailPlaces).toBe(2)
 		expect(roleGloss).toBe(0)
 	})
@@ -310,7 +310,7 @@ describe("stampNameRoles: the key-tail census", () => {
 			[]
 		)
 
-		// Toledo is below the threshold, so it is not in the denominator; New York is, and carries no role.
+		// Toledo is below the threshold, so it is not in the denominator. New York is, and carries no role.
 		expect(keyTailPlaces).toBe(2)
 		expect(keyTailWithRole).toBe(1)
 	})

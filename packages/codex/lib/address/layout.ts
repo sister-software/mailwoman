@@ -6,7 +6,7 @@
  *   Per-address-system LAYOUTS: the order a system prints its components in, as data.
  *
  *   A layout is written as a tagged template that reads in the order it prints, so reviewing one means looking at the
- *   shape of the address it produces rather than at a nested function call. The interpolations are slots; the literal
+ *   shape of the address it produces rather than at a nested function call. The interpolations are slots. the literal
  *   text between them are connectors.
  *
  *   ONE RULE governs rendering, and it replaces four mechanisms that each did part of the job elsewhere — the
@@ -58,7 +58,7 @@ export interface AddressAlternation {
 export type AddressAtom = AddressSlot | AddressConnector | AddressAlternation | AddressLayout
 
 /**
- * A layout: lines of atoms, in print order. A line break in the template starts a new line; how lines are joined for
+ * A layout: lines of atoms, in print order. A line break in the template starts a new line. how lines are joined for
  * single-line output is the caller's choice, and per-system for the systems that join on nothing.
  */
 export interface AddressLayout {
@@ -143,7 +143,7 @@ ${either(
  * The number-last line where a comma separates the name from the number — `Calle Mayor, 12`, and Brazil's order.
  *
  * The separator is not cosmetic. Spain's corpus recipe renders both this form and the space form on purpose, because
- * both occur in what a person types; collapsing one into the other would remove half the signal.
+ * both occur in what a person types. collapsing one into the other would remove half the signal.
  */
 export const numberLastCommaStreet: AddressLayout = addr`${poBoxLine}
 ${either(
@@ -168,8 +168,8 @@ ${either(
 )}`
 
 /**
- * Build a layout from a tagged template. A newline in the literal text starts a line; other literal text is a
- * connector; an interpolation is a slot, an alternation, or another layout.
+ * Build a layout from a tagged template. A newline in the literal text starts a line. other literal text is a
+ * connector. an interpolation is a slot, an alternation, or another layout.
  */
 export function addr(strings: TemplateStringsArray, ...values: readonly AddressAtom[]): AddressLayout {
 	const lines: AddressAtom[][] = [[]]

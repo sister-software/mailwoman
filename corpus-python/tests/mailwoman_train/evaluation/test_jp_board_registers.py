@@ -175,7 +175,7 @@ def test_unresolved_rows_are_unacceptable_and_land_in_their_own_register_bucket(
 
 
 def test_resolve_tags_select_which_spans_form_the_centroid_key():
-    """stage3-jp resolves prefecture|municipality; the STAGE3 (region|locality) pair finds nothing."""
+    """stage3-jp resolves prefecture|municipality. the STAGE3 (region|locality) pair finds nothing."""
     correct = {r["raw"] for r in ALL_ROWS}
     assert _score(correct)["acceptable"] == 6
 
@@ -197,7 +197,7 @@ def test_resolve_tag_defaults_track_the_label_set():
 
 def test_every_same_tag_gold_span_is_scored_against_every_predicted_run():
     # `TOKYO CHIYODA KANDA`: the KR ladder's shape, where 읍/면 and the 리 below it share `dependent_locality`.
-    # The row carries two `municipality` spans; a model that labels both must read 2/2, and the first span
+    # The row carries two `municipality` spans. a model that labels both must read 2/2, and the first span
     # is still what forms the centroid key.
     raw = "TOKYO CHIYODA KANDA"
     row = {
@@ -240,7 +240,7 @@ def test_every_same_tag_gold_span_is_scored_against_every_predicted_run():
 
 
 def test_a_multi_token_gold_span_hits_when_only_whitespace_splits_the_predicted_runs():
-    # The permit register's unit `1층 141호` is one gold span; the model labels the space `O`, which the served
+    # The permit register's unit `1층 141호` is one gold span. the model labels the space `O`, which the served
     # projection joins back. Both single runs and the joined surface must be readable, and a run that a NON-space
     # character separates stays apart.
     raw = "X 1층 141호 Y"
@@ -322,7 +322,7 @@ def test_a_gold_exact_row_is_counted_beside_the_check_and_never_inside_it():
 
 
 def test_a_gold_exact_row_needs_its_own_coordinate_within_the_radius():
-    """The gold pair names a centroid; the row still has to sit near it."""
+    """The gold pair names a centroid. the row still has to sit near it."""
     far = {**KANA_ROW, "lon": 0.0, "lat": 0.0}
     result = scorer.score_board(
         [far],

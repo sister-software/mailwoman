@@ -45,7 +45,7 @@ if _LOCAL_DATA_ROOT:
     timeout=3600,
 )
 def stage_v8cjk_regs() -> None:
-    """Copy the mounted local corpora and training code into the volume and commit; verify like the sync would."""
+    """Copy the mounted local corpora and training code into the volume and commit. verify like the sync would."""
     import shutil
 
     vol.reload()

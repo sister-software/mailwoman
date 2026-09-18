@@ -8,12 +8,12 @@
  *   hierarchy, then the runner-up candidates.
  *
  *   A flat list is the design, not a shortcut. The pane scrolls, and a scroll offset over a nested structure has to be
- *   translated into "which section, which row" by whoever draws it and by whoever clamps the offset; over a flat list
+ *   translated into "which section, which row" by whoever draws it and by whoever clamps the offset. over a flat list
  *   both are one `.slice()` call. That is also why this module is pure data rather than elements: `DebugFrame` renders the list and
  *   `DebugSessionApp` clamps its ↑/↓ against the same list, so the two can't disagree about how far down it goes.
  *
  *   Nothing here computes an address fact. Every value is read off the {@link GeocodeResult}, the {@link AddressTree},
- *   or the session's own clock; a section with no data is OMITTED rather than rendered empty, and a field with no value
+ *   or the session's own clock. a section with no data is OMITTED rather than rendered empty, and a field with no value
  *   renders {@link ABSENT}.
  */
 

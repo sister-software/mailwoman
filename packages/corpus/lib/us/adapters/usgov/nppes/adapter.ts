@@ -15,7 +15,7 @@
  *   header published at `https://download.cms.gov/nppes/NPI_Files.html`.
  *
  *   Output: one row per CSV record where the practice location address is populated. Organization
- *   rows carry `venue` from the legal business name; individual rows compose `attention` from
+ *   rows carry `venue` from the legal business name. individual rows compose `attention` from
  *   last+first name. Address quad goes on `(house_number, street, locality, region, postcode)`.
  *
  *   License: stamped `"Public Domain"` per CMS's federal government distribution terms.

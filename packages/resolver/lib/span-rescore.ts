@@ -45,7 +45,7 @@ export interface SpanRescoreOptions {
 	postcode?: string
 	/**
 	 * Reject a candidate whose coordinate is farther than this (km) from the postcode anchor. The check only fires when
-	 * the postcode resolves to a point in the backend; otherwise it can't and the match is accepted (so it never
+	 * the postcode resolves to a point in the backend. otherwise it can't and the match is accepted (so it never
 	 * penalizes a backend without postcode coverage). 0 disables. Default 50.
 	 */
 	thresholdKm?: number
@@ -73,7 +73,7 @@ export interface SpanRescoreOptions {
 	bareToponymSoftCountry?: boolean
 	/**
 	 * Weight of that prior, in log10-population units. Default {@link DEFAULT_COUNTRY_PRIOR_WEIGHT} (2). A large value
-	 * makes the country effectively hard again without changing the code path; 0 removes the locale's say entirely.
+	 * makes the country effectively hard again without changing the code path. 0 removes the locale's say entirely.
 	 */
 	bareToponymCountryWeight?: number
 	/**
@@ -241,7 +241,7 @@ export function hasResolvedPlace(
  * Deliberately not confidence-conditioned, unlike {@link confidentRanges}. The country node has score 0.68 in that case,
  * under the 0.7 bar, and a low-confidence GROUPING is still a grouping: the tokens were read as one name either way,
  * and the interior of a name the parse doubts is not thereby a better standalone candidate. Single-token spans are
- * excluded — there is no interior to protect.
+ * excluded — there is no interior to guard.
  */
 function multiTokenNameInteriors(roots: readonly AddressNode[], raw: string): Array<[number, number]> {
 	const out: Array<[number, number]> = []
@@ -269,7 +269,7 @@ function multiTokenNameInteriors(roots: readonly AddressNode[], raw: string): Ar
  * `affix` is `street_prefix` / `street_suffix`, and the distinction is that a span EQUAL to an affix is the "Ave,
  * France" failure — the guard's whole purpose — while a span that strictly CONTAINS one plus more is a different thing.
  * `MN Eden Prairie` parses `Prairie` as a `street_suffix` at 0.86 and leaves `MN Eden` a `street` at 0.61, under the
- * bar; blocking every span that touches `Prairie` makes `Eden Prairie` unenumerable, and the answer falls to `Eden` in
+ * bar. blocking every span that touches `Prairie` makes `Eden Prairie` unenumerable, and the answer falls to `Eden` in
  * North Carolina, 1,480 km away.
  */
 interface ConfidentRanges {
@@ -409,7 +409,7 @@ export async function findRescoreCandidate(
 			return !strictlyContains
 		})
 
-	// Proper sub-spans of a multi-token country/region name are refused; the whole span is not.
+	// Proper sub-spans of a multi-token country/region name are refused. the whole span is not.
 	const nameInteriors = multiTokenNameInteriors(roots, raw)
 
 	const isNameInterior = (s: number, e: number) =>
@@ -534,7 +534,7 @@ export async function findRescoreCandidate(
 		// 2026-08-15 board before this line split them.
 		const wholeSpan = !!wholeInput && sp.start === wholeInput.start && sp.end === wholeInput.end
 
-		// A sub-span that drops a word of the name is a corruption, not a recovery. Opt-in until measured; see
+		// A sub-span that drops a word of the name is a corruption, not a recovery. Opt-in until measured. see
 		// `remainderIsContext`.
 		if (opts.spanRescoreRequireContextRemainder && !wholeSpan && !remainderIsContext(sp)) continue
 
@@ -568,12 +568,12 @@ export async function findRescoreCandidate(
 		// equals it. Re-comparing only the PRIMARY name folded to [a-z0-9 ] excluded exactly the
 		// non-Latin-primary class: Москва folds to "" and could never equal "moscow", so Moscow RU never
 		// entered the list and Moscow, Idaho won by default among the Latin-named bearers — population-
-		// first ranking starved, not violated. The alias surface is the recall; ranking then does its job.
+		// first ranking starved, not violated. The alias surface is the recall. ranking then does its job.
 		// The postcode check below still applies to every admitted candidate, Moscow RU included.
 		//
 		// #17: importance-first within the admitted set. The key is the #28 blended fame prior
 		// (`PlaceCandidate.importance`, produced by the candidate build) — the only key that separates
-		// the bare GB panel rows; on an artifact predating the column it abstains and changes no pick.
+		// the bare GB panel rows. on an artifact predating the column it abstains and changes no pick.
 		// See `toponym-prior.ts`. It runs after the country prior deliberately: fame is the stronger
 		// signal when it has been measured, and leaves an unscored candidate exactly where population
 		// put it.

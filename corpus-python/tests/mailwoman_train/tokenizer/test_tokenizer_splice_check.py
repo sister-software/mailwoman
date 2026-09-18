@@ -1,6 +1,6 @@
 """#900 — the splice codepoint-overlap safety check.
 
-The v5.1.0 finding: "byte-identical by construction" was ASCII-only; FR/DE/ES shared codepoints
+The v5.1.0 finding: "byte-identical by construction" was ASCII-only. FR/DE/ES shared codepoints
 with the spliced pieces and 52/15k EU rows re-tokenized, measured only after the fact. The check
 must (a) report per-locale overlap, (b) fail loud on unaccepted overlap, (c) pass when overlap
 is either absent or explicitly accepted (= a pre-registered ni leg per CONTRIBUTING).

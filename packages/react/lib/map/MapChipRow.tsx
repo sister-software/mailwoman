@@ -6,7 +6,7 @@
  *   `<MapChipRow>` — the row of example queries under a search bar.
  *
  *   It SCROLLS horizontally and never wraps. Earth's twelve examples wrapped down five ragged rows (3/3/2/1/1/1) and
- *   took a third of the panel; one scrolling line is the shape the reference map apps use, and it costs a fixed
+ *   took a third of the panel. one scrolling line is the shape the reference map apps use, and it costs a fixed
  *   height whatever the number of examples.
  *
  *   NODE-SAFE: pure React, no maplibre.

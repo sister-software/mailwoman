@@ -46,7 +46,7 @@ export interface MailwomanLookupLike {
 		postcode?: string
 		/**
 		 * Soft proximity hints (#938 — the demo's map viewport / user location). With bias present, exact-tier candidates
-		 * near a hint sort ahead of distant ones; never a hard filter. Absent → population-first order.
+		 * near a hint sort ahead of distant ones. never a hard filter. Absent → population-first order.
 		 */
 		bias?: Array<{ lat: number; lon: number; weight?: number }>
 	}) => Promise<
@@ -331,7 +331,7 @@ export async function runCascade(
 	// Cross-country postcode check, carried over from the old cascade: an ambiguous INTERNATIONAL
 	// postcode (10115 = Berlin DE and a New York US ZIP shape) must not out-pin the parsed city
 	// across countries. When the top pin is a postcode whose country differs from the resolved
-	// locality's, the locality wins the pin; the postcode stays in the list.
+	// locality's, the locality wins the pin. the postcode stays in the list.
 	const top = collected[0]!
 	const localityEntry = collected.find((c) => c.rank === WOF_RANK_LOCALITY || c.rank === WOF_RANK_REGION)
 

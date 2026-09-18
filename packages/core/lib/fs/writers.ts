@@ -113,7 +113,7 @@ export async function writeLocalTextFile<S extends PathBuilderLike[]>(
 }
 
 /**
- * One line per element, every line terminated; no elements produces the empty string.
+ * One line per element, every line terminated. no elements produces the empty string.
  *
  * The same shape {@linkcode writeLocalTextFile} applies to an iterable, for the sites that build a document and hand it
  * somewhere else. `lines.join("\n")` leaves the last line unterminated, and `lines.join("\n") + "\n"` turns an empty

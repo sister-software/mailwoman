@@ -5,7 +5,7 @@
  *
  *   Build a "slim" Who's On First SQLite distribution that's small enough to ship as a static asset
  *   for the browser-side mailwoman demo (Path B of the demo plan). The full admin distribution is
- *   ~2 GB; the slim variant aims for the ~50–100 MB range by keeping only the places a public demo
+ *   ~2 GB. the slim variant aims for the ~50–100 MB range by keeping only the places a public demo
  *   will actually query for.
  *
  *   Selection policy (v1, US-focused):
@@ -29,8 +29,8 @@
  *   (both derive purely from `spr` + `names` — see `fts.ts`). That means `WOFSQLitePlaceLookup`
  *   opens the slim DB without any code change — it sees a smaller universe, nothing more.
  *
- *   Multi-extract inputs (e.g. admin + postcode) are processed in sequence; selected rows accumulate
- *   into the single output DB. The postcode extract contributes only postcodes; admin contributes
+ *   Multi-extract inputs (e.g. admin + postcode) are processed in sequence. selected rows accumulate
+ *   into the single output DB. The postcode extract contributes only postcodes. admin contributes
  *   everything else. Empty / missing input paths are skipped (callers pass `""` when a extract, such
  *   as a custom postcode DB, isn't built yet).
  */
@@ -69,7 +69,7 @@ export interface BuildSlimOptions {
 	 * Drop the `names` table after the FTS index is built (default false). `place_search` is a self-contained FTS5 (no
 	 * external `content=`), so once it's built `names` is only the build-time source — the resolver queries
 	 * `place_search` + `spr` + `place_population` + `coincident_roles` and never reads `names` at runtime. Dropping it is
-	 * the single biggest size win (~2/3 of the file for a multi-locale build; see #359). A future consumer that needs raw
+	 * the single biggest size win (~2/3 of the file for a multi-locale build. see #359). A future consumer that needs raw
 	 * alt-names at runtime should ship a SEPARATE extract rather than re-bloat the hot DB.
 	 */
 	dropNames?: boolean
@@ -151,7 +151,7 @@ export async function buildSlimWOFDatabase(opts: BuildSlimOptions): Promise<Buil
 	const progress = opts.onProgress ?? (() => {})
 
 	// Callers pass `""` for extracts that don't exist yet (e.g. a not-yet-built custom postcode DB).
-	// Skip empties up front; require every remaining path to exist.
+	// Skip empties up front. require every remaining path to exist.
 	const inputs = opts.inputs.filter((p) => p.length)
 
 	if (!inputs.length) throw new Error("no input WOF dbs provided")
@@ -189,14 +189,14 @@ export async function buildSlimWOFDatabase(opts: BuildSlimOptions): Promise<Buil
 				out.exec(createSQL.sql)
 			} else if (table === PLACE_POPULATION_TABLE) {
 				// Older source builds may predate the aux table — create it empty so the per-source
-				// copy + ranking have somewhere to land. Sparse-by-design; missing rows are fine.
+				// copy + ranking have somewhere to land. Sparse-by-design. missing rows are fine.
 				out.exec(PLACE_POPULATION_DDL)
 			} else {
 				throw new Error(`source DB ${inputs[0]} is missing required table '${table}'`)
 			}
 		}
 
-		// PRIMARY KEY on spr.id + place_population.id come from the schemas we copied; an explicit
+		// PRIMARY KEY on spr.id + place_population.id come from the schemas we copied. an explicit
 		// index on names.id helps the per-id INSERT SELECT later.
 		out.exec(`CREATE INDEX IF NOT EXISTS names_id_idx ON names(id);`)
 
@@ -282,7 +282,7 @@ async function copyFromSource(
 ): Promise<void> {
 	// ATTACH avoids any "load source into memory" step — SQLite walks both files in place. We need
 	// a fresh temp copy because some WOF distributions ship as read-only filesystem mounts and
-	// ATTACH will still want a writable journal on the side; copying to /tmp dodges that without
+	// ATTACH will still want a writable journal on the side. copying to /tmp dodges that without
 	// mutating the canonical files in /mnt/playpen/mailwoman-data/wof/. ATTACH / DETACH stay raw
 	// — Kysely doesn't model them.
 	await using tmpScratch = await temporaryDirectory("mailwoman-slim-src-")
@@ -293,7 +293,7 @@ async function copyFromSource(
 	out.exec(`ATTACH DATABASE '${scratchPath.replaceAll("'", "''")}' AS src;`)
 
 	try {
-		// Does this extract carry the pre-built population aux table? The admin source does; a bare
+		// Does this extract carry the pre-built population aux table? The admin source does. a bare
 		// postcode extract might not. The locality ranking + population copy below adapt accordingly.
 		const srcHasPopulation = Boolean(
 			out.prepare(`SELECT 1 FROM src.sqlite_master WHERE type = 'table' AND name = '${PLACE_POPULATION_TABLE}'`).get()

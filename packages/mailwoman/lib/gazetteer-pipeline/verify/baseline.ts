@@ -10,7 +10,7 @@
  *
  *   UPDATE DELIBERATELY: regenerate with `generateBaseline` (verify.ts) against a verified-good DB,
  *   re-apply the required-restore unions, and review the diff like code. A lagging baseline fails
- *   loudly; a hand-loosened one ships the next #1026.
+ *   loudly. a hand-loosened one ships the next #1026.
  */
 
 import type { VerifyBaseline } from "#gazetteer-pipeline/verify/index"

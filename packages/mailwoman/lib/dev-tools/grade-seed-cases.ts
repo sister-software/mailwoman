@@ -5,7 +5,7 @@
  *
  *   Grade seed cases before they are committed, through the gauntlet's own grader, and stamp each one's `status` with
  *   what the shipped pipeline does today: `pass` when it passes, `improvement_target` when it does not. A board author
- *   that writes statuses by hand writes what it hopes; this writes what was measured, and the regression layer then
+ *   that writes statuses by hand writes what it hopes. this writes what was measured, and the regression layer then
  *   holds the passes as pins and reports the targets as tracked.
  *
  *   The shape is the regression runner's own loop (`regression.ts`): route the row's overlay country, geocode through
@@ -30,7 +30,7 @@ import { routeCountry } from "#eval-harness/gauntlet/routing"
 export interface GradedSeedCase {
 	seed: SeedCase
 	/**
-	 * The grader's findings; empty is a pass.
+	 * The grader's findings. empty is a pass.
 	 */
 	issues: string[]
 }
@@ -94,7 +94,7 @@ export async function writeSeedCaseFile(cases: readonly SeedCase[], path: PathBu
 }
 
 /**
- * How many failing rows a per-group read prints; the file carries every row's status.
+ * How many failing rows a per-group read prints. the file carries every row's status.
  */
 export const ISSUES_SHOWN_PER_GROUP = 12
 

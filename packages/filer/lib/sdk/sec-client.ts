@@ -19,7 +19,7 @@
  *        policy limit. Not a token bucket: capacity C admits `C + rate * 1s` inside a sliding second,
  *        so no non-zero capacity honors a flat cap — see `core/api/pacer.ts`.
  *     3. The immutable-archive-vs-TTL cache rule — see {@linkcode isImmutableArchiveURL}.
- *     4. A host allowlist, https-only. This is the designated SEC client; it refuses to send the
+ *     4. A host allowlist, https-only. This is the designated SEC client. it refuses to send the
  *        configured UA (a real contact address) to an arbitrary caller-supplied host, or in cleartext.
  *     5. The 403 explanation. A bare 403 from sec.gov means "you didn't identify yourself":
  *        reproduced by hitting the same URL with and without a compliant UA — no UA is a 403, a
@@ -167,7 +167,7 @@ export function isImmutableArchiveURL(url: URL): boolean {
 /**
  * The only hosts this client will ever send a request to. {@linkcode SECClient.get} refuses (before any
  * cache/rate-limit/network activity) a URL on any other host, or any non-https scheme — this is the designated SEC
- * EDGAR client, and its configured User-Agent carries a real contact address; sending that anywhere a caller happens to
+ * EDGAR client, and its configured User-Agent carries a real contact address. sending that anywhere a caller happens to
  * point it (or in cleartext) would leak it outside SEC's fair-access program for no benefit.
  *
  * `sec.gov` (the apex) and `efts.sec.gov` (EDGAR full-text search — the Exhibit 21 discovery path) are included
@@ -216,7 +216,7 @@ export interface CreateSECClientOptions {
 	clock?: ClockLike
 	/**
 	 * On-disk cache root. Defaults to `dataRootPath("sec", "cache")`, resolved once at construction (the standalone
-	 * client re-resolved it per request; construct the client after setting `$MAILWOMAN_DATA_ROOT` instead).
+	 * client re-resolved it per request. construct the client after setting `$MAILWOMAN_DATA_ROOT` instead).
 	 */
 	cacheDir?: PathBuilderLike
 	/**
@@ -260,7 +260,7 @@ export interface SECClientConfig extends APIClientConfig {
 
 /**
  * Rewrite a 403 into an error that tells a maintainer what actually went wrong. A generic "403 Forbidden" reads as
- * "blocked" or "missing" and sends the reader down the wrong path; the real cause is almost always the User-Agent. The
+ * "blocked" or "missing" and sends the reader down the wrong path. the real cause is almost always the User-Agent. The
  * URN and status are reconstructed identically, so the caller's `status === 403` branch is unaffected.
  */
 function explainForbidden(cause: ResourceError, url: URL, userAgent: string): ResourceError {
@@ -450,7 +450,7 @@ export function createSECClient(options: CreateSECClientOptions = {}): SECClient
 			responseType: "json",
 			// `silentJSONParsing` defaults to TRUE, which makes Axios hand back the RAW STRING when a body
 			// fails to parse instead of raising. SEC occasionally serves an HTML error page under a 200
-			// status; silently returning that string as `T` is exactly the poisoning this client's cache
+			// status. silently returning that string as `T` is exactly the poisoning this client's cache
 			// rules exist to prevent, so parse failures must be errors.
 			transitional: { silentJSONParsing: false },
 			...options.axios,

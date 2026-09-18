@@ -25,7 +25,7 @@ export interface LocaleProfile {
 
 	/**
 	 * Npm package providing ONNX weights and tokenizer for the neural classifier in this locale. Optional — Phase 0 ships
-	 * no weights; a locale without a weights package runs rule-only.
+	 * no weights. a locale without a weights package runs rule-only.
 	 */
 	weightsPackage?: string
 

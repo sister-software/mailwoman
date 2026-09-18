@@ -115,7 +115,7 @@ const TELECOM_EXCHANGE_MID_RING: FixtureRow = {
 }
 
 // A non-telecom row right next to the near rows — proves categoryIDs filtering isn't accidentally
-// permissive (a plain nearest-POI scan would surface this; nearestInfrastructure must not).
+// permissive (a plain nearest-POI scan would surface this. nearestInfrastructure must not).
 const CAFE_TRAP: FixtureRow = {
 	name: "Cafe Not Infrastructure",
 	category: "cafe",

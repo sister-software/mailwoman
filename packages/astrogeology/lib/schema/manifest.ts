@@ -24,7 +24,7 @@ export const LockedSourceSchema = z.object({
 })
 
 /**
- * `sources.lock.json`: the locked sources keyed by source id. Written only by the fetch; read by every build.
+ * `sources.lock.json`: the locked sources keyed by source id. Written only by the fetch. read by every build.
  */
 export const SourcesLockSchema = z.record(z.string(), LockedSourceSchema)
 

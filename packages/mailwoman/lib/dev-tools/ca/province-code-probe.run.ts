@@ -63,7 +63,7 @@ const SEATS: Readonly<Record<string, string>> = {
 
 /**
  * The first letter of a Canadian postal code names its province, which is what lets a real code be found per province
- * without a name join. Newfoundland is `A`, Nova Scotia `B`, and so on; the three that share a letter with a neighbour
+ * without a name join. Newfoundland is `A`, Nova Scotia `B`, and so on. the three that share a letter with a neighbour
  * are separated by the second character, which this does not need — any code in the province serves.
  */
 const POSTAL_PREFIXES: Readonly<Record<string, readonly string[]>> = {
@@ -151,7 +151,7 @@ interface PostcodePick {
 	km: number
 }
 
-// A probe written to price a corpus change has to be able to point at the model that change produced; without this it
+// A probe written to price a corpus change has to be able to point at the model that change produced. without this it
 // can only ever grade the installed one, which is the arm the change is measured AGAINST.
 const deps = await buildGauntletDeps(values["weights-cache"] ? { weightsCacheRoot: values["weights-cache"] } : {})
 const report: ProbeRow[] = []
@@ -176,7 +176,7 @@ for (const { code, name } of Object.values(CA_PROVINCES)) {
 		const result = withPostcode ? await deps.geocode(input, {}) : seatResult
 
 		// The row is correct when the country is Canada and the region is the code and the locality survived. A country
-		// answered as the province's own code is the contradiction; a locality answered as the code is the other failure.
+		// answered as the province's own code is the contradiction. a locality answered as the code is the other failure.
 		report.push({
 			code,
 			province: name,

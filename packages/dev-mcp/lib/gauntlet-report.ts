@@ -18,10 +18,10 @@
  *   3. The **firing count**, for the one pass that prints one. An unchanged verdict from a mechanism that never ran
  *      proves nothing — but only postcode-country coherence reports its own firing rate, so this field is named for
  *      that pass rather than for "the pin under test". Pin a different pin and the log carries no evidence it
- *      participated; the `unparsed` note says so rather than letting the coherence number stand in for it.
+ *      participated. the `unparsed` note says so rather than letting the coherence number stand in for it.
  *
  *   Every field is EXTRACTED, so every field can be absent. A pattern that does not match yields `null` and a note
- *   saying the line was not found; it never yields a plausible default. A parser that invented a `0` here would be
+ *   saying the line was not found. it never yields a plausible default. A parser that invented a `0` here would be
  *   manufacturing exactly the kind of number this repo's meaning-of-zero rule exists to forbid.
  */
 

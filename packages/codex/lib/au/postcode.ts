@@ -10,7 +10,7 @@
  *       4-digit postcode and the brochure references envelopes "with preprinted four postcode
  *       squares".
  *   - The barcode addressing booklet documents the coarse first-digit → state prior: "if the Postcode
- *       falls in the range 3000-3999 the State abbreviation will be VIC; 4000-4999 will be QLD,
+ *       falls in the range 3000-3999 the State abbreviation will be VIC. 4000-4999 will be QLD,
  *       etc. … Exceptions to this include ACT Postcodes and Postcodes located on State borders."
  *       Because the booklet only enumerates VIC and QLD and flags exceptions, this module
  *       deliberately does not ship a full first-digit → state table — the shape is the contract,

@@ -13,7 +13,7 @@
  *   four placetypes reach a tag at all (`PLACETYPE_TO_BIO` — country / region / locality / postalcode).
  *   A `localadmin`, `county`, `borough` or `neighbourhood` entry is walked, deduped, and then dropped
  *   without ever touching the emission matrix. So the per-place ranking inside a name — the thing the
- *   Saint-Denis pair is about — is invisible to the decoder; only the max is not. Printing anything else
+ *   Saint-Denis pair is about — is invisible to the decoder. only the max is not. Printing anything else
  *   would overstate what an importance swap can do here.
  *
  *   `MISS` means the FST does not accept the surface at all: the gazetteer has nothing to say, which is

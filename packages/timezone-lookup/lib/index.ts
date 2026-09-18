@@ -31,7 +31,7 @@ export type MultiPolygonCoords = number[][][][]
  * dependency, delete these and import them.
  *
  * Repo-health-ignore private-name-shadows-export -- kept local so a leaf lookup package stays off @mailwoman/core's ~11
- * MB of shipped data; see the docstring
+ * MB of shipped data. see the docstring
  */
 function pointInRing(lon: number, lat: number, ring: number[][]): boolean {
 	let inside = false
@@ -54,7 +54,7 @@ function pointInRing(lon: number, lat: number, ring: number[][]): boolean {
  * Inside the outer ring and outside every hole.
  *
  * Repo-health-ignore private-name-shadows-export -- kept local so a leaf lookup package stays off @mailwoman/core's ~11
- * MB of shipped data; see the docstring
+ * MB of shipped data. see the docstring
  */
 function pointInPolygon(lon: number, lat: number, polygon: number[][][]): boolean {
 	if (!polygon[0] || !pointInRing(lon, lat, polygon[0])) return false
@@ -110,7 +110,7 @@ export class TimezoneLookup implements Disposable {
 				? opts.database
 				: this.#resources.use(new DatabaseClient<TimezoneDatabase>(opts.databasePath, { readOnly: true }))
 
-		// Candidate features whose bbox contains the point; PIP picks the exact one.
+		// Candidate features whose bbox contains the point. PIP picks the exact one.
 		this.#stmt = this.#db.prepare(
 			`SELECT tzid, geom FROM timezone_polygons
 			 WHERE minLat <= ? AND maxLat >= ? AND minLon <= ? AND maxLon >= ?`

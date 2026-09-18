@@ -2,7 +2,7 @@
 # span-boundary aux head (use_span_boundary_head, weight 0.5) predicting per-token span START (B-*) +
 # END (entity token whose successor doesn't continue it), supervised from the BIO labels. Hypothesis:
 # boundary-placement pressure shrinks the region->street absorption residual ("05149 VT Tucker Road"
-# -> VT absorbed into street; golden confused-tags "05770 VT DELONG LN" -> street got "VT Delong").
+# -> VT absorbed into street. golden confused-tags "05770 VT DELONG LN" -> street got "VT Delong").
 # init_from the STABLE v257 (step-8000). 2k diagnostic. Inference-INVARIANT: the aux head is off the
 # logits path, never exported -> zero browser-SLO cost (that's why stage 1 is the cheap falsifier).
 # Grade: parity floors (does street move?), us-recall-flip-census (do the 5 VT boundary flips drop?),

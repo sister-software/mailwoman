@@ -14,7 +14,7 @@
  *   ABSENCE IS NO ROW, IN EVERY TABLE. Land outside a published survey area gets no `layer_coverage` row and
  *   no summary row — never a zero, never an empty histogram. Inside a published area the coverage row says
  *   `designated` at completeness 1.0, because NRCS declares its own mapping complete for those areas at its
- *   own scale; a coverage cell reached only by `NOTCOM` and access-denied polygons gets no row either,
+ *   own scale. a coverage cell reached only by `NOTCOM` and access-denied polygons gets no row either,
  *   because the polygon exists and the soil mapping behind it does not.
  *
  *   A COVERAGE ROW LICENSES ONLY THAT THE AUTHORITY MAPPED HERE. The reading is the class distribution, and
@@ -117,7 +117,7 @@ export interface SurveyAreaInput {
 	 */
 	outline: ParsedGeometry
 	/**
-	 * An in-process feature source. Correct for a fixture and for anything small; the batched path builds one of these
+	 * An in-process feature source. Correct for a fixture and for anything small. the batched path builds one of these
 	 * per chunk, so the two share one implementation.
 	 */
 	source?: SoilFeatureSource

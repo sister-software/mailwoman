@@ -3,7 +3,7 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Fail-closed cleanup primitives. Callers must supply the generated roots they are authorized to mutate; a path is
+ *   Fail-closed cleanup primitives. Callers must supply the generated roots they are authorized to mutate. a path is
  *   never considered safe merely because it is not exactly the repository or workspace root.
  */
 

@@ -80,7 +80,7 @@ describe("resolveProposalOverlaps — overlap resolution", () => {
 
 	test("PRECONDITION: equal-confidence decomposition beats the coarse subsuming span", () => {
 		// street[0,11] vs {house_number[0,3], street[4,11]} all at conf 0.9.
-		// Finer-span-first tiebreak accepts the two small spans; the coarse [0,11] overlaps both → dropped.
+		// Finer-span-first tiebreak accepts the two small spans. the coarse [0,11] overlaps both → dropped.
 		const out = resolveProposalOverlaps([
 			p("street", "350 5th Ave", 0, 0.9),
 			p("house_number", "350", 0, 0.9),

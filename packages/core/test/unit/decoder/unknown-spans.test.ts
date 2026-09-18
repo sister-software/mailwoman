@@ -53,7 +53,7 @@ describe("unknownSpans", () => {
 	})
 
 	it("captures leading and trailing gaps", () => {
-		// "  X " — only X [2,3) is covered; leading "  " and trailing " " are unknown.
+		// "  X " — only X [2,3) is covered. leading "  " and trailing " " are unknown.
 		const t = tree("  X ", [node("house_number", 2, 3, "X")])
 
 		expect(unknownSpans(t)).toEqual([

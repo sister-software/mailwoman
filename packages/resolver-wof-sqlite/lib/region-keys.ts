@@ -84,9 +84,9 @@ function withoutSuffix(value: string, suffixes: readonly string[]): string {
 
 /**
  * The comparable keys a region string expands to: its own fold (the shared candidate.db `name_key` normalizer,
- * {@link normalizeLocalityForKey} — build side and check side agree by construction); a county-prefix-stripped variant;
+ * {@link normalizeLocalityForKey} — build side and check side agree by construction). a county-prefix-stripped variant.
  * the codex subdivision expansions — the disjoint US+CA table always, plus the COUNTRY-SCOPED table when the caller
- * knows a country (`WA` under AU is Western Australia; under US, Washington — the collision that keeps AU out of the
+ * knows a country (`WA` under AU is Western Australia. under US, Washington — the collision that keeps AU out of the
  * unscoped table). Every expansion lands the canonical name and code folds in the set, so `IL`/`Illinois` and
  * `WA`/`Western Australia` meet from either side.
  */
@@ -124,7 +124,7 @@ export function regionKeys(value: string, countryAlpha2?: string): Set<string> {
  * the shared stripped key `donegal`. A table probe is one-sided: it matches the STORED fold verbatim, and WOF stores
  * Irish counties under `county donegal` with no bare `donegal` key (measured on the shipped candidate.db — the
  * qualifier probe missed every Irish county until this variant landed). Adding `county <key>` restores the
- * two-sidedness for the one stored-form family with an evidenced case; the union is monotone (a wider qualifier set can
+ * two-sidedness for the one stored-form family with an evidenced case. the union is monotone (a wider qualifier set can
  * only find more BEARERS, each of which must still genuinely contain a candidate before anything moves). The suffix
  * sibling (`<key> province`) is deliberately absent — no stored-form case has been evidenced, and a change without a
  * board does not get built.

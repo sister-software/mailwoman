@@ -38,12 +38,12 @@ const DICTIONARIES_DIR = resourceDictionaryPath("libpostal")
 
 /**
  * Sort a single dictionary file in place by code point (matching `LC_ALL=C sort`). Blank lines sort to the top, exactly
- * as `sort` orders empty strings; a trailing newline is preserved.
+ * as `sort` orders empty strings. a trailing newline is preserved.
  */
 async function sortFileInPlace(path: string): Promise<void> {
 	const text = await readLocalTextFile(path)
 	const hadTrailingNewline = text.endsWith("\n")
-	// oxlint-disable-next-line mailwoman/prefer-spliterator -- Sorting needs every line resident; the largest libpostal dictionary is 409 KB.
+	// oxlint-disable-next-line mailwoman/prefer-spliterator -- Sorting needs every line resident. the largest libpostal dictionary is 409 KB.
 	const lines = text.split("\n")
 
 	// Drop the empty element produced by a trailing newline so it isn't re-sorted as a blank line.

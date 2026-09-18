@@ -7,12 +7,12 @@
  *   Adds parquet files to a base corpus, keeping every base file verbatim (pure overlay add), and
  *   re-roots base paths to /data (the Modal volume). Parameterized by --parquet + --source, one
  *   label per parquet, so it works for any overlay (the fr-admin-split one is the original; #148's
- *   overture-multilocale is the second user; v0.29.0's eight target-family recipe outputs are why it
+ *   overture-multilocale is the second user. v0.29.0's eight target-family recipe outputs are why it
  *   takes a set rather than one — chaining eight single-file overlays would leave seven dead
  *   directories and an eight-deep base chain for what is one version).
  *
  *   Ported faithfully from scripts/assemble-overlay-manifest.py. The new file's source_id column is
- *   read through DuckDB (`@duckdb/node-api`) instead of PyArrow; everything else is pure JSON.
+ *   read through DuckDB (`@duckdb/node-api`) instead of PyArrow. everything else is pure JSON.
  *
  *   Pipeline (the recipe rides the result): `mailwoman corpus slice <recipe> --out <canonical>`, then
  *   `mailwoman corpus align-slice --input <canonical> --out <labeled> --corpus-version 0.5.0`, then

@@ -9,7 +9,7 @@
  *   One home, for the reason the sibling `release-config.ts` states about itself: a reader that lives outside a package
  *   is unreachable from one, which is how a package comes to hardcode what a config already names. The list this
  *   replaces was `D_RULE_COUNTRIES` in `@mailwoman/dev-mcp` — three hand-written country codes under a docstring
- *   reading "locales that iron rule 6 protects unconditionally", where the tier table names two and neither list knew
+ *   reading "locales that iron rule 6 guards unconditionally", where the tier table names two and neither list knew
  *   about the other.
  *
  *   The register carries membership only. The evidence behind a tier is prose with citations and stays in
@@ -30,7 +30,7 @@ export const SCOPE_TIER_KEYS = ["1", "2", "3", "4", "5"] as const
 export type ScopeTierKey = (typeof SCOPE_TIER_KEYS)[number]
 
 /**
- * `scope.config.json`, as read. `$comment`-prefixed keys carry the reasoning and are ignored here; a `Record` value is
+ * `scope.config.json`, as read. `$comment`-prefixed keys carry the reasoning and are ignored here. a `Record` value is
  * country code → the reason that entry exists, and an empty reason is refused by the `locale-scope` check rather than
  * by this reader, so a malformed register still parses and reports rather than throwing at every call site.
  */
@@ -69,7 +69,7 @@ export function tieredCountries(scope: ScopeConfig): Set<string> {
 }
 
 /**
- * One country the D-rule protects, and the reason it is protected.
+ * One country the D-rule guards, and the reason it is guarded.
  *
  * The reason travels with the country because the arc reports a D-rule block at the moment a reader is deciding whether
  * to believe it, and "GB" alone does not answer "why is GB on this list". Tier-1 membership is the reason for a tier-1
@@ -81,8 +81,8 @@ export interface ProtectedCountry {
 }
 
 /**
- * The countries a default-on change may not regress: tier 1, which iron rule 6 protects unconditionally, plus every
- * country the register protects explicitly. Sorted by country code so an arc's reasons read the same on every run.
+ * The countries a default-on change may not regress: tier 1, which iron rule 6 guards unconditionally, plus every
+ * country the register guards explicitly. Sorted by country code so an arc's reasons read the same on every run.
  */
 export function dRuleCountries(scope: ScopeConfig): ProtectedCountry[] {
 	const protectedCountries = new Map<string, string>()

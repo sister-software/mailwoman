@@ -475,7 +475,7 @@ describe("§7-3a criteria", () => {
 		 *
 		 * The fixture is the sharpest available shape: two rows agreeing on `(node_id, family_id, naming_node_id,
 		 * relationship)` and differing only in `assertion`/`match_score` (and the `source` that separates them under the
-		 * PK). One is a Form 499 filing that names the filer's own holding company; the other is a matcher's conclusion
+		 * PK). One is a Form 499 filing that names the filer's own holding company. the other is a matcher's conclusion
 		 * about the same membership. Drop either field from `filerLookup`'s projection and `.distinct()` folds the two into
 		 * a single entry — this test then dies on the length assertion, not just on a field comparison, which is what makes
 		 * it an assertion rather than a shape snapshot.
@@ -755,7 +755,7 @@ describe("§7-3a criteria", () => {
 				.insertInto("filer_edge")
 				.values([
 					// Provider↔FRN edges dated well before either test's asOf — the primary-FRN cardinality (>1 FRN
-					// identifier) must already be visible in `identifiers` at both query points; only the two
+					// identifier) must already be visible in `identifiers` at both query points. only the two
 					// form-499 filing edges below vary between "still open" and "closed" across the two asOf values.
 					authoritativeEdge({
 						from_node_id: PROVIDER_NODE,
@@ -969,7 +969,7 @@ describe("§7-3a criteria", () => {
 
 /**
  * The two §7-3b criteria. See `docs/superpowers/plans/2026-07-31-filer-3b-plan.md`'s "Acceptance criteria (§7-3b…)"
- * section for the criteria verbatim; both extend to EDGAR-sourced families, covered by the second describe block
+ * section for the criteria verbatim. both extend to EDGAR-sourced families, covered by the second describe block
  * below.
  */
 describe("§7-3b criteria", () => {
@@ -1817,7 +1817,7 @@ describe("§7-3b criteria", () => {
 			// CRITERION 1/2 extended, positive half: the family membership does surface, on the family-shaped field —
 			// and it surfaces AS AN INFERENCE. `assertion: inferred` plus a `match_score` is the
 			// whole difference between this row and a Form 499 holding-company membership the filer itself
-			// filed; before those two fields existed this entry was byte-identical to one, which is how a
+			// filed. before those two fields existed this entry was byte-identical to one, which is how a
 			// name-match guess reached the product surface wearing a filed disclosure's clothes.
 			expect(result.families).toEqual([
 				{

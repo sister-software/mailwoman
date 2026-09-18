@@ -19,7 +19,7 @@
  *   defines Zone 1 as the land outside Zones 2 and 3, so an empty answer inside England is a designation.
  *   NCERM publishes no coverage statement at all. A location in England with no erosion polygon is either
  *   inland — most of the country, about which the product says nothing — or on the coast and outside the
- *   mapped risk area, which is the designation a caller actually wants; and the published layers cannot tell
+ *   mapped risk area, which is the designation a caller actually wants. and the published layers cannot tell
  *   those apart. A reader that generalized the flood rule would report the whole country as not at risk of
  *   coastal erosion, which is a well-formed wrong answer nobody would question.
  *
@@ -39,7 +39,7 @@
  *   opposite facts that would otherwise look identical.
  *
  *   THE PROBE IS STRUCTURE FIRST, GEOMETRY LAST. `cellToParent` up the compacted whole-cell chain answers an
- *   interior point with primary-key probes alone; only a cell a boundary crosses reaches the ray cast, and
+ *   interior point with primary-key probes alone. only a cell a boundary crosses reaches the ray cast, and
  *   then only against the polygons `coastal_zone_cell` already named for that cell and that scenario.
  *
  *   THE READER IS SYNCHRONOUS AND USES RAW PREPARED STATEMENTS, for the same reason the flood reader is: it
@@ -102,11 +102,11 @@ export type CoastalReadingKind = (typeof CoastalReadingKind)[keyof typeof Coasta
  */
 export const CoastalContainmentPath = {
 	/**
-	 * The cell lies wholly inside the zone; no geometry was read.
+	 * The cell lies wholly inside the zone. no geometry was read.
 	 */
 	WholeCell: "whole_cell",
 	/**
-	 * The cell is crossed by a boundary; the point was ray-cast against the polygons named for that cell.
+	 * The cell is crossed by a boundary. the point was ray-cast against the polygons named for that cell.
 	 */
 	RayCast: "ray_cast",
 	/**
@@ -161,7 +161,7 @@ export interface CoastalErosionReading {
 	 */
 	scenario: CoastalScenario
 	/**
-	 * Every polygon of that scenario containing the point, ordered by `area_id`. Usually one; several where the
+	 * Every polygon of that scenario containing the point, ordered by `area_id`. Usually one. several where the
 	 * authority's own frontages overlap, which its `maxoverlap` column records on about half the rows of a measured
 	 * layer. Empty on `unknown`.
 	 */
@@ -227,7 +227,7 @@ export interface CoastalLayerIdentity {
 	 */
 	mappedExtents: Array<{ extentID: string; source: string; statement: string; statementURL: string }>
 	/**
-	 * The coverage basis every row carries. Always `source_present` while `mappedExtents` is empty; checked at open time
+	 * The coverage basis every row carries. Always `source_present` while `mappedExtents` is empty. checked at open time
 	 * rather than assumed.
 	 */
 	coverageBasis: CoverageBasis
@@ -540,7 +540,7 @@ function readIdentity(database: DatabaseClient<CoastalDatabase>, databasePath: s
 	// THE EXCLUSION CHECK, AND IT IS A CONDITION RATHER THAN A CONVENTION. NCERM publishes no coverage statement, so no
 	// row of this layer may license a claim that a location is not at risk. A stronger basis reaching a caller would let
 	// an absent polygon be read as a designation of safety over the whole of inland England. The check itself is the
-	// contract's rather than this product's; the SENTENCE saying why is this product's.
+	// contract's rather than this product's. the SENTENCE saying why is this product's.
 	assertCoverageLicensesNoExclusion(
 		(database.prepare("SELECT DISTINCT basis FROM layer_coverage").all() as Array<{ basis: string | null }>).map(
 			(coverageRow) => coverageRow.basis

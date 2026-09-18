@@ -52,7 +52,7 @@ export interface SubdivisionMatch {
 /**
  * Folded surface form (ISO code, English name, or — for CA — co-official French name) → subdivision. Built once. US
  * states are inserted first and never overwritten, so on the (currently empty) event of a future code/name collision
- * the US entry wins deterministically; today the two sets are disjoint.
+ * the US entry wins deterministically. today the two sets are disjoint.
  */
 const SUBDIVISION_LOOKUP: ReadonlyMap<string, SubdivisionMatch> = (() => {
 	const out = new Map<string, SubdivisionMatch>()
@@ -82,7 +82,7 @@ const SUBDIVISION_LOOKUP: ReadonlyMap<string, SubdivisionMatch> = (() => {
 })()
 
 /**
- * Resolve a first-level subdivision surface form (ISO 3166-2 code, English name, or co-official French name for CA;
+ * Resolve a first-level subdivision surface form (ISO 3166-2 code, English name, or co-official French name for CA.
  * accents optional) to its `{ code, name, country }`. Case- and diacritic-insensitive. Returns null for anything that
  * isn't a US state or Canadian province/territory — including bare country tokens (use {@link matchCountry} for
  * those).
@@ -142,7 +142,7 @@ const SCOPED_SUBDIVISION_LOOKUP: ReadonlyMap<string, ReadonlyMap<string, Subdivi
 /**
  * Resolve a subdivision surface form within one country. Same folding and return shape as {@link matchSubdivision}, but
  * scoped: `WA` under `AU` is Western Australia, under `US` Washington, and under any other country null. Use this
- * whenever the country is already established; the unscoped lookup exists for the address-line case where the
+ * whenever the country is already established. the unscoped lookup exists for the address-line case where the
  * subdivision itself is the country evidence.
  */
 export function matchSubdivisionIn(countryAlpha2: string, token: string | null | undefined): SubdivisionMatch | null {

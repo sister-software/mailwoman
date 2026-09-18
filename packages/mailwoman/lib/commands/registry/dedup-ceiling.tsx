@@ -5,7 +5,7 @@
  *
  *   `mailwoman registry dedup-ceiling` — the #625 "how good is good enough" measurement: the
  *   irreducible over-merge of co-located distinct-NPI providers (the Bayes error that caps dedup
- *   precision). Geocode-free + label-free; emits the markdown report to stdout.
+ *   precision). Geocode-free + label-free. emits the markdown report to stdout.
  */
 
 import { Text } from "ink"

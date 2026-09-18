@@ -7,7 +7,7 @@
  *   MANIFEST. corpus-v0.4.0 is a pure adapter-addition revision: it points at every parquet file from
  *   v0.3.0 plus the new kryptonite file(s). No v0.3.0 bytes are touched or re-shuffled.
  *
- *   See docs/engineering/reference/CORPUS_V0_4_0_GENERATION.md for the why; that doc also pins the
+ *   See docs/engineering/reference/CORPUS_V0_4_0_GENERATION.md for the why. that doc also pins the
  *   DeepSeek model version + prompt versions used to produce the JSONL.
  *
  *   Invoke via `mailwoman corpus slice kryptonite \

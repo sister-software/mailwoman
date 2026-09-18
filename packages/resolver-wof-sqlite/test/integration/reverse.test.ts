@@ -161,7 +161,7 @@ describe("WOFReverseGeocoder over the fixture gazetteer", () => {
 		using rg = new WOFReverseGeocoder({ adminDatabase: admin })
 		const result = await rg.reverseGeocode(44, -72)
 		expect(result.containment).toBe("approximate")
-		// Bbox false positives can't be vetoed without polygons; the smallest containing bbox
+		// Bbox false positives can't be vetoed without polygons. the smallest containing bbox
 		// (a county) still anchors the walk and the descent still reaches the village.
 		expect(result.hierarchy[0]?.name).toBe("Middlewich Village")
 	})

@@ -4,7 +4,7 @@
  * @author Teffen Ellis, et al.
  *
  *   `detectLocale` — Stage 2 entry point. Composes the per-rule scorers over the query shape and emits a `LocaleHint`.
- *   Synchronous and pure; the runtime pipeline wraps it into the coordinator's async `LocaleDetector` contract.
+ *   Synchronous and pure. the runtime pipeline wraps it into the coordinator's async `LocaleDetector` contract.
  *
  *   Caller-hint precedence: when `opts.hint` is provided, it wins at confidence 1.0 with
  *   `source="caller"`. The detector still runs the rules to populate `alternatives` so downstream
@@ -31,7 +31,7 @@ export function detectLocale(shape: QueryShapeFormatsView, opts: DetectLocaleOpt
 
 	// The writing system is a property of the INPUT, so it is the same whichever rung of the precedence ladder decides
 	// `locale`. A caller passing `--locale en-GB` for a Han-containing address gets their tag and the fact that the
-	// address carries Han; those are different claims and the hint now makes both.
+	// address carries Han. those are different claims and the hint now makes both.
 	const scripts: LocaleHint["script"] = (shape.scripts ?? []).map((entry) => ({
 		script: entry.script,
 		confidence: entry.share,
@@ -45,10 +45,10 @@ export function detectLocale(shape: QueryShapeFormatsView, opts: DetectLocaleOpt
 
 	scored.push(scoreFallback(shape))
 
-	// Sort descending by confidence; preserve scorer order on ties (stable sort).
+	// Sort descending by confidence. preserve scorer order on ties (stable sort).
 	scored.sort((a, b) => b.confidence - a.confidence)
 
-	// Deduplicate by locale — if two scorers picked en-US, the higher-confidence wins; the other
+	// Deduplicate by locale — if two scorers picked en-US, the higher-confidence wins. the other
 	// contributes nothing useful as an alternative.
 	const seen = new Set<string>()
 
@@ -84,7 +84,7 @@ export function detectLocale(shape: QueryShapeFormatsView, opts: DetectLocaleOpt
 	const top = deduped[0]!
 	const machineLocale = opts.machinePreferences?.locale
 
-	// The 0.3 candidate is the explicit no-input-evidence fallback. Machine locale may replace only that candidate;
+	// The 0.3 candidate is the explicit no-input-evidence fallback. Machine locale may replace only that candidate.
 	// scripts and postal formats continue to win. Timezone is reported independently and never converted to language.
 	if (top.reason === "fallback" && machineLocale) {
 		return {

@@ -8,7 +8,7 @@
  *   `cross-state` (the learned-scorer evals), `dedup-ceiling` (the #625 Bayes-error measurement —
  *   also its own `registry dedup-ceiling` command), `nppes-benchmark` (#617), and the cross-dataset
  *   family (`coverage-reconciliation`, `cross-dataset`, `threshold-sweep`) plus the geocoder probes
- *   (`namesake-probe`, `vs-provided-coords`). Every kind emits its report to stdout; most need the
+ *   (`namesake-probe`, `vs-provided-coords`). Every kind emits its report to stdout. most need the
  *   record-matcher source files + weights + WOF/database data locally — operator-run, not CI.
  */
 

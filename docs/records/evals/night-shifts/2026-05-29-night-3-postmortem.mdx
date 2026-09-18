@@ -232,7 +232,7 @@ are the larger gaps. Postcode fix is necessary, not sufficient.
 - **CI unblock via PR, not direct main push.** Auto-classifier (correctly)
   blocked direct-to-main; routed through a reviewable PR. Operator merged it.
 - **#35 as a decoder-side label repair (not a tokenizer change or emission
-  prior).** A true "protect-before-SentencePiece" needs a retrained model;
+  prior).** A true "guard-before-SentencePiece" needs a retrained model;
   the no-retrain, highest-precision change is snapping the decoded span to the
   regex match. Built with precision guards (longest-match-wins, SNAP-only for
   numeric shapes, local smear-clip) → 0 regressions.

@@ -14,7 +14,7 @@
  *   `<outRoot>/ban/MANIFEST.json` covers all codes.
  *
  *   Invoke via `mailwoman corpus fetch ban --out-root <path>`. Built-in `fetch` with gzip/brotli
- *   decompression replaces curl; native `node:zlib` gunzip replaces the `gunzip` subprocess; no
+ *   decompression replaces curl. native `node:zlib` gunzip replaces the `gunzip` subprocess. no
  *   Python.
  */
 
@@ -224,7 +224,7 @@ export async function fetchBan(options: FetchBanOptions, report?: (line: string)
 			continue
 		}
 
-		// Decompress in-place; delete the .gz.
+		// Decompress in-place. delete the .gz.
 		try {
 			await writeLocalFile(await gunzip(await readLocalBuffer(gzFile)), csvFile)
 		} catch (error) {

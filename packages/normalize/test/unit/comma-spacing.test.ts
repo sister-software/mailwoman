@@ -12,7 +12,7 @@ test("spaceAfterComma: a comma glued to a letter gains one space that maps to th
 	const r = spaceAfterComma("Biggin Hill,United Kingdom")
 	expect(r.text).toBe("Biggin Hill, United Kingdom")
 	expect(r.inserted).toBe(1)
-	// "Biggin Hill," is indices 0–11; the inserted space also points at the comma (11); "U" is raw index 12.
+	// "Biggin Hill," is indices 0–11. the inserted space also points at the comma (11). "U" is raw index 12.
 	expect(r.map.slice(10, 14)).toEqual([10, 11, 11, 12])
 	expect(r.map).toHaveLength(r.text.length)
 })

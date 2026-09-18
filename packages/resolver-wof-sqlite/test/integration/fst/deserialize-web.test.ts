@@ -189,7 +189,7 @@ function buildFSTBuffer(nodes: FixtureNode[], opts: BuildOpts = {}): Uint8Array 
 			view.setUint16(pp + 6, 0, true) // pad
 			view.setUint32(pp + 8, intern(place.name), true)
 
-			// referential: float32 for v2; for v1 the field is interpreted as a raw population u32.
+			// referential: float32 for v2. for v1 the field is interpreted as a raw population u32.
 			if (version >= 2) {
 				view.setFloat32(pp + 12, place.referential, true)
 			} else {
@@ -304,7 +304,7 @@ describe("deserializeFSTWeb", () => {
 //#region deserializeFSTWeb — v1 importance derivation
 
 test("deserializeFSTWeb: v1 derives importance from a population u32 via the log2 curve", () => {
-	// v1 stores population (u32) in the importance slot; the reader maps it through
+	// v1 stores population (u32) in the importance slot. the reader maps it through
 	// min(1, log2(1 + pop/1000) / 14). For pop = 1000: log2(2)/14 = 1/14 ≈ 0.0714.
 	const nodes: FixtureNode[] = [
 		{ edges: [["t", 1]], places: [] },

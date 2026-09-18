@@ -27,7 +27,7 @@ export interface PairIndexInputs {
 	transitionBeta?: number
 	parentDelta?: number
 	boroughDB?: string
-	// oxlint-disable-next-line sister-software/no-title-case-acronym -- mirrors release.config.json's literal `pairsJsonl` wire key; renaming the member would stop it typing the parsed JSON
+	// oxlint-disable-next-line sister-software/no-title-case-acronym -- mirrors release.config.json's literal `pairsJsonl` wire key. renaming the member would stop it typing the parsed JSON
 	pairsJsonl?: string
 	banDir?: string
 	[key: string]: unknown
@@ -49,7 +49,7 @@ export interface SoftFeedRecipe {
 
 /**
  * A char-path base package's binaries (#2164), keyed by script family (`cjk`). Paths are data-root relative, like
- * `weights.model`. The vocabulary is committed in the package too; the recipe's copy keeps it in step with the graph.
+ * `weights.model`. The vocabulary is committed in the package too. the recipe's copy keeps it in step with the graph.
  */
 export interface CharWeightsRecipe {
 	model: string

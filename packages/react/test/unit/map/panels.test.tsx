@@ -78,7 +78,7 @@ test("CompareToggle reveals the compare select (primary excluded) when turned on
 
 	const select = container.querySelector("#mw-demo-compare-version") as HTMLSelectElement
 	expect(select).not.toBeNull()
-	// The primary version is filtered out; the "Select version…" placeholder + the two others remain.
+	// The primary version is filtered out. the "Select version…" placeholder + the two others remain.
 	const values = Array.from(select.querySelectorAll("option")).map((o) => (o as HTMLOptionElement).value)
 	expect(values).not.toContain("v7.2.0")
 	expect(values).toContain("v7.1.0")

@@ -5,7 +5,7 @@
  * @file Which admin place CONTAINS this point — a build-time point-in-polygon locator over a WOF polygon database.
  *
  *   Built for the question a gazetteer join answers badly. Asking WOF which region a US postcode's `parent_id` leads to
- *   contradicts the ZIP numbering plan on 8.46% of placed codes; asking which region POLYGON contains the code's own
+ *   contradicts the ZIP numbering plan on 8.46% of placed codes. asking which region POLYGON contains the code's own
  *   coordinate contradicts it on 0.69%, a 12× improvement, using only data already shipped under permissive licences.
  *   The residual is inherited rather than produced: 264 of those 286 sit on a coordinate that is not a location.
  *
@@ -117,7 +117,7 @@ export class AdminLocator {
 				let maxLat = Number.NEGATIVE_INFINITY
 
 				for (const polygon of polygons) {
-					// The OUTER ring bounds the polygon; holes are inside it by definition.
+					// The OUTER ring bounds the polygon. holes are inside it by definition.
 					for (const [lon, lat] of polygon[0] ?? []) {
 						minLon = Math.min(minLon, lon!)
 						maxLon = Math.max(maxLon, lon!)

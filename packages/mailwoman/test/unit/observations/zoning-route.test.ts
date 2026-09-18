@@ -12,8 +12,8 @@
  *   configure: rollback is removing the argument.
  *
  *   THE REST PIN WHAT THIS LAYER SAYS AND, MORE IMPORTANTLY, WHAT IT REFUSES TO. A designation becomes one
- *   additive marker naming the verdict's own top kind; the AUTHORITY'S OWN CODE is in the sentence with the
- *   generic type beside it rather than instead of it; the plan and its window ride on the evidence; and a
+ *   additive marker naming the verdict's own top kind. the AUTHORITY'S OWN CODE is in the sentence with the
+ *   generic type beside it rather than instead of it. the plan and its window ride on the evidence. and a
  *   location with no zoning polygon raises nothing. That last one is the hardest case of the meaning-of-zero
  *   rule: an absent zoning polygon is one of at least four different things, and the publisher proves the
  *   asymmetry by stating `UNZ - Unzoned` as a POSITIVE value where it means it.

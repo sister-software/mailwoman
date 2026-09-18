@@ -6,7 +6,7 @@
  *   `fr-fragment` recipe (#727 T2) — the HOUSE-NUMBER-LICENCE change.
  *
  *   The measured problem (T1c, `2026-07-16-t1c-fragment-board-verdict.md`): the shipped model scores
- *   **0.925** on `<n> Rue X` and **0.215** on `Rue X`. Same streets, same model; the only difference
+ *   **0.925** on `<n> Rue X` and **0.215** on `Rue X`. Same streets, same model. the only difference
  *   is a leading number. It has learned that a house number LICENSES a street reading at all — strip
  *   it and a designator-led phrase parses as a locality, designator included:
  *
@@ -15,7 +15,7 @@
  *   "Allee Poque"           -> locality="Allee Poque"
  *   ```
  *
- *   `Rue` can only mean street in French. The model is not mislabelling an ambiguous toponym; it is
+ *   `Rue` can only mean street in French. The model is not mislabelling an ambiguous toponym. it is
  *   mislabelling `Rue`.
  *
  *   WHY THE EXISTING RECIPE DOESN'T COVER THIS. {@link frBareStreetRecipe} (#251) mints
@@ -34,7 +34,7 @@
  *   6. `bare-locality`       "Mery-sur-Oise"         — negative: a bare toponym that is a locality
  *
  *   The **admin/street homonym** class (`Rue de Rome`) is deliberately not a separate form. Homonym
- *   streets are already in the register and fall into 1–3 naturally; there is nothing different to
+ *   streets are already in the register and fall into 1–3 naturally. there is nothing different to
  *   teach about them, because the lesson is identical — the designator makes it a street. The
  *   fragment board scores them separately (they need measuring, not minting), and the recipe would
  *   need a second pass over the commune set to label them, buying a `synth_method` string and no
@@ -55,12 +55,12 @@
  *   generalization to unseen streets. The recipe refuses to run without the list rather than
  *   silently minting a contaminated recipe output.
  *
- *   MIX. The recipe output is ~145K rows off a 120K-tuple draw; the intended corpus mix is **5–10%**,
+ *   MIX. The recipe output is ~145K rows off a 120K-tuple draw. the intended corpus mix is **5–10%**,
  *   set at assembly time by source weight rather than by row count. Keep the cap: a recipe output that
  *   fixes fragments by degrading full addresses has moved the failure, not fixed it — which is what
  *   `street-housenumber` / `alnum-housenumber` on the fragment board and the global parity floor are
  *   there to catch. `date-name` is ~0.5% of the output because BAN only holds ~1,418 date-name streets
- *   after filtering and the tuple extractor already takes every one; if that class needs more, the
+ *   after filtering and the tuple extractor already takes every one. if that class needs more, the
  *   change is source weight, not invented data.
  *
  *   ⚠ Convention loss-mask: like {@link frBareStreetRecipe}, this recipe TEACHES FR `street_prefix`.
@@ -84,7 +84,7 @@ const HOUSE_NUMBERS = [
 ]
 
 /**
- * FR alphanumeric house-number forms. `bis`/`ter` are separated; a bare letter is suffixed.
+ * FR alphanumeric house-number forms. `bis`/`ter` are separated. a bare letter is suffixed.
  */
 const ALNUM_SUFFIXES = ["bis", "ter", "A", "B"]
 
@@ -105,7 +105,7 @@ const norm = (value: string): string =>
  * Needed because BAN's per-region extract databases keep only `locality_base` — normalized, lowercase, accent-stripped.
  * Emitting that verbatim would teach the counter-distribution that a lowercase accent-stripped string is a locality,
  * which is not a fact about French and would not match the fragment board (which reconstructs the same casing). The
- * accents are gone from the source and cannot be recovered here; the casing can.
+ * accents are gone from the source and cannot be recovered here. the casing can.
  */
 const FR_LOWER = new Set([
 	"le",
@@ -298,7 +298,7 @@ export const frFragmentRecipe: CorpusRecipe = {
 		const wanted = Math.round((emitted / Math.max(1, 1 - bareLocalityProb)) * bareLocalityProb)
 
 		for (let i = 0; i < wanted && pool.length; i++) {
-			// BAN gives `locality_base` normalized; restore the casing the fragment board also
+			// BAN gives `locality_base` normalized. restore the casing the fragment board also
 			// reconstructs, so train and eval show the model the same shape of French.
 			const name = frTitleCase(sample(pool, random))
 			const sourceID = recipeSourceID("synth-fr-fragment", { locality: name, v: `neg-${i}` })

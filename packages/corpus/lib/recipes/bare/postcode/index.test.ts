@@ -4,7 +4,7 @@
  * @author Teffen Ellis, et al.
  * @file `bare-postcode` — the postcode standing alone. The contract worth pinning is that every surface the recipe
  *   renders is one `known-formats.ts` reads as a postcode over its whole span, because a surface the detector refuses
- *   would train the model on a string the query-shape prior cannot then support. `run` reads a 500 MB archive; this
+ *   would train the model on a string the query-shape prior cannot then support. `run` reads a 500 MB archive. this
  *   reaches the rendering and the agreement without it.
  */
 

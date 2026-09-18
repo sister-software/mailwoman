@@ -98,7 +98,7 @@ def evaluate_row(
 ) -> list[tuple[str, bool]]:
     """Classify each street-family group and score the effective (post-relabel) labels.
 
-    Returns ``[(class, correct), ...]`` for the carrier groups; non-carrier groups yield
+    Returns ``[(class, correct), ...]`` for the carrier groups. non-carrier groups yield
     nothing. The caller's row is never mutated (the relabel runs on a shallow copy with a
     copied label list — the same discipline the loader uses).
     """

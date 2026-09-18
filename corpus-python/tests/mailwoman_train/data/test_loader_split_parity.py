@@ -7,7 +7,7 @@ draw, or skips one — reshuffles the corpus a run trains on while every existin
 the suite asserts that rows are well-formed and that mixtures are stationary, not that a seeded run
 yields these rows in this order.
 
-So this pins the sequence. `iter_rows` carries the sampling; the char path carries `iter_encoded`
+So this pins the sequence. `iter_rows` carries the sampling. the char path carries `iter_encoded`
 end to end without a SentencePiece artifact; `source_row_counts` carries the metadata reader that
 the epoch-mixture audit reads.
 """
@@ -145,9 +145,9 @@ def _row(index: int, country: str, source: str) -> dict[str, Any]:
 def build_reference_corpus(root: Path) -> Path:
     """A corpus with enough variety that every filter and every RNG consumer is live.
 
-    Two sources so the multinomial runs; three countries with unequal weights so the acceptance
-    test both passes and fails; several row groups per parquet file so the row-group shuffle has
-    something to permute; a mixed-source val file because the held-out branch bypasses the
+    Two sources so the multinomial runs. three countries with unequal weights so the acceptance
+    test both passes and fails. several row groups per parquet file so the row-group shuffle has
+    something to permute. a mixed-source val file because the held-out branch bypasses the
     source bucketing entirely and a single-source one would not tell the branches apart.
     """
     corpus = root / "corpus"

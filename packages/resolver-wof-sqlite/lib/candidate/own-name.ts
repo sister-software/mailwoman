@@ -16,7 +16,7 @@
  *   - IN: `brest`/`brest` 1.0 · `george town`/`georgetown` 0.909 · `saint george s`/`saint georges`
  *       0.929 · `adamovka`/`adamowka` 0.875
  *   - OUT: `lievin`/`levin` 0.833 (Liévin FR vs Levin NZ — different places with near-identical
- *       names; the panel's `41 Weraroa Road, Levin` row needs this side) · `chanchun`/`cancun` 0.75 ·
+ *       names. the panel's `41 Weraroa Road, Levin` row needs this side) · `chanchun`/`cancun` 0.75 ·
  *       `augsburg`/`augusta` 0.375 · `west bay`/`west end` 0.625 · `derry`/`londonderry` 0.455
  *       (Derry/Londonderry is a DUAL NAME, not a variant — its own follow-up on #1882)
  *
@@ -35,7 +35,7 @@ export const VARIANT_SIMILARITY_MIN = 0.85
 
 /**
  * BGN/PCGN-flavored Cyrillic romanization, folded to the name-key alphabet. Digraph outputs (zh, kh, ts, ch, sh, shch,
- * yu, ya) match the dominant transliteration conventions the gazetteer's Latin aliases actually use; the `w`/`v` and
+ * yu, ya) match the dominant transliteration conventions the gazetteer's Latin aliases actually use. the `w`/`v` and
  * `kh`/`h` style variance between systems is what the edit-similarity threshold absorbs.
  */
 const CYRILLIC_TO_LATIN: Record<string, string> = {

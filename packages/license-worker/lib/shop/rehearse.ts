@@ -5,7 +5,7 @@
  *
  *   A rehearsal purchase against a deployed worker, in Stripe's test mode: a customer on a test clock, a Checkout
  *   Session shaped as the Payment Link is (the same `checkoutCollection`), paid by a person in a browser with the test
- *   card; then the clock advances past the period end, Stripe raises and pays the renewal invoice, delivers its
+ *   card. then the clock advances past the period end, Stripe raises and pays the renewal invoice, delivers its
  *   `invoice.paid` to the worker, and the claim route hands back the second token. A Payment Link cannot carry a test
  *   clock, which is why the session is built here. Nothing is replayed or signed: the worker is exercised as a customer
  *   would exercise it, delivery included.
@@ -42,7 +42,7 @@ export interface StartRehearsalInput {
 
 /**
  * The first half: the objects, and the URL to pay. The Price is the provisioned one, found by lookup key as
- * `provisionShop` finds it; a missing Price means the shop was never provisioned in this mode.
+ * `provisionShop` finds it. a missing Price means the shop was never provisioned in this mode.
  */
 export async function startRehearsal(stripe: Stripe, input: StartRehearsalInput): Promise<RehearsalStart> {
 	const listed = await stripe.prices.list({ lookup_keys: [input.plan], active: true, limit: 1 })
@@ -94,12 +94,12 @@ export interface AdvanceRehearsalInput {
 	session: string
 	workerOrigin: string
 	/**
-	 * How far past the clock's frozen time to advance; past one monthly period, with room for Stripe's renewal window.
+	 * How far past the clock's frozen time to advance. past one monthly period, with room for Stripe's renewal window.
 	 */
 	days: number
 	fetch?: typeof fetch
 	/**
-	 * Waits between polls; a test passes one that does not wait.
+	 * Waits between polls. a test passes one that does not wait.
 	 */
 	sleep?: (ms: number) => Promise<void>
 	pollMs?: number

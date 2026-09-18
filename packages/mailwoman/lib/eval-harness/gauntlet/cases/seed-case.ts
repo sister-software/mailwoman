@@ -55,7 +55,7 @@ export interface SeedCase {
 	 * OPT-IN multi-script rendering contract, per component key — `{ venue: ["Gandantegchinlen Monastery",
 	 * "Гандантэгчинлэн хийд"] }`. For a listed key the grader asserts that `scriptRenderings(got)` contains every listed
 	 * rendering (case-folded), and the same key in {@linkcode expectComponents} is superseded — see `check-case.ts`'s
-	 * component check. Only for a row whose INPUT genuinely carries a span in two or more scripts; every list must be
+	 * component check. Only for a row whose INPUT genuinely carries a span in two or more scripts. every list must be
 	 * non-empty (the schema refuses an empty one).
 	 */
 	expectComponentRenderings?: Record<string, string[]>
@@ -71,7 +71,7 @@ export interface SeedCase {
 	/**
 	 * True = the expected outcome is no coordinate: the resolver abstains rather than answering, and any resolved
 	 * coordinate fails the row. Mutually exclusive with `expectLat`/`expectLon` (the schema refuses the combination). The
-	 * #1585 fuzzy-scope contract: a scoped-empty typo correction abstains instead of falling through world-fuzzy; such a
+	 * #1585 fuzzy-scope contract: a scoped-empty typo correction abstains instead of falling through world-fuzzy. such a
 	 * row is re-pinned to real coordinates once coverage arrives (its note names the artifact).
 	 */
 	expectAbstain?: boolean

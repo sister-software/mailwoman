@@ -187,7 +187,7 @@ describe("resolveRingRoles", () => {
 
 	it("carries a hole that shares its parent's boundary rather than dropping it, and counts it", () => {
 		// The residual case, measured at 9 of 3,516 holes nationally and every one a sliver under 1.7 m²: a ring whose
-		// vertices sit on the exterior. Dropping it would add ground the plan carved out; the count is on the receipt so a
+		// vertices sit on the exterior. Dropping it would add ground the plan carved out. the count is on the receipt so a
 		// reader sees the number rather than assuming it is zero.
 		const resolved = resolveRingRoles(
 			[
@@ -206,7 +206,7 @@ describe("resolveRingRoles", () => {
 	it("takes the LARGEST ring as the exterior where no ring reads as one, and counts it", () => {
 		// Measured at exactly one feature of 85,330: a three-vertex sliver enclosing 3.0 × 10⁻⁷ m², whose winding is
 		// floating-point noise rather than something the publisher stated — it reads clockwise in the source's own metres
-		// and counter-clockwise after reprojection. Refusing would fail the build on the publisher's own data; skipping the
+		// and counter-clockwise after reprojection. Refusing would fail the build on the publisher's own data. skipping the
 		// feature would invent an absence.
 		const resolved = resolveRingRoles([[holeRing(ORIGIN.lon, ORIGIN.lat, ORIGIN.lon + SIDE, ORIGIN.lat + SIDE)]], "9")
 

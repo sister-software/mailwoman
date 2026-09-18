@@ -4,7 +4,7 @@
  * @author Teffen Ellis, et al.
  *
  *   Adds confidence-scaled span-proposal biases to encoder emissions before Viterbi. Annotation spans
- *   bias toward `O`; quoted spans do not bias labels; mapped proposal kinds bias their component tag.
+ *   bias toward `O`. quoted spans do not bias labels. mapped proposal kinds bias their component tag.
  */
 
 import type { ProposedSpan } from "@mailwoman/core/pipeline"
@@ -15,7 +15,7 @@ import { spansOverlap } from "#span/repair"
 
 export interface SpanProposalPriorOpts {
 	/**
-	 * Bias magnitude for tag-mapped proposals in log odds; re-evaluate after retraining.
+	 * Bias magnitude for tag-mapped proposals in log odds. re-evaluate after retraining.
 	 */
 	biasScale?: number
 	/**

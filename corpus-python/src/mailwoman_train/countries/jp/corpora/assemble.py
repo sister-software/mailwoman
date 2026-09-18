@@ -103,7 +103,7 @@ def survey_source(parquet: Path, args: argparse.Namespace) -> SourceSurvey:
     cap = water_fill(pool_counts, target)
     quotas = {prefecture: min(cap, count) for prefecture, count in pool_counts.items()}
     shortfall = target - sum(quotas.values())
-    # Water-filling lands at or below target; hand the remainder to the prefectures with headroom so
+    # Water-filling lands at or below target. hand the remainder to the prefectures with headroom so
     # the corpus hits its row count exactly rather than "about".
     if shortfall > 0:
         for prefecture in sorted(pool_counts, key=lambda p: pool_counts[p] - quotas[p], reverse=True):
@@ -292,7 +292,7 @@ def write_board(out_dir: Path, selection: Selection, encoder: RowEncoder) -> lis
 
 
 def check_stratification(args: argparse.Namespace, selection: Selection) -> tuple[set[str], set[str]]:
-    """Violations RAISE; a corpus that fails one is not a corpus. Returns (train prefectures, board municipalities)."""
+    """Violations RAISE. a corpus that fails one is not a corpus. Returns (train prefectures, board municipalities)."""
     train_prefectures = {row[0] for row in selection.train}
     if args.max_row_groups is None and len(train_prefectures) != 47:
         raise RuntimeError(f"train covers {len(train_prefectures)} prefectures, expected 47 — stratification broken")

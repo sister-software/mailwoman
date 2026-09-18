@@ -12,13 +12,13 @@
  *   then reports on a transformation nobody declared — so the suite is re-derived here rather than trusted.
  *
  *   AND THAT NO ARM IS MISSING BY ACCIDENT. The cross product of the committed bases and five transformations
- *   is what the law claims to state; every absent arm has to name the applicability rule that refuses it, and
+ *   is what the law claims to state. every absent arm has to name the applicability rule that refuses it, and
  *   all three declared rules have to refuse at least one real arm. A suite that could quietly drop the arms it
  *   fails would report a smaller violation count, and a smaller count is indistinguishable from a law that
  *   holds.
  *
  *   THIS LEG SUPPLIES THE HALF THE AUDIT CANNOT. `punctuationApplicability` refuses a removal whose mark the
- *   row's own comparator would read back out of a component value; deciding that needs the row's ASSERTED
+ *   row's own comparator would read back out of a component value. deciding that needs the row's ASSERTED
  *   spans, which live in the corpus rather than in the fixture. The audit applies the declared half, and the
  *   reading here applies both.
  *

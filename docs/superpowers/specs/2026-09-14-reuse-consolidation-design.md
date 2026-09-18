@@ -115,7 +115,7 @@ with an `OPTION_INITIALISMS` table naming the segments that capitalize a whole a
 that derivation makes `Options` derived.
 
 The runtime table and the type-level table must not drift, and matched constants would not prevent it — this
-repository's own rule is to share the function, not the constants. The remedy is one declaration: keep
+repository's own rule is to share the function, not the constants. The action is one declaration: keep
 `OPTION_INITIALISMS` as a single `as const` object, take the type side from `typeof` it and the runtime side from
 `Object.entries` of it.
 

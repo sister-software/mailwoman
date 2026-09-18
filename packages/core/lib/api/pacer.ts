@@ -79,7 +79,7 @@ export class RequestPacer {
 	 * scheduled exactly `intervalMs` apart, but the continuation that actually issues the request runs whenever the event
 	 * loop gets to it, which on real timers is 0-2ms after the deadline. A grant that lands 1ms late shifts toward the
 	 * following window, so a sliding-second count over the OBSERVED dispatch times reads 11 rather than 10 at a 100ms
-	 * interval (measured 3/3 runs of a 40-call fan-out; the preceding second correspondingly holds 9, and the long-run
+	 * interval (measured 3/3 runs of a 40-call fan-out. the preceding second correspondingly holds 9, and the long-run
 	 * rate is exactly at the cap). A caller that needs a hard sliding-window ceiling with no jitter headroom should pace
 	 * fractionally under the published rate rather than exactly at it.
 	 */

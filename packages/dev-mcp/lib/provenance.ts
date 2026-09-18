@@ -101,7 +101,7 @@ export interface ProvenanceOptions {
 }
 
 /**
- * Assemble the provenance report. Every field is READ; nothing is derived from a convention that might not hold, which
+ * Assemble the provenance report. Every field is READ. nothing is derived from a convention that might not hold, which
  * is why an absent file is reported as absent rather than defaulted.
  */
 export async function runProvenance(options: ProvenanceOptions = {}): Promise<ProvenanceReport> {

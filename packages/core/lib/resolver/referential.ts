@@ -7,7 +7,7 @@
  *   R1, ratified 2026-08-06).
  *
  *   THE POLICY. "The importance of a knowledge-base article is not the probability that this is the
- *   place the user means." A geocoder ranks by REFERENTIAL likelihood; encyclopedic importance is
+ *   place the user means." A geocoder ranks by REFERENTIAL likelihood. encyclopedic importance is
  *   carried as data and is never a ranking key. Saint-Denis is the canonical case: the
  *   Seine-Saint-Denis suburb (pop 96,128) carries encyclopedic 0.1173 and the Aude hamlet (pop 418)
  *   carries 0.5683, so encyclopedic ranking inverts the answer every user means, by 4.8x.

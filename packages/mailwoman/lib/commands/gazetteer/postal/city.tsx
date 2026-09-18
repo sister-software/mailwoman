@@ -17,7 +17,7 @@
  *
  *   Idempotent: drops + recreates the table each run. Modifies the candidate DB IN PLACE — run it on
  *   a COPY to validate, then fold it into the canonical candidate build before republish. Progress
- *   streams to stderr; the final summary is on stdout.
+ *   streams to stderr. the final summary is on stdout.
  */
 
 import { allRows } from "@mailwoman/core/utils"

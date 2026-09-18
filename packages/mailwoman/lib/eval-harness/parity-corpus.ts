@@ -4,12 +4,12 @@
  * @author Teffen Ellis, et al.
  *
  *   The parity-corpus eval (#1093) — the rescued v1 hand-written gold scored against a checkpoint,
- *   parse-only. The ratified default check is the triaged corpus (321 live across 20 countries; see
+ *   parse-only. The ratified default check is the triaged corpus (321 live across 20 countries. see
  *   PARITY_FIXTURES_PATH below); pass `--fixtures` for the 354-live pre-triage v1 denominator. This
  *   is the model campaign's check for the
  *   held plan-2 swaps: the per-label floors below are the same pre-registered floors the swap checks
- *   carry (house_number ≥ 0.97, postcode ≥ 0.97, street-family ≥ 0.90 — never edited to green; a
- *   miss is an adjudication). Comparison is case-folded, whitespace-collapsed; the street label
+ *   carry (house_number ≥ 0.97, postcode ≥ 0.97, street-family ≥ 0.90 — never edited to green. a
+ *   miss is an adjudication). Comparison is case-folded, whitespace-collapsed. the street label
  *   compares the assembled neural street-name family against the gold `street` values.
  */
 
@@ -26,7 +26,7 @@ import { JSONSpliterator } from "spliterator"
 /**
  * Default check corpus. RATIFIED 2026-07-13 to the triaged set (321 live / 55 tombstones): the 22 rules-era no-solution
  * assertions plus 33 gold-triage tombstones (rules-idiosyncratic fixtures a neural parser should not be graded against
- * — solver-permutation probes, autocomplete-era jitter, self-admitted TODOs; each carries a `dropped` reason).
+ * — solver-permutation probes, autocomplete-era jitter, self-admitted TODOs. each carries a `dropped` reason).
  * Proposal
  *
  * - Per-fixture rationale: `docs/articles/evals/competitive-parity/2026-07-13-parity-gold-triage.md`. The pre-#875 v1
@@ -64,7 +64,7 @@ export interface ParityFixture {
 	 */
 	expect?: Record<string, string[]>
 	/**
-	 * Tombstone reason; the runner skips these rows but the provenance survives.
+	 * Tombstone reason. the runner skips these rows but the provenance survives.
 	 */
 	dropped?: string
 	/**
@@ -132,7 +132,7 @@ function loadFixtures(path: string): Promise<ParityFixture[]> {
 }
 
 /**
- * Run the parity-corpus eval; narrates per-label + per-country tables and a floor verdict on stdout.
+ * Run the parity-corpus eval. narrates per-label + per-country tables and a floor verdict on stdout.
  */
 export async function runParityEval(options: ParityEvalOptions = {}): Promise<ParityEvalOutcome> {
 	const fixtures = await loadFixtures(options.fixturesPath ?? PARITY_FIXTURES_PATH)
@@ -205,7 +205,7 @@ export async function runParityEval(options: ParityEvalOptions = {}): Promise<Pa
 		// production parses on — `safeClassify` in the runtime pipeline, and `geocode-core` since #981
 		// (which fixed this same divergence for the drop-in servers). Without it this check graded a
 		// starved parse. A no-op on inputs carrying no known format and no region abbrev, so the bare
-		// `street, city` class is byte-stable; it warrants its keep on the digit-span / region-abbrev rows.
+		// `street, city` class is byte-stable. it warrants its keep on the digit-span / region-abbrev rows.
 		const byTag = groupTuplesByTag(
 			await classifier.parse(fixture.input, {
 				postcodeRepair: true,

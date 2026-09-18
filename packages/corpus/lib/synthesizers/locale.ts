@@ -19,7 +19,7 @@
  *   German street names (German morphology is hard to fake) — it takes real German component tuples
  *   (from OpenAddresses Berlin/Saxony) and renders them in idiomatic German order via the OpenCage
  *   `DE` template (`formatAddress(..., "DE")` → `"Straußstraße 27, 12623 Berlin"`). The corpus
- *   aligner turns the row into BIO labels; every emitted component surface form occurs verbatim in
+ *   aligner turns the row into BIO labels. every emitted component surface form occurs verbatim in
  *   `raw` so alignment lands. Its locale-neutral API now also serves the international recipe.
  */
 
@@ -80,7 +80,7 @@ export interface LocaleSynthesisOpts {
 	/**
 	 * Postcode surface shape. `"conventional"` (default) canonicalizes to the country's rendered form (NL: OA's glued
 	 * `1011AB` → the spaced `1011 AB`); `"as-source"` keeps the source's own surface — the form OA (and the OA-derived
-	 * evals) feed, which for NL is 100% glued. Only NL differs today; every other country passes through identically
+	 * evals) feed, which for NL is 100% glued. Only NL differs today. every other country passes through identically
 	 * either way. Mixing both teaches the two-letter-suffix `1012 LM` shape and the glued feed shape (#241 — the model
 	 * currently glues the suffix onto the city).
 	 */
@@ -100,7 +100,7 @@ export interface LocaleSynthesisOpts {
 	 * comma-free single-line register — dictation, a copy out of a one-field form — `Neusser Str. 12 Nippes 50733 Köln`
 	 * for the same components. Stage 2 segments the comma form into three and the comma-free form into one, and a single
 	 * segment starves the placetype-pair prior, which is how the comma-free form loses `Nippes` (#1946). Only the native
-	 * order reads it; the international layout keeps its own separator.
+	 * order reads it. the international layout keeps its own separator.
 	 */
 	separator?: ", " | " "
 }
@@ -158,13 +158,13 @@ function tokenPresent(raw: string, value: string): boolean {
 
 /**
  * Render one real tuple into an idiomatic, locale-ordered `{raw, components}` row via the OpenCage `country` template
- * (DE → house-after-street + postcode-before-city; ES/IT the same; GB house-first; NL carries the `1012 LM` postcode),
+ * (DE → house-after-street + postcode-before-city. ES/IT the same. GB house-first. NL carries the `1012 LM` postcode),
  * with light variation (drop house number / postcode some of the time). Returns `null` when the tuple is too thin or a
  * component wouldn't align cleanly.
  *
  * Region handling is order-dependent: NATIVE order omits it (the native template absorbs the admin region into the
  * postcode/city line, so it rarely renders verbatim and would break BIO alignment), while INTERNATIONAL order includes
- * it in the tail ("City, Region Postcode" — the US/feed layout the eval uses; v0.9.3 / #327).
+ * it in the tail ("City, Region Postcode" — the US/feed layout the eval uses. v0.9.3 / #327).
  *
  * Pass `opts.order: "international"` to render the same components house-first / postcode-after-city instead (see
  * {@link LocaleSynthesisOpts.order}) — the layout international feeds impose on foreign addresses, and the one a
@@ -210,7 +210,7 @@ export function synthesizeLocaleRow(
 		components.region = base.region
 	}
 
-	// Native order uses the address's own country template; international order uses the US template —
+	// Native order uses the address's own country template. international order uses the US template —
 	// house-first, postcode-after-city, with a region slot for the tail. Neither branch consumes a
 	// `random()` draw for the template, so the RNG sequence existing callers/tests depend on is stable.
 	const renderCountry = order === "international" ? "US" : country

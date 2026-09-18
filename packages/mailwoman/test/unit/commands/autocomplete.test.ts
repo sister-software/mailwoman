@@ -230,7 +230,7 @@ describe("runAutocomplete — disk round-trip", () => {
 		const entries = await runAutocomplete("United", { fstPath: fixtureBinPath, limit: 5 })
 		const us = entries.find((e) => e.wofID === 85_633_793)
 		expect(us).toBeDefined()
-		// Float32 round-trip may introduce tiny epsilon; check within tolerance.
+		// Float32 round-trip may introduce tiny epsilon. check within tolerance.
 		expect(us!.referential).toBeCloseTo(0.99, 1)
 	})
 })

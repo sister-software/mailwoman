@@ -12,7 +12,7 @@
  *
  *   THE ORDERING IS THE WHOLE CONTRACT. This must run before `sealDatabase`, because a sealed artifact is
  *   `0444` and a manifest written afterwards needs the database reopened read-write — the one thing
- *   `openBuiltClient` exists to refuse. Calling it after the seal does not fail quietly; it fails
+ *   `openBuiltClient` exists to refuse. Calling it after the seal does not fail quietly. it fails
  *   loudly, which is the correct half. What it would cost is the build, at its very end.
  */
 

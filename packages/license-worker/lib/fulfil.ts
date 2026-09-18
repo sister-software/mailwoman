@@ -213,7 +213,7 @@ export async function fulfilInvoice(
 	})
 
 	if (inserted === "present") {
-		// Another mint for this invoice landed between the read above and this insert; its row is the token.
+		// Another mint for this invoice landed between the read above and this insert. its row is the token.
 		const winner = await findToken(deps.ledger, invoiceID)
 
 		if (!winner) throw new Error(`token for ${invoiceID} vanished after a concurrent insert`)

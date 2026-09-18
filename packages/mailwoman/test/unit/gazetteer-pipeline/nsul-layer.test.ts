@@ -301,7 +301,7 @@ describe("buildNSULLayer (fixture)", () => {
 		expect(manifest.sourceVintage).toBe("2026-06 (Epoch 127)")
 		expect(manifest.spineKeys.h3).toEqual({ column: "h3_cell", resolution: 9 })
 
-		// Coverage: the res-6 parent of a written point is designated-complete; an unsurveyed cell is UNKNOWN.
+		// Coverage: the res-6 parent of a written point is designated-complete. an unsurveyed cell is UNKNOWN.
 		const parent = shortCellToInt(
 			cellToParent(uprnFullCell(UPRN_POINTS[0]!.lat, UPRN_POINTS[0]!.lon), NSUL_COVERAGE_H3_RESOLUTION) as H3Cell
 		)

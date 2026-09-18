@@ -67,13 +67,13 @@ export async function generateLanguageTypes(
 
 	report?.(`Reading ${dataSourcePath}`)
 
-	// `header` defaults true, which skips the `alpha3-b,alpha2,English` line; the columns are read by position, so the
+	// `header` defaults true, which skips the `alpha3-b,alpha2,English` line. the columns are read by position, so the
 	// mode is named rather than derived from it.
 	for await (const columns of CSVSpliterator.fromAsync<string[]>(dataSourcePath, { mode: "array" })) {
 		const alpha3b = columns[0] as string
 		const alpha2 = columns[1] as string
 		const labelsConcatenated = columns[2] as string
-		// Empty for the 163 languages whose two 639-2 forms agree; a distinct code for the 20 that diverge.
+		// Empty for the 163 languages whose two 639-2 forms agree. a distinct code for the 20 that diverge.
 		const alpha3t = (columns[3] as string | undefined) ?? ""
 
 		const labels = labelsConcatenated.split("; ")
@@ -89,7 +89,7 @@ export async function generateLanguageTypes(
 		// It goes to `alpha3tPairs`, not to `entryLines`. Both lists build both direction maps from a
 		// `new Map([...])`, where the last entry for a key wins — so appending the /T form to
 		// `entryLines` would silently flip `Alpha2ToAlpha3b.get("de")` from `ger` to `deu`. That map is
-		// named for the /B standard and documented as returning it; changing what it answers is a
+		// named for the /B standard and documented as returning it. changing what it answers is a
 		// separate decision from widening what the union ACCEPTS, and it is not this one.
 		if (alpha3t) {
 			alpha3bEntries.set(alpha3t, labels)

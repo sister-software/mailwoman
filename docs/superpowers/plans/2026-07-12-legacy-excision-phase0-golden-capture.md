@@ -755,7 +755,7 @@ git commit -m "feat(phase0): capture nominatim /search full-response goldens (A3
 
 ---
 
-### Task 7: Golden-integrity test — CI protects the artifacts
+### Task 7: Golden-integrity test — CI guards the artifacts
 
 **Files:**
 

@@ -8,7 +8,7 @@
  *   be graded against the provided coordinates on real facility addresses (great-circle delta, tier
  *   breakdown via `oa-resolver-eval --address-points`).
  *
- *   Neutral scope: this measures GEOCODER ACCURACY on real public addresses; it makes no claim about
+ *   Neutral scope: this measures GEOCODER ACCURACY on real public addresses. it makes no claim about
  *   the facilities themselves.
  *
  *   Run: `mailwoman registry convert tx-hhsc [--src <tsv>] [--out /tmp/txhhsc-oarow.jsonl]`

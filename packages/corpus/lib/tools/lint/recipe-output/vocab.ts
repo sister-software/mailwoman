@@ -9,7 +9,7 @@
  *   Ported from the Python original (pyarrow → @duckdb/node-api); behavior preserved
  *   byte-for-byte (same flags, same stdout, same verdicts). The base-root default routes through
  *   `dataRootPath` so the lab `/mnt/playpen` literal stays in its one home
- *   (core/utils/data-root.ts) and `$MAILWOMAN_DATA_ROOT` is honored; with the env unset it equals
+ *   (core/utils/data-root.ts) and `$MAILWOMAN_DATA_ROOT` is honored. with the env unset it equals
  *   the Python default.
  *
  *   The #511 lesson: a synthetic recipe output must not label a token a tag the BASE dominantly
@@ -29,7 +29,7 @@
  *        the country the recipe output uses it in (the base has a `country` column), over a
  *        LARGE/FULL scan (`fraction`, default 1.0). Pure-numeric tokens excluded (house_number/postcode
  *        are context-determined). An affix-split flag (recipe output street_suffix/_prefix vs base
- *        "street") is EXPECTED — the loader's affix-relabel handles it; weigh those separately.
+ *        "street") is EXPECTED — the loader's affix-relabel handles it. weigh those separately.
  *
  *   Usage: mailwoman dev lint slice-vocab --slice <recipe-output.parquet>
  *   [--base-version v0.5.0] [--base-root <dir>] [--fraction 1.0] [--threshold 0.7] [--min-count
@@ -261,7 +261,7 @@ export async function lintRecipeVocab(options: LintRecipeVocabOptions): Promise<
 
 	console.log(`recipe output: ${outputRows.length} rows, ${outputVocab.size} unique tokens`)
 
-	// 2. base parts — FULL by default; fraction<1 takes a proportional per-source sample (still big)
+	// 2. base parts — FULL by default. fraction<1 takes a proportional per-source sample (still big)
 	const trainDir = join(baseRoot, baseVersion, `corpus-${baseVersion}`, "train")
 
 	let parts = (
@@ -330,7 +330,7 @@ export async function lintRecipeVocab(options: LintRecipeVocabOptions): Promise<
 		}
 	}
 
-	// 4. compare; flag contradictions (affix-split is expected — surfaced but tagged)
+	// 4. compare. flag contradictions (affix-split is expected — surfaced but tagged)
 	const flagged: VocabRow[] = []
 	const affix: VocabRow[] = []
 

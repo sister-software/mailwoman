@@ -16,7 +16,7 @@
  *   all. So the choice is (a), (b) or nothing, and this is (b).
  *
  *   OSM attests 4,757 of the 50,032 live NI postcodes — **9.5 %**. That is not a defect to be improved
- *   away; it is what volunteer mapping has recorded, and the number is baked into the artifact's `meta`
+ *   away. it is what volunteer mapping has recorded, and the number is baked into the artifact's `meta`
  *   so nobody reads a miss as a data error.
  *
  *   ## Why a partial database is strictly additive
@@ -181,7 +181,7 @@ export async function buildPostcodeNIOSM(options: BuildPostcodeNIOSMOptions = {}
 	const out = (options.out ?? dataRootPath("wof", `postalcode-ni-osm-${stamp}.db`)).toString()
 	const responsePath = join(sourceDir, "response.json")
 
-	// Acquire the source; offline operation is the normal path described by the option.
+	// Acquire the source. offline operation is the normal path described by the option.
 	if (!options.offline) {
 		await acquireNIPostcodes({ destDir: sourceDir, now, onPhase: phase })
 	}

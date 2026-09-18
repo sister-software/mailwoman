@@ -10,7 +10,7 @@
  *   calls (default 10), each with its own text, placetype and scope. So a row holds a map from canonical
  *   query to answer, plus the pool — the deduplicated union of every answer, which is the ordered candidate
  *   set the row offered. Which of the pool an arm consults is its own query policy and part of what is being
- *   measured; the pool is what must be equal, and `assertEqualEvidence` checks that.
+ *   measured. the pool is what must be equal, and `assertEqualEvidence` checks that.
  *
  *   `replayBackend` raises on a key it does not hold rather than answering `[]`. An empty answer is a state
  *   the resolver absorbs silently, so the arm would report an abstention the fixture produced.
@@ -73,7 +73,7 @@ export interface SameDataGold {
 	geonameid: string
 	/**
 	 * The distinct WOF ids that denote this place, ascending — a SET because the gazetteer carries 21 of its 10,738
-	 * coherently-joined `cities15000.txt` places twice. A selection naming any member is correct; grading against one
+	 * coherently-joined `cities15000.txt` places twice. A selection naming any member is correct. grading against one
 	 * arbitrary member would measure which duplicate an arm returned.
 	 */
 	placeIDs: number[]
@@ -378,7 +378,7 @@ export function replayBackend(row: SameDataFixtureRow, misses: string[] = []): R
 			}
 
 			// A fresh array and a fresh object per candidate. The array copy stops an in-place sort inside the walk from
-			// reordering the frozen evidence; the per-candidate copy stops the walk writing to it, because the resolver
+			// reordering the frozen evidence. the per-candidate copy stops the walk writing to it, because the resolver
 			// stamps verdict fields onto the candidates it is handed (`containedByQualifier`, `mismatch`). A shared
 			// object would leave one arm reading evidence another arm edited.
 			return hit.map((candidate) => ({ ...candidate }))

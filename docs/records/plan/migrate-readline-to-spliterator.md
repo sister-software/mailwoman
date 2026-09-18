@@ -130,7 +130,7 @@ for await (const row of CSVSpliterator.fromAsync(path, { mode: "object" })) {
 > **RESOLVED in v3.1.0:** the column tokenizer now unconditionally preserves empty fields
 > (`skipEmpty: false` internally; probed: `"a,,c,"` keeps all 4 columns including trailing
 > empties). The `registry/ingest.ts:54` workaround comment is stale on this point.
-> **⚠️ NEW known issue found during execution:** `enableQuoteHandling: true` does not protect
+> **⚠️ NEW known issue found during execution:** `enableQuoteHandling: true` does not guard
 > embedded delimiters inside quoted fields — the option is applied to row splitting only and
 > never reaches the column tokenizer (probed: `"a,x",b` mis-parses into two rows). Any CSV with
 > quoted fields must keep manual quote handling over `TextSpliterator`. Upstream fix needed.

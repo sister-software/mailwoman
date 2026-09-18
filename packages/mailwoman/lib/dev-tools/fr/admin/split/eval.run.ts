@@ -11,7 +11,7 @@
  *   break.
  *
  *   Grade the ASSEMBLED anchor-ON coordinate, never label-F1. Run for v1.5.0 (baseline) and the
- *   v1.8.0 candidate; promote iff the candidate's mean centroid error ≤ 0.95× v1.5.0 AND the US
+ *   v1.8.0 candidate. promote iff the candidate's mean centroid error ≤ 0.95× v1.5.0 AND the US
  *   guardrail (separate oa-resolver-eval run) holds.
  *
  *   Run: node packages/mailwoman/lib/dev-tools/fr/admin/split/eval.run.ts\
@@ -188,7 +188,7 @@ async function main() {
 			// Convention epoch 2026-07-04: locality-first is the DEFAULT (production's ladder). This flag
 			// reproduces the pre-epoch postcode-point convention for continuity against old dumps only.
 			"prefer-postcode-coord": { type: "boolean" },
-			// Pre-epoch spelling — accepted so in-flight scripts don't silently change convention; it is
+			// Pre-epoch spelling — accepted so in-flight scripts don't silently change convention. it is
 			// the default now, so it's a no-op.
 			"prefer-locality-coord": { type: "boolean" },
 		},
@@ -209,7 +209,7 @@ async function main() {
 	const postcodeConsistencyPin = pins["postcode-consistency"] === true ? true : undefined
 	const postalCompoundPin = tri("postal-compound-recovery", "no-postal-compound-recovery")
 	// `--default-country none` = truly UNSCOPED resolution (no country prior at all) — the #936
-	// namesake legs need it; an empty string would still be a (falsy, ambiguous) country value.
+	// namesake legs need it. an empty string would still be a (falsy, ambiguous) country value.
 	const defaultCountryArg = stringArgs["default-country"] || "FR"
 
 	const resolveOpts: {

@@ -25,7 +25,7 @@
  *   legacy script used.
  *
  *   Not ported (diagnostic-only, no effect on emitted bytes): the post-run `runSpanCheck` self-check
- *   (it reads the finished file back with a separate PRNG and prints to stderr; the recipe's output
+ *   (it reads the finished file back with a separate PRNG and prints to stderr. the recipe's output
  *   stream is still open during `run`), and the dead `renderReversed` helper (the legacy `main`
  *   inlined the variant logic and never called it).
  */
@@ -70,7 +70,7 @@ interface FrTuple {
 /**
  * Stream FR tuples out of the cached OA zip. The countrywide extract is GB-scale, so this reads only as far as `limit`
  * distinct tuples — the `break` closes the reader and releases the archive. Only keeps rows with a house_number (the
- * recipe's core signal) and a postcode (required for reversed-order rendering to be meaningful; it is also part of this
+ * recipe's core signal) and a postcode (required for reversed-order rendering to be meaningful. it is also part of this
  * recipe's dedup key).
  */
 async function readTuples(limit: number): Promise<FrTuple[]> {
@@ -108,7 +108,7 @@ function renderCanonical(
 	return { raw, components: { house_number: hn, street, postcode, locality } }
 }
 
-// Reversed layouts, a quarter each: A postcode+city then HN+street; B city, postcode, HN+street; C run-together;
+// Reversed layouts, a quarter each: A postcode+city then HN+street. B city, postcode, HN+street. C run-together.
 // D postcode, HN+street, city.
 const REVERSED_VARIANT_A_CUTOFF = 0.25
 const REVERSED_VARIANT_B_CUTOFF = 0.5

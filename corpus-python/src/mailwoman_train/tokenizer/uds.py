@@ -16,14 +16,14 @@ from pathlib import Path
 # anchor patterns that should never fragment across sub-pieces:
 #
 # - **Country abbreviations** the corpus mentions but the unigram model might split.
-# - **US state codes** (50 + DC) — short two-letter chunks adjacent to postcodes; without
+# - **US state codes** (50 + DC) — short two-letter chunks adjacent to postcodes. without
 #   UDS the unigram tokenizer can fragment ``NY 10001`` into ``N`` + ``Y`` + `` 10001``
 #   under some merges. Keeping state codes atomic preserves the region→postcode adjacency
 #   the classifier relies on.
-# - **Common postal markers** (PO Box, Cedex, BP) — fixed surface forms; cheaper to put in
+# - **Common postal markers** (PO Box, Cedex, BP) — fixed surface forms. cheaper to put in
 #   the vocab once than to learn them from frequency.
 # - **JP postcode hyphen anchor** (``-``) we don't include here because ``-`` already
-#   tokenizes as a single piece; the JP 100-0005 *whole-postcode* coverage comes from
+#   tokenizes as a single piece. the JP 100-0005 *whole-postcode* coverage comes from
 #   corpus-mined postcode literals (see ``mine_postcode_literals``).
 #
 # Callers can extend or replace this set via ``--user-defined-symbols-file`` (one literal
@@ -148,7 +148,7 @@ DEFAULT_USER_DEFINED_SYMBOLS: tuple[str, ...] = (
 
 
 def parse_user_defined_symbols_file(path: Path) -> list[str]:
-    """One literal per line; blank lines + ``#``-comments ignored. Whitespace stripped only
+    """One literal per line. blank lines + ``#``-comments ignored. Whitespace stripped only
     at line ends (a UDS may itself contain spaces like ``PO Box``)."""
     out: list[str] = []
     for line in path.read_text(encoding="utf-8").splitlines():

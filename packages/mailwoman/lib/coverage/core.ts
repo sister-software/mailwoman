@@ -5,7 +5,7 @@
  *
  *   Builder for the demo map's "fog of war" address-COVERAGE overlay — an H3 hexbin tileset that
  *   shades each area by how much address-point data we hold (covered → clear, empty → gray fog).
- *   Backs the `mailwoman coverage build` command; kept React-free here so the logic is testable and
+ *   Backs the `mailwoman coverage build` command. kept React-free here so the logic is testable and
  *   the command is a thin Ink wrapper (mirrors `geocode-core.ts`).
  *
  *   Pipeline: ATTACH the per-state address-point databases (+ interpolation databases) read-only → DuckDB's
@@ -19,7 +19,7 @@
  *   full gap). • coarse cell: fog = 1 − the MEAN child coverage — "on average, how covered are the
  *   blocks here" — so a region reads clear when zoomed out and the specific gaps surface as you
  *   zoom into the fine res. • `fog_opt = fog ** OPTIMISTIC_GAMMA` (γ>1) lifts partial coverage
- *   toward clear for an optimistic "looks covered until you zoom in" reading; the demo toggles
+ *   toward clear for an optimistic "looks covered until you zoom in" reading. the demo toggles
  *   between `fog` and `fog_opt`.
  *
  *   Each resolution is baked in its own non-overlapping zoom band (per-feature tippecanoe
@@ -116,7 +116,7 @@ export interface CoverageBuildOptions {
 	 */
 	postcodeExcludeCountries: string[]
 	/**
-	 * Highest zoom baked; MapLibre overzooms above it.
+	 * Highest zoom baked. MapLibre overzooms above it.
 	 */
 	tileMaxZoom: number
 	/**
@@ -207,9 +207,9 @@ function buildBands(allRes: number[], tileMaxZoom: number): Map<number, [number,
 
 /**
  * True if a GeoJSON polygon's outer ring spans >180° of longitude — the antimeridian-wrap artifact.
- * `h3_cell_to_boundary_wkt` emits UNWRAPPED lon for cells straddling ±180, smearing a polygon across the whole map; a
+ * `h3_cell_to_boundary_wkt` emits UNWRAPPED lon for cells straddling ±180, smearing a polygon across the whole map. a
  * normal hex spans a fraction of a degree, so a >180° span is unambiguously a wrap. Cheaper than round-tripping through
- * the spatial extension; covers AK/RU/FJ/NZ-Chathams.
+ * the spatial extension. covers AK/RU/FJ/NZ-Chathams.
  */
 function antimeridianWrapped(geojson: string): boolean {
 	let min = Infinity
@@ -289,7 +289,7 @@ export async function buildCoverageTiles(
 		`CREATE TEMP TABLE data_pt AS SELECT h3_latlng_to_cell(lat, lon, ${opts.fineRes}) AS cell, count(*)::BIGINT AS cnt FROM (${ptAgg}) GROUP BY 1`
 	)
 
-	// data_seg: res-FINE street-segment counts. The geometry is a JSON coordinate array; bin its first
+	// data_seg: res-FINE street-segment counts. The geometry is a JSON coordinate array. bin its first
 	// vertex (a segment is ~block-length). Same raw-then-aggregate discipline as data_pt.
 	const segIdx = states.map((s, i) => (s.interp ? i : -1)).filter((i) => i >= 0)
 
@@ -433,7 +433,7 @@ export async function buildCoverageTiles(
 		// build-importance). importance is already ∈ [0,1] with major cities ≈ 0.85–0.99, so it is the
 		// salience: a big uncovered city → dark hole, a hamlet → faint. Only places carrying a signal
 		// count as "civilization" (the unknown long tail is dropped, not flagged as work-to-do). Each
-		// place spreads to a 1-ring halo; a cell's salience is the strongest place touching it.
+		// place spreads to a 1-ring halo. a cell's salience is the strongest place touching it.
 		await duck.run(`
 			CREATE TEMP TABLE sal AS
 			WITH places AS (
@@ -511,7 +511,7 @@ export async function buildCoverageTiles(
 		ndjsonPath,
 	]
 
-	// quiet: tippecanoe's stderr must not leak into the Ink render; we surface it only on failure.
+	// quiet: tippecanoe's stderr must not leak into the Ink render. we surface it only on failure.
 	const tip = await $({ nothrow: true, quiet: true })`tippecanoe ${tipArgs}`
 
 	if (tip.exitCode !== 0) {

@@ -192,7 +192,7 @@ export async function setEmailState(
 /**
  * Tokens whose email has not been confirmed sent: `pending` covers a crash between the insert and the send, or between
  * the provider accepting the message and the ledger recording it; `failed` is a provider refusal. Both are re-sent
- * under the invoice id; whether the provider deduplicates on it is the provider's (`email/provider.ts`).
+ * under the invoice id. whether the provider deduplicates on it is the provider's (`email/provider.ts`).
  */
 export async function tokensAwaitingEmail(ledger: Ledger): Promise<LicenseTokenRow[]> {
 	return ledger.selectFrom("license_tokens").selectAll().where("email_state", "in", ["pending", "failed"]).execute()

@@ -3,7 +3,7 @@
 # orders (rotated i%3) so locality+postcode appear in every position. It worked (EU +9..+31pp, US/FR
 # held) — but AU was never in it: country_weights lists US + 21 EU locales, no AU, and data_loader
 # EXCLUDES any row whose country isn't listed. So v4.13.0 reads AU's native postcode-first format
-# ("3053 Carlton, Barry Street 50") with its US/EU number-first prior and mangles it; au-order-probe.ts
+# ("3053 Carlton, Barry Street 50") with its US/EU number-first prior and mangles it. au-order-probe.ts
 # proved the model parses the same addresses perfectly when reordered (65% -> 87% @25km). It's the
 # German/EU word-order gap again, for AU.
 #
@@ -11,9 +11,9 @@
 #   - country_weights: + AU: 1.0  (so the gnaf AU rows aren't excluded — the data_loader.py check).
 #   - source_weights:  + gnaf: 6.0  (the gnaf G-NAF AU 3-order source, #208). 6.0 matches the TARGETED-
 #     FIX precedent — synth-german (6.0) and synth-fr-admin-split (6.0) are single-concept format fixes,
-#     exactly gnaf's role; overture's 3.0 was for BROAD 16-locale exposure, a different job. The
+#     exactly gnaf's role. overture's 3.0 was for BROAD 16-locale exposure, a different job. The
 #     step-2000 check adjudicates dilution: lower if US/EU regress, raise if AU flat.
-# The gnaf recipe output is the same 3-order rotation (canonical/pc-first/city-first, i%3) overture used; built
+# The gnaf recipe output is the same 3-order rotation (canonical/pc-first/city-first, i%3) overture used. built
 # by `mailwoman gnaf assemble` (G-NAF PSV join, 150k held-out from the AU eval) + the `gnaf` corpus
 # adapter. Pure overlay ADD onto corpus-v0.9.1-multilocale (scripts/assemble-overlay-manifest.py).
 #

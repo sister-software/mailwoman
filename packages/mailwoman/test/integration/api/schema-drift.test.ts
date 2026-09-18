@@ -48,13 +48,13 @@
  *     per-field value check alone would miss it.
  *
  *   Empirically verified each check fires independently: dropping a schema field breaks `_KeysMatch` AND
- *   Direction 2; narrowing one field's type (e.g. `lat` non-nullable) breaks Direction 1 only; adding a
+ *   Direction 2. narrowing one field's type (e.g. `lat` non-nullable) breaks Direction 1 only. adding a
  *   schema field `GeocodeResult` doesn't have breaks `_KeysMatch` alone when the field is optional, and
  *   `_KeysMatch` AND Direction 1 when it's required (Direction 2 permits width subtyping, so an extra
  *   schema-side field can never break it).
  *
  *   `vitest`'s own `expectTypeOf`/`assertType` were deliberately not used — they only gain teeth under
- *   `vitest --typecheck` (a mode this repo doesn't run; its default `typecheck.include` is `*.test-d.ts`
+ *   `vitest --typecheck` (a mode this repo doesn't run. its default `typecheck.include` is `*.test-d.ts`
  *   anyway, not this file's required `.test.ts` name), so they'd silently no-op under the repo's actual
  *   `yarn vitest run`. The hand-rolled `Equal`/`IsAssignable` utilities below are pure type-level
  *   conditional types with zero runtime footprint and zero new dependencies, wired to fire under the
@@ -106,7 +106,7 @@ export type _ResultAcceptsSchema = Expect<IsAssignable<Inferred, GeocodeResult>>
 /**
  * Every `GeocodeResult` field name, as a `satisfies` object — TypeScript itself enforces this list can't drift from the
  * interface (add, remove, or rename a `GeocodeResult` field and this stops compiling). Exists so the runtime check
- * below has something concrete to compare against; JS has no reflection over a TS interface, so SOME hardcoded list is
+ * below has something concrete to compare against. JS has no reflection over a TS interface, so SOME hardcoded list is
  * unavoidable for a runtime assertion — this is the compile-time-guarded version of one.
  */
 const GEOCODE_RESULT_FIELD_NAMES = {

@@ -11,7 +11,7 @@
 # GEOMETRY IS IDENTICAL TO v0_7_2-intersection-bare.yaml on purpose: the pretrained encoder
 # must be state_dict-key-identical to the supervised model so `init_from` loads it cleanly.
 # use_phrase_priors / use_crf stay true so their params exist in the checkpoint (untrained
-# here; the fine-tune trains them). forward_mlm skips the phrase-projection + CRF heads.
+# here. the fine-tune trains them). forward_mlm skips the phrase-projection + CRF heads.
 #
 # This is a VALIDATION run: 20k steps to confirm the loss descends sanely + the Trackio
 # dashboard works end to end, then a fine-tune from the resulting checkpoint decides whether

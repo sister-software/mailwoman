@@ -26,7 +26,7 @@ def manifest_files(data: dict[str, Any]) -> list[dict[str, Any]]:
     MEASURED 2026-09-09, and the reason this function exists: the rename changed this reader's key without
     migrating the manifests. `v0.28.0-reviewed-postcode-tail` declares 706 train parquet files under the old key,
     and the loader resolved one — the overlay's own file — because the new key read empty and the glob fallback
-    saw only the overlay directory. A run would have trained on 22 rows and reported success; the `val` split
+    saw only the overlay directory. A run would have trained on 22 rows and reported success. the `val` split
     raised `FileNotFoundError` instead, which is the only reason it surfaced at all.
     """
     current = data.get("slices")
@@ -90,7 +90,7 @@ def _parquet_paths(corpus_dir: Path, split: str) -> list[Path]:
        root, which do not exist when the corpus is mounted elsewhere (the Modal volume at
        ``/data/...``).
 
-    So per file: use the manifest path AS-IS when it exists; otherwise RE-ROOT it under
+    So per file: use the manifest path AS-IS when it exists. otherwise RE-ROOT it under
     ``corpus_dir`` (take the ``<split>/<basename>`` tail). This serves both cases — overlay
     cross-dir refs are preserved when valid, build-machine paths are re-rooted when stale — and is
     why v0.7.2 (v0.4.0 overlay → v0.3.0 base) trained fine: its manifest paths resolve as-is on the
@@ -123,7 +123,7 @@ def _parquet_paths(corpus_dir: Path, split: str) -> list[Path]:
         # STRICT partial-resolution guard (#480, the v0.7.1 trap): a manifest that declares files
         # this loop cannot find means the corpus is BROKEN (an overlay missing its base, a moved
         # volume) — training on the survivors silently measures the wrong corpus. There is no
-        # legitimate partial case; fail with the full missing list. All-missing falls through to
+        # legitimate partial case. fail with the full missing list. All-missing falls through to
         # the legacy glob (monolithic corpora whose manifests never resolved here).
         if resolved and missing:
             raise FileNotFoundError(
@@ -152,14 +152,14 @@ def file_source_counts(path: Path) -> dict[str, int]:
     ground that the corpus is source-segregated. It is not: the writer caps a file at ``rowsPerFile`` rows and a
     source boundary falls wherever it falls, so 8 of the 718 train files in ``v0.31.0-region-code-and-unit`` carry
     two, and one carries four. ``_file_row_iter`` has always filtered per row against the source it was asked for,
-    so the ROWS were right; what the first-row reading got wrong is which sources exist at all — two of them appear
+    so the ROWS were right. what the first-row reading got wrong is which sources exist at all — two of them appear
     in no other file and were invisible to every caller.
 
     Reading every source costs less than reading the first one did. The column is dictionary-encoded and the
     grouping happens inside Arrow, so a 1,000,000-row file takes 30 ms where the first-row read was documented at
-    50 ms; the four-source file takes 45 ms.
+    50 ms. the four-source file takes 45 ms.
 
-    Raises on a non-string cell, which is a ``--golden`` (label-less) file used as a train file; it used to fail
+    Raises on a non-string cell, which is a ``--golden`` (label-less) file used as a train file. it used to fail
     later with a cryptic ``'<' not supported between NoneType and str`` from ``sorted()``.
     """
     column = pq.ParquetFile(path).read(columns=["source"])["source"]

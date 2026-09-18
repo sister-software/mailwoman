@@ -96,7 +96,7 @@ export function createUSGovIRSBMFAdapter(): CorpusAdapter {
 				const zipRaw = (record.ZIP ?? "").trim()
 
 				if (!city || !zipRaw) continue
-				const postcode = zipRaw.split("-")[0]!.trim() // 5-digit; drop the optional +4
+				const postcode = zipRaw.split("-")[0]!.trim() // 5-digit. drop the optional +4
 
 				const split = splitStreetLineOrPOBox(street)
 

@@ -16,7 +16,7 @@
  *   name-match can't generate when a small town isn't well-indexed.
  *
  *   Build-from-source per the standing rule: locality polygons from the whosonfirst-data-admin-<cc>
- *   GeoJSON repos; postcode centroids from our own custom-built postalcode-intl.db (not a prebuilt
+ *   GeoJSON repos. postcode centroids from our own custom-built postalcode-intl.db (not a prebuilt
  *   dump).
  *
  *   Usage: node scripts/build-postcode-locality.ts --country DE\

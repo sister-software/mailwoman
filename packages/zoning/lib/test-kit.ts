@@ -120,8 +120,8 @@ export function fixtureFeature(
 }
 
 /**
- * The fixture set: two adjacent zones, one of them holed the way this service encodes holes; a second plan over the
- * same ground as the first; a zone smaller than a cell; and a zone the authority states as unzoned.
+ * The fixture set: two adjacent zones, one of them holed the way this service encodes holes. a second plan over the
+ * same ground as the first. a zone smaller than a cell. and a zone the authority states as unzoned.
  *
  * THE OVERLAP BETWEEN PLANS IS THE POINT. A point inside the first zone must answer with both rows, each naming its own
  * plan — which is what proves a plan is part of the claim rather than a parameter of it.

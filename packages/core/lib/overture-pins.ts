@@ -14,7 +14,7 @@
  *   Five tools carried their own literal before this constant existed, at two different releases, and one of them
  *   would have defaulted to a directory that holds no addresses parquet at all: on the lab data root the addresses
  *   theme is fetched at `2026-06-17.0` (53 country parquets), the older `2026-05-20.0` holds 23, and the divisions
- *   pin's directory holds none. A tool that needs another vintage takes it through its own `--release` option; the
+ *   pin's directory holds none. A tool that needs another vintage takes it through its own `--release` option. the
  *   default is this one, so the vintage a build read is the vintage the corpus and the CJK board were built from.
  */
 

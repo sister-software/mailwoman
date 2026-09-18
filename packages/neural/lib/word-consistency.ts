@@ -24,10 +24,10 @@
  *       existing cross-word merge still joins them.
  *
  *   Safety: a word whose pieces already agree IN TYPE is left byte-identical — enforced structurally
- *   (the vote never runs on a type-consistent word; single-piece words are trivially consistent).
+ *   (the vote never runs on a type-consistent word. single-piece words are trivially consistent).
  *   Until 2026-07-15 this held only when the vote happened to agree with the decoder, which let the
  *   heal RE-DECODE consistent words from local type-mass and override viterbi (`▁Broadway`
- *   B-street→O; all-street `Gamle` →locality) — the mechanism behind the 2026-06-19 street
+ *   B-street→O. all-street `Gamle` →locality) — the mechanism behind the 2026-06-19 street
  *   regression below. The vote includes `O`, so a disagreeing word can still resolve to all-`O`.
  *
  *   Promotion-eval outcome (2026-06-19, fr-admin-split-eval + per-locale-f1, MAILWOMAN_WORD_CONSISTENCY=1): not
@@ -36,13 +36,13 @@
  *
  *   Re-diagnosis (2026-07-15): the regression was not vote noise — it was two defects in this module.
  *   (1) The heal re-decoded words whose pieces already AGREED whenever the local type-mass preferred
- *   another type, overriding viterbi (`▁Broadway` B-street→O; all-street `Gamle`→locality). Fixed
+ *   another type, overriding viterbi (`▁Broadway` B-street→O. all-street `Gamle`→locality). Fixed
  *   structurally: the vote now only runs on words whose pieces disagree in type. (2) Punctuation
  *   continuation pieces joined the preceding word's vote group (`Ave` + `,`), and their `O` mass
  *   manufactured fake disagreements that killed real spans — the `WordConsistencyOpts.splitOnPunctuation`
  *   promotion eval. With both fixed (+ `skipByteFallbackWords`), the heal is a clean win with no confidence floor:
- *   golden us street 82.0→82.2, fr macro 42.2→51.5, adversarial flat; parity house_number .767→.808,
- *   postcode →1.000, street .543→.573; error analysis within the 2pp threshold. Ships on at the pipeline call
+ *   golden us street 82.0→82.2, fr macro 42.2→51.5, adversarial flat. parity house_number .767→.808,
+ *   postcode →1.000, street .543→.573. error analysis within the 2pp threshold. Ships on at the pipeline call
  *   sites via `WORD_CONSISTENCY_SHIP_DEFAULT` (core/pipeline/types.ts). A `minMeanConfidence` floor
  *   was measured NET-NEGATIVE on the parity corpus (fragment rows are low-confidence but heal
  *   correctly) — it exists as an opt, unused by the ship default.
@@ -154,7 +154,7 @@ export function enforceWordConsistency(
 	labelIndices: readonly number[],
 	opts?: WordConsistencyOpts
 ): WordConsistencyResult {
-	// Type → {B index, I index}; the standalone O index; per-label-index → type.
+	// Type → {B index, I index}. the standalone O index. per-label-index → type.
 	const typeB = new Map<string, number>()
 	const typeI = new Map<string, number>()
 
@@ -203,7 +203,7 @@ export function enforceWordConsistency(
 		}
 
 		if (opts?.splitOnPunctuation && PUNCTUATION_ONLY.test(content)) {
-			// Punctuation separator — `12/345`'s halves vote independently; a trailing `,` never joins
+			// Punctuation separator — `12/345`'s halves vote independently. a trailing `,` never joins
 			// `Ave`'s group. The piece itself joins no word (its label is left as-is, like whitespace).
 			flush()
 

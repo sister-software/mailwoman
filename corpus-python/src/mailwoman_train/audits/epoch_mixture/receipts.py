@@ -7,7 +7,7 @@ corpus cannot feed trains a model that answers the question nobody asked.
 
 The binding is what stops a passing audit from being reused. It digests the config and the corpus
 MANIFEST together, so a GPU run must present a token derived from the same bytes the CPU preflight
-read. A receipt audit against a different corpus is not a weaker check; it is a check of something
+read. A receipt audit against a different corpus is not a weaker check. it is a check of something
 else.
 """
 

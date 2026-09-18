@@ -71,7 +71,7 @@ export interface DocsSubHeaderProps {
  * the navbar and the sidebar/content row (mounted from the ejected `theme/DocRoot/Layout`).
  *
  * Each section is its own sidebar (see sidebars.ts), so this bar — not a collapsible sidebar category — is how a reader
- * moves between sections; the active sidebar's contents sit one level shallower as a result.
+ * moves between sections. the active sidebar's contents sit one level shallower as a result.
  */
 export const DocsSubHeader: FC<DocsSubHeaderProps> = ({ navbarRef, hidden }) => {
 	const activeName = useDocsSidebar()?.name

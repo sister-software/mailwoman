@@ -4,7 +4,7 @@
  * @author Teffen Ellis, et al.
  *
  *   Codex-backed lexicon for the Stage 2.7 span proposer (`@mailwoman/core/pipeline`'s
- *   `proposeSpans`). Core stays codex-free; this module assembles the proposer's designator
+ *   `proposeSpans`). Core stays codex-free. this module assembles the proposer's designator
  *   vocabulary from the provenance-tracked `@mailwoman/codex` tables — USPS Pub-28 C2 secondary
  *   unit designators, USPS PO-box designators, Australia Post AMAS delivery types, NZ Post ADV358
  *   delivery-service types. Which systems are loaded conditions the proposer's locale-dependent
@@ -14,7 +14,7 @@
  *   codex table row. AU `MS` (Mail Service) and the identifier-less counter types (CARE PO, CMA,
  *   CPA, Counter Delivery, Poste Restante) are excluded from the mid-text SCAN regex — a bare
  *   two-letter designator with no required number is exactly the false-positive shape ("Ms Smith")
- *   the AU matcher special-cases; the scan keeps only number-carrying forms.
+ *   the AU matcher special-cases. the scan keeps only number-carrying forms.
  */
 
 import { au, nz, us, type SystemCode } from "@mailwoman/codex"
@@ -135,7 +135,7 @@ export function buildCodexSpanLexicon(systems: readonly SystemCode[] = ["us", "a
 	}
 
 	// Longest-first so "GPO Box" beats "Box", "Private Bag" beats "Bag".
-	// oxlint-disable-next-line unicorn/no-array-sort -- sorts a freshly-built array; toSorted would double-allocate on a hot path
+	// oxlint-disable-next-line unicorn/no-array-sort -- sorts a freshly-built array. toSorted would double-allocate on a hot path
 	const alternatives = [...deliveryPhrases].sort((a, b) => b.length - a.length).map(phraseToPattern)
 
 	const deliveryService = alternatives.length

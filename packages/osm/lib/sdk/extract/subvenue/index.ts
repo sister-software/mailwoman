@@ -7,7 +7,7 @@
  *   terminals, boarding gates, station platforms) and their containing venues (aerodromes, stations,
  *   campuses) out of a Geofabrik `.osm.pbf` extract via GDAL/ogr2ogr, matched against an AND/OR
  *   tag-rule table and yielded as {@link SubVenueSourceRow}s. Mirrors `extract-poi.ts`'s
- *   process-spawn + GeoJSONSeq-over-stdout idiom; the two differences are the predicate (transport
+ *   process-spawn + GeoJSONSeq-over-stdout idiom. the two differences are the predicate (transport
  *   structure, not telecom infrastructure) and the LOCALIZED-NAME harvest described below.
  *
  *   WHY THIS EXISTS. `docs/engineering/sub-venue-corpus-task.mdx` establishes that `North Terminal` /
@@ -40,7 +40,7 @@
  *   for rather than emitting hstore SQL that runs and matches nothing. Verified against the installed `osmconf.ini` and against a hand-authored `.osm`
  *   XML fixture read with the system `ogr2ogr` (GDAL's OSM driver reads plain OSM XML the same way it
  *   reads `.pbf`), which is also what `extract-subvenue.test.ts` pins. A custom `OSM_CONFIG_FILE` that
- *   changes either `attributes=` line breaks the bare-column assumption; not a concern for the shipped
+ *   changes either `attributes=` line breaks the bare-column assumption. not a concern for the shipped
  *   default.
  *
  *   A promoted key is not repeated inside `other_tags` — that is the whole point of promotion — so the
@@ -51,7 +51,7 @@
  *   No parent linkage. A terminal's containing aerodrome is expressed in OSM by geometry (or an
  *   occasional site relation), not by a parent id, so pairing `Terminal 5` with `Heathrow Airport`
  *   needs a spatial join this module deliberately does not attempt. Both tiers are yielded with their
- *   coordinates and a {@link SubVenueTier} discriminator; pairing is the consumer's job.
+ *   coordinates and a {@link SubVenueTier} discriminator. pairing is the consumer's job.
  *
  *   No `country` either, for the same reason `extract-poi.ts` has none: a Geofabrik extract's country
  *   is a property of the invocation, not of a feature. Rows carry `country: ""` and the caller stamps it.
@@ -148,7 +148,7 @@ export function parseOSMHstore(text: string | null | undefined): Record<string, 
 
 		if (key === null) break
 
-		// Step over the `=>` separator; a malformed pair just resolves to the next quoted run.
+		// Step over the `=>` separator. a malformed pair just resolves to the next quoted run.
 		const value = readQuoted()
 
 		if (value === null) break

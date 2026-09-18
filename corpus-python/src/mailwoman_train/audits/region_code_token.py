@@ -8,7 +8,7 @@ at the definitions stated here and at both sampling levels.
 
 NO CODE LIST IS TYPED HERE. Every two-letter uppercase token is counted and keyed by itself, so the
 contested set falls out of the data rather than out of a table that would be a second copy of the
-codex's. A code with a count under one tag only is not contested; a code with counts under both is.
+codex's. A code with a count under one tag only is not contested. a code with counts under both is.
 
 BOTH LEVELS, BECAUSE AUGMENTATION WRITES REGIONS. `augment_region_prob` appends a region surface to a
 row that did not carry one, so the emitted stream carries region codes the drawn stream does not. A

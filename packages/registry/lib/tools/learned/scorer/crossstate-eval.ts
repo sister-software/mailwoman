@@ -8,11 +8,11 @@
  *   baseline on clustering by +5.2pp — but the GBT was trained and evaluated within one state (TX).
  *   The production question is whether that +5.2pp generalizes: train on one state, evaluate the dedup
  *   clustering F1 on a different state the model never saw. If it holds, the GBM is
- *   production-worthy; if it collapses, the scorer is fitting state-specific structure and needs
+ *   production-worthy. if it collapses, the scorer is fitting state-specific structure and needs
  *   per-state training (a finding either way).
  *
  *   One registry pass builds the global address-frequency table + a TRAIN-state sample + an
- *   EVAL-state sample (the SHARED multi-state sample builder); both are geocoded; the GBT + LR are
+ *   EVAL-state sample (the SHARED multi-state sample builder). both are geocoded. the GBT + LR are
  *   trained on the train state's pairs and used to cluster the eval state's records through the
  *   same `resolveEntities` pipeline (FS baseline / GBT scorer / LR scorer), best F1 over a fine
  *   per-scorer threshold sweep. The metric is the dedup benchmark's clustering F1.
@@ -115,7 +115,7 @@ export async function scorerCrossStateEval(
 	const geocoder = await options.createGeocoder()
 
 	// `auth`/`taxonomy` ride as attributes so the SHARED featurizer's #625 roll-up features can read the
-	// authorized official; the FS arm ignores them (no discriminators configured).
+	// authorized official. the FS arm ignores them (no discriminators configured).
 	const mapping: ColumnMapping = {
 		id: "npi",
 		name: "name",

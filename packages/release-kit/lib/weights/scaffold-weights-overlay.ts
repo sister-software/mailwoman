@@ -52,7 +52,7 @@ export interface ScaffoldWeightsOverlayOptions {
 	 */
 	locale: string
 	/**
-	 * The one artifact the overlay adds; defaults to `pair-index-<cc>.bin`, or `fst-<locale>.bin` under `base`.
+	 * The one artifact the overlay adds. defaults to `pair-index-<cc>.bin`, or `fst-<locale>.bin` under `base`.
 	 */
 	artifact?: string
 	/**
@@ -86,7 +86,7 @@ export async function scaffoldWeightsOverlay(
 
 	/**
 	 * BCP-47 in, lowercase package suffix out: `es-ES` → `es-es`. The workspace directory, the package name and every
-	 * register use this form; the ORIGINAL casing is kept only for the model card's `locale` field, which is the one
+	 * register use this form. the ORIGINAL casing is kept only for the model card's `locale` field, which is the one
 	 * place the tag is a tag rather than an identifier.
 	 */
 	const localeTag = options.locale
@@ -139,7 +139,7 @@ export async function scaffoldWeightsOverlay(
 				"!scripts/**",
 			],
 			dependencies: { [basePackage]: "workspace:*" },
-			// The dev linker imports the shared builder; knip refuses an import no manifest declares.
+			// The dev linker imports the shared builder. knip refuses an import no manifest declares.
 			devDependencies: { "@mailwoman/resolver-wof-sqlite": "workspace:*" },
 			mailwoman: { baseWeights: basePackage },
 		},
@@ -162,7 +162,7 @@ export async function scaffoldWeightsOverlay(
 	// The dev linker, emitted rather than copied. This step used to be a printed instruction reading
 	// "copy the closest sibling's build block", and that is precisely how es-es and it-it came to ship
 	// de-de's docstring — describing German addresses, in packages whose code was correct. Generating it
-	// leaves nothing to copy; the magnitudes below are placeholders the author is told to calibrate.
+	// leaves nothing to copy. the magnitudes below are placeholders the author is told to calibrate.
 	await writeLocalTextFile(
 		base
 			? `/**
@@ -261,7 +261,7 @@ await materializeDevOverlay({
 	const registered: string[] = []
 
 	// 1. Root workspaces. The field is `packages/*` plus literals, so a new overlay directory is covered by the glob
-	//    the moment it exists; a literal entry is only written when no pattern already names the directory.
+	//    the moment it exists. a literal entry is only written when no pattern already names the directory.
 	const rootPath = repoPath("package.json")
 	const rootPkg = await readLocalJSONFile<{ workspaces: string[] }>(rootPath)
 

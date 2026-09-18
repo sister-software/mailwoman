@@ -6,7 +6,7 @@
  *   Typed schema for poi.db — spatial layer #1 (spec §3.4). One clustered `WITHOUT ROWID` B-tree
  *   keyed `(h3_cell, category_id, neg_rank, rowid_key)` so "everything near this res-9 cell" is a
  *   contiguous key range (the byte-range/httpvfs access pattern, same discipline as the candidate
- *   gazetteer). Rows carry denormalized name/brand/coords; category ids are small ints via the
+ *   gazetteer). Rows carry denormalized name/brand/coords. category ids are small ints via the
  *   `poi_category_codes` dictionary (poi-taxonomy category ids are the string side). The DB also
  *   embeds the layer-contract tables from `@mailwoman/core/layers` — the builder writes the
  *   manifest (tier `shipped`, spine `h3` res 9) and per-res-6-cell coverage.
@@ -64,7 +64,7 @@ export interface POITable {
 }
 
 /**
- * Staging mirror — every column nullable except the coords (the loader fills positionally; the materialize SELECT
+ * Staging mirror — every column nullable except the coords (the loader fills positionally. the materialize SELECT
  * enforces completeness).
  */
 export interface POIStageTable {
@@ -154,7 +154,7 @@ export async function createPOITable(db: Kysely<POIDatabase>): Promise<void> {
 		.addColumn("confidence", "real", (c) => c.notNull())
 		.addColumn("gers_id", "text")
 		.addPrimaryKeyConstraint("poi_pk", ["h3_cell", "category_id", "neg_rank", "rowid_key"])
-		// `WITHOUT ROWID` has no first-class builder; the raw modifier is the idiomatic fallback.
+		// `WITHOUT ROWID` has no first-class builder. the raw modifier is the idiomatic fallback.
 		.modifyEnd(sql`without rowid`)
 		.execute()
 }
@@ -168,7 +168,7 @@ export async function createPOINameKeyIndex(db: Kysely<POIDatabase>): Promise<vo
 
 /**
  * Secondary index for the BRAND path — a brand-wide fetch by `brand_wikidata` (no `h3_cell` prefix). Brand rows are
- * globally sparse (~0.31% of poi.db, median nearest tagged instance ~110 km), so the k-ring walk can never reach them;
+ * globally sparse (~0.31% of poi.db, median nearest tagged instance ~110 km), so the k-ring walk can never reach them.
  * the reader instead fetches all of a brand's rows and distance-sorts. Without this index that is a full-table scan
  * (~600 ms); with it, a range-scan (<1 ms p50). PARTIAL (`WHERE brand_wikidata IS NOT NULL`) so the ~99.7% of rows that
  * carry no QID never enter the B-tree — the index holds only the ~43k branded rows. Builders call this after the bulk

@@ -18,7 +18,7 @@
  *      gains a field.
  *   2. **Every table is ordered by identifier**, under {@link compareIdentifiers} — code point, never
  *      `localeCompare`, whose answer depends on the machine's collation. Arrays inside a record keep
- *      the order they were authored in; the compiler writes the tables, so it orders those.
+ *      the order they were authored in. the compiler writes the tables, so it orders those.
  *
  *   Nothing here records when compilation ran. `modelVersion` is the authored document's own version,
  *   so two builds of one document are byte-identical, and a clock in the artifact would make every
@@ -181,7 +181,7 @@ function artifactProblem(value: unknown): string | undefined {
  * {@link CompiledGeographicModel}.
  *
  * It checks the format version and the presence of every table, and does not re-validate the records. An artifact is
- * generated from a document that `parseGeographicModelDocument` already accepted; re-checking every record here would
+ * generated from a document that `parseGeographicModelDocument` already accepted. re-checking every record here would
  * be a second validator, and the version check is what catches the failure this reader can actually meet — an artifact
  * written by a different compiler.
  */

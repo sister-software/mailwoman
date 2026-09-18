@@ -45,7 +45,7 @@ export interface MatcherScaleOptions {
 
 /**
  * Generate N synthetic records clustered into ~N/DUP distinct "places". Each place gets a coordinate in the
- * continental-US box, a canonical key, and an org name; its DUP duplicates carry a lightly-varied name and a jittered
+ * continental-US box, a canonical key, and an org name. its DUP duplicates carry a lightly-varied name and a jittered
  * coordinate, so geo-cell + canonical-key blocking groups them and scoring links them — the realistic shape of a dedup
  * workload.
  */
@@ -111,7 +111,7 @@ export async function matcherScale(
 		const t0 = performance.now()
 
 		// learnedScorer:false — this measures the FS-baseline pipeline throughput baseline (the learned scorer
-		// is now default-on; its per-pair tree eval is a separate cost, not what this scale number tracks).
+		// is now default-on. its per-pair tree eval is a separate cost, not what this scale number tracks).
 		const { entities, candidatePairs } = resolveEntities(records, {
 			collapseSpatial: true,
 			trainEM: EM,

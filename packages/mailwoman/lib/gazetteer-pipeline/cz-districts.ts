@@ -11,11 +11,11 @@
  *   SOURCE + LICENSE: the GeoNames CZ places file (`<data-root>/geonames/CZ.txt`, CC-BY 4.0,
  *   attribution GeoNames) — rows whose name matches `Praha \d+` (the 22 administrative districts),
  *   the A-feature (administrative-division) row preferred per name. Same unified-schema shape as the
- *   LINZ NZ database (#1617), so the candidate build's `localities` fold consumes it as-is; same
+ *   LINZ NZ database (#1617), so the candidate build's `localities` fold consumes it as-is. same
  *   provenance discipline (`database_meta` + source md5).
  *
  *   Verified against the eu-mixed panel (2026-08-12 test rebuild): `Chabeřická 585, 19016 Praha 9`
- *   moved from a 6,733 km US answer to CZ at ~400 m — the postcode row was always in the artifact;
+ *   moved from a 6,733 km US answer to CZ at ~400 m — the postcode row was always in the artifact.
  *   this database supplies the locality half the pair rung needed.
  *
  *   Run: mailwoman gazetteer build cz-districts [--source <CZ.txt>] [--out <localities-cz-districts.db>]

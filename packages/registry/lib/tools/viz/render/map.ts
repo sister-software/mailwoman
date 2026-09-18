@@ -16,7 +16,7 @@
  *       renders accurate markers on a blank basemap). Serve the output dir first, e.g. `python3 -m
  *       http.server 8899 -d <dir>`, then point this at `http://localhost:8899/<page>.html`.
  *
- *   The map paints asynchronously after the network settles; we wait for networkidle, then a fixed
+ *   The map paints asynchronously after the network settles. we wait for networkidle, then a fixed
  *   beat for the basemap tiles + marker layer to finish compositing.
  */
 
@@ -45,7 +45,7 @@ export async function renderServedMapToPNG(
 ): Promise<{ outPNG: string; consoleErrors: string[] }> {
 	const { consoleErrors: errors } = await withChromiumPage({ viewport: { width: 1100, height: 760 } }, async (page) => {
 		await page.goto(options.url, { waitUntil: "networkidle", timeout: 30_000 })
-		// MapLibre composites tiles + the marker layer async after the network settles; give it a beat.
+		// MapLibre composites tiles + the marker layer async after the network settles. give it a beat.
 		await page.waitForTimeout(4000)
 		await page.screenshot({ path: options.outPNG })
 	})

@@ -55,7 +55,7 @@ export interface CopyWeightsOptions {
 	repoRoot: string
 	/**
 	 * Where the weights workspaces are written — the source checkout (the release path), or a #1894 preflight's staging
-	 * tree. Sources always resolve against this checkout's data root and release.config.json; only destinations move.
+	 * tree. Sources always resolve against this checkout's data root and release.config.json. only destinations move.
 	 */
 	destRoot?: string
 	log: (line: string) => void
@@ -96,7 +96,7 @@ interface MaterializationContext {
 /**
  * Serve `filename` into `dir` from the derived store, if this checkout's key already has it.
  *
- * Returns true when the file was placed, which tells the caller to skip its CLI spawn. A miss returns false; the caller
+ * Returns true when the file was placed, which tells the caller to skip its CLI spawn. A miss returns false. the caller
  * builds and then calls {@link stashDerived}.
  *
  * Replaces the actions/cache round-trip that carried 76.3 MB at ~1.6 MB/s (48–54s per leg) to a runner that already
@@ -122,7 +122,7 @@ async function serveFromDerivedStore(context: MaterializationContext, dir: strin
 
 	// Unlink first. `fs.copyFile` FOLLOWS a symlink at the destination and writes THROUGH it, leaving
 	// the symlink in place — and the registry refuses a tarball containing one (HTTP 415, YN0035).
-	// Same discipline as the rest of this module; see AGENTS.md "symlinks in the publish tarball".
+	// Same discipline as the rest of this module. see AGENTS.md "symlinks in the publish tarball".
 	await removePathIfPresent(dest)
 
 	await copyFileTo(cached, dest)
@@ -140,7 +140,7 @@ async function serveFromDerivedStore(context: MaterializationContext, dir: strin
  */
 async function stashDerived(context: MaterializationContext, dir: string, filename: string): Promise<void> {
 	// Never poison the store: a below-floor build must not become the artifact every future run
-	// receives as a HIT. The build-time floors are the primary check; this holds when they are
+	// receives as a HIT. The build-time floors are the primary check. this holds when they are
 	// bypassed (a stale-compiled builder predating them was #1528's exact shape).
 	const violation = await derivedStoreServeViolation(filename, resolvePath(dir, filename))
 
@@ -169,7 +169,7 @@ export async function copyWeights({
 }: CopyWeightsOptions): Promise<CopyWeightsReport> {
 	// CI release workflow sets MAILWOMAN_SKIP_WEIGHTS_COPY=1 when release_weights
 	// input is false (the default). Weights binaries live on the operator's host and
-	// aren't fetchable from CI; the workflow excludes the weights workspaces from the
+	// aren't fetchable from CI. the workflow excludes the weights workspaces from the
 	// publish set in that mode, so skipping the copy is correct.
 	if ($public.MAILWOMAN_SKIP_WEIGHTS_COPY) {
 		log("copy-weights: MAILWOMAN_SKIP_WEIGHTS_COPY set — skipping.")
@@ -304,7 +304,7 @@ async function materializeFST(context: MaterializationContext, workspace: string
  * street-morphology` at $MAILWOMAN_DATA_ROOT/wof/. Shipping it as a weights sibling is what carries it to the
  * per-version R2 asset layout the browser demo fetches — the node runtimes can rebuild from the bundled libpostal
  * dictionaries, the browser cannot. A missing source is skipped with a warning (byte-stable: node consumers fall back
- * to the per-process dictionary build; the demo parses without the street-context check, exactly as before).
+ * to the per-process dictionary build. the demo parses without the street-context check, exactly as before).
  */
 async function materializeStreetMorphology(context: MaterializationContext, workspace: string, dir: string) {
 	const src = resolvePath(context.dataRoot, "wof", "fst-street-morphology.bin")

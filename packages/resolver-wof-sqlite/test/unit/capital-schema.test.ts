@@ -2,8 +2,8 @@
  * @copyright Sister Software
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
- * @file The `capital` table round-trip (#1880's distribution home): what the builder writes, the reader returns; a
- *   pre-table artifact answers NULL (fall through to the repo file), never an empty list; malformed rows are skipped
+ * @file The `capital` table round-trip (#1880's distribution home): what the builder writes, the reader returns. a
+ *   pre-table artifact answers NULL (fall through to the repo file), never an empty list. malformed rows are skipped
  *   rather than crashing a session open.
  */
 

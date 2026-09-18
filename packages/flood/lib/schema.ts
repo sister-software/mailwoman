@@ -9,13 +9,13 @@
  *
  *   WHY TWO TIERS. A rooftop answer needs point-in-polygon against the real geometry — hexes alone either
  *   bloat to absurd resolution or lie exactly at zone boundaries, which is where a flood answer matters
- *   most. So the rings are stored once, unsimplified, with a precomputed bbox; the cell table classifies
- *   every cell `whole` or `partial` per zone; a `whole` cell answers in one primary-key probe, and only a
+ *   most. So the rings are stored once, unsimplified, with a precomputed bbox. the cell table classifies
+ *   every cell `whole` or `partial` per zone. a `whole` cell answers in one primary-key probe, and only a
  *   `partial` cell falls through to the ray cast, against just the polygons {@link FloodZoneCellAreaTable}
  *   names for that cell. Size concentrates where it is irreducible: the boundary fringe.
  *
  *   `WITHOUT ROWID` ON THE CELL TABLES AND NEVER ON THE GEOMETRY TABLE. Small fixed-width rows probed by
- *   their exact primary key belong in the B-tree; a row carrying a geometry blob does not — clustering it
+ *   their exact primary key belong in the B-tree. a row carrying a geometry blob does not — clustering it
  *   into the B-tree makes every index page a geometry page. That is the root `AGENTS.md` rule, and this
  *   layer is the first one where both halves of it appear in the same database.
  *
@@ -41,7 +41,7 @@ export const FloodCellContainment = {
 	 */
 	Whole: "whole",
 	/**
-	 * The zone boundary crosses the cell. The index has narrowed the candidate polygons; the point test decides.
+	 * The zone boundary crosses the cell. The index has narrowed the candidate polygons. the point test decides.
 	 */
 	Partial: "partial",
 } as const
@@ -149,7 +149,7 @@ export interface FloodZoneCellAreaTable {
 export interface FloodMapExtentTable {
 	extent_id: string
 	/**
-	 * What the authority says about this footprint. `mapped` for the EA's England statement; a source with an
+	 * What the authority says about this footprint. `mapped` for the EA's England statement. a source with an
 	 * availability layer of its own (FEMA's is layer 0) writes its published categories here instead.
 	 */
 	status: string
@@ -237,7 +237,7 @@ export async function createFloodZoneCellTable(db: FloodSchemaHandle): Promise<v
 
 	await addCellIndexColumns(table, "zone_code")
 		.addPrimaryKeyConstraint("flood_zone_cell_pk", ["h3_cell", "zone_code"])
-		// `WITHOUT ROWID` has no first-class builder; the raw modifier is the idiomatic fallback.
+		// `WITHOUT ROWID` has no first-class builder. the raw modifier is the idiomatic fallback.
 		.modifyEnd(sql`without rowid`)
 		.execute()
 }

@@ -96,7 +96,7 @@ function isValidTransition(from: string, to: string): boolean {
  * Because the bonus is predecessor-independent, it cannot change which predecessor wins for `toLabel` at `timestep` —
  * it changes whether paths entering `toLabel` there outscore paths that stay fused through a competing run (the task-8
  * probe's path-fusion mechanism: a locally-winning emission bias can still lose globally when the forced
- * `I-`/fresh-`B-` continuation costs more than the local emission bias recovers; a transition-entry bonus pays that
+ * `I-`/fresh-`B-` continuation costs more than the local emission bias recovers. a transition-entry bonus pays that
  * structural toll directly).
  */
 interface ViterbiTransitionAdjustment {

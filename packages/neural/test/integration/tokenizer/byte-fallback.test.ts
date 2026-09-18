@@ -97,7 +97,7 @@ describe("MailwomanTokenizer — byte-fallback offset reconstruction (paired-pun
 		const openRun = runPieces.slice(0, 3)
 		const closeRun = runPieces.slice(3, 6)
 
-		// Only the last piece of each run carries the real (non-zero-width) span; earlier pieces are zero-width
+		// Only the last piece of each run carries the real (non-zero-width) span. earlier pieces are zero-width
 		// placeholders at the run's start — mirrors groupPiecesIntoWords's "own placeholder, zero contribution"
 		// idiom for a bare ▁.
 		expect(openRun[0]!.start).toBe(openRun[0]!.end)

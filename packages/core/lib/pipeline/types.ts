@@ -49,20 +49,20 @@ export interface PipelineOpts {
 	 */
 	inputMode?: InputMode
 	/**
-	 * Disable fast-path shortcuts; always run the full pipeline. Does not bypass the poi_query branch — that's a routing
+	 * Disable fast-path shortcuts. always run the full pipeline. Does not bypass the poi_query branch — that's a routing
 	 * decision (the kind classifier + `stages.poiIntent`), not a fast-path shortcut, so a `poi_query`-classified input
 	 * still takes the poi branch regardless of this flag.
 	 */
 	forceFullPipeline?: boolean
 	/**
-	 * Hard cap on lookups the resolver may issue; passed through.
+	 * Hard cap on lookups the resolver may issue. passed through.
 	 */
 	resolveOpts?: ResolveOpts
 	/**
 	 * #690: title-case detected all-caps ASCII input before the Stage 3 classifier (helps on all-caps registry/compliance
 	 * data). Threaded to `ClassifierOpts.normalizeCase`. Detection-restricted
 	 *
-	 * - **Default-ON** (#895 settled drift D2; the classifier applies it when unset) — byte-stable for mixed-case input
+	 * - **Default-ON** (#895 settled drift D2. the classifier applies it when unset) — byte-stable for mixed-case input
 	 *   either way. Pass `false` to restore the raw-case parse.
 	 */
 	normalizeCase?: boolean
@@ -153,11 +153,11 @@ export interface LocaleHint {
 	 *
 	 * SEPARATE FROM `locale`, and added because it had nowhere else to go. `locale` is one BCP-47 tag, so a Hangul
 	 * address and a kanji address both had to be reported under one of them, and the rule that picks it answers `ja-JP`
-	 * for every CJK input; on the Korean reference set that is every row. The tag is not wrong about ROUTING — the
+	 * for every CJK input. on the Korean reference set that is every row. The tag is not wrong about ROUTING — the
 	 * character path is one weights family for Japanese, Korean and Chinese — it is wrong about what it says, and a
 	 * consumer reading the hint could not tell "Japanese" from "a script I cannot resolve a language for".
 	 *
-	 * This field lets it say the second. `locale` keeps its current meaning and its current values; a consumer that wants
+	 * This field lets it say the second. `locale` keeps its current meaning and its current values. a consumer that wants
 	 * the writing system reads here. Script narrows language where it is diagnostic — Hangul decides Korean on 37 of 37
 	 * rows of the Korean reference set — and does not where it is not: Han is shared, and kana decides Japanese on 356 of
 	 * 11,946 JP gold rows, because 県/市/区 and most place names are written in Han.
@@ -253,7 +253,7 @@ export const QueryIntentCode = {
 	/**
 	 * The answer holds nothing of the asked-for kind, and a coverage layer surveyed the searched cell for exactly that
 	 * kind — so the emptiness is a statement about the world rather than about retrieval. `evidence.coverage` carries the
-	 * cell, its basis and the layer that measured it; without exclusion-grade coverage this code is never raised, because
+	 * cell, its basis and the layer that measured it. without exclusion-grade coverage this code is never raised, because
 	 * an unsurveyed cell is unknown and never absence.
 	 */
 	CoverageQualifiedAbsence: "coverage_qualified_absence",
@@ -272,7 +272,7 @@ export const QueryIntentCode = {
 	 * The query supplied components finer than the answer reached, and the answer says which ones it could not use.
 	 *
 	 * The counterpart of `declared_ambiguity`, and it exists because the two failures were reported asymmetrically. Too
-	 * MANY answers raised a marker with a margin and a runner-up; too FEW — a street parsed and a locality centroid
+	 * MANY answers raised a marker with a margin and a runner-up. too FEW — a street parsed and a locality centroid
 	 * returned — raised nothing, so `301 College Ave #101, Athens, GA 30601` and `Athens, GA` came back as the same shape
 	 * of answer at the same tier with `uncertainty_m` null on both. A consumer could not tell "a city is the whole
 	 * answer" from "I was handed a street and a house number and discarded them".
@@ -311,7 +311,7 @@ export interface QueryIntentMarker {
 	 */
 	mechanism: string
 	/**
-	 * Human-readable, for a surface that shows it. Not machine-stable; branch on `code`.
+	 * Human-readable, for a surface that shows it. Not machine-stable. branch on `code`.
 	 */
 	message: string
 	/**
@@ -340,13 +340,13 @@ export interface QueryKindResult {
  * fragmented mode — three training runs showed they lift the fragment register (admin-street homonym +0.765 lower+heal)
  * while degrading full-address parses (the flip census, `.superpowers/sdd/progress.md` 2026-07-28). Explicitly settable
  * on every surface (CLI/API); when unset, {@link deriveInputMode} maps the kind-classifier's verdict. Endpoint defaults
- * (GTM B10): validation/batch/CSV → formatted; autocomplete/demo search → fragmented; plain parse → derived.
+ * (GTM B10): validation/batch/CSV → formatted. autocomplete/demo search → fragmented. plain parse → derived.
  */
 export type InputMode = "fragmented" | "formatted"
 
 /**
  * Map a {@link QueryKind} to its {@link InputMode} register. Multi-component postal specifications
- * (`structured_address`/`po_box`/`intersection`) are the formatted register; single-thing lookups (postcode, locality,
+ * (`structured_address`/`po_box`/`intersection`) are the formatted register. single-thing lookups (postcode, locality,
  * landmark, POI, vague) are fragments. Never keyed on case — lowercase is the primary user register (operator
  * doctrine).
  *
@@ -368,7 +368,7 @@ export function deriveInputMode(kind: QueryKind): InputMode {
 /**
  * The structured POI intent — the pluggable boundary between detection (kind classifier), the executors (Plan 3's
  * poi.db SQL compiler), and the export formats (OverpassQL emitter). Category ids are `@mailwoman/poi-taxonomy` ids
- * carried as plain strings — core stays lexicon-free; the branded type lives with the data package. Spec §3.2:
+ * carried as plain strings — core stays lexicon-free. the branded type lives with the data package. Spec §3.2:
  * docs/superpowers/specs/2026-07-18-spatial-layers-and-poi-design.md
  */
 export interface POIIntent {
@@ -387,7 +387,7 @@ export interface POIIntent {
 				 * How the set was bound to the PLACE, present only when at least one reached category carried a country scope.
 				 * `anchorCountry` is the resolved anchor's ISO 3166-1 alpha-2 country, or `null` when no anchor resolved to one
 				 * — and `null` admits no scoped claim. `excludedCategoryIDs` are the categories every one of whose authorities
-				 * scoped its claim to countries that do not include it; they were reached by the phrase and are not in
+				 * scoped its claim to countries that do not include it. they were reached by the phrase and are not in
 				 * `categoryIDs`. A set that empties this way abstains as `country_scope_excluded`.
 				 */
 				countryBinding?: { anchorCountry: string | null; excludedCategoryIDs: string[] }
@@ -414,7 +414,7 @@ export interface POIIntent {
 }
 
 /**
- * One executed POI search result (spec §3.4; produced by the executor, absent pre-execution).
+ * One executed POI search result (spec §3.4. produced by the executor, absent pre-execution).
  */
 export interface POIResult {
 	name: string | null
@@ -515,7 +515,7 @@ export interface FSTMatcherLike {
 export interface ClassifierOpts {
 	queryShape?: QueryShapeLite
 	/**
-	 * The input register (see {@link InputMode}). `formatted` runs the evidence-bundle channels deliberately off; the
+	 * The input register (see {@link InputMode}). `formatted` runs the evidence-bundle channels deliberately off. the
 	 * pipeline passes an explicit mode on every parse (caller override or {@link deriveInputMode} of the kind verdict).
 	 */
 	inputMode?: InputMode
@@ -524,7 +524,7 @@ export interface ClassifierOpts {
 	/**
 	 * Street-morphology matcher. In the pipeline this is the signal source for the FST street-context CHECK (#1315),
 	 * always paired with zeroed `fstStreetMorphologyOpts` — the morphology EMISSION prior measured US-golden-negative
-	 * (−48, 2026-07-25 decomposition) and stays off on the production paths; it remains reachable via direct
+	 * (−48, 2026-07-25 decomposition) and stays off on the production paths. it remains reachable via direct
 	 * `classifier.parse` for measured, opt-in use.
 	 */
 	fstStreetMorphology?: FSTMatcherLike
@@ -576,7 +576,7 @@ export interface AddressClassifier {
 
 /**
  * The Stage-2 locale detector the coordinator calls: the normalized input and its shape in, a {@link LocaleHint} out.
- * The caller's hint wins outright; an environment locale sits below it and above inferred machine preferences.
+ * The caller's hint wins outright. an environment locale sits below it and above inferred machine preferences.
  * `@mailwoman/locale-hint` implements it over the query shape alone.
  */
 export type LocaleDetector = (
@@ -592,7 +592,7 @@ export type LocaleDetector = (
 /**
  * Injectable stage implementations. All optional — when a stage is absent, the coordinator either skips it (resolver)
  * or substitutes a no-op stub (normalize / queryShape / `@mailwoman/locale-check` stage / kind classifier). The
- * classifier is required for the full pipeline path; without it, the coordinator can only fast-path on QueryShape
+ * classifier is required for the full pipeline path. without it, the coordinator can only fast-path on QueryShape
  * known-formats.
  */
 export interface RuntimePipelineStages {
@@ -620,13 +620,13 @@ export interface RuntimePipelineStages {
 	/**
 	 * POI intent stage (spec §3.1). Runs only when the kind classifier emitted `poi_query`. Returns the extracted intent,
 	 * an abstain, or `null` to fall through to the full pipeline (the mis-detection safety valve — a `poi_query` kind
-	 * with no extractable subject parses normally). Absent by default; wired by `createRuntimePipeline({ poiQueryKind:
+	 * with no extractable subject parses normally). Absent by default. wired by `createRuntimePipeline({ poiQueryKind:
 	 * true })`.
 	 */
 	poiIntent?: (input: NormalizedInputLite, locale: LocaleHint, opts?: PipelineOpts) => Promise<POIIntentOutcome | null>
 	/**
 	 * Stage 2.7 phrase grouper. Emits coherent input-unit proposals consumed by Stage 3 (as conditioning) and Stage 5 (as
-	 * boundary candidates). Hard dep in v0.5.0; pre-v0.5.0 callers run with no grouper and the result `phraseProposals`
+	 * boundary candidates). Hard dep in v0.5.0. pre-v0.5.0 callers run with no grouper and the result `phraseProposals`
 	 * field is empty.
 	 */
 	groupPhrases?: (input: NormalizedInputLite, shape: QueryShapeLite, locale: LocaleHint) => Promise<PhraseProposal[]>
@@ -638,7 +638,7 @@ export interface RuntimePipelineStages {
 	fst?: FSTMatcherLike
 	/**
 	 * Street-morphology matcher — the signal source for the FST street-context check (#1315). Consumed only with the
-	 * morphology emission prior zeroed at the classify call sites (the emission prior is US-golden-negative; the check
+	 * morphology emission prior zeroed at the classify call sites (the emission prior is US-golden-negative. the check
 	 * alone is golden-flat and fragment-positive). Effective only when `fst` is also present.
 	 */
 	streetMorphology?: FSTMatcherLike

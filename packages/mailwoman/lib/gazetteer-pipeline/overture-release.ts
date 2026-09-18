@@ -6,7 +6,7 @@
  *   Does a pinned Overture release still exist?
  *
  *   Overture DELETES releases from the bucket on roughly a monthly window — a 2026-08-19 listing held two. Every build
- *   that reads Overture carries its own pin (divisions for admin, places for POI, addresses for the corpus ingest;
+ *   that reads Overture carries its own pin (divisions for admin, places for POI, addresses for the corpus ingest.
  *   independent on purpose, because bumping one is a new-vintage decision for that artifact alone), and each pin dies
  *   silently when its release is pruned.
  *
@@ -116,7 +116,7 @@ export interface ReleaseCheck {
  * Check one pin against the bucket.
  *
  * A failed listing reports `reachable: false` and `present: true` — deliberately permissive. This is a pre-flight whose
- * only job is to turn a 30-minute failure into an immediate one; letting it BLOCK a build on its own network trouble
+ * only job is to turn a 30-minute failure into an immediate one. letting it BLOCK a build on its own network trouble
  * would trade a slow failure for a spurious one.
  */
 export async function checkOvertureRelease(release: string, client?: OvertureListingClient): Promise<ReleaseCheck> {

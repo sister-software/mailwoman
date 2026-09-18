@@ -15,7 +15,7 @@
  *
  *   Usage: mailwoman dev generate official-languages [--cldr-dir <dir>] [--cldr-version 47.0.0]
  *
- *   With `cldrDir`, reads cldr-territoryInfo.json + cldr-aliases.json from disk; otherwise fetches
+ *   With `cldrDir`, reads cldr-territoryInfo.json + cldr-aliases.json from disk. otherwise fetches
  *   the pinned cldr-core release from jsdelivr.
  */
 

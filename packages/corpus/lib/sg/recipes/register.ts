@@ -17,7 +17,7 @@
  *   Every value in `components` is a verbatim substring of `raw`, aligned by {@link alignAndWrite}. The floor-unit is
  *   SYNTHESIZED (the register carries one on a single row): floor 01–30, unit 01–399, zero-padded — the shape, not a
  *   real occupancy. `Blk` and the `S(` `)` around a postcode are untagged, as the board's `sg-cs-blk-12-kallang-ave`
- *   row expects (`house_number: "12"`). Streets arrive upper-case and are rendered title-cased; a third abbreviate the
+ *   row expects (`house_number: "12"`). Streets arrive upper-case and are rendered title-cased. a third abbreviate the
  *   generic (`Avenue` → `Ave`, `Road` → `Rd`, …) the way a typed line does.
  *
  *   Run: mailwoman corpus slice sg-register --input <overture-sg.corpus.jsonl> --count N --seed S
@@ -50,13 +50,13 @@ const GENERIC_ABBREVIATIONS: ReadonlyArray<readonly [full: string, short: string
 
 /**
  * Estate and area names the register's `unit` field carries beside building names. A name ending in one of these is an
- * estate, which no one writes in front of an address line; a name without one reads as a building and is rendered as a
+ * estate, which no one writes in front of an address line. a name without one reads as a building and is rendered as a
  * `venue`.
  */
 const ESTATE_TAILS = ["ESTATE", "CONSERVATION AREA", "HILLS", "PARK", "GARDENS", "GARDEN", "HEIGHTS", "GROVE", "VILLE"]
 
 /**
- * Share of rows per register. The block line and the bracketed postcode are the two the Latin model has never seen; the
+ * Share of rows per register. The block line and the bracketed postcode are the two the Latin model has never seen. the
  * official line keeps the register's own shape in the mix so the block forms train beside it.
  */
 const P_BLOCK = 0.4

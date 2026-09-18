@@ -33,7 +33,7 @@ const XLSX_FILENAME = "HI_Public_Schools_List.xlsx"
 
 export interface FetchStateHISchoolsOptions extends BaseFetchOptions {
 	/**
-	 * Workbook URL. Defaults to the Hawaii DOE source; overridable for an isolated fetch test.
+	 * Workbook URL. Defaults to the Hawaii DOE source. overridable for an isolated fetch test.
 	 */
 	sourceURL?: string
 }

@@ -13,7 +13,7 @@
  *   The public-data portal labels the category files "이용허락범위 제한 없음" and links them to
  *   `file.localdata.go.kr`, which serves them behind a session: the category page sets the XSRF cookie,
  *   `/file/validate/download-count` is the portal's own rate check (429 when it wants a pause), and
- *   `/file/download/<slug>/info` streams the CSV. The files are CP949 as delivered; the adapter
+ *   `/file/download/<slug>/info` streams the CSV. The files are CP949 as delivered. the adapter
  *   decodes. The restaurant category alone is about 700 MB.
  *
  *   Invoke via `mailwoman corpus fetch localdata-kr --out-root <path>`, optionally with
@@ -94,7 +94,7 @@ async function openSession(): Promise<Session> {
 }
 
 /**
- * The portal's own rate check; a 429 carries the pause it asks for in prose, so the caller sleeps and retries.
+ * The portal's own rate check. a 429 carries the pause it asks for in prose, so the caller sleeps and retries.
  */
 async function validateDownloadCount(session: Session): Promise<boolean> {
 	const headers: Record<string, string> = { "user-agent": USER_AGENT, cookie: session.cookie, referer: INDEX_URL }

@@ -51,7 +51,7 @@ const LOCALE_TAG = /^[a-z]{2}-[A-Za-z]{2}$/u
  * those are at least half of what it holds.
  *
  * DISCOVERED RATHER THAN LISTED, because a check that names its subjects cannot see the fifth table somebody adds. The
- * first version named four files; the rule below finds seven, and the three it gained are `corpus`'s `LOCALE_TAG`,
+ * first version named four files. the rule below finds seven, and the three it gained are `corpus`'s `LOCALE_TAG`,
  * `localeFor` and `LOCALE_BY_COUNTRY` — the last of which the constant inventory (#2219) lists as unmeasured. Both
  * halves of the rule are required: two pairs alone admits a table of something else that happens to carry a couple, and
  * the ratio alone admits a two-entry map of anything.

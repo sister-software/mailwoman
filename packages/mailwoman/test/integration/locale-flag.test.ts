@@ -36,7 +36,7 @@ describe("--locale validation", () => {
 describe("npx mailwoman parse '<input>' (default — runtime pipeline)", () => {
 	test("exits 0 on a bare US ZIP+4 via fast-path (postcode_only)", async () => {
 		const { stdout } = await runFile(process.execPath, [cliBin, "parse", "10118-1234"])
-		// Fast-path for unambiguous US ZIP+4 emits a postcode root from QueryShape; no model needed.
+		// Fast-path for unambiguous US ZIP+4 emits a postcode root from QueryShape. no model needed.
 		expect(stdout).toContain("postcode")
 		expect(stdout).toContain("10118-1234")
 	}, 20_000)

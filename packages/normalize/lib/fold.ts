@@ -7,7 +7,7 @@
 
 /**
  * Lower-case, whitespace runs collapsed to one space, ends trimmed. The fold every string comparison applies before it
- * compares; it keeps punctuation and diacritics, so `Saint-Étienne` and `Saint-Etienne` stay distinct.
+ * compares. it keeps punctuation and diacritics, so `Saint-Étienne` and `Saint-Etienne` stay distinct.
  */
 export function foldCaseWhitespace(input: string): string {
 	return input.toLowerCase().replaceAll(/\s+/gu, " ").trim()

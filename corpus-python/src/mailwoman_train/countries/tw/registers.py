@@ -9,7 +9,7 @@ the same premises from the tax office:
 The shape is ``<縣市><鄉鎮市區>[<村里>]<街路 with 段/巷/弄><號><樓 之N>``, no separators, digits in either width,
 臺/台 in either form, and an occasional U+3000 inside a district name (``北　區``). Alignment is exact against the
 Overture-TW key sets (`TWKeyIndex`): the 縣市 must be one Overture lists, the 鄉鎮市區 one of that 縣市's, and the
-street one that district lists; the number and the floor are read by the same regexes the LABEL builder uses. The
+street one that district lists. the number and the floor are read by the same regexes the LABEL builder uses. The
 spans land on the string AS TYPED, digits and all. A string that does not satisfy the key is a board row.
 """
 

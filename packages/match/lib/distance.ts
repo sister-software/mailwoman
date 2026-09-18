@@ -5,7 +5,7 @@
  *
  *   Geographic distance as a scoring feature — the other half of geocode-first matching.
  *
- *   Blocking uses geography to _propose_ candidates; this scores them on it. The research is explicit
+ *   Blocking uses geography to _propose_ candidates. this scores them on it. The research is explicit
  *   that an address must be matched as a SPATIAL attribute, not by string similarity (a
  *   one-character edit can be 650 m apart), and that distance measurably helps as a comparison
  *   feature. So we bucket the great-circle distance between two records' coordinates into ordered
@@ -90,7 +90,7 @@ export const DEFAULT_DISTANCE_LEVELS: ComparisonLevel[] = [
  *   2" that geocode to the same rooftop still warrants near-agreement (the geo-first point of the whole design).
  * - Keys differ and no usable coordinate → no evidence.
  *
- * Exactly one spatial vote, no redundancy. Pass {@link DEFAULT_SPATIAL_LEVELS} or your own; index 0 must be the
+ * Exactly one spatial vote, no redundancy. Pass {@link DEFAULT_SPATIAL_LEVELS} or your own. index 0 must be the
  * exact-key tier, indices 1…n the distance buckets nearest → far by `maxKm` (last = `far`).
  */
 export function spatialComparison<R>(config: {
@@ -129,7 +129,7 @@ export function spatialComparison<R>(config: {
 
 /**
  * Default levels for {@link spatialComparison}: an exact same-key tier on top of the distance buckets. `m`/`u` are
- * EM-estimable seeds (m decreasing, u increasing down the tiers; each column ≈ sums to 1).
+ * EM-estimable seeds (m decreasing, u increasing down the tiers. each column ≈ sums to 1).
  */
 export const DEFAULT_SPATIAL_LEVELS: ComparisonLevel[] = [
 	{ label: "same-key", m: 0.85, u: 0.01 },

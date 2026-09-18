@@ -4,8 +4,8 @@
  * @author Teffen Ellis, et al.
  *
  *   The invariance mini-suite's perturbation classes — pure functions, no model, no I/O. Each class is
- *   imported from the METAMORPHIC-TESTING literature (Chen et al. 1998's original MR framing; Segura et
- *   al. 2016's survey of MR classes; Ribeiro et al. 2020 CheckList's INV taxonomy for NLP specifically),
+ *   imported from the METAMORPHIC-TESTING literature (Chen et al. 1998's original MR framing. Segura et
+ *   al. 2016's survey of MR classes. Ribeiro et al. 2020 CheckList's INV taxonomy for NLP specifically),
  *   deliberately not derived from this project's own historical failures — the five-whys premise is that
  *   failure-derived cases only ever catch failures we've already had. `apply` returns `null` when the
  *   class doesn't apply to a given input (e.g. no swappable abbreviation token); the caller treats that as
@@ -48,7 +48,7 @@ function commaDrop(raw: string): string | null {
  * full `normalize/abbreviations.ts` dictionary the gauntlet's metamorphic layer uses. Keeping it small and separate
  * means this suite exercises a different, independent perturbation source than the gauntlet — two implementations of
  * the same literature class, not one shared with an inherited bug. FR/DE street types (Rue, Boulevard, Straße, …) are
- * deliberately OUT OF SCOPE for this table; a row without an Ave/St/Rd token gets no abbreviation-swap case (documented
+ * deliberately OUT OF SCOPE for this table. a row without an Ave/St/Rd token gets no abbreviation-swap case (documented
  * per-row in suite.jsonl).
  */
 const LONG_TO_SHORT = new Map([
@@ -82,7 +82,7 @@ const SECONDARY_DESIGNATOR_WORDS = new Set(["apt", "ste", "suite", "unit", "fl",
  *
  * 1. The "st" token itself must not be phrase-final (no trailing comma/period of its own). A Saint-prefix is always
  *    immediately adjacent to the name it prefixes ("St Andrews", "St Ives") and so never carries its own trailing
- *    punctuation; a street SUFFIX often closes a phrase right before the next address component ("...Salmon St,
+ *    punctuation. a street SUFFIX often closes a phrase right before the next address component ("...Salmon St,
  *    Portland, ..."). This is what lets the guard tell "St Andrews" apart from "...Salmon St, Portland" even though
  *    both have "St" followed by a capitalized non-suffix word.
  * 2. The next token must be capitalized and not itself a street-suffix word or a secondary-address designator — the shape
@@ -236,7 +236,7 @@ function wrapInQuotes(raw: string): string | null {
  * Append an irrelevant bracketed aside — the paired-punctuation sibling of `trailing-punct`'s "add innocuous trailing
  * content" idiom (Ribeiro et al. 2020's INV class explicitly covers appending irrelevant clauses/asides). The
  * parenthetical content ("main entrance") never appears in any golden component for these rows, so every EXISTING
- * component (house_number, street, locality, postcode, …) must survive unchanged; the aside itself getting no tag (or a
+ * component (house_number, street, locality, postcode, …) must survive unchanged. the aside itself getting no tag (or a
  * `venue`/`unit`-shaped one) is not itself a violation — the runner's `compareComponents` only flags a degradation/loss
  * on components that were present before and change or vanish after.
  */

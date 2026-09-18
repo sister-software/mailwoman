@@ -7,7 +7,7 @@
  *   (script class + known postcode formats), never place-name dictionaries.
  *
  *   Scoring shape: each scorer returns `{ locale, confidence }` or null. The composer picks the
- *   highest-confidence non-null result; ties broken by scorer order (most-specific first).
+ *   highest-confidence non-null result. ties broken by scorer order (most-specific first).
  */
 
 import type { QueryShapeFormatsView } from "@mailwoman/query-shape"
@@ -32,7 +32,7 @@ export interface LocaleCandidate {
  *   `ja`/`zh`/`ko` to that family, so the model loaded is the same whichever tag stands here. What this tag does decide
  *   is the LABEL a consumer reads off the hint — a Chinese-script address reports `ja-JP` — and that is a known limit
  *   of the hint's contract, not a routing choice.
- * - Cyrillic → ru-RU (not currently shipped; signal is still useful)
+ * - Cyrillic → ru-RU (not currently shipped. signal is still useful)
  * - Arabic → ar (similar)
  * - Alpha / alphanumeric / numeric → no script-based commit (other scorers decide)
  */
@@ -71,7 +71,7 @@ export function scoreByPostcode(shape: QueryShapeFormatsView): LocaleCandidate |
 			case "uk_postcode":
 				return { locale: "en-GB", confidence: 0.95, reason: `format=${hit.format}` }
 			case "ca_postcode":
-				// Canadian — both en-CA and fr-CA possible. Default en-CA; FR caller can override.
+				// Canadian — both en-CA and fr-CA possible. Default en-CA. FR caller can override.
 				return { locale: "en-CA", confidence: 0.9, reason: `format=${hit.format}` }
 			case "jp_postcode":
 				return { locale: "ja-JP", confidence: 0.95, reason: `format=${hit.format}` }
@@ -83,7 +83,7 @@ export function scoreByPostcode(shape: QueryShapeFormatsView): LocaleCandidate |
 
 	if (fivedigit) {
 		// Low confidence — US is the global plurality interpretation. Returns en-US so a downstream
-		// consumer without a stronger signal still gets a sensible default; alternatives surface FR/DE.
+		// consumer without a stronger signal still gets a sensible default. alternatives surface FR/DE.
 		return { locale: "en-US", confidence: 0.5, reason: "ambiguous-5digit-postcode" }
 	}
 

@@ -164,7 +164,7 @@ async function readFamilyRollup(
 /**
  * Read every corporate family a `familyID`/`nodeID` resolves to — see the module docstring for the full contract (XOR
  * query, manifest-first, schema-version guard, temporal scoping, the always-array return shape). A `familyID` query
- * returns at most one element; a `nodeID` query may return more than one (a node legitimately belonging to more than
+ * returns at most one element. a `nodeID` query may return more than one (a node legitimately belonging to more than
  * one family is a normal shape, never an error).
  */
 export async function familyRollup(

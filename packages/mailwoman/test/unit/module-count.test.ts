@@ -10,7 +10,7 @@
  *
  *   The counter is `module.registerHooks()`, which sees ESM and CJS alike, injected as a `data:` URL so the guard
  *   needs no committed helper. It runs against the COMPILED CLI (`out/cli.js`) because that is what ships and what
- *   the bin points at; the suite skips when the tree has not been built.
+ *   the bin points at. the suite skips when the tree has not been built.
  */
 
 import { pathExists } from "@mailwoman/core/fs/readers"

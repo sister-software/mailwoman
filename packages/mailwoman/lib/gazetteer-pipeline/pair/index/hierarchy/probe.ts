@@ -4,7 +4,7 @@
  * @author Teffen Ellis, et al.
  *
  *   PROBE builder — WOF-hierarchy generalization of the PIX1 placetype-pair index (static-index
- *   survey candidate #3; design: `docs/superpowers/plans/2026-07-26-pair-index-hierarchy-design.md`).
+ *   survey candidate #3. design: `docs/superpowers/plans/2026-07-26-pair-index-hierarchy-design.md`).
  *   Extracts per-country (locality, region) pairs from the WOF admin DB's `ancestors` table and
  *   writes one PIX1 binary per country to `$MAILWOMAN_DATA_ROOT/wof/pair-index-hierarchy-probe/`.
  *
@@ -34,7 +34,7 @@
  *   - Child places: `spr` rows, `placetype = 'locality'`, `is_current = 1 AND is_deprecated = 0`.
  *   - Edges: the `ancestors` table, `ancestor_placetype` in the per-country parent set — US `region`;
  *     FR `region` + `macroregion` (both the département and the région are `region`-tagged surfaces in
- *     FR addresses; WOF splits them across two placetypes).
+ *     FR addresses. WOF splits them across two placetypes).
  *   - Surfaces (name policy `spr-name+official-names-v1`): `spr.name` ∪ `names` rows with
  *     `official = 1`, for child and parent alike. The official-name union is what makes the FR
  *     artifact carry "Bretagne" (official fra) alongside the spr default "Brittany" — the #936
@@ -117,7 +117,7 @@ const PROBE_PAIRS_BY_COUNTRY: Readonly<Record<string, ReadonlyArray<readonly [ch
  */
 export interface HierarchyPairIndexHeader extends PairIndexHeaderInput {
 	/**
-	 * The hierarchy edge in ComponentTag space (child resolves to `edge.child` on a hit; parent is context).
+	 * The hierarchy edge in ComponentTag space (child resolves to `edge.child` on a hit. parent is context).
 	 */
 	edge: { child: "locality"; parent: "region" }
 	/**
@@ -242,7 +242,7 @@ async function main(): Promise<void> {
 		)
 
 		// Phase 2: surfaces. Country-scoping the parent side is sound — every ancestor of a US locality
-		// is itself US; a parent outside the scope would simply have no surfaces and the edge is skipped.
+		// is itself US. a parent outside the scope would simply have no surfaces and the edge is skipped.
 		const childSurfaces = collectSurfaces(db, wofCountry, spec.childWOFPlacetypes)
 		const parentSurfaces = collectSurfaces(db, wofCountry, spec.parentWOFPlacetypes)
 

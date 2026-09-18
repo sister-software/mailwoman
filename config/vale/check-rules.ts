@@ -29,7 +29,7 @@
  *     contract-tied name survives the vocabulary ban without being renamed.
  *
  *   The CODE leg exists because that last mechanism does not reach a source comment. Vale's
- *   markdown parser skips inline code; its comment scanner has no markdown parser, so a
+ *   markdown parser skips inline code. Its comment scanner has no markdown parser, so a
  *   backticked identifier in a `//` comment is flagged exactly like bare prose (measured on
  *   @vvago/vale 3.17.0). `AmbiguousShorthandCode.yml` therefore protects contract-tied
  *   names by NAME, and `dirty.ts` asserts the negative that matters: a backticked `the check` MUST
@@ -88,7 +88,7 @@ interface StyleLeg {
 	cleanFixture: string
 	/**
 	 * The error-severity count the dirty fixture produces today (measured, not estimated). It is a `>=` bar, so adding a
-	 * rule plus its fixture line passes without a bump; only a rule that STOPS firing fails.
+	 * rule plus its fixture line passes without a bump. Only a rule that STOPS firing fails.
 	 */
 	minDirtyErrors: number
 	/**
@@ -121,6 +121,7 @@ const LEGS: StyleLeg[] = [
 			"styles.StockPhrases",
 			"styles.Terms",
 			"styles.Weasel",
+			"styles.MedicalMetaphor",
 		],
 		cleanCountsEverySeverity: false,
 	},
@@ -130,7 +131,13 @@ const LEGS: StyleLeg[] = [
 		dirtyFixture: "fixtures/dirty.ts",
 		cleanFixture: "fixtures/clean.ts",
 		minDirtyErrors: 7,
-		ruleChecks: ["styles.AmbiguousShorthandCode", "styles.EmphasisCapitals", "styles.ReifiedShorthand"],
+		ruleChecks: [
+			"styles.AmbiguousShorthandCode",
+			"styles.EmphasisCapitals",
+			"styles.ReifiedShorthand",
+			"styles.MedicalMetaphor",
+			"styles.CommentSemicolons",
+		],
 		// Both rules this config runs are error-severity, so the exit code carries the whole
 		// verdict.
 		cleanCountsEverySeverity: false,
@@ -161,6 +168,7 @@ const LEGS: StyleLeg[] = [
 			"styles.UnsupportedAttribution",
 			"styles.VaguePraise",
 			"styles.WindDown",
+			"styles.MedicalMetaphor",
 		],
 		cleanCountsEverySeverity: true,
 	},

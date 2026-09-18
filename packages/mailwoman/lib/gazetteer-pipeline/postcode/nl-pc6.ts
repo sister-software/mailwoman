@@ -97,14 +97,14 @@ export async function buildNLPC6Database(
 			const lon = Number(lonS)
 			const lat = Number(latS)
 
-			// A valid PC6 is 4 digits + 2 letters; the CBS file is already normalized (no space).
+			// A valid PC6 is 4 digits + 2 letters. the CBS file is already normalized (no space).
 			if (!/^\d{4}[A-Z]{2}$/.test(pc6) || !Number.isFinite(lat) || !Number.isFinite(lon)) {
 				skipped++
 
 				continue
 			}
 
-			const name = normalizePostcodeName(pc6) // identity for the CBS form; keeps the convention explicit
+			const name = normalizePostcodeName(pc6) // identity for the CBS form. keeps the convention explicit
 			const display = `${pc6.slice(0, 4)} ${pc6.slice(4)}`
 			const id = NL_PC6_ID_BASE + inserted
 
@@ -126,7 +126,7 @@ export async function buildNLPC6Database(
 		db.exec("ANALYZE")
 	}
 
-	// Build-on-copy: the previous version moves aside; the new artifact swaps in atomically.
+	// Build-on-copy: the previous version moves aside. the new artifact swaps in atomically.
 	await swapDatabaseIntoPlace(tmpPath, outPath)
 	// The sealed-artifact invariant: a built DB is a read-only asset from the moment it exists.
 	await sealDatabase(outPath)

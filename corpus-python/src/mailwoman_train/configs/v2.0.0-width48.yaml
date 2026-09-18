@@ -4,19 +4,19 @@
 # clues always present), the frozen-head probe eliminated output competition (frozen 29M features
 # = P100/R~25 — the representation LACKS the affix feature). Capacity earned its evidence.
 # Reasoned deltas vs v1.0.0-consolidation:
-#   - use_affix_head: true (the #492 head + gaz skip — keep at width; the checkpoint includes it)
-#   - synth-affix 2.0 -> 5.0 (Run A's level; 20x was a 29M workaround, not a recipe)
-#   - synth-intersection 0.2 -> 2.0 (the #487 rider — EXISTING recipe formats only; the real eval's
+#   - use_affix_head: true (the #492 head + gaz skip — keep at width. the checkpoint includes it)
+#   - synth-affix 2.0 -> 5.0 (Run A's level. 20x was a 29M workaround, not a recipe)
+#   - synth-intersection 0.2 -> 2.0 (the #487 rider — EXISTING recipe formats only. the real eval's
 #     gap forms (corner-of/intersection-of/unpadded) may lag — REPORT, not check, on intersection)
-# PRE-REGISTERED CHECK (canonical bars; stability read at 2k and 20k and 40k — the transient lesson):
-#   affix >=78/67 STABLE; US street >=80.4; country >=83.3; US postcode >=97; unit >=92;
-#   FR >=99.5/91; DE >=83.8; no-regression vs v4.2.0; intersection_a/b REPORTED (check draft #487).
+# PRE-REGISTERED CHECK (canonical bars. stability read at 2k and 20k and 40k — the transient lesson):
+#   affix >=78/67 STABLE. US street >=80.4. country >=83.3. US postcode >=97. unit >=92.
+#   FR >=99.5/91. DE >=83.8. no-regression vs v4.2.0. intersection_a/b REPORTED (check draft #487).
 #   int8 lands ~50MB — pocket budget holds (two-tier contract). Iteration cost ~1.5-2x: the real price.
 #
 # === v1.0.0-consolidation (#466) — the v0-PARITY FLAG-PLANT ======================================
 # One model carrying every proven parity change, at a larger step budget (the cumulative-dilution
 # lesson: never stack N sources into a fixed 20k budget — give them room). This is not a single-variable
-# experiment; it's the integration run. Changes folded in:
+# experiment. it's the integration run. Changes folded in:
 #   - unit          (shipped v4.1.0)                      → synth-unit 1.5
 #   - affix         (multi-locale reroll, #469)           → synth-affix 2.0  (corpus v0.4.11-affix-ml)
 #   - country       (balanced recipe output, #464)                → synth-country 2.0 (corpus v0.4.10-country-bal)
@@ -25,13 +25,13 @@
 # po_box/cedex DEFERRED (matcher-proven 100%; coverage recipe outputs are a follow-up, not in this flag-plant).
 #
 # Corpus v0.4.12-consolidation = v0.4.11-affix-ml parquet files (base+unit+german+deepseek+MULTI-LOCALE affix)
-# + the v0.4.10-country-bal balanced country recipe output, referenced verbatim (pure manifest concat; every
+# + the v0.4.10-country-bal balanced country recipe output, referenced verbatim (pure manifest concat. every
 # parquet already on the volume). Recipe inherits v0.9.13 (gazetteer anchor + country class-weight 3.5).
 #
 # Two deliberate changes vs v0.9.13:
 #   1. max_steps 20k → 40k. The solo affix reroll (v0.9.14) showed fixed-budget dilution (FR
 #      house_number 92→87, US street 80.4→79.0) when 40K balance rows competed for 20k steps. A larger
-#      budget is the prescribed fix; 40k ≈ 2x exposure per source.
+#      budget is the prescribed fix. 40k ≈ 2x exposure per source.
 #   2. gazetteer_curriculum is off and gazetteer_choreography is on. The curriculum (random clue zero-out)
 #      only recovered +0.6 of the −3.7 US-postcode dip in v0.9.13. The choreography (zero the clue on tokens
 #      adjacent to a postcode-anchor hit, train+inference paired) is the targeted, DeepSeek-diagnosed
@@ -45,9 +45,9 @@
 #   - US postcode back to baseline (≥ 97, fp32) — the choreography must absorb the v0.9.12 −3.7.
 #   - FR postcode ≥ 99.5 AND FR house_number ≥ 91 (the v0.9.14 watch-item — confirm the bigger budget
 #     recovers it).
-#   - US spine (street/locality/region/house_number) ≥ v0.9.8; DE native-order locality ≥ 83.8.
-#   DECISION: all hold → v0-parity FLAG-PLANT; ship candidate (int8 → v4.2.0). Any tag short → the
-#     dilution isn't budget-bound; fall back to weight-merge (#466's titled approach) or raise that
+#   - US spine (street/locality/region/house_number) ≥ v0.9.8. DE native-order locality ≥ 83.8.
+#   DECISION: all hold → v0-parity FLAG-PLANT. ship candidate (int8 → v4.2.0). Any tag short → the
+#     dilution isn't budget-bound. fall back to weight-merge (#466's titled approach) or raise that
 #     source's weight/budget. Measure: score-country-homograph.ts + score-affix.ts (incl. unit) +
 #     per-locale-f1.ts (US/FR, --tokenizer + --model-anchor-lookup + --gazetteer-lexicon) +
 #     de-order-eval.ts, all fp32.

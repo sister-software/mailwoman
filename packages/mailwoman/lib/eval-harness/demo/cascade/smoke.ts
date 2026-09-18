@@ -29,7 +29,7 @@
  *
  *   Defaults point at the staged demo release dir (`--stage-dir`, the byte-copies of what the live
  *   demo serves); `MAILWOMAN_WOF_HOT_DB` overrides the DB path (same env the #522 integration tests
- *   use). Exit 0 = the run completed (row failures are reported in the table + sidecar; the
+ *   use). Exit 0 = the run completed (row failures are reported in the table + sidecar. the
  *   promotion-eval verdict enforces any floor). Exit 2 = missing artifacts / malformed rows.
  *
  *   Measurement only: this script changes no pipeline or resolver behavior.
@@ -93,7 +93,7 @@ export interface DemoCascadeSmokeOptions {
 
 /**
  * What {@linkcode demoCascadeSmoke} returns. `exitCode` carries what the script signalled with `process.exit`: 0 = the
- * run completed (row failures are in the table + sidecar; the check verdict enforces any floor), 2 = missing artifacts
+ * run completed (row failures are in the table + sidecar. the check verdict enforces any floor), 2 = missing artifacts
  * or malformed rows. The check reports a non-zero code and continues, exactly as it did with the child.
  */
 export interface DemoCascadeSmokeResult {
@@ -132,7 +132,7 @@ export async function demoCascadeSmoke(
 	// module walk (`mailwoman --help`) loads this file in every clean install — a top-level import
 	// here failed the ci:smoke clean-install leg the day it was added (2026-08-06). The cascade leg
 	// is dev-only (it needs a local wof-hot.db), so the dependency loads only when the leg actually
-	// runs; in a clean install without the package the leg fails here, loudly, naming the import.
+	// runs. in a clean install without the package the leg fails here, loudly, naming the import.
 	const { runCascade } = await import("@mailwoman/resolver-wof-wasm/browser-cascade")
 	const STAGE = options.stageDir || wofHotStageDir()
 	const DB = options.db || resolveWOFHotDB(String(STAGE))

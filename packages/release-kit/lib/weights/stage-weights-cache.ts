@@ -10,7 +10,7 @@
  *
  *   Why this exists rather than "just point --model at the checkpoint". A model is not its `.onnx`. The
  *   card declares which channels it needs, and the siblings (anchor binary, four lexicons, FST, pair
- *   index) are what feed them; grading a candidate by swapping the model file alone silently scores it
+ *   index) are what feed them. grading a candidate by swapping the model file alone silently scores it
  *   with the shipped bundle's channels — the #566/#685 trap one level up. Staging the whole set into a
  *   throwaway directory is what makes "this is the bundle, graded as a bundle" checkable.
  *
@@ -84,7 +84,7 @@ export async function stageWeightsCache(options: StageWeightsCacheOptions): Prom
 
 	const omit = new Set(options.omit)
 	/**
-	 * Staged name → source path. Seeded from `from`, then overridden; last writer wins, which is what makes `file` a
+	 * Staged name → source path. Seeded from `from`, then overridden. last writer wins, which is what makes `file` a
 	 * divergence rather than a conflict.
 	 */
 	const staged = new Map<string, string>()

@@ -278,7 +278,7 @@ export async function buildCorpusCensus(manifestPath: string): Promise<CorpusCen
  * rows as zero when the newer corpus added them — an absence indistinguishable from the real thing, which is the
  * failure this whole file exists to prevent.
  *
- * Returns undefined when the config states no corpus_dir; that is "cannot check", not "they match".
+ * Returns undefined when the config states no corpus_dir. that is "cannot check", not "they match".
  */
 export async function readConfiguredCorpusVersion(configPath: string): Promise<string | undefined> {
 	if (!(await pathExists(configPath))) return undefined
@@ -400,7 +400,7 @@ export async function readGazetteerCoverage(dbPath: string): Promise<Map<string,
 		const tables = allRows<{ name: string }>(db.prepare("SELECT name FROM sqlite_master WHERE type = 'table'"))
 		const names = new Set(tables.map((t) => t.name))
 
-		// The serving DB is the candidate table; the older admin build exposes `spr`. Support both rather than
+		// The serving DB is the candidate table. the older admin build exposes `spr`. Support both rather than
 		// hard-coding one, because which is live is expressed in a symlink and changes.
 		const sql = names.has("candidate")
 			? "SELECT c.code AS cc, COUNT(*) AS n FROM candidate x JOIN country_codes c ON c.id = x.country_id GROUP BY c.code"
@@ -473,7 +473,7 @@ export async function censusCoverage(options: CensusCoverageOptions): Promise<Co
 	const gazetteerPath = options.gazetteerPath ?? String(dataRootPath("wof", "candidate.db"))
 	const gazetteer = await readGazetteerCoverage(gazetteerPath)
 	// DERIVED from `release.config.json` rather than restated here. This was a hand-written eleven-entry table, and
-	// `repo-health`'s `locale-tables` check exists because it was a second copy of the config's two lists; the check
+	// `repo-health`'s `locale-tables` check exists because it was a second copy of the config's two lists. the check
 	// still holds every other country→locale table against the config, and this one can no longer disagree with it.
 	const weightsPackages = weightsPackageByCountry(await readReleaseConfig())
 

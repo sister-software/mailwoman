@@ -11,7 +11,7 @@
  *   1. **Denormalized single-probe shape** — every candidate row carries name + centroid + bbox +
  *        country/placetype codes, so a resolve is one statement (no join to spr).
  *   2. **Shared-normalizer parity** — the `name_key` is {@link normalizeLocalityForKey}, the same
- *        function the query side uses; a diacritic name keys to its folded form by construction.
+ *        function the query side uses. a diacritic name keys to its folded form by construction.
  *   3. **page_size = 8192** — set right before VACUUM (node:sqlite creates the file at 4096).
  *   4. **The passes** — primaries, alias bags, region abbreviations, postcode extracts (with the
  *        `latitude!=0 AND longitude!=0` placeholder-coord filter), and each extract's `names`-table
@@ -321,7 +321,7 @@ describe("buildCandidateTable", () => {
 			)
 
 		try {
-			// Gloss core: every alias of the double-absent place stamps; its primary never does.
+			// Gloss core: every alias of the double-absent place stamps. its primary never does.
 			expect(role("fish")[0]).toMatchObject({ role: "gloss" })
 			expect(role("vis")[0]).toMatchObject({ role: "gloss" })
 			expect(role("poisson")[0]).toMatchObject({ role: null, primary: 1 })
@@ -329,7 +329,7 @@ describe("buildCandidateTable", () => {
 			// Prominence rescue: same key volume, measured population — no gloss stamp.
 			expect(role("bigtown")[0]).toMatchObject({ role: null })
 
-			// Abbr provenance: official-language variant stamps; non-official variant does not; the
+			// Abbr provenance: official-language variant stamps. non-official variant does not. the
 			// preferred-name alias does not.
 			expect(role(normalizeLocalityForKey("Chi-Town"))[0]).toMatchObject({ role: "abbr", primary: 0 })
 			expect(role(normalizeLocalityForKey("Windy City"))[0]).toMatchObject({ role: null })
@@ -363,7 +363,7 @@ describe("buildCandidateTable", () => {
 		const output = scratch.resolve("candidate.db")
 		buildFixtureAdmin(input)
 		const result = await buildCandidateTable({ input, output })
-		// Chicago: Chi-Town + Windy City; Saint-Étienne: St Etienne = 3 aliases.
+		// Chicago: Chi-Town + Windy City. Saint-Étienne: St Etienne = 3 aliases.
 		expect(result.aliases).toBe(3)
 
 		using db = new DatabaseClient<WOFDatabase>(output, { readOnly: true })
@@ -396,7 +396,7 @@ describe("buildCandidateTable", () => {
 		buildFixturePostcodes(pc)
 
 		const result = await buildCandidateTable({ input, output, postcodes: [pc] })
-		// The real-coord 60601 + 11201 survive; the 0,0 placeholder 20500 is filtered.
+		// The real-coord 60601 + 11201 survive. the 0,0 placeholder 20500 is filtered.
 		expect(result.postcodes).toBe(2)
 
 		using db = new DatabaseClient<WOFDatabase>(output, { readOnly: true })
@@ -550,7 +550,7 @@ describe("buildCandidateTable", () => {
 	describe("the importance column (#28)", () => {
 		/**
 		 * A score source whose ids share nothing with the admin fixture's — the join must work anyway. Chicago and
-		 * Saint-Étienne are scored; Springfield deliberately is not (the unmeasured case).
+		 * Saint-Étienne are scored. Springfield deliberately is not (the unmeasured case).
 		 */
 		function buildFixtureImportance(path: string): void {
 			using db = new DatabaseClient<WOFDatabase>(path)
@@ -638,7 +638,7 @@ describe("buildCandidateTable", () => {
 
 			using db = new DatabaseClient<WOFDatabase>(output, { readOnly: true })
 
-			// A postcode has no toponym fame; the score source's 60601 row must not leak onto it.
+			// A postcode has no toponym fame. the score source's 60601 row must not leak onto it.
 			expect(importanceOf(db, "60601")).toEqual([null])
 			// …including the delivery-city alias hanging off the same postcode row.
 			expect(importanceOf(db, normalizeLocalityForKey("Brooklyn"))).toEqual([null])
@@ -791,7 +791,7 @@ describe("resurrectCurrencyHoles (#1737 — the currency backfill)", () => {
 	}
 
 	/**
-	 * GeoNames dump lines: 19 tab-separated columns; the pass reads 1 name, 2 ascii, 4 lat, 5 lon, 6 feature_class, 14
+	 * GeoNames dump lines: 19 tab-separated columns. the pass reads 1 name, 2 ascii, 4 lat, 5 lon, 6 feature_class, 14
 	 * population.
 	 */
 	function geonamesLine(id: number, name: string, lat: number, lon: number, fclass: string, pop: number): string {

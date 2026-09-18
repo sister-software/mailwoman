@@ -13,7 +13,7 @@
  *   ORDER IS DEFINED, not incidental: country dir ascending, then case `id` ascending within the file. The
  *   loader re-sorts rather than trusting file order, so a hand-appended row at the bottom of a file cannot
  *   change what the corpus IS — only what a text diff looks like. Nothing downstream depends on the old
- *   chronological array order; the ablation board id hashes a SORTED fingerprint (`ablation.ts`), and the
+ *   chronological array order. the ablation board id hashes a SORTED fingerprint (`ablation.ts`), and the
  *   regression runner grades per row.
  *
  *   What the prose migration cost, stated directly: JSONL carries no comments, so the 16 batch headers and 18
@@ -66,7 +66,7 @@ export class CorpusRowError extends Error {
 }
 
 /**
- * Read one `<cc>/*.jsonl` file. Blank lines are skipped; the line counter still counts them, so the number in an error
+ * Read one `<cc>/*.jsonl` file. Blank lines are skipped. the line counter still counts them, so the number in an error
  * is the number your editor shows.
  */
 async function loadCorpusFile(path: string, expectedCC: string): Promise<SeedCase[]> {
@@ -102,7 +102,7 @@ async function loadCorpusFile(path: string, expectedCC: string): Promise<SeedCas
 		}
 
 		// The dir is the country claim. A row filed under the wrong `cc` still loads and still runs, so nothing
-		// downstream would ever notice; the listing it was filed under would just be quietly wrong.
+		// downstream would ever notice. the listing it was filed under would just be quietly wrong.
 		if (result.data.country.toLowerCase() !== expectedCC) {
 			throw new CorpusRowError(
 				path,

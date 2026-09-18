@@ -129,7 +129,7 @@ def test_ewc_penalty_grows_with_distance_and_scales_with_lambda(tmp_path: Path) 
 def _fisher_weighted_drift(fisher_path: Path, base: torch.nn.Module, tuned: torch.nn.Module) -> float:
     """Σ F_i·(θ_i − θ*_i)² — drift measured where the Fisher says the base had curvature.
 
-    EWC only promises protection ALONG high-Fisher directions; low-curvature directions drift
+    EWC only promises protection ALONG high-Fisher directions. low-curvature directions drift
     freely by design (that freedom is what lets the fine-tune learn). An unweighted drift metric
     counts exactly the directions the brake deliberately releases.
     """
@@ -187,7 +187,7 @@ def test_fresh_head_params_are_unpenalized(tmp_path: Path) -> None:
             self.fresh_head = torch.nn.Linear(3, 5)
 
     # A model sharing no names with the artifact is a wiring error — penalty() refuses loudly
-    # (silence would ship an unbraked "protected" fine-tune).
+    # (silence would ship an unbraked "guarded" fine-tune).
     ewc = EWCPenalty(fisher_path, ref, lam=1.0, device=torch.device("cpu"))
     with pytest.raises(ValueError, match="no parameter names"):
         ewc.penalty(WithHead())

@@ -21,7 +21,7 @@ export interface LoadingIndicatorProps extends React.HTMLAttributes<HTMLDivEleme
 	 */
 	mode?: LoadingMode
 	/**
-	 * Optional label; in staged mode it renders above the step list.
+	 * Optional label. in staged mode it renders above the step list.
 	 */
 	label?: string
 	/**
@@ -37,7 +37,7 @@ export interface LoadingIndicatorProps extends React.HTMLAttributes<HTMLDivEleme
 	 */
 	steps?: string[]
 	/**
-	 * 0-based index of the active step; earlier steps are complete, later ones pending. @default -1
+	 * 0-based index of the active step. earlier steps are complete, later ones pending. @default -1
 	 */
 	activeStep?: number
 }

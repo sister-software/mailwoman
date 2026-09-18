@@ -11,7 +11,7 @@
  *
  *   A failed verify THROWS and leaves the artifact UNSEALED for inspection — do not swap it. On
  *   success the build appends itself to the build log (`data/gazetteer/wof-build-manifest.json` — a LOG, not
- *   a recipe; the recipe is `../defaults.ts`).
+ *   a recipe. the recipe is `../defaults.ts`).
  */
 
 import { pathExists, readLocalJSONFile } from "@mailwoman/core/fs/readers"
@@ -145,7 +145,7 @@ export async function buildAdmin(opts: BuildAdminOptions = {}): Promise<BuildAdm
 			concurrency: opts.concurrency,
 			batchCommitSize: opts.batchCommitSize,
 			// #1905: GeoNames-anchored label-point adjudication. Reads the same per-country extracts fold-geonames
-			// consumes; a data root without them degrades to the plain label preference.
+			// consumes. a data root without them degrades to the plain label preference.
 			anchorLookup: await createGeoNamesAnchorLookup(String(dataRootPath("geonames"))),
 			onProgress: (processed, skipped, total) =>
 				phase(

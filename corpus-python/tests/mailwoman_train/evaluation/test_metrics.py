@@ -39,7 +39,7 @@ def test_macro_excludes_zero_support_and_O():
 
 def test_zero_support_tag_with_false_positive_not_counted_in_macro():
     # Model wrongly predicts a po_box where there is none. po_box has 0 true instances (support 0),
-    # so its (bad) F1 is excluded from macro; the one real tag is perfect → macro stays 1.0.
+    # so its (bad) F1 is excluded from macro. the one real tag is perfect → macro stays 1.0.
     true = _ids("B-locality", "O")
     pred = _ids("B-locality", "B-po_box")
     r = token_f1(pred, true, num_labels=NUM)

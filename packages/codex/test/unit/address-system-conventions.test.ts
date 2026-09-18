@@ -5,7 +5,7 @@
  *
  *   Pure-codex guard for the FR conventions row (#719). The shipped neural model emits the FR LEADING
  *   `street_prefix` (Rue/Avenue/Cours/…) correctly, but the #511 forbid masked it to −1e9 before
- *   Viterbi and destroyed it on real French addresses (F1 0.0 vs 80.0 mask-off; the larger real-FR
+ *   Viterbi and destroyed it on real French addresses (F1 0.0 vs 80.0 mask-off. the larger real-FR
  *   eval saw ~96 → ~0.6). These assertions fail in CI — no model, no weights — if a future change
  *   re-forbids `street_prefix`, so the live bug cannot silently reappear. The model-level
  *   regression check is a separate, later build step.

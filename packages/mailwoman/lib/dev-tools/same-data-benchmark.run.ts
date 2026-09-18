@@ -297,7 +297,7 @@ async function recordedUnder(): Promise<{ benchmarkID: string; withheldGoldRule:
 
 	return {
 		benchmarkID: receipt?.benchmarkID ?? "(no receipt beside these results)",
-		// A fixture recorded before the rule was named carries no field; that is the v1 rule, and saying so is not the
+		// A fixture recorded before the rule was named carries no field. that is the v1 rule, and saying so is not the
 		// same as saying nothing.
 		withheldGoldRule: receipt?.withheldGoldRule ?? "concorded-ids (receipt predates the field)",
 	}
@@ -496,7 +496,7 @@ async function knobPhase(): Promise<void> {
 	}
 
 	// A raised floor changes what the walk asks next, so each arm loses a different set of rows to replay misses.
-	// Scoring every arm over its own survivors would compare rates whose denominators moved; this intersection is what
+	// Scoring every arm over its own survivors would compare rates whose denominators moved. this intersection is what
 	// makes the columns comparable, and the count of rows it drops is reported beside them.
 	const errored = new Set(
 		[...byArm.values()].flatMap((results) => results.filter((result) => result.error).map((result) => result.rowID))

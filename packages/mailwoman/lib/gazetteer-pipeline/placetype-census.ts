@@ -5,14 +5,14 @@
  *
  *   Hierarchy campaign R4c — build the PCN1 placetype census from the shipped WOF admin DB. Two
  *   pieces live here: {@link PLACETYPE_PROJECTION}, the executable form of the projection table in
- *   plan/reference/placetype-evidence.mdx ("no placetype gets its own tag; every placetype gets a
+ *   plan/reference/placetype-evidence.mdx ("no placetype gets its own tag. every placetype gets a
  *   projection"), and {@link buildPlacetypeCensus}, which counts each parent's children THROUGH that
  *   projection.
  *
  *   The census counts what the source can actually answer. `admin-global-priority.db` carries nine
  *   placetypes (locality, localadmin, neighbourhood, borough, county, macrocounty, region,
  *   macroregion, country) because `ADMIN_PLACETYPES` in `admin/ingest-wof.ts` allowlists exactly
- *   those; the projection table maps all 34 in the WOF vocabulary. The other 25 are absent from the
+ *   those. the projection table maps all 34 in the WOF vocabulary. The other 25 are absent from the
  *   artifact by BUILD RECIPE, not by WOF's contents — which is COVERAGE, not fact (the
  *   meaning-of-zero rule), and why the artifact ships positive counts only and the reader treats a
  *   missing node as neutral. `mailwoman gazetteer granularity` measures the difference.
@@ -37,7 +37,7 @@ import { DatabaseClient } from "@mailwoman/sqlite/client"
  *
  * Pinned to `WhosOnFirstPlacetype` (`@mailwoman/core/resources/whosonfirst`) with `satisfies`, the same discipline
  * `WOF_VENUE_STRUCTURE_PLACETYPES` uses: this list stops COMPILING if it names something outside the vocabulary. The
- * type is the authority on membership; this array exists because a type union cannot be enumerated at runtime, which is
+ * type is the authority on membership. this array exists because a type union cannot be enumerated at runtime, which is
  * what the completeness test needs. A hand-maintained copy drifted once already — it was missing `custom`.
  */
 export const WOF_PLACETYPES = [

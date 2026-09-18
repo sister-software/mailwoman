@@ -4,7 +4,7 @@
  * @author Teffen Ellis, et al.
  *
  *   Input coercions shared by every operation schema. An adapter hands an operation `--key value` pairs with the value
- *   still a string, or `true` for a bare flag; the schema is the one place a type is decided, so these helpers are how a
+ *   still a string, or `true` for a bare flag. the schema is the one place a type is decided, so these helpers are how a
  *   flag becomes a boolean and a comma list becomes an array.
  */
 
@@ -28,7 +28,7 @@ export const flagDefaultOn = z
 	.transform((value) => value === undefined || value === true || value === "true" || value === "1")
 
 /**
- * An optional string; a bare `--key` with no value is refused rather than read as the string "true".
+ * An optional string. a bare `--key` with no value is refused rather than read as the string "true".
  */
 export const text = z.string().optional()
 

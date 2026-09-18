@@ -1,12 +1,12 @@
 """Contract tests for the train-time conventions loss mask (#478 pairing).
 
-Essential: FR rows' forbidden columns carry zero gradient; US rows and knob-off runs are
-bit-identical to the unmasked loss; the mask buffer mirrors codex (fr forbids the affix tags).
+Essential: FR rows' forbidden columns carry zero gradient. US rows and knob-off runs are
+bit-identical to the unmasked loss. the mask buffer mirrors codex (fr forbids the affix tags).
 """
 
 import pytest
 
-torch = pytest.importorskip("torch")  # training deps live on Modal; locally these skip
+torch = pytest.importorskip("torch")  # training deps live on Modal. locally these skip
 
 from mailwoman_train.features.conventions import CONVENTIONS_FORBIDDEN_TAGS, build_forbidden_mask  # noqa: E402
 from mailwoman_train.labels import ACTIVE_BIO_LABELS, LABEL_TO_ID, LOCALE_COUNTRIES  # noqa: E402

@@ -7,7 +7,7 @@
  *   a larger feature sorts first at an equal prefix. The trie carries no ancestry (nomenclature has no containment
  *   graph); what it gives the app is a prefix walk over the names with the feature's id and position as cargo.
  *
- *   The tokenizer lives in `#search/tokens`, the platform-free half an app bundles; the build calls the same one.
+ *   The tokenizer lives in `#search/tokens`, the platform-free half an app bundles. the build calls the same one.
  */
 
 import { AncestrieBuilder } from "@mailwoman/ancestrie"

@@ -47,7 +47,7 @@ describe("decodeBytes", () => {
 describe("decodeByteStream", () => {
 	it("holds a character split across two chunks", async () => {
 		// The split lands between `98` and `de` — the two bytes of `샾`. A per-chunk decode emits a replacement character
-		// here and corrupts the row; the stream decoder holds the lead until its trail arrives.
+		// here and corrupts the row. the stream decoder holds the lead until its trail arrives.
 		async function* halves(): AsyncGenerator<Uint8Array> {
 			yield THE_SHARP.slice(0, 3)
 			yield THE_SHARP.slice(3)

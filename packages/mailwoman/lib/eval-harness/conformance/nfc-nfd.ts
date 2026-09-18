@@ -32,7 +32,7 @@
  *
  *   STAGE 1 OWNS THIS, WHICH IS THE REASON TO MEASURE IT AND NOT THE REASON TO SKIP IT. `@mailwoman/normalize`
  *   composes to NFC before anything downstream sees the text, so both forms should converge before the
- *   tokenizer runs. "Should converge" is a claim about code; a divergence here is that claim failing, and the
+ *   tokenizer runs. "Should converge" is a claim about code. a divergence here is that claim failing, and the
  *   first place to look is whichever stage received the two forms still distinct.
  */
 
@@ -245,7 +245,7 @@ export interface CanonicalFormCoverage {
 /**
  * Measure this suite against the population it draws from.
  *
- * `corpusInputs` is every committed board row's query text; the caller supplies it rather than this module loading the
+ * `corpusInputs` is every committed board row's query text. the caller supplies it rather than this module loading the
  * corpus, so the law module stays free of the corpus loader and a caller can measure the suite against any population
  * it can name.
  */

@@ -182,7 +182,7 @@ export interface PremiseLinkageResultRow extends PremiseLinkagePresence {
 	outcome: PremiseLinkageOutcome
 	/**
 	 * Carried so the report writer can REFUSE a coordinate on a row whose terms forbid one. A permission flag is not a
-	 * licensed value; the check it enables is only possible if the flag travels with the row.
+	 * licensed value. the check it enables is only possible if the flag travels with the row.
 	 */
 	coordinatePublishable: boolean
 	/**
@@ -200,7 +200,7 @@ export interface PremiseLinkageResultRow extends PremiseLinkagePresence {
 }
 
 /**
- * A numerator and the denominator it was measured against. Both are always stated; neither is ever inferred from the
+ * A numerator and the denominator it was measured against. Both are always stated. neither is ever inferred from the
  * other.
  */
 export interface PremiseLinkageCount {
@@ -213,7 +213,7 @@ export interface PremiseLinkageCount {
  *
  * This is the only thing that moves a refusal into a denominator. Under `abstain_ok` a refusal leaves the eligible set,
  * because an arm that declined was not asked to be right. Under `unique_required` it stays in the denominator — and it
- * is still recorded as `refused`, never rewritten to `wrong`. The policy changes what a rate is measured over; it never
+ * is still recorded as `refused`, never rewritten to `wrong`. The policy changes what a rate is measured over. it never
  * changes what an arm did.
  */
 export const PremiseLinkagePolicy = {

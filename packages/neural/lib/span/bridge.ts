@@ -33,9 +33,9 @@ export interface BridgePunctuationOpts {
 	/**
 	 * Structural spans (from the Stage 2.7 span proposer — ANNOTATION/QUOTED groups, delimiters inclusive) whose
 	 * boundaries no merge may straddle: M2's crossing constraint, the bridge's mirror image (the bridge merges across
-	 * WEAK punctuation; this blocks merging across STRUCTURAL punctuation). A merge is blocked when either span boundary
+	 * WEAK punctuation. this blocks merging across STRUCTURAL punctuation). A merge is blocked when either span boundary
 	 * falls inside the gap being bridged — e.g. an apostrophe-quoted name whose closing quote sits in an
-	 * otherwise-bridgeable gap. Boundaries already inside a labeled token are the model's call, not the bridge's; only
+	 * otherwise-bridgeable gap. Boundaries already inside a labeled token are the model's call, not the bridge's. only
 	 * gaps are policed.
 	 */
 	blockedSpans?: ReadonlyArray<{ start: number; end: number }>
@@ -52,7 +52,7 @@ function crossesBlockedBoundary(
 	if (!blockedSpans) return false
 
 	for (const span of blockedSpans) {
-		// span.start = opening delimiter index; span.end = one past the closing delimiter.
+		// span.start = opening delimiter index. span.end = one past the closing delimiter.
 		if (span.start >= gapStart && span.start <= gapEnd) return true
 
 		if (span.end - 1 >= gapStart && span.end - 1 <= gapEnd) return true

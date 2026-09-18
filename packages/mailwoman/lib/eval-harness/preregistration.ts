@@ -80,7 +80,7 @@ export interface LoadFrozenDefinitionOptions<T> {
 	 */
 	idField: keyof T & string
 	/**
-	 * The definition's own executability audit; any problem refuses the load.
+	 * The definition's own executability audit. any problem refuses the load.
 	 */
 	audit: (definition: T) => string[]
 }

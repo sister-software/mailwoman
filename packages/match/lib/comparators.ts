@@ -5,7 +5,7 @@
  *
  *   String comparators for the matcher's scoring stage.
  *
- *   The record-linkage literature (Winkler/Census; Belin 1993) settles on the prefix-weighted Jaro
+ *   The record-linkage literature (Winkler/Census. Belin 1993) settles on the prefix-weighted Jaro
  *   comparator (Jaro-Winkler) as the default for names: it tolerates the typographical error real
  *   data is full of better than raw character-edit distance. But J-W has a documented blind spot on
  *   compound / double surnames (e.g. Hispanic `Garcia Lopez`): the second half of the compound

@@ -12,7 +12,7 @@ import { dataRootPath } from "@mailwoman/core/data-root"
  *                  that surfaces the gold token could recover it (harder).
  *     - emitUnres: model emitted the gold locality but resolveTree still didn't resolve -> a resolver
  *                  ranking/country-filter issue, not a rescore opportunity.
- *     - covGap   : gold not in the gazetteer -> rescoring can't help; it's a coverage gap.
+ *     - covGap   : gold not in the gazetteer -> rescoring can't help. it's a coverage gap.
  *   recoverable = swap + needsK = #370's CEILING. Same resolver for baseline + gold-check (consistent).
  *
  *   Run: node packages/mailwoman/lib/dev-tools/rescore-ceiling-probe.run.ts [--model out/v191/model.onnx] [--n 150]
@@ -71,7 +71,7 @@ async function main() {
 
 	const T = { n: 0, res: 0, unres: 0, swap: 0, needsK: 0, emitUn: 0, cov: 0 }
 	// FALSIFIER accumulators: great-circle error (km) from the postcode-disambiguated gold-locality
-	// resolution to truth, over the swap cases. top1 = resolver's ranked choice; best5 = the ceiling
+	// resolution to truth, over the swap cases. top1 = resolver's ranked choice. best5 = the ceiling
 	// if same-name disambiguation picks the right candidate from the top 5.
 	const swapTop1: number[] = []
 	const swapBest5: number[] = []
@@ -115,7 +115,7 @@ async function main() {
 
 				// FALSIFIER: resolve the gold locality with the row's postcode (what the rescore keeps as
 				// an anchor) and measure great-circle to truth. p50 < 10km → the swap recovers a real
-				// coordinate; scatter → the gold name resolves to a same-name collision (a label-F1 mirage,
+				// coordinate. scatter → the gold name resolves to a same-name collision (a label-F1 mirage,
 				// the #685 trap). (0,0) placeholders are dropped — WOF ships them on some rows.
 				const tLat = Number(row.lat),
 					tLon = Number(row.lon)

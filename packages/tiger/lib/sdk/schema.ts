@@ -6,7 +6,7 @@
  *   TIGER SQLite schema, as a string so it loads in both `tsx` source mode and the compiled CLI
  *   (`tsc` doesn't copy `.sql` assets into `out/`). Geometry is GeoJSON text — NOT SpatiaLite. The
  *   prior SpatiaLite path (`load_extension` of a hardcoded macOS dylib + WKB `GEOM` columns) never
- *   loaded on Linux; plain text keeps the build dependency-free and `node:sqlite`-native (read it
+ *   loaded on Linux. plain text keeps the build dependency-free and `node:sqlite`-native (read it
  *   back with `JSON.parse`).
  */
 
@@ -51,7 +51,7 @@ export interface PLBlockTable {
 	 */
 	housing_units: number
 	/**
-	 * H1 occupied. `occupied + vacant === housing_units` by construction; the reader refuses a row where it is not.
+	 * H1 occupied. `occupied + vacant === housing_units` by construction. the reader refuses a row where it is not.
 	 */
 	occupied: number
 	/**
@@ -111,7 +111,7 @@ PRAGMA journal_mode = WAL;
 
 /**
  * Create the TIGER tables + indexes via the Kysely schema-builder (the house idiom). Idempotent (`IF NOT EXISTS`). Pass
- * a {@link DatabaseClient} (or any `Kysely`) over the TIGER DB; run {@link TIGER_PRAGMAS} first. `us_state`/`tract`
+ * a {@link DatabaseClient} (or any `Kysely`) over the TIGER DB. run {@link TIGER_PRAGMAS} first. `us_state`/`tract`
  * aren't in {@link TIGERDatabase} (created here but not queried via Kysely) — `createTable` takes any table name, so
  * that's fine.
  *
@@ -121,7 +121,7 @@ PRAGMA journal_mode = WAL;
 /**
  * Refuse a `pl_block` built before the H1 columns existed. `createTable(...).ifNotExists()` leaves an older table as it
  * is, and the next load would fail on the first insert with a message about a column, not about the cause. The table is
- * derived (the redistricting command reloads it state by state), so the remedy is a rebuild: drop it and re-run
+ * derived (the redistricting command reloads it state by state), so the action is a rebuild: drop it and re-run
  * `mailwoman tiger redistricting` for each state you hold. Databases are never patched in place.
  */
 async function assertPLBlockShape(db: Kysely<TIGERDatabase>): Promise<void> {

@@ -37,7 +37,7 @@
  *   {@linkcode assertWorkbookHeader} refuses a header missing any of them.
  *
  *   **Memory:** `XLSXSpliterator` materializes the sheet — XLSX is a ZIP of XML with shared strings in a
- *   separate entry, so bounded-memory streaming is not available. ~20k × 122 is fine; this note exists so
+ *   separate entry, so bounded-memory streaming is not available. ~20k × 122 is fine. this note exists so
  *   nobody points it at a genuinely large workbook expecting otherwise.
  */
 
@@ -96,7 +96,7 @@ const NOTE_KEYS = ["note1", "note2", "note3"] as const
 
 /**
  * USPS codes for the workbook's 59 jurisdiction columns, keyed by the normalized header name. Territories and the
- * Pacific atolls are included because the workbook carries them; Johnston and Midway have no USPS code of their own and
+ * Pacific atolls are included because the workbook carries them. Johnston and Midway have no USPS code of their own and
  * take their FIPS-adjacent conventional abbreviations, which are recorded here rather than silently dropped.
  */
 const STATE_CODE_BY_KEY: Record<string, string> = {
@@ -197,7 +197,7 @@ const US_DATE_PATTERN = /^(\d{1,2})\/(\d{1,2})\/(\d{4})$/
  * Returns `""` for anything that isn't that shape rather than inventing a date. That is deliberate and it is not
  * silent: `lastFiledAt` becomes `valid_from`, and `assertISODate` throws on a non-ISO value — so an unconverted date
  * fails the build loudly at the point it would be written, which is where a reader can see which filer caused it.
- * Emitting the raw `M/D/YYYY` here would fail the same assertion; emitting a guess would not fail at all.
+ * Emitting the raw `M/D/YYYY` here would fail the same assertion. emitting a guess would not fail at all.
  */
 export function toISOFilingDate(value: string): string {
 	// A workbook whose cells are real dates rather than text arrives pre-converted by `cell`.

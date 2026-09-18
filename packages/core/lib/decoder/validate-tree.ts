@@ -15,7 +15,7 @@
  *   Two checks:
  *
  *   1. **illegal-edge** — invariant: a non-root node's parent tag must appear in its `PARENT_OF` list.
- *        (The tree builder enforces this by construction; the check guards against regressions in
+ *        (The tree builder enforces this by construction. the check guards against regressions in
  *        build-tree.ts.)
  *   2. **stranded-dependent** — a strict dependent tag (one that is meaningless without a structural
  *        anchor) whose anchor type is entirely absent from the tree. Geographic containers

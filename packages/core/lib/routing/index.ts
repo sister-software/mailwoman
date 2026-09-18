@@ -64,7 +64,7 @@ export type ExtractURLPatternPathname<I extends URLPatternPathnameInit | string>
  * A record of path parameter names to their raw values.
  */
 // The mapped form is not interchangeable with Record here. The key is a deferred generic, and only
-// the mapped type keeps the extracted parameter names resolvable at each call site; Record collapses
+// the mapped type keeps the extracted parameter names resolvable at each call site. Record collapses
 // them and every `params.stateCode` access in tile-worker stops type-checking.
 // oxlint-disable-next-line typescript/consistent-indexed-object-style -- deferred generic key
 export type URLPatternPathParameters<I extends URLPatternPathnameInit | string, V extends string | number = string> = {
@@ -161,7 +161,7 @@ export class URLRoutePattern<I extends URLPatternPathnameInit | string = string>
 				normalizedParamValue +
 				pathname.slice(paramPatternIndex + paramPattern.length)
 
-			// oxlint-disable-next-line typescript/no-dynamic-delete -- removing one key from a plain record; the object is not on a hot path
+			// oxlint-disable-next-line typescript/no-dynamic-delete -- removing one key from a plain record. the object is not on a hot path
 			delete remainingParams[paramName]
 		}
 

@@ -12,7 +12,7 @@
  *   runs `scripts/...` or a bare `lib/*.ts` path instead of a registered entry point.
  *
  *   Workspace-local `scripts/` directories (`packages/<name>/scripts/`, `docs/scripts/`, `corpus-python/scripts/`)
- *   are not the root drawer and stay out of scope; a string that names one of them is matched by its prefix.
+ *   are not the root drawer and stay out of scope. a string that names one of them is matched by its prefix.
  */
 
 import { readLocalTextFile } from "@mailwoman/core/fs/readers"

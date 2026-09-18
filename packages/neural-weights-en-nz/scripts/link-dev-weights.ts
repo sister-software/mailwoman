@@ -10,7 +10,7 @@
  *   #1179 OVERLAY FORM: en-nz declares `mailwoman.baseWeights: "@mailwoman/neural-weights-en-us"`, so
  *   `resolveWeights` falls through to the en-us package for `model.onnx` / `tokenizer.model`. This overlay links no
  *   model or tokenizer — it REMOVES any leftover local pair so the base fallback engages (a stale local file would
- *   SHADOW the base fallback and silently serve outdated bytes; the fr-fr manifest's header records the incident).
+ *   SHADOW the base fallback and silently serve outdated bytes. the fr-fr manifest's header records the incident).
  *
  *   What en-nz owns locally (`resolveFromPackageDir` resolves these from the overlay dir with no base fallback):
  *
@@ -20,7 +20,7 @@
  *   - `pair-index-nz.bin` (NZ arc, #1277) — no committed source (derived from the LINZ-derived OpenAddresses NZ
  *       countrywide CSV, the same register `synth-nz-v2` was built from), built through the shared
  *       `buildPairIndexOverlay` (whose freshness guard compares the format, every calibrated magnitude, and the
- *       source md5; sidecar-cached — the CSV is 2.12M rows). `--delta 10` is the NZ-sweep-calibrated value (saturates
+ *       source md5. sidecar-cached — the CSV is 2.12M rows). `--delta 10` is the NZ-sweep-calibrated value (saturates
  *       at δ=10, identical to 12/15, 0/54 golden-FP throughout) baked into the artifact's header. This locale
  *       deliberately ships without a `transitionBeta` (unmeasured there); the parent-bias δ=5 is measured — NZ's own
  *       shipped board moved 230/246 → 246/246 whole-edge, identical at δ 4/6/8/20 — see

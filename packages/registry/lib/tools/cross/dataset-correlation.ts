@@ -11,7 +11,7 @@
  *   We ingest each source under its own {@link ColumnMapping} + a `source` provenance label into one
  *   combined record set, geocode every address through mailwoman's real parser + resolver, resolve
  *   to canonical entities, and report the entities whose members span ≥2 sources — those are the
- *   cross-dataset links. We surface the correlation; interpretation is the consumer's.
+ *   cross-dataset links. We surface the correlation. interpretation is the consumer's.
  *
  *   Tractable sample: TX-scoped, capped per source. Streams the 4.8 GB NPPES registry via `streamRows`.
  *
@@ -154,7 +154,7 @@ export async function crossDatasetCorrelation(
 
 	// Stream each source, filter Texas rows, and retain the first capped rows for geocoding.
 	// (when --corpus-frequency, the default) count every in-state address into a corpus-wide table. The
-	// sample is the matched set; the frequency table reflects the full TX population, so the proven
+	// sample is the matched set. the frequency table reflects the full TX population, so the proven
 	// inverse-frequency change down-weights a genuinely-crowded shared campus even when it appears once in
 	// the geocoded sample. ---
 	const rawBySource = new Map<string, Record<string, string>[]>()
@@ -254,7 +254,7 @@ export async function crossDatasetCorrelation(
 	report?.(`    ${records.length} records; geocoded ${geo}/${total} (${((100 * geo) / total).toFixed(1)}%)`)
 
 	// Resolve records to canonical entities using the default-on proven changes.
-	// spatial (A1) + inverse-address-frequency. We feed the corpus-wide table when we built one; otherwise
+	// spatial (A1) + inverse-address-frequency. We feed the corpus-wide table when we built one. otherwise
 	// resolveEntities auto-computes the input-scoped default. ---
 	report?.("[D] resolving across sources…")
 
@@ -407,7 +407,7 @@ export async function crossDatasetCorrelation(
 
 	// Emit a GeoJSON FeatureCollection for every resolved entity.
 	// carries `sources` + `sourceIDs` (so an analyst filters the cross-dataset links by `sources` length ≥ 2)
-	// and the geocode tier. QGIS-ready; this is the operator-verifiable output of the matcher. ---
+	// and the geocode tier. QGIS-ready. this is the operator-verifiable output of the matcher. ---
 	if (OUT_GEOJSON) {
 		const fc = toGeoJSON(entities)
 		await writeLocalJSONFile(fc, OUT_GEOJSON)

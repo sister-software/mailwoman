@@ -8,18 +8,18 @@
 #      converged at 2k).
 #   2. data.augment_upper_case_prob 0.15 — P3 (#829/#690): ALL-CAPS training copies mirroring
 #      lowercase_row semantics (b3d741bd). Read is off-manifold for leg 1 (case vs span structure),
-#      so cross-contamination risk is low; the joint recipe is what would ship regardless.
+#      so cross-contamination risk is low. the joint recipe is what would ship regardless.
 #
 # PRE-REGISTERED READS (2k):
 #   LEG 1 (span) — span NLL converging toward O(1) (v301 precedent: 26.4 -> ~2 by 2k with the LR
 #     group); seg@1 > token@1 on the starved python check (scripts/eval_seg_at_1.py — RELATIVE read,
-#     both heads share the starved encoder; absolutes are not the JS harness numbers).
+#     both heads share the starved encoder. absolutes are not the JS harness numbers).
 #   LEG 2 (all-caps) — uppercase-perturbed golden-us subset (n>=200), exact-match with
 #     normalizeCase off, package-shaped int8: probe must beat v381 on the same rows by >=5pp
-#     (v381 has zero all-caps training signal; anything less says the augment is inert -> drop it
+#     (v381 has zero all-caps training signal. anything less says the augment is inert -> drop it
 #     and keep the #690 shim).
-#   GUARDS (noise-read at 2k, binding at 8k): golden us/fr micro within noise of v381; FR fragment
-#     board + digit board no worse than -2pp; BIO decode quality unchanged on presets (the span head
+#   GUARDS (noise-read at 2k, binding at 8k): golden us/fr micro within noise of v381. FR fragment
+#     board + digit board no worse than -2pp. BIO decode quality unchanged on presets (the span head
 #     is an ADDITIONAL output — the token path must stay byte-stable-ish under the shared encoder).
 #   Not a promote check. The 8k full run pre-registers the standing battery (golden 2pp check,
 #   gauntlet, metamorphic, fragment boards) + oracle@5 / seg@1 on the JS harness via the PR #1154
@@ -145,7 +145,7 @@ model: # Verbatim from v2.4.1.
   use_country_anchor: true
   country_feature_dim: 2
   # #1104 homograph-guard SOFTENER — the one variable vs v263. Scales the country_ambiguous dim by 0.5
-  # before the country_projection (bakes into the exported ONNX; no lexicon/inference change). v263's
+  # before the country_projection (bakes into the exported ONNX. no lexicon/inference change). v263's
   # hard guard (scale 1.0) over-suppressed homograph countries Georgia/Jordan (country-homograph F1
   # 89.8->82.6); softening should recover homograph recall without giving back the country F1 the
   # WOF-admin rows produced.
@@ -189,7 +189,7 @@ model: # Verbatim from v2.4.1.
 
 train: # Same-vocab init_from fine-tune off the shipped v261 (fresh optimizer; --resume none on a fresh
   # output_dir honors init_from, weights only). The new country_projection starts random and learns to
-  # route the cue; the encoder keeps v261's span-boundary + street grammar.
+  # route the cue. the encoder keeps v261's span-boundary + street grammar.
   output_dir: /data/output-v3100-span-ship-probe-s42/checkpoints
   seed: 42
   init_from: /data/output-v381-punct-fix-full-s42/checkpoints/step-008000

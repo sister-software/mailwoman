@@ -9,7 +9,7 @@
  *   that deliberately CROSSES state borders, so it cannot tell you the Bundesland. A Spanish código
  *   postal is the opposite: its first two digits are the province code, assigned alphabetically
  *   (01 Álava … 28 Madrid … 50 Zaragoza), so the province is derivable from the postcode exactly.
- *   Code that wants a Spanish region from an address can read it off the postcode; code that wants a
+ *   Code that wants a Spanish region from an address can read it off the postcode. code that wants a
  *   German one cannot.
  */
 
@@ -27,7 +27,7 @@ export type CodigoPostal = Tagged<string, "CodigoPostal">
 
 /**
  * Shape of a Spanish código postal — five digits. Identical in shape to a French code postal, a German PLZ and a US
- * ZIP; disambiguation is the parser's job, not the pattern's.
+ * ZIP. disambiguation is the parser's job, not the pattern's.
  */
 export const CODIGO_POSTAL_PATTERN = /^\d{5}$/
 
@@ -60,7 +60,7 @@ export function parseCodigoPostal(input: string): CodigoPostal | null {
 
 /**
  * The two-digit province prefix (`"28001"` → `"28"`), or `null` for a non-postcode. Callers map it through their own
- * province table; this module deliberately does not ship one, since the campaign that needed it only needs the shape.
+ * province table. this module deliberately does not ship one, since the campaign that needed it only needs the shape.
  */
 export function codigoPostalProvincePrefix(input: string): string | null {
 	const code = normalizeCodigoPostal(input)

@@ -147,7 +147,7 @@ export function selectRepos(discovered: readonly DiscoveredRepo[], options: Sele
 		wanted.add(name)
 	}
 
-	// A country expands to the repositories it might have; only a country with none at all is an error. Most countries
+	// A country expands to the repositories it might have. only a country with none at all is an error. Most countries
 	// carry an admin repository and no postalcode one, so requiring both would refuse the common case.
 	for (const code of extractDelimited(options.countries)) {
 		const candidates = countryRepoNames(code).filter((name) => byName.has(name))

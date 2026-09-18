@@ -78,7 +78,7 @@ describe.skipIf(!HAS_WOF)("FST autocomplete — integration", () => {
 
 // Synthetic-FST unit tests (no WOF DB needed → always run in CI). Cover the #587 char-level
 // partial-last-token completion + dedupeByName. The trie:
-//   root --new--> [york -> New York; london -> New London ×2 (city+county)]
+//   root --new--> [york -> New York. london -> New London ×2 (city+county)]
 //        --san--> [francisco -> San Francisco]
 //        --chicago--> Chicago
 describe("FST autocomplete — char-level + dedupe (synthetic)", () => {

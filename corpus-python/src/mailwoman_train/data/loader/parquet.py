@@ -53,7 +53,7 @@ def _file_row_iter(
     coarse-label check, and — when ``expected_source`` is given — a per-row source equality
     check. The per-row source check matters for the 2 "transition" files in corpus
     v0.2.0 (part-0016 and part-0259) where one source's data ends and the next begins
-    mid-file; without it the per-source iterator would yield rows from the wrong source.
+    mid-file. without it the per-source iterator would yield rows from the wrong source.
 
     Does **not** apply source weighting — source weighting is handled at the multinomial
     sampler level in ``_raw_row_stream``, so that the observed mix matches ``source_weights``
@@ -63,7 +63,7 @@ def _file_row_iter(
     """
     pf = pq.ParquetFile(path)
     # Span-column presence is a per-file schema fact (#519): all three or none. Partial = a
-    # corrupt file; reading the survivors would silently train the wrong labels.
+    # corrupt file. reading the survivors would silently train the wrong labels.
     schema_names = set(pf.schema_arrow.names)
     span_present = [c for c in _SPAN_COLUMNS if c in schema_names]
     if span_present and len(span_present) != len(_SPAN_COLUMNS):
@@ -144,7 +144,7 @@ def _source_iter(
 ) -> Iterator[dict[str, Any]]:
     """Yield rows from a sequence of parquet files, restricted to ``expected_source``.
 
-    Files are visited in shuffled order; within each file, row-groups and row indices
+    Files are visited in shuffled order. within each file, row-groups and row indices
     are also shuffled (see ``_file_row_iter``). One row-group's worth of rows is held
     in memory at a time per source, so total RAM is bounded by the number of distinct
     sources, not by any file-pool parameter.

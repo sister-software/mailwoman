@@ -12,7 +12,7 @@ import { SYNTHETIC_ID_RANGE_MIN_WIDTH, SYNTHETIC_ID_RANGES } from "@mailwoman/co
 import { describe, expect, test } from "vitest"
 
 /**
- * WOF ids are below this; every synthetic base sits above.
+ * WOF ids are below this. every synthetic base sits above.
  */
 const WOF_ID_CEILING = 2_000_000_000
 

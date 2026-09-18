@@ -68,7 +68,7 @@ interface NADRecord {
 	St_PosDir?: string | null
 	St_PosMod?: string | null
 	StNam_Full?: string | null
-	// Sub-address (carried as part of street for now; Phase 1 has no unit/floor labels)
+	// Sub-address (carried as part of street for now. Phase 1 has no unit/floor labels)
 	Building?: string | null
 	Floor?: string | null
 	Unit?: string | null
@@ -246,7 +246,7 @@ export function createUsgovNADAdapter(): CorpusAdapter {
 			let emitted = 0
 			outer: for (const file of files) {
 				if (opts.signal?.aborted) break
-				// TextSpliterator streams string lines; the per-line tryParsingJSON below keeps the reader
+				// TextSpliterator streams string lines. the per-line tryParsingJSON below keeps the reader
 				// tolerant of malformed rows (skip silently), so TextSpliterator + a non-throwing parse —
 				// not JSONSpliterator, which would throw. The path string lets the lib own + dispose each
 				// file's handle, including on the `break outer` early exit.

@@ -97,7 +97,7 @@ the city.
 Neither is attributable from this run. Two hypotheses were floated during the arc and **both were
 wrong**, recorded here because each was stated confidently before being checked:
 
-1. _"The from-scratch run discards the suffix-boundary cure."_ **False** — `v0.19.0-suffix-boundary-v2`
+1. _"The from-scratch run discards the suffix-boundary fix."_ **False** — `v0.19.0-suffix-boundary-v2`
    is in v5.0.0's corpus at 30,000 rows.
 2. _"Uniform 1.0 weights flatten the mixture, so US drops to a 1/33 share."_ **False** — the loader's
    rejection sampler is `if weight < max_weight`, which never fires when every weight is 1.0. The
@@ -119,7 +119,7 @@ Pre-registered reading, in the config header:
 
 > If the FR/GB/DE regressions clear, admission is the cause and this is the ship candidate. If they
 > persist, the admission hypothesis is FALSIFIED and the corpus change is the remaining suspect — do
-> not re-run this with a different dose.
+> not re-run this with a different amount.
 
 The falsification clause is the required half. The 2026-08-23 trailing-region arc spent four runs
 re-weighting a change that could not work; a weight change is not a fix when the mechanism is wrong.
@@ -184,7 +184,7 @@ row-level instability for one seed pair), or the v4.4.0 arc's own path applied f
 fine-tuned ON TOP of the v5.0.0 base rather than another base). Both candidates' artifacts and run
 IDs are retained; the board runs are replayable via `{kind:"recorded"}`.
 
-## Postscript 2 — the full three-leg arc: null + cure on the v5.0.0 base (2026-08-24)
+## Postscript 2 — the full three-leg arc: null + fix on the v5.0.0 base (2026-08-24)
 
 The first run of the complete protocol — self-control, null, candidate in one call:
 
@@ -203,18 +203,18 @@ Three findings:
    base graded +2 — continuing the base's own recipe for 1,000 steps costs nothing measurable, unlike
    the v4.4.0 base's measured 10-row tax. A tax is a property of the base and its recipe, not a
    universal constant.
-2. **The cure worked, on exactly its target class.** Candidate minus null: net +2, regressions −3 —
+2. **The fix worked, on exactly its target class.** Candidate minus null: net +2, regressions −3 —
    and the three healed rows are `Passeig de Gràcia`, `Passeig de Sant Joan`, and the
    `…Queen St Unit 1…` unit-swallow: the street-prefix/boundary class the suffix-boundary extract
-   teaches. Mechanism-consistent, small, and directly attributed. (Null↔cure share the same base
+   teaches. Mechanism-consistent, small, and directly attributed. (Null↔fix share the same base
    init, seed, and steps, so the treatment comparison is not confounded by the separate country-admission change.)
 3. **The D-rule core is base-inherited and unchanged at every weight.** FR 2 / GB 4 / DE 1 are identical across
-   base, null, and cure: the GB venue cluster (`St Andrew Undershaft…`, `30 St Mary Axe…`,
+   base, null, and fix: the GB venue cluster (`St Andrew Undershaft…`, `30 St Mary Axe…`,
    `Cafe at St Mary's…`, `Milford on Sea…`), `Unter den Linden`, and the bare-street coin flips. More
    suffix-boundary weight is not the change for these — the venue-boundary class needs its own treatment
    (#1366's territory), or this lineage does not ship default-on.
 
-Artifacts: null int8 `f52ceaf164c4e01d1682dd80f3c6ac8c`, cure int8 `f2d264f09b7d6f269158ab97d1843346`.
+Artifacts: null int8 `f52ceaf164c4e01d1682dd80f3c6ac8c`, fix int8 `f2d264f09b7d6f269158ab97d1843346`.
 Run IDs in the store: control `0bb3f465`, null `e0b9491c`, candidate `c85ef830`.
 
 ## Postscript 3 — the routed re-grading supersedes this document's board numbers (2026-08-24)
@@ -244,7 +244,7 @@ measurements live in `scratchpad/HANDOFF-2026-08-24.md` and the run store.
   `Brixton Hill, United Kingdom`); DE 0 of 6.** The GB venue-cluster blocking story
   (`St Andrew Undershaft Church…`, `30 St Mary Axe…`) was an artifact of grading GB rows without
   their overlay.
-- The v5.0.1-null / v5.0.2-cure row-level readings, including "the cure healed exactly its 3 target
+- The v5.0.1-null / v5.0.2-fix row-level readings, including "the fix healed exactly its 3 target
   rows" — same unrouted path. The parse-level diffs (the deleted `locality="London"`, the Passeig
   retags) remain real observations of the SINGLE-CONFIG en-US parse and stay useful as mechanism
   illustrations of the grammar contract; they are not statements about the production route.

@@ -84,7 +84,7 @@ export interface ProposedSpan {
 	end: number
 	kind: ProposedSpanKind
 	/**
-	 * 0..1. Confidence is shape-derived; consumers weight or floor it (it is never a verdict).
+	 * 0..1. Confidence is shape-derived. consumers weight or floor it (it is never a verdict).
 	 */
 	confidence: number
 	/**
@@ -254,7 +254,7 @@ function findBalancedPairs(text: string, open: string, close: string): Array<{ o
 }
 
 /**
- * Same-character quote pairing ("…"): consecutive occurrences pair up; an odd count is unbalanced.
+ * Same-character quote pairing ("…"): consecutive occurrences pair up. an odd count is unbalanced.
  */
 function findSameCharPairs(text: string, ch: string): Array<{ open: number; close: number }> | null {
 	const positions: number[] = []
@@ -675,7 +675,7 @@ function proposeNumericReadings(
 //#region Entry point
 
 /**
- * Propose typed spans over `text`. Pure and synchronous; safe to run on every parse. Proposals may overlap freely
+ * Propose typed spans over `text`. Pure and synchronous. safe to run on every parse. Proposals may overlap freely
  * ("possibilities not constraints"); alternatives of one surface share an `alternativeGroup`. Sorted by `start`, then
  * descending confidence.
  *

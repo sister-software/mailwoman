@@ -202,7 +202,7 @@ def test_build_optimizer_three_group_labels_attribute_to_the_right_group(tmp_pat
     # Reorder-proofing: `labels2` is READ from build_optimizer's return, never re-derived by
     # this test — the same discipline the fixed call site in train.py now follows. If
     # build_optimizer's internal carve-out order ever changes, this assignment (and the
-    # zip below) tracks it automatically; nothing here hard-codes group index -> label.
+    # zip below) tracks it automatically. nothing here hard-codes group index -> label.
     assert labels2 == labels1  # same overrides set => same label order, sourced fresh each time
     live_lrs = [g["lr"] for g in optim2.param_groups]
     sched2 = build_scheduler(optim2, _scheduler_cfg(warmup_steps=2))

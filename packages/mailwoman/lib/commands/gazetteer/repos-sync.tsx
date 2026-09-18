@@ -7,7 +7,7 @@
  *   perform.
  *
  *   THE DIVISION OF LABOUR MATTERS, because two commands touching the same directories otherwise looks like an
- *   accident. `gazetteer inspect sync` clones and pulls; it now resolves each repo's origin through
+ *   accident. `gazetteer inspect sync` clones and pulls. it now resolves each repo's origin through
  *   `resolveWOFRepoOrigin`, so a new clone comes from our fork when one exists. What it cannot do is fix an EXISTING
  *   checkout: `synchronizeRepo` pulls in place and never rewrites a remote, so a directory cloned from upstream before
  *   the fork existed keeps pulling upstream forever, silently, over corrections the build depends on. That repair is
@@ -69,7 +69,7 @@ const GazetteerReposSync: CommandComponent<typeof spec> = ({ options }) => {
 		const audit = await auditReposRoot(root, { readCommits: false })
 		const repos = [...new Set([...audit.repos.map((r) => r.name), ...requested])].toSorted()
 
-		// Existing clones live under `<root>/<owner>/<name>` when nested; prefer wherever the repo already is. The
+		// Existing clones live under `<root>/<owner>/<name>` when nested. prefer wherever the repo already is. The
 		// existence probes are materialized up front because `planReposSync`'s `directoryFor` is a synchronous callback.
 		const directories = new Map<string, string>()
 

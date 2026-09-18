@@ -9,15 +9,15 @@
  *   The interface is an async iterable rather than an array because a controlled file is read under terms
  *   that usually forbid holding it whole, and because a run that streams can be stopped without ever
  *   having materialized the licensed rows. A provider's data populates one implementation of this
- *   interface; nothing downstream of it changes.
+ *   interface. nothing downstream of it changes.
  *
  *   The controlled adapter is deliberately not written here. Its file format is the provider's, it is
  *   not known yet, and inventing one now would mean the first real file either fits a guess or forces
  *   a redesign of the thing that was supposed to be fixed in advance.
  *
  *   Everything below is synthetic. The identifiers sit in the same reserved 0-prefixed range
- *   `@mailwoman/core/resolver`'s fixture provider uses, which no real UPRN occupies; the addresses name
- *   a town that does not exist; the coordinates are round numbers in the sea of arbitrary. The one
+ *   `@mailwoman/core/resolver`'s fixture provider uses, which no real UPRN occupies. the addresses name
+ *   a town that does not exist. the coordinates are round numbers in the sea of arbitrary. The one
  *   rule this file must keep is that the ROWS and the PROVIDER'S ANSWERS are derived from a single
  *   table — two hand-maintained lists that must agree drift the moment someone edits one of them.
  */
@@ -50,7 +50,7 @@ export interface PremiseLinkageAdapter {
 }
 
 /**
- * The scheme every synthetic row grades against. Real UK premise linkage grades against UPRNs; the fixture uses the
+ * The scheme every synthetic row grades against. Real UK premise linkage grades against UPRNs. the fixture uses the
  * same scheme name with invented identifiers so the grading path is the one a controlled run takes.
  */
 const SYNTHETIC_SCHEME = "uprn"

@@ -6,7 +6,7 @@
  *   `mailwoman gazetteer verify` — the structural promotion eval, standalone: node census vs the
  *   committed baseline (#1026), coverage floor, region-abbrev/place_abbr spot-checks (#440/#1015),
  *   FTS/bbox coverage, degenerate-extent spot-check (#1015), and the reverse EU panel. Exits non-zero
- *   on any failure — do not swap an artifact that fails here. `build admin` runs this automatically;
+ *   on any failure — do not swap an artifact that fails here. `build admin` runs this automatically.
  *   the standalone command is for verifying an existing DB (e.g. before promoting a staging artifact).
  *
  *   It also prints a DERIVED-ARTIFACT FRESHNESS section (2026-08-05): which FST binaries were built
@@ -15,7 +15,7 @@
  *   derived from it goes stale silently and on its own schedule — the 2026-08-04 swap left
  *   `fst-global-priority.bin` at a 2026-05-28 build and nothing anywhere noticed. A stale FST is a
  *   decode-time bias list that is merely old, not a reason to refuse a database that is fine, and dev
- *   trees must keep running; so it warns, names the rebuild command, and gets out of the way.
+ *   trees must keep running. so it warns, names the rebuild command, and gets out of the way.
  */
 
 import type { WOFDatabase } from "@mailwoman/resolver-wof-sqlite/schema"

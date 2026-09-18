@@ -5,7 +5,7 @@
  *
  *   `mailwoman corpus golden expand` — generate golden-set candidate entries by LLM-driven
  *   surface-form synthesis from verified-label seeds in a corpus test parquet file. Candidates land in
- *   `data/eval/golden/candidates/` for operator review; promote with `corpus golden promote`.
+ *   `data/eval/golden/candidates/` for operator review. promote with `corpus golden promote`.
  *   Requires `DEEPSEEK_API_KEY` (or `ANTHROPIC_API_KEY` with `--provider anthropic`).
  */
 

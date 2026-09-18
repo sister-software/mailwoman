@@ -128,11 +128,11 @@ export interface BuildFSTOpts {
 	placetypes?: PlacetypeID[]
 	languages?: string[]
 	/**
-	 * Degenerate-surface curation (build-time; the ASR-contextual-biasing "prune the bias list" discipline). A name whose
+	 * Degenerate-surface curation (build-time. the ASR-contextual-biasing "prune the bias list" discipline). A name whose
 	 * full normalized token sequence joins to a member of this set is never inserted — the surface carries no
 	 * discriminative value as a bias key (bare function words: "la"; bare street-type words: "boulevard"). The FST is a
 	 * bias list, not the gazetteer of record — the resolver's candidate tables are untouched, so excluded places stay
-	 * findable; they just stop nudging the decoder on degenerate keys. Keys must be `normalizeTokens(...).join(" ")`.
+	 * findable. they just stop nudging the decoder on degenerate keys. Keys must be `normalizeTokens(...).join(" ")`.
 	 */
 	excludeSurfaces?: ReadonlySet<string>
 	/**
@@ -151,7 +151,7 @@ export interface BuildFSTOpts {
 	 * every inserted place row records the count for its accepting surface (`PlaceEntry.crossCountryBranches`) — an entry
 	 * accessible under several surfaces records each surface's own count. Serialized into the place row's former `_pad`
 	 * byte with presence signaled by header flags bit0, so VERSION stays put and pre-ambiguity artifacts read as "no
-	 * data" (never "0 branches" — the meaning-of-zero rule). No decoder consumes it yet; consumers (FST-prior tempering,
+	 * data" (never "0 branches" — the meaning-of-zero rule). No decoder consumes it yet. consumers (FST-prior tempering,
 	 * the Option-A evidence channel) arrive behind their own measured checks.
 	 */
 	surfaceCountryCounts?: ReadonlyMap<string, number>

@@ -189,7 +189,7 @@ export interface TarballAudit {
 }
 
 /**
- * Audit a packed tarball; throw with every violation listed if it does not contain what it promises.
+ * Audit a packed tarball. throw with every violation listed if it does not contain what it promises.
  *
  * Callers publish only when this returns. It is deliberately a throw rather than a boolean: there is no partial pass,
  * and a published version cannot be taken back.

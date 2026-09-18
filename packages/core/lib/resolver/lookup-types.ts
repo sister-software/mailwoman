@@ -94,7 +94,7 @@ export interface InterpolatedPointHit {
 
 /**
  * House-number interpolation lookup (#483). Like {@link AddressPointLookup}, implementations own their normalization
- * (the shared `resolver-wof-sqlite/street-normalize.ts`); core depends only on this contract. Postcode-scoped; without
+ * (the shared `resolver-wof-sqlite/street-normalize.ts`). core depends only on this contract. Postcode-scoped. without
  * a postcode the tier answers only when the covering ranges agree on one postcode — `near` (the resolved locality's
  * coordinate) lets an implementation break a multi-postcode tie by segment proximity instead of abstaining (the
  * Brooklyn-vs-Great-Neck namesake class). Optional and advisory: implementations may ignore it.
@@ -112,7 +112,7 @@ export interface InterpolationLookup {
 	 * is a property of the calibration set the artifact was built against, so it ships in the artifact, not in caller
 	 * code. The resolver applies it as the DEFAULT whenever `ResolveOpts.interpolationRadiusCalibration` is absent.
 	 * `undefined` (or an implementation without the property) = the artifact carries none — extracts built before the
-	 * metadata table existed; behavior is then exactly the pre-artifact ladder (caller-supplied factor or raw).
+	 * metadata table existed. behavior is then exactly the pre-artifact ladder (caller-supplied factor or raw).
 	 * Implementations must read this at OPEN time (constructor/factory), never per-lookup — `find()` is synchronous by
 	 * design.
 	 */

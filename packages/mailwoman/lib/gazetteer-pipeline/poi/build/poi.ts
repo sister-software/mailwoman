@@ -177,7 +177,7 @@ export interface BBox {
  *
  * Rows whose H3 cell falls outside the bbox's own polyfilled cell set are not represented in the returned coverage
  * (their observed count is silently uncounted) — acceptable because `bbox` is expected to describe the same extract
- * region the rows were pulled from; a caller passing a bbox narrower than its rows' actual extent will undercount.
+ * region the rows were pulled from. a caller passing a bbox narrower than its rows' actual extent will undercount.
  *
  * Pure function: no DuckDB/ogr2ogr/network involved, so it's directly unit-testable over synthetic coordinates.
  */
@@ -246,7 +246,7 @@ export interface BuildPOIOptions {
 	 */
 	rows?: AsyncIterable<POISourceRow> | Iterable<POISourceRow>
 	/**
-	 * Output `poi.db` path. Removed + rebuilt if already present (build-on-copy at the file level; see module docstring).
+	 * Output `poi.db` path. Removed + rebuilt if already present (build-on-copy at the file level. see module docstring).
 	 */
 	out: PathBuilderLike
 	/**
@@ -272,7 +272,7 @@ export interface BuildPOIOptions {
 	source?: "overture-places" | "osm"
 	/**
 	 * Manifest distribution tier. Default {@link LayerTier.Shipped}. The `--source osm` build branch passes
-	 * {@link LayerTier.BuildLocal} (ODbL share-alike; see `osm/README.md`).
+	 * {@link LayerTier.BuildLocal} (ODbL share-alike. see `osm/README.md`).
 	 */
 	tier?: LayerTier
 	/**
@@ -493,7 +493,7 @@ export async function buildPOIDatabase(opts: BuildPOIOptions): Promise<BuildPOIR
 		// `BuildPOIOptions.coverageCellsOverride`'s docstring. Default path (no override) is unchanged.
 		// `basis: source_present` states in the artifact what the paragraph above states in prose: the 1.0 is
 		// "Overture returned rows here", not "everything here is known". A consumer building an exclusion
-		// reads the basis and refuses; one reading `completeness` alone would have concluded the opposite.
+		// reads the basis and refuses. one reading `completeness` alone would have concluded the opposite.
 		//
 		// An override entry may carry its own `completeness`/`basis` — the only way a cell in this pipeline
 		// reaches an exclusion-grade basis. Omitting either falls back to the source-present pair above, so a

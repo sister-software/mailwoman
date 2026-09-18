@@ -374,7 +374,7 @@ test("deriveHeadNounSurfaces holds the cognate floor at five folded characters",
 	// `campo` shares four folded characters with `campus` and means FIELD.
 	expect(deriveHeadNounSurfaces([surface({ phrase: "campo sportivo", recordID: "campus", lang: "it" })])).toEqual([])
 
-	// `satélite` shares five with `satellite` and is the addressed form; a floor of six loses it.
+	// `satélite` shares five with `satellite` and is the addressed form. a floor of six loses it.
 	expect(
 		deriveHeadNounSurfaces([surface({ phrase: "satélite de embarque", recordID: "satellite", lang: "es" })]).map(
 			(s) => s.phrase
@@ -401,7 +401,7 @@ test("deriveHeadNounSurfaces keeps a spaced non-Latin candidate to whole tokens"
 		surface({ phrase: "공항터미널", recordID: "terminal", lang: "ko" }),
 	])
 
-	// `터미널` and `공항` are both whole tokens of the spaced member; a fragment straddling the space is
+	// `터미널` and `공항` are both whole tokens of the spaced member. a fragment straddling the space is
 	// never offered.
 	expect(derived.map((s) => s.phrase).toSorted()).toEqual(["공항", "터미널"])
 })
@@ -440,7 +440,7 @@ test("applyPromotions curates only the matching designator, phrase and locale", 
 })
 
 test("applyPromotions refuses a region-free surface when the same language has a rejection", () => {
-	// The `pier` case. Promoted for en-GB, rejected for en-US; without this guard the en-GB decision
+	// The `pier` case. Promoted for en-GB, rejected for en-US. without this guard the en-GB decision
 	// curates the region-free English surface and hands `Pier 1 Imports` what en-US was refused.
 	const surfaces = [
 		surface({ phrase: "pier", recordID: "pier", lang: "en", region: "", source: "seed" }),

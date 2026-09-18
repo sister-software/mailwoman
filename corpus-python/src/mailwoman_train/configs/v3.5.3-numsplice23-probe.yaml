@@ -17,23 +17,23 @@
 # v352 read.)
 #
 # init_from /data/models/numsplice23-expanded (v310 step-008000, token_embeddings FVT mean-init'd to
-# 74,131 — each 10-999 row = mean of its digit constituents; encoder/heads byte-identical).
+# 74,131 — each 10-999 row = mean of its digit constituents. encoder/heads byte-identical).
 #
 # PRE-REGISTERED READ:
 #   PRIMARY (must at least match v352) — board 3 bare-street-hn near v352's 0.787; `aleja Wojska
-#     Polskiego 178` -> house_number; contextful classes hold at v352's recovered levels.
+#     Polskiego 178` -> house_number. contextful classes hold at v352's recovered levels.
 #   THE 2-DIGIT QUESTION (the reason to prefer 10-999) — FR date-name rises above v352's 0.367 toward
 #     the full range's 0.682. If it does not, the 2-digit pieces add nothing and the 100-999 range is
 #     the one to keep.
-#   POSTCODE (must not drop) — parity postcode holds at ~0.986 (as v352 did); board 3 bare-pc holds; the 6
+#   POSTCODE (must not drop) — parity postcode holds at ~0.986 (as v352 did). board 3 bare-pc holds. the 6
 #     demo presets hold. If parity postcode drops, a 2-digit piece is colliding, which is unexpected,
 #     and the 100-999 range is the one to keep.
 #   DO-NO-HARM — FR fragment OVERALL + global parity hold.
 #
 # DECISION TABLE:
-#   Parity postcode holds at ~0.986 and FR date-name rises above 0.367 -> 10-999 dominates; train this
+#   Parity postcode holds at ~0.986 and FR date-name rises above 0.367 -> 10-999 dominates. train this
 #     config to 8k, then promote.
-#   Parity postcode holds and FR date-name stays at 0.367 -> the 2-digit pieces add nothing; train
+#   Parity postcode holds and FR date-name stays at 0.367 -> the 2-digit pieces add nothing. train
 #     100-999 (v352) to 8k instead.
 #   Parity postcode drops -> a 2-digit piece collides (unexpected); fall back to 100-999 (v352).
 #

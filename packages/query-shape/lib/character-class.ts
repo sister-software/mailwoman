@@ -187,7 +187,7 @@ const COMMON_RANGES: ReadonlyArray<[number, number]> = [
 	[0x30_00, 0x30_04],
 	[0x30_06, 0x30_06],
 	[0x30_08, 0x30_20],
-	[0x30_2a, 0x30_2d], // Ideographic tone marks; U+302E..302F beside them are HANGUL tone marks
+	[0x30_2a, 0x30_2d], // Ideographic tone marks. U+302E..302F beside them are HANGUL tone marks
 	[0x30_30, 0x30_37],
 	[0x30_3c, 0x30_3f],
 	// The voiced marks and the katakana-hiragana double hyphen, MINUS U+309D..309F, which are Hiragana: the iteration
@@ -570,7 +570,7 @@ export function tokenizeForClass(text: string): SpanRange[] {
 			continue
 		}
 
-		// Start a token at i; walk until we hit whitespace, punct, or a script boundary.
+		// Start a token at i. walk until we hit whitespace, punct, or a script boundary.
 		// Connectors (`-`, `'`, `_`) join across digit/alpha boundaries.
 		const start = i
 		const startCls = cls
@@ -589,7 +589,7 @@ export function tokenizeForClass(text: string): SpanRange[] {
 				continue
 			}
 
-			// Break tokens across script transitions (digit↔alpha is fine; alpha↔cjk is a boundary).
+			// Break tokens across script transitions (digit↔alpha is fine. alpha↔cjk is a boundary).
 			const isLatinPair = (a: CodepointClass, b: CodepointClass) =>
 				(a === "digit" || a === "alpha") && (b === "digit" || b === "alpha")
 

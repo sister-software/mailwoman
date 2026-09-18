@@ -6,10 +6,10 @@
  *   The hard-case board's SWEEP-DERIVED rows — the half that is lifted rather than authored.
  *
  *   Separate from `rows/index.ts` because the editorial responsibility is different. Those rows are
- *   written; these are CITATIONS. Each entry names a case id in `gauntlet/cases/<cc>/regression.jsonl`
+ *   written. these are CITATIONS. Each entry names a case id in `gauntlet/cases/<cc>/regression.jsonl`
  *   and the builder copies that row's input, coordinate and tolerance verbatim, so the board and the
  *   corpus cannot disagree about a row they share. The only things curated here are the CLASS the row
- *   belongs to and the surface worth probing; changing an input means changing the corpus row, not this
+ *   belongs to and the surface worth probing. changing an input means changing the corpus row, not this
  *   file.
  *
  *   Two classes live here, and both are outside the four FST countries:
@@ -23,7 +23,7 @@
 import type { HardCaseClass } from "#eval-harness/hard-case-board"
 
 /**
- * Sweep rows lifted verbatim. `class` is assigned by the curator; everything else — input, coordinate, tolerance —
+ * Sweep rows lifted verbatim. `class` is assigned by the curator. everything else — input, coordinate, tolerance —
  * comes from the corpus row so the two artifacts cannot disagree.
  */
 export const SWEEP_ROWS: Array<{

@@ -12,7 +12,7 @@
  *   A build that completes only when fragmentation happens to stay low is not a reproducible build, so
  *   the classification is bounded by construction — {@linkcode buildFloodDatabase} runs one of these per
  *   range of the authority's own feature ids, each in its own process, and each therefore against a heap
- *   that starts empty. The call-removal shortcuts in `cells.ts` make this faster; they are not what makes
+ *   that starts empty. The call-removal shortcuts in `cells.ts` make this faster. they are not what makes
  *   it correct.
  *
  *   THE CHUNK OWNS NO ARTIFACT. It appends rows to a database the parent created and will seal, and

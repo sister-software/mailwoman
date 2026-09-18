@@ -53,7 +53,7 @@ const SOURCE_EXTENSIONS = [".ts", ".tsx", ".json"]
 
 export interface TreeFingerprint {
 	/**
-	 * The hash callers compare. Opaque; only equality is meaningful.
+	 * The hash callers compare. Opaque. Only equality is meaningful.
 	 */
 	digest: string
 	gitHead: string
@@ -180,13 +180,13 @@ export async function computeTreeFingerprint(repoRoot: PathBuilderLike): Promise
 /**
  * The message a tool returns when the process's imported modules predate the current source.
  *
- * A RESTART is the only remedy, and this message must not offer another. It once ended by suggesting `mwdev_daemon`
- * action `reload`, which drops sessions and rebuilds them around the same module graph: the rebuilt engine then
- * reported the new fingerprint over the old code — a clean-looking success that is the exact failure this guard exists
- * to prevent, and worse than the staleness because it is now invisible. Node cannot drop a module from its ESM cache,
- * so any claim of an in-process reload is false.
+ * Restarting the process is the only permitted response, and this message must not offer another. It once ended by
+ * suggesting `mwdev_daemon` action `reload`, which drops sessions and rebuilds them around the same module graph: the
+ * rebuilt engine then reported the new fingerprint over the old code — a clean-looking success that is the exact
+ * failure this guard exists to prevent, and worse than the staleness because it is now invisible. Node cannot drop a
+ * module from its ESM cache, so any claim of an in-process reload is false.
  *
- * To A/B a SOURCE change, run each arm in its own process; one process cannot hold two versions of a module.
+ * To A/B a source change, run each arm in its own process. One process cannot hold two versions of a module.
  */
 export function staleEngineMessage(engineFingerprint: TreeFingerprint, current: TreeFingerprint): string {
 	const changed = current.newestPath ? ` Newest source: ${current.newestPath}.` : ""

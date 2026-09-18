@@ -5,7 +5,7 @@
  *
  *   `mailwoman gazetteer country-plan <cc>` — what moving a country between admin sources would involve.
  *
- *   READ-ONLY, by construction and not by flag. It clones nothing, edits nothing and builds nothing; the
+ *   READ-ONLY, by construction and not by flag. It clones nothing, edits nothing and builds nothing. the
  *   `--apply` half is a separate command precisely because the steps it would take are a clone measured in
  *   hundreds of megabytes and an edit to a file that is reviewed like code.
  *

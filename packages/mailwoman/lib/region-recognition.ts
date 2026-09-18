@@ -20,7 +20,7 @@
  *   - A `locality` whose value is a merged `"City, ST"` → split into `region(ST) → locality(City)`.
  *
  *   US-scoped by design (the gazetteer is US states). The principled long-term fix is the model
- *   recognizing the region; this closes the gap for the bare-`City, State` class today.
+ *   recognizing the region. this closes the gap for the bare-`City, State` class today.
  */
 
 import type { ComponentTag } from "@mailwoman/codex/component"
@@ -89,7 +89,7 @@ const STATE_SLUGS = new Set(Object.values(STATE_NAME_TO_SLUG))
 
 /**
  * Is `value` exactly a US state — its full name (e.g. "Texas") or 2-letter abbreviation (e.g. "TX")? Returns the
- * canonical 2-letter slug, else null. Whitespace/case-insensitive; rejects anything with extra tokens (so a city
+ * canonical 2-letter slug, else null. Whitespace/case-insensitive. rejects anything with extra tokens (so a city
  * literally named after a state is only matched when it's the whole value).
  */
 export function usStateSlug(value: string): string | null {
@@ -132,7 +132,7 @@ function correctSiblings(siblings: AddressNode[]): AddressNode[] {
 		afterSplit.push(split ?? node)
 	}
 
-	// Second, turn a locality whose whole value is a state into a region; sibling city localities
+	// Second, turn a locality whose whole value is a state into a region. sibling city localities
 	// nest under it. Only fires when there's exactly one state-name locality in the container (the
 	// unambiguous "City, State" shape) — avoids reparenting in a multi-locality list we don't model. ---
 	const stateIdxs = afterSplit
@@ -179,7 +179,7 @@ function splitMergedCityState(node: AddressNode): AddressNode | null {
 	const slug = usStateSlug(tail)
 
 	if (!slug || !head) return null
-	// Offsets: the region covers the tail's char span; the locality the head's (relative to node.start).
+	// Offsets: the region covers the tail's char span. the locality the head's (relative to node.start).
 	const tailStart = node.start + node.value.indexOf(tail, comma)
 	const region = makeRegionNode(tail, tailStart, node.end, node.confidence)
 

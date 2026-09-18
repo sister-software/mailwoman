@@ -26,7 +26,7 @@ import { LADDER, type CountryGranularity, bottomsOutAt } from "#gazetteer-pipeli
  *
  * A country whose rows are Overture- or GeoNames-sourced had NO WOF GeoJSON repo ingested, so its empty sub-locality
  * rung says nothing whatsoever about WOF's depth there. Only a dozen of the 260 admin repos WOF publishes are in the
- * recipe; the rest of the world arrives via Overture divisions (5 subtypes, none hood-level) or the GeoNames alias
+ * recipe. the rest of the world arrives via Overture divisions (5 subtypes, none hood-level) or the GeoNames alias
  * fold. Without this column a reader would take "233 countries bottom out at locality" as a finding about WOF rather
  * than about the recipe.
  *

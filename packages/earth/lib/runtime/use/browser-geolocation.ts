@@ -4,7 +4,7 @@
  * @author Teffen Ellis, et al.
  *
  *   The map's initial centre: the tile worker's `/geolocate` answer for the visitor's connection, or the contiguous
- *   United States when that answer does not arrive. The map never waits on it; the hook answers null until one of the
+ *   United States when that answer does not arrive. The map never waits on it. the hook answers null until one of the
  *   two is known, and the caller renders at the default in the meantime.
  */
 

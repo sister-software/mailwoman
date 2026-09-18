@@ -6,7 +6,7 @@ import torch
 
 
 def force_math_sdpa() -> None:
-    """Disable flash / mem-efficient SDPA; force math kernel.
+    """Disable flash / mem-efficient SDPA. force math kernel.
 
     Required on gfx1103 (Radeon 780M). Safe no-op on other backends. Idempotent.
     """

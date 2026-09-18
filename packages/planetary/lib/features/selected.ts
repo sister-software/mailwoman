@@ -4,7 +4,7 @@
  * @author Teffen Ellis, et al.
  *
  *   The feature the app has selected: what the panel shows and the camera frames. It is the subset of the
- *   pipeline's nomenclature record a tile or the search artifact carries; a click and a deep link both produce one.
+ *   pipeline's nomenclature record a tile or the search artifact carries. a click and a deep link both produce one.
  */
 
 export interface SelectedFeature {

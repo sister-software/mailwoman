@@ -40,7 +40,7 @@ describe("isOwnNameVariant — the measured census contests", () => {
 	})
 
 	it("refuses the near-identical DIFFERENT places (Liévin vs Levin) and the dual-name class (Derry/Londonderry)", () => {
-		// Liévin, France vs Levin, New Zealand — 0.833, just under the floor; the panel's
+		// Liévin, France vs Levin, New Zealand — 0.833, just under the floor. the panel's
 		// `41 Weraroa Road, Levin` row needs Levin NZ to keep winning the primary side.
 		expect(isOwnNameVariant("lievin", "levin")).toBe(false)
 		// Derry/Londonderry is a dual name, not a variant — its own follow-up on #1882.

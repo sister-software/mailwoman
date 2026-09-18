@@ -25,7 +25,7 @@
  *   3. **The country line.** `%R` is absent from nearly every `fmt`, because libaddressinput's consumers add the
  *      destination country themselves. It closes a small-first address and opens a large-first one, and it prints only
  *      when a caller supplies the name — an intra-country row carries none and prints none.
- *   4. **The post-office box.** The dataset models no box at all; the street node carries it, on its own line directly
+ *   4. **The post-office box.** The dataset models no box at all. the street node carries it, on its own line directly
  *      above the street.
  *
  *   Adding a country is therefore: transcribe its `fmt` skeleton, pick a street node, and close with the country line.
@@ -162,7 +162,7 @@ function printedTags(layout: AddressLayout): ComponentTag[] {
 				}
 			}
 		} else if (isAlternation(atom)) {
-			// The first alternative is the one that renders when both could; an alternation never reorders region
+			// The first alternative is the one that renders when both could. an alternation never reorders region
 			// against street, so reading one is enough to locate them.
 			for (const inner of atom.alternatives) {
 				visit(inner)
@@ -335,7 +335,7 @@ export function layoutForCountry(countryCode: string | null | undefined, script?
 
 	// A hand-authored entry states one order, and where the two scripts disagree it may be stating either. Hong Kong's
 	// is the Latin one, so serving it as the local layout leaves that country's own script unreachable. The two print
-	// orders decide which it is: agreeing means the board-checked entry is the local order and wins; disagreeing means
+	// orders decide which it is: agreeing means the board-checked entry is the local order and wins. disagreeing means
 	// it is the other script's, and the skeleton derived from `fmt` is what the local order says.
 	if (script === "local" && hand && local && layoutPrintsLargestFirst(hand) !== layoutPrintsLargestFirst(local)) {
 		return local

@@ -18,15 +18,15 @@
  *       context separates them. The model attends to the trailing token to decide the leading one.
  *
  *   Template mix (the A0 learning sets a HEAVY CASE-P floor so the default doesn't flip — DeepSeek's
- *   ≥35% CASE-P; here CASE-P total = 35%): H-adversarial 30% US street, leading real-ZIP house# +
+ *   ≥35% CASE-P. here CASE-P total = 35%): H-adversarial 30% US street, leading real-ZIP house# +
  *   TRAILING postcode → house_number P-us-rural 20% US rural, leading postcode, no trailing →
  *   postcode (the A0-erosion fix) P-de 15% German leading postcode "{pc} {city}, {street} {hn}" →
  *   postcode anchor-fp 10% leading 5-digit that is not a real ZIP + trailing postcode →
- *   house_number locale-ambig 15% minimal context; the local token (street-type vs none) decides
+ *   house_number locale-ambig 15% minimal context. the local token (street-type vs none) decides
  *   standard 10% normal small house# + trailing postcode → house_number (baseline)
  *
  *   Real ZIPs for the leading-5-digit are sampled from the postcode anchor lookup at build time
- *   (passed via opts.realZips) so the shaped anchor fires on them exactly as at inference; fake
+ *   (passed via opts.realZips) so the shaped anchor fires on them exactly as at inference. fake
  *   ZIPs (anchor-fp) are 5-digit strings deliberately absent from the lookup.
  */
 
@@ -87,7 +87,7 @@ function houseNum(random: () => number, realZips: ReadonlyArray<string>): string
 
 /**
  * Curated, provenance-light reference vocab (real US street/city/state + DE). Surface forms must appear in `raw` for
- * alignRow; these are plain ASCII tokens that align cleanly.
+ * alignRow. these are plain ASCII tokens that align cleanly.
  */
 const STREET_NAMES = [
 	"Main",

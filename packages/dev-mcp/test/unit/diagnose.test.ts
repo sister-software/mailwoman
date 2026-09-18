@@ -179,7 +179,7 @@ describe("collectRetrievalFacts — ranks and the flip stage", () => {
 	})
 
 	it("keeps a trace with no resolver records apart from a walk that performed no lookups", () => {
-		// One is a trace that predates the records; the other is the walk stating it had nothing resolvable. Folding
+		// One is a trace that predates the records. the other is the walk stating it had nothing resolvable. Folding
 		// them together would let an old trace read as a retrieval failure.
 		expect(collectRetrievalFacts(undefined).lookups).toBeNull()
 		expect(collectRetrievalFacts([]).lookups).toEqual([])

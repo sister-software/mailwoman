@@ -264,7 +264,7 @@ describe("openaddresses adapter against fixture sample-us.geojson", () => {
 
 		expect((await loadRows()).find((r) => r.source_id === "openaddresses-e5f6071829304152")).toBeDefined()
 
-		// The explicit adapter-scoped drop still works (vestigial fallback; build-level is the norm).
+		// The explicit adapter-scoped drop still works (vestigial fallback. build-level is the norm).
 		await runAdapter({
 			adapter: createOpenaddressesAdapter({ allowShareAlike: false }),
 			adapterOptions: { inputPath: fixtureGeojsonl, country: "US" },

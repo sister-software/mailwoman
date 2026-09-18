@@ -170,7 +170,7 @@ export async function auditReposRoot(
 			continue
 		}
 
-		// An owner directory. Its children are the nested layout; a name that is itself a repo was handled above.
+		// An owner directory. Its children are the nested layout. a name that is itself a repo was handled above.
 		for await (const child of Globerator.from("*", { cwd: full, withFileTypes: true, onlyFiles: false })) {
 			const childPath = join(full, child.name)
 

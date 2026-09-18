@@ -28,7 +28,7 @@
  *       board 3 bare-pc negative class must stay at 1.000.
  *
  *   SLASH HAZARD, pinned deliberately: Norwegian `124/1` is one house_number (cadastral gnr/bnr). AU
- *   `12/345` is two (unit + house_number). This recipe teaches the Norwegian reading; a future AU
+ *   `12/345` is two (unit + house_number). This recipe teaches the Norwegian reading. a future AU
  *   intra-word-split recipe (B5) must not generalize over it. The two are locale-restricted by design.
  *
  *   SPLIT: `--exclude-surfaces` is required (the recipe throws without it) — the digit board's reserved surface

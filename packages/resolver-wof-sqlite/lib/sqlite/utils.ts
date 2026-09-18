@@ -11,7 +11,7 @@ import type { DatabaseClient, SQLInputValue } from "@mailwoman/sqlite/client"
 import { hasColumn as columnExists, tableExists } from "@mailwoman/sqlite/introspection"
 
 // The row-shape assertion itself lives in `core` so the readers that cannot depend on this package reach the same
-// helper; re-exported here because this module is where this package's readers already look for it.
+// helper. re-exported here because this module is where this package's readers already look for it.
 
 /**
  * A prepared single-row query whose parameter tuple remains visible to TypeScript. `StatementSync` accepts only the
@@ -71,7 +71,7 @@ export function hasTable<DB>(db: DatabaseClient<DB>, name: string): boolean {
  * construction and shape the query — `table_info` is a PRAGMA, so it must not sit on a per-query path.
  *
  * Note the interpolation: PRAGMA does not take bound parameters, so `table` is spliced. Every caller passes a
- * module-level constant; never pass user input.
+ * module-level constant. never pass user input.
  */
 export function hasColumn<DB>(db: DatabaseClient<DB>, table: string, column: string): boolean {
 	try {

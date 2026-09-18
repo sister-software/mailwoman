@@ -21,7 +21,7 @@
  *   prove they do not.
  *
  *   A COVERAGE ROW LICENSES ONLY THAT THE AUTHORITY DETERMINED HERE. The hazard reading is the zone value.
- *   A `designated`-complete cell holding no polygon says the EA's map assigns Zone 1 there; it does not
+ *   A `designated`-complete cell holding no polygon says the EA's map assigns Zone 1 there. it does not
  *   say the location will not flood, and the authority itself declines that second statement.
  *
  *   THE COVERAGE CELL OF A ROW IS `cellToParent` OF ITS FINER CELL, never a fresh `latLngToCell` at the
@@ -79,7 +79,7 @@ export const FLOOD_SCHEMA_VERSION = 1
 export type BuildFloodInput =
 	| {
 			/**
-			 * A feature source consumed IN THIS PROCESS. Correct for a fixture and for anything small; it is what the batched
+			 * A feature source consumed IN THIS PROCESS. Correct for a fixture and for anything small. it is what the batched
 			 * form falls back to per chunk, so the two share one implementation.
 			 */
 			source: FloodFeatureSource
@@ -448,7 +448,7 @@ function resolveCells(database: DatabaseClient<FloodDatabase>): {
 	let partialRows = 0
 
 	// One group per (zone, resolution): `compactCells` takes a single resolution, and an adaptively-indexed layer has
-	// several. Pooling them throws; compacting only the target group would silently drop every coarsened feature's
+	// several. Pooling them throws. compacting only the target group would silently drop every coarsened feature's
 	// interior — the shape of failure this repo keeps writing down, because the artifact would still build.
 	for (const { zone_code: zoneCode, resolution } of zones) {
 		const wholeShort = database

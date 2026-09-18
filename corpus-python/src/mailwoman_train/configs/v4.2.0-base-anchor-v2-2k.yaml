@@ -8,7 +8,7 @@
 #      measured locally — the loader pays it once per worker at init. An OOM or a silent fallback
 #      to the pilot lookup shows up in the first minute.
 #   2. Does the startup census DRAW the GB/NL/ES/IT sources, and do GB anchor spans PAINT at
-#      runtime? (The v383 gap: a truncated census log hid a source drawing zero rows; the #1467
+#      runtime? (The v383 gap: a truncated census log hid a source drawing zero rows. the #1467
 #      root cause was a slot that never saw gradient. Zero painted GB rows here = the defect
 #      repeating, silently.)
 #   3. Does `synth-gb` at weight 6.0 under the corrected 1.0 dependent_locality class weight skew the
@@ -18,7 +18,7 @@
 #
 # Deliberate deviations from v4.2.0-base-anchor-v2.yaml (curves are not directly comparable):
 #   * `warmup_steps: 200` instead of 1000 — half-warmup probes read as stalls.
-#   * cosine fully anneals inside the probe; the full run is 3.3% through its cosine at step 2,000.
+#   * cosine fully anneals inside the probe. the full run is 3.3% through its cosine at step 2,000.
 #   * `eval_every_steps: 250` — the point is the SHAPE of the curve, not the endpoint.
 #   * `save_every_steps: 1000` — saves twice, insurance against a save-path crash surfacing at
 #     step 5,000 of the real run.
@@ -167,7 +167,7 @@ model: # Verbatim from v4.0.1.
     # tags". The R5 diagnosis (`docs/superpowers/plans/2026-08-01-r5-us-deploc-preregistration.md`)
     # traced the shipped model's dead US dependent_locality to exactly that weight: US surfaces
     # carry more raw dep-loc mass than the GB ones that work, so the tag was never dead — it was
-    # weighted down. Corrected in v4.0.1 and carried here; the shipped lineage still predates the
+    # weighted down. Corrected in v4.0.1 and carried here. the shipped lineage still predates the
     # correction, so this run is the first base to retrain it in.
     B-dependent_locality: 1.0
     I-dependent_locality: 1.0

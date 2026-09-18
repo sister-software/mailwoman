@@ -192,7 +192,7 @@ describe("postal-compound recovery (#942)", () => {
 		const out = await resolver.resolveTree(failingTree(), { postalCompoundRecovery: true })
 		const locality = out.roots.find((n) => n.tag === "locality" && n.placeID)
 
-		// Both candidates surface; the check keeps only the SI one.
+		// Both candidates surface. the check keeps only the SI one.
 		expect(locality).toBeDefined()
 		expect(locality!.lat).toBeCloseTo(45.8, 1)
 	})
@@ -215,7 +215,7 @@ describe("#961 joint country recovery — the locale-default trap", () => {
 
 	it("rejects a cross-country namesake whose own country cannot verify the postcode", async () => {
 		// The HR decoy shares the name but HR holds no postcode "1382" → the joint pass must not
-		// promote it; with the SI row removed the tree stays unresolved rather than guessing.
+		// promote it. with the SI row removed the tree stays unresolved rather than guessing.
 		const resolver = createWOFResolver(
 			await makeBackend(PLACES.filter((p) => !(p.placetype === "locality" && p.country === "SI")))
 		)

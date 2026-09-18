@@ -8,7 +8,7 @@
  *   `adresses-<dept>.csv` dump under `--ban-dir` through `@mailwoman/ban/sdk`'s
  *   `extractBANAddrPoints`, which now surfaces a cleaned `lieuDit` per record (junk/dup filtering
  *   lives in `ban/sdk/extract.ts`'s `cleanLieuDit`, not duplicated here). Only rows carrying a clean
- *   lieu-dit survive into the pool; the existing `ban`/`synth-fr` sources and their emitted rows are
+ *   lieu-dit survive into the pool. the existing `ban`/`synth-fr` sources and their emitted rows are
  *   untouched — this recipe reads the same raw CSVs but emits under its own source name.
  *
  *   Mapping: lieu-dit → `dependent_locality`, commune → `locality`. Rendered to match the formatter's

@@ -4,7 +4,7 @@
  * `scriptFamilyForText` once routed on the FOLDED character class alone, so only an input that was CJK end to end
  * reached the character model and every mixed input went to the Latin one — which is how `逊克二分场四队, HEILONGJIANG, CHINA`
  * came back as a single locality holding the whole Han unit. The question was never whether reading the per-span script
- * helps the Chinese rows; it is what it does to a Latin address that happens to carry a Han venue name.
+ * helps the Chinese rows. it is what it does to a Latin address that happens to carry a Han venue name.
  *
  * Two candidate rules are measured against the same rows, beside what the shipped router does today (`routedToday`):
  *

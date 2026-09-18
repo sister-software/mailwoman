@@ -41,7 +41,7 @@
 data:
   # PROBE A0 (this config): v192's corpus verbatim — anchor_paint_mode is a LOAD-TIME transform
   # (encode_row paints on shape, not the parquet), so the WHERE fix needs no new data / no rebuild. The
-  # existing US corpus already carries real 5-digit house numbers; shaped-painting fires the anchor on
+  # existing US corpus already carries real 5-digit house numbers. shaped-painting fires the anchor on
   # them at train (gold=house_number) = the override signal. Probe A1 (if A0 under-moves eval set H) swaps
   # corpus_dir to a rebuilt overlay that ADDS the synth-anchor-absorption recipe output to amplify the signal.
   corpus_dir: /data/corpus/versioned/v0.9.3-anchor-absorption/corpus-v0.9.3-anchor-absorption
@@ -108,7 +108,7 @@ data:
   gazetteer_lexicon_path: /data/gazetteer/anchor-lexicon-v1.json
   gazetteer_choreography: true
   affix_relabel_lexicon_path: /data/gazetteer/affix-relabel-lexicon-v1.json
-  # #220 NEW anchor knobs (loader honors these; default to v1.9.2 behavior when absent):
+  # #220 NEW anchor knobs (loader honors these. default to v1.9.2 behavior when absent):
   anchor_paint_mode: shaped # gold | shaped — paint on postcode-SHAPED spans (mirror inference). The fix.
   # KEEP the posterior+latlon value by DEFAULT (the review's correction): it is the anchor's designed
   # value — the country posterior that resolves the 5-digit US/DE/FR collision + hands the parser its
@@ -117,7 +117,7 @@ data:
   anchor_value_mode: posterior_latlon # posterior_latlon (DEFAULT, keep value) | region_agnostic_mindist (variant)
   # region_centroids_path: /data/anchor/region-centroids.json # Only needed for the region_agnostic variant.
   # Anchor dropout is the EXISTING train.py curriculum (perturb_anchor_confidence, ANCHOR_ZERO_OUT_MAX
-  # 0.15, ramped 25-50% then hold; on resume @40k it's already at full strength). REUSE it — do not add a
+  # 0.15, ramped 25-50% then hold. on resume @40k it's already at full strength). REUSE it — do not add a
   # parallel knob. To probe a harder mask, bump ANCHOR_ZERO_OUT_MAX 0.15->0.30 (a probe variable).
 
 model: # Verbatim from v1.9.2.
@@ -187,7 +187,7 @@ train: # Verbatim from v1.9.2 except output_dir + run_name. RESUME from v192 (se
   grad_clip_norm: 1.0
   # PROBE A0 = 2k steps: resume RESTORES the step counter (train.py:427 resume_step=ts["step"]=40000),
   # loop is `while step < max_steps`, so max_steps must be 40000+2000 to run 2k. Constant LR holds at
-  # 1.5e-4; the anchor-dropout curriculum sits at full strength (step 40000 >> the 25% ramp). If the
+  # 1.5e-4. the anchor-dropout curriculum sits at full strength (step 40000 >> the 25% ramp). If the
   # probe passes, resume this run's step-042000 ckpt to a full run (bump max_steps) within the $20 cap.
   max_steps: 42000
   eval_every_steps: 2000

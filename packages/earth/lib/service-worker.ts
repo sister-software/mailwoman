@@ -13,7 +13,7 @@
  *      Cache Storage keyed by URL and offset. A repeat visit replays the warm-up and the cascade reads from disk.
  *   2. INTEGRITY. Mobile Safari's HTTP cache can hand back a TORN range chunk (a truncated body for a 206), which
  *      reaches SQLite as "database disk image is malformed". Every chunk's body length is checked against its
- *      Content-Range before it is cached or served; a torn chunk is refetched once with `cache: "no-store"`. The
+ *      Content-Range before it is cached or served. a torn chunk is refetched once with `cache: "no-store"`. The
  *      readers' own cache-busting retry stays as the backstop for browsers without service workers.
  *
  *   Non-database requests are never intercepted (no `respondWith`, so the browser default applies). sql.js-httpvfs

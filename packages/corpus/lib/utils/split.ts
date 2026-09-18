@@ -39,7 +39,7 @@ export type SplitName = "train" | "val" | "test"
 export interface SplitOptions {
 	/**
 	 * Region-name → holdout policy, keyed by ISO 3166-1 alpha-2 country. The values are the region-component strings the
-	 * splitter looks for in `row.components.region`. Override to change the holdout for an experiment; defaults to
+	 * splitter looks for in `row.components.region`. Override to change the holdout for an experiment. defaults to
 	 * `defaultHoldouts()`.
 	 */
 	holdouts?: Record<string, readonly string[]>
@@ -110,7 +110,7 @@ export function splitForRow(
  * Compute a `SplitManifest` from an iterable of labeled (or canonical) rows. Both shapes are accepted — only
  * `source_id`, `country`, `corpus_version`, and `components.region` are consulted.
  *
- * Retained for in-memory callers (tests; small-scale fixture runs). Real-data builds via `buildCorpus` use the
+ * Retained for in-memory callers (tests. small-scale fixture runs). Real-data builds via `buildCorpus` use the
  * streaming path (`splitForRow` + `writeSplitManifestsFromLabeledFiles`) to avoid materializing every aligned row's
  * split membership in heap.
  */

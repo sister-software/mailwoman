@@ -16,8 +16,8 @@
  *
  *   JOIN SHAPE (per state, streaming): `LOCALITY` (pid → name) and `STREET_LOCALITY` (pid →
  *   name/type/suffix) load as maps; `ADDRESS_DEFAULT_GEOCODE` (detail-pid → lon/lat) loads as a
- *   map; then `ADDRESS_DETAIL` streams once. Retired rows and non-principal (alias) addresses are
- *   skipped. `NUMBER_FIRST` wins; a number-less row falls back to `LOT_NUMBER` (the `LOT 373`
+ *   map. then `ADDRESS_DETAIL` streams once. Retired rows and non-principal (alias) addresses are
+ *   skipped. `NUMBER_FIRST` wins. a number-less row falls back to `LOT_NUMBER` (the `LOT 373`
  *   rural class the parser reads as unit + house_number). Street rendering: `STREET_NAME` +
  *   `STREET_TYPE_CODE` + suffix, with the directional suffix CODES expanded to words (the register
  *   stores types as full words but suffixes as codes); keys via the shared `en` normalizer — the

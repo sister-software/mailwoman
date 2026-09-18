@@ -9,17 +9,17 @@
  *   Two concerns, kept separate:
  *
  *   1. **Column mapping + normalization** (this is pure): a {@link ColumnMapping} says which column(s)
- *        hold the name, organization, address, phone, email; each row is normalized with
+ *        hold the name, organization, address, phone, email. each row is normalized with
  *        `@mailwoman/record` (parse the person name, canonicalize the org). This is deterministic
  *        and testable with no heavy runtime.
  *   2. **Geocoding** (the heavy part) is an injected dependency — a {@link GeocodeAddress} the caller provides.
- *        Ingest never imports the neural parser, the resolver, or the extracts; it just calls the
+ *        Ingest never imports the neural parser, the resolver, or the extracts. it just calls the
  *        call per address. {@link geocodeAddressVia} builds that geocoder from mailwoman's real parse +
  *        geocode primitives (which the CLI constructs with the model + data in hand), so the wiring
  *        is concrete and testable without pinning the heavy runtime into this package.
  *
  *   LLM-assisted column mapping (infer the mapping from a header + samples) is a documented
- *   fast-follow; the mapping is an explicit input here.
+ *   fast-follow. the mapping is an explicit input here.
  */
 
 import { isPresent } from "@mailwoman/core/objects"

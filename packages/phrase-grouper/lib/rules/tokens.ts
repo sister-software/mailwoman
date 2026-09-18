@@ -44,7 +44,7 @@ export const US_REGION_NAMES: ReadonlySet<string> = new Set(
  */
 /**
  * Digit count above which a pure-numeric token stops being unambiguously a house number. 1-4 digits are clearly
- * NUMERIC; 5 and up collide with postcodes, so the proposal is emitted at neutral confidence and the reconciler
+ * NUMERIC. 5 and up collide with postcodes, so the proposal is emitted at neutral confidence and the reconciler
  * decides.
  */
 export const MAX_UNAMBIGUOUS_HOUSE_NUMBER_DIGITS = 4

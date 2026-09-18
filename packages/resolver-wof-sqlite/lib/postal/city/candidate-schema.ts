@@ -24,7 +24,7 @@ import type { NameKey } from "#street/normalize"
 
 /**
  * One postal-city → geo-locality edge, keyed exactly by `(name_key, postcode)`. The probe returns the geographic
- * locality directly; the denormalized name/coord avoid a join back to `candidate`.
+ * locality directly. the denormalized name/coord avoid a join back to `candidate`.
  */
 export interface PostalCityCandidateTable {
 	/**
@@ -87,7 +87,7 @@ export async function createPostalCityCandidateTable(db: Kysely<PostalCityCandid
 		.addColumn("latitude", "real", (c) => c.notNull())
 		.addColumn("longitude", "real", (c) => c.notNull())
 		.addPrimaryKeyConstraint("postal_city_candidate_pk", ["name_key", "postcode"])
-		// `WITHOUT ROWID` has no first-class builder; the raw modifier is the idiomatic fallback.
+		// `WITHOUT ROWID` has no first-class builder. the raw modifier is the idiomatic fallback.
 		.modifyEnd(sql`without rowid`)
 		.execute()
 }

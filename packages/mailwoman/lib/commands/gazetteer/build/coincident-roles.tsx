@@ -5,7 +5,7 @@
  *
  *   `mailwoman gazetteer build coincident-roles <admin.db>... [--no-drop]` — derive the
  *   `coincident_roles` relation (dual-role places: city-states, capital-seat provinces, consolidated
- *   city-counties — #403/#402) into one or more admin gazetteers. Additive + idempotent; rebuilds by
+ *   city-counties — #403/#402) into one or more admin gazetteers. Additive + idempotent. rebuilds by
  *   default so the relation reflects the current spr/ancestors (`--no-drop` appends — incremental
  *   tests only). Absorbs the retired `mailwoman-wof-build-coincident-roles` bin.
  */

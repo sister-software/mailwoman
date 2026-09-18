@@ -8,7 +8,7 @@
  *   row. The body mirrors upstream verbatim except for:
  *
  *   1. The extra `styles.docsViewport` column wrapper, so the sub-header stacks on top of the flex-row
- *        `docsWrapper` instead of becoming a column beside the sidebar; and
+ *        `docsWrapper` instead of becoming a column beside the sidebar. and
  *   2. The <DocsSubHeader/> mount + its hide-on-scroll wiring.
  *
  *   Re-diff against upstream when bumping Docusaurus.
@@ -33,7 +33,7 @@ export default function DocRootLayout({ children }: Props): ReactNode {
 
 	// The band shows on section pages (not the single-category licensing sidebar) and
 	// hides on scroll-down. `useHideableNavbar` is the same scroll-direction hook the
-	// real navbar uses; we pass `showSubHeader` so it no-ops when there's no band.
+	// real navbar uses. we pass `showSubHeader` so it no-ops when there's no band.
 	const showSubHeader = useIsDocsSection()
 	const { navbarRef, isNavbarVisible } = useHideableNavbar(showSubHeader)
 	const subHeaderHidden = showSubHeader && !isNavbarVisible

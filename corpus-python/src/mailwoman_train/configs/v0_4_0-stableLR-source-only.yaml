@@ -7,7 +7,7 @@
 #
 # Stable-LR matrix: drop back to v0.3.0's proven lr=1.5e-4 and test each v0.4.0
 # change in isolation on top of v0.3.0's stable recipe. This config tests §4 alone
-# — should pass; if it fails the source_weights have a data-loader bug worth fixing.
+# — should pass. if it fails the source_weights have a data-loader bug worth fixing.
 #
 # Recipe:
 #   v0.3.0 base:    per_sequence CRF NLL × crf_loss_weight=0.05, NO class_weights

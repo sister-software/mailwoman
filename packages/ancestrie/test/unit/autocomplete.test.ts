@@ -26,7 +26,7 @@ function seal(entries: readonly AncestrieEntry[]): Ancestrie {
 }
 
 // The synthetic trie the FST suite used:
-//   root --new--> [york → New York; london → New London ×2 (city 2 + county 3)]
+//   root --new--> [york → New York. london → New London ×2 (city 2 + county 3)]
 //        --san--> [francisco → San Francisco]
 //        --chicago--> Chicago
 const CITIES = seal([

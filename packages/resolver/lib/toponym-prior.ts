@@ -20,7 +20,7 @@
  *
  *   Every one of those is a place people know for something other than its size, and the gazetteer
  *   already measures that: `admin-global-priority-importance.db` ranks all four the RIGHT way round
- *   (Whitby GB 0.5496 over CA 0.5089; Windsor GB 0.5648 over CA 0.5607 — a 0.004 margin population
+ *   (Whitby GB 0.5496 over CA 0.5089. Windsor GB 0.5648 over CA 0.5607 — a 0.004 margin population
  *   inverts by a factor of eight). What it measures is a BLENDED global toponym prior
  *   (`ResolvedPlace.importance`): the concordance's encyclopedia-derived channel where a concordance
  *   matched, a population-derived proxy everywhere else — the one scale on which every bearer of a
@@ -34,7 +34,7 @@
  *
  *   Both obey the same three house rules, and neither is a check:
  *
- *   1. **Tier-safe.** `exactMatch` stays the primary key. A soft prior re-orders within a tier; it never
+ *   1. **Tier-safe.** `exactMatch` stays the primary key. A soft prior re-orders within a tier. it never
  *      promotes a partial match over an exact one.
  *   2. **Positive evidence only.** An absent score is unmeasured, not zero (the meaning-of-zero rule), so an
  *      unscored candidate is never moved BY the signal and never penalized FOR lacking it — it keeps the
@@ -76,7 +76,7 @@ export const DEFAULT_COUNTRY_PRIOR_WEIGHT = 2
  * The band never compares across countries, and that scope is forced by decided rows, not preference: Windsor's
  * accepted flip (GB 0.564842 over CA 0.560687) sits at a 0.0042 gap — inside any band that covers Springfield. The two
  * decisions are only co-satisfiable if the band binds same-country pairs alone. That is also what the §2 referential
- * policy (ROAD_TO_V9) says: within a country the geocoder ranks referentially; the blended prior's job is the
+ * policy (ROAD_TO_V9) says: within a country the geocoder ranks referentially. the blended prior's job is the
  * cross-country question — which country's bearer a bare query meant.
  *
  * A band enforces the referential policy up to a fixed gap only, so every same-country pair whose importance and
@@ -116,7 +116,7 @@ function rankWithinTier<T extends Rankable>(candidates: readonly T[], compare: (
 	for (const c of candidates) {
 		// `exactMatch` is TRI-STATE: true / false / undefined (a backend path that stamps no flag —
 		// e.g. WOFSQLitePlaceLookup's postcode-area neighbours from #fetchLocalitiesByID). Only a
-		// stated TRUE warrants the exact tier; undefined must not outrank a real fuzzy name match
+		// stated TRUE warrants the exact tier. undefined must not outrank a real fuzzy name match
 		// (the 2026-08-10 de.native_locality incident: 75 Saxon towns lost to nameless neighbours).
 		;(c.exactMatch === true ? exact : rest).push(c)
 	}
@@ -142,7 +142,7 @@ const measured = (c: Rankable): boolean => typeof c.importance === "number" && N
  *
  * This is what "positive evidence only" has to mean when coverage is partial, which it always is — measured on the
  * shipped importance artifact, the four bare GB panel rows have 2/7, 8/10, 8/10 and 9/10 of their candidates scored. A
- * blanket "abstain unless everything is measured" throws the signal away on all four; treating absent as 0 would let a
+ * blanket "abstain unless everything is measured" throws the signal away on all four. treating absent as 0 would let a
  * scored hamlet leapfrog an unscored metropolis. Neither is right, and the resolution is that an unmeasured row simply
  * does not participate: it holds the rank population gave it, and the scored rows permute among the slots they hold
  * between them.
@@ -201,7 +201,7 @@ const counted = (c: Rankable): boolean => typeof c.population === "number" && c.
  * not the answer, and reading it as a regression would refuse a correct change.
  *
  * Deliberately not a cap in `blendImportance`: that is a gazetteer rebuild, and it would reach the cross-country pools
- * the cap's own docstring protects, where an article-only score is the only evidence there is.
+ * the cap's own docstring guards, where an article-only score is the only evidence there is.
  */
 function countedFirstWithinCountry<T extends Rankable>(rows: readonly T[]): T[] {
 	const out = [...rows]
@@ -246,7 +246,7 @@ function countedFirstWithinCountry<T extends Rankable>(rows: readonly T[]): T[] 
  * than its country's head.
  */
 function orderMeasuredByImportance<T extends Rankable>(rows: readonly T[]): T[] {
-	// Group by country in first-appearance order; a row without a country can never substantiate a
+	// Group by country in first-appearance order. a row without a country can never substantiate a
 	// same-country tie, so it stays a singleton.
 	const groups = new Map<string, { firstIndex: number; members: T[] }>()
 	const clusters: Array<{ firstIndex: number; members: T[] }> = []
@@ -374,7 +374,7 @@ export type CapitalLevelFn = (place: Pick<ResolvedPlace, "name" | "country" | "l
  * scope is forced by decided rows, not caution — a seat margin of even 1 log10 unit flips bare `Springfield` to
  * Springfield, Illinois against the ratified 2026-08-11 referential decision
  * ({@link SAME_COUNTRY_IMPORTANCE_TIE_BAND}), and sends bare `Hamilton` to the Waikato seat (Hamilton NZ, 2.8x smaller
- * than Hamilton, Ontario), both measured on the shipped `candidate.db`. The reference still records seats; no consumer
+ * than Hamilton, Ontario), both measured on the shipped `candidate.db`. The reference still records seats. no consumer
  * promotes on them.
  */
 const PROMOTABLE_CAPITAL_LEVEL = 2

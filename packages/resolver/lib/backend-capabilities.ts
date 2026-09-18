@@ -68,7 +68,7 @@ const reported = new Set<string>()
 
 /**
  * Report a backend's gaps to stderr the first time this process sees them. The gaps are data on
- * `Resolver.capabilityGaps` regardless; this also reports them to an operator.
+ * `Resolver.capabilityGaps` regardless. this also reports them to an operator.
  */
 export function reportCapabilityGaps(gaps: readonly BackendCapabilityGap[]): void {
 	const [first] = gaps

@@ -8,7 +8,7 @@
  *   Every mint is `${identifierType}:${value}`, so two rows carrying the same identifier land on one node by
  *   construction. That is the dedup mechanism and also what has to be defended: a BLANK value mints one degenerate
  *   node (`frn:`, `form499_id:`) that every other blank-valued row silently collapses into, joining unrelated filers
- *   under a single identity. So the identifier mints throw on a blank rather than accept it; the company-name mints
+ *   under a single identity. So the identifier mints throw on a blank rather than accept it. the company-name mints
  *   do not, because each is reached only after its caller has established the name is non-empty.
  *
  *   The two assertions here guard TEMPORAL columns rather than identity: `valid_from` is mandatory on every edge and
@@ -26,7 +26,7 @@ import { assertISODate } from "#sdk/guards"
  * {@linkcode mintForm499NodeID}/{@linkcode mintProviderNodeID}.
  *
  * On the 499 path this is called only from inside the caller's `if (row.frn)` truthy check — an empty string is falsy
- * in JS, so that branch is already skipped before this function is ever reached there; the guard is unreachable on that
+ * in JS, so that branch is already skipped before this function is ever reached there. the guard is unreachable on that
  * path, not merely redundant. On the provider-list path `ProviderListRow.frn` is typed as always-present (`FRN`, never
  * `FRN | null`), and {@linkcode parseProviderList} validates it via `toFRN` on the production (file-reading) route — but
  * the `providerRows` TEST INJECTION POINT bypasses that parser entirely. Without this guard, two rows for two
@@ -71,7 +71,7 @@ export function mintCIKNodeID(cik: string, context: string): string {
 
 /**
  * Mints the `subsidiary_name:` node id for a raw Exhibit 21 disclosure — the same "global name-node" shape
- * {@linkcode mintHoldingCompanyNodeID} uses (the raw string, unnormalized; two different parents both disclosing a
+ * {@linkcode mintHoldingCompanyNodeID} uses (the raw string, unnormalized. two different parents both disclosing a
  * subsidiary under the identical spelling share one node).
  */
 export function mintSubsidiaryNameNodeID(name: string): string {

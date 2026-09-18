@@ -24,7 +24,7 @@
  *
  *   Also tracks the pre-fold CITY word-length distribution (whitespace-split word count per raw,
  *   non-empty CITY) — this sizes the word-span window the decode-side prior walks (a
- *   dependent_locality candidate rarely spans more than a handful of words; the p99 here is the
+ *   dependent_locality candidate rarely spans more than a handful of words. the p99 here is the
  *   evidence for that window, not a guess).
  */
 
@@ -99,7 +99,7 @@ export function nearestRankPercentile(sortedAscending: readonly number[], p: num
 
 /**
  * Incrementally folds (rawCity, rawDistrict) rows into deduplicated PIX1 entries, tracking the skip count and the raw
- * CITY word-length distribution. One instance per build; call {@link addRow} per source row, then {@link finish} once.
+ * CITY word-length distribution. One instance per build. call {@link addRow} per source row, then {@link finish} once.
  */
 export class PairIndexBuilder {
 	readonly #seen = new Map<string, PairIndexEntry>()

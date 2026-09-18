@@ -13,7 +13,7 @@ import { describe, expect, it } from "vitest"
 
 describe("enumerateCountryDisplayNames", () => {
 	it("supplies the exact surfaces the bare-toponym probe could not resolve", () => {
-		// Left column is what a user typed and got nothing for; right is the country it means.
+		// Left column is what a user typed and got nothing for. right is the country it means.
 		const wanted: Array<[string, string]> = [
 			["格鲁吉亚", "GE"],
 			["沙特阿拉伯", "SA"],

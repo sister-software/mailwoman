@@ -8,10 +8,10 @@
  *   Reads a hand-acquired archive from a vintage-dated `<data-root>/nsul/<YYYY-MM>/` directory
  *   (there is no download step — the portal item is fetched by hand beside its `.md5` sidecar and
  *   `item.json`), verifies it against the sidecar, and writes a sealed, atomically-swapped artifact.
- *   Nothing on the parse/resolve path reads it yet; the runtime surface is a separate proposal
+ *   Nothing on the parse/resolve path reads it yet. the runtime surface is a separate proposal
  *   (#1975, F4).
  *
- *   Coverage is England, Scotland and Wales; Northern Ireland postcode data is outside ONS's open
+ *   Coverage is England, Scotland and Wales. Northern Ireland postcode data is outside ONS's open
  *   terms, and the layer's own coverage rows say so. See `gazetteer-pipeline/nsul-layer.ts` for the
  *   checks (md5, exact header per region, the eleven-region set, accounting identity, row floor).
  *

@@ -5,12 +5,12 @@
  *
  *   The gazetteer DEPTH LADDER — per-country measurement of where the admin gazetteer bottoms out,
  *   worldwide. Built 2026-08-02 after a probe found the shipped `admin-global-priority.db` stocks 9
- *   of WOF's 34 placetypes and carries a `dependent_locality` tier in 11 of 244 countries; the venue
+ *   of WOF's 34 placetypes and carries a `dependent_locality` tier in 11 of 244 countries. the venue
  *   tier is empty. "Is WOF granular enough" had never been measured, and this module is the
  *   instrument.
  *
  *   Rung MEMBERSHIP derives from `PLACETYPE_PROJECTION` so the scorecard and the placetype census
- *   can never disagree about what projects where; rung ORDER is explicit here, because "bottoms out
+ *   can never disagree about what projects where. rung ORDER is explicit here, because "bottoms out
  *   at" needs an ordering the projection map does not carry.
  *
  *   Two different presence rules, deliberately. Rungs at or above `locality` are measured by node
@@ -77,7 +77,7 @@ export function placetypesForRung(rung: ComponentTag): string[] {
 }
 
 /**
- * One rung's measurement for one country. A rung the builder LOOKED AT and found empty is a present row of zeroes; a
+ * One rung's measurement for one country. A rung the builder LOOKED AT and found empty is a present row of zeroes. a
  * rung with no measurable source is absent from {@link CountryGranularity.rungs} entirely. Collapsing those two would
  * break the meaning-of-zero rule inside the artifact.
  */

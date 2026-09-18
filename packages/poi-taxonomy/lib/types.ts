@@ -4,7 +4,7 @@
  * @author Teffen Ellis, et al.
  *
  *   Types for the POI category taxonomy. Categories come from two namespaces: the Overture Places
- *   `taxonomy` snapshot (shipped-tier data; the old `categories` property is dead as of Overture's
+ *   `taxonomy` snapshot (shipped-tier data. the old `categories` property is dead as of Overture's
  *   Sept 2026 release, so only the new property is modeled), and the `mailwoman-infra` extension
  *   for street-furniture/infrastructure classes that exist only in ODbL sources (fire hydrants,
  *   post boxes) — recognized by the lexicon even when no build-local layer is present.
@@ -59,7 +59,7 @@ export interface CategoryRecord {
 	basicLabel: string | null
 	/**
 	 * The OSM tag this category maps to, `key=value` form (e.g. `amenity=hospital`) — consumed by the OverpassQL export
-	 * emitter. Curated alongside the category; not an Overture field.
+	 * emitter. Curated alongside the category. not an Overture field.
 	 */
 	osmTag?: string
 	source: CategorySource
@@ -102,7 +102,7 @@ export interface SynonymEntry {
 export interface POITaxonomyTable {
 	version: string
 	/**
-	 * Overture release the category snapshot was taken from; null until Plan 3 lands the full snapshot.
+	 * Overture release the category snapshot was taken from. null until Plan 3 lands the full snapshot.
 	 */
 	overtureRelease: string | null
 	categories: CategoryRecord[]

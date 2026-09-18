@@ -8,7 +8,7 @@
 # solo A/B: does multi-locale balance clear the FR-postcode dilution without losing the street_suffix /
 # street_prefix F1 the affix rows produced?
 #
-# WHY. v0.9.8 cleared the affix check (street_prefix 0→78, street_suffix 0→67, P100; US street +2.1
+# WHY. v0.9.8 cleared the affix check (street_prefix 0→78, street_suffix 0→67, P100. US street +2.1
 # negative-space) but its one blemish was FR postcode −3.9 — a US-only recipe output (every row "City, ST ZIP")
 # strengthened the US postcode-after-region pattern and diluted FR's postcode-BEFORE-locality order.
 # The night-9 cumulative country run PROVED the recovery: its multi-locale rows lifted FR postcode
@@ -17,12 +17,12 @@
 # unchanged (50K US rows at weight 2.0 = same weighted mass as v0.9.8); the balance rows are additive.
 #
 # PRE-REGISTERED CHECK (stop at 20k), fp32-to-fp32 vs v4.1.0 / v0.9.8:
-#   - RECOVER FR postcode: FR postcode F1 >= v4.1.0 (undo the −3.9; back within ~1pp).
+#   - RECOVER FR postcode: FR postcode F1 >= v4.1.0 (undo the −3.9. back within ~1pp).
 #   - RETAIN the affix classes: street_suffix F1 >= 65% AND street_prefix F1 >= 70% on the real-affix eval
 #     (data/eval/external/street-affix-real.jsonl) — at or above v0.9.8 (78/67).
-#   - `street` F1 >= v4.1.0 (no loss; negative space) on golden US + the real-affix eval.
+#   - `street` F1 >= v4.1.0 (no loss. negative space) on golden US + the real-affix eval.
 #   - RETAIN unit: `unit` >= 88% on data/eval/external/unit-real-designators.jsonl.
-#   - NO-REGRESSION (within ~1pp, fp32): US house_number / postcode / locality / region; DE native-order
+#   - NO-REGRESSION (within ~1pp, fp32): US house_number / postcode / locality / region. DE native-order
 #     locality (de-order-eval.ts). The balance rows ADD FR/DE order signal — DE should hold or improve.
 #   DECISION: FR postcode recovered + affix retained + no regression check → PROMOTE candidate (v4.2.0) and the
 #     affix change is BANKED for consolidation. If affix slips below v0.9.8: too much balance crowded the

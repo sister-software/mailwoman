@@ -86,7 +86,7 @@ async function shippedLexiconGenerations(dir: PathBuilder, prefix: string): Prom
  * closing #1511: a data-only overlay that ships no lexicon of its own would start resolving the base package's, which
  * silently turns both evidence channels on for every overlay in the repo (de-de, es-es, it-it, en-in, en-nz, fr-fr) in
  * one commit, on locales no board has graded. An overlay that wants the bundle links its own copy and says so in its
- * `files` array; that is one locale's measured decision, not seven unmeasured ones.
+ * `files` array. that is one locale's measured decision, not seven unmeasured ones.
  */
 export async function resolveEvidenceLexicon(
 	channel: EvidenceLexiconChannel,

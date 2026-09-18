@@ -20,7 +20,7 @@ const CASE_FOLDING_SCRIPT = /^[\p{Script=Latin}\p{Script=Cyrillic}\p{Script=Gree
 
 /**
  * Scripts written without spaces between words, where a token split cannot find a designator and a SUBSTRING test is
- * the correct operator. Han, Hiragana, Katakana; Hangul is excluded because Korean does space its words.
+ * the correct operator. Han, Hiragana, Katakana. Hangul is excluded because Korean does space its words.
  *
  * The Germanic-compound argument that keeps {@link nameContainsSurfaces} token-bounded for Latin script does not
  * transfer here — there is no `-gate`/`-hall` street-name suffix class in Japanese, and `第1ターミナル` is unreachable by any

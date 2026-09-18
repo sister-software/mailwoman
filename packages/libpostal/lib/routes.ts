@@ -5,7 +5,7 @@
  *
  *   Route definitions + handlers for the libpostal-compatible surface. The OpenAPI document is
  *   emitted from these definitions — there is no handwritten spec. Wire shapes (bodies, error
- *   envelopes, status codes) are the vendor contract; see schema.ts.
+ *   envelopes, status codes) are the vendor contract. see schema.ts.
  */
 
 import { createRoute, type OpenAPIHono, z } from "@hono/zod-openapi"
@@ -60,7 +60,7 @@ footer { margin-top: 2rem; font-size: .9rem; opacity: .8 }
 `
 
 /**
- * Query-side request schema, shared by the GET routes (documented; presence enforced in-handler).
+ * Query-side request schema, shared by the GET routes (documented. presence enforced in-handler).
  */
 const parseQueryParams = z.object({
 	query: z.string().optional().openapi({ description: "The address to parse. `address` is accepted as an alias." }),
@@ -146,11 +146,11 @@ const expandPostRoute = createRoute({
 })
 
 /**
- * Read the JSON body if present and parseable; a missing/malformed body is `{}` (legacy tolerance).
+ * Read the JSON body if present and parseable. a missing/malformed body is `{}` (legacy tolerance).
  *
  * The try/catch here re-guards what `canonicalizeJSONBody` already guarantees (well-formed JSON, string-only contract
  * fields) — deliberate defense in depth. Don't drop this side's tolerance just because the middleware upstream makes it
- * look redundant; the two are meant to fail safe independently.
+ * look redundant. the two are meant to fail safe independently.
  */
 async function readBody(c: Context): Promise<Record<string, unknown>> {
 	try {
@@ -183,7 +183,7 @@ const canonicalizeJSONBody: MiddlewareHandler = async (c, next) => {
 
 		try {
 			const raw = c.req.raw.body ? await c.req.raw.text() : ""
-			// oxlint-disable-next-line no-restricted-properties -- `@mailwoman/libpostal` reaches @mailwoman/core for TYPES only; a runtime import would be a new dependency.
+			// oxlint-disable-next-line no-restricted-properties -- `@mailwoman/libpostal` reaches @mailwoman/core for TYPES only. a runtime import would be a new dependency.
 			const parsed = raw ? (JSON.parse(raw) as unknown) : {}
 
 			if (typeof parsed === "object" && parsed !== null) {

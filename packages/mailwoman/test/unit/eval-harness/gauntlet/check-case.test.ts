@@ -147,7 +147,7 @@ describe("the place-identity check (#1507)", () => {
 
 	it("grades place identity off the RESOLVED place, not the echoed query span", () => {
 		// The Gaborone class, verbatim: the parse is perfect and `locality` echoes it, while the resolver
-		// returned an Austrian hamlet. `expect_components.locality` is green on this result; only the place
+		// returned an Austrian hamlet. `expect_components.locality` is green on this result. only the place
 		// check can see the failure — which is what makes reading `hierarchy[0].name` required.
 		const c = storedCase({
 			expect_components: stringifyJSON({ locality: "Gaborone" }),
@@ -205,7 +205,7 @@ describe("the place-identity check (#1507)", () => {
 describe("the component check is exact — multi-script truth is a per-row opt-in (#34)", () => {
 	// The 2026-08-10 global relaxation (any dual-script got satisfied a truth freezing one rendering) let a
 	// cross-tag bleed grade as a pass, so review converted it into the `expect_component_renderings` opt-in.
-	// The first two tests pin the reversal; the rest pin the opt-in contract itself.
+	// The first two tests pin the reversal. the rest pin the opt-in contract itself.
 	it("fails a cross-script bleed against a plain expect_components truth — the Manchester case", () => {
 		// The exposure the global relaxation disclosed: a locality that swallowed the CJK venue next door
 		// graded as a pass. With no rendering contract on the row, this must fail again.
@@ -267,7 +267,7 @@ describe("the component check is exact — multi-script truth is a per-row opt-i
 	})
 
 	it("lets a contract key supersede the same key in expect_components", () => {
-		// expect_components freezes the Latin half; the contract requires both. The dual span passes (the
+		// expect_components freezes the Latin half. the contract requires both. The dual span passes (the
 		// superseded exact comparison would have failed it), the frozen half alone fails (the contract owns
 		// the key), and an unrelated exact key on the same row still grades through expect_components.
 		const c = storedCase({

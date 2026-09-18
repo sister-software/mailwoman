@@ -335,7 +335,7 @@ describe("per-row locale + gained-capability class (#1516)", () => {
 
 	it("--baseline: a pair the candidate holds but the baseline violated is GAINED — reported, non-blocking", async () => {
 		// The measured #1516 shape: the baseline's original parse never emits the row's critical
-		// components (the quoted venue's street), so the whole row is a gained capability; on top of
+		// components (the quoted venue's street), so the whole row is a gained capability. on top of
 		// that, this pair specifically flips — candidate INVARIANT where baseline DEGRADED.
 		const row: InvarianceRow = {
 			id: "gb-quoted-gain",
@@ -380,7 +380,7 @@ describe("per-row locale + gained-capability class (#1516)", () => {
 
 	it("--baseline: violations on a row the baseline never parsed are gained-capability residuals — reported, non-blocking", async () => {
 		// The measured #1516 shape for gb-quoted-venue: the baseline (v4.0.1) never emits the venue's
-		// street in any register, so the row's baseline ORIGINAL has no critical components; the
+		// street in any register, so the row's baseline ORIGINAL has no critical components. the
 		// candidate (v4.2.0) gained the street in 7/8 registers and loses it only on the register-flat
 		// tail (quoted + comma-dropped). Those residual LOST/DEGRADED pairs are gains, not regressions.
 		const row: InvarianceRow = {

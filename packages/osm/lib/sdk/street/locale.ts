@@ -27,13 +27,13 @@ const COUNTRY_TO_STREET_LOCALE = new Map<string, StreetLocale>([
 	["fr", "fr"],
 	["de", "de"],
 	["nl", "nl"],
-	// CA defaults to English; surface routing selects French rules when appropriate.
+	// CA defaults to English. surface routing selects French rules when appropriate.
 	["ca", "en"],
 	// These locales provide transliteration and abbreviation rules their base folds do not cover.
 	["pl", "pl"],
 	["vn", "vn"],
 	["id", "id"],
-	// Islamabad-sector addressing ("House 4, Street 25, F-7/2") is English-typed; the en rules fold it.
+	// Islamabad-sector addressing ("House 4, Street 25, F-7/2") is English-typed. the en rules fold it.
 	["pk", "en"],
 ])
 

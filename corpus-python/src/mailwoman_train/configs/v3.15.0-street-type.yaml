@@ -15,14 +15,14 @@
 # THE READ = an ON/OFF contrast on the same retrained model (fully controls for the feed + the retrain):
 #   grade the fragment board (ban-fragments-fr) feeding street_type_features, then again feeding zeros.
 #   - street↔locality discrimination improves with the feature on ⇒ the P-C labeling gap is literal
-#     evidence absence; Option A is the axis (input-side evidence, not head capacity). Signal for the
+#     evidence absence. Option A is the axis (input-side evidence, not head capacity). Signal for the
 #     next-major: build the evidence-bundle channel (street-type + locality) + the ablation check.
-#   - No improvement ⇒ street-type input evidence alone is insufficient; the gap is deeper (the model
+#   - No improvement ⇒ street-type input evidence alone is insufficient. the gap is deeper (the model
 #     already infers street-type from context) — re-scope Option A toward the locality (open-vocab) leg.
 #
 # ONE VARIABLE vs the ON/OFF contrast: the street_type feature toggle. Model+trainer changes: model.py
 # street_type channel (projection + cue + merge-in-forward, mirrors the #1104 country channel); config.py
-# use_street_type_anchor + street_type_lexicon_path; train.py carveout adds street_type_* to the hot
+# use_street_type_anchor + street_type_lexicon_path. train.py carveout adds street_type_* to the hot
 # classifier LR group (the FRESH channel learns to use the signal in the probe window). deploc_head OFF
 # (P-A is orthogonal to P-B's head experiment — don't confound).
 #
@@ -30,8 +30,8 @@
 #   PRIMARY READ (the contrast): on ban-fragments-fr, per-tag street/dependent_locality/locality with
 #     street_type on vs off (same checkpoint). Street-F1 (on − off) delta > 0 = hypothesis supported.
 #   SECONDARY (not hard bars — this is a falsifier): golden us/fr within ±0.7pp of v385 (87.6/91.1) with
-#     the feature ON; invariance suite vs v385 (does the input channel introduce a new class?).
-#   VERDICT: 3k reached, contrast graded → A live | A insufficient. One run; no knob iteration.
+#     the feature ON. invariance suite vs v385 (does the input channel introduce a new class?).
+#   VERDICT: 3k reached, contrast graded → A live | A insufficient. One run. no knob iteration.
 #
 # Launch: cd corpus-python && modal run -d -m launch.train_remote --config v3.15.0-street-type.yaml --resume none
 #   (--resume none is required: init_from + the fresh channel live in the else branch; --resume auto no-ops it.)
@@ -66,7 +66,7 @@ data:
     AU: 1.0
     CA: 1.0 # New (Overture) — live locality, sidesteps NZ's dead dependent_locality
     MX: 1.0 # New (Overture) — BR dropped (0% OA-lineage + SN-garbage numbers)
-    NZ: 1.0 # v3.12 COMPANION BUG FIX (not the variable): the allowlist lacked NZ through the whole v3.11.x lineage — synth-nz drew zero rows (step-0 measured; the documented v3.8.2-era allowlist trap re-triggered). Restores the recipe's DECLARED 4-locale intent.
+    NZ: 1.0 # v3.12 COMPANION BUG FIX (not the variable): the allowlist lacked NZ through the whole v3.11.x lineage — synth-nz drew zero rows (step-0 measured. the documented v3.8.2-era allowlist trap re-triggered). Restores the recipe's DECLARED 4-locale intent.
   source_weights: # v3.1.0 weights + overture-latam (CA/MX/BR, dedicated source so it doesn't dilute the trained EU overture rows) + synth-no-fragment (the one new variable); synth-no-street-led ZEROED (its on-disk part predates --exclude-surfaces and is contaminated vs the board — see the overlay note).
     overture-latam: 6.0 # New — the CA/MX/BR Overture rows. 6.0/~142 ≈ 4.2%, within Fable's ≤5-8% new-mass band. Distinct from  (EU) so EU exposure is untouched.
     wof-admin: 2.0
@@ -107,9 +107,9 @@ data:
     # (matches fr-fragment). Bare streets + street+number with no postcode partner, + counters.
     synth-no-fragment: 12.0
     synth-gb: 10.0 # FEED: 6.1% stream × .328 dep-loc (probe-2 had this at 20.2% — the skew culprit)
-    synth-nz: 4.0 # FEED NEW: 2.4% stream × .792 (synth-nz-v2 800k; key also covers the old 2,990-row po-box recipe output — harmless, same country)
+    synth-nz: 4.0 # FEED NEW: 2.4% stream × .792 (synth-nz-v2 800k. key also covers the old 2,990-row po-box recipe output — harmless, same country)
     synth-es-pedania: 5.0 # FEED NEW: 3.0% stream × .303 (post-4b formatter fix)
-    synth-fr-lieudit: 3.0 # FEED NEW: 1.8% stream × 1.00 (BAN nom_ld, 4ce6821a; directly feeds the bare-locality regression class)
+    synth-fr-lieudit: 3.0 # FEED NEW: 1.8% stream × 1.00 (BAN nom_ld, 4ce6821a. directly feeds the bare-locality regression class)
   train_rows_per_epoch: 1000000
   val_rows: 4096
   coarse_filter: true
@@ -125,7 +125,7 @@ data:
   # #1104 country-lexicon channel — the dedicated country soft-feed vocabulary (feature_dim 2).
   country_lexicon_path: /data/gazetteer/country-surface-lexicon-v1.json
   # P-A street-type channel — the codex street-type lexicon (feature_dim 1). Same JSON schema as the
-  # gazetteer lexicon; the loader reuses load_gazetteer_lexicon + realign_gazetteer_to_pieces.
+  # gazetteer lexicon. the loader reuses load_gazetteer_lexicon + realign_gazetteer_to_pieces.
   street_type_lexicon_path: /data/gazetteer/street-type-lexicon-v1.json
   gazetteer_choreography: true
   affix_relabel_lexicon_path: /data/gazetteer/affix-relabel-lexicon-v1.json
@@ -135,7 +135,7 @@ data:
 model: # Verbatim from v2.4.1.
   hidden_size: 384
   use_span_boundary_head: true
-  use_deploc_head: false # P-A leaves the dep-loc head disabled — orthogonal to P-B's head experiment; don't confound the street-type read.
+  use_deploc_head: false # P-A leaves the dep-loc head disabled — orthogonal to P-B's head experiment. don't confound the street-type read.
   span_boundary_loss_weight: 0.5
   num_hidden_layers: 6
   num_attention_heads: 6
@@ -164,7 +164,7 @@ model: # Verbatim from v2.4.1.
   use_street_type_anchor: true
   street_type_feature_dim: 1
   # #1104 homograph-guard softener — the one variable vs v263. Scales the country_ambiguous dim by 0.5
-  # before the country_projection (bakes into the exported ONNX; no lexicon/inference change). v263's
+  # before the country_projection (bakes into the exported ONNX. no lexicon/inference change). v263's
   # hard guard (scale 1.0) over-suppressed homograph countries Georgia/Jordan (country-homograph F1
   # 89.8->82.6); softening should recover homograph recall without giving back the country F1 the
   # WOF-admin rows produced.

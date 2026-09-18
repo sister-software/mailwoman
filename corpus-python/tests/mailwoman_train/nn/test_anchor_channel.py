@@ -98,7 +98,7 @@ def _dual_fixture():
     torch.manual_seed(0)
     single = MailwomanCoarseEncoder(**_COMMON, use_postcode_anchor=True, inject_first_token=False).eval()
     dual = MailwomanCoarseEncoder(**_COMMON, use_postcode_anchor=True, inject_first_token=True).eval()
-    dual.load_state_dict(single.state_dict())  # identical weights; differ only in the injection
+    dual.load_state_dict(single.state_dict())  # identical weights. differ only in the injection
     ids = torch.randint(1, 100, (2, 8))
     mask = torch.ones(2, 8, dtype=torch.long)
     feats = torch.randn(2, 8, ANCHOR_DIM)

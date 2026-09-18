@@ -62,7 +62,7 @@ export interface LieuDitExtractResult {
  *
  * Excludes the `merged`/`france` aggregates (they duplicate the per-département rows, so counting them would inflate
  * every frequency) and prefers an uncompressed `.csv` when both forms exist for the same département — a stale-refetch
- * artifact observed on disk for 13/2A/48/69/75. Mirrors `corpus/src/database-recipes/fr-lieudit.ts`'s enumeration; the
+ * artifact observed on disk for 13/2A/48/69/75. Mirrors `corpus/src/database-recipes/fr-lieudit.ts`'s enumeration. the
  * two must agree or the index and the training database would read different populations.
  */
 export async function enumerateBANDeptFiles(banDir: string): Promise<string[]> {

@@ -4,7 +4,7 @@
  * @author Teffen Ellis, et al.
  *
  *   Registry for downloadable public-data bundles. It defines remote artifacts, their local paths,
- *   and whether local state is current; the data commands own network and filesystem I/O.
+ *   and whether local state is current. the data commands own network and filesystem I/O.
  */
 
 import type { DataReleaseManifest } from "#data/release"
@@ -223,11 +223,11 @@ export function artifactURL(artifact: BundleArtifact, baseURL: string = PUBLIC_B
  * artifact's {@link BundleArtifact.localPath} to the VERSIONED filename (`resolveDatabasePath`'s naming convention:
  * `<family>/<family>-us-<slug>-<version>.db`) when the manifest pins that family to a version — so a download lands
  * exactly where `resolveDatabasePath` (`data-release.ts`) will find it on the next `mailwoman geocode` run. Artifacts
- * with no `family` (candidate/poi/fr — single fixed-path downloads) pass through unchanged; a family artifact with no
+ * with no `family` (candidate/poi/fr — single fixed-path downloads) pass through unchanged. a family artifact with no
  * matching manifest entry also passes through unchanged (the legacy unversioned path, `resolveDatabasePath`'s
  * fallback).
  *
- * Pure: no filesystem access. This computes the intended DESTINATION path; whether something already exists there (or
+ * Pure: no filesystem access. This computes the intended DESTINATION path. whether something already exists there (or
  * at a differently-versioned path `resolveDatabasePath` would also accept) is the caller's `existsSync`/
  * `resolveDatabasePath` check, not this function's.
  */

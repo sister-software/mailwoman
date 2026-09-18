@@ -11,7 +11,7 @@
  *   #484) reuses the same walk instead of growing a second one. The placetype-specificity ordering
  *   lives here as `PLACETYPE_DEPTH` — a single TS map instead of the previous SQL CASE, and
  *   extended below `localadmin` (locality/borough/neighbourhood/microhood now rank correctly
- *   instead of sorting last; forward resolution rarely saw those as ANCESTOR placetypes, reverse
+ *   instead of sorting last. forward resolution rarely saw those as ANCESTOR placetypes, reverse
  *   geocoding always does).
  */
 

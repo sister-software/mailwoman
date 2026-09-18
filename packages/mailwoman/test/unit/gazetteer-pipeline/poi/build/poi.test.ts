@@ -120,13 +120,13 @@ describe("buildPOIDatabase", () => {
 		// paths race to close() the same DatabaseSync and one throws "database is not open".
 		using kdb = new DatabaseClient<POIDatabase>(out, { readOnly: true })
 
-		// Category codes round-trip by first sight; zero remains uncategorized.
+		// Category codes round-trip by first sight. zero remains uncategorized.
 		const codes = (await kdb.selectFrom("poi_category_codes").selectAll().execute()) as POICategoryCodeTable[]
 		expect(codes.map((c) => c.category).toSorted()).toEqual(["cafe", "museum", "restaurant"])
 		expect(codes.every((c) => c.id > 0)).toBe(true)
 		const cafeID = codes.find((c) => c.category === "cafe")!.id
 
-		// Clustered disk order makes the first (h3_cell, category_id) row authoritative; no
+		// Clustered disk order makes the first (h3_cell, category_id) row authoritative. no
 		// ORDER BY — relying on the WITHOUT ROWID clustered-key order) is the best-confidence one. ---
 		const group = await kdb
 			.selectFrom("poi")
@@ -211,7 +211,7 @@ describe("buildPOIDatabase", () => {
 
 /**
  * Extract-bbox coverage polyfill (decision 5) — the pure helper `--source osm` uses in place of the Overture path's
- * "rows-present ⇒ 1" coverage. Springfield IL sits well inside this small bbox; the bbox spans several res-6 cells, so
+ * "rows-present ⇒ 1" coverage. Springfield IL sits well inside this small bbox. the bbox spans several res-6 cells, so
  * an empty `rows` list (or rows clustered in only one spot) always leaves at least one cell with `observedRows: 0` to
  * exercise decision 5's "well-surveyed, none found" case.
  */

@@ -17,7 +17,7 @@ import { ResourceError } from "#errors/schema"
  *
  * Exists so a caller that opts out of throwing — `validateStatus: () => true`, for a graceful non-2xx path — can still
  * ask the question by name. Written against axios's own `HttpStatusCode` because this package already owns that
- * dependency; a consumer package spelling `>= 200 && < 300` inline would either name two bare thresholds or take an
+ * dependency. a consumer package spelling `>= 200 && < 300` inline would either name two bare thresholds or take an
  * undeclared dependency to avoid it.
  */
 export function isSuccessStatus(status: number): boolean {
@@ -226,7 +226,7 @@ function responseReason(status: number): string {
  * `TileAPI` configuration found **16 of them changed**, not the two originally claimed:
  *
  * - Every RESPONSELESS failure (`ERR_NETWORK`, `ECONNREFUSED`, `ECONNRESET`, `ECONNABORTED`, `ETIMEDOUT`, `ERR_CANCELED`)
- *   used to collapse into a uniform 500; they now split into 503 / 504 / 400 by cause, and `ERR_CANCELED` flips from
+ *   used to collapse into a uniform 500. they now split into 503 / 504 / 400 by cause, and `ERR_CANCELED` flips from
  *   transient to terminal, which is the point — a caller who cancelled should not requeue.
  * - Every non-401 HTTP status used to rethrow the raw `AxiosError`, so `status`-based branching (404 → skip, 403 → abort)
  *   had to reach into `error.response`. 401's own message and URN changed too.

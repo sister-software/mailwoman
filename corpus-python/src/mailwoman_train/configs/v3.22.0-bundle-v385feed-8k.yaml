@@ -1,14 +1,14 @@
 # === v3.22.0-bundle-v385feed-8k — PRODUCTION BUNDLE CANDIDATE, INCREMENT 4 (Option-A Phase 3). ===
-# (Claude-owned; operator go 2026-07-28 "alright let's continue", after the Decision-B analysis.)
+# (Claude-owned. operator go 2026-07-28 "alright let's continue", after the Decision-B analysis.)
 #
 # WHAT THE DECISION-B ANALYSIS SHOWED (record: .superpowers/sdd/progress.md 2026-07-28): the two
 # ablated-column golden deficits are FEED-PASSENGER damage, not bundle damage — (1) the po-box
-# regression is Canadian alphanumeric-postcode rows (box number stolen as postcode; 93-vs-9
+# regression is Canadian alphanumeric-postcode rows (box number stolen as postcode. 93-vs-9
 # asymmetric), diluted by +22u of probe-era source mass; (2) us.street losses are ALL
 # trailing-directional reduces ("74TH ST SE"→"74TH ST") — the GB boundary habit from synth-gb 10.0,
 # a source weighted for the FALSIFIED dep-loc resurrection arc. Punct-drop was tested and
 # exonerated (control fails comma-intact rows too). The deploc feed was probe tooling inherited
-# for comparability; production owes it nothing.
+# for comparability. production owes it nothing.
 #
 # ONE NAMED DELTA vs v3.21.0:
 #   data: = the shipped v385 recipe's data section verbatim (v3.8.5-latam-8k: corpus
@@ -20,7 +20,7 @@
 # PRE-REGISTERED CHECKS — reshaped by the operator's Decision A (inputMode fragmented|formatted;
 # formatted runs channels-OFF, so the SHIP columns are:)
 #   G1 fragment bars (fed, P0 grid --lexicon v5 --street-lexicon v2, every save): homonym ON−OFF
-#      ≥ +0.050 asis and ≥ +0.25 lower+heal; house-number classes ≥ −0.020 asis raw; lowercase-heal
+#      ≥ +0.050 asis and ≥ +0.25 lower+heal. house-number classes ≥ −0.020 asis raw. lowercase-heal
 #      ALL ≥ +0.015. NAMED RISK: bare-locality classes lose the es-pedania/fr-lieudit feeders —
 #      if a bare-locality bar alone misses, add back just those two sources as one named delta.
 #   G2 ablation: channels-off column vs the v385 same-grader reference only (the feed control is
@@ -28,14 +28,14 @@
 #   G3 invariance (int8, --baseline v385): zero new classes.
 #   G4 gauntlet ×3 (fed weights-cache).
 #   G5 golden ABLATED (the formatted-mode ship column): all v6.0.0-shipped-baseline floors — no
-#      named-watch exemptions this time; v385's food means v385's floors, full stop.
+#      named-watch exemptions this time. v385's food means v385's floors, full stop.
 #   G5b golden FED (recorded, not ship-blocking under Decision A): the fragment-mode-on-formatted
-#      read; feeds the future misroute-cost check (misroute rate × this harm).
-#   G6 canary: recorded under both modes; zero-flip required only in the formatted/ablated mode
+#      read. feeds the future misroute-cost check (misroute rate × this harm).
+#   G6 canary: recorded under both modes. zero-flip required only in the formatted/ablated mode
 #      (Decision A routes these full-address rows there in production).
 #   VERDICT: G1-G5 + G6-formatted ⇒ the promotion battery + the inputMode implementation arc.
 #   Ablated-column golden failure ⇒ the feed-passenger diagnosis is FALSIFIED — bundle training
-#   itself erodes base competence; STOP, architecture question (from-scratch vs shelve) to the
+#   itself erodes base competence. STOP, architecture question (from-scratch vs shelve) to the
 #   operator. No knob iteration inside the run.
 #
 # Launch: cd corpus-python && modal run -d -m launch.train_remote --config v3.22.0-bundle-v385feed-8k.yaml --resume none
@@ -135,7 +135,7 @@ data:
 model: # Verbatim from v2.4.1.
   hidden_size: 384
   use_span_boundary_head: true
-  use_deploc_head: false # P-A: the deploc head is off — orthogonal to P-B's head experiment; don't confound the street-type read.
+  use_deploc_head: false # P-A: the deploc head is off — orthogonal to P-B's head experiment. don't confound the street-type read.
   span_boundary_loss_weight: 0.5
   num_hidden_layers: 6
   num_attention_heads: 6
@@ -167,7 +167,7 @@ model: # Verbatim from v2.4.1.
   use_locality_surface_anchor: true
   locality_surface_feature_dim: 2
   # #1104 homograph-guard SOFTENER — the one variable vs v263. Scales the country_ambiguous dim by 0.5
-  # before the country_projection (bakes into the exported ONNX; no lexicon/inference change). v263's
+  # before the country_projection (bakes into the exported ONNX. no lexicon/inference change). v263's
   # hard guard (scale 1.0) over-suppressed homograph countries Georgia/Jordan (country-homograph F1
   # 89.8->82.6); softening should recover homograph recall without giving back the country F1 the
   # WOF-admin rows produced.

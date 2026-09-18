@@ -1,4 +1,4 @@
-"""#1677: a reps-per-row target names the exposure; the weight is derived from it, never picked."""
+"""#1677: a reps-per-row target names the exposure. the weight is derived from it, never picked."""
 
 from __future__ import annotations
 
@@ -24,7 +24,7 @@ def test_a_target_of_five_lands_at_five_reps_per_row():
     assert _reps(merged, "synth-bare-country-v23") == pytest.approx(5.0)
     # The issue's table: parity with the ES source is a weight near 0.030, not the 1.0 that was picked.
     assert derived[0].weight == pytest.approx(0.0302, abs=0.0005)
-    # The fixed weights are untouched; the reps-targeted draws come out of their share.
+    # The fixed weights are untouched. the reps-targeted draws come out of their share.
     assert {k: merged[k] for k in FIXED} == FIXED
 
 

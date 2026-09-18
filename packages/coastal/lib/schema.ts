@@ -9,7 +9,7 @@
  *
  *   `area_id` IS SCOPED BY SCENARIO, AND THE KEY INSIDE A SCENARIO IS THE AUTHORITY'S FEATURE ID — NOT ITS
  *   FRONTAGE ID. The same frontage appears in all twelve scenario layers with a different distance each
- *   time, so the source's `frontageid` is not unique across the artifact; measured, it is not unique within
+ *   time, so the source's `frontageid` is not unique across the artifact. measured, it is not unique within
  *   a layer either. `NCERM_NFI_2055_0CC` holds 7,379 features over 7,369 distinct frontage ids (frontage
  *   39260 alone appears ten times), and the twelve layers together hold 89,211 features over far fewer
  *   frontages — 835 rows would have collided. So the key is `<scenario key>:<OBJECTID>` and `frontage_id`
@@ -23,7 +23,7 @@
  *   one scenario and a reading reports every one that contains the point.
  *
  *   `WITHOUT ROWID` ON THE CELL TABLE AND NEVER ON THE GEOMETRY TABLES. Small fixed-width rows probed by
- *   their exact primary key belong in the B-tree; a row carrying a geometry blob does not — clustering it
+ *   their exact primary key belong in the B-tree. a row carrying a geometry blob does not — clustering it
  *   into the B-tree makes every index page a geometry page.
  *
  *   THE WHOLE-CELL SET IS COMPACTED PER FEATURE, SO IT IS MIXED-RESOLUTION. A row therefore carries its own
@@ -46,7 +46,7 @@ export const CoastalCellContainment = {
 	 */
 	Whole: "whole",
 	/**
-	 * The zone boundary crosses the cell. The index has narrowed the candidate polygons; the point test decides.
+	 * The zone boundary crosses the cell. The index has narrowed the candidate polygons. the point test decides.
 	 */
 	Partial: "partial",
 } as const
@@ -285,7 +285,7 @@ export async function createCoastalZoneCellTable(db: CoastalSchemaHandle): Promi
 
 	await addCellIndexColumns(table, ["scenario_key", "area_id"])
 		.addPrimaryKeyConstraint("coastal_zone_cell_pk", ["h3_cell", "area_id"])
-		// `WITHOUT ROWID` has no first-class builder; the raw modifier is the idiomatic fallback.
+		// `WITHOUT ROWID` has no first-class builder. the raw modifier is the idiomatic fallback.
 		.modifyEnd(sql`without rowid`)
 		.execute()
 }

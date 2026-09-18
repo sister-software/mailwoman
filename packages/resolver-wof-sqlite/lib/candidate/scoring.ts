@@ -58,10 +58,10 @@ export function candidateFromSearchRow(
 
 	// Proximity boost: only applied when the query carries `near` and the candidate has real
 	// coordinates. The formula decays smoothly with distance so close-but-not-exact hits
-	// still benefit; tunable via proximityBoost + proximityScaleKm.
+	// still benefit. tunable via proximityBoost + proximityScaleKm.
 	let distanceKm: number | undefined
 	// The best decayed-distance term over `near` + every `bias` point (each point's term is
-	// scaled by its weight; the maximum wins — a candidate near any hint is "nearby"). Carried
+	// scaled by its weight. the maximum wins — a candidate near any hint is "nearby"). Carried
 	// into the exact-tier prominence sort below when hints are present.
 	let proximityTerm = 0
 

@@ -16,7 +16,7 @@
  *
  *   Pure transport: `fetch` only, no node-specific deps (runs in the browser too). The
  *   `addressPoints` / `interpolation` opts are LIVE SQLite handles — not serializable — so they're
- *   stripped before the POST; the resolver service supplies its own from the tree's region (the
+ *   stripped before the POST. the resolver service supplies its own from the tree's region (the
  *   data lives server-side, which is the whole point). All other opts (defaultCountry, calibration,
  *   hierarchyCompletion, …) ride along.
  */

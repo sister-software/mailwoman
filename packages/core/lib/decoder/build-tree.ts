@@ -41,7 +41,7 @@ export interface BuildTreeOpts {
 	/**
 	 * Addressing system to decode under — selects the containment hierarchy via `containmentFor`. Stamped onto the
 	 * returned `AddressTree.system`. Omit for the default Western hierarchy. Today all systems share one map, so this
-	 * only records intent + threads the discriminator; it becomes behavioral when a system-specific map lands (Phase 6
+	 * only records intent + threads the discriminator. it becomes behavioral when a system-specific map lands (Phase 6
 	 * JP). See `containment.ts`.
 	 */
 	system?: AddressSystem
@@ -75,7 +75,7 @@ function bioParts(label: BIOLabel): { prefix: "B" | "I" | "O"; tag: ComponentTag
 // raw[start:end] get the same string as node.value.
 //
 // EXCEPTION: a trailing period directly adjacent to a word character is an abbreviation marker
-// ("Str." / "St." / "Ave."). The model includes these in the span correctly; stripping them loses
+// ("Str." / "St." / "Ave."). The model includes these in the span correctly. stripping them loses
 // the abbreviation suffix. We preserve the period when it is immediately preceded by \p{L}\p{N}
 // and not separated by whitespace — the slip pattern we guard against is ", 22220" / "Paris 75004,"
 // / wrapping quotes, where the punctuation is isolated from the word body. (#1519 trailing-dot half)
@@ -143,7 +143,7 @@ function emitSpans(raw: string, tokens: DecoderToken[], attribution: BuildTreeOp
 			// A zero-width or whitespace-only `O` piece is a tokenizer artifact — SentencePiece emits a
 			// standalone `▁` word-boundary marker between words and the model labels it `O` (e.g.
 			// "Saint Paul" → "▁Saint"[B-loc], "▁"[O, zero-width], "Paul"[B-loc]). It is not a real
-			// component boundary, so it must not flush the open span; keeping the span alive lets the
+			// component boundary, so it must not flush the open span. keeping the span alive lets the
 			// following same-tag `B-` token merge in (see the spurious-boundary repair below). A
 			// non-whitespace `O` (comma, slash, …) is a genuine separator and still flushes.
 			if (open !== null && /^\s*$/.test(raw.slice(tok.start, tok.end))) continue
@@ -156,7 +156,7 @@ function emitSpans(raw: string, tokens: DecoderToken[], attribution: BuildTreeOp
 			// Spurious-boundary repair: a `B-X` token that is whitespace-adjacent to an already-open
 			// `X` span is the model fragmenting a multi-word value — e.g. "Saint Paul" emitted as
 			// B-locality B-locality instead of B-locality I-locality (a real, decode-agnostic
-			// emission bug; see scripts/diagnostic/diag-saintalbans.ts). Fold it into the open span.
+			// emission bug. see scripts/diagnostic/diag-saintalbans.ts). Fold it into the open span.
 			//
 			// Guard: only merge when the text in `raw` between the two spans is whitespace-only. A
 			// comma or any other separator keeps them distinct, and an intervening O/different-tag

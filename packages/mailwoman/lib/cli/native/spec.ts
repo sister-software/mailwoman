@@ -119,7 +119,7 @@ type AlwaysPresentFlag<Options> = {
  *
  * The router writes each flag's value to the property `optionPropertyName` derives from it, so a property spelled any
  * other way is never written to and the flag parses, validates, and does nothing. A restated `interface Options` can
- * disagree that way silently; a derived one cannot, because the disagreement becomes a compile error at the read site.
+ * disagree that way silently. a derived one cannot, because the disagreement becomes a compile error at the read site.
  *
  * A flag carrying a `default`, or marked `required`, is always supplied and its property is required. Every other
  * property is optional. `choices` narrows the property to that union; `multiple` widens it to an array.

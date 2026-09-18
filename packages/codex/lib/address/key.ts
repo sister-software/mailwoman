@@ -16,7 +16,7 @@
  *   Deliberately not done yet (follow-ups, all conditioned on `@mailwoman/codex`): expanding street
  *   suffixes (`Ave` → `avenue`) and directionals (`N` → `north`) to a canonical form, and
  *   USPS-style standardization. This first version is pure normalization with no dictionary expansion,
- *   so the key is stable and explainable; expansion is an additive refinement, not a rewrite.
+ *   so the key is stable and explainable. expansion is an additive refinement, not a rewrite.
  */
 
 import type { ComponentDict } from "#address/format"

@@ -24,7 +24,7 @@ REGISTRY_SOURCE = "localdata-kr"
 COUNTRY = "KR"
 COUNTRY_NAME = "대한민국"
 
-# The spoken / typed short forms of the 시·도. A region absent here has no `short_region` register; the build report
+# The spoken / typed short forms of the 시·도. A region absent here has no `short_region` register. the build report
 # counts the rows that lose the register rather than inventing a form.
 SHORT_REGIONS: dict[str, tuple[str, ...]] = {
     "서울특별시": ("서울시", "서울"),
@@ -83,7 +83,7 @@ def render_row(
     else:
         renderer.put("region", row.region)
     renderer.glue(sep)
-    # A compound 시군구 (`수원시 장안구`) is two adjacent subregion spans; the space between them is glue. 세종특별자치시
+    # A compound 시군구 (`수원시 장안구`) is two adjacent subregion spans. the space between them is glue. 세종특별자치시
     # has no 시군구 at all, so its rows go straight from the region to the 읍/면 or the road.
     for index, unit in enumerate(row.sigungu.split()):
         if index:

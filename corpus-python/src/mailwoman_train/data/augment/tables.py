@@ -23,7 +23,7 @@ DIRECTIONALS: dict[str, str] = {
 # "350 Fifth Ave, New York, NY" (the Empire State Building) lost its locality while the digit form
 # parsed clean. The num-ordinal BAND relation is a stated product invariant (gauntlet metamorphic);
 # teach the equivalence instead of hoping for it. First..Tenth covers the overwhelming mass of US
-# ordinal streets; applied only to street-family-labeled tokens (a "5th" unit/floor is not a street).
+# ordinal streets. applied only to street-family-labeled tokens (a "5th" unit/floor is not a street).
 ORDINAL_STREETS: dict[str, str] = {
     "1st": "First",
     "2nd": "Second",

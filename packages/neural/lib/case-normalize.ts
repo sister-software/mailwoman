@@ -12,7 +12,7 @@
  *   Detection is deliberately STRICT — only a fully-shouting input qualifies — so mixed-case input is
  *   never touched (the caller's byte-stable path). Distinct from the identifier-casing all-caps
  *   idiom in `core/strings/case.ts` (`smartSnakeCase`/`smartCamelCase`): those skip _case
- *   conversion_ when a name is already uppercase; this _applies_ a title-case to address TEXT for
+ *   conversion_ when a name is already uppercase. this _applies_ a title-case to address TEXT for
  *   the model.
  */
 
@@ -131,7 +131,7 @@ export function isAllLowerInput(text: string): boolean {
  * Restore a fully-lowercase input to the canonical mixed-case the model was trained on: title-case each ASCII run ≥3
  * letters (`pennsylvania` → `Pennsylvania`) and UPPERCASE each run ≤2 letters (`dc` → `DC`, `nw` → `NW`, `lg` → `LG`).
  * The ≤2 handling is where this differs from {@link titleCaseInput}: on all-caps input those tokens are already shouting
- * so #690 preserves them; on all-lowercase input they arrive as `dc`/`ny` and must be uppercased to reach the same form
+ * so #690 preserves them. on all-lowercase input they arrive as `dc`/`ny` and must be uppercased to reach the same form
  * — every ≤2-letter token in an address is an abbreviation the model reads best uppercase (state codes NY/DC,
  * directionals N/NW/SE, suffixes ST/RD, the NL postcode suffix LG). Length-preserving — token offsets unchanged. Net:
  * `1600 pennsylvania ave nw, washington dc` and `1600 PENNSYLVANIA AVE NW, WASHINGTON DC` both canonicalize to `1600
@@ -144,7 +144,7 @@ export function restoreLowerInput(text: string): string {
 }
 
 /**
- * Normalize a shouting or whispering ASCII input to canonical mixed-case before the model; mixed-case and
+ * Normalize a shouting or whispering ASCII input to canonical mixed-case before the model. mixed-case and
  * accented/non-Latin input pass through byte-identically. The parser's #690 (all-caps) + #829 (all-lowercase) hook.
  */
 export function normalizeInputCase(text: string): string {

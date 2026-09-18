@@ -8,8 +8,8 @@
 # Single-piece numbers remove the continuations the postcode mass lived on.
 #
 # init_from /data/models/numsplice-expanded (v310's step-008000 with token_embeddings FVT mean-init'd
-# to 83,131 — each number row = mean of its digit constituents; encoder/heads byte-identical). English
-# LETTERS tokenize byte-identically; only numeric spans change (verified, scratchpad/build-number-splice.py).
+# to 83,131 — each number row = mean of its digit constituents. encoder/heads byte-identical). English
+# LETTERS tokenize byte-identically. only numeric spans change (verified, scratchpad/build-number-splice.py).
 #
 # PRE-REGISTERED READ:
 #   PRIMARY — the digit defect: `aleja Wojska Polskiego 178` -> house_number (not postcode); board 3
@@ -130,7 +130,7 @@ model: # Verbatim from v2.4.1.
   use_country_anchor: true
   country_feature_dim: 2
   # #1104 homograph-guard SOFTENER — the one variable vs v263. Scales the country_ambiguous dim by 0.5
-  # before the country_projection (bakes into the exported ONNX; no lexicon/inference change). v263's
+  # before the country_projection (bakes into the exported ONNX. no lexicon/inference change). v263's
   # hard guard (scale 1.0) over-suppressed homograph countries Georgia/Jordan (country-homograph F1
   # 89.8->82.6); softening should recover homograph recall without giving back the country F1 the
   # WOF-admin rows produced.
@@ -174,7 +174,7 @@ model: # Verbatim from v2.4.1.
 
 train: # Same-vocab init_from fine-tune off the shipped v261 (fresh optimizer; --resume none on a fresh
   # output_dir honors init_from, weights only). The new country_projection starts random and learns to
-  # route the cue; the encoder keeps v261's span-boundary + street grammar.
+  # route the cue. the encoder keeps v261's span-boundary + street grammar.
   output_dir: /data/output-v350-numsplice-probe-s42/checkpoints
   seed: 42
   init_from: /data/models/numsplice-expanded

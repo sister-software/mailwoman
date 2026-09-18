@@ -6,23 +6,23 @@
 # discard the head's learned state and re-trigger warmup. Constant LR → resume is clean (no cosine).
 #
 # The 2k probe cleared all three pre-registered reads (2026-07-17):
-#   LEG-1 span mechanism: loss 18.6→1.49 converged; seg@1 0.603 > token@1 0.558 (+4.5pp, parity 267,
+#   LEG-1 span mechanism: loss 18.6→1.49 converged. seg@1 0.603 > token@1 0.558 (+4.5pp, parity 267,
 #     CHANNEL-STARVED relative check) — the span scorer beats token decode on the v0.11.0-no-fragment
-#     corpus (the novel confirmation; v301 proved it on v257).
-#   GUARD: golden us micro 86.9=86.9 / exact 66.4 vs 66.2; fr micro 90.0 vs 90.1 / exact flat — the
+#     corpus (the novel confirmation. v301 proved it on v257).
+#   GUARD: golden us micro 86.9=86.9 / exact 66.4 vs 66.2. fr micro 90.0 vs 90.1 / exact flat — the
 #     span head is a purely ADDITIONAL output, the BIO token path is byte-stable-ish.
 #   LEG-2 P3 all-caps: FAILED (raw-case exact 48.0 vs v381 48.3, vs the +5pp bar). augment_upper_case
 #     is INERT at 2k. It rides the 8k as an unchanged passenger (resume = no distribution shift) and
-#     gets a fair 8k re-grade — but its promote bar (+5pp) is unchanged and unmet; the #690 shim stays
+#     gets a fair 8k re-grade — but its promote bar (+5pp) is unchanged and unmet. the #690 shim stays
 #     unless the 8k re-grade clears it. Not a bar relaxation: the promote check still stands.
 #
-# Pre-registered 8k reads (package-shaped int8 vs shipped v381 baselines; same corpus+tokenizer → F1 valid):
+# Pre-registered 8k reads (package-shaped int8 vs shipped v381 baselines. same corpus+tokenizer → F1 valid):
 #   PROMOTE CHECK (standing): golden 2pp check (no tag >2pp down vs v381), the gauntlet passes, metamorphic,
 #     FR fragment board + digit board no worse than -2pp. The span head must not cost the token path.
 #   ARC READS (the point): seg@1 and oracle@5 on the JS harness via the PR #1154 decode surface +
-#     the semi-crf-transitions sidecar; the phase-4c name-evidence rerank consumes this model.
+#     the semi-crf-transitions sidecar. the phase-4c name-evidence rerank consumes this model.
 #   LEG-2 re-grade: all-caps raw-case vs v381 48.3 (promote bar +5pp — informational, shim-delete check).
-#   This 8k checkpoint ships nowhere without the full battery green; it is the phase-4c decode substrate.
+#   This 8k checkpoint ships nowhere without the full battery green. it is the phase-4c decode substrate.
 #
 # fp32 partition math enforced inside span_scorer.py regardless of autocast (v0.5.0 bf16 CRF scar).
 data:
@@ -143,7 +143,7 @@ model: # Verbatim from v2.4.1.
   use_country_anchor: true
   country_feature_dim: 2
   # #1104 homograph-guard SOFTENER — the one variable vs v263. Scales the country_ambiguous dim by 0.5
-  # before the country_projection (bakes into the exported ONNX; no lexicon/inference change). v263's
+  # before the country_projection (bakes into the exported ONNX. no lexicon/inference change). v263's
   # hard guard (scale 1.0) over-suppressed homograph countries Georgia/Jordan (country-homograph F1
   # 89.8->82.6); softening should recover homograph recall without giving back the country F1 the
   # WOF-admin rows produced.
@@ -187,7 +187,7 @@ model: # Verbatim from v2.4.1.
 
 train: # Same-vocab init_from fine-tune off the shipped v261 (fresh optimizer; --resume none on a fresh
   # output_dir honors init_from, weights only). The new country_projection starts random and learns to
-  # route the cue; the encoder keeps v261's span-boundary + street grammar.
+  # route the cue. the encoder keeps v261's span-boundary + street grammar.
   output_dir: /data/output-v3100-span-ship-probe-s42/checkpoints
   seed: 42
   init_from: /data/output-v381-punct-fix-full-s42/checkpoints/step-008000

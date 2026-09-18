@@ -11,7 +11,7 @@ import { registerSW } from "virtual:pwa-register"
 
 import { App } from "./App.tsx"
 
-// MapLibre derives its default worker URL from `import.meta.url`, which a bundled build cannot answer; without an
+// MapLibre derives its default worker URL from `import.meta.url`, which a bundled build cannot answer. without an
 // explicit worker the map composes its style and never requests a tile. The worker imports a shared sibling chunk, so
 // Vite bundles it as a worker entry and hands back the emitted file's URL.
 setWorkerUrl(maplibreWorkerURL)

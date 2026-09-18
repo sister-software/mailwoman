@@ -102,7 +102,7 @@ function run(cmd: string, args: string[], cwd: string, env: Record<string, strin
 		cwd,
 		stdio: ["ignore", "pipe", "pipe"],
 		encoding: "utf8",
-		// oxlint-disable-next-line sister-software/no-process-globals -- the child must inherit PATH and the rest; only the data root is added
+		// oxlint-disable-next-line sister-software/no-process-globals -- the child must inherit PATH and the rest. only the data root is added
 		env: { ...process.env, ...env },
 	})
 }
@@ -161,7 +161,7 @@ export async function smokeGetStarted(options: SmokeGetStartedOptions): Promise<
 	try {
 		doctor = run("node", [cli, "doctor"], project, { MAILWOMAN_DATA_ROOT: doctorRoot })
 	} catch (error) {
-		// doctor exits non-zero when a check fails, which is the cold state the page shows; the transcript is what counts.
+		// doctor exits non-zero when a check fails, which is the cold state the page shows. the transcript is what counts.
 		doctor = error instanceof Error && "stdout" in error ? String((error as { stdout: unknown }).stdout) : String(error)
 	}
 

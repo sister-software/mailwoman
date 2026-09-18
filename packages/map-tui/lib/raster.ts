@@ -16,7 +16,7 @@
 import type { RGB } from "#style"
 
 /**
- * A row-major RGBA pixel buffer. Alpha starts at 0 (unlit/transparent) everywhere; drawing a pixel sets it to 255,
+ * A row-major RGBA pixel buffer. Alpha starts at 0 (unlit/transparent) everywhere. drawing a pixel sets it to 255,
  * which is how callers (including this module's own tests) distinguish "lit" from "background".
  */
 export class RGBAGrid {
@@ -68,7 +68,7 @@ function stampSquare(grid: RGBAGrid, x: number, y: number, color: RGB, width: nu
 }
 
 /**
- * Draws a single line segment with the integer Bresenham algorithm. Coordinates are floored on entry; every plotted
+ * Draws a single line segment with the integer Bresenham algorithm. Coordinates are floored on entry. every plotted
  * point routes through `grid.setPixel`, so segments that run partly or fully off-grid clip for free.
  */
 function drawSegment(grid: RGBAGrid, x0: number, y0: number, x1: number, y1: number, color: RGB, width: number): void {
@@ -175,7 +175,7 @@ export function fillPolygon(
 
 /**
  * Draws a circle's outline (ring, not a filled disc) with the midpoint circle algorithm, plotting all eight symmetric
- * octant points per step. `centerX`/`centerY`/`radius` are floored on entry; every plotted point routes through
+ * octant points per step. `centerX`/`centerY`/`radius` are floored on entry. every plotted point routes through
  * `setPixel`, so a circle that runs off the grid clips rather than throwing.
  */
 export function drawCircle(grid: RGBAGrid, centerX: number, centerY: number, radius: number, color: RGB): void {

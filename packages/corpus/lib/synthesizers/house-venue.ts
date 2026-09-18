@@ -17,7 +17,7 @@
  *
  *   This synthesizer fixes #2 directly. Each emitted row has all of: house_number, street, venue,
  *   locality, region, postcode — a counter-example to "house_number is rare." Used as a companion
- *   source to synth-no-street; the v0.6.3 config weights synth-no-street at 0.5 and
+ *   source to synth-no-street. the v0.6.3 config weights synth-no-street at 0.5 and
  *   synth-house-venue at 1.0 to recover the lost house_number signal.
  *
  *   Real-world shape: business cards, mailing labels, store directories — `"123 Main St, Sunrise
@@ -28,7 +28,7 @@
  *   decompose-mode pressure.
  */
 
-/* oxlint-disable mailwoman/prefer-home -- the four admin tails below are hand-written on purpose; the comment at the
+/* oxlint-disable mailwoman/prefer-home -- the four admin tails below are hand-written on purpose. the comment at the
    `tail` assignment names the GB surface a layout cannot currently write and the counts behind it. */
 
 import { sample } from "@mailwoman/core/random"
@@ -192,7 +192,7 @@ const GB_VENUE_POOL_RATE = 0.7
 
 /**
  * Fraction of GB rows whose house number widens into a range ("287-293"). Real GB venue addresses frequently span
- * buildings; 0.15 keeps ranges a minority register — pre-registered in the #1366 memo.
+ * buildings. 0.15 keeps ranges a minority register — pre-registered in the #1366 memo.
  */
 const GB_RANGE_NUMBER_RATE = 0.15
 
@@ -239,7 +239,7 @@ export function synthesizeHouseVenueRow(
 	// street and a house number, so the surface is taught with the alternatives present rather than against them.
 
 	// GB rows draw from the GB pool 70% of the time (institutional/archaic/brand-dash-place forms,
-	// incl. directional-led names — the #1366 target class) and the shared pool otherwise; real GB
+	// incl. directional-led names — the #1366 target class) and the shared pool otherwise. real GB
 	// registers mix both. Other locales keep the shared pool (which already carries the FR flavor).
 	const venue = gbOrder && random() < GB_VENUE_POOL_RATE ? sample(GB_VENUES, random) : sample(PLAIN_VENUES, random)
 	const street = base.street ?? sample(FALLBACK_STREETS, random)
@@ -247,7 +247,7 @@ export function synthesizeHouseVenueRow(
 
 	// GB range numbers ("287-293 New N Rd"): real GB venue addresses frequently span buildings.
 	// 15% of GB rows widen the number into a range (same parity, small span — the register's real
-	// shape). Pre-registered in the #1366 memo; the base pool's no-ranges stance stays for other
+	// shape). Pre-registered in the #1366 memo. the base pool's no-ranges stance stays for other
 	// locales.
 	if (gbOrder && random() < GB_RANGE_NUMBER_RATE && /^\d+$/.test(houseNumber)) {
 		const start = Number.parseInt(houseNumber, 10)

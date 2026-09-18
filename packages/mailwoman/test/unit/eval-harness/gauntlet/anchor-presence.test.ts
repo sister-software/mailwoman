@@ -79,7 +79,7 @@ describe("the anchor-artifact presence assertion", () => {
 	it("stays silent for a package that declares no anchor artifact — the #1476 en-gb posture", async () => {
 		// Verbatim shape of the en-gb card: `requires.anchor.required` is TRUE (a fact about the shared encoder)
 		// while `files` carries only a comment where the binary key would be. A guard keyed on `requires` calls
-		// this broken; a guard keyed on `files` calls it what it is.
+		// this broken. a guard keyed on `files` calls it what it is.
 		const root = await fixtureWeights("zz-zz", {
 			requires: { anchor: { required: true } },
 			files: { $comment_postcode_anchor: "NONE — this overlay ships no postcode-zz.bin (deliberate)" },

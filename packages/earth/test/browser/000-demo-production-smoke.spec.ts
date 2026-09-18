@@ -2,7 +2,7 @@
  * @file Production functional-smoke — the check the 2026-07-04 demo triple outage went missing for.
  *   `version-parity.yml` confirmed the demo's PINNED VERSION tracked npm, and stayed green for three days while the
  *   demo served no WOF hits, no FST, and no street tier — version parity is not functional parity. Every one of those
- *   three failures produced zero console errors; the only symptom was degraded results. So this smoke grades the
+ *   three failures produced zero console errors. the only symptom was degraded results. So this smoke grades the
  *   RESULTS, not the absence of errors. Tagged `@smoke`: `earth-smoke.yml` runs this spec (and only this) against the
  *   deployed app daily via `MAILWOMAN_EARTH_URL`. It also runs in the local build check like every other browser spec,
  *   so a refactor that breaks the cascade fails in CI before it ships. Two addresses, chosen to light up all three
@@ -59,7 +59,7 @@ test.describe("Demo — production functional smoke @smoke", () => {
 
 		const { markerCount } = await demo.readResult()
 
-		// The tell: NL Amsterdam is ~52.37, 4.90; the pre-v5.4.0 mis-parse landed on Amsterdam, NY (~42.94, -74.19).
+		// The tell: NL Amsterdam is ~52.37, 4.90. the pre-v5.4.0 mis-parse landed on Amsterdam, NY (~42.94, -74.19).
 		demo.expectNear(await demo.readCoords(), { lat: 52.35, lon: 4.9 }, 0.2)
 		expect(markerCount, "no marker rendered").toBeGreaterThan(0)
 		demo.console.assertNoFailEvents()

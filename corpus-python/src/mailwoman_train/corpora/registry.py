@@ -3,7 +3,7 @@
 The LABEL corpora (`countries/tw/corpora`, `countries/jp/corpora`) render register rows in synthetic registers. This
 builder writes the other half: the address strings a clerk typed into a company register, aligned against the same
 LABEL key sets (`tw_registry.py`, `jp_registry.py`) and kept only where the whole key matches. The alignment rate is
-measured over every row and written to the build report; a string that does not align is a board row, never a
+measured over every row and written to the build report. a string that does not align is a board row, never a
 training row.
 
 Hold-out follows the LABEL corpus of the same locale exactly, so a typed address in a held-out unit is read, not

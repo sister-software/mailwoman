@@ -175,7 +175,7 @@ resolve, which shows long tasks and main-thread occupancy directly — or
 The question to answer first is whether the main thread is occupied or idle during those twenty
 seconds. Everything else follows from that, and nothing should be changed until it is known.
 
-NOT FIXED, and not to be fixed from here. The candidate remedies — inference in a worker, yielding
+NOT FIXED, and not to be fixed from here. The candidate actions — inference in a worker, yielding
 between pipeline stages — are architecture changes whose whole value is what they do to frame timing,
 which is the one thing a workspace that cannot open a browser must not be trusted to judge. The memory
 work above (86e85929f) was a separate and established bug; it is not a fix for this.

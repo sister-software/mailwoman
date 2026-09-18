@@ -104,7 +104,7 @@ describe("createGBTScorer", () => {
 		const featurize = createMatchFeaturizer({ comparisons, addressFrequency })
 		const a = rec("1", "ann", "lee", "10 oak st", "10 OAK ST")
 		const b = rec("2", "ann", "lee", "10 oak st", "10 OAK ST")
-		// A trivial model trained so its score is well-defined; we only assert the wiring is consistent.
+		// A trivial model trained so its score is well-defined. we only assert the wiring is consistent.
 		const x = featurize(a, b)
 		const dim = x.length
 

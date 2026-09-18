@@ -11,7 +11,7 @@
  *
  *   Reads REAL US OpenAddresses tuples and SPLITS the OA `street` field via the codex:
  *   `matchLeadingDirectional` (USPS Pub-28 C1) for the prefix, `matchTrailingSuffix` (Pub-28 C2
- *   street suffixes) for the suffix. OA streets nearly all carry a suffix; only ~10-20% carry a
+ *   street suffixes) for the suffix. OA streets nearly all carry a suffix. only ~10-20% carry a
  *   directional, so we INJECT a directional prefix onto a fraction of prefix-less streets to give
  *   `street_prefix` real signal. Each row varies surface form per affix — abbreviated ("N", "St")
  *   vs expanded ("North", "Street") — and varies the layout (full address / bare / street-only /
@@ -49,7 +49,7 @@ import { readCSVRecords, readOATuples, recipeSourceID, type CorpusRecipe } from 
 import type { CanonicalRow } from "#types"
 import { alignRow } from "#utils"
 
-// Same OA cache as the unit recipe. Train = every NON-Vermont state; eval = Vermont (the holdout).
+// Same OA cache as the unit recipe. Train = every NON-Vermont state. eval = Vermont (the holdout).
 
 interface USSource {
 	zip: PathBuilderLike
@@ -75,7 +75,7 @@ const EVAL_SOURCE: USSource = {
 
 // Multi-locale BALANCE sources (--multilocale-count > 0). These rows carry no affix split — they exist
 // only to keep the postcode-ORDER distribution multi-locale. Native-order rendering mirrors the
-// `country-balanced` recipe: FR = number-street, postcode-city; DE/IT/NL = street-number,
+// `country-balanced` recipe: FR = number-street, postcode-city. DE/IT/NL = street-number,
 // postcode-city. `order` drives the body.
 interface BalanceSource {
 	zip: PathBuilderLike
@@ -555,7 +555,7 @@ export const streetAffixRecipe: CorpusRecipe = {
 
 		if (multilocaleCount > 0) {
 			const mlSources = opts.golden ? MULTILOCALE_EVAL_SOURCES : MULTILOCALE_SOURCES
-			const perSource = Math.ceil((multilocaleCount * 3) / mlSources.length) // over-read; balance locales
+			const perSource = Math.ceil((multilocaleCount * 3) / mlSources.length) // over-read. balance locales
 			const mlPool: BalanceTuple[] = []
 
 			for (const s of mlSources) {
@@ -641,7 +641,7 @@ const TERMINAL_ONLY_SHARE = 0.8
  * #1569 root-fix recipe. Both classes come from real non-Vermont OA streets and use the affix recipe's existing layout
  * diversity. v4.3.1 makes terminal-only 80% of the mix: the first 40/60 run moved a 100-row TRAIN sample only 4→11
  * while contrast was already 95/100 before training (93/100 after). Post-run audit found that the global affix relabel
- * pass corrupts many already-decomposed target rows into double suffixes; do not retrain this recipe until relabel is
+ * pass corrupts many already-decomposed target rows into double suffixes. do not retrain this recipe until relabel is
  * idempotent over a decomposed street family. The 20% contrast leg remains explicit, additive to the already-strong
  * base distribution, and B2 still checks it unchanged.
  *

@@ -102,7 +102,7 @@ export function scriptFamilyForText(text: string): string | undefined {
 
 /**
  * What the router reads from a classifier: the parse entries and the weights-package metadata the session forwards. A
- * `NeuralAddressClassifier` satisfies it; so does a test stub.
+ * `NeuralAddressClassifier` satisfies it. so does a test stub.
  */
 export type RoutableClassifier = Pick<
 	NeuralAddressClassifier,
@@ -115,7 +115,7 @@ export interface ScriptRoutedClassifierOpts<C extends RoutableClassifier = Routa
 	 */
 	primary: C
 	/**
-	 * Load the family's classifier (`cjk`). Called once per family; a rejection marks the family unavailable.
+	 * Load the family's classifier (`cjk`). Called once per family. a rejection marks the family unavailable.
 	 */
 	loadFamily: (family: string) => Promise<C>
 	/**

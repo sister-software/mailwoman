@@ -35,7 +35,7 @@ const DEFAULT_PLACETYPES: PlacetypeID[] = [
 const DEFAULT_COUNTRIES = ["US"]
 const DEFAULT_LANGUAGES = ["eng", ""]
 /**
- * Ids per `IN (…)` batch. SQLITE_MAX_VARIABLE_NUMBER defaults to 32,766; 500 matches the name-load batch a few phases
+ * Ids per `IN (…)` batch. SQLITE_MAX_VARIABLE_NUMBER defaults to 32,766. 500 matches the name-load batch a few phases
  * down, so both read paths bind the same shape.
  */
 const ANCESTOR_CHUNK = 500
@@ -177,7 +177,7 @@ export async function buildFSTFromWOF(opts: BuildFSTOpts): Promise<{
 	// Referential is always population-anchored and never read out of a legacy `place_importance`
 	// column, because a legacy row that got a Wikipedia score overwrote whatever population would have
 	// said and the two are indistinguishable afterwards. Encyclopedic rides along for consumers and is
-	// never handed to the decoder. `loadImportanceSplit` handles all four schema generations; the
+	// never handed to the decoder. `loadImportanceSplit` handles all four schema generations. the
 	// source it reports is stamped into provenance so an artifact says which one it read.
 	progress("importance", "Loading referential + encyclopedic scores")
 	const split = loadImportanceSplit(db)

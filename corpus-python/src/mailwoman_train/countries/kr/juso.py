@@ -79,7 +79,7 @@ class LabelRow:
 
 def member_names(archive: zipfile.ZipFile) -> dict[str, str]:
     """Readable name → the archive's own name. The portal writes CP949 names without the UTF-8 flag, which `zipfile`
-    surfaces as CP437 mojibake; recoding them is the only way to find `주소_서울특별시.txt` by name."""
+    surfaces as CP437 mojibake. recoding them is the only way to find `주소_서울특별시.txt` by name."""
     names: dict[str, str] = {}
     for info in archive.infolist():
         if info.flag_bits & 0x800:
@@ -216,7 +216,7 @@ def alias_key_index(index: KeyIndex) -> None:
 
 
 def build_key_index(rows: Iterator[LabelRow]) -> KeyIndex:
-    """The key sets the permit aligner reads, from one pass over the LABEL rows; the older region names are admitted
+    """The key sets the permit aligner reads, from one pass over the LABEL rows. the older region names are admitted
     as aliases so a permit string written before the 2026 merger still aligns."""
     index = empty_key_index()
     for row in rows:

@@ -10,7 +10,7 @@
  *   city `上市` plus a district beginning with 町. Over the 1,892 municipalities in Japan Post's KEN_ALL list the
  *   shape has six members, so the boundary is stated here rather than learned — a positive attestation from the
  *   postal register, consumed after decode by `@mailwoman/neural`'s JP municipality repair. Two of the six (`上市町`,
- *   `下市町`) put 市 immediately before the suffix, the boundary the model closes at; the other four are listed for the same
+ *   `下市町`) put 市 immediately before the suffix, the boundary the model closes at. the other four are listed for the same
  *   repair so an early close inside them is also repaired.
  */
 
@@ -54,7 +54,7 @@ export const JP_INNER_SHI_TOWN_NAMES: readonly string[] = JP_INNER_SHI_TOWNS.fla
 
 /**
  * The characters a municipality surface must absorb from what follows it to become one of the register's names, or null
- * when no name extends it. `following` is the text after the surface; the answer is a prefix of it. A surface that
+ * when no name extends it. `following` is the text after the surface. the answer is a prefix of it. A surface that
  * already is a register name answers null: nothing to absorb.
  */
 export function jpMunicipalityCompletion(surface: string, following: string): string | null {

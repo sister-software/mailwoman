@@ -21,7 +21,7 @@ SURFACE ONLY — never from gold labels — so the exact same computation runs a
 
 - ``country_surface`` (bit 1) — the piece is inside a recognized country surface phrase.
 - ``country_ambiguous`` (bit 2) — the surface is a homograph (also a US region) or a common-word
-  name; a soft false-positive guard, the model-first analogue of Pelias's hard blacklist. The model
+  name. a soft false-positive guard, the model-first analogue of Pelias's hard blacklist. The model
   learns to trust ``surface & !ambiguous`` strongly and ``surface & ambiguous`` weakly, via context.
 
 WHY A DEDICATED CHANNEL rather than the gazetteer's existing ``country`` slot: the gazetteer slot

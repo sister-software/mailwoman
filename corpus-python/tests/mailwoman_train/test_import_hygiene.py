@@ -32,7 +32,7 @@ def _module_name(path: Path) -> str:
 def _resolve(module: str | None, level: int, holder: str, *, is_package: bool) -> str:
     """The absolute module a `from ... import` names, given the module holding it.
 
-    Inside a package's `__init__.py` a single dot means that package; inside a plain module it means
+    Inside a package's `__init__.py` a single dot means that package. inside a plain module it means
     the package containing it. Conflating the two makes `from .x` in `a/b/__init__.py` resolve to
     `a.x`, and if `a.x` happens to exist the check passes over a broken import.
     """
@@ -110,7 +110,7 @@ def test_every_deferred_import_names_a_module_that_exists() -> None:
     """A deferred import is not checked until it runs, and most of them never run under test.
 
     Moving a module one directory deeper re-levels every relative import inside it. A module-level
-    import that survives the move wrong fails at import; a deferred one fails at first call, on a
+    import that survives the move wrong fails at import. a deferred one fails at first call, on a
     branch a config has to enable. Four of these pointed at `mailwoman_train.data.gazetteer_anchor`
     after the data move and the whole suite stayed green.
     """

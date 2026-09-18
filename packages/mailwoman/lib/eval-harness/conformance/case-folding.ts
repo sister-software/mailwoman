@@ -9,7 +9,7 @@
  *   WHY THIS IS A PRODUCT COMMITMENT AND NOT A NICETY. Lowercase is the user register: a phone keyboard
  *   emits it, a pasted spreadsheet cell emits SHOUTING, and an autocapitalized field emits Title Case. All
  *   three name the same building as the mixed-case form a curator typed into the board. A pipeline that
- *   resolves one and not the others has not made a small mistake on an unusual input; it has failed the
+ *   resolves one and not the others has not made a small mistake on an unusual input. it has failed the
  *   input shape most of its traffic arrives in.
  *
  *   TWO GUARDS, AND THEY ANSWER DIFFERENT QUESTIONS. {@linkcode caseFoldKey} decides whether a pair differs
@@ -129,7 +129,7 @@ export function classifyCaseTransformation(base: string, variant: string): CaseT
  *   with casing, and its holding would be counted as evidence that casing is handled.
  * - `locale-sensitive-casing` — the row's locale maps the cases of a letter differently from the root locale, so a
  *   root-locale transformation changes which letter is written. Turkish and Azeri separate dotted `i`/`İ` from dotless
- *   `ı`/`I`, and Lithuanian retains the dot on a lowercase `i`/`j` under an accent; Unicode records all three in
+ *   `ı`/`I`, and Lithuanian retains the dot on a lowercase `i`/`j` under an accent. Unicode records all three in
  *   `SpecialCasing.txt` as the only locale-conditional casing rules.
  */
 export const CASE_APPLICABILITY_RULES = ["identity-transformation", "locale-sensitive-casing"] as const
@@ -140,7 +140,7 @@ export type CaseApplicabilityRule = (typeof CASE_APPLICABILITY_RULES)[number]
  * Countries whose locale casts a letter's case differently from the root locale, with the characters that trigger it.
  *
  * Keyed by ISO-3166 alpha-2 because that is what a fixture's `context.caseCountry` carries. The trigger sets are the
- * letters `SpecialCasing.txt`'s conditional mappings act on; a text carrying none of them cases identically under both
+ * letters `SpecialCasing.txt`'s conditional mappings act on. a text carrying none of them cases identically under both
  * locales and stays applicable.
  */
 const LOCALE_SENSITIVE_CASING: Record<string, { characters: string; note: string }> = {

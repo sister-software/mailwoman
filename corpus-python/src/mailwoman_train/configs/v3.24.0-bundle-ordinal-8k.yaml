@@ -1,25 +1,25 @@
 # === v3.24.0-bundle-ordinal-8k — PRODUCTION BUNDLE CANDIDATE, INCREMENT 6 (Option-A Phase 4). ===
-# (Claude-owned; operator 2026-07-29 "that seems like a big failure and something we need to fix" —
+# (Claude-owned. operator 2026-07-29 "that seems like a big failure and something we need to fix" —
 # the Fifth-Ave metamorphic hold, resolved by training the invariant rather than waiving it.)
 #
 # WHAT THE 8.2.0 PRE-SHIP GAUNTLET CAUGHT on v3.23-4k (record: progress.md 2026-07-29):
 #   1. World-city rotation on fed bare lookups — FIXED CODE-SIDE (the street-context check at the
-#      soft-features boundary; locality evidence needs street context; every measured win class carries
+#      soft-features boundary. locality evidence needs street context. every measured win class carries
 #      street words). Ships regardless of this run.
 #   2. "350 Fifth Ave, New York, NY" → locality absorbed into region (283km resolve). v385-clean ⇒
-#      a real model regression; 1/8 in the targeted sweep (point brittleness, not a class — the
+#      a real model regression. 1/8 in the targeted sweep (point brittleness, not a class — the
 #      state-name-starvation hypothesis was probed and weakened: 5/6 state-name-city rows clean).
 #
 # ONE NAMED DELTA vs v3.23.0: augment_ordinal_prob 0.3 — the ordinal-street swap (5th↔Fifth, both
-# directions, street-family labels only; splice_expansion arithmetic; rng-stream-identical at 0).
-# The num-ordinal BAND relation is a STATED gauntlet invariant; v385 satisfied it by luck of the
+# directions, street-family labels only. splice_expansion arithmetic. rng-stream-identical at 0).
+# The num-ordinal BAND relation is a STATED gauntlet invariant. v385 satisfied it by luck of the
 # draw, v3.23 lost it by the same luck — this trains it.
 #
 # PRE-REGISTERED CHECKS: G1-G6 VERBATIM from the v3.23 header (P0 grid --lexicon
-# locality-surface-lexicon-v6.json --street-lexicon street-type-lexicon-v3.json per save; G5
-# ablated all floors incl. fr.cedex 82.2; G6 canary formatted-clean) PLUS:
+# locality-surface-lexicon-v6.json --street-lexicon street-type-lexicon-v3.json per save. G5
+# ablated all floors incl. fr.cedex 82.2. G6 canary formatted-clean) PLUS:
 #   G7 THE FULL PRE-SHIP GAUNTLET on the dev-linked flip (regression + metamorphic + held-out) —
-#      the exact instrument that stopped the 8.2.0 reduce; the Fifth-Ave INV/BAND pair must clear and
+#      the exact instrument that stopped the 8.2.0 reduce. the Fifth-Ave INV/BAND pair must clear and
 #      the world-city fixtures stay clear under the street-context check.
 #   VERDICT: all seven ⇒ resume the 8.2.0 reduce at the metadata surfaces. A save passing G1-G6 but
 #   not G7 ⇒ STOP, back to the operator (no further augment iteration without a fresh decision).
@@ -75,7 +75,7 @@ data:
     synth-fr-order: 3.0
     synth-fr-admin-split: 6.0
     synth-unit: 1.5
-    synth-po-box-cedex: 3.0 # v3.23 DELTA-2: fine-tune replay boost (2x v385 share). Cedex forgetting is CONTINUED-TRAINING damage (every fine-tune ~80 vs shipped 85.6 same-harness; CA-specific, us.po_box IMPROVES). Watch us.po_box_real for overfit.
+    synth-po-box-cedex: 3.0 # v3.23 DELTA-2: fine-tune replay boost (2x v385 share). Cedex forgetting is CONTINUED-TRAINING damage (every fine-tune ~80 vs shipped 85.6 same-harness. CA-specific, us.po_box IMPROVES). Watch us.po_box_real for overfit.
     synth-affix: 2.0
     synth-country: 2.0
     overture: 3.0
@@ -104,7 +104,7 @@ data:
   # #1101 FIX — the delimiter-free augmentation (built+tested, never shipped): an extra comma-stripped
   # copy per row so the model segments street/locality without leaning on the comma. Closes the gauntlet
   # comma-drop INV (White House + FR Rue du Chevaleret). One new variable vs v373.
-  augment_ordinal_prob: 0.3 # v3.24 DELTA (the one variable): ordinal-street swap 5th↔Fifth on street-family tokens (augment.ORDINAL_STREETS; value = the directional precedent). The 8.2.0 pre-ship metamorphic catch: '350 Fifth Ave, New York, NY' lost its locality while the digit form parsed clean (v385-clean ⇒ regression) — teach the num-ordinal invariant the gauntlet grades.
+  augment_ordinal_prob: 0.3 # v3.24 DELTA (the one variable): ordinal-street swap 5th↔Fifth on street-family tokens (augment.ORDINAL_STREETS. value = the directional precedent). The 8.2.0 pre-ship metamorphic catch: '350 Fifth Ave, New York, NY' lost its locality while the digit form parsed clean (v385-clean ⇒ regression) — teach the num-ordinal invariant the gauntlet grades.
   augment_punct_drop_prob: 0.3
   anchor_lookup_path: /data/anchor/pilot-anchor-lookup.json
   gazetteer_lexicon_path: /data/gazetteer/anchor-lexicon-v1.json
@@ -122,7 +122,7 @@ data:
 model: # Verbatim from v2.4.1.
   hidden_size: 384
   use_span_boundary_head: true
-  use_deploc_head: false # P-A: the deploc head is off — orthogonal to P-B's head experiment; don't confound the street-type read.
+  use_deploc_head: false # P-A: the deploc head is off — orthogonal to P-B's head experiment. don't confound the street-type read.
   span_boundary_loss_weight: 0.5
   num_hidden_layers: 6
   num_attention_heads: 6
@@ -154,7 +154,7 @@ model: # Verbatim from v2.4.1.
   use_locality_surface_anchor: true
   locality_surface_feature_dim: 2
   # #1104 homograph-guard SOFTENER — the one variable vs v263. Scales the country_ambiguous dim by 0.5
-  # before the country_projection (bakes into the exported ONNX; no lexicon/inference change). v263's
+  # before the country_projection (bakes into the exported ONNX. no lexicon/inference change). v263's
   # hard guard (scale 1.0) over-suppressed homograph countries Georgia/Jordan (country-homograph F1
   # 89.8->82.6); softening should recover homograph recall without giving back the country F1 the
   # WOF-admin rows produced.

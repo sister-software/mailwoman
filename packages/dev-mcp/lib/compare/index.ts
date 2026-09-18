@@ -363,7 +363,7 @@ async function compareMailwomanArms(
 		significance: test,
 		power: changeReading,
 		...(options.stratifyBy ? { strata: stratify(rows, options.stratifyBy) } : {}),
-		// Complete, never truncated. The 837-row FST run produced 24 changed rows; that is the evidence, and a
+		// Complete, never truncated. The 837-row FST run produced 24 changed rows. that is the evidence, and a
 		// "first 30" cap would have hidden the tail on a larger one.
 		rows_changed: differed,
 		warnings: confounds.warnings,
@@ -707,7 +707,7 @@ async function scoreGeoRows(context: GeoScoringContext): Promise<unknown> {
 
 	const graded = rows.filter((row) => row.grade !== "ungradeable")
 	const differed = rows.filter((row) => row.differed)
-	// The emitted change list also carries identity-only and tier-only rows (differed stays coordinate-level; the
+	// The emitted change list also carries identity-only and tier-only rows (differed stays coordinate-level. the
 	// row's own identity_differed / tier_differed flag says which kind of change a reader is looking at).
 	const changedRows = rows.filter((row) => row.differed || row.identity_differed === true || row.tier_differed === true)
 

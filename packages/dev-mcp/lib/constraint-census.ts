@@ -53,7 +53,7 @@ interface ConstraintMiss {
 	 */
 	elsewhere: string[]
 	/**
-	 * Candidates present on a null pick means the rows came back and lost downstream; none means the probe itself
+	 * Candidates present on a null pick means the rows came back and lost downstream. none means the probe itself
 	 * returned an empty set. Calling a scoring filter an empty gazetteer is the misreading this separates.
 	 */
 	had_candidates: boolean

@@ -1,4 +1,4 @@
-# v0.8.0 — supervised fine-tune from scratch (arm B of the decisive A/B; the honest baseline).
+# v0.8.0 — supervised fine-tune from scratch (arm B of the decisive A/B. the honest baseline).
 #
 # Random encoder init (no init_from), identical recipe to v0_8_0-finetune-pretrained.yaml. This is
 # the fair baseline: the only difference between the two arms is the encoder initialization, so any
@@ -10,7 +10,7 @@
 #     out the pretrained features (catastrophic forgetting); shorter (40k vs 100k) because a
 #     pretrained encoder adapts fast.
 #   - label_smoothing 0.1: shared calibration change on both arms.
-#   - CRF OFF (crf_loss_weight 0.0): matches what trained stably; avoids the CRF-under-bf16 NaN.
+#   - CRF OFF (crf_loss_weight 0.0): matches what trained stably. avoids the CRF-under-bf16 NaN.
 #   - corpus v0.4.0 + source_weights + augmentation: the v0.7.2 supervised recipe (the labeled task),
 #     so the comparison reflects the parser the product actually uses.
 #

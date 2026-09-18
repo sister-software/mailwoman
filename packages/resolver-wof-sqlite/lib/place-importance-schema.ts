@@ -8,27 +8,27 @@
  *
  *   THE POLICY THIS ENCODES, ratified 2026-08-06: **the importance of a knowledge-base article is not
  *   the probability that this is the place the user means.** The geocoder ranks by REFERENTIAL
- *   likelihood; encyclopedic importance is carried as data and is never the ranking key. So the one
+ *   likelihood. encyclopedic importance is carried as data and is never the ranking key. So the one
  *   `place_importance.importance` column — which was a Wikipedia score where the concordance join
  *   landed and a population-derived pseudo-score everywhere else — becomes two named columns that can
  *   never be confused for one another:
  *
  *   - {@link PlaceImportanceTable.referential} — population-anchored, always derivable, the ranking
  *     backbone. {@link referentialFromPopulation} is the normalization the FST builder's population
- *     fallback has always used; naming it here is the whole change.
+ *     fallback has always used. naming it here is the whole change.
  *   - {@link PlaceImportanceTable.encyclopedic} — the fan-out-guarded Wikipedia join
  *     (`importance-fanout.ts`, #1497). NULLABLE, and null means absent, never "an importance of
  *     zero": ~1.5 M of the 1.54 M rows in the 2026-08-05 build have no Wikipedia article at all, and
  *     a consumer that reads a 0 there would be reading a fact nobody recorded.
  *
  *   WHY SAINT-DENIS IS THE TEST. The Seine-Saint-Denis suburb (pop 96,128) carries encyclopedic
- *   0.1173; the Aude hamlet (pop 418) carries 0.5683 — the encyclopedic signal ranks the hamlet 4.8x
+ *   0.1173. the Aude hamlet (pop 418) carries 0.5683 — the encyclopedic signal ranks the hamlet 4.8x
  *   above the place every user means. Referentially the suburb wins by 230x on population. One score
  *   cannot serve both readers, which is why there are two.
  *
  *   THE LEGACY COLUMN STAYS, AND IS DERIVED. `importance` is written by {@link blendImportance} — the
  *   bounded blend the bare-toponym fame consumer (#28) ranks on. It is the CONFLATION, and nothing new
- *   should read it; new code reads the split columns.
+ *   should read it. new code reads the split columns.
  */
 
 import { referentialFromPopulation } from "@mailwoman/core/resolver"
@@ -145,7 +145,7 @@ export const ENCYCLOPEDIC_BOOST_CAP = 0.25
  *   it 4.8x); the cap half repairs the upward one (`Tó`, above).
  *
  * Scale of the clamp on the 2026-08-24 staging build: of 628,202 article-containing rows, 209,738 sit above the cap and
- * 13,888 sit below their referential floor; the 305,168 article-without-population rows pass through unchanged.
+ * 13,888 sit below their referential floor. the 305,168 article-without-population rows pass through unchanged.
  */
 export function blendImportance(referential: number, encyclopedic: number | null | undefined): number {
 	if (encyclopedic === null || encyclopedic === undefined) return referential
@@ -242,7 +242,7 @@ export const LEGACY_FALLBACK_EPSILON = 8 * Number.EPSILON
  * inputs (worked example: wof 85803233, population 21,299 — stored 0.31992193633838988953, CPython
  * 0.31992193633838994504, delta 5.55e-17). Bit equality would therefore INVENT 33,542 encyclopedic scores for anyone
  * who ported this rule to another runtime, and invented data is the failure mode this whole module exists to end. The
- * tolerance is a few ULP of the score's own magnitude; a genuine Wikipedia value that close to the population curve is
+ * tolerance is a few ULP of the score's own magnitude. a genuine Wikipedia value that close to the population curve is
  * not distinguishable from it by any consequence.
  *
  * MEASURED, not reasoned (2026-08-06, `wof/fst-staging-2026-08-05/admin-global-priority-importance.db`): 1,543,753 rows

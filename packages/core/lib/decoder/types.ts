@@ -11,7 +11,7 @@
  *
  *   Why three shapes:
  *
- *   - JSON is the libpostal-compat surface; downstream users with existing pipelines.
+ *   - JSON is the libpostal-compat surface. downstream users with existing pipelines.
  *   - Tuples preserve repetition + source order — fixes the lossy cases JSON can't handle.
  *   - XML preserves containment hierarchy and per-node attributes (conf today, src in Phase 4 when the
  *       Resolver lands). XML chosen over S-expression for LLM-tooling alignment and off-the-shelf
@@ -61,7 +61,7 @@ export interface DecoderToken {
  * One node of the address tree — a component span plus any nested child components.
  *
  * `value` is the raw text covered by this span, taken from the original input by `[start, end)`. `confidence` is
- * aggregated across the span's tokens (currently mean; see `build-tree.ts`). `children` are tagged subcomponents whose
+ * aggregated across the span's tokens (currently mean. see `build-tree.ts`). `children` are tagged subcomponents whose
  * spans fall within this node's span and whose tag's containment rule names this node's tag as a permitted parent.
  */
 export interface AddressNode {
@@ -116,7 +116,7 @@ export interface AddressNode {
 	 * — a city-state (Berlin is region and locality) or a capital-seat province (Milano province ~ Milano comune). Rather
 	 * than synthesize a second node with a borrowed span, the resolver records the extra role(s) here, so one node = one
 	 * span = many roles (the model Google's `address_components[].types` uses). `tag`/`placeID`/`lat`/`lon` remain the
-	 * PRIMARY role; each interpretation is a distinct secondary role with its own resolved place. Serializers surface
+	 * PRIMARY role. each interpretation is a distinct secondary role with its own resolved place. Serializers surface
 	 * every role (a city-state emits both `region` and `locality`). Distinct from `alternatives` — those are same-role
 	 * runner-up places (Springfield IL vs MA); interpretations are different tags, same span. Empty / absent for the
 	 * common single-role node. Both completion (#415) and a future concordance decode write into this one slot.
@@ -184,7 +184,7 @@ export interface AddressTree {
 	 * which country's addressing this text is shaped like. Absent = under threshold or the head never ran — unknown,
 	 * never "domestic". Evidence about the TEXT, not a resolved country: the head is a 9-way classifier, so a Chinese
 	 * address may read GB — right about "not the locale's country", wrong about which. The scope check this exists for
-	 * (#1684) therefore only ever drops an inferred scope on a mismatch; it never re-points one.
+	 * (#1684) therefore only ever drops an inferred scope on a mismatch. it never re-points one.
 	 */
 	localeCountry?: { country: string; confidence: number }
 }

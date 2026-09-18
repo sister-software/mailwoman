@@ -8,7 +8,7 @@
  *   from `benchmark-definition.json`, committed before any row was inspected.
  *
  *   Two strata per BAND, and the band is what this benchmark adds. The same-data panel drew every gold above
- *   one population floor, so a floor arm admitted all of it by construction; here a stratum is filled once per
+ *   one population floor, so a floor arm admitted all of it by construction. here a stratum is filled once per
  *   band, from that band's own rows, and the record reports each band separately.
  *
  *   Rows are drawn from the per-country main-table dumps rather than `cities15000.txt`, because the point is

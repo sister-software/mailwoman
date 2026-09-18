@@ -109,7 +109,7 @@ import { sql, type Kysely } from "kysely"
  *
  * `SubsidiaryName` is a raw subsidiary name exactly as one parent CIK's Exhibit 21 disclosed it — `build-filer.ts`'s
  * EDGAR ingest mints one of these for every subsidiary row, the same "global name-node" shape
- * `HoldingCompanyName`/`ManagementCompanyName` already use (the raw string, unnormalized; two different parents both
+ * `HoldingCompanyName`/`ManagementCompanyName` already use (the raw string, unnormalized. two different parents both
  * disclosing a subsidiary under the identical spelling share one node). Deliberately its own namespace, never folded
  * into `HoldingCompanyName`/`ManagementCompanyName`: those name the source filer's own parent/manager, the opposite
  * direction of relationship from "a company this filer owns."
@@ -241,11 +241,11 @@ export interface FilerEdgeTable {
 	 */
 	valid_to: string | null
 	/**
-	 * Inferred only; null for authoritative assertions.
+	 * Inferred only. null for authoritative assertions.
 	 */
 	match_score: number | null
 	/**
-	 * JSON-encoded match evidence. Inferred only; null for authoritative assertions.
+	 * JSON-encoded match evidence. Inferred only. null for authoritative assertions.
 	 */
 	evidence: string | null
 }
@@ -315,7 +315,7 @@ export interface FilerFamilyTable {
 	 */
 	valid_to: string | null
 	/**
-	 * Inferred only; null for authoritative memberships, and a CHECK constraint enforces that direction (see
+	 * Inferred only. null for authoritative memberships, and a CHECK constraint enforces that direction (see
 	 * {@link createFilerFamilyTable}). An inferred membership carrying no score tells a caller nothing about how far to
 	 * trust it, so every inferred writer should populate this — but, matching `filer_edge`'s own permissiveness
 	 * ({@link FilerEdgeTable.match_score} is likewise nullable on inferred rows), that direction is a writer's obligation
@@ -338,7 +338,7 @@ export const FILER_FAMILY_SCHEMA_VERSION = 2
  * `filer_edge.valid_to` a column something actually writes.
  *
  * **No table changed shape between 2 and 3, and the bump is still correct.** A version-2 artifact is structurally
- * readable by a version-3 reader; what it cannot be trusted about is CONTENT. Every ceased filer in a version-2 build
+ * readable by a version-3 reader. what it cannot be trusted about is CONTENT. Every ceased filer in a version-2 build
  * carries `valid_to: null`, because nothing set it — so an `asOf`-scoped read against a 2013 date returns carriers
  * dissolved a decade earlier, silently and with no error to notice. That is a worse failure than a missing table: it
  * answers.

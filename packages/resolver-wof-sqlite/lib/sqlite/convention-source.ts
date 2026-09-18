@@ -5,12 +5,12 @@
  *
  *   `SqliteConventionSource` — a `ConventionSource` backed by the build-from-source convention asset
  *   (#290, Direction E). Conventions live in a read-only, provenance-stamped `address_convention`
- *   table keyed by WOF polygon id; this source queries them ON DEMAND by id (one indexed lookup,
+ *   table keyed by WOF polygon id. this source queries them ON DEMAND by id (one indexed lookup,
  *   memoized) rather than paging the whole table into memory as a code constant — the deliberate
  *   counter to the Pelias "giant dictionary in RAM, no provenance" pattern (see the operator design
  *   value in memory `feedback-no-irrelevant-trivia`).
  *
- *   The asset is the queryable, distributable artifact; the strategy IMPLEMENTATIONS stay in code. An
+ *   The asset is the queryable, distributable artifact. the strategy IMPLEMENTATIONS stay in code. An
  *   unknown strategy NAME is surfaced loudly at dispatch (see `lookup.ts`), not silently
  *   swallowed.
  */

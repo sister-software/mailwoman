@@ -11,13 +11,13 @@
  *   two consumers depend on:
  *
  *   1. **Chain round-trip** — closure rows are denormalized (placetype + display name + shared-fold
- *      key) and `ancestors()` serves them nearest-first, no join;
+ *      key) and `ancestors()` serves them nearest-first, no join.
  *   2. **Interval truth table** — ancestor / descendant / sibling / self / disjoint verdicts from
  *      the pre/post labels via the shared {@link intervalContains};
  *   3. **Enumerate-with-chains** — every candidate under one `name_key` is enumerable with its
  *      chain from the one artifact (the account-layer probe);
  *   4. **DAG canonicalization** — a multi-parent place keeps every parent in the closure rows while
- *      the interval forest commits to the one canonical parent;
+ *      the interval forest commits to the one canonical parent.
  *   5. **Capability honesty** — an artifact without the sidecar reports `ancestors` absent, and a
  *      canonical-parent cycle degrades to unlabeled places, never a hung or corrupt build.
  */
@@ -354,7 +354,7 @@ describe("the candidate ancestors sidecar", () => {
 
 		const result = await buildCandidateTable({ input, output })
 
-		// The cycle members keep their closure rows (the record is real) but receive no labels; the
+		// The cycle members keep their closure rows (the record is real) but receive no labels. the
 		// healthy chain labels normally (Healthy + Sane State = 2 forest nodes).
 		expect(result.ancestorPlaces).toBe(3)
 		expect(result.intervalPlaces).toBe(2)

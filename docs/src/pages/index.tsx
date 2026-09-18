@@ -30,7 +30,7 @@ function HomepageHeader(): ReactNode {
 				    returns lat 38.89767510742324, lon -77.03654697024702, resolution_tier "address_point",
 				    uncertainty_m 1 — so the 4-dp rounding below is exact and "rooftop" is the house gloss for
 				    an address_point hit at 1 m (mailwoman/geocode-core.ts:56: "`address_point` — rooftop /
-				    parcel centroid; uncertainty_m is a small floor (~1 m)"). Re-run it before changing either
+				    parcel centroid. uncertainty_m is a small floor (~1 m)"). Re-run it before changing either
 				    number. */}
 				<p className={styles.heroTransform}>
 					<span className={styles.heroIn}>"1600 Pennsylvania Ave NW"</span>

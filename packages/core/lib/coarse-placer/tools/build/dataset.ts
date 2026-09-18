@@ -97,7 +97,7 @@ export async function buildDataset(
 
 	const TRAIN_GLOB = dataRootPath("corpus", "versioned", "v0.5.0", "corpus-v0.5.0", "train", "*.parquet")
 
-	// #244/#928 AU expansion: the v0.5.0 pin carries only ~5.9k AU rows; the v0.9.2 G-NAF extract carries
+	// #244/#928 AU expansion: the v0.5.0 pin carries only ~5.9k AU rows. the v0.9.2 G-NAF extract carries
 	// 150k real Australian addresses. AU rides the same corpus sampling path as `COUNTRIES`, just from its
 	// own glob — the (country, glob) pairs below unify the two.
 	const AU_GLOB = dataRootPath(

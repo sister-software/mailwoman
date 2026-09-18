@@ -6,7 +6,7 @@
  *   Fetch the National Tax Agency's corporate-number register (法人番号公表サイト 全件データ): every
  *   corporation assigned a number, about 5,000,000 rows, with the head-office address as one string
  *   (国内所在地) plus the prefecture and municipality split out and the postcode. The nationwide CSV
- *   in Unicode is one zip of about 255 MB. This is the NOISY source for Japanese addresses; the
+ *   in Unicode is one zip of about 255 MB. This is the NOISY source for Japanese addresses. the
  *   Overture rows the JP corpus is built from are the LABEL half.
  *
  *   The agency states the three published fields may be used freely by anyone ("どなたでも自由にご利用

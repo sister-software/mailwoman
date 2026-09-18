@@ -1,0 +1,9 @@
+## Mailwoman code-comment rule: use sentences or separate lines, not semicolons.
+##
+## This rule is enabled by the code-comment Vale config for TypeScript, TSX, and
+## Python. It does not ban semicolons in executable code or data values.
+extends: existence
+message: "';' is not allowed in a comment — split the sentence or use a full stop."
+level: error
+tokens:
+  - '\b\w+;\s*\w+\b'

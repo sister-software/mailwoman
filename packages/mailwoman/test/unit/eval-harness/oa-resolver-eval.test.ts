@@ -258,7 +258,7 @@ describe("resolveOptsFrom", () => {
 	})
 
 	it("carries a ZERO cap, which is the arm that separates the re-pick from the coordinate fallback", () => {
-		// `0` is falsy and the surrounding pins are presence-tested; a truthiness check here would drop the one arm that
+		// `0` is falsy and the surrounding pins are presence-tested. a truthiness check here would drop the one arm that
 		// refuses every fall, and the run would report the shipped numbers under the arm's name.
 		expect(resolveOptsFrom({ postcodeConsistencyMaxMoveKm: 0 }, "none")).toEqual({ postcodeConsistencyMaxMoveKm: 0 })
 

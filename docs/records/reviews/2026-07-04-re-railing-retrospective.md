@@ -13,7 +13,7 @@ The review's four-week success state was reached in three days, and then exceede
 the review didn't anticipate: the measurement system it asked us to repair started **finding
 shipped defects on its own** — including one (#949) that the model line's newest release existed
 to create, and which the next release (v5.3.0, reduce today) exists to fix. The re-railing worked
-not because the plan was executed line by line, but because the two disciplines it protected —
+not because the plan was executed line by line, but because the two disciplines it guarded —
 pre-registered checks and coordinate-first grading — compounded once the record-keeping around
 them was repaired.
 

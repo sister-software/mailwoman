@@ -13,7 +13,7 @@
  *   linter invocations. Re-run this whenever the corpus changes substantially (a new mainline
  *   recipe output added, a source-pool re-weighted, etc.).
  *
- *   Output schema (`slice_paths` is the stats file's own key; a stats file already on disk carries it,
+ *   Output schema (`slice_paths` is the stats file's own key. a stats file already on disk carries it,
  *   so the linter reads it under that spelling):
  *
  *   ```ts

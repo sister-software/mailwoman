@@ -295,7 +295,7 @@ nobody had. `promotion-eval.ts:250-278` carries the recompile-before-eval lore g
 _Answer:_ the daemon imports **source**. `packages/mailwoman/package.json`'s exports map puts a `node`
 condition on `.ts` for every subpath (`"./eval-harness/*": { "node": "./eval-harness/*.ts", … }`), so
 `out/` is not on the daemon's own path at all. The one place it re-enters is `mwdev_cli`, which shells
-`out/cli.js`; that tool runs the same mtime walk and **refuses** with the `yarn compile` remedy rather
+`out/cli.js`; that tool runs the same mtime walk and **refuses** with the `yarn compile` action rather
 than running stale code.
 
 **(b) A stale derived artifact.** `regression.db` is built from the committed JSONL and carries a

@@ -175,10 +175,10 @@ test("backfillAncestorsFromHierarchy: survives more candidates than SQLite's bou
 	db.exec("CREATE TABLE spr (id INTEGER PRIMARY KEY, placetype TEXT)")
 	db.exec("CREATE TABLE ancestors (id INTEGER, ancestor_id INTEGER, ancestor_placetype TEXT, lastmodified INTEGER)")
 	// Production always carries ancestors_by_id (unified-schema.ts) and the freeze runs its index phase
-	// before this backfill; without it the correlated NOT EXISTS is quadratic over 33k rows.
+	// before this backfill. without it the correlated NOT EXISTS is quadratic over 33k rows.
 	db.exec("CREATE INDEX ancestors_by_id ON ancestors(id)")
 
-	// node:sqlite caps a statement at 32,766 bound variables; the 2026-08-04 wide-coverage admin build
+	// node:sqlite caps a statement at 32,766 bound variables. the 2026-08-04 wide-coverage admin build
 	// carried 67,521 country-less candidates. 33,000 self-only places reproduce the overflow.
 	const insertSpr = db.prepare("INSERT INTO spr (id, placetype) VALUES (?, 'locality')")
 	const insertAnc = db.prepare("INSERT INTO ancestors VALUES (?, ?, 'locality', 0)")

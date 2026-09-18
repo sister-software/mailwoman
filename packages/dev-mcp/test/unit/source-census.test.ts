@@ -5,8 +5,8 @@
  * @file `mwdev_sources` — what data we hold, per country, per artifact.
  *
  *   The tests that matter are the ones about ABSENCE, because every one of them corresponds to a wrong conclusion
- *   somebody could draw from a row count: a extract with rows but no join tables reads as usable and is not; a country
- *   asked for and missing must come back as a zero rather than as a missing key; and an unreadable file is a finding,
+ *   somebody could draw from a row count: a extract with rows but no join tables reads as usable and is not. a country
+ *   asked for and missing must come back as a zero rather than as a missing key. and an unreadable file is a finding,
  *   never an exception that takes the whole census down with it.
  */
 

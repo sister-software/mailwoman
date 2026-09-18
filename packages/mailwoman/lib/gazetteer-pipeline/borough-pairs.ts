@@ -5,13 +5,13 @@
  *
  *   Hierarchy campaign R2 — borough (child, parent) pairs from the shipped WOF admin DB, emitted
  *   in the pair-index entry shape. Boroughs PROJECT onto `dependent_locality` (the schema umbrella
- *   term — see plan/reference/placetype-evidence.mdx), so the entries ride the existing PIX1 tag;
+ *   term — see plan/reference/placetype-evidence.mdx), so the entries ride the existing PIX1 tag.
  *   no format change.
  *
  *   Scope discipline: the extractor is country-filtered — only locales with a CARRIER package and
- *   a contextually-alive tag receive entries (GB/London first; a perfect index against a dead tag
+ *   a contextually-alive tag receive entries (GB/London first. a perfect index against a dead tag
  *   is zero, the v385 control's lesson). The 211-borough census (2026-08-01): London 33, Tokyo 23,
- *   Paris 20, Rotterdam 23, Amsterdam 8 (compass-named — the directional-homograph class; they
+ *   Paris 20, Rotterdam 23, Amsterdam 8 (compass-named — the directional-homograph class. they
  *   enter only when their locale carrier exists, and law-1-style directional care applies).
  *   Berlin-style duplicates (locality + localadmin parents) dedupe on (child, parent) surface.
  *
@@ -140,7 +140,7 @@ const MIN_ALIAS_LENGTH = 3
 const LATIN_SURFACE_PATTERN = /^[\p{Script=Latin}\p{Mark}0-9 '\-.,()/]+$/u
 
 /**
- * Extract dependent-locality-class (child, parent) pairs for one country from a WOF admin DB. Read-only; dedupes
+ * Extract dependent-locality-class (child, parent) pairs for one country from a WOF admin DB. Read-only. dedupes
  * (child, parent) across the locality/localadmin parent duplication. See {@link PAIR_PLACETYPES_BY_COUNTRY} for why the
  * placetype sets are per-country.
  */
@@ -210,7 +210,7 @@ export function extractBoroughPairs(adminDBPath: string, country: string): Borou
 			if (language !== "eng" && !isOfficialLanguage(country, language)) continue
 
 			// LATIN SCRIPT ONLY. India has 22 official languages and WOF carries Devanagari, Tamil and Bengali names
-			// for its cities; this model never sees those scripts, so indexing them is pure artifact weight. The check
+			// for its cities. this model never sees those scripts, so indexing them is pure artifact weight. The check
 			// is on the alias, not the language tag, because a language can be written in more than one script.
 			if (!LATIN_SURFACE_PATTERN.test(alias)) continue
 

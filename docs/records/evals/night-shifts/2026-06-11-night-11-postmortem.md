@@ -70,7 +70,7 @@
 2. **Built the span bridge as the po_box corrective** instead of a data change — the row audit
    showed a structural format limit (10× exposure moved the number +2.9), making decode-side
    containment the only same-night option. Alternative (char-offset corpus labels) is recorded
-   in the check doc as the structural cure.
+   in the check doc as the structural fix.
 3. **Excluded commas from bridgeable gaps** after the second fail — alternative was tag-scoped
    bridging (only po_box/cedex), rejected as a special case that would hide the same bug for the
    next dotted tag.
@@ -86,7 +86,7 @@
   live is yours. Credit where due: DeepSeek's idle-check nudge caught that I had mis-filed this
   as a morning item when it was already-granted night work.
 - #517 (Commonwealth/military po_box): needs codex au/nz modules first — queue position?
-- The char-offset label format (the structural cure for what the bridge contains): a corpus-
+- The char-offset label format (the structural fix for what the bridge contains): a corpus-
   format change with wide impact — deserves a day-session design, not a night slot.
 - FR house_number 97.7→97.2 and fr.postcode 99.7→99.6: both within single-row noise, both
   recorded in the card's known-regressions — flagging per the no-silent-drift habit.

@@ -9,11 +9,11 @@
  *
  *   Two query shapes are handled (the trie is over WORD tokens):
  *
- *   - COMPLETE tokens — `walk` lands on a state; collect its accepting entries + BFS a couple tokens
+ *   - COMPLETE tokens — `walk` lands on a state. collect its accepting entries + BFS a couple tokens
  *       past it for nearby completions.
  *   - A PARTIAL last token ("new yor") — `walk` fails (there is no "yor" edge, only "york"). So walk
  *       the complete prefix, then complete the partial token by prefix-filtering the continuation
- *       edges (`token.startsWith(partial)`). This is what a char-level typeahead needs; without it
+ *       edges (`token.startsWith(partial)`). This is what a char-level typeahead needs. without it
  *       "new yor" returns nothing useful. (#587)
  *
  *   Both interpretations of the last token run, always: it can be a complete edge and a partial of
@@ -68,7 +68,7 @@ interface BFSItem {
 /**
  * Autocomplete from the current token prefix. Returns suggestions ranked rank-descending, each with its full token path
  * and its ancestor chain. Takes any {@link AncestrieReaderLike} — a sealed {@link Ancestrie} or a consumer's adapter over
- * its own storage; the order contracts the algorithm relies on are documented on the interface.
+ * its own storage. the order contracts the algorithm relies on are documented on the interface.
  */
 export function autocomplete<TPayload = Uint8Array | JSONValue>(
 	trie: AncestrieReaderLike<TPayload>,
@@ -200,7 +200,7 @@ function addSuggestion<TPayload>(
 }
 
 /**
- * Keep one suggestion per key — the highest-ranked. Input is already rank-sorted, so the first occurrence per key wins;
+ * Keep one suggestion per key — the highest-ranked. Input is already rank-sorted, so the first occurrence per key wins.
  * order is preserved.
  */
 function dedupe<TPayload>(

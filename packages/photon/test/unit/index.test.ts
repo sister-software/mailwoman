@@ -128,7 +128,7 @@ test("forward: a house-grade (rooftop) result decorates type:house + housenumber
 	expect(props.osm_value).toBe("house")
 	expect(props.housenumber).toBe("8")
 	expect(props.street).toBe("Boulevard du Palais")
-	// name is dropped (upstream has none for a bare address point; keeping the city here would double it in the
+	// name is dropped (upstream has none for a bare address point. keeping the city here would double it in the
 	// QGIS FLF label "Paris 8 Boulevard du Palais Paris 75001").
 	expect(props.name).toBeUndefined()
 	// The admin fields the ancestry filled are retained — a house result still carries city/postcode/country.

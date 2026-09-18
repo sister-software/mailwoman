@@ -12,7 +12,7 @@
  *   distinction that matters against the ministry's entrance-coordinate products, which are provided
  *   only after a purpose-of-use review (`docs/superpowers/plans/counsel-dossier.md` §4).
  *
- *   The portal is a single-page app; the file behind it is reached in two calls. `selectAttrbDBDwldList`
+ *   The portal is a single-page app. the file behind it is reached in two calls. `selectAttrbDBDwldList`
  *   lists the monthly full files for one product (`rtlDtaDtlSn` 8 is the 주소DB, 2 the English
  *   road-name DB), and `/api/jst/download` streams one by the parameters the listing carried. The
  *   English DB rides along because it is the Latin-script half of the same register.

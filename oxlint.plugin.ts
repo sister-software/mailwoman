@@ -4,21 +4,21 @@
  * @author Teffen Ellis, et al.
  * @file Mailwoman's repo-local oxlint JS plugin (ESLint v9-compatible API), loaded alongside the
  *   bundled Sister Software plugin via `jsPlugins` in `oxlint.config.ts`. Rules encoding
- *   mailwoman-specific guidance live here; anything general enough for other repos graduates to
+ *   mailwoman-specific guidance live here. anything general enough for other repos graduates to
  *   `@sister.software/oxlint-config`.
  *
  *   `no-sync-fs-in-async`: a synchronous `node:fs` call standing inside an `async` function blocks the event loop
  *   where an `await` is already legal on the same line. The rule fires only in that position — a sync call inside a
  *   sync function is a cascade, not a defect, and the rule stays silent there.
  *
- *   `no-relative-dynamic-import`: `import("./x.ts")` names a module by the importer's location; the package's
+ *   `no-relative-dynamic-import`: `import("./x.ts")` names a module by the importer's location. the package's
  *   `imports` map names it once.
  *
  *   `no-private-import-in-test`: a test file reaches the package under test through its public exports, never the
  *   `#` map — the map is the package's private naming, and a test that uses it never exercises the surface a consumer
  *   gets.
  *
- *   `no-import-meta-dirname-walk`: `resolvePath(import.meta.dirname, "../..")` counts directories; a package's own
+ *   `no-import-meta-dirname-walk`: `resolvePath(import.meta.dirname, "../..")` counts directories. a package's own
  *   file is `resolvePackagePath`, a repository file is `repoRootPath`.
  *
  *   `no-import-meta-resolve`: `fileURLToPath(import.meta.resolve(…))` has a typed home in
@@ -31,7 +31,7 @@
  *   `prefer-spliterator`: `text.split("\n")` (or `"\t"`) materializes every segment into one array
  *   before the first is read — the whole-buffer parse the spliterator library exists to avoid (the
  *   quadratic-CSV episode in AGENTS.md started exactly there). The rule warns on those two literal
- *   delimiters only; splitting on anything else is not a streaming shape and stays silent.
+ *   delimiters only. splitting on anything else is not a streaming shape and stays silent.
  */
 
 import { stringifyJSON } from "@mailwoman/core/json"
@@ -511,7 +511,7 @@ const noPrivateImportInTestRule: Rule = {
 /**
  * `fileURLToPath(import.meta.resolve(…))` is string plumbing around a question with a typed answer.
  * `@mailwoman/core/module/resolvers` owns it: `resolveModulePath` for a file a specifier names,
- * `resolvePackageDirectory` for a package's root; a module's own neighbours are `resolvePath(import.meta.dirname, …)`.
+ * `resolvePackageDirectory` for a package's root. a module's own neighbours are `resolvePath(import.meta.dirname, …)`.
  */
 const noImportMetaResolveRule: Rule = {
 	meta: {
@@ -632,13 +632,13 @@ function isVariableIndex(node: AstNode | undefined): boolean {
 }
 
 /**
- * Whether a `for` header counts down from a length to 1: `for (let i = xs.length - 1; i > 0; i--)`, or the same written
+ * Whether a `for` header counts down from a length to 1: `for (let i = xs.length - 1. i > 0. i--)`, or the same written
  * `i >= 1`.
  *
  * All three clauses are required, and they are not sufficient on their own — heapsort's extraction phase satisfies
- * every one of them. What the body check adds is that both swapped indices are variables; see {@link isVariableIndex}.
+ * every one of them. What the body check adds is that both swapped indices are variables. see {@link isVariableIndex}.
  *
- * Known miss: a loop whose bound is hoisted (`const n = xs.length; for (let i = n - 1; …)`) reads as a plain descent
+ * Known miss: a loop whose bound is hoisted (`const n = xs.length. for (let i = n - 1. …)`) reads as a plain descent
  * and is not reported. Widening the init clause to any identifier would report every backwards loop in the repository,
  * which is a worse trade for a suggestion rule.
  */

@@ -6,12 +6,12 @@
  *   The dev-MCP worker — the process that actually imports mailwoman.
  *
  *   The shim (`cli.ts`) speaks MCP stdio to the client and imports nothing from this repo's runtime, so it never goes
- *   stale; this child holds the whole module graph — engines, gazetteers, ONNX sessions — and is the unit of restart.
+ *   stale. this child holds the whole module graph — engines, gazetteers, ONNX sessions — and is the unit of restart.
  *   Killing and re-forking it is the only way a running server picks up edited source: Node cannot evict an imported
  *   ES module, and a fresh process is also the only guarantee that the multi-gigabyte SQLite mmaps and ORT sessions
  *   are actually released.
  *
- *   Protocol (over the fork IPC channel; every message is one JSON-structured object):
+ *   Protocol (over the fork IPC channel. every message is one JSON-structured object):
  *
  *   in:  { type: "handshake" }
  *        { type: "call", id, name, args }
@@ -21,7 +21,7 @@
  *
  *   `inputSchema` crosses the boundary as plain JSON Schema (draft-7, what MCP clients expect) because the shim must
  *   register tools without importing zod schemas from this side — that import is exactly the staleness it exists to
- *   avoid. Tool handlers run here verbatim; the shim adds no behavior beyond transport and restart.
+ *   avoid. Tool handlers run here verbatim. the shim adds no behavior beyond transport and restart.
  *
  *   STDOUT DISCIPLINE: this process's stdout is piped to the shim's STDERR, so library noise can never corrupt the
  *   MCP channel. All protocol traffic rides the IPC channel via `process.send`.
@@ -150,7 +150,7 @@ process.on("message", (message: WorkerInbound) => {
 	}
 })
 
-// The shim restarts by SIGTERM; the same cleanup the old single-process server ran on its signals.
+// The shim restarts by SIGTERM. the same cleanup the old single-process server ran on its signals.
 for (const signal of ["SIGINT", "SIGTERM"] as const) {
 	process.on(signal, () => {
 		registry.evictAll()

@@ -11,7 +11,7 @@
  *   town in another state. Opt-in — the lookup is only constructed when a path is supplied, and
  *   absent it the resolver is byte-identical.
  *
- *   The reader returns RAW divergent rows for a postcode; normalization + name-matching against the
+ *   The reader returns RAW divergent rows for a postcode. normalization + name-matching against the
  *   candidate localities is the scorer's job (it owns the case/diacritic fold the soft name score
  *   uses), keeping one normalizer in one place.
  */

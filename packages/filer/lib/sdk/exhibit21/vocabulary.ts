@@ -149,14 +149,14 @@ export function carriesLegalDesignation(value: string): boolean {
 
 /**
  * True when one cell holds several entity values the source kept in separate blocks — a split point with a complete
- * legal entity name on both sides of it. `ooma-2025.htm`'s last row is a single `<td>` holding five `<p>` blocks;
+ * legal entity name on both sides of it. `ooma-2025.htm`'s last row is a single `<td>` holding five `<p>` blocks.
  * reading it as one string runs them together into `"Trunking.IO, LLC FluentStream Corp. FluentStream Intermediate, LLC
  * …"` against a jurisdiction of `"Delaware Delaware Delaware Colorado Delaware"`, which is five fabricated claims, not
  * one. Decision 6: the row states more than this parser can align, so it abstains.
  *
  * A block boundary alone is not enough, and this is the rule's whole difficulty: EDGAR's Word/Workiva exporters also
  * emit a soft line wrap as a block boundary, so `att-2025.htm` states one name as `<div>Illinois Bell
- * Telephone</div><div>&#160;&#160;Company, LLC</div>` — text in both blocks, one entity. What separates the two is that
+ * Telephone</div><div>&#160.&#160.Company, LLC</div>` — text in both blocks, one entity. What separates the two is that
  * each half of a genuine multi-value cell is a whole legal name carrying its own designation
  * (`canonicalizeOrganizationName` — `"Trunking.IO, LLC"` / `"FluentStream Corp. …"` both do), whereas a wrap splits one
  * name's designation off the front half (`"Illinois Bell Telephone"` carries none). Ten of AT&T's nineteen subsidiaries

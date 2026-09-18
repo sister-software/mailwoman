@@ -23,7 +23,7 @@
 #    `POSTCODE_CONVENTIONS` had no US entry at all, so the bare surface was never written. Adding it
 #    needed three things besides the table row: `lookupUSState`, because GeoNames publishes
 #    `California` and never `CA`; a per-country GeoNames locality COLUMN, because column 3 is the city
-#    for the US while admin2 is the county — the inverse of PT/MX/IN; and a round-robin over the
+#    for the US while admin2 is the county — the inverse of PT/MX/IN. and a round-robin over the
 #    region in `applyCountryBudget`, because source order is postcode order and the US was taking its
 #    16,000 rows from 23 of 56 states.
 #
@@ -47,14 +47,14 @@
 #   synth-unit-v30                 weight 1.5, the exposure `synth-unit` already drew (9,013/epoch)
 #
 # The US source takes one pass, like `synth-bare-postcode`, because its 16,000 rows are distinct real
-# (postcode, city, state) triples rather than templated variations; 12,000 of them carry no street at
+# (postcode, city, state) triples rather than templated variations. 12,000 of them carry no street at
 # all and 4,000 write the region as a code, so one pass delivers 4,000 instances of the exact family
 # the issue measured against v5.6.0's ~3,900 for the shape that worked.
 #
 # The Canadian source takes four, and that number is set against a count rather than by symmetry. Its
 # 13,740 rows carry 188 that write `NL` and 169 that write `PE`. The mixture already carries `NL` as a
 # country 45 times per million emitted rows, which is about 345 over this run. One pass leaves the
-# region reading outnumbered 188 to 345; two reaches parity; four puts it at 752 against 345, on the
+# region reading outnumbered 188 to 345. two reaches parity. four puts it at 752 against 345, on the
 # right side of 2:1. Eight would reach 4.4:1 and spend 1.43% of the run on one country's admin tail,
 # which is more than the margin needs.
 #
@@ -66,7 +66,7 @@
 #
 #   1. The D-rule floors. `fr.bare_street_intact` in the promotion battery (v5.5.0 raised it 95 -> 100)
 #      and the target-family boards v5.4.0 won: `sg/register.jsonl` 118/240, `us/family-po-box.jsonl`
-#      6/6, `ve/family-locality-postcode.jsonl` 5/5. FR and US are tier 1; a drop disqualifies the arm.
+#      6/6, `ve/family-locality-postcode.jsonl` 5/5. FR and US are tier 1. a drop disqualifies the arm.
 #
 #   2. #2303's four arms, `us-city-state-postcode-arms.run.ts`, same 581-city panel. Baseline under
 #      v5.6.0: bare 53.2% (309/581), with-country 61.4% (357/581), with-street 99.7% (579/581). The
@@ -272,7 +272,7 @@ data:
   # Reps per row, not weights (#1677). 60,000 steps x batch 128 = 7,680,000 samples, so the nine
   # sources below demand 1.0*142083 + 1.0*80081 + 8.0*4551 + 8.0*4944 + 8.0*5279 + 0.5*153965 +
   # 1.0*20460 + 1.0*16000 + 4.0*13740 = 508,759 draws, 6.6% of the run. The big register sources take
-  # one pass each because they carry their diversity in the rows; the four-to-five-thousand-row ones
+  # one pass each because they carry their diversity in the rows. the four-to-five-thousand-row ones
   # take eight, which is the exposure `synth-suffix-boundary` already draws at weight 2.5.
   #
   # The two added lines are the arm's exposure decisions and the epoch audit is what confirms them —

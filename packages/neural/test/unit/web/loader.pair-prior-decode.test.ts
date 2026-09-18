@@ -13,7 +13,7 @@
  *   fixture tokenizer: "Shoreditch London" → ['▁Shore','d','itch','▁London'], with a fused street run
  *   (8+7+7=22) that outscores the δ=6-biased dependent_locality reading (6+6+6=18) by 4 — more than the
  *   per-piece emission gap, less than β=5. So the flip to dependent_locality requires both halves to
- *   reach viterbi: without the emission matrix the dep-loc path scores ~β alone; without the transition
+ *   reach viterbi: without the emission matrix the dep-loc path scores ~β alone. without the transition
  *   bonus the fused street path survives (the measured emission-only miss). One assertion, both wires.
  */
 

@@ -6,7 +6,7 @@
  *   The upload transport this pipeline hands `publishTiles` and `uploadToBucket`: `wrangler r2 object put` under the
  *   account's API token (`CLOUDFLARE_API_TOKEN` + `CLOUDFLARE_ACCOUNT_ID` in the inherited environment), which is
  *   the credential the tile worker deploys with. Wrangler refuses an object over 300 MiB, so this transport checks
- *   the size first and names the cap; every artifact this pipeline builds at zoom 6 is well under it, and a deeper
+ *   the size first and names the cap. every artifact this pipeline builds at zoom 6 is well under it, and a deeper
  *   zoom that crosses it goes through rclone instead.
  */
 

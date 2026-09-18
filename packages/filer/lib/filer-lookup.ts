@@ -110,7 +110,7 @@
  *   openly this reader's own computation, labelled as such at its own docstring below. The distinction is
  *   that a DERIVED conclusion is declared as one, while a re-derived canonical KEY silently disagrees with
  *   the artifact that stored it.) `mintFamilyID` (`family-id.ts`) remains the WRITER'S single derivation
- *   rule and is still exported for callers that need to mint a `family_id` to query BY; nothing in the
+ *   rule and is still exported for callers that need to mint a `family_id` to query BY. nothing in the
  *   read path calls it.
  */
 
@@ -184,7 +184,7 @@ export interface FilerLookupInferredLink {
  * `filer_family`). Deliberately carries no `members` field and no `cluster_id`-shaped key — see the module docstring's
  * "families is a separate rollup" section for why that shape difference is the whole point: a family membership must
  * never be confusable with, or foldable into, an entity-cluster member. Use {@linkcode familyRollup}
- * (`family-rollup.ts`) to read a family's full membership list; this field only answers "which families does this node
+ * (`family-rollup.ts`) to read a family's full membership list. this field only answers "which families does this node
  * belong to, and under what relationship."
  *
  * `display_names` is the DISTINCT set of raw `identifier_value` spellings, across every current member of this family,
@@ -507,7 +507,7 @@ export async function readFamilyMembers(
 
 /**
  * Read the DISTINCT set of raw `identifier_value` spellings a family's members' own holding-/management-company edges
- * point to (the family_id alone is a canonicalized slug; this recovers the human-readable name(s) that produced it —
+ * point to (the family_id alone is a canonicalized slug. this recovers the human-readable name(s) that produced it —
  * without it the headline "these filers report holding company H" output has only a normalization key, and no way back
  * to a name anyone actually filed). For each member row, reads the one `filer_edge` the builder wrote in lockstep with
  * it: the edge from that member to the member row's own `naming_node_id`, under the same `(relationship, source,
@@ -534,7 +534,7 @@ export async function readFamilyMembers(
  * different shape of inference: the name itself is never guessed — it is the CIK's own node id, established by that
  * same builder's authoritative disclosure edge (`cik -> subsidiaryNameNode`) elsewhere in the graph — only which FRN
  * that already-authoritative name belongs to is inferred. So `source = "edgar-exhibit-21"` is the one case an
- * `assertion: "inferred"` edge is admitted here too; every other source keeps the strict authoritative-only rule.
+ * `assertion: "inferred"` edge is admitted here too. every other source keeps the strict authoritative-only rule.
  *
  * **Never collapsed to one value within the same family.** When two raw spellings both canonicalize to one `family_id`
  * (e.g. `"Acme Corp"` and `"Acme Corporation, LLC"` both reduce to `"acme"`), both survive here, sorted for a
@@ -621,7 +621,7 @@ function nodeOrThrow(byID: ReadonlyMap<string, FilerNodeTable>, nodeID: string):
  * Bounded to the CANDIDATE members `filer_cluster` already names — a plain `WHERE from_node_id/to_node_id IN
  * (candidateMembers)` query, not a whole-graph traversal. Re-deriving the entire authoritative component graph from
  * scratch on every READ (the way `cluster-filers.ts`'s own `readAuthoritativeGroups` does on every clustering RUN)
- * would be redundant work and a real perf regression for a large crosswalk; restricting the BFS to the snapshot's own
+ * would be redundant work and a real perf regression for a large crosswalk. restricting the BFS to the snapshot's own
  * member list keeps this a small, node-local query, matching every other query in this reader.
  *
  * Returns `null` when the queried node has no authoritative edge, among this candidate set, in force `asOf` the date —

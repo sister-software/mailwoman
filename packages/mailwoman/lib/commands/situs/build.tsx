@@ -16,10 +16,10 @@
  *   cores. The per-state steady-state bottleneck is the single-threaded SQLite insert loop, not the
  *   scan, so N concurrent inserts is where the wall-clock saving comes from. Sequentialise via `--concurrency 1`.
  *
- *   Each per-state CHILD owns its own DB's atomic write; this driver only spawns children (skipping
+ *   Each per-state CHILD owns its own DB's atomic write. this driver only spawns children (skipping
  *   COMPLETE databases) and writes the small `ATTRIBUTION.json` manifest incrementally — so there is
  *   no national-DB temp-then-rename here, the large-artifact atomicity lives one level down in the
- *   database builder. Progress streams to stderr; the final summary lands on stdout.
+ *   database builder. Progress streams to stderr. the final summary lands on stdout.
  *
  *   LICENSING (measured 2026-06-14): US Overture addresses are NAD (68%, US public domain) +
  *   OpenAddresses (32%, government open data) with ZERO OpenStreetMap/ODbL rows. So the default is
@@ -73,7 +73,7 @@ export const spec = {
 
 /**
  * Coverage-ranked (largest first, from the 2026-05-20.0 parquet probe). NH + HI carry zero Overture address coverage in
- * this release, so they're absent — interpolation-only states. VI (territory) included for completeness; harmless if
+ * this release, so they're absent — interpolation-only states. VI (territory) included for completeness. harmless if
  * the parser's region→slug map skips it.
  */
 const STATES_BY_COVERAGE = [

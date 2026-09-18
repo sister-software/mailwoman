@@ -1,6 +1,6 @@
 """The concerns a training run observes, one per module.
 
-The loop runs the steps and decides when to evaluate; these four write what happened. The order in
+The loop runs the steps and decides when to evaluate. these four write what happened. The order in
 `default_callbacks` is the order a reader of the log sees, so it is the order the run's output is
 composed in, not an implementation detail.
 

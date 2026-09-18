@@ -2,7 +2,7 @@
 # The 8k ESCALATION of the v372 2k probe, which BROKE the v371 plateau (bare-street-hn 0.733->0.775) with
 # a clean golden check. This run answers whether the 2k->8k trajectory clears the strict bar (~>=0.78).
 #
-# PRE-REGISTERED READ (written before the numbers exist; graded on the Norway digit board, board 3,
+# PRE-REGISTERED READ (written before the numbers exist. graded on the Norway digit board, board 3,
 # scratchpad/run-digit-board.run.ts, package-shaped int8, vs the registered SHIPPED-v310 baselines).
 #
 # THE VARIABLE vs v3.7.0 (knob 3): --long-number-boost 4->6 AND --long-number-min-digits 3->1, so EVERY
@@ -15,13 +15,13 @@
 #
 # CONFOUND, stated: the 6x-all boost triples the recipe output's volume (11,609 -> 33,203 rows) at the same weight
 # 12.0, so this changes signal volume and composition. The FR guard is the detector — if FR re-drifts like
-# knob 1, the volume over-diluted and the weight needs dropping; if FR holds, volume was fine. Reading FR
+# knob 1, the volume over-diluted and the weight needs dropping. if FR holds, volume was fine. Reading FR
 # is therefore required this run, not just do-no-harm.
 #
 # THE MEASURED PROBLEM (board 3, n=400/class, 95% Wilson, shipped v310, zero Norwegian rows pre-#1145):
 #     bare-street-hn   "Leppdalsvegen 1285"   0.693 [0.646, 0.736]   <- TARGET (no postcode competing)
 #
-# MOVE  : bare-street-hn CROSSES the plateau — v371 (knob 3 8k) topped out at 0.733; this must beat that
+# MOVE  : bare-street-hn CROSSES the plateau — v371 (knob 3 8k) topped out at 0.733. this must beat that
 #         materially, ideally lower CI above v310's 0.736 (~>=0.78). Falsifier: if boosting all lengths at
 #         6x also plateaus ~0.73, the corpus change is EXHAUSTED (every knob tried) and digit-ownership is
 #         fully explored — ship v371 as the clean additive net-positive or hold. This is the last knob.
@@ -29,7 +29,7 @@
 # GUARD : street-led-hn / city-first-hn / pc-first-hn do not regress from 0.94-0.968.
 # GUARD : the FR fragment board (board 2) does not re-drift below FR OVERALL ~0.725 (v310 0.733).
 # GUARD : GOLDEN (post-numsplice lesson — an on-board win can hide an off-board cost). If board 3 passes,
-#         run the golden check delta vs v310; fr.house_number / us.unit_real must not regress >2pp.
+#         run the golden check delta vs v310. fr.house_number / us.unit_real must not regress >2pp.
 #
 # Ship candidate. On a pass: export int8, run board 3 + FR fragment + the golden check, then operator promotes.
 #
@@ -151,7 +151,7 @@ model: # Verbatim from v2.4.1.
   use_country_anchor: true
   country_feature_dim: 2
   # #1104 homograph-guard SOFTENER — the one variable vs v263. Scales the country_ambiguous dim by 0.5
-  # before the country_projection (bakes into the exported ONNX; no lexicon/inference change). v263's
+  # before the country_projection (bakes into the exported ONNX. no lexicon/inference change). v263's
   # hard guard (scale 1.0) over-suppressed homograph countries Georgia/Jordan (country-homograph F1
   # 89.8->82.6); softening should recover homograph recall without giving back the country F1 the
   # WOF-admin rows produced.
@@ -195,7 +195,7 @@ model: # Verbatim from v2.4.1.
 
 train: # Same-vocab init_from fine-tune off the shipped v261 (fresh optimizer; --resume none on a fresh
   # output_dir honors init_from, weights only). The new country_projection starts random and learns to
-  # route the cue; the encoder keeps v261's span-boundary + street grammar.
+  # route the cue. the encoder keeps v261's span-boundary + street grammar.
   output_dir: /data/output-v384-latam-probe-s42/checkpoints
   seed: 42
   init_from: /data/output-v381-punct-fix-full-s42/checkpoints/step-008000

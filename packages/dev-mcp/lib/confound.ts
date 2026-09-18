@@ -13,13 +13,13 @@
  *   moved. A caller declaring `variable: ["backend"]` in that situation is measuring two things and attributing the
  *   result to one.
  *
- *   Comparing STATED configs cannot see this; comparing EFFECTIVE configs can, which is why
+ *   Comparing STATED configs cannot see this. comparing EFFECTIVE configs can, which is why
  *   {@link EngineRegistry.acquire} resolves defaults before anything here reads them.
  *
  *   **It warns, it does not refuse** (decided 2026-08-16, spec §6.3). An earlier draft made an undeclared difference a
  *   hard error. The reasoning that overturned it: a refusal an agent cannot override is a reason to bypass the tool
  *   and run the comparison in a shell, where there is no guard at all. A warning that travels inside `summary`
- *   survives the relay; a refusal only helps if the agent stays inside the tool.
+ *   survives the relay. a refusal only helps if the agent stays inside the tool.
  */
 
 import { stringifyJSON } from "@mailwoman/core/json"
@@ -30,7 +30,7 @@ import { effectiveKeyFor } from "#engine/registry"
 /**
  * Whether the comparison's SETUP was clean — did exactly the declared keys differ between the two resolved configs.
  *
- * Read this as a hygiene check on the experiment, never as a causal finding. It compares two config objects; it has no
+ * Read this as a hygiene check on the experiment, never as a causal finding. It compares two config objects. it has no
  * access to why any individual row moved, and a delta is a property of an aggregate while causation happens per row
  * through a mechanism. A `clean` here licenses the sentence "nothing else in the configuration moved" and nothing
  * stronger. Diagnosis needs the per-row interior, which this file does not have and `mwdev_trace` does.

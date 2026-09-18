@@ -630,7 +630,7 @@ describe("rankByPrimaryPreference (bounded cross-country primary preference)", (
 
 describe("rankByPrimaryPreference — exonym-collision band (δ=1.0 population-ratio setting, regression lock)", () => {
 	// THE RULE, locked here so it can't silently drift: δ=1.0 (PRIMARY_PREFERENCE_LOG10) means a
-	// cross-country ALIAS must be ≥10x more populous than the same-key foreign PRIMARY to win; below 10x the
+	// cross-country ALIAS must be ≥10x more populous than the same-key foreign PRIMARY to win. below 10x the
 	// primary wins and the alias is demoted out of the exact tier. This is a population-RATIO proxy for
 	// NOTABILITY — the refinement to a true notability signal is tracked as a follow-up.
 	//
@@ -750,7 +750,7 @@ describe("rankByPrimaryPreference — variant-alias exemption (#1882, opt-in)", 
 describe("postcode-containment coherence (#31, Mechanism 2)", () => {
 	// The B2-2 board: three same-name US localities whose POPULATION order disagrees with their
 	// distance from postcode 94101's centroid (37.75, -122.42): big (720, 1.0 M, ~550 km away),
-	// mid (721, 100 k, ~4,000 km), small (722, 10 k, ~2 km). Population-first answers big; the
+	// mid (721, 100 k, ~4,000 km), small (722, 10 k, ~2 km). Population-first answers big. the
 	// containment rung must answer small.
 	const ANCHOR = { lat: 37.75, lon: -122.42 }
 	const SANSOME_BIG = 720
@@ -791,7 +791,7 @@ describe("postcode-containment coherence (#31, Mechanism 2)", () => {
 	}
 
 	test("B2-1: the #741 postal-city short-circuit is untouched — an exact (name, postcode) hit wins with the flag on or off", async () => {
-		// Patch the built candidate DB with the #741 side-index carrying the exact hit; the lookup
+		// Patch the built candidate DB with the #741 side-index carrying the exact hit. the lookup
 		// conditions its probe on the table, so this is the real fast-path configuration.
 		using db = new DatabaseClient<WOFDatabase>(candidatePath)
 
@@ -813,7 +813,7 @@ describe("postcode-containment coherence (#31, Mechanism 2)", () => {
 		const off = await lk.findPlace(sansomeQuery({ postcode: "94101" }))
 		const on = await lk.findPlace(sansomeQuery({ postcode: "94101", postcodeContainmentCoherence: true }))
 
-		// Byte-identical: the exact probe answers the single geographic locality; the re-rank rung
+		// Byte-identical: the exact probe answers the single geographic locality. the re-rank rung
 		// sits strictly beneath it and never sees the three-row candidate set.
 		expect(on).toEqual(off)
 		expect(on).toHaveLength(1)
@@ -904,7 +904,7 @@ describe("postcode-containment coherence (#31, Mechanism 2)", () => {
 		const a = tagged(withConsistency.roots, "locality")[0]!
 		const b = tagged(withoutConsistency.roots, "locality")[0]!
 
-		// The containment rung picks small; the consistency pass (default-on) is already satisfied and
+		// The containment rung picks small. the consistency pass (default-on) is already satisfied and
 		// must not re-pick with a different tie-break — both arms land on the same locality.
 		expect(a.placeID).toBe("wof:722")
 		expect(b.placeID).toBe(a.placeID)
@@ -918,7 +918,7 @@ describe("postcode-containment coherence (#31, Mechanism 2)", () => {
  * Three states have to be distinguishable, because the consumer (`resolver/toponym-prior.ts`) treats exactly one of
  * them as evidence:
  *
- * 1. The artifact scored this place → the field is present;
+ * 1. The artifact scored this place → the field is present.
  * 2. The artifact has the column but no measurement for this place → the field is absent (not 0);
  * 3. The artifact predates the column entirely → the field is absent, and nothing throws.
  */
@@ -926,7 +926,7 @@ describe("WOFCandidateTableLookup — importance (#28)", () => {
 	let scoredPath: string
 
 	/**
-	 * A score source for the lookup fixture's homonym pair. Moscow RU is scored ABOVE Moscow, Idaho; Chicago is scored;
+	 * A score source for the lookup fixture's homonym pair. Moscow RU is scored ABOVE Moscow, Idaho. Chicago is scored.
 	 * Lenk deliberately is not. Ids are unrelated to the admin fixture's, as they are in production.
 	 */
 	function buildFixtureImportance(path: string): void {
@@ -1065,7 +1065,7 @@ describe("rankByPrimaryPreference — seat preference on a coincident same-name 
 
 	test("a contest between distinct places is left alone — only the seat tier is promoted", () => {
 		// The three transitions an unguarded specificity term moved most: region→county (2,973),
-		// locality→neighbourhood (2,885), postalcode→locality (2,662). None is a duplicate; all keep scan order.
+		// locality→neighbourhood (2,885), postalcode→locality (2,662). None is a duplicate. all keep scan order.
 		expect(rankByPrimaryPreference([at(3), at(5)], 5, undefined, PLACETYPES)[0]!.placetype_id).toBe(3)
 		expect(rankByPrimaryPreference([at(7), at(10)], 5, undefined, PLACETYPES)[0]!.placetype_id).toBe(7)
 		expect(rankByPrimaryPreference([at(10), at(7)], 5, undefined, PLACETYPES)[0]!.placetype_id).toBe(7)
@@ -1114,7 +1114,7 @@ describe("seat preference through findPlace — where the term can and cannot re
 
 describe("admin-containment re-rank through findPlace (#1717 stage 2)", () => {
 	// The fixture is the Weimar shape: 'Marwei' DE (60 k, under region Thuria) vs a MORE-populous US
-	// namesake (2.0 M). Population-first answers the US one; a country=US scope hides the DE one; the
+	// namesake (2.0 M). Population-first answers the US one. a country=US scope hides the DE one. the
 	// qualifier must answer the DE one in both postures. The board-measured mechanism (2026-08-18):
 	// the locale-inferred hard filter partitions the true instance out of the list before any
 	// comparator, so a reorder-only setting would be inert — the #1729 class, which is why these

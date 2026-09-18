@@ -11,7 +11,7 @@
  *   (`edtf:deprecated: 2019-01-16` on 53 of the 66 readable GB deprecated-no-successor localities)
  *   without writing successors. The Medway cluster shows the shape: `Chatham` stayed current,
  *   `Rochester` and `Gillingham` were deprecated, and the replacement `Medway` localadmin is itself
- *   not current. Every record looks individually plausible; only the cluster is wrong.
+ *   not current. Every record looks individually plausible. only the cluster is wrong.
  *
  *   THIS MODULE DECIDES NOTHING. It measures and reports, because the non-current population is a
  *   MIXTURE that no rule separates — measured over the shipped artifact:
@@ -225,7 +225,7 @@ function judgeCoverage(
 		if (distanceKm > COVERAGE_RADIUS_KM) continue
 
 		if (live.key === dead.key) {
-			// Same band is a true cover; another band answers the query at a coarser grain and is reported as
+			// Same band is a true cover. another band answers the query at a coarser grain and is reported as
 			// such — but only after the whole neighbourhood is searched, since an in-band cover may follow.
 			if (live.placetype === dead.placetype) {
 				return {
@@ -283,7 +283,7 @@ function judgeCoverage(
 
 /**
  * Folded name → P-class GeoNames rows for one country, restricted to the names actually being judged (the dump is
- * streamed; only the keys under review are held).
+ * streamed. only the keys under review are held).
  */
 async function loadAttestors(
 	dumpPath: string,

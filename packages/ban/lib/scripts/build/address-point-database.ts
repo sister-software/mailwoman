@@ -10,7 +10,7 @@
  *   so there is no OSM-style association gap: we write the exact source coordinate for every valid row.
  *
  *   The `rep` (repetition: bis/ter/…) is folded into the house-number key (`"8 bis"`), so a parsed
- *   `"8 bis Rue X"` matches; plain-number rows are keyed on the bare number, unchanged. Keying uses the
+ *   `"8 bis Rue X"` matches. plain-number rows are keyed on the bare number, unchanged. Keying uses the
  *   shared FR normalizer (`normalizeStreetForKeyLocale(street, "fr")`) — the identical function the
  *   lookup tier applies at query time, so build-side and probe-side can't drift.
  *

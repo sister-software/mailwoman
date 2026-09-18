@@ -324,7 +324,7 @@ export async function buildSpawnTools(registry: EngineRegistryLike, jobs: JobReg
 
 				const promotionEvalOutDir = promotionEvalOutDirs.get(jobID)
 
-				// A check job's numbers come from its own artifacts; only a gauntlet job needs its log parsed.
+				// A check job's numbers come from its own artifacts. only a gauntlet job needs its log parsed.
 				const report = promotionEvalOutDir
 					? await readEvalReport(promotionEvalOutDir, job.stdout, job.stderr)
 					: parseGauntletReport(job.stdout, job.stderr)

@@ -46,7 +46,7 @@ export interface GauntletLayerOptions {
 	 *
 	 * A DECLARED ABLATION. The choreography pairs with the train-time half, so a board run under `false` measures what
 	 * the channel is worth on every tag at once — which is the only way to price the locality it recovers against the
-	 * postcode it was added to protect.
+	 * postcode it was added to guard.
 	 */
 	suppressGazetteerNearPostcode?: boolean
 	/**
@@ -118,7 +118,7 @@ export async function runRegressionLayer(options: GauntletLayerOptions = {}): Pr
 	// separately, because the pass is not attributable to the production path (#2223).
 	const withheld: string[] = []
 	let counted = 0
-	// #42 firing receipts. An unchanged verdict means "harmless" only if the mechanism actually ran on some row;
+	// #42 firing receipts. An unchanged verdict means "harmless" only if the mechanism actually ran on some row.
 	// otherwise it means "never reached", and the two are indistinguishable without this count.
 	const overrides: string[] = []
 

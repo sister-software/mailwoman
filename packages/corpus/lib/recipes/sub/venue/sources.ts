@@ -5,7 +5,7 @@
  *
  *   The READ half of the `sub-venue` recipe (#35 step 4): which surfaces a locale may emit,
  *   what identifier follows them in that region, and which real names become the confound negatives.
- *   `sub-venue.ts` owns the WRITE half (line rendering + the emit loop) and the recipe registration;
+ *   `sub-venue.ts` owns the WRITE half (line rendering + the emit loop) and the recipe registration.
  *   split because the two halves together run past the 750-line file cap, and this is the split — one
  *   side reads disk and the ledger, the other side never touches either.
  *
@@ -22,7 +22,7 @@
  *       35% ranges).
  *   - {@link isVenueSlotName} / {@link isSignIdentifier} — the filters that keep bus-stop codes, route
  *       descriptions and street names out of the slots they would mislabel. Both were written from
- *       smoke output, not predicted; the docstrings name the strings that produced them.
+ *       smoke output, not predicted. the docstrings name the strings that produced them.
  */
 
 import { readLocalJSONFile } from "@mailwoman/core/fs/readers"
@@ -64,7 +64,7 @@ export async function readSubVenueLexicon(path: string = defaultLexiconPath()): 
 
 /**
  * Longest venue name kept for the venue slot. The extracts carry a tail of route descriptions and junction names
- * ("Furnival Gate/Moorhead MH2", "SPEKE HALL ROAD/HILLFOOT AVE") that are not venue names at all; a length cap plus
+ * ("Furnival Gate/Moorhead MH2", "SPEKE HALL ROAD/HILLFOOT AVE") that are not venue names at all. a length cap plus
  * {@link isCleanName} removes the bulk of them without a hand list.
  */
 const MAX_VENUE_NAME_LENGTH = 44
@@ -76,7 +76,7 @@ const MAX_VENUE_NAME_LENGTH = 44
 const MIN_NAME_LENGTH = 4
 
 /**
- * Longest attested sub-venue string, in whitespace tokens. `Terminal 1 Flugsteig B` is four and real; anything longer
+ * Longest attested sub-venue string, in whitespace tokens. `Terminal 1 Flugsteig B` is four and real. anything longer
  * is a venue's own name that happens to contain a designator.
  */
 const MAX_ATTESTED_TOKENS = 4
@@ -401,7 +401,7 @@ export function promotedSurfacesFor(
 			phrase: promotion.phrase,
 			surface: titleCase(promotion.phrase),
 			identifierRequired: promotion.shape === "identifier-required",
-			// A promotion marks a SURFACE usable; it does not widen the modifier grammar (the ledger's
+			// A promotion marks a SURFACE usable. it does not widen the modifier grammar (the ledger's
 			// own words). Modifier eligibility stays the designator's, and only English legs read it.
 			modifierEligible: Boolean(designator?.modifierEligible) && promotion.shape !== "identifier-required",
 		})
@@ -517,7 +517,7 @@ export function sampleIdentifier(model: IdentifierModel, designatorID: string, r
 export interface LegPools {
 	context: LocaleBaseTuple[]
 	/**
-	 * Real venue names for the venue slot (stations, airports, campuses; US: airports, terminals, hospitals, rail).
+	 * Real venue names for the venue slot (stations, airports, campuses. US: airports, terminals, hospitals, rail).
 	 */
 	venues: string[]
 	/**

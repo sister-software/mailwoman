@@ -11,11 +11,11 @@
  *   roughly 510,000 and 798,000 features on geometry that classifies in milliseconds in a fresh process. A
  *   build that completes only when fragmentation happens to stay low is not a reproducible build, so the
  *   classification is bounded BY CONSTRUCTION — one process per range of the authority's own feature ids.
- *   This product is small enough that one chunk per layer fits inside the default bound; the bound ships
+ *   This product is small enough that one chunk per layer fits inside the default bound. the bound ships
  *   anyway, because determinism by construction is not the same fact as determinism by luck.
  *
  *   THE DOMAIN CHECKS RUN HERE, AND THEY THROW. An unknown policy, policy interpretation or defence type is a
- *   source-schema change, which is the event a reader most needs to hear about; coercing it to a nearest
+ *   source-schema change, which is the event a reader most needs to hear about. coercing it to a nearest
  *   neighbour or to null converts "the source changed" into "there is nothing here". The defence check
  *   compares case-folded and stores the source's own string, because the census found `Sheet piles` beside
  *   `Sheet Piles` and `Vertical Wall - Concrete` beside `Vertical Wall - concrete`.

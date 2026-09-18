@@ -311,7 +311,7 @@ def test_build_optimizer_gives_the_span_head_its_own_lr():
     """A FRESH head on a PRETRAINED encoder needs its own LR.
 
     The v3.0.0 probe inherited lr=1e-5 from a fine-tune recipe and the randomly-initialized span head
-    barely moved in 2k steps (loss 26.4 -> 17.8, still falling; raw span NLL ~35 where a converged
+    barely moved in 2k steps (loss 26.4 -> 17.8, still falling. raw span NLL ~35 where a converged
     semi-CRF is O(1)). Param groups let the head run at 1e-3 while the encoder stays at 1e-5.
     """
     from mailwoman_train.optim.groups import build_optimizer
@@ -322,7 +322,7 @@ def test_build_optimizer_gives_the_span_head_its_own_lr():
     assert labels == ["base", "span_head_learning_rate"]
     by_lr = {g["lr"]: g for g in optim.param_groups}
     assert set(by_lr) == {1e-5, 1e-3}
-    # Every span/semi-CRF param is in the fast group; nothing else is.
+    # Every span/semi-CRF param is in the fast group. nothing else is.
     head_ids = {id(p) for n, p in model.named_parameters() if n.startswith(("span_scorer.", "semi_crf."))}
     fast_ids = {id(p) for p in by_lr[1e-3]["params"]}
     assert fast_ids == head_ids

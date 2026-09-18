@@ -4,17 +4,17 @@
 #   1. glue augmentation 0.25 (PR #514) — probe: fused-row region 52->93 / postcode 57->97, affix flat.
 #   2. intersection source @ 1.0 (PR #515) — probe: intersection-real 100/100, VT golden 94.9/96.1, zero false fires.
 #   3. po_box/cedex recipe output v2 @ 1.5 (PR #516, REBUILT minus the '#' template — probe measured it
-#      colliding with the shipped unit convention) — probe: cedex 94.6 passed; po_box 57.5 was the
-#      punctuation-truncation class at +4k exposure; this run's 10x exposure answers it UNDER the
+#      colliding with the shipped unit convention) — probe: cedex 94.6 passed. po_box 57.5 was the
+#      punctuation-truncation class at +4k exposure. this run's 10x exposure answers it UNDER the
 #      check's po_box floor. Bonus banked: the cedex layouts fixed the FR digit-split in-weights (6->2).
 # STATED config decisions (no silent drift):
 #   - synth-po-box (the old fixed-layout source) retired — key removed, its rows drop (source filter).
-#     po_box mass now comes from one provenanced source; double-counting was the alternative.
+#     po_box mass now comes from one provenanced source. double-counting was the alternative.
 #   - Train-time conventions pairing DEFERRED: designed but UNPROBED — it does not ride a
 #     consolidation on theory (the discipline that caught Run B's confound). Its own probe next.
 # CHECK: scripts/eval/checks/v4.4.0-boundary.json (pre-registered before any change existed) —
 # incl. fr.region floored 16.2, perturb arena >= 71, po_box >= 70 real / cedex >= 70, intersection >= 50.
-# (The spec's po_box/cedex floors read data/eval/external/po-box-cedex-val.jsonl; intersection reads
+# (The spec's po_box/cedex floors read data/eval/external/po-box-cedex-val.jsonl. intersection reads
 # intersection-real + the VT golden. Runner extension lands with the check.)
 # Launch: cd corpus-python && modal run -d -m launch.train_remote --config v1.3.0-boundary-consolidation.yaml --resume none
 data:

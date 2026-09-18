@@ -40,7 +40,7 @@ export const EDGAR_MATCH_SCORE_NORMALIZATION_ONLY = 0.75
  * distinguished them, so the match is resting on a token it deliberately threw away. The abstention in
  * {@linkcode processEdgarSubsidiaryRow} (`matchedFRNs.length !== 1`) does not cover this — it only fires on a collision
  * within the 499 file, so when 499 carries only the LLC and Exhibit 21 discloses the Inc., exactly one FRN matches and
- * the edge is written. That edge may well be the wrong company; this number says so.
+ * the edge is written. That edge may well be the wrong company. this number says so.
  */
 export const EDGAR_MATCH_SCORE_DESIGNATION_DIFFERS = 0.5
 
@@ -56,7 +56,7 @@ export function strippedDesignationKey(name: string): string {
  * The `match_score` for one subsidiary-name→FRN inference — graded per match, never one flat constant across every such
  * link regardless of how much the match actually knows.
  *
- * Both names reaching this function already share a canonical form; that is the match. The question this answers is how
+ * Both names reaching this function already share a canonical form. that is the match. The question this answers is how
  * much of the ORIGINAL string that shared form threw away, because `canonicalizeOrganizationName` maps `"American
  * Broadband LLC"`, `"American Broadband, Inc."` and `"American Broadband Corp"` all to `"american broadband"`
  * (verified). A match that provably cannot tell three companies apart must not report the same confidence as one on
@@ -65,7 +65,7 @@ export function strippedDesignationKey(name: string): string {
  * **`@mailwoman/match`'s comparators were checked first and are the wrong instrument here — measured, not assumed.**
  * `nameSimilarity` on the RAW pair scores `"American Broadband LLC"` vs `"American Broadband, Inc."` at **0.9485** and
  * vs `"American Broadband Corp"` at **0.9557** — HIGHER than a flat 0.92 would be, because Jaro-Winkler's prefix boost
- * rewards exactly the long shared head these pairs have. String distance measures how alike two spellings look; the
+ * rewards exactly the long shared head these pairs have. String distance measures how alike two spellings look. the
  * signal that separates a real match from a designation collision is WHICH TOKENS canonicalization deleted, which is a
  * set comparison. So this uses `canonicalizeOrganizationName`'s own `designations` output — already computed on this
  * path, no new dependency — rather than a comparator that would score the ambiguous case highest of all.

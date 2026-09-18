@@ -15,7 +15,7 @@
 #   3. Do the 19 supported labels separate from the 28 zero-support ones, or does label smoothing
 #      over a mostly-dead 47-way head make the dead rows fire? Read per-label F1 in the eval dump.
 #   4. Does the board scorer run end to end against a `stage3-jp` checkpoint — including the
-#      per-register split? The blended number at 2k is not the check; the native register clearing
+#      per-register split? The blended number at 2k is not the check. the native register clearing
 #      the pack is the signal that the encoder is learning the surface the source actually contains.
 #
 # DELIBERATE DEVIATIONS from v8-jp-full.yaml (so nobody reads the curves as directly comparable):

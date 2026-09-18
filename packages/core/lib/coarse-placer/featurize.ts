@@ -27,7 +27,7 @@ import { hashFNV1a } from "#coarse-placer/fnv-hash"
  * couldn't emit — ambiguous names there (FI "Helsinki", PL "Rybnik") landed off-continent in the population-first
  * candidate gazetteer because no country prior pinned them. They're trained from the Overture per-country addresses
  * theme (`build-dataset.mjs`), and they're pulled out of the Latin off-map `OTHER` outlier set
- * (`build-outlier-latin.mjs`) that used to teach PL/PT/CZ → OTHER. Widening the class set is the soft-prior change; it
+ * (`build-outlier-latin.mjs`) that used to teach PL/PT/CZ → OTHER. Widening the class set is the soft-prior change. it
  * never hard-filters, so a neighbour confusion (DK↔NO, EE↔LT↔LV) still keeps resolution in-region, off the global-pop
  * attractors. Adding a class requires a retrain + a fresh artifact — the bundled meta.json carries its own `classes`,
  * so this constant only drives training (`train.mjs`), not inference.
@@ -69,7 +69,7 @@ export const COARSE_CLASSES = [
 
 /**
  * Hashed-feature dimensionality (2^16). Keeps the weight matrix small (28×65536 ≈ 1.8 MB int8) while collisions stay
- * tolerable for a linear bag-of-features model; the discriminative n-grams are few.
+ * tolerable for a linear bag-of-features model. the discriminative n-grams are few.
  */
 export const FEATURE_DIM = 1 << 16
 

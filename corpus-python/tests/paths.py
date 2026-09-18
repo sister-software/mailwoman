@@ -8,7 +8,7 @@ config file rather than as a wrong root, and a test that reads a directory rathe
 have failed at nothing at all.
 
 Each root below walks up until it finds the marker that defines it, so a test may sit at any depth.
-Import these instead of counting; the count is the defect.
+Import these instead of counting. the count is the defect.
 """
 
 from __future__ import annotations

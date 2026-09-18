@@ -396,7 +396,7 @@ function OutputRow(props: { line: OutputLine }): React.ReactElement {
 			{line.badge ? (
 				// The badge's text is wrapped in a `<Text>` because `Badge` UPPERCASES a plain-string child, and these
 				// two badges carry machine values (`address_point`, `structured_address`) a reader copies into a flag
-				// or a gauntlet row. The chip is the improvement; the shouting is not.
+				// or a gauntlet row. The chip is the improvement. the shouting is not.
 				<Badge color={line.badgeColor ?? "cyan"}>
 					<Text>{line.badge}</Text>
 				</Badge>

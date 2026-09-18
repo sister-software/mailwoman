@@ -9,7 +9,7 @@
  *
  *   Split out of `resolve.ts` so the resolver file holds the walk and the admin-coherence passes, and
  *   this one holds the tiers. The FR voie-type folding lives here because only the street-centroid
- *   tier consults it; the voie types themselves are `@mailwoman/codex/fr`'s, and what stays local is
+ *   tier consults it. the voie types themselves are `@mailwoman/codex/fr`'s, and what stays local is
  *   the tokens this recognizer admits beyond them.
  */
 
@@ -72,7 +72,7 @@ const LOCALITY_BBOX_RADIUS_DEG = 0.25
  * the street's, a number before the street winning a tie. A venue-led string parses more than one of each — `Bar 1802,
  * 22 Rue Pascal, 75005 Paris, France` carries two house numbers and one street, and `22` is the one written beside `Rue
  * Pascal`. The tiers probe the pairs in this order and stop at the first register hit, and the pair that hit is what
- * the result names; a walk that took "the first node of each tag" paired whatever the traversal met first.
+ * the result names. a walk that took "the first node of each tag" paired whatever the traversal met first.
  */
 export function streetNumberPairs(
 	roots: readonly AddressNode[]
@@ -96,7 +96,7 @@ export function streetNumberPairs(
 }
 
 /**
- * Characters between a house number and its street; a number after the street costs one extra so the tie goes to the
+ * Characters between a house number and its street. a number after the street costs one extra so the tie goes to the
  * number written before it, the order every Latin-script address system this resolver serves writes.
  */
 function pairGap(pair: { street: AddressNode; houseNumber: AddressNode }): number {
@@ -208,7 +208,7 @@ export function applyInterpolation(
 	const postcode = firstOfTag(roots, "postcode")?.value.trim()
 	// The resolved locality's coordinate — the `near` tie-breaker the interpolator may consult when the query carries
 	// no postcode and the covering ranges span several ZIPs (the borough-namesake class). Only a RESOLVED locality
-	// qualifies; an unresolved one contributes nothing.
+	// qualifies. an unresolved one contributes nothing.
 	const resolvedLocality = [...walkNodes(roots)].find((n) => n.tag === "locality" && n.lat != null && n.lon != null)
 
 	const localityCoord = resolvedLocality ? { lat: resolvedLocality.lat!, lon: resolvedLocality.lon! } : undefined
@@ -245,7 +245,7 @@ export function applyInterpolation(
 	houseNumber.metadata = { ...houseNumber.metadata, resolution_tier: "interpolated" }
 	// Conformal-calibrated radius (#374): the raw half-segment heuristic underestimates the true spread
 	// (~72% coverage on Travis); ×1.70 → a 90% bound. The ARTIFACT's own multiplier (read from the extract's
-	// `interp_calibration` metadata table at open time — `lookup.radiusCalibration`) is the default; an
+	// `interp_calibration` metadata table at open time — `lookup.radiusCalibration`) is the default. an
 	// explicit caller factor is the @internal instrument override. Neither present (extracts predating the
 	// metadata table, no caller factor) keeps the raw value, byte-stable. Preserve the raw radius for
 	// transparency.
@@ -322,7 +322,7 @@ function pushCandidate(list: string[], v: string | undefined, cap: number): void
 
 /**
  * Add a street centroid for street-only queries when no rooftop or street coordinate exists. Candidate pairs prefer
- * parsed values and fall back to comma-separated raw input; a lookup miss is ignored.
+ * parsed values and fall back to comma-separated raw input. a lookup miss is ignored.
  */
 export function applyStreetCentroid(
 	roots: AddressNode[],
@@ -370,7 +370,7 @@ export function applyStreetCentroid(
 	if (houseNumber) return // street-only tier — a numbered address is the rooftop tiers' job
 
 	// Candidate countries: pre-resolution hints (defaultCountry + unrestricted placer) then the resolved countries. BAN is
-	// FR-only, so a non-FR candidate simply yields no lookup; the exact (street, base-commune) match is the real filter.
+	// FR-only, so a non-FR candidate simply yields no lookup. the exact (street, base-commune) match is the real filter.
 	const countries: string[] = []
 
 	for (const c of [...hints, ...resolvedCountries]) {

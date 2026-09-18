@@ -129,7 +129,7 @@ class CoarseEncoderHeads(CoarseEncoderState):
         # the affix head, so the inference graph carries it). The encoder stays shared+trainable — the probe
         # tests whether growing the capability in a separate head avoids the comma-drop invariance break that
         # every flat-head reinit recipe paid (v3.10–v3.13). init_from v385 (strict=False) leaves this head
-        # fresh; the main CE loss trains it via the merged logits.
+        # fresh. the main CE loss trains it via the merged logits.
         self.use_deploc_head = use_deploc_head
         if use_deploc_head:
             self.deploc_head = nn.Sequential(
@@ -159,7 +159,7 @@ class CoarseEncoderHeads(CoarseEncoderState):
         """Heads that score or decode the classifier's output without replacing any of it."""
         # Span-boundary auxiliary head (#727, GLiNER-lite probe). A TRAINING-ONLY 2-logit head over the
         # final hidden state predicting, per token, whether an entity span STARTS (a B-* tag) and whether
-        # one ENDS here (an entity token whose successor doesn't continue it). The BIO head places tags;
+        # one ENDS here (an entity token whose successor doesn't continue it). The BIO head places tags.
         # this head places boundaries, and the shared encoder must satisfy both — the pressure targets the
         # boundary-absorption residual (a region token pulled into an adjacent street span, "05149 VT
         # Tucker Road" → "VT" absorbed into street). It never touches the exported inference graph (like the
@@ -226,7 +226,7 @@ class CoarseEncoderHeads(CoarseEncoderState):
             elif p.dim() == 1 and p.requires_grad:
                 nn.init.zeros_(p)
         # Reset every LayerNorm to default (gamma=1, beta=0). The blanket loop above
-        # accidentally zeroed gamma; LN with gamma=0 emits 0 + beta for all inputs.
+        # accidentally zeroed gamma. LN with gamma=0 emits 0 + beta for all inputs.
         for module in self.modules():
             if isinstance(module, nn.LayerNorm):
                 nn.init.ones_(module.weight)
@@ -238,7 +238,7 @@ class CoarseEncoderHeads(CoarseEncoderState):
             with torch.no_grad():
                 self.token_embeddings.weight[self.token_embeddings.padding_idx].zero_()
         # PR3: zero-init the FiLM projection so conditioning starts as a no-op (gamma=0, beta=0).
-        # The blanket xavier loop above gave it real weights; reset them so the from-scratch model
+        # The blanket xavier loop above gave it real weights. reset them so the from-scratch model
         # begins identical to an unconditioned encoder and learns to modulate gradually.
         if self.locale_film is not None:
             nn.init.zeros_(self.locale_film.weight)

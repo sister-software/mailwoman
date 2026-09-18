@@ -10,7 +10,7 @@
  *   standing for the thing it doubles. Built here instead, a change to `EngineRegistryLike` fails in one place with
  *   the name of the member that moved.
  *
- *   `acquire` throws by default. A test that needs an engine says so by passing one; a test that reaches the engine
+ *   `acquire` throws by default. A test that needs an engine says so by passing one. a test that reaches the engine
  *   without meaning to gets a message rather than a `undefined` it will misread.
  */
 
@@ -52,7 +52,7 @@ export function stubEngineRegistry(overrides: Partial<EngineRegistryLike> = {}):
 }
 
 /**
- * Build an engine double. Pass the session behaviour the case reads; everything else is filled in.
+ * Build an engine double. Pass the session behaviour the case reads. everything else is filled in.
  *
  * `session` is asserted rather than completed on purpose, and it is the only assertion here: `GeocodeSession` is the
  * real pipeline's surface, far wider than any test drives, while the seven members of `Engine` around it are cheap to

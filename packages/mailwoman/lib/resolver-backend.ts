@@ -75,7 +75,7 @@ export async function resolveCandidateDBPath(
  *
  * Returned UNFILTERED — whether a missing path is a degradation or an error is the caller's contract, not this
  * function's. `createGeocodeSession` filters with `pathExists` and throws when nothing survives; `mailwoman doctor`
- * reports each absence; a probe wants to say which database it could not open. Sharing the SELECTION is the point: a
+ * reports each absence. a probe wants to say which database it could not open. Sharing the SELECTION is the point: a
  * caller that reads only `wofExtractPaths` silently probes different databases than the runtime on any box where the
  * env is set, which is the exact class of wrong answer a data-source probe exists to rule out.
  */
@@ -103,7 +103,7 @@ export async function resolvePostalCityAliasDBPath(explicit?: string): Promise<s
 /**
  * The #1009 "no gazetteer data found" preflight message, shared by every caller that checks on a candidate/WOF resolver
  * being present before it will boot (`photon/cli.ts`, `nominatim/cli.ts`, `mailwoman/api-engine.ts`'s `mailwoman
- * serve`). Originally a bare `curl -fSL https://public.mailwoman.ai/...` line; measured 2026-08-03
+ * serve`). Originally a bare `curl -fSL https://public.mailwoman.ai/...` line. measured 2026-08-03
  * (`commands/data/pull.tsx`'s `downloadToDisk` docstring) that an UNRANGED GET against that bucket 403s — the hint was
  * broken for every stranger who copy-pasted it. `mailwoman data pull candidate` (Task 6) is the fix: it carries the
  * `Range: bytes=0-` header the WAF requires, verifies the download, and atomically seals it into place.
@@ -156,7 +156,7 @@ export async function createResolverBackend(
 		postalCityAliasDB?: string
 		/**
 		 * #1882 — exempt own-name `variant` aliases from the cross-country primary-preference penalty. Candidate backend
-		 * only (the penalty lives there). Default ON; pass `false` to disable. On an artifact without the `name_role`
+		 * only (the penalty lives there). Default ON. pass `false` to disable. On an artifact without the `name_role`
 		 * column the exemption matches no row and resolution is byte-identical, so the default is old-artifact-safe.
 		 */
 		variantAliasExemption?: boolean
@@ -198,7 +198,7 @@ export function conventionCapitalsPath(): string {
 
 /**
  * Load the capital-status reference into the ranking index, preferring the ARTIFACT copy: a `candidate.db` that carries
- * the `capital` table (#1880's distribution home) serves npm consumers who never have the repo file; the repo's
+ * the `capital` table (#1880's distribution home) serves npm consumers who never have the repo file. the repo's
  * `data/gazetteer/capitals-v1.json` is the dev fallback.
  *
  * When neither source exists, `missing` decides. `"throw"` (the default) is for an EXPLICIT `capital_tier: true` — a

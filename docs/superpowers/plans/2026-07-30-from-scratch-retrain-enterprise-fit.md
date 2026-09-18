@@ -64,7 +64,7 @@ harness becomes the per-customer acceptance battery.
 2. **The run itself:** materially bigger than the arc's fine-tunes (from-scratch, larger step
    budget, possibly the encoder change) — plan in agent-nights with the full G1–G7 ladder plus
    per-locale checks; the acceptance battery in its packaged form is the exit criterion.
-3. **B11 alpha after:** the packaged battery + the Fisher-protected fine-tune recipe make the
+3. **B11 alpha after:** the packaged battery + the Fisher-guarded fine-tune recipe make the
    first enterprise fine-tune engagement mostly configuration, not research.
 
 **Net:** if B11 is real, the retrain is its foundation work and should be scheduled as such —

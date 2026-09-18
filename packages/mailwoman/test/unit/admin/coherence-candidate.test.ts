@@ -8,7 +8,7 @@
  *   with the admin-coherence verdicts read off the resolved tree the way `extractGeocodeResult`
  *   reads them. This is the flip the sidecar exists for — the Weimar-class winner's `region`
  *   verdict moves from `unverifiable` (no ancestry to check) to a DECIDED verdict, while the
- *   ranking itself stays untouched (flag-only: the wrong winner still wins; the verdict now says
+ *   ranking itself stays untouched (flag-only: the wrong winner still wins. the verdict now says
  *   so).
  */
 

@@ -63,7 +63,7 @@ class CoarseEncoderChannels(CoarseEncoderState):
         # v0.5.0 thread C: optional phrase-prior conditioning. ``phrase_features`` is the
         # per-token BIE+kind one-hot from Stage 2.7. When the encoder was built with
         # ``use_phrase_priors=True`` and features are supplied, concat them onto the embed
-        # and project back to hidden_size; absent features default to zeros (silently — a
+        # and project back to hidden_size. absent features default to zeros (silently — a
         # caller that opted into priors but didn't supply them gets the equivalent of "no
         # phrase covers any token," which is a degraded but well-defined inference path).
         if self.phrase_input_projection is not None:
@@ -158,7 +158,7 @@ class CoarseEncoderChannels(CoarseEncoderState):
                 h = h + pos0_add * pos_indicator
 
         # Gazetteer-anchor injection (#464). Confidence is 1.0 where any lexicon bit fires, 0
-        # elsewhere. Span-local by construction; no first-token pooling, because a lexicon clue is a
+        # elsewhere. Span-local by construction. no first-token pooling, because a lexicon clue is a
         # positional fact about the token it sits on, where a postcode identifies the whole row.
         h, _ = _inject_soft_feed(
             h,
@@ -192,7 +192,7 @@ class CoarseEncoderChannels(CoarseEncoderState):
 
         # Street-type injection (P-A / Option A). Per-token additive: s_i = c_i · (W_s·features + v_STREET).
         # Confidence is 1.0 where a street-type surface fires, 0 elsewhere — the no-clue identity. Span-local
-        # positional fact; no first-token pooling. Gives the encoder the street-type evidence the P-A
+        # positional fact. no first-token pooling. Gives the encoder the street-type evidence the P-A
         # diagnostic showed it never had, so a street name can be distinguished from a locality name.
         h, _ = _inject_soft_feed(
             h,

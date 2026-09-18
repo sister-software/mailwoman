@@ -8,7 +8,7 @@
  *
  *   The reported failure was `Maracaibo 4001, Zulia, Venezuela` answering with no country at all. The
  *   parse mis-tagged `Zulia` — a Venezuelan REGION — as a locality. Venezuela has no locality Zulia and
- *   Colombia does, so the locality claim was satisfiable only in CO; the walk inferred CO and probed
+ *   Colombia does, so the locality claim was satisfiable only in CO. the walk inferred CO and probed
  *   `Venezuela` inside it, finding nothing.
  *
  *   **The live input stopped reproducing it before the guard existed**, because the PARSE moved — today
@@ -111,7 +111,7 @@ describe("#2248 — an inferred country must never overrule one the input named"
 		const backend = new RecordingBackend()
 		const result = await createWOFResolver(backend).resolveTree(MALFORMED_PARSE)
 
-		// Leaving `Zulia` unresolved is the correct degradation here; its correct TAGGING belongs to #1748.
+		// Leaving `Zulia` unresolved is the correct degradation here. its correct TAGGING belongs to #1748.
 		const zulia = result.roots[0]?.children.find((child) => child.value === "Zulia")
 
 		expect(zulia?.placeID).not.toBe(`wof:${ZULIA_LOCALITY_CO}`)

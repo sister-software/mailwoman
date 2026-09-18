@@ -80,7 +80,7 @@ const MINIMUM_HEADER_ROW_CELLS = 3
  * jurisdiction: 1}`, and `atn-international-2025.htm`'s unlabelled first column (its header row is `["", "Jurisdiction
  * of Incorporation", "Other name(s) under which entity does business"]`) still maps to `{name: 0, jurisdiction: 1}`.
  *
- * Returns `null` when no row qualifies; the caller then keeps whatever mapping a PRECEDING sibling table established.
+ * Returns `null` when no row qualifies. the caller then keeps whatever mapping a PRECEDING sibling table established.
  */
 function headerColumnMapping(
 	rows: readonly TableCell[][],
@@ -124,14 +124,14 @@ function headerColumnMapping(
  *
  * The distinctness condition is not belt-and-braces. Charter Communications writes its jurisdiction column as
  * `"Delaware limited liability company"`, so 135 of 135 second values carry a designation on a table that is a
- * perfectly ordinary name/jurisdiction list; what separates the two cases is repetition — a jurisdiction column repeats
+ * perfectly ordinary name/jurisdiction list. what separates the two cases is repetition — a jurisdiction column repeats
  * (Charter 9 distinct over 135 rows, Comcast 0.05, Uniti 0.13, T-Mobile 0.15, Lumen 0.26), a second NAME column does
  * not (IDT 1.00). Measured 2026-08-03 across the large filings that are not vendored.
  */
 const MINIMUM_NAME_OVER_NAME_ROWS = 4
 
 /**
- * More than half the second values must carry a legal designation. IDT's two-across name table is 5/5; a genuine
+ * More than half the second values must carry a legal designation. IDT's two-across name table is 5/5. a genuine
  * jurisdiction column is 0/N except where the filer spells the entity type out (Charter's `"Delaware limited liability
  * company"`, 135/135) — which is what {@linkcode DISTINCT_SECOND_VALUE_RATIO} is there to separate.
  */
@@ -335,7 +335,7 @@ function subsidiariesFromTableRows(tables: readonly TableCell[][][]): ParsedExhi
  * {@linkcode parseExhibit21} so the table, list and plain-text strategies all see the same window rather than each
  * re-deriving it.
  *
- * The SGML `<TEXT>` element is EDGAR's own envelope around the exhibit; a document with no envelope (every hand-written
+ * The SGML `<TEXT>` element is EDGAR's own envelope around the exhibit. a document with no envelope (every hand-written
  * fixture in `exhibit21.test.ts`) is left whole. The HTML `<head>` goes because its `<title>` is the source filename
  * rather than a subsidiary — `q42025exh211listofsubsidia.htm` was emitted as an entity name before this window existed
  * — and `<script>`/`<style>` because their text is code.
@@ -490,7 +490,7 @@ const TITLE_LINE_PATTERNS = [
 /**
  * A candidate line/list-item longer than this many whitespace-separated tokens is abstained on rather than split — see
  * the module docstring. The longest legitimate name in the real-filing corpus (`bandwidth-2025.htm`'s `"Voxbone
- * Telekomunikasyon ve Iletisim Hizmetleri Ticaret Limited Sirketi"`) is 8 tokens; a preamble sentence or a run of
+ * Telekomunikasyon ve Iletisim Hizmetleri Ticaret Limited Sirketi"`) is 8 tokens. a preamble sentence or a run of
  * concatenated names is not a name at all, and decision 6 abstains rather than guessing a boundary.
  */
 const MAX_ENTITY_NAME_WORDS = 12
@@ -504,7 +504,7 @@ const MAX_ENTITY_NAME_WORDS = 12
  *
  * A line reduced to nothing but whitespace by the marker strip falls through to {@linkcode splitCandidateLine} same as
  * any other line — it still ends up counted `unparseable` there (a blank name), the same basis `"----"`-style
- * decorative divider lines were already counted on before this rule existed; that path is preserved deliberately rather
+ * decorative divider lines were already counted on before this rule existed. that path is preserved deliberately rather
  * than special-cased to "skip uncounted", since the marker character class overlaps with plain decorative dashes and
  * the two cases aren't distinguishable from the marker alone.
  */
@@ -560,7 +560,7 @@ function subsidiariesFromLines(lines: readonly string[]): ParsedExhibit21 {
  * True when every extracted cell of every extracted row is blank — a purely decorative border/spacer table (the kind
  * Word/Workiva exports use as a horizontal-rule substitute) carrying no subsidiary data at all, as opposed to a real
  * table that legitimately abstains on some or all of its rows (`subsidiariesFromTableRows`'s job, unchanged here).
- * `shentel-2025.htm` states its subsidiary list as block text outside two such decorative tables; committing to the
+ * `shentel-2025.htm` states its subsidiary list as block text outside two such decorative tables. committing to the
  * (empty) table strategy the instant any `<table>` tag exists would silence the real list this document states. A table
  * with even one real non-blank cell still commits to the table strategy as before — reading a real table's data with
  * more confidence (multiple sibling tables, blank spacer columns, footnote rows, …) is Task 3's territory, not this

@@ -5,7 +5,7 @@
     modal run -m launch.train_remote::push_artifact_r2 --volume-path=… --r2-subpath=…
 
 Quantization runs here rather than locally because the dynamo-exported graph trips onnx shape
-inference in some local onnxruntime builds; the training image's pinned one quantizes it cleanly.
+inference in some local onnxruntime builds. the training image's pinned one quantizes it cleanly.
 The push exists because this volume's container and CLI views are fully divergent — `modal volume
 get` cannot pull a container-written file — so an artifact leaves the way the corpus arrived.
 """
@@ -31,7 +31,7 @@ def export_onnx(
     """Export a checkpoint to ONNX.
 
     Env-var fallbacks (MAILWOMAN_EXPORT_OUTPUT_DIR / MAILWOMAN_EXPORT_STEP /
-    MAILWOMAN_EXPORT_TOKENIZER) are kept for back-compat with prior workflows; CLI params take
+    MAILWOMAN_EXPORT_TOKENIZER) are kept for back-compat with prior workflows. CLI params take
     precedence when set.
 
     ``--model-dir`` bypasses the ``{output_dir}/checkpoints/step-{step}`` layout and loads a flat

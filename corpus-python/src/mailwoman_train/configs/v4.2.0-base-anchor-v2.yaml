@@ -1,6 +1,6 @@
 # === v4.2.0-base-anchor-v2 — DRAFT, NOT LAUNCH-READY. The base rebuild that closes the GB anchor hole. ===
 #
-# NAMING: the next BASE in the v4 line (v4.0.0/v4.0.1 were the from-scratch base runs; v4.1.x were
+# NAMING: the next BASE in the v4 line (v4.0.0/v4.0.1 were the from-scratch base runs. v4.1.x were
 # GB-venue fine-tunes off v4.0.1). Nothing here is the npm major — that is a separate number.
 #
 # WHY THIS RUN EXISTS. `docs/records/evals/2026-08-05-en-gb-anchor-off.md`. The shared encoder's
@@ -10,7 +10,7 @@
 # 67,708 keys, US/DE/FR only, zero of them letter-containing. So slots 3–8 took no gradient in 60,000
 # steps. When `postcode-gb.bin` was shipped at inference it fed slot 4 a value the encoder had never
 # seen and cost 24 exact postcodes on the 120-row gb-golden board; #1467 shipped the interim
-# mitigation (en-gb ships no bin, the channel resolves off). This run is the cure.
+# mitigation (en-gb ships no bin, the channel resolves off). This run is the fix.
 #
 # THE ONE NAMED DELTA vs v4.0.1-base-60k: `anchor_lookup_path`. Everything else below is
 # v4.0.1-base-60k verbatim unless a comment says otherwise, and the two comments that follow are
@@ -59,7 +59,7 @@
 #
 # PRE-REGISTERED CHECKS: the v4.0.0 sheet verbatim (G1-G8 + Fisher sanity), plus:
 #   - gb-golden: exact `postcode` >= 318/318 across three registers with the anchor channel fed
-#     (the #1467 mitigation reached 318/318 by switching the channel off; this run has to hold it
+#     (the #1467 mitigation reached 318/318 by switching the channel off. this run has to hold it
 #     with the channel on, which is the whole point).
 #   - No US/FR regression: the 100-row US + 46-row FR parity boards, three registers each.
 #   - Anchor-ablation delta: score the resulting model anchor-ON vs anchor-OFF on gb-golden. A
@@ -207,7 +207,7 @@ model: # Verbatim from v4.0.1.
     # tags". The R5 diagnosis (`docs/superpowers/plans/2026-08-01-r5-us-deploc-preregistration.md`)
     # traced the shipped model's dead US dependent_locality to exactly that weight: US surfaces
     # carry more raw dep-loc mass than the GB ones that work, so the tag was never dead — it was
-    # weighted down. Corrected in v4.0.1 and carried here; the shipped lineage still predates the
+    # weighted down. Corrected in v4.0.1 and carried here. the shipped lineage still predates the
     # correction, so this run is the first base to retrain it in.
     B-dependent_locality: 1.0
     I-dependent_locality: 1.0

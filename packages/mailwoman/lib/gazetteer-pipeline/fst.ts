@@ -14,7 +14,7 @@
  *   and Carmen's index-time token hygiene: the hazard is removed from the artifact rather than
  *   guarded at decode time, so it cannot misfire on lowercase, comma-free, any-locale input. The FST
  *   is a bias list, not the gazetteer of record — the resolver's candidate tables are untouched, so
- *   excluded places stay findable; they just stop nudging the decoder on degenerate keys.
+ *   excluded places stay findable. they just stop nudging the decoder on degenerate keys.
  *
  *   Exclusion sources are the shipped libpostal dictionaries (`core/data/libpostal/dictionaries/`):
  *   per-language `stopwords.txt` (whole-surface + compositional clauses) and `street_types.txt`
@@ -24,7 +24,7 @@
  *
  *   Provenance (policy string + excluded-insertion count) is recorded in the artifact trailer.
  *   Artifacts are written to --output (default: a `fst-per-locale-curated/` sibling of the shipped
- *   `fst-per-locale/` dir) — staged BESIDE, never overwriting; the swap into the shipped path is
+ *   `fst-per-locale/` dir) — staged BESIDE, never overwriting. the swap into the shipped path is
  *   operator-approved after the battery.
  */
 
@@ -78,7 +78,7 @@ export const EXCLUSION_POLICY_ID =
 
 /**
  * Function-word surfaces the libpostal dictionaries MISS. Each entry carries its justification — this list is curated,
- * not a dumping ground; a candidate belongs here only when it is a common function word in a served language whose
+ * not a dumping ground. a candidate belongs here only when it is a common function word in a served language whose
  * libpostal stopword file lacks the bare form.
  */
 export const SUPPLEMENTAL_DEGENERATE_SURFACES: ReadonlySet<string> = new Set([
@@ -88,7 +88,7 @@ export const SUPPLEMENTAL_DEGENERATE_SURFACES: ReadonlySet<string> = new Set([
 ])
 
 /**
- * The shipped per-locale FST set (provenance-recovered country scoping; en-nz deliberately has none).
+ * The shipped per-locale FST set (provenance-recovered country scoping. en-nz deliberately has none).
  *
  * An overlay absent here ships with no FST, which makes `--gazetteer-prior` a silent no-op for it — the artifact
  * resolves to `undefined` and the run degrades to the base model with extra steps. That is why membership is worth
@@ -117,9 +117,9 @@ export const FST_LOCALES: ReadonlyMap<string, string[]> = new Map([
  * DB's md5 says nothing about whether it is current and stamping it against one would be a lie the guard then enforces.
  * The CJK three are here despite having no entry in {@link FST_LOCALES} — they were built by the pre-#1318 flow,
  * nothing can rebuild them today, and they stay frozen pending the CJK arc's importance-source and WOF-geometry
- * questions; that is a fact the check should surface rather than hide. `fst-global-priority.bin` (317 MB, retired
+ * questions. that is a fact the check should surface rather than hide. `fst-global-priority.bin` (317 MB, retired
  * 2026-08-06 — see RELEASING.md) is deliberately gone from this list: a retired artifact must not keep generating
- * freshness rows that read as a rebuild obligation. The public HF object outlives the template on purpose; removing it
+ * freshness rows that read as a rebuild obligation. The public HF object outlives the template on purpose. removing it
  * is a separate, operator-approved step (#1493).
  */
 export const ADMIN_DERIVED_FST_ARTIFACTS: readonly string[] = [
@@ -155,7 +155,7 @@ export interface FSTFreshnessRow {
  * that database is sound — the arrow runs the other way. The artifacts also cannot be rebuilt as a side effect of a
  * verify: a locale FST build is minutes, its output is staged, and the swap is operator-approved because an FST changes
  * decoder behaviour. So the section exists to make the drift visible at the moment the operator is already looking at
- * the gazetteer, with the command that starts fixing it. The caller decides what to do with the exit code; today it
+ * the gazetteer, with the command that starts fixing it. The caller decides what to do with the exit code. today it
  * does nothing, and that is deliberate.
  *
  * The exclusion-policy expectation applies only to locales the current builder can produce. Naming a policy for
@@ -328,7 +328,7 @@ export async function computeSurfaceCountryCounts(dbPath: string): Promise<Map<s
  * Memo for {@link computeSurfaceCountryCounts}, keyed on (path, mtimeMs, size).
  *
  * The scan streams the whole `spr` + `names` surface — millions of rows — and the locality-surface build calls it once
- * per country set. The FR and US passes in one process paid it twice; measured 2026-08-02 that pair was 236.9s of a
+ * per country set. The FR and US passes in one process paid it twice. measured 2026-08-02 that pair was 236.9s of a
  * 253s CI leg.
  *
  * Not keyed on path alone. The WOF admin DB is a sealed readonly artifact that a rebuild REPLACES, so a path-only memo
@@ -346,7 +346,7 @@ function scanSurfaceCountryCounts(dbPath: string): Map<string, number> {
 	const ph = placetypes.map(() => "?").join(",")
 	// Memory shape matters: the names table runs to millions of rows (GeoNames alias folds included)
 	// and a Set per surface OOMs a default heap. Most surfaces are single-country, so store the first
-	// country as a bare string and promote to an overflow Set only on the second distinct country;
+	// country as a bare string and promote to an overflow Set only on the second distinct country.
 	// rows stream via iterate() — never materialize the rowset.
 	const first = new Map<string, string>()
 	const overflow = new Map<string, Set<string>>()

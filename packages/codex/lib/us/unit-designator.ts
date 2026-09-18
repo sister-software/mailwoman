@@ -8,7 +8,7 @@
  *   The sibling of {@link ./street-suffix.ts}: where that table standardizes the trailing street
  *   _type_ (AVENUE → AVE), this one standardizes the _secondary unit_ designator that introduces an
  *   apartment / suite / floor / room (APARTMENT → APT, SUITE → STE). For each canonical designator
- *   the value lists recognized variants in USPS order; the first is the approved USPS abbreviation
+ *   the value lists recognized variants in USPS order. the first is the approved USPS abbreviation
  *   (what the post office prints).
  *
  *   Used by `@mailwoman/corpus`'s synthesis layer (the `unit-{expand,abbreviate}` augmentations) to
@@ -16,7 +16,7 @@
  *   counterpart to the runtime `UnitDesignatorClassifier` (which matches the broader libpostal
  *   `unit_types` lexicon). Designators are LEADING ("Apt 4B"), unlike street suffixes which trail.
  *
- *   `US_UNIT_DESIGNATOR_REQUIRES_RANGE` (added for #1100, the secondary-address epic; retrieved from
+ *   `US_UNIT_DESIGNATOR_REQUIRES_RANGE` (added for #1100, the secondary-address epic. retrieved from
  *   Appendix C2 2026-07-13) is Pub-28's own "Requires a Secondary Number" column: APT, BLDG, DEPT,
  *   FL, HNGR, KEY, LOT, PIER, RM, SLIP, SPC, STOP, STE, TRLR, and UNIT must be followed by an
  *   identifier ("Apt 4B", never bare "Apt"); BSMT, FRNT, LBBY, LOWR, OFC, PH, REAR, SIDE, and UPPR
@@ -98,7 +98,7 @@ export const US_UNIT_DESIGNATOR_PREFERRED_ABBR: Readonly<Record<USUnitDesignator
 /**
  * Canonical designators Appendix C2 marks as "Requires a Secondary Number" — the designator must be followed by an
  * identifier ("Apt 4B", "Rm 12"), never appearing bare. The remaining designators (BASEMENT, FRONT, LOBBY, LOWER,
- * OFFICE, PENTHOUSE, REAR, SIDE, UPPER) may stand alone with no trailing identifier. Verbatim from USPS Pub-28 C2; see
+ * OFFICE, PENTHOUSE, REAR, SIDE, UPPER) may stand alone with no trailing identifier. Verbatim from USPS Pub-28 C2. see
  * the module header for provenance (#1100).
  */
 export const US_UNIT_DESIGNATOR_REQUIRES_RANGE: Readonly<Record<USUnitDesignator, boolean>> = {

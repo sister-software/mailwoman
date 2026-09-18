@@ -288,6 +288,6 @@ def test_iter_encoded_skips_astral_utf16_offset_rows(tmp_path: Path, monkeypatch
     monkeypatch.setattr(encode_module, "encode_row", fake_encode_row)
     cfg = DataConfig(corpus_dir=str(corpus), country_weights={"US": 1.0}, coarse_filter=False)
     list(iter_encoded(cfg, tokenizer=UNUSED_TOKENIZER, split="train"))
-    # Only the BMP row reached encode_row; the astral row was skipped before it (no crash).
+    # Only the BMP row reached encode_row. the astral row was skipped before it (no crash).
     assert len(captured) == 1
     assert captured[0]["raw"] == "P.O. Box 19, Buffalo, NY 14201"

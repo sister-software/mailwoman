@@ -236,7 +236,7 @@ describe("transitionBeta header field (TRANSITION-BETA build)", () => {
 	it("old-binary compat: a header WITHOUT the field reads back transitionBeta === undefined", () => {
 		// HEADER carries no transitionBeta, so the emitted header JSON has no such key at all (not
 		// null/0) — the same absence an artifact built before the field existed carries. (Since the
-		// tagTable build the serializer is no longer byte-identical to pre-field artifacts; the true
+		// tagTable build the serializer is no longer byte-identical to pre-field artifacts. the true
 		// legacy-binary path is exercised with hand-built bytes in the tagTable describe block.)
 		const bytes = serializePairIndex(HEADER, ENTRIES)
 		const r = new PairIndexResolver(bytes)
@@ -245,7 +245,7 @@ describe("transitionBeta header field (TRANSITION-BETA build)", () => {
 		expect(peekPairIndexHeader(bytes).transitionBeta).toBeUndefined()
 		expect("transitionBeta" in r.header).toBe(false)
 		// transitionBeta stays absence-tolerant within a schema — optional fields ride on the JSON header without
-		// version bumps; only the RECORD-shaping fields (the tag table, the parent byte) are version-conditional.
+		// version bumps. only the RECORD-shaping fields (the tag table, the parent byte) are version-conditional.
 		expect(r.header.schemaVersion).toBe(3)
 	})
 })
@@ -385,7 +385,7 @@ describe("parentTag record field (schemaVersion 3 — the typed parent)", () => 
 	it("carries a parent tag the containment map would NOT have derived", () => {
 		// `WESTERN_PARENT_OF.dependent_locality` is `["locality"]`. The US borough source legitimately
 		// emits a dependent_locality UNDER a borough (also dependent_locality) — a derived parent tag
-		// could never say that; a recorded one can.
+		// could never say that. a recorded one can.
 		const r = resolver([
 			{ child: "park slope", parent: "brooklyn", tag: "dependent_locality", parentTag: "dependent_locality" },
 		])

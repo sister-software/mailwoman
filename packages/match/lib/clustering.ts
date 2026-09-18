@@ -40,7 +40,7 @@ export interface ClusterOptions {
 	/**
 	 * How the above-threshold link graph resolves into clusters:
 	 *
-	 * - `"single"` (default) — connected components (union-find). Fast; any above-threshold link fuses two groups, so a
+	 * - `"single"` (default) — connected components (union-find). Fast. any above-threshold link fuses two groups, so a
 	 *   single weak link can over-merge unrelated records through a transitive chain.
 	 * - `"average"` — agglomerative average-linkage refinement within each connected component: two sub-clusters merge only
 	 *   when the AVERAGE weight of the links between them clears the threshold, so a lone weak bridge no longer fuses two
@@ -223,7 +223,7 @@ export function cluster<R>(records: readonly R[], links: Iterable<ScoredLink<R>>
 
 /**
  * Pick a cluster's most complete record as its canonical representative — the one with the fewest empty fields (`null`
- * / `undefined` / `""`). Ties keep the earliest. A basic, generic canonicalizer; field-level merging across the cluster
+ * / `undefined` / `""`). Ties keep the earliest. A basic, generic canonicalizer. field-level merging across the cluster
  * is the application's job (it knows which source to trust).
  */
 export function representative<R extends object>(group: readonly R[]): R | undefined {

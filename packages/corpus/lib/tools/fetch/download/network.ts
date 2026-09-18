@@ -17,7 +17,7 @@ import type { PathBuilderLike } from "path-ts"
 const HTTP_TOO_MANY_REQUESTS = 429
 
 /**
- * Lowest 5xx status. Server-side failures are retryable; 4xx are not.
+ * Lowest 5xx status. Server-side failures are retryable. 4xx are not.
  */
 const HTTP_SERVER_ERROR_MIN = 500
 
@@ -44,13 +44,13 @@ export interface BaseFetchOptions {
 	 *
 	 * A test that exercises the failure path pays this delay once per retry in real time — measured at 20.1 s for the two
 	 * failing-transfer cases in `geonames-postal.test.ts`, which is the whole cost of that file. The retry COUNT is the
-	 * behaviour under test there; the pause between attempts is not, so it is a caller's to shorten.
+	 * behaviour under test there. the pause between attempts is not, so it is a caller's to shorten.
 	 */
 	retryDelayMs?: number
 }
 
 /**
- * The per-run result every fetch module returns; the command maps `failed > 0` to exit code 1.
+ * The per-run result every fetch module returns. the command maps `failed > 0` to exit code 1.
  */
 export interface FetchSummary {
 	fetched: number

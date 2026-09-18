@@ -57,7 +57,7 @@ export class Ancestrie implements AncestrieReaderLike {
 	}
 
 	/**
-	 * Open a sealed artifact. Validates magic, version, and that the buffer covers the layout the header declares; throws
+	 * Open a sealed artifact. Validates magic, version, and that the buffer covers the layout the header declares. throws
 	 * rather than reading past either.
 	 */
 	static from(data: Uint8Array): Ancestrie {
@@ -130,7 +130,7 @@ export class Ancestrie implements AncestrieReaderLike {
 
 	/**
 	 * The entries accepting at a state, highest rank first (the stored order — no query-time sort). `limit` caps how many
-	 * are decoded; an out-of-range state yields `[]`.
+	 * are decoded. an out-of-range state yields `[]`.
 	 */
 	entriesAt(stateID: number, limit?: number): AncestrieRecord[] {
 		if (stateID < 0 || stateID >= this.header.stateCount) return []

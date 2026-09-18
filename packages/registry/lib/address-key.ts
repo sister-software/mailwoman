@@ -21,7 +21,7 @@ import type { SourceRecord } from "#types"
 
 /**
  * The stable address primary key for a record, or null when it isn't geocoded (no coordinate → no locality cell) or
- * carries no raw address to hash. Uses the resolved coordinate + the raw address; the state prefix is plucked from the
+ * carries no raw address to hash. Uses the resolved coordinate + the raw address. the state prefix is plucked from the
  * address when present.
  */
 export function postalAddressID(record: SourceRecord): PostalAddressID | null {

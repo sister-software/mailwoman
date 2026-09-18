@@ -9,8 +9,8 @@
  *   so the corpus adapter renders the string and the spans fall out by construction. A Singapore
  *   postcode names one building, so the postcode column is also the join to the OneMap/Overture rows.
  *
- *   License: Singapore Open Data Licence version 1.0 (attribution; commercial use, modification and
- *   adaptation permitted; no share-alike). The prescribed attribution sentence goes in the manifest.
+ *   License: Singapore Open Data Licence version 1.0 (attribution. commercial use, modification and
+ *   adaptation permitted. no share-alike). The prescribed attribution sentence goes in the manifest.
  *
  *   data.gov.sg serves a dataset in two calls: `initiate-download` prepares a signed URL and
  *   `poll-download` answers it once the export is ready.

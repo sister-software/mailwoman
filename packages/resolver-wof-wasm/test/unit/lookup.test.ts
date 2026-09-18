@@ -228,7 +228,7 @@ describe("WOFWasmPlaceLookup", () => {
 		try {
 			// Live-demo bug (2026-06-11): a strict placetype='locality' filter excluded the borough, so
 			// "Brooklyn" resolved to Brooklyn Park, MN. The shared expansion (locality → locality +
-			// borough + localadmin) makes the exact-named borough reachable; exact tiering puts it first.
+			// borough + localadmin) makes the exact-named borough reachable. exact tiering puts it first.
 			const matches = await lookup.findPlace({ text: "Brooklyn", placetype: "locality", limit: 5 })
 			expect(matches[0]).toMatchObject({ id: 230, name: "Brooklyn", placetype: "borough" })
 			expect(matches[0]?.exactMatch).toBe(true)

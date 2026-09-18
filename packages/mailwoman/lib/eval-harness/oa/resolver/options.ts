@@ -138,7 +138,7 @@ export interface OAResolverEvalOptions {
 	normalizeCase?: boolean
 	/**
 	 * #42 tri-state pin: force postcodeCountryCoherence on. The library default has been on since 2026-08-05, so this pin
-	 * is now a no-op restatement; it stays because a check leg that says what it graded is the point of a tri-state.
+	 * is now a no-op restatement. it stays because a check leg that says what it graded is the point of a tri-state.
 	 */
 	postcodeCountryCoherence?: boolean
 	/**

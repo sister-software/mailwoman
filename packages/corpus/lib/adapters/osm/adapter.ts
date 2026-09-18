@@ -27,7 +27,7 @@
  *   | JSONL field                                | ComponentTag                                              |
  *   | ------------------------------------------ | --------------------------------------------------------- |
  *   | `number`                                   | `house_number` when designator-shaped (`12`, `14/E`, `B-77`) |
- *   | `street`                                   | `street` (keyword included; affix-relabel splits it)      |
+ *   | `street`                                   | `street` (keyword included. affix-relabel splits it)      |
  *   | `unit`                                     | `unit`                                                     |
  *   | `postcode`                                 | `postcode` when 4–6 digits                                 |
  *   | `city` (tail after the last comma)         | `locality`                                                 |
@@ -192,7 +192,7 @@ export function componentsForOSMRow(row: OSMCorpusRow): CanonicalRow["components
 		components.region = province
 	}
 
-	// A street alone is not an address row; the coarse adapters already teach bare names. A number and a street is one:
+	// A street alone is not an address row. the coarse adapters already teach bare names. A number and a street is one:
 	// 41,000 of Vietnam's 70,069 rows carry nothing above the street, and `568 Đường Điện Biên Phủ` is the line a
 	// person types.
 	if (Object.keys(components).length === 1) return null

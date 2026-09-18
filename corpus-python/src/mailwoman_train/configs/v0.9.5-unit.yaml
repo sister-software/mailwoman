@@ -13,21 +13,21 @@
 #
 # SINGLE VARIABLE: identical to v0.9.3-de-regiontail EXCEPT corpus v0.4.4-unit (= the v0.4.3 base parquet files
 # referenced verbatim + the `synth-unit` overlay parquet file) and `synth-unit: 2.5` in source_weights. The
-# B-unit/I-unit class weights were already 1.5; no schema/model/anchor change.
+# B-unit/I-unit class weights were already 1.5. no schema/model/anchor change.
 #
 # SOURCE PROVENANCE (eval-honesty): the train rows are real non-Vermont US OpenAddresses skeletons with
 # USPS Pub-28 C2 designators INJECTED (OA carries bare unit ids only); the held-out unit eval is real
 # VERMONT OA rows (the corpus defaultHoldout, never trained), measured separately via per-locale-f1 on
 # /tmp/unit-val.jsonl. Geographic split = no leakage. NOTE: designators are injected in both, so the VT
-# eval measures designator RECOGNITION on held-out addresses; the real-in-the-wild designator signal is
+# eval measures designator RECOGNITION on held-out addresses. the real-in-the-wild designator signal is
 # the libpostal/postal arenas (scripts/eval/external-arenas.ts). Read both lenses at the check.
 #
-# PRE-REGISTERED CHECK (DeepSeek-signed; stop at 20k):
+# PRE-REGISTERED CHECK (DeepSeek-signed. stop at 20k):
 #   - `unit` F1 >= 20% (token-level) on the held-out VT unit eval — minimally measurable (was ~0%, but
-#     on 5 golden rows = noise; this is the first real read).
+#     on 5 golden rows = noise. this is the first real read).
 #   - `street` precision >= +1pp vs v0.9.3 — CONFIRMS negative space (unit absorbed street false-positives).
 #   - NO-REGRESSION (all within ~1pp vs v0.9.3): US house_number >=73 / postcode >=80 / locality >=77 /
-#     street >=86; FR comparable per-class floors; DE native postcode >=83 / street >=82; cross_pollution <1%.
+#     street >=86. FR comparable per-class floors. DE native postcode >=83 / street >=82. cross_pollution <1%.
 #   If unit moves but street precision is flat/down: negative space refuted for our model — keep the
 #     unit lift, note the result. If a US/FR/DE regression check trips: lower synth-unit weight (2.5 -> 1.5) + rerun.
 # Measure: per-locale-f1.ts (US/FR + the VT unit eval) + external-arenas.ts (real-designator arenas) +

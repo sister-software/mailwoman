@@ -11,7 +11,7 @@ names exist, and is the version it stages still in the table.
 
 Every check is scoped to a `modal run` command. A recipe header also carries local-CLI commands —
 `python -m mailwoman_train train --config <path>` — whose `--config` takes a filesystem path,
-the opposite of what the launcher takes; scanning the whole file would flag those as broken.
+the opposite of what the launcher takes. scanning the whole file would flag those as broken.
 """
 
 from __future__ import annotations
@@ -89,7 +89,7 @@ def test_the_launcher_is_named_as_a_module(recipe: Path) -> None:
 
     Modal imports a file path as a TOP-LEVEL module with that file's own directory on `sys.path`,
     so `launch` is unimportable and the package's relative imports raise. The failure is loud when
-    it happens, but only after someone has typed the command; this catches the comment instead.
+    it happens, but only after someone has typed the command. this catches the comment instead.
     """
     for arguments in _modal_commands(recipe):
         assert "-m launch.train_remote" in arguments, (
@@ -101,7 +101,7 @@ def test_the_launcher_is_named_as_a_module(recipe: Path) -> None:
 def test_every_named_recipe_exists(recipe: Path) -> None:
     """The launcher joins `--config` onto its own configs directory, so it takes a BARE FILENAME.
 
-    A path there resolves under `configs/` and finds nothing; a deleted recipe fails the same way.
+    A path there resolves under `configs/` and finds nothing. a deleted recipe fails the same way.
     """
     for arguments in _modal_commands(recipe):
         for named in NAMED_CONFIG.findall(arguments):

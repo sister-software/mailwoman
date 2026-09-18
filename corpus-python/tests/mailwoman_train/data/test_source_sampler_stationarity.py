@@ -141,7 +141,7 @@ def test_positive_weight_source_with_zero_selectable_rows_raises(tmp_path: Path)
 
 def test_source_absent_from_source_weights_raises(tmp_path: Path) -> None:
     """The mirror of the guard above, and the one that was missing. A positive weight with no rows
-    raises; a source with no weight used to be filtered out and logged at INFO as "zero-weighted",
+    raises. a source with no weight used to be filtered out and logged at INFO as "zero-weighted",
     which is what a deliberate zero also says. The shape it hid: a regenerated recipe output takes a version
     suffix in its ``source`` column, the config keeps the old key, and training continues on the
     superseded vintage."""

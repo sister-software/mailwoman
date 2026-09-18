@@ -115,7 +115,7 @@ export async function goldSetSample(
 			sameTaxonomy: sameTax,
 			bothSubpartSameParent: false,
 			// Programmatic heuristic verdict (what an entity-level rule would say, beyond the flagged
-			// subparts): same authorized official ⇒ likely one org; different official + different
+			// subparts): same authorized official ⇒ likely one org. different official + different
 			// specialty ⇒ likely distinct. The whole point is to ADJUDICATE whether this is right.
 			programmaticVerdict: sameAuth ? "same-entity" : "distinct",
 			adjudication: null,

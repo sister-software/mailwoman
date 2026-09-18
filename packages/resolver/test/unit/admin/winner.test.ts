@@ -4,7 +4,7 @@
  * @author Teffen Ellis, et al.
  * @file The two shapes of one ordering must agree.
  *
- *   Result assembly walks a TAG ladder; the eval harnesses sort resolved nodes by PLACETYPE. Both are expressing the
+ *   Result assembly walks a TAG ladder. the eval harnesses sort resolved nodes by PLACETYPE. Both are expressing the
  *   same claim about where a postcode sits, and #1773 is what it cost when they drifted: each harness froze one arm of
  *   a conditional as a constant, so every grader was right on one half of the data and wrong on the other,
  *   unconditionally. The binding assertions below are the ones a constant cannot satisfy.

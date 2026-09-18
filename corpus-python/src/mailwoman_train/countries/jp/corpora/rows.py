@@ -116,7 +116,7 @@ def render_row(
             renderer.put("house_number", hyphen.join(parts) if parts else number)
 
     raw = renderer.raw
-    # Legacy token columns (the char path ignores them; the corpus schema requires them): whitespace
+    # Legacy token columns (the char path ignores them. the corpus schema requires them): whitespace
     # tokens labeled by the span covering their first character — honest at the token grain.
     tokens: list[str] = []
     labels: list[str] = []
@@ -148,7 +148,7 @@ def render_row(
 def available_registers(chome: int | None, number: str, kana: bool = False) -> tuple[str, ...]:
     """Which registers a row can honestly render.
 
-    A row with no chōme has no chōme register to convert; a number that is not a clean part list
+    A row with no chōme has no chōme register to convert. a number that is not a clean part list
     (``362B-2``, ``761乙号-2`` — 103,299 rows) cannot be re-rendered as designators at all, so it
     stays whole-span in its native surface. ``kana`` says whether the municipality has a kana
     reading to render (#2165); without one the kana register is not on offer.

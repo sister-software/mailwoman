@@ -16,7 +16,7 @@
  *   `longitude`), and `min/max` bbox — so a resolve is one statement, no FTS, no join to spr:
  *   SELECT spr_id, name, latitude, longitude, min_lat, ... FROM candidate WHERE name_key = ? AND
  *   country_id = ? AND placetype_id IN (...) AND latitude BETWEEN ... (the bbox clause, optional) ORDER BY
- *   neg_rank ASC LIMIT K; The demo cascade resolves a parsed region first (its bbox), then constrains the locality to
+ *   neg_rank ASC LIMIT K. The demo cascade resolves a parsed region first (its bbox), then constrains the locality to
  *   that bbox; `region_id` (the place's region-tier ancestor) is also carried for a future region
  *   2-step.
  *
@@ -66,7 +66,7 @@ import { resurrectCurrencyHoles } from "#currency-backfill"
 import type { WOFDatabase } from "#schema"
 import { normalizeLocalityForKey } from "#street/normalize"
 
-// The build's contract is this module path; the passes behind it live in `./candidate/`. Re-exported
+// The build's contract is this module path. the passes behind it live in `./candidate/`. Re-exported
 // here so a consumer never has to know which pass owns which name.
 export { stageCountryDisplayNames } from "#candidate/country-display-names"
 export { GLOSS_EXCLUDED_PLACETYPES, GLOSS_KEY_THRESHOLD } from "#candidate/name-roles"
@@ -90,7 +90,7 @@ export interface BuildCandidateOptions {
 	/**
 	 * Optional postcode extracts (`spr` rows with `placetype='postalcode'` + real coords, e.g. postalcode-us.db) — folded
 	 * in as `postalcode` candidate rows so `findPlace(postalcode)` resolves a ZIP directly (the demo's primary postcode
-	 * path; the postcode-*.bin anchor stays the fallback). Matches the slim wof-hot.db, which took one such postcode DB.
+	 * path. the postcode-*.bin anchor stays the fallback). Matches the slim wof-hot.db, which took one such postcode DB.
 	 *
 	 * Each extract's `names` table is folded in too (#1495) — that's where the GeoNames delivery-city names live
 	 * ("Brooklyn" for 11201), and they were previously reachable only through FTS.
@@ -102,14 +102,14 @@ export interface BuildCandidateOptions {
 	 * candidate rows with UNMEASURED population (`neg_rank 0`: a extract row ranks behind any populated namesake and wins
 	 * only where its key is the answer). Each extract's `names` table folds as aliases, `is_primary = 0`, same as the
 	 * delivery-city pass. An extract whose `ancestors` table names an admin region for a row gives that row the region's
-	 * scope (`region_id`) plus closure rows for the region and the region's own chain above it; an extract without one
+	 * scope (`region_id`) plus closure rows for the region and the region's own chain above it. an extract without one
 	 * stays unscoped, as before.
 	 */
 	localities?: string[]
 	/**
 	 * Optional WOF admin database carrying a `place_importance` table — the source of the `importance` column (#28), the
 	 * toponym-fame prior that decides the bare-city-name class. Joined by `(name_key, country, placetype)` + nearest
-	 * centroid, not by id; see `candidate-importance.ts` for why the id join silently drops the foreign homonyms the
+	 * centroid, not by id. see `candidate-importance.ts` for why the id join silently drops the foreign homonyms the
 	 * prior exists to demote.
 	 *
 	 * Omit it and every row's `importance` is NULL — unmeasured, which is what the consumer's positive-evidence-only rule
@@ -234,7 +234,7 @@ export async function buildCandidateTable(opts: BuildCandidateOptions): Promise<
 	await createCandidateStagingTables(kdb)
 
 	// Build compact country and placetype code maps for clustered keys.
-	// assigned here; the rows are bulk-inserted via kdb once the passes have discovered every code. ---
+	// assigned here. the rows are bulk-inserted via kdb once the passes have discovered every code. ---
 	const ccodes = new Map<string, number>()
 	const ptcodes = new Map<string, number>()
 
@@ -314,7 +314,7 @@ export async function buildCandidateTable(opts: BuildCandidateOptions): Promise<
 
 	// The hot path — millions of clustered rows. Kept a single positional prepared statement (the fastest
 	// node:sqlite insert) rather than a per-row query builder. Placeholders come from CANDIDATE_COLUMNS so
-	// the column COUNT can't drift; the positional run() args below must stay in CANDIDATE_COLUMNS order.
+	// the column COUNT can't drift. the positional run() args below must stay in CANDIDATE_COLUMNS order.
 	const insStage = kdb.prepare(`INSERT INTO cand_stage VALUES (${CANDIDATE_COLUMNS.map(() => "?").join(", ")})`)
 
 	// Stage primary names and attributes reused by later alias passes.
@@ -340,7 +340,7 @@ export async function buildCandidateTable(opts: BuildCandidateOptions): Promise<
 		// A zero population on a COUNTRY row is a WOF absence artifact, never a real zero — 147 of 237
 		// primary country records carried none (measured 2026-08-18, #1650), which ranked those nations
 		// below any namesake hamlet in every prominence race ("Georgia" → Georgia VT). The codex table is
-		// the secondary source; a country absent from it too stays at zero honestly.
+		// the secondary source. a country absent from it too stays at zero honestly.
 		// The join carries NULL through rather than COALESCE-ing it to zero: `place_population`'s minimum is 1 over
 		// 1,520,369 rows, so an absent row is the only way a place has no number, and 3,275,445 of the 4,770,674 current
 		// places are absent from it. Every reader already treats null and a non-positive alike, so this changes no

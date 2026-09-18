@@ -11,7 +11,7 @@
  *
  *   Dynamic imports stay external, which is webpack's view of a `webpackIgnore` import and the view every bundler gets
  *   once the imported specifier carries a `browser` condition. A dynamic import of a builtin is tolerated only when a
- *   row lists it with a reason; the list is the whole allowance, and a new one is an error until it is removed or
+ *   row lists it with a reason. the list is the whole allowance, and a new one is an error until it is removed or
  *   listed.
  *
  *   Resolution goes to `out/`, which is what a consumer bundles, so the check refuses an uncompiled tree rather than
@@ -47,7 +47,7 @@ export interface BundleRow {
 	external?: readonly string[]
 	/**
 	 * Follow dynamic imports into the bundle instead of leaving them external. A row that asserts what a lazily imported
-	 * specifier resolves to under the row's conditions needs this; every other row grades the static graph alone.
+	 * specifier resolves to under the row's conditions needs this. every other row grades the static graph alone.
 	 */
 	followDynamicImports?: boolean
 	allowedDynamicImports?: readonly AllowedDynamicImport[]
@@ -148,7 +148,7 @@ const BUNDLE_ROWS: readonly BundleRow[] = [
 
 /**
  * The bare builtin names a dependency reaches without the `node:` prefix (graceful-fs, spliterator and unzipper do). A
- * `node:`-prefixed path is recognised by prefix; this list only has to cover the unprefixed spellings.
+ * `node:`-prefixed path is recognised by prefix. this list only has to cover the unprefixed spellings.
  */
 const BARE_BUILTINS = new Set([
 	"assert",
@@ -235,7 +235,7 @@ async function bundleRow(row: BundleRow, repoRoot: string): Promise<Metafile | D
 
 		return result.metafile
 	} catch (error) {
-		// A static reach past a builtin can fail to RESOLVE under the browser platform before a metafile exists; each
+		// A static reach past a builtin can fail to RESOLVE under the browser platform before a metafile exists. each
 		// resolution error is the finding, named by the file that made the import.
 		const failure = error as BuildFailure
 

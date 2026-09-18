@@ -5,12 +5,12 @@
  *
  *   Reduce the saved Overpass response to one point per `BT` unit postcode.
  *
- *   The response is a flat list of OSM elements that each CLAIM a postcode on an address; the database needs one
+ *   The response is a flat list of OSM elements that each CLAIM a postcode on an address. the database needs one
  *   coordinate per postcode. So this module does three things and counts everything it drops:
  *
  *   1. **Validate** against the BT unit shape. OSM tag values are free text typed by humans, and this
  *      acquisition contains exactly one value that is not a postcode (`"BT36 4RU,"` — a trailing comma).
- *      One in 12,327 is not a reason to skip validation; it is the reason to have it, because the failure
+ *      One in 12,327 is not a reason to skip validation. it is the reason to have it, because the failure
  *      mode of accepting it is a searchable place named after a typo.
  *   2. **Normalize** under the #920 name law — uppercase, single-space display form, and the
  *      space-stripped form as the lookup name. See `normalizePostcodeName`.

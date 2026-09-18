@@ -111,7 +111,7 @@ describe("diffGeocode", () => {
 	})
 
 	it("keeps a LOST coordinate distinct from a zero-kilometre move", () => {
-		// Undefined distance and zero distance are different events; collapsing them is the meaning-of-zero mistake.
+		// Undefined distance and zero distance are different events. collapsing them is the meaning-of-zero mistake.
 		const node = tree(["locality", "London", 13, 19, 0.9, "wof:101750367", 51.5, -0.12, 2])
 
 		const diff = diffGeocode(

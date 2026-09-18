@@ -6,7 +6,7 @@
  *   `runPipeline` — the runtime coordinator that composes all six stages.
  *
  *   Generic over stage implementations (see `types.ts::RuntimePipelineStages`). Each stage is
- *   injected; the coordinator handles composition, timing, fast-path routing, and graceful
+ *   injected. the coordinator handles composition, timing, fast-path routing, and graceful
  *   degradation when stages are absent.
  *
  *   Implementation contract per `docs/engineering/reference/STAGES.md`.
@@ -50,7 +50,7 @@ const SHORT_CIRCUIT_MAX_LOCALITY_LENGTH = 30
 
 /**
  * Whether a QueryShape known-format name names a postcode shape. `@mailwoman/query-shape` owns the format table and its
- * naming convention — `us_zip`, `us_zip4`, or `<cc>_postcode` — and its test pins every table entry to that convention;
+ * naming convention — `us_zip`, `us_zip4`, or `<cc>_postcode` — and its test pins every table entry to that convention.
  * this package cannot depend on query-shape, so it reads the convention rather than a copied list. The copied list it
  * replaces held seven of the table's twelve names, so a Dutch, Czech, Slovak, Swedish or Greek postcode passed the
  * query-shape and kind-classifier checks and missed this pipeline's own.
@@ -87,7 +87,7 @@ const HARD_PLACE_COUNTRY_MIN_CONF = 0.9
  * table carries the per-country promotion-eval verdicts + the measured rates (the numbers that used to be trivia in
  * this comment), and a loaded artifact's derived safelist (`resolver.artifactCoverage.hardCountrySafelist`) takes
  * precedence over this constant. The measured record lives in `mailwoman/gazetteer-pipeline/coverage-manifest.ts`
- * (MEASURED_COUNTRY_COVERAGE — grow that at promotes; it updates the artifact at rebuild). Precedence: per-call
+ * (MEASURED_COUNTRY_COVERAGE — grow that at promotes. it updates the artifact at rebuild). Precedence: per-call
  * `PipelineOpts.hardCountrySafelist` (the eval's instrument, measures unrestricted to grow the list) → the loaded
  * artifact's manifest → this constant. Historical receipts now recorded structurally in MEASURED_COUNTRY_COVERAGE:
  * US/FR/DE 100, ES 99.8, NL 97.3, IT 96.8 (in); FI 69.5, PL 77.8 (measured, out); GB + CA at the #928 promote
@@ -290,7 +290,7 @@ function buildFastPathTree(text: string, kind: QueryKindResult, shape: QueryShap
  * 2. Compute QueryShape (or empty)
  * 3. `@mailwoman/locale-hint` (or caller-trust)
  * 4. Kind classifier (or default structured_address)
- * 5. Branch: fast-path → resolver; full → classifier → resolver
+ * 5. Branch: fast-path → resolver. full → classifier → resolver
  *
  * Per-stage timing recorded on `result.timing`. Fast-path stages are absent from the timing map.
  */
@@ -334,7 +334,7 @@ export async function runPipeline(
 			// soft posterior alone can't move a LOW-population place (a FI town loses to a high-pop namesake
 			// even when FI is pinned); the hard filter does. Three conditions: confidence (ambiguous DK↔NO stay
 			// soft), the safelist (only well-covered countries — where a miss is a genuine non-match, not a
-			// coverage gap — hard-filter; the low-coverage tail keeps its recall on the soft path), and the
+			// coverage gap — hard-filter. the low-coverage tail keeps its recall on the soft path), and the
 			// caller's own hardCountry/defaultCountry is never overwritten. Safelist precedence: the per-call
 			// `hardCountrySafelist` override (the eval measures unrestricted to grow it) → the loaded gazetteer
 			// artifact's own coverage manifest → the code-constant fallback inside hardCountryFor.
@@ -453,8 +453,8 @@ export async function runPipeline(
 	}
 
 	// Full pipeline.
-	// Stage 2.7 — phrase grouper. Optional injection; runs when wired. Proposals flow forward to
-	// stages 3 + 5 (today: surfaced on the result; tomorrow: passed in as classifier conditioning).
+	// Stage 2.7 — phrase grouper. Optional injection. runs when wired. Proposals flow forward to
+	// stages 3 + 5 (today: surfaced on the result. tomorrow: passed in as classifier conditioning).
 	let phraseProposals: PhraseProposal[] = []
 
 	if (stages.groupPhrases) {
@@ -475,7 +475,7 @@ export async function runPipeline(
 			normalizeCase: opts?.normalizeCase,
 			placetypePair: opts?.placetypePair,
 			streetMorphology: stages.streetMorphology,
-			// Decision A: explicit caller register wins; otherwise the kind verdict decides. Never case-keyed.
+			// Decision A: explicit caller register wins. otherwise the kind verdict decides. Never case-keyed.
 			inputMode: opts?.inputMode ?? deriveInputMode(kind.kind),
 		})
 
@@ -537,7 +537,7 @@ function throwIfAborted(opts?: PipelineOpts): void {
  *
  * The wrappers below all call this instead of `catch {}`. A bare `catch {}` is what made a classifier crash
  * indistinguishable from a clean no-match (#40 / mailfail finding 4) — the tree came back empty, the grouper-audit
- * refilled it from rule-based proposals, and the caller saw a tidy parse. Degrading is still the right behavior; doing
+ * refilled it from rule-based proposals, and the caller saw a tidy parse. Degrading is still the right behavior. doing
  * it silently was not.
  */
 function recordFault(faults: PipelineFault[], stage: PipelineFaultStage, cause: unknown): void {
@@ -576,7 +576,7 @@ async function safeClassify(
 
 	try {
 		// Postcode regex repair on by default (v0.7 #35, operator-signed). #690 normalizeCase forwards as-is —
-		// default-ON at the classifier since #895 (unset runs it; explicit false pins the raw-case parse).
+		// default-ON at the classifier since #895 (unset runs it. explicit false pins the raw-case parse).
 		// Word-consistency heal on by default (2026-07-15): arbitrates intra-word tag disagreement only, with the
 		// punctuation-separator + byte-fallback conditions — clean win across golden us/fr/adversarial + parity floors.
 		// Semantics in neural/word-consistency.ts.
@@ -669,7 +669,7 @@ const PHRASE_KIND_TO_TAG: ReadonlyMap<string, ComponentTag> = new Map([
  *
  * The audit once took a classifier top-k and deferred to it on an orphaned span, and once suppressed a duplicate
  * singleton tag. Both existed for the joint-reconcile path, which fed the only top-k that ever reached here and was
- * removed in #1749; on the surviving argmax path the parameter was always `undefined`, so neither branch could fire.
+ * removed in #1749. on the surviving argmax path the parameter was always `undefined`, so neither branch could fire.
  * Removed rather than left as unreachable code — the #425 reasoning they encoded is in the retirement report.
  */
 export function grouperAudit(tree: AddressTree, proposals: PhraseProposal[], text: string): AddressTree {

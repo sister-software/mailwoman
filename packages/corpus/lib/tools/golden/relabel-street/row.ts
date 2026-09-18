@@ -35,7 +35,7 @@
  *   - **street type + post-directional** — the last word is a directional and the one before it is a
  *       Pub-28 suffix: "Pennsylvania Avenue NW" → `street: "Pennsylvania"`,
  *       `street_suffix: "Avenue NW"` (347 rows). The post-directional joins the suffix rather than
- *       becoming a tag of its own, because that is what the corpus adapter emits; there is no
+ *       becoming a tag of its own, because that is what the corpus adapter emits. there is no
  *       `street_postfix` tag to move it to.
  *   - **everything else is left folded** and reported. In particular a bare post-directional tail
  *       ("Seymour East", "BROADWAY N" — 16 rows) is not split: a directional is not a Pub-28 suffix,
@@ -69,7 +69,7 @@ import { escapeRegExp } from "@mailwoman/core/strings/regexp"
 
 /**
  * A golden-set row, as stored one-per-line in `us.jsonl` / `fr.jsonl` / `adversarial.jsonl`. Only the fields this tool
- * reads are modeled; every other key rides through untouched.
+ * reads are modeled. every other key rides through untouched.
  */
 export interface GoldenStreetRow {
 	raw: string
@@ -147,7 +147,7 @@ interface TailSplit {
 
 /**
  * Split `s` at its last whitespace run, returning the three pieces verbatim. Null when there is no interior whitespace,
- * when the head would be empty, or when `s` carries leading/trailing whitespace (a golden row is stored trimmed; an
+ * when the head would be empty, or when `s` carries leading/trailing whitespace (a golden row is stored trimmed. an
  * untrimmed one is reported rather than silently normalized).
  */
 function splitLastWord(s: string): TailSplit | null {

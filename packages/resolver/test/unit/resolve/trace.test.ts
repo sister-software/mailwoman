@@ -110,7 +110,7 @@ describe("resolver-interior trace (#1721)", () => {
 		const canada = localityRecord!.candidates.find((c) => c.country === "CA")
 		const yorkshire = localityRecord!.candidates.find((c) => c.country === "GB")
 
-		// The backend's own order put the populous namesake first; the fame key flipped them. The rank
+		// The backend's own order put the populous namesake first. the fame key flipped them. The rank
 		// vector records both facts, which is the whole point.
 		expect(canada?.ranks["initial"]).toBe(1)
 		expect(yorkshire?.ranks["initial"]).toBe(2)

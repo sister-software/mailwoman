@@ -22,7 +22,7 @@
  *   flat streaming pass with no `Map` keyed by `provider_id`, no dedup, and no last-wins — every row in
  *   the file is yielded exactly once, in file order. A `provider_id` appearing on N rows yields N
  *   {@linkcode ProviderListRow}s, full stop. The crosswalk graph (`filer.db`) is where that cardinality gets
- *   to mean something; collapsing it here would be unrecoverable downstream.
+ *   to mean something. collapsing it here would be unrecoverable downstream.
  *
  *   `frn` is parsed through {@linkcode toFRN} (decision 3's zero-padded 10-digit branded string). Unlike
  *   `Form499Row.frn`, this field is not nullable: the provider list — unlike a 499 filing — has no
@@ -133,7 +133,7 @@ function toProviderListRow(
  * physical lines — a line reader splits a quoted `holding_company` containing a newline into two broken rows, and the
  * column-count check below then rejects both. The file is never read into memory whole. Yields every row as a typed
  * {@linkcode ProviderListRow}. The first non-blank line is read as the header and used to locate the
- * `frn`/`provider_id`/`holding_company` columns by name; a header missing any of the three throws immediately. A data
+ * `frn`/`provider_id`/`holding_company` columns by name. a header missing any of the three throws immediately. A data
  * row whose column count doesn't match the header's throws immediately, naming `csvPath` and the 1-indexed line number
  * (decision 8) — no partial/truncated row is ever silently yielded. A blank line is skipped rather than treated as
  * malformed.

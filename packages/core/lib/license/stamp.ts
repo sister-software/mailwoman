@@ -9,7 +9,7 @@
  *   and every stamped output agree on the branch by construction.
  *
  *   The stamp carries no licensee and no key id. A deployment serving the public must not carry its operator's
- *   commercial relationship in every response; the doctor prints those two locally. It is offline: the well-known
+ *   commercial relationship in every response. the doctor prints those two locally. It is offline: the well-known
  *   register is the doctor's freshness check, not a per-process network call.
  */
 
@@ -60,7 +60,7 @@ function noticeSentence(license: string, expiredOn?: string): string {
 
 /**
  * Build the stamp. `key` is the offline verification of the configured key, or absent when none is configured. The
- * branch comes from `appliedLicenseBranch`, the function the doctor calls too; the stamp passes no publication because
+ * branch comes from `appliedLicenseBranch`, the function the doctor calls too. the stamp passes no publication because
  * it is offline by design.
  */
 export function buildEngineStamp(input: {
@@ -82,7 +82,7 @@ export function buildEngineStamp(input: {
 
 /**
  * The stderr notice: two lines, or nothing when the commercial branch applies. An expired key is the one reading whose
- * cause the notice states, because the date tells the operator what to do; every other failed reading leaves the reason
+ * cause the notice states, because the date tells the operator what to do. every other failed reading leaves the reason
  * to `mailwoman doctor`.
  */
 export function licenseNoticeLines(stamp: EngineStamp, key?: LicenseKeyVerification): [string, string] | undefined {

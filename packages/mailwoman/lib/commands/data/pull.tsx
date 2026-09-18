@@ -30,7 +30,7 @@
  *
  *   A successful `candidate` pull prints the `export MAILWOMAN_CANDIDATE_DB=...` line `mailwoman
  *   doctor` used to be the only place showing — candidate.db resolution is env-restricted
- *   (`resolver-backend.ts`'s `resolveCandidateDBPath`), so writing the file alone doesn't wire it up;
+ *   (`resolver-backend.ts`'s `resolveCandidateDBPath`), so writing the file alone doesn't wire it up.
  *   this is the ledgered product finding (FR addresses geocoding to the US on the FTS default) whose
  *   fix path is the candidate backend, so the env line has to be impossible to miss.
  */
@@ -114,7 +114,7 @@ export const spec = {
  * The sidecar GET carries the same `Range: bytes=0-` header `downloadToDisk` needs (see that function's docstring for
  * the measured WAF behavior) — a `.md5` sidecar is a tiny text object on the same bucket, and nothing rules out the
  * WAF's ranged-request rule applying to it too. No bundle publishes one today (`data-bundles.ts`'s docstring), so this
- * path is UNEXERCISED against live data; a failure here is loud (`console.error`), not swallowed, so the day a sidecar
+ * path is UNEXERCISED against live data. a failure here is loud (`console.error`), not swallowed, so the day a sidecar
  * ships, a wrong guess about which requests need `Range` shows up immediately instead of silently degrading forever.
  */
 async function probeRemote(

@@ -82,7 +82,7 @@ describe("runWorktreeArm — a ref arm runs THAT ref's source", () => {
 	it("answers from the committed source, not the working tree", async () => {
 		const root = await fakeRepo("committed")
 
-		// Edit without committing. A ref arm must not see this; that is the whole distinction it sells.
+		// Edit without committing. A ref arm must not see this. that is the whole distinction it sells.
 		await writeLocalTextFile(
 			`export async function createGeocodeSession() {
 				return { geocode: async () => ({ result: { lat: 9, lon: 9, resolution_tier: "uncommitted", components: {} } }), [Symbol.dispose]: () => {} }
@@ -152,7 +152,7 @@ describe("runWorktreeArm — cleanup", () => {
 
 		const listed = runFileSync("git", ["worktree", "list"], { cwd: root, encoding: "utf8" })
 
-		// The main checkout is always listed; a leaked worktree would be a second line.
+		// The main checkout is always listed. a leaked worktree would be a second line.
 		// oxlint-disable-next-line mailwoman/prefer-spliterator -- the test creates at most one extra worktree
 		expect(listed.trim().split("\n")).toHaveLength(1)
 	})
@@ -166,7 +166,7 @@ describe("runWorktreeArm — cleanup", () => {
 
 		expect(runFileSync("git", ["status", "--porcelain"], { cwd: root, encoding: "utf8" })).toBe(before)
 		expect(runFileSync("git", ["rev-parse", "HEAD"], { cwd: root, encoding: "utf8" })).toBe(head)
-		// A stash-based arm would have moved these; a worktree cannot, which is why it is a worktree.
+		// A stash-based arm would have moved these. a worktree cannot, which is why it is a worktree.
 		expect(await Globerator.from("*", { cwd: root, absolute: false, onlyFiles: false }).toArray()).toContain("packages")
 	})
 })

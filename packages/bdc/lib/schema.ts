@@ -10,12 +10,12 @@
  *   per-provider CSV (see `sdk/parsing.ts`) — NOT one row per (block, provider, technology) triple: when
  *   two Broadband Serviceable Locations in the same block file different speeds/flags for the same
  *   provider/technology, both rows survive `build-bdc.ts`'s materialize-time collapse (see that file's
- *   docstring; accepted FCC filing behavior, not a bug). `bdc_provider` is a small dictionary
+ *   docstring. accepted FCC filing behavior, not a bug). `bdc_provider` is a small dictionary
  *   keyed on `provider_id`, populated by a later registry-join task — decision 8 keeps FRN/brand/
  *   holding-company resolution out of 2a's scope. The DB also embeds the layer-contract tables from
  *   `@mailwoman/core/layers` (manifest tier `shipped`, license `public-domain` — FCC BDC block-level
  *   availability data, at the granularity this layer ships, is US government public-domain data, not
- *   redistribution-restricted; the CostQuest Fabric boundary this workspace never crosses is the
+ *   redistribution-restricted. the CostQuest Fabric boundary this workspace never crosses is the
  *   licensing edge, see `bdc/README.md` — spine `h3` res 9 for availability rows, res 6 for coverage
  *   cells, matching poi.db's convention).
  *
@@ -42,7 +42,7 @@ import type { Kysely } from "kysely"
 /**
  * One availability row from the FCC's per-provider BDC CSV. In the default build mode this is one row per DISTINCT
  * (geoid, provider_id, technology_code, speeds, low_latency, business_residential_code) tuple — NOT one row per (block,
- * provider, technology) triple; a triple whose BSLs carry differing speed tiers keeps multiple rows here (see
+ * provider, technology) triple. a triple whose BSLs carry differing speed tiers keeps multiple rows here (see
  * `build-bdc.ts`'s docstring).
  */
 export interface BDCAvailabilityTable {
@@ -78,7 +78,7 @@ export interface BDCAvailabilityTable {
  *
  * **Decision 6 — this table is an explicitly LOSSY denormalization, not the source of truth.** `provider_id` is the PK
  * (one row per provider), but the FCC's BDC provider list lets one `provider_id` carry MULTIPLE `frn` values — and
- * conflicting `holding_company` strings — across its rows (`parseProviderList` preserves every one of them; see
+ * conflicting `holding_company` strings — across its rows (`parseProviderList` preserves every one of them. see
  * `filer/sdk/provider-list.ts`). A single-row-per-provider table cannot express that cardinality. `filer.db`
  * (`@mailwoman/filer`) is the source of truth: it retains every `provider_id`↔`frn` (and
  * `provider_id`↔`holding_company_name`) edge, never folded or last-wins. When `bdc.db` is built with

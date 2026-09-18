@@ -13,10 +13,10 @@
  *     against the public bucket 403s) — see `resolver-backend.ts`'s `buildNoGazetteerMessage`.
  *   - `libpostal` needs only the model weights — no gazetteer, no data pull; `serve` must bind and answer
  *     `GET /` with 200 (the "lowest-dependency drop-in" the README claims). On a CONSUMER install the published
- *     package ships the binaries, so a bare data root is the complete cold start; that half of the claim belongs
+ *     package ships the binaries, so a bare data root is the complete cold start. that half of the claim belongs
  *     to the clean-install smoke. IN-REPO the workspace package is bare by design (#1733: `link-dev-weights`
  *     populates the data-root overlay, never the tracked package), so the test seeds its scratch root's overlay
- *     from whatever weights this environment resolves and proves the data-independence half; a box that resolves
+ *     from whatever weights this environment resolves and proves the data-independence half. a box that resolves
  *     no weights at all skips with the resolver's own message rather than failing on its environment.
  *   - `mcp` speaks JSON-RPC over stdio rather than HTTP, and loads its deps LAZILY, so its cold start fails
  *     inside a tool call rather than at boot: the server must still connect and list its tools with no data at
@@ -31,7 +31,7 @@
  *   These assertions run in every environment and download nothing (a bare `mkdtemp` data root, never
  *   populated). The full loop — actually `data pull candidate` (~1.65 GB) and confirm photon/nominatim also
  *   bind + answer 200 against it, plus the Paris/Texas routing retest (#task-7's carry-forward finding: the FTS
- *   default backend misroutes a French address to its US homonym; the candidate backend does not) — is conditional
+ *   default backend misroutes a French address to its US homonym. the candidate backend does not) — is conditional
  *   behind `$MAILWOMAN_COLD_START_FULL=1` (unset in CI). Run it manually once per change to this cold-start
  *   path; `$MAILWOMAN_COLD_START_DATA_ROOT` lets a repeat local run reuse an already-pulled data root instead of
  *   re-downloading.
@@ -88,7 +88,7 @@ const PREFLIGHT_TIMEOUT_MS = 30_000
 
 /**
  * Wall-clock budget for a server to bind and answer its health route. Model load (ONNX + tokenizer +, for
- * photon/nominatim, opening the resolver backend) is the dominant cost; measured under 3 s warm on an idle box, so 30 s
+ * photon/nominatim, opening the resolver backend) is the dominant cost. measured under 3 s warm on an idle box, so 30 s
  * leaves comfortable margin under load.
  */
 const HEALTHY_TIMEOUT_MS = 30_000
@@ -101,7 +101,7 @@ const HEALTHY_TIMEOUT_MS = 30_000
 const TEST_TIMEOUT_MS = 150_000
 
 /**
- * The `data pull candidate` step in the conditional suite streams ~1.65 GB; this budget is network-bound, not
+ * The `data pull candidate` step in the conditional suite streams ~1.65 GB. this budget is network-bound, not
  * CPU-bound.
  */
 const PULL_TIMEOUT_MS = 600_000
@@ -350,9 +350,9 @@ describe.skipIf(!hasLibpostalCLI)("mailwoman-libpostal serve — cold start, zer
 
 			// The claim under test is "weights only, zero data artifacts" — not "the workspace package carries
 			// weights". A CONSUMER install satisfies the weights half natively (the published package ships the
-			// binaries; the clean-install smoke owns that claim). A dev checkout deliberately does not (#1733:
+			// binaries. the clean-install smoke owns that claim). A dev checkout deliberately does not (#1733:
 			// `link-dev-weights` populates the DATA-ROOT overlay, never the tracked package — the YN0035/worktree
-			// hazards), so seed the scratch root's overlay from whatever this environment resolves; the child then
+			// hazards), so seed the scratch root's overlay from whatever this environment resolves. the child then
 			// proves the data-independence half on every box, through the same overlay rung a dev run uses.
 			const { resolveWeights } = await import("@mailwoman/neural/weights")
 
@@ -464,7 +464,7 @@ describe.skipIf(!isFull || !hasMailwomanCLI || !hasPhotonCLI || !hasNominatimCLI
 			"mailwoman data pull candidate + photon/nominatim serve bind and answer 200; Paris routes to France not Texas",
 			async () => {
 				const reuseRoot = $public.MAILWOMAN_COLD_START_DATA_ROOT
-				// A `--data-root` supplied through the environment is the CALLER's and is never removed; the one this
+				// A `--data-root` supplied through the environment is the CALLER's and is never removed. the one this
 				// test makes is registered on the file's fixture stack by `freshDataRoot`.
 				const dataRoot = reuseRoot ?? (await freshDataRoot())
 

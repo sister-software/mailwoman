@@ -3,7 +3,7 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Reliability curves compare reported confidence with observed correctness. This module is pure;
+ *   Reliability curves compare reported confidence with observed correctness. This module is pure.
  *   surface-specific confidence collection lives in `reliability-surfaces.ts`.
  */
 
@@ -118,7 +118,7 @@ export function reliabilityCurve(sample: readonly Observation[], binCount: numbe
 /**
  * What a confidence floor at each threshold would actually buy.
  *
- * The curve says whether the number is honest; this says what to do with it, and they are different questions — a
+ * The curve says whether the number is honest. this says what to do with it, and they are different questions — a
  * well-calibrated surface can still have no threshold worth setting, because the admitted-error count at every useful
  * recall is too high. Both columns of the trade are reported: a precision figure alone hides the correct answers the
  * check throws away.
@@ -154,7 +154,7 @@ export interface ErrorClass {
  * downstream resolve to the wrong answer, while a rejection only forgoes the narrowing — so the per-class rate above
  * the eval is the number that decides whether the eval is safe, and the overall confusion matrix is not.
  *
- * Requires `expected` and `predicted` strata; a surface without them (the decode path grades a value against a label
+ * Requires `expected` and `predicted` strata. a surface without them (the decode path grades a value against a label
  * and has no second class to name) returns nothing, which is absence and not a clean confusion matrix.
  */
 export function errorClasses(sample: readonly Observation[], threshold: number, limit: number): ErrorClass[] {

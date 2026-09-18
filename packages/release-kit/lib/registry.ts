@@ -5,7 +5,7 @@
  *
  *   The registry of release operations — the only executable entry point of this package, and the file knip treats as
  *   such. An operation that is not listed here is dead code and knip reports it, which is the property the retired
- *   `scripts/**` entry glob could never provide. Adapters (`@mailwoman/ops-cli`, the release MCP) iterate this array;
+ *   `scripts/**` entry glob could never provide. Adapters (`@mailwoman/ops-cli`, the release MCP) iterate this array.
  *   they never import an operation module directly.
  */
 

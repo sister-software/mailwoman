@@ -46,7 +46,7 @@ def main() -> None:
         if junk:
             total_junk[path.name] = junk
         # Also surface non-junk load failures (strict merge raises on the first
-        # unknown key; the Norway guard raises ValueError on retyped keys).
+        # unknown key. the Norway guard raises ValueError on retyped keys).
         try:
             load_config(path)
         except Exception as exc:  # noqa: BLE001 — audit wants every failure class

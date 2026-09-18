@@ -21,7 +21,7 @@ import type { KnownFormat, QueryShapeTokensView as QueryShapeLike } from "@mailw
 import { expect, test } from "vitest"
 /**
  * Build the `SegmentToken[]` for a single segment string the same way `tokenizeSegment` does, but keep it explicit in
- * tests so each token's offsets are visible. `tokenizeSegment` is itself tested directly below; the other rule tests
+ * tests so each token's offsets are visible. `tokenizeSegment` is itself tested directly below. the other rule tests
  * reuse it as the trusted tokenizer.
  */
 const tokens = (segmentBody: string, segmentStart = 0): SegmentToken[] => tokenizeSegment(segmentBody, segmentStart)
@@ -119,7 +119,7 @@ test("scorePostcode: po_box hits are skipped (the kind classifier owns that sign
 		"PO Box 90210"
 	)
 
-	// "PO Box " is 7 chars; the [7,12) substring is the ZIP "90210".
+	// "PO Box " is 7 chars. the [7,12) substring is the ZIP "90210".
 	expect(out.map(summarize)).toEqual([{ body: "90210", start: 7, end: 12, kind: "POSTCODE", confidence: 0.8 }])
 })
 
@@ -145,7 +145,7 @@ test("scoreRegionAbbreviation: tail-of-segment region code scores highest", () =
 
 test("scoreRegionAbbreviation: non-tail region in a non-last segment gets the neutral baseline", () => {
 	const text = "TX 75001"
-	// "TX" followed by an all-digit token (not place-name content) → not suppressed; not at tail; not
+	// "TX" followed by an all-digit token (not place-name content) → not suppressed. not at tail. not
 	// last segment → NEUTRAL_PROPOSAL_CONFIDENCE (0.55).
 	const out = scoreRegionAbbreviation(tokens(text), text, false)
 	expect(out.map(summarize)).toEqual([{ body: "TX", start: 0, end: 2, kind: "REGION_ABBREVIATION", confidence: 0.55 }])
@@ -192,7 +192,7 @@ test("scoreHyphenatedCompound: ZIP+4 single token and double-hyphen edge", () =>
 test("scoreStreetPhrase: house-number + name + suffix excludes the house number and scores 0.9", () => {
 	const text = "350 Fifth Ave"
 	const out = scoreStreetPhrase(tokens(text), text)
-	// #565: the leading all-digit house number is excluded from the span; phrase starts at "Fifth".
+	// #565: the leading all-digit house number is excluded from the span. phrase starts at "Fifth".
 	expect(out.map(summarize)).toEqual([{ body: "Fifth Ave", start: 4, end: 13, kind: "STREET_PHRASE", confidence: 0.9 }])
 })
 
@@ -258,7 +258,7 @@ test("scoreLocalityPhrase: a two-token place name proposes every prefix length",
 
 	// From i=0: len1 "Saint" (not at tail), len2 "Saint Petersburg" (at tail, last segment).
 	// From i=1: len1 "Petersburg" (at tail, last segment).
-	// base 0.55; len2 bonus +0.15; atTail +0.05; atTail&&last +0.1.
+	// base 0.55. len2 bonus +0.15. atTail +0.05. atTail&&last +0.1.
 	expect(out.map(spanShape)).toEqual([
 		{ body: "Saint", start: 0, end: 5, kind: "LOCALITY_PHRASE" },
 		{ body: "Saint Petersburg", start: 0, end: 16, kind: "LOCALITY_PHRASE" },
@@ -281,7 +281,7 @@ test("scoreLocalityPhrase: a leading Romance street prefix is left to scoreStree
 
 test("scoreLocalityPhrase: a known US region name not at segment-tail is penalized −0.2", () => {
 	// "Texas Tower" — "Texas" is a US region name; "Tower" is plain place-name content (not a street
-	// prefix/suffix/particle). From i=0: len1 "Texas" (not at tail) → 0.55 − 0.2 = 0.35; len2 "Texas
+	// prefix/suffix/particle). From i=0: len1 "Texas" (not at tail) → 0.55 − 0.2 = 0.35. len2 "Texas
 	// Tower" (at tail, last) → 0.55 + 0.15 + 0.05 + 0.1 = 0.85. From i=1: len1 "Tower" (at tail, last).
 	const text = "Texas Tower"
 	const out = scoreLocalityPhrase(tokens(text), text, true)
@@ -318,7 +318,7 @@ test("scoreLocalityPhrase: bridges a lowercase place-name particle between capit
 })
 
 test("scoreLocalityPhrase: never proposes a span ending on a connective particle", () => {
-	// "Las Palmas de" — the trailing "de" is a particle; no proposal may end on it.
+	// "Las Palmas de" — the trailing "de" is a particle. no proposal may end on it.
 	const text = "Las Palmas de"
 	const out = scoreLocalityPhrase(tokens(text), text, true)
 	const bodies = out.map((p) => p.span.body)
@@ -337,7 +337,7 @@ test("scoreLocalityPhrase: a stray digit or street suffix stops the run", () => 
 })
 
 test("scoreLocalityPhrase: confidence is capped at 0.95", () => {
-	// A two-token tail-of-last run hits 0.85; engineer a longer run that would otherwise exceed 0.95?
+	// A two-token tail-of-last run hits 0.85. engineer a longer run that would otherwise exceed 0.95?
 	// len2 gives the max single-step bonus (0.15). 0.55 + 0.15 + 0.05 + 0.1 = 0.85 < 0.95, so the cap
 	// is defensive. Confirm no proposal ever exceeds 0.95 for a normal multi-word place name.
 	const text = "Las Palmas de Gran Canaria"

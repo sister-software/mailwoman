@@ -5,14 +5,14 @@
  *
  *   Administrative-boundary extractor — pull one named `boundary=administrative` multipolygon out of a
  *   Geofabrik `.osm.pbf` extract via GDAL/ogr2ogr and hand back its GeoJSON geometry. Mirrors
- *   `extract-poi.ts`'s process-spawn + GeoJSONSeq-over-stdout idiom; the differences are that it keeps the
+ *   `extract-poi.ts`'s process-spawn + GeoJSONSeq-over-stdout idiom. the differences are that it keeps the
  *   GEOMETRY rather than reducing it to a representative point, and that it refuses anything other than
  *   exactly one match.
  *
  *   Why the geometry and not a bounding box: a coverage claim keyed on a rectangle asserts survey over
  *   whatever the rectangle overhangs, and a country/region extract is clipped to a polygon, not a
  *   rectangle. `bboxCoverageCells` in the POI pipeline is correct for the rectangular extracts it was written
- *   for; a named administrative region needs its own outline or the cells along its edge claim coverage
+ *   for. a named administrative region needs its own outline or the cells along its edge claim coverage
  *   the source never had.
  *
  *   Refusing a multi-match is the point, not politeness. `name` is not unique in OSM even within one
@@ -32,12 +32,12 @@ const BOUNDARY_LAYER = "multipolygons"
 /**
  * Same allowlist discipline as `extract-poi.ts`'s `SAFE_TAG_TOKEN`, widened to the characters a real place name carries
  * (`Île-de-France`, `Provence-Alpes-Côte d'Azur`). The value is interpolated into an OGRSQL string literal, so an
- * apostrophe is admissible only because it is doubled below; every other quoting metacharacter is refused outright.
+ * apostrophe is admissible only because it is doubled below. every other quoting metacharacter is refused outright.
  */
 const SAFE_NAME = /^[\p{L}\p{N} '’\-.()/]+$/u
 
 /**
- * `admin_level` is compared as an OGRSQL string literal; OSM only ever carries small integers here.
+ * `admin_level` is compared as an OGRSQL string literal. OSM only ever carries small integers here.
  */
 const SAFE_ADMIN_LEVEL = /^[0-9]{1,2}$/
 

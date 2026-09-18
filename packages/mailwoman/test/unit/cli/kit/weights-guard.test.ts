@@ -4,7 +4,7 @@
  * @author Teffen Ellis, et al.
  *
  *   Pure-implementation tests for the CLI weights guard (plan 3). The interactive component is exercised
- *   live under a pty in the plan's Task-4 verification; here we pin the npm invocation, the probe
+ *   live under a pty in the plan's Task-4 verification. here we pin the npm invocation, the probe
  *   semantics against a cache layout, and the probe's rejection of metadata-only installs.
  */
 

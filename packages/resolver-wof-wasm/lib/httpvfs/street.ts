@@ -7,7 +7,7 @@
  *   `@mailwoman/resolver-wof-sqlite`'s `AddressPointSqliteLookup` (#476) and `StreetInterpolator`
  *   (#483). They run the same SQL + the same shared normalizer (`street-normalize.ts`) as the node
  *   classes, just async over the Comlink-proxied worker's `db.exec` (the demo resolves async on the
- *   main thread; see the architecture spec, 2026-06-14-client-side-geocoder-demo-spec.md). The
+ *   main thread. see the architecture spec, 2026-06-14-client-side-geocoder-demo-spec.md). The
  *   parity preference and range scoping in `HTTPVFSInterpolator` still mirror `StreetInterpolator`
  *   by hand — KEEP THOSE IN LOCKSTEP (the same contract the WOF resolvers hold). The polyline
  *   geometry no longer needs it: both now call `pointAlong` from `@mailwoman/spatial`.
@@ -131,7 +131,7 @@ export interface StreetInterpHit {
 }
 
 /**
- * TIGER-range interpolation — async twin of `StreetInterpolator`. Postcode-scoped; abstains on cross-ZIP ambiguity.
+ * TIGER-range interpolation — async twin of `StreetInterpolator`. Postcode-scoped. abstains on cross-ZIP ambiguity.
  */
 export class HTTPVFSInterpolator {
 	#worker: HTTPVFSDB
@@ -221,7 +221,7 @@ export interface StreetResolution {
 	lon: number
 	tier: "address_point" | "interpolated"
 	/**
-	 * Calibrated uncertainty radius in meters (10 m situs floor; interp = uncertaintyM × the region factor).
+	 * Calibrated uncertainty radius in meters (10 m situs floor. interp = uncertaintyM × the region factor).
 	 */
 	uncertaintyM: number
 }

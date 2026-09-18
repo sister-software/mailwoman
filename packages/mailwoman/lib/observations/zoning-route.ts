@@ -9,7 +9,7 @@
  *   and only where the publisher itself publishes one, its national generic classification carried as a
  *   separate labelled value that never replaces the local code.
  *
- *   THE ROUTE READS; IT NEVER ANSWERS. It takes a finished coordinate and returns a record. Nothing here is
+ *   THE ROUTE READS. IT NEVER ANSWERS. It takes a finished coordinate and returns a record. Nothing here is
  *   consulted while an answer is being chosen, no candidate is read, no result is added, removed or
  *   re-ordered, and no abstain is reached or avoided because of it. A geocode with the route configured is
  *   the same geocode plus one advisory, which is a statement about construction rather than about a
@@ -17,14 +17,14 @@
  *
  *   PRESENCE IS THE SWITCH, AND IT IS A LAYER PATH. There is no boolean: a boolean would make the caller's
  *   factory construct the reader itself and put a sealed layer open on the default construction path. A
- *   session resolves the layer path, opens it if the file is there, and hands the route in; a session that
+ *   session resolves the layer path, opens it if the file is there, and hands the route in. a session that
  *   finds no file hands in nothing and is byte-identical to one built before this route existed.
  *
  *   NO SCENARIO, BUT ALWAYS A JURISDICTION AND A PLAN. The coastal route answers under one of twelve named
  *   scenarios because its product publishes twelve. This product publishes one, so there is no scenario to
  *   name — and there is a JURISDICTION and a PLAN, which are part of the claim rather than parameters of it.
  *   A zone exists inside a named Development Plan or Local Area Plan adopted by a named authority, with a
- *   stated validity window; an observation that dropped either would report a designation nobody could trace
+ *   stated validity window. an observation that dropped either would report a designation nobody could trace
  *   to a plan.
  *
  *   ONLY A DESIGNATION REACHES A CALLER, AND THE SILENCE IS required. There is no absence observation
@@ -75,7 +75,7 @@ export interface ZoningDesignationObservation {
 	 */
 	reading: ZoningReadingKind
 	/**
-	 * Every polygon containing the point. Usually one; several where a Local Area Plan overlays a Development Plan over
+	 * Every polygon containing the point. Usually one. several where a Local Area Plan overlays a Development Plan over
 	 * the same ground, which the publisher issues as two rows.
 	 */
 	designations: ZoningDesignation[]

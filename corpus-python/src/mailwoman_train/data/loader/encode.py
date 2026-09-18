@@ -100,7 +100,7 @@ def resolve_char_mode(cfg_data: DataConfig) -> CharMode | None:
 def load_lexicons(cfg_data: DataConfig) -> Lexicons:
     """Every configured channel input, read once. An absent path leaves its channel at None."""
     # Street-type and locality-surface share the gazetteer lexicon's JSON schema, so they share its
-    # reader; the country lexicon has its own.
+    # reader. the country lexicon has its own.
     from ...features.country_lexicon import load_country_lexicon
     from ...features.gazetteer_anchor import load_gazetteer_lexicon
 
@@ -154,7 +154,7 @@ def encode_char_row(row: dict[str, Any], char: CharMode, label_set: Any) -> Enco
     )
     return EncodedExample(
         # Dummy pad row — the model's use_char_embed branch derives (B, S) from char_ids
-        # and never reads input_ids; the constant row keeps collate/_to_tensor_batch uniform.
+        # and never reads input_ids. the constant row keeps collate/_to_tensor_batch uniform.
         input_ids=[0] * len(enc["attention_mask"]),
         attention_mask=enc["attention_mask"],
         labels=enc["labels"],
@@ -173,7 +173,7 @@ def iter_encoded(
 ) -> Iterator[EncodedExample]:
     """Yield encoded examples, dropping rows whose SP token count exceeds ``max_length``.
 
-    Length-filter rationale: address text is short by nature; long rows are usually adapter
+    Length-filter rationale: address text is short by nature. long rows are usually adapter
     bugs (per Phase 2 §2.3). Cap at the model's ``max_position_embeddings``.
 
     ``tokenizer`` may be None only when ``cfg_data.char_mode != "off"`` — the char path never
@@ -242,7 +242,7 @@ def iter_encoded(
             street_type_lexicon=lexicons.street_type,
             locality_surface_lexicon=lexicons.locality_surface,
             # v0.5.0 char-offset labels (#519): rows from a span-schema parquet file train from the
-            # spans (encode_row builds the per-char label array from them; the token path is the
+            # spans (encode_row builds the per-char label array from them. the token path is the
             # legacy fallback for frozen corpora). encode_row raises on a partial triple.
             span_starts=row.get("span_starts"),
             span_ends=row.get("span_ends"),
@@ -251,7 +251,7 @@ def iter_encoded(
         # Drop rows whose non-padding length exceeds max_length (length filter §2).
         non_pad = sum(enc["attention_mask"])
         if non_pad >= cfg_data.max_length:
-            # Even at exactly max_length we keep — the spec says drop tokens > 128; equality is fine.
+            # Even at exactly max_length we keep — the spec says drop tokens > 128. equality is fine.
             # But hand-curated coarse rows almost never hit this. Track via downstream metrics.
             pass
         yield EncodedExample(

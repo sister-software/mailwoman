@@ -33,7 +33,7 @@
  *   family (ground / basement / numbered / fractional / special / fixed), then — for numbered
  *   designators only — apply the locale's numbering convention. IMDF (Apple's Indoor Mapping Data
  *   Format) is the schema precedent for encoding a level as a signed integer `ordinal` where ground is
- *   always 0; this table supplies the locale-aware mapping from a raw (designator, number) pair into
+ *   always 0. this table supplies the locale-aware mapping from a raw (designator, number) pair into
  *   that same ordinal space.
  *
  *   Data is convention encoded from common postal/building usage, not a single postal authority
@@ -45,7 +45,7 @@
  *
  *   - **Spanish PRINCIPAL / ENTRESUELO**: pre-metric Spanish buildings run BAJO (0) → ENTRESUELO
  *     (~0.5) → PRINCIPAL (1) → PISO 1/2 (2), but the exact offset varies by city and building age.
- *     ENTRESUELO's true position (0.5) isn't representable as an integer ordinal; it floors to 0
+ *     ENTRESUELO's true position (0.5) isn't representable as an integer ordinal. it floors to 0
  *     (grouped with ground) — a documented approximation, not an empirical claim. PRINCIPAL is a
  *     fixed, always-ordinal-1 designator (it names a specific floor by convention, not by a number the
  *     caller supplies).
@@ -58,7 +58,7 @@
  *     guessing.
  *   - **Nordic ground-floor vocabulary**: Danish STUEN/STUEETAGE is a well-attested standard term
  *     (the "st." you see on Danish addresses). Norwegian has no equally standard, universally-agreed
- *     single word for "ground floor" distinct from "1. etasje" in everyday use; GATEPLAN is included
+ *     single word for "ground floor" distinct from "1. etasje" in everyday use. GATEPLAN is included
  *     here for structural parity with the other Nordic tables but is a lower-confidence, regional
  *     inclusion — flagged in-line, not asserted as authoritative.
  *
@@ -124,7 +124,7 @@ export interface LevelDesignatorRow {
 
 /**
  * English (American, British, Canadian, Australian, …) floor/level vocabulary. This is the GENERIC English lexicon for
- * the ordinal-semantics table; it doesn't replace the more detailed per-system lexicons in
+ * the ordinal-semantics table. it doesn't replace the more detailed per-system lexicons in
  * {@link "./us/floor-designator.ts"} (USPS Pub-28 C2) or {@link "./au/level-designator.ts"} (AS 4590.1 / AMAS) — those
  * drive span-proposer/synthesis vocabulary for their own address system. This table exists to answer a narrower
  * question for ANY English-speaking locale: given a designator + number, what ordinal does it name.
@@ -554,7 +554,7 @@ export const LEVEL_ORDINAL_CONVENTIONS: Readonly<Record<string, LevelOrdinalConv
 /**
  * Default convention per language family, used when {@link levelToOrdinal} is given a bare-language locale ("fr" with no
  * country) or a country this table doesn't specifically override. Every entry here follows the
- * continental-European/IMDF convention (ground is its own designator; numbered floors start at 1 for the storey above)
+ * continental-European/IMDF convention (ground is its own designator. numbered floors start at 1 for the storey above)
  * except Japanese, which follows the US/CA convention. English has no family-wide default — American/Canadian and
  * British buildings disagree, so a bare "en" locale intentionally resolves to `undefined` rather than guessing.
  */

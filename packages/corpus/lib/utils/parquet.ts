@@ -7,7 +7,7 @@
  *
  *   Phase 1 (#9) shipped JSONL files + a Python (PyArrow) converter as the path to binary Parquet —
  *   bridging until the JS toolchain caught up. Phase 1.5 (#18 §4) replaced that with a native JS
- *   writer. The build pipeline no longer touches Python at all in its hot path; the only remaining
+ *   writer. The build pipeline no longer touches Python at all in its hot path. the only remaining
  *   Python is the one-shot `train_tokenizer.py` SentencePiece step.
  *
  *   Compression: `SNAPPY`. The plan in #18 §4 specified `zstd`; parquet-wasm supports SNAPPY,
@@ -55,7 +55,7 @@ import type { SplitName } from "#utils/split"
 export const ROW_GROUP_SIZE = 50_000
 
 /**
- * Escape `value` for a single-quoted SQL string literal; the caller supplies the quotes.
+ * Escape `value` for a single-quoted SQL string literal. the caller supplies the quotes.
  */
 export function escapeSQLString(value: string): string {
 	return value.replaceAll("'", "''")
@@ -274,7 +274,7 @@ function normalizeDuckDBValue(value: unknown): unknown {
  * Stream rows from a local Parquet file in DuckDB-managed chunks.
  *
  * DuckDB opens the path itself and exposes its DataChunks through `fetchChunk()`. Rows are converted and yielded one
- * chunk at a time; the complete Parquet file and complete result set are never copied into JavaScript memory.
+ * chunk at a time. the complete Parquet file and complete result set are never copied into JavaScript memory.
  */
 export async function* streamParquetRows<T>(
 	path: string,
@@ -387,7 +387,7 @@ export interface ParquetManifest {
 
 export interface WriteParquetFilesOptions {
 	/**
-	 * Root output directory; corpus version dir is created beneath.
+	 * Root output directory. corpus version dir is created beneath.
 	 */
 	outputDir: PathBuilderLike
 

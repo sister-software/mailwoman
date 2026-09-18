@@ -77,7 +77,7 @@ FIXTURES = [
         ["1600", "Pennsylv", "ania", "Ave", "NW", ",", "Washington", ",", "DC", "20500"],
     ),
     (
-        "accented-fr",  # NFC é — one code unit; offsets address the composed form.
+        "accented-fr",  # NFC é — one code unit. offsets address the composed form.
         "10 Rue de la République, 75008 Paris",
         ["10", "Rue", "de", "la", "République", "75008", "Paris"],
         ["B-house_number", "B-street", "I-street", "I-street", "I-street", "B-postcode", "B-locality"],
@@ -200,7 +200,7 @@ def test_check_b_gazetteer_painting_fires_on_fixtures():
 
 # "P.O. Box 19" — one po_box span over chars [0, 11) (the whole surface). Pieces give each
 # period its own piece: the token path's per-char array has O on the periods (the corpus
-# tokenizer dropped them), so the stream FRAGMENTS; the span path covers them.
+# tokenizer dropped them), so the stream FRAGMENTS. the span path covers them.
 PO_RAW = "P.O. Box 19"
 PO_TOKENS = ["P", "O", "Box", "19"]
 PO_LABELS = ["B-po_box", "I-po_box", "I-po_box", "I-po_box"]

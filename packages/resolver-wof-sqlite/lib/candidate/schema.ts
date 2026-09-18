@@ -6,7 +6,7 @@
  *   Typed schema for the byte-range CANDIDATE gazetteer (`candidate.db`) — the single source of truth
  *   for the columns shared by the BUILDER ({@link buildCandidateTable}) and the READERS (the Node
  *   {@link WOFCandidateTableLookup} + the browser `@mailwoman/resolver-wof-wasm/httpvfs/resolver`). Before this module each
- *   side hand-wrote the column list; a rename in one place broke the other at runtime. Now the
+ *   side hand-wrote the column list. a rename in one place broke the other at runtime. Now the
  *   contract is a Kysely `Database` interface (`new DatabaseClient<CandidateDatabase>(...)` for
  *   typed inserts) plus the table DDL as strings — so a column change is a compile error on every
  *   consumer.
@@ -22,7 +22,7 @@ import type { CapitalTable } from "#capital-schema"
 import type { NameKey } from "#street/normalize"
 
 /**
- * One candidate row. `name_key` + the four small int keys + `neg_rank` + `spr_id` form the clustered primary key; the
+ * One candidate row. `name_key` + the four small int keys + `neg_rank` + `spr_id` form the clustered primary key. the
  * rest is denormalized so a resolve is one probe (no join to `spr`). Coordinates + bbox + name are nullable at the SQL
  * level (a postcode extract row may lack a bbox).
  */
@@ -241,7 +241,7 @@ export async function createCandidateTable(db: Kysely<CandidateDatabase>): Promi
 			"neg_rank",
 			"spr_id",
 		])
-		// `WITHOUT ROWID` has no first-class builder; the raw modifier is the idiomatic fallback.
+		// `WITHOUT ROWID` has no first-class builder. the raw modifier is the idiomatic fallback.
 		.modifyEnd(sql`without rowid`)
 		.execute()
 }

@@ -3,7 +3,7 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   `astrogeology verify --body <moon|mars> [--out <dir>]` — the verify step over a build directory; the logic is
+ *   `astrogeology verify --body <moon|mars> [--out <dir>]` — the verify step over a build directory. the logic is
  *   `verifyBody` in `#build/verify`, which the publish runs too.
  */
 

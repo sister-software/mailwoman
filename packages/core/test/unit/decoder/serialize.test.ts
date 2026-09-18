@@ -135,7 +135,7 @@ describe("decodeAsXML (nested mixed-content)", () => {
 		const xml = decodeAsXML(tree)
 		const openers = [...xml.matchAll(/<([a-z_]+)(?:\s[^>]*)?>/g)].map((m) => m[1])
 		const closers = [...xml.matchAll(/<\/([a-z_]+)>/g)].map((m) => m[1])
-		// Self-closing tags would shorten the closer list; we don't emit any, so they should match.
+		// Self-closing tags would shorten the closer list. we don't emit any, so they should match.
 		expect(openers.toSorted()).toEqual(closers.toSorted())
 	})
 

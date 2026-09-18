@@ -79,7 +79,7 @@ export interface LookupArgs {
 	config?: EngineConfig
 	/**
 	 * `candidate` only — a second candidate.db to run the same queries against, answering both row sets plus a per-query
-	 * delta (rows only one artifact holds; shared rows whose ranking fields moved). The two-artifact probe every staged
+	 * delta (rows only one artifact holds. shared rows whose ranking fields moved). The two-artifact probe every staged
 	 * gazetteer diagnosis previously scripted by hand.
 	 */
 	compareCandidateDB?: string
@@ -303,7 +303,7 @@ const UNAVAILABLE_NOTE =
 	"absence for every query rather than as an unavailable source."
 
 /**
- * The WOF extracts, opened as a set. Unavailable only when no extract opens; a partial set is reported in the notes,
+ * The WOF extracts, opened as a set. Unavailable only when no extract opens. a partial set is reported in the notes,
  * because "three of six extracts" is a different reading of a miss than "all six".
  */
 async function runWOFLookup(args: LookupArgs, dataRoot: string): Promise<LookupResult> {

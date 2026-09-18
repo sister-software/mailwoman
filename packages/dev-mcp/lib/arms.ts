@@ -58,7 +58,7 @@ export interface ExternalArm {
 	engine: ExternalEngine
 	endpoint: string
 	/**
-	 * What the caller believes is running there. Required only when the endpoint will not identify itself; see
+	 * What the caller believes is running there. Required only when the endpoint will not identify itself. see
 	 * `external-arm.ts`'s identity probe for why an unidentified endpoint is refused rather than scored.
 	 */
 	version?: string
@@ -89,7 +89,7 @@ export interface RecordedArm {
  *
  * The kind a source change needs and the other four cannot express. A `mailwoman` arm runs whatever this process
  * imported, so two of them can only differ by CONFIG — which does cover the model, via `weights_cache`, but never the
- * code that loads it; a `recorded` arm replays a past run but cannot produce a new one at an old ref. Neither answers
+ * code that loads it. a `recorded` arm replays a past run but cannot produce a new one at an old ref. Neither answers
  * "what does my edit do", which is the question most maintainer changes are.
  */
 export interface WorktreeArm {

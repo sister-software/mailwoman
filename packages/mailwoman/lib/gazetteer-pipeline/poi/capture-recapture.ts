@@ -145,7 +145,7 @@ export interface CapturePair {
  * completeness — again in the direction that turns a gap into negative evidence.
  *
  * The candidate scan is quadratic in the two inputs. That is deliberate at pilot scale (a few thousand rows a side, a
- * few seconds) and is the wrong shape for a region an order of magnitude larger; the spatial pre-bucket that fixes it
+ * few seconds) and is the wrong shape for a region an order of magnitude larger. the spatial pre-bucket that fixes it
  * belongs with the breadth work, not ahead of the basis review.
  */
 export function matchInventories(
@@ -276,7 +276,7 @@ export function completenessAcrossProtocols(
 			matched,
 			estimate,
 			completeness: second.length / estimate.population,
-			// A degenerate interval (upper <= 0) can only arise from an empty inventory; read it as no evidence.
+			// A degenerate interval (upper <= 0) can only arise from an empty inventory. read it as no evidence.
 			completenessLowerBound: estimate.upper > 0 ? Math.min(1, second.length / estimate.upper) : 0,
 		}
 	})

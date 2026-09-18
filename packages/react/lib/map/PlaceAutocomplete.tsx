@@ -5,7 +5,7 @@
  *
  *   `<PlaceAutocomplete>` — the "Did you mean" suggestion listbox from the demo (`_app.tsx:1394-1418`), as
  *   a dumb presentational unit. It renders the current suggestions with the keyboard-highlighted active
- *   descendant; the state + keyboard nav live in {@link usePlaceAutocomplete}. Renders `null` when there
+ *   descendant. the state + keyboard nav live in {@link usePlaceAutocomplete}. Renders `null` when there
  *   is nothing to suggest, so the row only appears when useful. Wire the ids from the hook so the input's
  *   `aria-controls` / `aria-activedescendant` match this listbox.
  *

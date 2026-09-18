@@ -103,7 +103,7 @@ def test_audit_emitted_count_matches_the_loader_for_an_excluded_source(tmp_path:
     audited_share = report["emitted_level"]["per_source"][EXCLUDED]["emitted_share"]
 
     # The threshold is measured, not chosen. On this corpus the loader emits 0.3650 of the budget from
-    # the excluded source; the repaired audit reports 0.3368 (delta 0.028, the shuffle buffer) and the
+    # the excluded source. the repaired audit reports 0.3368 (delta 0.028, the shuffle buffer) and the
     # pre-#2243 audit reported 0.5100 (delta 0.145, a 40% over-report). 0.05 separates them.
     assert abs(loader_share - audited_share) < 0.05, (
         f"loader emitted {loader_share:.3f} of the budget from {EXCLUDED}, audit reported {audited_share:.3f}"

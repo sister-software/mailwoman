@@ -8,10 +8,10 @@
  *   worse-matching candidate across tiers.
  *
  *   The motivating bug: querying the 2-letter region abbreviation "ME" returned Maine (which has the
- *   exact alias `ME`) and larger-population states that also surfaced as FTS candidates; the
+ *   exact alias `ME`) and larger-population states that also surfaced as FTS candidates. the
  *   additive population boost overcame Maine's text-match edge, so "Portland, ME" resolved its
  *   region to a more-populous wrong state and the locality cascaded with it. Tiering puts exact
- *   name/alias matches in a higher tier; population only orders within a tier.
+ *   name/alias matches in a higher tier. population only orders within a tier.
  *
  *   The population-override is forced deterministically here (large `populationBoost` + a decoy state
  *   with population while Maine has none) rather than relying on the small in-memory fixture's BM25
@@ -39,7 +39,7 @@ interface SeedRegion {
 /**
  * Build a fixture in the production shape: a pre-built `place_population` aux table (no geojson — `build-unified-wof`
  * extracts `wof:population` into this table at ingest), so the population boost is actually active (the plain
- * lookup.test.ts seed has no population path). Opened with `buildFTS: true` by the lookup; the lazy FTS build leaves
+ * lookup.test.ts seed has no population path). Opened with `buildFTS: true` by the lookup. the lazy FTS build leaves
  * the pre-existing `place_population` untouched (it only (re)builds it from geojson, which we don't carry).
  */
 function buildDB(regions: SeedRegion[]): DatabaseClient<WOFDatabase> {
@@ -105,7 +105,7 @@ const REGIONS: SeedRegion[] = [
 	{ id: 2, name: "ME Plains", country: "US", lat: 38.4, lon: -92.5, population: 6_196_156 },
 ]
 
-// Large boost magnitude so the populous decoy's lift dwarfs any BM25 gap; Maine (no population) gets
+// Large boost magnitude so the populous decoy's lift dwarfs any BM25 gap. Maine (no population) gets
 // +0. Makes the tiering-off case reliably pick the populous non-match.
 const POP_DOMINATES: Partial<RankingWeights> = { populationBoost: 1000, populationScaleLog10: 6 }
 
@@ -235,7 +235,7 @@ describe("findPlace — exact-match tiering", () => {
 	})
 
 	// The 48026 rule (proximity bias): two same-name postcode rows on different continents — with
-	// no hints, population-first picks the bigger one; with a bias point near the smaller, the
+	// no hints, population-first picks the bigger one. with a bias point near the smaller, the
 	// prominence sort follows the hint. Soft only: both candidates still return.
 	test("bias re-ranks a cross-country postcode tie; absent bias = population order", async () => {
 		const db = buildDB([

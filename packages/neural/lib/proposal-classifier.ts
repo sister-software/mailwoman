@@ -13,7 +13,7 @@
  *   `wrapLegacyClassifier`.
  *
  *   Per-section calls trade a small amount of context for the uniform `ProposalClassifier` shape.
- *   Addresses inside a section are typically short and the model handles them well; whole-input
+ *   Addresses inside a section are typically short and the model handles them well. whole-input
  *   inference is a future optimization once the policy layer has a way to invoke a classifier "once
  *   per parse" instead of per section.
  */
@@ -72,7 +72,7 @@ export function createNeuralProposalClassifier(cfg: NeuralProposalClassifierConf
 				// Emit a structurally-Span-shaped record. We intentionally avoid `Span.from(...)` here:
 				// the tokenization module performs filesystem-bound module-init (libpostal data dir
 				// scan) which we don't want to force on every consumer of the proposal-classifier. The
-				// solver and policy registry read `start` / `end` / `body` only; if a downstream
+				// solver and policy registry read `start` / `end` / `body` only. if a downstream
 				// consumer needs the full Span behavior (graph membership, classifications, …), it
 				// should re-construct via Span.from(p.span.body, { start: p.span.start }).
 				const span = {

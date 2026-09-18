@@ -33,7 +33,7 @@ export function violationKey(violation: TreeViolation): string {
 
 /**
  * Addresses kept per violation class. Enough to see whether a class is one recurring shape or several unrelated ones,
- * which is the distinction that decides whether it is a single defect; the full list is recoverable by re-running
+ * which is the distinction that decides whether it is a single defect. the full list is recoverable by re-running
  * against a filtered input set.
  */
 const EXAMPLES_PER_CLASS = 5

@@ -6,7 +6,7 @@
  *   Measure the #244 coarse-placer's handling of the Latin-script off-map residual (milestone 3). A
  *   Latin off-map address is handled when the model routes it to `OTHER` or abstains — anything else
  *   is a confident mis-placement onto a wrong (trained) country. Reports handled-rate overall, by
- *   group (indist = held-out rows of trained-OTHER countries; heldout = countries never trained),
+ *   group (indist = held-out rows of trained-OTHER countries. heldout = countries never trained),
  *   and by source country, plus where the misses land. Run baseline (current model) and the M3
  *   retrain through this to read the before/after.
  *

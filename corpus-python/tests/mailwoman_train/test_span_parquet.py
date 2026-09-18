@@ -1,7 +1,7 @@
 """Parquet round-trip check for the v0.5.0 span columns (#519, rebuild-plan step 1).
 
 The recipe-output pipeline is JSONL (builders, via ``alignRow``) → converter →
-parquet → this package's PyArrow readers. JSONL has carried the span triple since #527; this
+parquet → this package's PyArrow readers. JSONL has carried the span triple since #527. this
 test pins the two properties the parquet leg must now hold:
 
 1. **Round-trip identity** — ``span_starts``/``span_ends``/``span_tags`` written by the real

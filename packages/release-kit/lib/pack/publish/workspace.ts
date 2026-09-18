@@ -12,8 +12,8 @@
  *        while building the tarball. npm's own publish step does not do this translation, and
  *        shipping `workspace:*` to consumers breaks `npm install` (EUNSUPPORTEDPROTOCOL).
  *   2. Derive the PUBLISH exports map from the dev map inside the tarball — every `node → .ts`
- *        condition is rewritten to emitted JavaScript (the repo runs source under node; consumers get `out/`). The dev
- *        `exports` in each workspace's package.json is the single source of truth; there is no
+ *        condition is rewritten to emitted JavaScript (the repo runs source under node. consumers get `out/`). The dev
+ *        `exports` in each workspace's package.json is the single source of truth. there is no
  *        hand-maintained `publishConfig.exports` (that duplication shipped a fully-broken v7.2.0
  *        when it was removed without a replacement — this transform is the replacement). A guard
  *        then fails the publish if any exported target still ends in `.ts`/`.tsx` or points at a

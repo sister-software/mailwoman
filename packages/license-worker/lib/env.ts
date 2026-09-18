@@ -4,7 +4,7 @@
  * @author Teffen Ellis, et al.
  *
  *   The worker's bindings, validated on every request and refused when a var still carries a placeholder. Vars are
- *   strings in Wrangler; the two booleans are parsed here so no route compares a string to "true".
+ *   strings in Wrangler. the two booleans are parsed here so no route compares a string to "true".
  */
 
 import { z } from "zod"
@@ -19,7 +19,7 @@ export interface LicenseWorkerBindings {
 	 */
 	EMAIL_API_KEY?: string
 	/**
-	 * Cloudflare's `send_email` binding; present, the worker sends through it and needs no email key.
+	 * Cloudflare's `send_email` binding. present, the worker sends through it and needs no email key.
 	 */
 	EMAIL_SENDER?: SendEmail
 	LICENSE_SIGNING_KID: string

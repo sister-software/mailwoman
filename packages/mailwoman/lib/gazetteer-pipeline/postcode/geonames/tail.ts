@@ -27,7 +27,7 @@
  *   Attribution the frozen artifact never carried, and the reason the `meta` table exists: GeoNames
  *   postal is CC-BY 4.0, and GB rides in from `GB_full`, whose upstream is Ordnance Survey Code-Point
  *   Open — OGL v3, which CC-BY cannot relax. See {@link GB_LICENSE_NOTE} for the receipts and for the
- *   two questions that stay open (the Northern Ireland rows; whether a downstream DB is "derived").
+ *   two questions that stay open (the Northern Ireland rows. whether a downstream DB is "derived").
  *   Both licence statements, the per-file md5s, and the build date are baked into the artifact so a
  *   consumer reads them at open instead of trusting a runbook.
  */
@@ -111,7 +111,7 @@ export interface GeonamesPostalSourceFact {
 	 * How many of those codes the dump carried on SEVERAL rows that all named one coordinate. GeoNames computes a postal
 	 * coordinate by matching the code against place names and admin divisions, averaging neighbouring codes where the
 	 * match fails, so those rows are one value inherited N times rather than N settlements agreeing. The centroid is
-	 * still the best the source offers; the count is what tells a consumer how much of the country's coverage is that.
+	 * still the best the source offers. the count is what tells a consumer how much of the country's coverage is that.
 	 */
 	singlePointRows: number
 }
@@ -127,7 +127,7 @@ export interface BuildPostcodeGeonamesTailOptions {
 	 */
 	postalDir?: PathBuilderLike
 	/**
-	 * Output artifact. Default `<data-root>/wof/postalcode-geonames-tail-<YYYY-MM-DD>.db` — a new dated path every build;
+	 * Output artifact. Default `<data-root>/wof/postalcode-geonames-tail-<YYYY-MM-DD>.db` — a new dated path every build.
 	 * promoting it over the shipped `postalcode-geonames-tail.db` is a deliberate, separate swap.
 	 */
 	out?: PathBuilderLike
@@ -148,7 +148,7 @@ export interface BuildPostcodeGeonamesTailResult {
 	inserted: number
 	byCountry: Record<string, number>
 	/**
-	 * Countries whose `<CC>.txt` was absent — reported, not fatal (a partial database is still a valid database; the
+	 * Countries whose `<CC>.txt` was absent — reported, not fatal (a partial database is still a valid database. the
 	 * parity check is what decides whether it may be promoted).
 	 */
 	missing: string[]
@@ -306,7 +306,7 @@ const GEONAMES_ATTRIBUTION = "Contains data from GeoNames (geonames.org), © Geo
  * only "we continue using the previous data", ONS's OGL grant for postcode products explicitly EXCLUDES Northern
  * Ireland data, and commercial NI use needs a separate Land & Property Services licence; (2) whether a downstream
  * database counts as "derived" for OGL purposes is a counsel question, the same posture `osm/` already sits in. This
- * builder records the facts; it does not make the redistribution decision.
+ * builder records the facts. it does not make the redistribution decision.
  */
 const GB_LICENSE_NOTE =
 	"GB rows come from the GeoNames GB_full dump, whose GB (England/Scotland/Wales) portion derives from Ordnance " +

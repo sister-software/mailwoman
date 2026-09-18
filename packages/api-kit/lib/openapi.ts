@@ -4,7 +4,7 @@
  * @author Teffen Ellis, et al.
  *
  *   OpenAPI emit helpers. The document is always derived from the route table — never
- *   handwritten. 3.1 is the published flavor; 3.0 exists solely for client generators that lag
+ *   handwritten. 3.1 is the published flavor. 3.0 exists solely for client generators that lag
  *   (progenitor), replacing the old hand-downgrade step.
  */
 
@@ -47,7 +47,7 @@ export interface OpenAPIDocInfo {
  * document has no meaningful form without them, and every manifest here carries all three.
  *
  * @param base The CALLER's `import.meta.url`. The package resolves through the graph of the workspace that declares it,
- *   which is what `resolve-from` exists for; resolving from here would answer through `@mailwoman/api-kit`'s instead.
+ *   which is what `resolve-from` exists for. resolving from here would answer through `@mailwoman/api-kit`'s instead.
  */
 export async function readServedDocumentInfo(
 	base: string,
@@ -109,7 +109,7 @@ export function emitOpenAPIDocuments(app: OpenAPIHono, info: OpenAPIDocInfo): { 
 
 /**
  * The shared body of every surface's `openapi` CLI subcommand (the three drop-ins + `mailwoman openapi`): pick the
- * flavor `emitOpenAPIDocuments` produces (`--flavor 3.0` → the 3.0.3 diet client generators like progenitor want;
+ * flavor `emitOpenAPIDocuments` produces (`--flavor 3.0` → the 3.0.3 diet client generators like progenitor want.
  * default 3.1.0), then either print it to stdout or write it to `out`. Always compact (single-line) JSON — never
  * pretty-printed — so the stdout form is a stable `startsWith('{"openapi":"3.1.0"')` smoke check, matching what a live
  * `/openapi.json` response looks like. `out`'s parent directory is created if missing (the docs build writes into a

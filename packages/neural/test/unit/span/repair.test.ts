@@ -4,7 +4,7 @@
  * @author Teffen Ellis, et al.
  *
  *   Tests for the shared repair-pass skeleton (`span-repair.ts`). `postcode-repair.test.ts` and
- *   `unit-repair.test.ts` cover these helpers end-to-end through their own passes; this file pins
+ *   `unit-repair.test.ts` cover these helpers end-to-end through their own passes. this file pins
  *   the selection rules directly so a future edit to the tie-break cannot slip through as a
  *   pass-specific change. The ZIP+4-vs-NL case is the one the longest-first rule exists for.
  */

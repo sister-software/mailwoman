@@ -1,7 +1,7 @@
 # v5.3.0 — FROM-SCRATCH treatment: reviewed Venezuela postcode tails (#1821 / #1871)
 #
 # Control: v5.0.0-base-alltails-60k.yaml at seed 42. The replacement seed-control run uses the same
-# recipe at seed 43 to measure run-to-run variance; it is not the attribution control for this arm.
+# recipe at seed 43 to measure run-to-run variance. it is not the attribution control for this arm.
 #
 # Treatment deltas, and no others:
 #   corpus_dir     v0.27.0 -> v0.28.0, a pure overlay adding 22 reviewed Venezuelan rows whose
@@ -13,7 +13,7 @@
 # The persisted one-epoch CPU audit is the exposure measurement because augmentation can emit extra rows.
 # Training must not start unless that audit passes and its report is bound to this config and manifest.
 # Grade the candidate against v5.0 seed 42 on the 649-row board plus the promotion battery. The four
-# ve_city_postcode_trailing_state rows are the target metric; tier-1 regressions remain disqualifying.
+# ve_city_postcode_trailing_state rows are the target metric. tier-1 regressions remain disqualifying.
 
 data:
   corpus_dir: /data/corpus/versioned/v0.28.0-reviewed-postcode-tail/corpus-v0.28.0-reviewed-postcode-tail

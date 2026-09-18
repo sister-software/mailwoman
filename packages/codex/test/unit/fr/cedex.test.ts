@@ -25,7 +25,7 @@ describe("matchCedex", () => {
 	it("does not claim digit runs longer than two as the office", () => {
 		// "CEDEX 123": the trailing \b cannot land inside a digit run, so the optional office
 		// group backtracks away entirely — bare CEDEX matches and "123" stays unclaimed (a
-		// three-digit number is not a cedex office; this is the desired behavior).
+		// three-digit number is not a cedex office. this is the desired behavior).
 		const m = matchCedex("PARIS CEDEX 123")
 		expect(m?.matched).toBe("CEDEX")
 		expect(m?.office).toBeUndefined()

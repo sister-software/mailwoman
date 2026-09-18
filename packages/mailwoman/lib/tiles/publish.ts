@@ -9,7 +9,7 @@
  *   `https://tiles.mailwoman.ai/<tileset>.json` and `/<tileset>/{z}/{x}/{y}.{ext}`.
  *
  *   Uploads go through `rclone`: the `RCLONE_S3_*` variables are its s3-backend config (source the repo `.env` first:
- *   `set -a; . ./.env; set +a`). rclone handles multipart for large archives, and the anti-501 flags skip the post-PUT
+ *   `set -a. . ./.env. set +a`). rclone handles multipart for large archives, and the anti-501 flags skip the post-PUT
  *   HEAD and checksum operations R2 refuses. The worker reads the object through its R2 binding, so Content-Type and
  *   Cache-Control do not matter.
  *
@@ -22,7 +22,7 @@ import { formatFileSize, pathExists } from "@mailwoman/core/fs/readers"
 import { CommandError } from "@mailwoman/core/scripting/command"
 
 /**
- * A transport that puts one local file at `bucket/key`. The default is rclone over the `RCLONE_S3_*` credentials; a
+ * A transport that puts one local file at `bucket/key`. The default is rclone over the `RCLONE_S3_*` credentials. a
  * caller with another credential (the planetary pipeline uploads through wrangler and the account's API token) injects
  * its own, and the key layout, the size report and the served-at line stay shared.
  */

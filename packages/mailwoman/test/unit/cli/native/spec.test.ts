@@ -146,7 +146,7 @@ describe("a renamed option keeps its old spelling working", () => {
 	})
 
 	test("an option's own DEFAULT does not read as the new flag being passed", () => {
-		// The retired flag must still win over a default the caller never typed; comparing against the value alone would
+		// The retired flag must still win over a default the caller never typed. comparing against the value alone would
 		// make `--style` a usage error on every command whose current flag has one.
 		expect(parseCommand(renamed, ["--style", "slow"]).values.mode).toBe("slow")
 	})

@@ -3,7 +3,7 @@
 # counter-form (#1644) — the v4.5.0 erosion's confirmed cause was 'every delimiter-free surface
 # ends in a locality' training toward a categorical trailing-locality prior.
 # One config knob vs v4.5.0: synth-fr-bare-street weight 12.0 -> 6.0 (the FR shapes were the
-# erosion's attacker; CZ stays 12.0 — its forms were not implicated). B11 template otherwise
+# erosion's attacker. CZ stays 12.0 — its forms were not implicated). B11 template otherwise
 # verbatim: init_from v4.4.0 step-060000, EWC lambda=1.0e4 + the base fisher, LR 1e-5.
 # Check (pre-registered, the v4.5.0 lesson): the probe is graded on the board, not val — export
 # step-2000, int8, `eval gauntlet --candidate`. A pass is zero new counted failures vs the base board

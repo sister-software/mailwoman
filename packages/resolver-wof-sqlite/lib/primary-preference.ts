@@ -66,7 +66,7 @@ export type RankedRow<R> = R & {
 	/**
 	 * `neg_rank` plus the bounded cross-country alias penalty — the value the row is ORDERED by, and the base the emitted
 	 * `prominence` is derived from (so the resolver walk's `prominence ?? score` sort, `resolve.ts`, agrees with this
-	 * order; the raw `score`/`neg_rank` is left intact for the walk's `minWinningScore` floor).
+	 * order. the raw `score`/`neg_rank` is left intact for the walk's `minWinningScore` floor).
 	 */
 	effectiveNegRank: number
 	/**
@@ -74,7 +74,7 @@ export type RankedRow<R> = R & {
 	 * coincidental foreign exonym (Changchun's "Çançun" for "Cancun"). Such a row is dropped out of the exact-match tier
 	 * (`exactMatch=false`) so the resolver walk's country pin — the model's `anchorPosterior`, which "never crosses the
 	 * exact/partial boundary" (`resolve.ts`) — can't ride a spurious posterior (CN 0.86 for "Cancun") back over the
-	 * primary. Only the LOSING foreign alias is demoted; a dominant alias (Los Angeles over La, Ghana) keeps its exact
+	 * primary. Only the LOSING foreign alias is demoted. a dominant alias (Los Angeles over La, Ghana) keeps its exact
 	 * tier, and a same-country nickname (San Francisco's "Frisco") is never touched.
 	 */
 	demoted: boolean
@@ -95,7 +95,7 @@ export type RankedRow<R> = R & {
 	containedByQualifier?: boolean
 	/**
 	 * The #1882 exemption's firing mark (#1893): this row would have taken the cross-country alias penalty and
-	 * `exemptVariantAliases` prevented it. Present only when the exemption changed this row's treatment; absent on every
+	 * `exemptVariantAliases` prevented it. Present only when the exemption changed this row's treatment. absent on every
 	 * row it merely inspected — an in-country variant, a primary, a set with no foreign top primary. The winner-level
 	 * receipt downstream (`mechanism_fired_on.variant_alias_exemption`) counts this mark only when it survives onto the
 	 * selected candidate.
@@ -131,7 +131,7 @@ export type RankedRow<R> = R & {
  * also tie. Downstream the resolver re-sorts by importance (`resolver/toponym-prior.ts`) but is stable on equal keys,
  * so the order stamped here is the order that answers — inverting this term moves bare `Pu-cheng-hsien` 1,100 km
  * (locality Pucheng over the 浦城县 localadmin, identical population and importance). Where importance separates the pair,
- * the fame prior overrides by design; a probe with no placetype filter (the browser cascade's last resort, the dev
+ * the fame prior overrides by design. a probe with no placetype filter (the browser cascade's last resort, the dev
  * lookup tools) presents the full tie and this term is all that breaks it.
  *
  * Both conditions are required, and a plain "finer placetype wins" measured wrong before this shape was settled: it
@@ -139,7 +139,7 @@ export type RankedRow<R> = R & {
  * were contests between genuinely distinct places that merely tie — 2,885 `locality → neighbourhood` (a bare city name
  * losing to a same-named hood), 2,973 `region → county`, 2,662 `postalcode → locality` — and 7,179 of the 11,377 sat at
  * population 0, where a tie means NO EVIDENCE rather than equal evidence. Requiring a real population keeps the term
- * off every no-evidence tie; promoting the populated-place tier specifically, rather than whatever is finer, keeps it
+ * off every no-evidence tie. promoting the populated-place tier specifically, rather than whatever is finer, keeps it
  * off the admin-tier and hood contests. It can never reach a pair population separates: it does not override a
  * population gap, it replaces an undetermined order with a stated one.
  */
@@ -162,12 +162,12 @@ export function rankByPrimaryPreference<R extends PrimaryPreferenceRow>(
 
 	const topCountry = topPrimary?.country_id
 
-	// A cross-country alias (different country than the top primary) is penalized; it is DEMOTED when even after — i.e.
+	// A cross-country alias (different country than the top primary) is penalized. it is DEMOTED when even after — i.e.
 	// the penalty leaves its effective rank behind the primary's raw rank (it lost the bounded population contest).
 	//
 	// #1882 exemption (opt-in): a `name_role = 'variant'` alias is the holder's own primary name in another
 	// orthography (`Брэст` → `brest`, `George Town` → `georgetown` — the build's own-name detector), so the
-	// query is naming that place, not colliding with it; the penalty exists for the coincidental-collision
+	// query is naming that place, not colliding with it. the penalty exists for the coincidental-collision
 	// class ("Çançun"/`cancun`), which the detector's measured threshold keeps un-stamped. An artifact
 	// predating the role column carries no 'variant' rows, so the flag no-ops there by construction.
 	const wouldPenalize = (r: R): boolean =>
@@ -219,9 +219,9 @@ export function rankByPrimaryPreference<R extends PrimaryPreferenceRow>(
 	return (
 		rows
 			.map((r, i) => ({ row: annotate(r), i }))
-			// Effective rank ASC; ties keep population order, then the seat preference DESC, then the primary name
+			// Effective rank ASC. ties keep population order, then the seat preference DESC, then the primary name
 			// among unmeasured rows, then original index (stable).
-			// oxlint-disable-next-line unicorn/no-array-sort -- sorts a freshly-built array; toSorted would double-allocate on a hot path
+			// oxlint-disable-next-line unicorn/no-array-sort -- sorts a freshly-built array. toSorted would double-allocate on a hot path
 			.sort(
 				(a, b) =>
 					a.row.effectiveNegRank - b.row.effectiveNegRank ||

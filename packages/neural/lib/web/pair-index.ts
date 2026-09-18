@@ -34,7 +34,7 @@ export function resolvePairIndexCountry(country: string | undefined): string {
  * {@link PairIndexResolver} and retained, tagged by its header country. The per-parse selection
  * ({@link resolvePairIndexForText}) chooses among them at decode time from the input text's detected country — a load
  * that serves a US and a GB address in one session needs both resolvers live. (#1300 constructed only the single
- * matching index; that peek-before-construct economy is dropped deliberately — the multi-locale demo needs them all,
+ * matching index. that peek-before-construct economy is dropped deliberately — the multi-locale demo needs them all,
  * and a handful of small pair maps is cheap.)
  */
 export async function loadPairIndexes(urls: readonly string[], fetchImpl: typeof fetch): Promise<LoadedPairIndex[]> {

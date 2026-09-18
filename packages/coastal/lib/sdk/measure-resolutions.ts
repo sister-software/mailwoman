@@ -11,7 +11,7 @@
  *   and reports the table the choice is made from; `build-coastal.ts` then builds at the chosen one.
  *
  *   THE TABLE IS PER SCENARIO AND THE POOLED ROW IS FOR SIZE ONLY. Twelve layers cover the same frontages
- *   with different extents; a pooled `partial` share averages a present-day designation together with a 2105
+ *   with different extents. a pooled `partial` share averages a present-day designation together with a 2105
  *   projection and describes neither. What a scenario-scoped probe reads is one scenario's share, so that is
  *   the number the resolution is chosen on. The pooled total answers a different question — how many rows the
  *   artifact holds — and is reported separately rather than folded in.

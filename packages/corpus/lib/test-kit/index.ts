@@ -10,7 +10,7 @@
  *   `JSONSpliterator` import header, a `let scratch`, a `beforeEach` that mkdtemps
  *   `mailwoman-<something>-`, an `afterEach` that force-removes it swallowing errors, and a
  *   `loadRows()` that reads the run's `canonical.jsonl` back through `JSONSpliterator`. Nothing about
- *   any of that is adapter-specific; only the tmpdir prefix and the adapter id ever differed.
+ *   any of that is adapter-specific. only the tmpdir prefix and the adapter id ever differed.
  *
  *   This directory is excluded from the published tarball by `corpus/package.json`'s `files` (the
  *   `!test-kit/**\/*` entry, which predates this file), which is why importing `vitest` here is safe

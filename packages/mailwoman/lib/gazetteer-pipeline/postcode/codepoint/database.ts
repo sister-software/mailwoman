@@ -75,7 +75,7 @@ import {
 import { createDatabaseMetaTable, writeMetaRows } from "#gazetteer-pipeline/postcode/geonames/tail"
 
 /**
- * ISO-3166-1 alpha-2 stamped on every row. Code-Point Open is a GB-only product; the ONS country code distinguishing
+ * ISO-3166-1 alpha-2 stamped on every row. Code-Point Open is a GB-only product. the ONS country code distinguishing
  * England/Scotland/Wales is carried separately on the parsed record and is not what `spr.country` means.
  */
 const COUNTRY = "GB"
@@ -155,7 +155,7 @@ export async function buildPostcodeCodePoint(
 	//
 	// An OFFLINE build must not silently produce an artifact with blank provenance. `downloadCodePointOpen`
 	// leaves an `acquisition.json` sidecar next to the archive precisely so a later offline rebuild can
-	// recover the release label and md5 it would otherwise have to invent; when even that is missing, the
+	// recover the release label and md5 it would otherwise have to invent. when even that is missing, the
 	// meta records the ABSENCE in words rather than an empty string, because "" reads as "no release" to
 	// anyone grepping it.
 	let archiveMD5: string
@@ -253,7 +253,7 @@ export async function buildPostcodeCodePoint(
 		db.exec("COMMIT")
 		phase("ingest", `${inserted.toLocaleString()} unit postcodes`)
 
-		// Check the archive's own manifest; codepoint/extract.ts explains this oracle.
+		// Check the archive's own manifest. codepoint/extract.ts explains this oracle.
 
 		// Every row's parent_id is -1 (Code-Point carries no hierarchy), so this writes the SELF row per place
 		// and nothing else. Not decorative: the resolver's parent-constraint scopes a lookup with

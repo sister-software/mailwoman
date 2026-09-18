@@ -30,7 +30,7 @@
 /**
  * One USPS Pub 28 C2 floor-class designator row.
  *
- * `requiresNumber` mirrors the Appendix C2 classification: FLOOR and BASEMENT must be followed by a secondary number;
+ * `requiresNumber` mirrors the Appendix C2 classification: FLOOR and BASEMENT must be followed by a secondary number.
  * PENTHOUSE and LOBBY may stand alone.
  */
 export interface USFloorDesignator {
@@ -54,7 +54,7 @@ export interface USFloorDesignator {
 }
 
 /**
- * USPS Pub 28 C2 floor-class secondary unit designators. Verbatim from the publication; see the module header for the
+ * USPS Pub 28 C2 floor-class secondary unit designators. Verbatim from the publication. see the module header for the
  * per-row provenance. Ordered with the most-common numbered form first.
  */
 export const US_FLOOR_DESIGNATORS = [

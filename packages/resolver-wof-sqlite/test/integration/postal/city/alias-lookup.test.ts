@@ -29,7 +29,7 @@ import { afterEach, beforeEach, describe, expect, it } from "vitest"
  */
 async function buildAliasDB(): Promise<DatabaseClient<PostalCityAliasDatabase>> {
 	const kdb = DatabaseClient.temp<PostalCityAliasDatabase>()
-	// `kdb` wraps `db` for the DDL; the test owns `db`'s lifecycle (reader.destroy()/aliasDB.destroy()),
+	// `kdb` wraps `db` for the DDL. the test owns `db`'s lifecycle (reader.destroy()/aliasDB.destroy()),
 	// so we don't destroy `kdb`.
 
 	await createPostalCityAliasTable(kdb)

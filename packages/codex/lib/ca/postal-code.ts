@@ -9,9 +9,9 @@
  *   The informative contrast across `us/zipcode.ts`, `de/postleitzahl.ts`, `fr/code-postal.ts`, and
  *   here:
  *
- *   - A US ZIP is numeric; its first digit maps to a loose BAND of states.
- *   - A German PLZ is numeric; its first digit maps to a Leitzone that CROSSES Bundesland borders.
- *   - A French code postal is numeric; its first two digits are the département.
+ *   - A US ZIP is numeric. its first digit maps to a loose BAND of states.
+ *   - A German PLZ is numeric. its first digit maps to a Leitzone that CROSSES Bundesland borders.
+ *   - A French code postal is numeric. its first two digits are the département.
  *   - A Canadian postcode is `A1A 1A1` — Letter Digit Letter, then Digit Letter Digit — and its
  *       first LETTER pins the province or territory directly (`M` → Ontario, `H` → Quebec, `V` →
  *       British Columbia). So like the French prefix it is a clean admin prior, but it does the job

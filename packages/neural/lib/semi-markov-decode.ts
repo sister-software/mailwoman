@@ -17,7 +17,7 @@
  *   K-BEST, not 1-best, from day one: the whole point of the arc is a LIST of hypotheses with
  *   comparable scores for the resolver to rerank (a rank-2 parse that resolves to a real place beats
  *   a rank-1 that resolves to a country centroid). Scores within one input share the partition
- *   function, so they are directly comparable; ACROSS inputs they are not (that needs the Phase-4
+ *   function, so they are directly comparable. ACROSS inputs they are not (that needs the Phase-4
  *   isotonic pass).
  *
  *   The segment-type axis is never hardcoded here — it arrives from the weights bundle's
@@ -138,7 +138,7 @@ export function decodeSegmentationsKBest(
 
 	// dp[j] : lastType -> up-to-k best partial segmentations covering [0, j).
 	const dp: Array<Map<number, SegmentationHypothesis[]>> = Array.from({ length: seqLen + 1 }, () => new Map())
-	// -1 is the BOS pseudo-type; startTransitions carries its outgoing scores.
+	// -1 is the BOS pseudo-type. startTransitions carries its outgoing scores.
 	dp[0]!.set(-1, [{ score: 0, segments: [] }])
 
 	const push = (column: Map<number, SegmentationHypothesis[]>, key: number, entry: SegmentationHypothesis): void => {

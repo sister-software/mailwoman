@@ -8,12 +8,12 @@
  *   misses a house number, bracket the number with real neighbor points on the same street from the
  *   same #476 extract and interpolate linearly in house-number space between them. Real occupancy
  *   replaces TIGER's uniform-spacing assumption — the dominant error term of the TIGER pilot's check
- *   miss; TIGER range interpolation (`StreetInterpolator`) demotes to the fallback for streets too
+ *   miss. TIGER range interpolation (`StreetInterpolator`) demotes to the fallback for streets too
  *   sparse to bracket.
  *
  *   Matching key is `street_key` — THE shared normalizer plus the route fold
  *   (`canonicalizeRouteKey`), identical at build time (`mailwoman situs address-points`) and
- *   query time, by construction. Scope is postcode-first like the segment tier; a query without a
+ *   query time, by construction. Scope is postcode-first like the segment tier. a query without a
  *   postcode goes straight to the fallback (which carries its own statewide-ambiguity abstention).
  *
  *   Bracketing contract:
@@ -196,7 +196,7 @@ function interpolateFromNeighbors(rows: readonly PointRow[], n: number): Interpo
 	}
 
 	// Single-sided: extrapolate along the two nearest known numbers on the populated side.
-	// `near` is the anchor closest to n, `far` the next one out; t > 1 by construction.
+	// `near` is the anchor closest to n, `far` the next one out. t > 1 by construction.
 	const side = below ? anchors.slice(-2) : anchors.slice(0, 2)
 
 	if (side.length < 2) return null

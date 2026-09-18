@@ -16,7 +16,7 @@ import type { ModuleMove } from "#move/types"
 
 export interface RepoFix {
 	/**
-	 * The id of the check this repairs. They match, so a diagnostic names its own remedy.
+	 * The id of the check this repairs. They match, so a diagnostic names its own action.
 	 */
 	id: string
 	description: string

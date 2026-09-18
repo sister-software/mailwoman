@@ -4,7 +4,7 @@
  * @author Teffen Ellis, et al.
  *
  *   `<BackendControl>` — the backend indicator + Force-WASM toggle, in the WebGPU and forced-WASM states.
- *   No maplibre; plain DOM.
+ *   No maplibre. plain DOM.
  */
 
 import type { Meta, StoryObj } from "@storybook/react-vite"

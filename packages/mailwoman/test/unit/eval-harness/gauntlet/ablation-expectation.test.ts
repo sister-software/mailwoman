@@ -8,7 +8,7 @@
  *   The fake is the point. The model's whole claim is that an expectation is computed from the components a deletion
  *   LEFT BEHIND — never from the variant's own output — and the only way to prove a non-dependency is to hold
  *   everything else fixed and vary the output. `deriveExpectedRung` takes no result argument at all, so the compiler
- *   already forbids the obvious version of the mistake; the test forbids the version where someone adds one later.
+ *   already forbids the obvious version of the mistake. the test forbids the version where someone adds one later.
  *
  *   Four other properties are pinned here because each has a silent failure mode:
  *
@@ -275,7 +275,7 @@ describe("deriveExpectedRung — computed from what REMAINS", () => {
  * THE CIRCULARITY GUARD.
  *
  * An expectation derived from the variant's own output would grade the pipeline against itself and pass everything.
- * `deriveExpectedRung` takes no result argument, so the direct version cannot compile; these pin the property so a
+ * `deriveExpectedRung` takes no result argument, so the direct version cannot compile. these pin the property so a
  * later "just peek at the answer" refactor fails loudly instead of quietly making the layer useless.
  */
 describe("the expectation is INVARIANT to the variant's output", () => {
@@ -293,7 +293,7 @@ describe("the expectation is INVARIANT to the variant's output", () => {
 		]
 
 		for (const outcome of outcomes) {
-			// Grading consumes the outcome; deriving must not. Re-derive after each grade and compare.
+			// Grading consumes the outcome. deriving must not. Re-derive after each grade and compare.
 			gradeAgainstLadder({ expected, ladder: LADDER, ...outcome, slot: "absent", anchorRungDepth: 0 })
 
 			expect(deriveExpectedRung(remaining, LADDER, gz)).toEqual(expected)
@@ -468,7 +468,7 @@ describe("gradeAgainstLadder", () => {
 
 	describe("the anchor floor — a deletion is charged only for what IT cost", () => {
 		it("reads a variant that matches its already-coarse anchor as held, not as a loss", () => {
-			// The anchor was already at the locality rung; the variant lands there too. Nothing was lost.
+			// The anchor was already at the locality rung. the variant lands there too. Nothing was lost.
 			const graded = gradeAgainstLadder({
 				...base,
 				anchorRungDepth: 1,

@@ -4,7 +4,7 @@
 # Attribution: candidate MINUS v5.0.1-null. Ship check: against shipped v4.4.0, D-rule absolute.
 # CAUTION: v5.0.0 and v5.1.0 changed the regression outcome for 40 of 649 board rows, but those runs
 # differ in country admission and therefore do not measure seed variance. Do not discount a D-rule
-# regression using that count; the fixed-config seed-43 repeat is still pending.
+# regression using that count. the fixed-config seed-43 repeat is still pending.
 data:
   corpus_dir: /data/corpus/versioned/v0.27.0-house-venue-intl/corpus-v0.27.0-house-venue-intl
   tokenizer_dir: /data/models/tokenizer/v0.9.0-multisplice

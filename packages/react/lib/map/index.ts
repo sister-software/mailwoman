@@ -5,7 +5,7 @@
  *
  *   `@mailwoman/react/map` — the geocoder map surface, kept behind its own subpath so `maplibre-gl`
  *   / `react-map-gl` (WebGL + DOM at import) never enter the package-root graph. Importing this subpath
- *   pulls the map deps; importing `@mailwoman/react` (root) does not. Consumers who only want the
+ *   pulls the map deps. importing `@mailwoman/react` (root) does not. Consumers who only want the
  *   parse/POI explorers never pay for maplibre.
  *
  *   The host must supply `maplibre-gl` + `react-map-gl` (peer deps) and import
@@ -15,7 +15,7 @@
 export { MapCanvas } from "./MapCanvas.tsx"
 export type { MapCanvasExtraProps, MapCanvasProps, MapCanvasStyle } from "./MapCanvas.tsx"
 
-// ── Map chrome (node-safe presentation; the host supplies the input and reads its own map) ──
+// ── Map chrome (node-safe presentation. the host supplies the input and reads its own map) ──
 export { MapChipRow } from "./MapChipRow.tsx"
 export type { MapChip, MapChipRowProps } from "./MapChipRow.tsx"
 export { MapCompass } from "./MapCompass.tsx"
@@ -47,7 +47,7 @@ export type {
 	VersionOption,
 } from "#map/types"
 
-// ── Pure geometry + render spec (node-safe; no react-map-gl at runtime) ──────
+// ── Pure geometry + render spec (node-safe. no react-map-gl at runtime) ──────
 export { approxCircleGeometry, bboxToBounds, geomBounds, radiusCircleGeometry } from "#map/geometry"
 export type { BoundsTuple, PlaceBBox, PlaceGeometry } from "#map/geometry"
 export { cameraToViewState, computeMapPlaceRenderSpec } from "#map/place-render"

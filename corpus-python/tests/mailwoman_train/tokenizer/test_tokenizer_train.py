@@ -5,7 +5,7 @@ corpus on disk: script detection, byte-fallback measurement, UDS file parsing, a
 postcode-shape preservation invariant when UDS literals are present in the SP model.
 
 The full ``train_tokenizer`` end-to-end (with parquet input) is exercised by hand from the
-CLI; covering it here would require committing a parquet fixture or training on the real
+CLI. covering it here would require committing a parquet fixture or training on the real
 30 GB parquet tree, neither of which is appropriate for fast unit tests.
 """
 
@@ -73,7 +73,7 @@ def test_parse_user_defined_symbols_file(tmp_path: Path):
                 "10001",
                 "",
                 "SW1A 1AA",
-                "  ",  # blank-ish; trimmed to nothing, skipped
+                "  ",  # blank-ish. trimmed to nothing, skipped
                 "100-0005",
             ]
         )
@@ -169,7 +169,7 @@ def _train_tiny_sp(tmp_path: Path, uds: list[str] | None = None) -> spm.Sentence
         # UDS literals, with headroom for actual unigram pieces. 256 is below the floor.
         vocab_size=512,
         character_coverage=1.0,
-        # The synthetic corpus may not contain enough distinct pieces to fill vocab_size;
+        # The synthetic corpus may not contain enough distinct pieces to fill vocab_size.
         # this lets SP cap at the extractable count instead of erroring out.
         hard_vocab_limit=False,
         model_type="unigram",
@@ -206,7 +206,7 @@ def test_user_defined_postcode_kept_whole(tmp_path: Path):
 def test_measure_byte_fallback_buckets_per_script(tmp_path: Path):
     """Byte-fallback measurement should bucket by detected script and compute rates."""
     sp = _train_tiny_sp(tmp_path)
-    # CJK + Cyrillic lines aren't in the tiny synthetic corpus, so they'll byte-fallback;
+    # CJK + Cyrillic lines aren't in the tiny synthetic corpus, so they'll byte-fallback.
     # Latin lines are in-corpus and won't.
     lines = [
         "Paris 75008",  # latin, in-vocab
@@ -244,11 +244,11 @@ def test_iter_train_files_prefers_manifest(tmp_path: Path):
     sibling = tmp_path / "elsewhere"
     sibling.mkdir()
     cross_version_file = sibling / "part-0000.parquet"
-    cross_version_file.write_bytes(b"")  # contents unused; only path resolution is tested
+    cross_version_file.write_bytes(b"")  # contents unused. only path resolution is tested
 
     corpus = tmp_path / "v0.4.0"
     (corpus / "train").mkdir(parents=True)
-    # A local file that the glob fallback *would* return; the manifest should beat it.
+    # A local file that the glob fallback *would* return. the manifest should beat it.
     local_only = corpus / "train" / "part-local.parquet"
     local_only.write_bytes(b"")
 

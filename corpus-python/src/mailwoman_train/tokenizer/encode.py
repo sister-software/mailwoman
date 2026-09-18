@@ -121,7 +121,7 @@ def encode_row(
     THE SPANS and the token-quantized path is skipped — intra-span punctuation pieces get the
     span's label, which the token path structurally cannot express. Rows without spans use the
     legacy ``tokens``/``labels`` path unchanged, so the loader reads both corpus generations
-    during the transition; the token path is deleted once v0.5.0 lands. This is one storage
+    during the transition. the token path is deleted once v0.5.0 lands. This is one storage
     format change in flight, not a permanent dual-format fork.
 
     When ``anchor_lookup`` is supplied (the postcode-anchor pilot, #239/#240), also returns
@@ -132,7 +132,7 @@ def encode_row(
 
     When ``gazetteer_lexicon`` is supplied (the gazetteer anchor, #464), also returns
     ``gazetteer_features`` ``(max_length, lexicon.feature_dim)`` and ``gazetteer_confidence``
-    ``(max_length,)`` — candidate-tag-set clues painted from the RAW SURFACE only (never labels;
+    ``(max_length,)`` — candidate-tag-set clues painted from the RAW SURFACE only (never labels.
     identical computation at train and inference, and identical under both label sources).
     Absent → omitted (back-compat).
     """
@@ -186,7 +186,7 @@ def encode_row(
 
     if country_lexicon is not None:
         # Country-lexicon channel (#1104): per-piece [country_surface, country_ambiguous] painted from
-        # the RAW SURFACE only (never labels; identical at train + inference). Independent of the
+        # the RAW SURFACE only (never labels. identical at train + inference). Independent of the
         # near-postcode gazetteer choreography — a trailing "…12345 USA" keeps its country clue.
         put("country", realign_country_to_pieces(raw, list(spans), country_lexicon), COUNTRY_FEATURE_DIM)
 

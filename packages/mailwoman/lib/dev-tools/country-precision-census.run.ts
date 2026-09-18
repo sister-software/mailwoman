@@ -18,7 +18,7 @@
  *   — never an assertion. So a row can name Venezuela, answer with the country dropped, and pass.
  *
  *   TRUTH IS THE ROW'S OWN `country` FIELD, NOT A REGEX OVER THE INPUT. The first version of this
- *   census matched country NAMES in the string and reported 9 contradictions; 7 of the 9 were the
+ *   census matched country NAMES in the string and reported 9 contradictions. 7 of the 9 were the
  *   parser being right — `China Red` is a restaurant in Manchester, `Luxembourg House` a building in
  *   London, `Masala India` a curry house in Leyton, `Venezuela` a street in San Juan. That is the
  *   place-shaped-venue class the board already names in its own notes, and an instrument that cannot
@@ -78,7 +78,7 @@ function namedCountry(input: string): string | null {
 
 /**
  * Name-to-alpha-2, folded for lookup. The parse answers a SURFACE FORM (`Canada`, `United Kingdom`, `España`) and the
- * board states a CODE, so one side has to cross over; crossing the parse's side keeps the board's field untouched as
+ * board states a CODE, so one side has to cross over. crossing the parse's side keeps the board's field untouched as
  * the reference.
  */
 const CODE_BY_FOLDED_NAME = new Map(

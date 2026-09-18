@@ -17,9 +17,9 @@
  *     provider that declined to answer, an ambiguous response keeps every candidate, and neither is a
  *     parse failure or an open-gazetteer miss.
  *   - **Provider assertions never overwrite Mailwoman's own answer.** The response is carried BESIDE
- *     the open result; the consumer chooses which identity to act on.
+ *     the open result. the consumer chooses which identity to act on.
  *   - **No provider product names in this module.** Product-specific mapping lives in an adapter
- *     package; these shapes are what every adapter maps into.
+ *     package. these shapes are what every adapter maps into.
  */
 
 import type { ComponentTag } from "@mailwoman/codex/component"
@@ -90,13 +90,13 @@ export interface AuthoritativeMatch {
 	providerPlaceID: string
 	/**
 	 * Authoritative object identifiers by scheme, e.g. `{ uprn: "100023336956" }`. Schemes are lowercase keys owned by
-	 * the adapter; a provider that supplies none omits the field.
+	 * the adapter. a provider that supplies none omits the field.
 	 */
 	objectIDs?: Readonly<Record<string, string>>
 	/**
 	 * Canonical address fields as the provider returned them, keyed by the provider's own field names. Deliberately not
 	 * remapped to {@link ComponentTag}: a lossy remap would overwrite the assertion this contract exists to preserve. An
-	 * adapter may additionally offer a mapped view; this field is the record.
+	 * adapter may additionally offer a mapped view. this field is the record.
 	 */
 	canonicalFields?: Readonly<Record<string, string>>
 	latitude?: number
@@ -109,7 +109,7 @@ export interface AuthoritativeMatch {
 	coordinatePrecision?: string
 	matchStatus: AuthoritativeMatchStatus
 	/**
-	 * The provider's own match score, when it states one. Scale is provider-defined; ordinal only.
+	 * The provider's own match score, when it states one. Scale is provider-defined. ordinal only.
 	 */
 	providerScore?: number
 }

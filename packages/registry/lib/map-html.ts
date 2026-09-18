@@ -5,7 +5,7 @@
  *
  *   Render resolved entities as a standalone map page — the visual complement to {@link toGeoJSON}'s
  *   QGIS/analyst export. `toMapHTML(featureCollection)` returns one HTML file you open in a
- *   browser; no server, no build.
+ *   browser. no server, no build.
  *
  *   It renders on the HOUSE stack: MapLibre GL + a Protomaps basemap (`@protomaps/basemaps` generates
  *   the `layers()` for a named flavor) over the `basemap-v4` vector tiles served from R2 at
@@ -19,7 +19,7 @@
  *   SERVE IT OVER LOCALHOST, don't open it as a file. The house tile server (`tiles.mailwoman.ai`)
  *   CORS-restricts to localhost + the docs domains, so a `file://` page shows the (accurate)
  *   markers on a blank basemap. `npx serve` / `python3 -m http.server` in the output directory is
- *   enough; the page also surfaces a hint banner when it detects it's running from `file://`.
+ *   enough. the page also surfaces a hint banner when it detects it's running from `file://`.
  *
  *   Neutral entity-resolution view: it shows what resolved to what and how confidently (cohesion).
  *   Bucket labels render verbatim from the data, never editorialized.
@@ -45,7 +45,7 @@ const MAPLIBRE_CSS_SRI = "sha384-uTttxo/aOKbdE5RlD/SPzSDoDmNvGlUYPjONi2MN/b7c9HP
  *
  * Glyphs + sprite come from the UPSTREAM Protomaps assets (GitHub Pages, `ACAO: *`), not the house mirror at
  * `public.mailwoman.ai` — that bucket sends no CORS headers, so the mirror can't be fetched cross-origin
- * (`cartographer/base/composition.ts` flags the same: "Currently upstream URLs; we mirror these … but no public route
+ * (`cartographer/base/composition.ts` flags the same: "Currently upstream URLs. we mirror these … but no public route
  * fronts that bucket yet"). The upstream assets target the v4 schema, matching the `basemap-v4` tiles. Swap to the
  * house mirror once it has a CORS-enabled route.
  */
@@ -80,7 +80,7 @@ export interface MapHTMLOptions {
 }
 
 /**
- * Categorical palette (reused for buckets; cycles if there are more buckets than entries).
+ * Categorical palette (reused for buckets. cycles if there are more buckets than entries).
  */
 const PALETTE = ["#2f9e44", "#f08c00", "#1971c2", "#e8590c", "#9c36b5", "#0c8599", "#e03131", "#5c940d"]
 /**
@@ -94,7 +94,7 @@ const CROSS_COLOR = "#e8590c"
 
 /**
  * Escape a value for safe inlining inside a `<script>` as JSON. `JSON.stringify` alone isn't enough — a record value
- * containing `</script>` would close the block early; escaping `<`/`>`/`&` to `\uXXXX` keeps the JSON valid and makes a
+ * containing `</script>` would close the block early. escaping `<`/`>`/`&` to `\uXXXX` keeps the JSON valid and makes a
  * breakout impossible.
  */
 function safeJSONForScript(value: unknown): string {
@@ -107,7 +107,7 @@ function sourceCount(props: MapFeatureData): number {
 
 /**
  * Render `geojson` (a {@link toGeoJSON} / reconciliation FeatureCollection) as a complete, standalone HTML document.
- * Entities without a coordinate are already absent from those collections; an empty collection renders a friendly empty
+ * Entities without a coordinate are already absent from those collections. an empty collection renders a friendly empty
  * state rather than a broken map.
  */
 export function toMapHTML(

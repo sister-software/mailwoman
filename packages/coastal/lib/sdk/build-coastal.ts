@@ -23,7 +23,7 @@
  *   memory stays flat in row count with nothing to resolve afterwards.
  *
  *   THE INGEST IS BOUNDED ANYWAY. h3's WASM heap cannot be reset from JavaScript and does not survive an
- *   unbounded number of polyfill calls; the sibling product died twice on that, after roughly 510,000 and
+ *   unbounded number of polyfill calls. the sibling product died twice on that, after roughly 510,000 and
  *   798,000 features. This product's largest layer holds 7,501, so one chunk per layer fits inside the
  *   100,000-id default with two orders of magnitude to spare — and the bound still ships, because a build
  *   that stays inside a ceiling by luck is not the same fact as one that cannot cross it.
@@ -96,7 +96,7 @@ export const DEFAULT_CHUNK_SIZE = 100_000
 export type BuildCoastalInput =
 	| {
 			/**
-			 * A feature source consumed IN THIS PROCESS. Correct for a fixture and for anything small; it is what the batched
+			 * A feature source consumed IN THIS PROCESS. Correct for a fixture and for anything small. it is what the batched
 			 * form falls back to per chunk, so the two share one implementation.
 			 */
 			source: CoastalFeatureSource
@@ -293,7 +293,7 @@ export async function buildCoastalDatabase(options: BuildCoastalOptions): Promis
 
 			// NO SECONDARY INDEXES, AND THAT IS A DECISION RATHER THAN AN OMISSION. Both probes this artifact serves are
 			// already primary-key probes: the cell table's `(h3_cell, area_id)` key answers `WHERE h3_cell = ?` as a range
-			// scan of a handful of rows, and a scenario filter over those few rows costs nothing; the geometry table is
+			// scan of a handful of rows, and a scenario filter over those few rows costs nothing. the geometry table is
 			// probed by `area_id`, its own key. A `(scenario_key, h3_cell)` index over a `WITHOUT ROWID` table carries the
 			// primary key in every entry, so it would roughly double the cell tier to serve a scan that is already short —
 			// size for a reader that does not exist.

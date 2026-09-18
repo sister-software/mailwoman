@@ -44,7 +44,7 @@ describe.skipIf(!HOT_DB_PATH)("against the production wof-hot.db (MAILWOMAN_WOF_
 
 	// `MailwomanLookupLike.placetype` is `string | string[]` by design — widened for the shared-resolver
 	// convergence, see its own doc — while this lookup accepts only the branded WOFPlacetype. Every
-	// placetype the cascade passes is valid; the mismatch is parameter variance, not a runtime one.
+	// placetype the cascade passes is valid. the mismatch is parameter variance, not a runtime one.
 	const asCascadeLookup = (l: WOFWasmPlaceLookup): MailwomanLookupLike => l as MailwomanLookupLike
 
 	aroundAll(async (runSuite) => {
@@ -113,7 +113,7 @@ describe.skipIf(!HOT_DB_PATH)("against the production wof-hot.db (MAILWOMAN_WOF_
 		})
 
 		test("an unresolvable parsed region does not sink the locality (parentFallback recall)", async () => {
-			// The old cascade warned-and-widened here; the shared walk's parentFallback retries the
+			// The old cascade warned-and-widened here. the shared walk's parentFallback retries the
 			// locality unscoped when the parent scope yields nothing — recall over silence, no warning
 			// contract. The locality must still resolve.
 			const hits = await runCascade(

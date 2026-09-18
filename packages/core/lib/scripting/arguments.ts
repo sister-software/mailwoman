@@ -77,7 +77,7 @@ export function requiredArgument(scope: string, name: string, value: string | un
  * Kebab segments whose property spelling capitalizes the whole acronym, per the house casing convention.
  *
  * A segment missing here derives a property the command's own `Options` does not declare. The flag still parses and
- * still passes validation; it reaches the component under a name nothing reads, so it does nothing and reports no
+ * still passes validation. it reaches the component under a name nothing reads, so it does nothing and reports no
  * error. Add the segment here when a flag carries an acronym.
  */
 export const OPTION_INITIALISMS = {
@@ -139,12 +139,12 @@ export function optionPropertyName(value: string): string {
 
 /**
  * Parse CLI arguments against a `node:util` `parseArgs` config — the same `options`, `allowPositionals`, `strict` and
- * `tokens` fields. `args` defaults to {@linkcode cliArguments}, so a script never reads `process.argv` itself; a caller
+ * `tokens` fields. `args` defaults to {@linkcode cliArguments}, so a script never reads `process.argv` itself. a caller
  * that has already taken a command name off the front passes the remainder as `args` and it is used as given. The
  * result is typed from the config exactly as the builtin types it.
  */
 export function parseArguments<T extends ParseArgsConfig>(config: T): ReturnType<typeof parseArgs<T>> {
-	// The builtin types its result from the whole config object, so supplying `args` moves the type; the parsed shape
+	// The builtin types its result from the whole config object, so supplying `args` moves the type. the parsed shape
 	// depends on `options`/`allowPositionals` alone, which `T` carries.
 	return parseArgs({ args: [...cliArguments()], ...config }) as ReturnType<typeof parseArgs<T>>
 }

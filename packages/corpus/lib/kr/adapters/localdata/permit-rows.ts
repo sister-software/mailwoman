@@ -24,7 +24,7 @@ import type { Aligned } from "#kr/adapters/localdata/align"
 export const SOURCE = "localdata-kr"
 
 /**
- * Every permit in this registry is Korean; the publisher issues no others.
+ * Every permit in this registry is Korean. the publisher issues no others.
  */
 export const COUNTRY = "KR"
 

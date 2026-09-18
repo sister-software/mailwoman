@@ -67,7 +67,7 @@ export interface WOFSQLitePlaceLookupOpts {
 	 * rules.
 	 *
 	 * Routing: queries with a `placetype` matching a extract's name (or explicit `placetypes` hint) are sent to that
-	 * extract; everything else hits main. Cross-extract UNION is not done — BM25 isn't comparable across
+	 * extract. everything else hits main. Cross-extract UNION is not done — BM25 isn't comparable across
 	 * separately-indexed corpora.
 	 */
 	databasePath?: string | ReadonlyArray<string | ExtractConfig>
@@ -167,12 +167,12 @@ export class WOFSQLitePlaceLookup implements PlaceLookup, Disposable {
 	readonly #encyclopedicClauses: Map<string, { select: string; join: string }>
 	/**
 	 * Per-extract probe for the `postcode_locality` table (the coordinate-first candidate table, built by
-	 * scripts/build-postcode-locality.ts). Cached at construction; null'd out when absent so the coord-first path
+	 * scripts/build-postcode-locality.ts). Cached at construction. null'd out when absent so the coord-first path
 	 * silently no-ops on a deployment that didn't ship the table.
 	 */
 	readonly #postcodeLocalityExtract: string | null
 	/**
-	 * Resolved extract list. Always at least one entry; first is `main`. Multi-extract adds extras with their own derived
+	 * Resolved extract list. Always at least one entry. first is `main`. Multi-extract adds extras with their own derived
 	 * (or override) schema names.
 	 */
 	readonly #extracts: ResolvedExtract[]
@@ -238,7 +238,7 @@ export class WOFSQLitePlaceLookup implements PlaceLookup, Disposable {
 			}
 		}
 
-		// node:sqlite has no .pragma() helper; pragmas are executed as plain SQL.
+		// node:sqlite has no .pragma() helper. pragmas are executed as plain SQL.
 		this.#db.exec("PRAGMA busy_timeout = 5000")
 
 		if (opts.buildFTS) {
@@ -272,7 +272,7 @@ export class WOFSQLitePlaceLookup implements PlaceLookup, Disposable {
 		// CLAIM to be a place extract. Carrying a name that routes is an INVITATION to be queried as one, and
 		// it is made by the filename alone — so a database with no tables at all still gets picked, still
 		// answers no query, and still dies inside a SELECT. Testing only the claim lets an empty or
-		// truncated file past construction; testing only the name would exempt a correctly-named build
+		// truncated file past construction. testing only the name would exempt a correctly-named build
 		// input. A extract needs to fail neither test to be exempt.
 		//
 		// Exempt by design: `postcode-locality-<cc>.db` carries a relation table and nothing else, matches
@@ -305,7 +305,7 @@ export class WOFSQLitePlaceLookup implements PlaceLookup, Disposable {
 		}
 
 		// #920 country-aware extract routing: probe each NON-MAIN extract's country set once at
-		// construction (they're small, purpose-built extracts — postcode/locality extracts; main is the
+		// construction (they're small, purpose-built extracts — postcode/locality extracts. main is the
 		// multi-GB admin DB and is the fallback anyway, so it is deliberately not scanned). Feeds
 		// pickExtractForPlacetype so two postcode extracts (postalcode-us + postalcode-geonames-tail)
 		// route by the query's country instead of first-match starving the second extract.
@@ -326,7 +326,7 @@ export class WOFSQLitePlaceLookup implements PlaceLookup, Disposable {
 		}
 
 		// The postcode_locality table can live on any attached extract (typically its own
-		// `postcode-locality-<cc>.db`). Find the first extract that has it; null = coord-first disabled.
+		// `postcode-locality-<cc>.db`). Find the first extract that has it. null = coord-first disabled.
 		this.#postcodeLocalityExtract =
 			this.#extracts.find((s) => this.#extractHasTable(s.schemaName, POSTCODE_LOCALITY_TABLE))?.schemaName ?? null
 
@@ -335,9 +335,9 @@ export class WOFSQLitePlaceLookup implements PlaceLookup, Disposable {
 		this.#postalCityAliases = opts.postalCityAliases ?? null
 
 		// The Geographic Rule Engine convention source. Precedence: an explicit `opts.conventions`
-		// (a ready source or a seed map) wins; else the build-from-source convention asset if one is
+		// (a ready source or a seed map) wins. else the build-from-source convention asset if one is
 		// attached (auto-detected, like the postcode_locality extract — adding conventions.db to
-		// databasePath enables it; queried on demand, not paged into memory); else empty, so EU rides
+		// databasePath enables it. queried on demand, not paged into memory). else empty, so EU rides
 		// WORLD_DEFAULT. The registry binds strategy NAMES to the SQL-bound primitives — adding a
 		// strategy is registering it here.
 		const conventionExtract =
@@ -376,7 +376,7 @@ export class WOFSQLitePlaceLookup implements PlaceLookup, Disposable {
 	async findPlace(query: FindPlaceQuery): Promise<PlaceCandidate[]> {
 		// Geographic Rule Engine dispatch (#289). Resolve the effective convention for this query
 		// (WORLD_DEFAULT for the EU locales — the seed source is empty) and run its candidate strategies
-		// in order; the first to return a non-null result wins. The default list,
+		// in order. the first to return a non-null result wins. The default list,
 		// [postcode_area_resolution, fallback_fuzzy_name_match], reproduces the pre-engine coordinate-
 		// first → FTS fall-through exactly. Unknown strategy names are skipped, so a convention may name
 		// a primitive a future phase will register.
@@ -455,7 +455,7 @@ export class WOFSQLitePlaceLookup implements PlaceLookup, Disposable {
 	/**
 	 * The ancestor lineage of a place — its containment chain joined with `spr` for canonical names, ordered
 	 * NEAREST-FIRST (localadmin → county → region → … → country). Backs {@link ResolveOpts.includeAncestors} (#404). Self
-	 * is excluded; memoized per id. Returns `[]` when the place has no recorded ancestry.
+	 * is excluded. memoized per id. Returns `[]` when the place has no recorded ancestry.
 	 *
 	 * The walk itself lives in `ancestry.ts` (shared with the reverse geocoder, #484); the ordering is its
 	 * `PLACETYPE_DEPTH` table — same ranking as the previous inline SQL CASE, extended below `localadmin` so
@@ -500,7 +500,7 @@ export class WOFSQLitePlaceLookup implements PlaceLookup, Disposable {
 	/**
 	 * Strategy `postcode_area_resolution` — the coordinate-first locality path, strictly conditioned (a sibling postcode
 	 * and a postcode_locality table and a locality query). Returns `null` — so the dispatcher falls through to the next
-	 * strategy — when the condition is unmet or the postcode isn't in the table; otherwise the soft-scored postcode∪name
+	 * strategy — when the condition is unmet or the postcode isn't in the table. otherwise the soft-scored postcode∪name
 	 * candidate set.
 	 */
 	#postcodeAreaResolution(query: FindPlaceQuery, convention: ResolvedConvention): Promise<PlaceCandidate[] | null> {
@@ -524,13 +524,13 @@ export class WOFSQLitePlaceLookup implements PlaceLookup, Disposable {
 		// fuzzy "Brooklyn Park, MN" won instead. Order-preserving: the first entry stays the
 		// requested placetype, which is what extract routing keys off below.
 		const placetypes = expandPlacetypeFilter(normalizePlacetypes(query.placetype)) as WOFPlacetype[] | null
-		// Postcode-typed queries keep the #920 fused name-law shape; everything else splits on
+		// Postcode-typed queries keep the #920 fused name-law shape. everything else splits on
 		// intra-token punctuation so hyphenated names reach the FTS as their real terms (#945).
 		const ftsQuery = sanitizeFTSQuery(query.text, { fuseTokens: placetypes?.includes("postalcode") ?? false })
 
 		if (!ftsQuery) return []
 
-		// Pick the extract for this query. Multi-extract routing is placetype-driven; a query without
+		// Pick the extract for this query. Multi-extract routing is placetype-driven. a query without
 		// `placetype` always goes to main. (Mixed-placetype queries with multiple extracts aren't
 		// supported in v1 — caller can issue two findPlace calls and merge in TS if needed.)
 		const firstPlacetype = placetypes?.[0]
@@ -580,7 +580,7 @@ export class WOFSQLitePlaceLookup implements PlaceLookup, Disposable {
 				countriesBySchema: this.#extractCountries,
 			})
 
-		// bare schema name; safe to interpolate (validated at construction)
+		// bare schema name. safe to interpolate (validated at construction)
 		const sch = extract.schemaName
 
 		const rawRows = fetchSearchRows({
@@ -623,7 +623,7 @@ export class WOFSQLitePlaceLookup implements PlaceLookup, Disposable {
 
 	/**
 	 * Resolve the effective convention for a query (the Geographic Rule Engine entry point). The ancestor chain is keyed
-	 * by WOF polygon id; for #289 it carries just the country level — resolved from `query.country` via the cached
+	 * by WOF polygon id. for #289 it carries just the country level — resolved from `query.country` via the cached
 	 * code→WOF-id lookup — so the EU locales, which have no override rows, resolve to `WORLD_DEFAULT` and dispatch is
 	 * byte-identical to the pre-engine path. E4 (JP) extends the chain with the resolved locality's `ancestors` row, so a
 	 * region/locality-level convention (e.g. Sapporo's grid) deep-merges over the country one.
@@ -776,7 +776,7 @@ export class WOFSQLitePlaceLookup implements PlaceLookup, Disposable {
 			// every locality polygon still anchor to the closest town.
 			const anchorRow = pcRows
 				.filter((r) => merged.has(r.id))
-				// oxlint-disable-next-line unicorn/no-array-sort -- sorts a freshly-built array; toSorted would double-allocate on a hot path
+				// oxlint-disable-next-line unicorn/no-array-sort -- sorts a freshly-built array. toSorted would double-allocate on a hot path
 				.sort((a, b) => b.containing - a.containing || a.dist - b.dist)[0]
 
 			const anchor = anchorRow ? merged.get(anchorRow.id) : undefined

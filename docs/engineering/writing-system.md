@@ -50,7 +50,7 @@ recursive one-sentence hops, so understanding "geocoding" requires opening "lati
 [geocode.earth/docs](https://geocode.earth/docs/) runs one flat sidebar of roughly 25 pages, with pricing,
 attribution and terms kept structurally outside the docs tree. Reference is plain declarative; guides are
 warmer and first-person plural; the blog carries the most personality. Limits state their mechanism, not
-only their number: per-second rate limits exist "to protect our servers from momentary spikes in requests"
+only their number: per-second rate limits exist "to guard our servers from momentary spikes in requests"
 and are "strictly enforced and are not averaged over multiple seconds"
 ([rate limits](https://geocode.earth/docs/intro/rate_limits/)). The authentication page names its own
 security gap and then admits it withholds the mitigation.

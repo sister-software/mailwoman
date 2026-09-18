@@ -5,7 +5,7 @@
  *
  *   Census ZCTA centroid fill + GeoNames postal fill for placeholder US postcodes (#525).
  *
- *   WOF ships `(0,0)` for ~22% of US postcode records; every downstream artifact (pilot anchor
+ *   WOF ships `(0,0)` for ~22% of US postcode records. every downstream artifact (pilot anchor
  *   lookup, `postcode-us.bin`, the slim hot DB's postcode cascade leg) inherits the holes. Two
  *   passes fill what they can:
  *
@@ -21,7 +21,7 @@
  *   overwrite a real coordinate. Both are idempotent (the UPDATE re-checks `latitude=0`).
  *
  *   Data file notes: `$MAILWOMAN_DATA_ROOT/census/README.md` (ZCTA);
- *   download.geonames.org/export/zip/US.zip (GeoNames; CC-BY 4.0, attribute "GeoNames (CC-BY
+ *   download.geonames.org/export/zip/US.zip (GeoNames. CC-BY 4.0, attribute "GeoNames (CC-BY
  *   4.0)").
  *
  *   This module owns the parse + fill logic; `gazetteer build postcode-database` runs these fills;
@@ -34,7 +34,7 @@ import type { WOFDatabase } from "@mailwoman/resolver-wof-sqlite/schema"
 import type { DatabaseClient } from "@mailwoman/sqlite/client"
 
 /**
- * Columns a US Census gazetteer row carries; short rows are truncated and skipped.
+ * Columns a US Census gazetteer row carries. short rows are truncated and skipped.
  */
 const GAZETTEER_ROW_COLUMNS = 7
 
@@ -55,7 +55,7 @@ export interface ZCTACentroid {
 }
 
 /**
- * Parse a Census ZCTA Gazetteer file (tab-delimited; header `GEOID ... INTPTLAT INTPTLONG`) into a 5-digit-code →
+ * Parse a Census ZCTA Gazetteer file (tab-delimited. header `GEOID ... INTPTLAT INTPTLONG`) into a 5-digit-code →
  * centroid map. Skips the header, non-5-digit GEOIDs, non-finite coordinates, and `(0,0)` rows (a placeholder must
  * never fill a placeholder).
  */
@@ -79,7 +79,7 @@ export function parseZCTACentroids(text: string): Map<string, ZCTACentroid> {
 
 /**
  * Fill `(0,0)`-placeholder US postcode rows in a WOF postcode database's `spr` table from the ZCTA centroid map,
- * recording per-row provenance in `centroid_source`. Rows with a real coordinate are never touched; placeholders
+ * recording per-row provenance in `centroid_source`. Rows with a real coordinate are never touched. placeholders
  * without a ZCTA stay placeholder (and get no provenance row). Idempotent. Returns the number of rows filled.
  */
 export function fillPlaceholderCentroids(
@@ -127,7 +127,7 @@ export function fillPlaceholderCentroids(
 }
 
 /**
- * Parse a GeoNames postal file (TSV, no header; columns: country(0), postcode(1), place(2), adm1-name(3), adm1-code(4),
+ * Parse a GeoNames postal file (TSV, no header. columns: country(0), postcode(1), place(2), adm1-name(3), adm1-code(4),
  * adm2-name(5), adm2-code(6), adm3-name(7), adm3-code(8), lat(9), lon(10), accuracy(11)) into a postcode →
  * mean-centroid map. Multiple rows for the same postcode (one per place sharing the code) are averaged. Non-finite
  * coordinates and `(0,0)` placeholder rows are skipped.

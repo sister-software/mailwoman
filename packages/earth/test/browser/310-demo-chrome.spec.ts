@@ -6,9 +6,9 @@
  *   The floating chrome's contract, at a desktop and a phone width.
  *
  *   Every assertion stands for a defect that reached earth.mailwoman.ai and was found by a person looking at the page:
- *   a side sheet that opened over the button that opened it, so there was no way to close it; a footer strip that
- *   covered the bottom sheet's last rows on a phone; a compass built, exported and mounted in no app; a sources
- *   popover clipped out of existence by the strip's own overflow; two panels sharing an edge.
+ *   a side sheet that opened over the button that opened it, so there was no way to close it. a footer strip that
+ *   covered the bottom sheet's last rows on a phone. a compass built, exported and mounted in no app. a sources
+ *   popover clipped out of existence by the strip's own overflow. two panels sharing an edge.
  *
  *   None of them were reachable by the suites that already ran here, which assert what the geocoder answers and
  *   nothing about what the page shows.

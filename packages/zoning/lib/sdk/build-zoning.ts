@@ -26,7 +26,7 @@
  *   afterwards.
  *
  *   THE INGEST IS BOUNDED ANYWAY. h3's WASM heap cannot be reset from JavaScript and does not survive an
- *   unbounded number of polyfill calls; a sibling product died twice on that, after roughly 510,000 and
+ *   unbounded number of polyfill calls. a sibling product died twice on that, after roughly 510,000 and
  *   798,000 features. This product holds 85,330, so the whole country fits inside the 100,000-id default with
  *   room to spare — and the bound still ships, because a build that stays inside a ceiling by luck is not the
  *   same fact as one that cannot cross it.
@@ -105,7 +105,7 @@ export const DEFAULT_CHUNK_SIZE = 100_000
 export type BuildZoningInput =
 	| {
 			/**
-			 * A feature source consumed IN THIS PROCESS. Correct for a fixture and for anything small; it is what the batched
+			 * A feature source consumed IN THIS PROCESS. Correct for a fixture and for anything small. it is what the batched
 			 * form falls back to per chunk, so the two share one implementation.
 			 */
 			source: ZoningFeatureSource
@@ -337,7 +337,7 @@ async function buildZoningResult(
 	const area = assertAreaAgreement(ingested, options.expectedSourceAreaM2)
 
 	// THE CROSSWALK IS NOT A TABLE, AND THE BUILD CHECKS IT RATHER THAN ASSUMING IT. Writing no edges while the mapping
-	// happens not to be a function would be an accident; refusing to write them while it is not is a statement.
+	// happens not to be a function would be an accident. refusing to write them while it is not is a statement.
 	const nonFunctional = nonFunctionalPairs(ingested.crosswalkPairs)
 
 	assertCrosswalkIsNotATable(ingested.crosswalkPairs, 0)
@@ -615,7 +615,7 @@ function assertAreaAgreement(
  * Run the ingest as a sequence of bounded child processes, over ranges of the authority's own feature ids.
  *
  * THE PARENT HOLDS NO HANDLE WHILE THEY RUN — its caller closed one before this and opens another after. Each child
- * opens the same file and appends; chunks run one at a time, so there is exactly one writer at every instant and no
+ * opens the same file and appends. chunks run one at a time, so there is exactly one writer at every instant and no
  * locking to reason about.
  *
  * @throws {Error} When a chunk exits non-zero, or prints no result line — a chunk that died mid-range has written a

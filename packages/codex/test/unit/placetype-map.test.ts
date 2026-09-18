@@ -60,7 +60,7 @@ describe("expandPlacetypeFilter", () => {
 		const expanded = expandPlacetypeFilter(["locality"])
 
 		expect(expanded).toEqual(PLACETYPE_FILTER_GROUPS.locality)
-		// Brooklyn is a borough; a strict locality filter made it unreachable.
+		// Brooklyn is a borough. a strict locality filter made it unreachable.
 		expect(expanded).toContain("borough")
 	})
 
@@ -97,13 +97,13 @@ describe("isPlacetypeFallback", () => {
 
 describe("DEFAULT_PLACETYPE_MAP", () => {
 	it("omits the tags whose rows live outside the admin gazetteer", () => {
-		// Components absent from the map are not queried; their classifier attribution stands.
+		// Components absent from the map are not queried. their classifier attribution stands.
 		expect(DEFAULT_PLACETYPE_MAP.street).toBeUndefined()
 		expect(DEFAULT_PLACETYPE_MAP.house_number).toBeUndefined()
 	})
 
 	it("routes postcode to WOF's own placetype name", () => {
-		// The tags and the taxonomy disagree on the spelling; the map is where that is reconciled.
+		// The tags and the taxonomy disagree on the spelling. the map is where that is reconciled.
 		expect(DEFAULT_PLACETYPE_MAP.postcode).toBe("postalcode")
 	})
 })

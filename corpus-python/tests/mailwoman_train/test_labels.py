@@ -94,7 +94,7 @@ def test_stage3_preserves_stage2_label_ids():
 
 def test_active_set_points_at_current_stage():
     # ACTIVE_* tracks the CURRENT training round's vocabulary — STAGE3 as of the v0.6.0
-    # ship (STAGE4 is defined in labels.py but deliberately not active; its activation
+    # ship (STAGE4 is defined in labels.py but deliberately not active. its activation
     # couples to a retrain + the JS ComponentTag union bump). When the ship-line moves,
     # this sentinel moves with it in the same commit — never pin ACTIVE to a historical
     # stage.

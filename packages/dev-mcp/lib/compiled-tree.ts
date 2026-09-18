@@ -92,7 +92,7 @@ export interface CompiledFreshness {
 	newestSource: { mtimeMs: number; path: string } | null
 	newestCompiled: { mtimeMs: number; path: string } | null
 	/**
-	 * Why it is not fresh, or `null` when it is. Written as the remedy, because that is what the reader needs.
+	 * Why it is not fresh, or `null` when it is. Written as the action, because that is what the reader needs.
 	 */
 	reason: string | null
 }

@@ -26,7 +26,7 @@ async function isWorkspaceDirectory(repoRoot: PathBuilderLike, directory: string
 export interface ReadWorkspaceDirectoriesOptions {
 	/**
 	 * Skip a literal entry whose directory carries no manifest instead of failing. A checkout at an older ref may predate
-	 * a workspace the field names; a reader that resolves that ref's own tree wants absence, not an error.
+	 * a workspace the field names. a reader that resolves that ref's own tree wants absence, not an error.
 	 *
 	 * @default false
 	 */
@@ -66,7 +66,7 @@ export async function readWorkspaceDirectories(
 
 		if (!parent) throw new Error(`workspace pattern ${stringifyJSON(entry)} is not a single trailing "*" segment`)
 
-		// Only a directory can be a workspace; a file beside them (a README) is skipped before anything is stat-ed under it.
+		// Only a directory can be a workspace. a file beside them (a README) is skipped before anything is stat-ed under it.
 		const children = (
 			await Globerator.from("*", {
 				cwd: resolvePath(repoRoot, parent),

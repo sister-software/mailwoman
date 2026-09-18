@@ -54,7 +54,7 @@ export interface BlessPackageOptions {
 	env?: string
 	provider: string
 	/**
-	 * Publish only; configure trust separately.
+	 * Publish only. configure trust separately.
 	 */
 	noTrust: boolean
 	dryRun: boolean
@@ -81,7 +81,7 @@ const npmWrite = $({ stdio: ["inherit", "inherit", "pipe"] })
  * Inside tmux this needs `set-clipboard on`. The default, `external`, sets the clipboard from tmux's own copy-mode but
  * silently discards sequences that applications emit — the copy appears to work and nothing arrives.
  *
- * Returns whether the sequence was written; the terminal on the other end may still ignore it, which is not detectable
+ * Returns whether the sequence was written. the terminal on the other end may still ignore it, which is not detectable
  * from here.
  */
 function copyToTerminalClipboard(text: string): boolean {
@@ -254,7 +254,7 @@ async function trust(dir: string, options: BlessPackageOptions): Promise<boolean
 	// There is no cheap way to ask whether trust is already on file: `npm trust list` needs the same
 	// second factor as the write, and reading it under `.quiet()` would swallow npm's approval URL —
 	// which it prints to stderr — leaving the operator staring at a silent process. So attempt the
-	// write unconditionally and let npm arbitrate. Failure never blocks the publishes; npm has already
+	// write unconditionally and let npm arbitrate. Failure never blocks the publishes. npm has already
 	// printed the reason to this terminal, so only the retry command needs restating.
 	try {
 		await runNPMWrite(npmWrite`npm ${args}`, log)

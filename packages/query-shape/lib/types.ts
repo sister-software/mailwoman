@@ -33,7 +33,7 @@ export type CharacterClass = "numeric" | "alpha" | "alphanumeric" | "cjk" | "cyr
  * `CharacterClass` and are `Hang` and `Hani`.
  *
  * `Zyyy` (Common) and `Zzzz` (Unknown) are Unicode's own codes and are answers, not failures. A digit is genuinely
- * script-neutral; a codepoint in a script this file carries no ranges for is genuinely unknown, and saying so beats
+ * script-neutral. a codepoint in a script this file carries no ranges for is genuinely unknown, and saying so beats
  * folding it into a script that happens to be nearby.
  */
 export type ScriptCode = "Latn" | "Hani" | "Hira" | "Kana" | "Hang" | "Cyrl" | "Arab" | "Yiii" | "Zyyy" | "Zzzz"

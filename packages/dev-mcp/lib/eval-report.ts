@@ -10,7 +10,7 @@
  *   a number — the log is read only for the two things that exist nowhere else, the lore-guard refusal and the
  *   pre-filled ledger command.
  *
- *   This module adds no metric and moves no floor. The eval is the release authority; a floor relaxed here would be the
+ *   This module adds no metric and moves no floor. The eval is the release authority. a floor relaxed here would be the
  *   silent eval drift the eval discipline exists to catch.
  */
 
@@ -65,7 +65,7 @@ export interface EvalReport {
 	/**
 	 * The pre-filled `eval ledger-append` command the eval prints on a pass, or `null`.
 	 *
-	 * Surfaced, never RUN. Appending to the ledger is a repo write and a claim about a shipped version; the eval runs on
+	 * Surfaced, never RUN. Appending to the ledger is a repo write and a claim about a shipped version. the eval runs on
 	 * candidates that may never ship. See {@link EvalReport.ledger_note}.
 	 */
 	ledger_command: string | null
@@ -158,7 +158,7 @@ export async function readEvalReport(outDir: string, stdout: string, stderr: str
 
 	for (const [index, line] of lines.entries()) {
 		if (!ledgerCommand && line.includes(LEDGER_MARKER)) {
-			// The command spans a couple of continued lines; take them until one does not end in a backslash.
+			// The command spans a couple of continued lines. take them until one does not end in a backslash.
 			const collected = [line.trim()]
 
 			for (let next = index + 1; next < lines.length && collected.at(-1)!.endsWith("\\"); next++) {
@@ -247,12 +247,12 @@ async function declaredArtifacts(packageDir: PathBuilderLike): Promise<string[]>
  * than calling `resolveWeights({cacheRoot})` precisely so a mis-staged candidate dies on an ENOENT instead of falling
  * through to the installed workspace package — which in this repo always resolves, and would grade the shipped model
  * under the candidate's label. This check runs before the spawn only so the reader learns the expected shape from a
- * sentence rather than from a stack trace; it never substitutes for that guard.
+ * sentence rather than from a stack trace. it never substitutes for that guard.
  *
  * The layout comes from `weightsCachePackageDir`, the resolver's own function, rather than a re-typed
  * `node_modules/@mailwoman/…` literal — the 2026-08-06 triage lesson recorded at the eval's own call site.
  *
- * @returns `kind` distinguishes a wrong-shaped root from a correctly-shaped one that is under-staged; the two need
+ * @returns `kind` distinguishes a wrong-shaped root from a correctly-shaped one that is under-staged. the two need
  *   different fixes and one message for both sends the reader to the wrong place. `paths` is empty when well-formed.
  */
 export async function missingWeightsCacheArtifacts(

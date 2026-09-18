@@ -28,7 +28,7 @@ import type { WOFDatabase } from "#schema"
  *
  * Excluded by policy: self rows, and placetypes outside the containment ladder (continent, empire, …: `placetypeDepth` 0)
  * — they discriminate nothing a consumer of this sidecar checks. An edge to a parent with no current `spr` row has no
- * name to denormalize; it is dropped and counted rather than stored blind.
+ * name to denormalize. it is dropped and counted rather than stored blind.
  */
 export async function buildAncestorsSidecar(ctx: {
 	src: DatabaseClient<WOFDatabase>
@@ -48,8 +48,8 @@ export async function buildAncestorsSidecar(ctx: {
 	)
 
 	// The canonical-parent forest the interval labels are computed over. One parent per place — the
-	// depth-1 edge (finest containment tier, lowest ancestor id; the `regionOf` MIN-stability
-	// convention). All parents stay in the closure rows; only the interval tree canonicalizes.
+	// depth-1 edge (finest containment tier, lowest ancestor id. the `regionOf` MIN-stability
+	// convention). All parents stay in the closure rows. only the interval tree canonicalizes.
 	const canonicalParentOf = new Map<number, number>()
 	const childrenOf = new Map<number, number[]>()
 	const forest = new Set<number>()
@@ -58,7 +58,7 @@ export async function buildAncestorsSidecar(ctx: {
 	let ancestorPlaces = 0
 	let droppedParents = 0
 
-	// Per-child edge buffer; the stream below is grouped by child id, so each flush owns one place.
+	// Per-child edge buffer. the stream below is grouped by child id, so each flush owns one place.
 	let childID = -1
 	let edges: Array<{ aid: number; apt: string }> = []
 

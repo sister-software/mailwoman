@@ -7,7 +7,7 @@
  *
  *   THE MEANING-OF-ZERO INVERSION IS THE POINT OF THIS FILE, and it is checked in three ways rather than
  *   asserted once. Every coverage row must fail `supportsExclusion`; a builder handing a stronger basis to
- *   the coverage writer must be refused; and an artifact carrying one must be refused at open time. The
+ *   the coverage writer must be refused. and an artifact carrying one must be refused at open time. The
  *   sibling flood layer reports a point inside its footprint and outside every polygon as the authority's
  *   Zone 1 DESIGNATION. This layer must report the same geometry as `unknown` with no designation, because
  *   NCERM publishes no coverage statement and an absent polygon may simply be inland.

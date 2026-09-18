@@ -4,7 +4,7 @@
  * @author Teffen Ellis, et al.
  *
  *   Held-out fresh-draw Gauntlet — THE generalization check (DeepSeek 019f1144: "the only layer that
- *   measures the tail; when it conflicts with the curated suite, it wins"). Each run draws a fresh random
+ *   measures the tail. when it conflicts with the curated suite, it wins"). Each run draws a fresh random
  *   sample with truth coordinates (BAN for FR), so the model can't memorize it, and runs both the candidate
  *   and the current production model on the same draw. It checks on a two-proportion z-test: ship only if the
  *   candidate is not statistically worse than production at the locality tolerance. Absolute accuracy is not
@@ -22,7 +22,7 @@ import { buildGauntletDeps, type GauntletDeps, type GauntletResolverPins } from 
 
 /**
  * Two-sided 95% critical value of the standard normal. The check blocks only on a SIGNIFICANT regression, so a
- * candidate that is ahead or within noise passes; this is the noise boundary.
+ * candidate that is ahead or within noise passes. this is the noise boundary.
  */
 const Z_CRITICAL_95_TWO_SIDED = -1.96
 
@@ -43,7 +43,7 @@ export interface HoldoutLayerOptions {
 	 */
 	source?: string
 	/**
-	 * A tokenizer-SPLICE candidate (#444/#884/#912) ships a new vocab; grading it needs the candidate tokenizer (+ card)
+	 * A tokenizer-SPLICE candidate (#444/#884/#912) ships a new vocab. grading it needs the candidate tokenizer (+ card)
 	 * paired with the candidate model. Production is then also run through the shipped trio (createScorer both sides) so
 	 * the only variables are the ONNX + the vocab. Omit for a model-only bump.
 	 */
@@ -86,7 +86,7 @@ export interface Sample {
 /**
  * Held-out truth sources — fresh-draw, not in mailwoman's training corpus, so they measure generalization. Each parses
  * a semicolon row of its staging file into a BARE-form query (no postcode — the hard case the tail exercises) + truth
- * coord. FR/BAN streams the 5 GB file; the smaller pools (US/FDIC, ~77k) are the fast draw. Add a source by dropping a
+ * coord. FR/BAN streams the 5 GB file. the smaller pools (US/FDIC, ~77k) are the fast draw. Add a source by dropping a
  * staging file + a parser here.
  */
 export interface SourceDef {

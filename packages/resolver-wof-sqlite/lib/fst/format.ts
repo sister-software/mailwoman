@@ -5,7 +5,7 @@
  *
  *   The FST binary-format constants, shared by the Node serializer/deserializer (`fst-serialize.ts`)
  *   and the browser deserializer (`fst-deserialize-web.ts`). Platform-free by design — no Buffer at
- *   module scope; both runtimes convert {@link FST_MAGIC_BYTES} themselves.
+ *   module scope. both runtimes convert {@link FST_MAGIC_BYTES} themselves.
  */
 
 import type { PlacetypeID } from "#fst/types"
@@ -49,7 +49,7 @@ export const WIDE_STATE_ENTRY_SIZE = 16
 export const NARROW_STATE_ENTRY_SIZE = 12
 
 /**
- * First format version carrying the trailing metadata block; older files simply have none.
+ * First format version carrying the trailing metadata block. older files simply have none.
  */
 export const VERSION_WITH_METADATA = 3
 

@@ -7,7 +7,7 @@
  *   Enumerated from the INDEX, not the filesystem. A file set read off the disk is not a property of the repository —
  *   it is a property of whichever files happen to be sitting in that checkout. A tree carrying gitignored scratch
  *   scripts counted 166 `asNever` against a clean checkout's 85 at the same commit, so the debt check failed on files no
- *   commit contains; a directory walk likewise kept flagging `scratchpad/` probes and agent worktrees — hits that fail
+ *   commit contains. a directory walk likewise kept flagging `scratchpad/` probes and agent worktrees — hits that fail
  *   for whoever has the file and cannot fail in CI, which reads as a real violation and is unreproducible by the person
  *   asked to fix it. `git ls-files` answers the actual question, and drops the hand-maintained skip lists (build output,
  *   `node_modules`, `.yarn`) with it: two readers of the same count must be able to reproduce each other.

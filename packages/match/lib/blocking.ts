@@ -8,7 +8,7 @@
  *   bet pays off: two records resolving to the same place land in the same spatial cell regardless
  *   of how their address strings are spelled, so geography is the primary block.
  *
- *   A {@link BlockingKey} maps a record to zero or more string keys; records sharing any key become
+ *   A {@link BlockingKey} maps a record to zero or more string keys. records sharing any key become
  *   candidates. Keys compose as a _union_ (the standard multi-pass approach — high recall from
  *   cheap rules): block on the spatial cell or the canonical key or the postcode, and a pair that
  *   any rule catches is scored. {@link conjunction} builds the AND-style key Geo-ER uses
@@ -118,7 +118,7 @@ export function conjunction<R>(...keys: BlockingKey<R>[]): BlockingKey<R> {
  */
 export interface BlockResult<R> {
 	/**
-	 * Deduplicated candidate pairs (no self-pairs; a pair caught by multiple keys appears once).
+	 * Deduplicated candidate pairs (no self-pairs. a pair caught by multiple keys appears once).
 	 */
 	pairs: Array<[R, R]>
 	/**

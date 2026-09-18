@@ -31,7 +31,7 @@
  *   with no rate limit and nothing to pace, run once per refresh. It uses the same `downloadToFile`
  *   every other module in this `fetch/` family uses, which is where the retry and timeout live.
  *   The Wikidata sibling (`wikidata-subvenue.ts`) is an API client and is built on `APIClient`
- *   accordingly; the split between the two is the one `AGENTS.md` draws.
+ *   accordingly. the split between the two is the one `AGENTS.md` draws.
  *
  *   Invoke via `mailwoman corpus fetch ourairports --out-root <path>`.
  */

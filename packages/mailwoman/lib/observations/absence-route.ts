@@ -9,7 +9,7 @@
  *   statement that the thing asked for is not there, carrying the assertion's provenance and the coverage
  *   cell's basis together.
  *
- *   THE ROUTE READS; IT NEVER ANSWERS. It takes a finished {@linkcode POIIntentOutcome} and returns a
+ *   THE ROUTE READS. IT NEVER ANSWERS. It takes a finished {@linkcode POIIntentOutcome} and returns a
  *   record beside it. Nothing here is wired into the pipeline, no result is added, removed, re-ordered or
  *   suppressed, and no abstain is reached or avoided because of it. The pipeline that produced the outcome
  *   is byte-identical to the pipeline that runs with this module unloaded, which is what makes the
@@ -206,7 +206,7 @@ export const ABSENCE_REFUSALS = [
 	 */
 	"cell_unsurveyed",
 	/**
-	 * The cell has a coverage row whose basis is `source_present`. The source looked and returned rows; that is presence
+	 * The cell has a coverage row whose basis is `source_present`. The source looked and returned rows. that is presence
 	 * evidence and supports no exclusion.
 	 */
 	"basis_supports_no_exclusion",

@@ -682,7 +682,7 @@ export function overlayText(
 ): boolean
 ```
 
-`rasterizeToFrame` subclasses asciify's `AsciifyTerminal` with a no-op sink to reach the protected braille conversion — the protected members (`_computeBrailleCells`, `_cellChars`, `_cellColors`) are accessible from a subclass, so asciify's dither/luminance logic is reused rather than re-implemented:
+`rasterizeToFrame` subclasses asciify's `AsciifyTerminal` with a no-op sink to reach the guarded braille conversion — the guarded members (`_computeBrailleCells`, `_cellChars`, `_cellColors`) are accessible from a subclass, so asciify's dither/luminance logic is reused rather than re-implemented:
 
 ```ts
 import { AsciifyTerminal } from "@sister.software/asciify/tui"

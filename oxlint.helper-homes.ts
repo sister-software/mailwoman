@@ -10,7 +10,7 @@
  */
 
 /* oxlint-disable mailwoman/prefer-home -- this file is the table the rule reads. Every constant and subcommand below
-   is the signature of a helper, quoted so the rule can recognize a copy; importing the helper here would leave the
+   is the signature of a helper, quoted so the rule can recognize a copy. importing the helper here would leave the
    rule with nothing to match on. */
 
 /**
@@ -46,7 +46,7 @@ export interface HelperHome {
 
 /**
  * Every helper shape the `prefer-home` rule knows. Each row was added by a review that found the same helper typed
- * twice; the rule then reports the third copy at commit time.
+ * twice. the rule then reports the third copy at commit time.
  */
 export const HELPER_HOMES: readonly HelperHome[] = [
 	{

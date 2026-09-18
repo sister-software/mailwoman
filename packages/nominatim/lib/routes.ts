@@ -5,7 +5,7 @@
  *
  *   Route definitions + handlers for the Nominatim-compatible surface. The OpenAPI document is
  *   emitted from these definitions — no handwritten spec. Handlers parse params from the
- *   `legacyQuery` express-shaped view; the zod query schemas drive only the emitted document.
+ *   `legacyQuery` express-shaped view. the zod query schemas drive only the emitted document.
  */
 
 import { createRoute, type OpenAPIHono, z } from "@hono/zod-openapi"

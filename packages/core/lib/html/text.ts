@@ -10,7 +10,7 @@
  *   whitespace runs intact. What it cannot do is the one rule here — `textContent` inserts nothing at an
  *   element boundary, so `<td>a</td><td>b</td>` reads as `"ab"` and `<p>Acme Fiber</p><p>LLC</p>` as
  *   `"Acme FiberLLC"`, a name that appears nowhere in the document. Reach for the sanitizer from a module
- *   that already sanitizes; its Node build constructs a jsdom window at import (measured 422 ms, 71 MB,
+ *   that already sanitizes. its Node build constructs a jsdom window at import (measured 422 ms, 71 MB,
  *   against `htmlparser2`'s 12 ms), which is priced for sanitizing, not for reading a table.
  */
 

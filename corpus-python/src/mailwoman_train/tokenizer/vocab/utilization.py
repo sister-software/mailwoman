@@ -43,7 +43,7 @@ def _init_worker(tokenizer_path: str) -> None:
 
 
 def _count_file(path: str, vocab_size: int) -> np.ndarray:
-    """Encode every `raw` in one parquet file; return int64 fire counts."""
+    """Encode every `raw` in one parquet file. return int64 fire counts."""
     from itertools import chain
 
     import pyarrow.parquet as pq
@@ -55,7 +55,7 @@ def _count_file(path: str, vocab_size: int) -> np.ndarray:
         raws = batch.column(0).to_pylist()
         id_lists = _SP.encode(raws)  # type: ignore[union-attr]
         # Flatten via C-speed chain + fromiter, then one bincount — the per-id python loop was the
-        # bottleneck (a ~6h pace over 8B ids; this path measures ~20-30 min on 13 workers).
+        # bottleneck (a ~6h pace over 8B ids. this path measures ~20-30 min on 13 workers).
         flat = np.fromiter(chain.from_iterable(id_lists), dtype=np.int64)
         counts += np.bincount(flat, minlength=vocab_size)
 

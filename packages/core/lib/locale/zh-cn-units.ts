@@ -7,13 +7,13 @@ import { stringifyJSON } from "#json"
  * @file The CN organizational-unit reader (#2034). China's rural and state-farm addresses carry a hierarchy below the
  *   named settlement that the universal tags have no rung for: `孟定农场 → 三分场 → 八队` (Mengding Farm → No. 3 sub-farm →
  *   No. 8 production team), the XPCC ladder `一四三团十二连` (143rd regiment → 12th company), the villager group `民权三组`.
- *   The schema holds the whole ordinal chain as one `locality_unit` span; this module is the deterministic reading of
+ *   The schema holds the whole ordinal chain as one `locality_unit` span. this module is the deterministic reading of
  *   that span — which rung each generic names — and the labeler the corpus recipe uses to write the span in the first
  *   place. Both halves share the one generic table, so a generic added for labeling is read back the same way.
  *
  *   The vocabulary is geography wearing organizational words. `团` is a regiment and `连` a company, but a 1983
  *   place-name reform treated a `团` as approximately a town and a `连` as approximately a village, and current XPCC farm
- *   pages still describe farms by numbered `连队`. A literal translation reads as mail to an army formation; the reader
+ *   pages still describe farms by numbered `连队`. A literal translation reads as mail to an army formation. the reader
  *   names the rung, never translates it.
  */
 
@@ -36,7 +36,7 @@ export type CNUnitRung = (typeof CN_UNIT_RUNGS)[number]
 
 /**
  * Generic suffix → rung. Longer generics are listed first so `生产队` is read before `队` and `大队` before `队`. Every entry
- * here is a suffix the census of the coarse-placer CN rows found at least once as the tail of an ordinal unit; a
+ * here is a suffix the census of the coarse-placer CN rows found at least once as the tail of an ordinal unit. a
  * generic that only ever follows a NAME (`林场`, `牧场`, `垦殖场`) belongs to the named head and is deliberately absent.
  */
 export const CN_UNIT_GENERICS: ReadonlyArray<readonly [generic: string, rung: CNUnitRung]> = [

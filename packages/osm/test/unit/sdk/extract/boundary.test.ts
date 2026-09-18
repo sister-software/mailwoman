@@ -3,7 +3,7 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Unit cover for {@link buildBoundarySQL} — the OGRSQL string builder. No `ogr2ogr` is spawned; the
+ *   Unit cover for {@link buildBoundarySQL} — the OGRSQL string builder. No `ogr2ogr` is spawned. the
  *   extraction itself needs a real `.osm.pbf` and GDAL on the path.
  */
 

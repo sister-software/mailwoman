@@ -106,7 +106,7 @@ describe("buildGranularityLadder", () => {
 		const rows = buildGranularityLadder(ladderFixtureDB())
 		const gb = rows.find((row) => row.country === "GB")
 
-		// London has a borough child and a neighbourhood child; both project onto dependent_locality.
+		// London has a borough child and a neighbourhood child. both project onto dependent_locality.
 		expect(gb?.rungs.dependent_locality?.nodes).toBe(2)
 		expect(gb?.rungs.dependent_locality?.parentsCovered).toBe(1)
 	})

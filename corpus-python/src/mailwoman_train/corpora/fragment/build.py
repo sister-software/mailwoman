@@ -3,12 +3,12 @@
 Row types (the measured failure classes, night-1 postmortem):
   bare_street      "Vestre Haugen"        -> B-street [I-street ...]
   street_number    "Vestre Haugen 74"     -> street tokens + B-house_number   (EURO locales only —
-                                             the trailing-number-tagged-postcode failure class;
+                                             the trailing-number-tagged-postcode failure class.
                                              leading-number en-* forms are already base-dominant)
 
 Sources: OpenAddresses extracts (STREET/NUMBER columns — real names, real number formats, per
 locale), plus bare US/AU/NZ streets lifted from an existing corpus parquet's street spans (no local
-OA `us` extract). Labels are by construction; spans are char offsets over the rendered text.
+OA `us` extract). Labels are by construction. spans are char offsets over the rendered text.
 
 ASSAY TOOLING: if the assay confirms the data change, the production recipe graduates to the
 `corpus/` TS generator convention (CONTRIBUTING_MODEL_WORK §Adding a recipe). A 10% deterministic
@@ -82,7 +82,7 @@ def parse_args(argv: Sequence[str] | None = None) -> argparse.Namespace:
 def push_oa_locale_rows(args: argparse.Namespace, push: Push) -> None:
     """Every row a locale's OpenAddresses extract yields, in the order the registers are listed.
 
-    Locales are visited in sorted order so the ids are stable across runs; within a locale the
+    Locales are visited in sorted order so the ids are stable across runs. within a locale the
     blocks run bare street, street with number, bare locality, locality with postcode, unit,
     comma-free context, then the country counterweight.
     """
@@ -155,7 +155,7 @@ def push_corpus_harvest_rows(
     counterweight block below zips them against street surfaces rather than re-reading the corpus.
     """
     corpus_streets = span_rows_from_corpus(args.corpus_parquet_glob, {"US"}, args.per_locale_cap, max_parts=30)
-    # Fragment recipe v3: GLOBAL bare-locality twins (all countries; cap/4 each) — the gauntlet
+    # Fragment recipe v3: GLOBAL bare-locality twins (all countries. cap/4 each) — the gauntlet
     # global-dublin-bare regression showed famous cities outside the recipe's OA locales lose their
     # locality reading once fragment street-mass grows. Harvested from real corpus locality spans.
     if args.famous_localities_file:
@@ -255,10 +255,10 @@ def push_country_counterweight_rows(
     )
     # US is the biggest golden country class (us.jsonl) and the corpus's US streets (tiger/nad) are what
     # --corpus-parquet-glob points at. FR streets live in a different source block (BAN) that this glob
-    # doesn't cover, so seed US only here; FR/DE ride the 16 OA-locale country rows + a later BAN pass if
+    # doesn't cover, so seed US only here. FR/DE ride the 16 OA-locale country rows + a later BAN pass if
     # still short. A modest cap keeps country from dominating the recipe output.
     country_seed_countries = {"US"}
-    number_first = {"US", "GB", "CA", "FR"}  # NUMBER STREET; the rest (DE/IT/ES/AT/…) are STREET NUMBER
+    number_first = {"US", "GB", "CA", "FR"}  # NUMBER STREET. the rest (DE/IT/ES/AT/…) are STREET NUMBER
     country_cap = min(args.per_locale_cap, 1500)
     country_seed_streets = span_rows_from_corpus(
         args.corpus_parquet_glob, country_seed_countries, country_cap, tag="street", max_parts=40
@@ -304,7 +304,7 @@ def push_country_counterweight_rows(
     # v2.9.1 (#1104): LEADING-position country rows — "United States of America, Wyoming, Лорейн"
     # (country first). The v290 tail-only counterweight recovered tail cases but MISSED this WOF-admin
     # distribution (12/60 golden misses, all leading-position + non-Latin locality). Regions from NAD
-    # admin_pairs; localities from corpus_localities["US"] INCLUDING non-Latin (the point — teach country
+    # admin_pairs. localities from corpus_localities["US"] INCLUDING non-Latin (the point — teach country
     # when the locality context is non-Latin). Rotate the codex surfaces (the golden favors the long
     # "United States of America" form here).
     us_regions = [reg for _, reg in admin_pairs]
@@ -312,7 +312,7 @@ def push_country_counterweight_rows(
     us_surfaces = COUNTRY_SURFACES.get("US", [])
     # v2.9.2 (#1104): weight the LEADING surfaces to the MULTI-WORD forms ("United States of America",
     # "United States"). The v291 probe pinned the residual exactly there: short leading forms ("USA, AZ,
-    # …" → country=USA) already parse; only the long form fails ("United States of America, …" → the
+    # …" → country=USA) already parse. only the long form fails ("United States of America, …" → the
     # 4-token phrase reads as a STREET). Rotating all 6 surfaces gave the long form only ~1/6 of leading
     # rows. Bias to the multi-word forms so the model gets enough signal to stop reading them as street.
     leading_surfaces = [s for s in us_surfaces if len(s.split()) >= 2] or us_surfaces

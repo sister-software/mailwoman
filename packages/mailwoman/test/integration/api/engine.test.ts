@@ -41,7 +41,7 @@ import { beforeAll, beforeEach, describe, expect, test } from "vitest"
 const wofPath = $public.MAILWOMAN_WOF_DB ?? String(dataRootPath("wof", "admin-global-priority.db"))
 const txSitus = String(dataRootPath("address-points", "address-points-us-tx.db"))
 const hasStack = (await pathExists(wofPath)) && (await pathExists(txSitus))
-// oxlint-disable-next-line vitest/valid-title, vitest/valid-describe-callback -- an aliased describe; the title and callback arrive where it is invoked
+// oxlint-disable-next-line vitest/valid-title, vitest/valid-describe-callback -- an aliased describe. the title and callback arrive where it is invoked
 const describeIfStack = describe.skipIf(!hasStack)
 
 /**
@@ -60,7 +60,7 @@ async function weightsPresent(): Promise<boolean> {
 	}
 }
 
-// oxlint-disable-next-line vitest/valid-title, vitest/valid-describe-callback -- an aliased describe; the title and callback arrive where it is invoked
+// oxlint-disable-next-line vitest/valid-title, vitest/valid-describe-callback -- an aliased describe. the title and callback arrive where it is invoked
 const describeIfWeights = describe.skipIf(!(await weightsPresent()))
 
 let app: ReturnType<typeof createMailwomanAPI>
@@ -145,7 +145,7 @@ describe("api-engine — /health (run unconditionally, never throws)", () => {
 	})
 })
 
-// /v1/parse — native neural output; needs only the model weights, not the gazetteer, so
+// /v1/parse — native neural output. needs only the model weights, not the gazetteer, so
 // it's conditioned on `weightsPresent()` rather than `hasStack` — a WOF-less boot still answers this.
 
 describeIfWeights(

@@ -82,13 +82,13 @@ export const DEFAULT_POSTCODE_DATABASES = [
 	"postalcode-geonames-intl.db",
 	// GB via OS Code-Point Open under OGL v3 (operator licence ruling 2026-08-05): 1,746,976 unit
 	// postcodes, England+Scotland+Wales — NO Northern Ireland (excluded from every permissive UK
-	// grant; see the codepoint builder's NI note). Replaces the GeoNames GB rows, which the
+	// grant. see the codepoint builder's NI note). Replaces the GeoNames GB rows, which the
 	// 2026-08-05 parity check measured as the same survey (max coordinate delta 6.6 m over 1.75M
 	// joined rows) under a muddled licence. Rebuild: `mailwoman gazetteer build postcode-codepoint`.
 	"postalcode-gb-codepoint.db",
 	// Northern Ireland (BT), the hole Code-Point Open leaves — 4,757 of 50,032 live NI postcodes (9.5 %),
 	// 250/886 sectors, 80/80 districts, from OpenStreetMap `addr:postcode` (2026-08-05 extract). A miss on a
-	// BT code means NOT ATTESTED IN OSM, not that the code does not exist; since #1480 an unknown postcode
+	// BT code means NOT ATTESTED IN OSM, not that the code does not exist. since #1480 an unknown postcode
 	// abstains, so the partial database is strictly additive.
 	//
 	// BUILD-LOCAL TIER — ODbL 1.0 is share-alike on a Derived Database, so this artifact is never
@@ -98,14 +98,14 @@ export const DEFAULT_POSTCODE_DATABASES = [
 	// Rebuild: `mailwoman gazetteer build postcode-ni-osm` (add `--offline` to rebuild from the saved
 	// Overpass response rather than re-querying a volunteer endpoint).
 	"postalcode-ni-osm.db",
-	// Japan's 7-digit codes from WOF (142,604 rows; 48,216 carry the 0,0 unlocated sentinel, which the candidate fold
+	// Japan's 7-digit codes from WOF (142,604 rows. 48,216 carry the 0,0 unlocated sentinel, which the candidate fold
 	// skips by construction). The located 94,388 answer a 町域 centroid: on 637 postcode-containing JP board rows the
 	// centroid sits 0.52 km (p50) / 2.31 km (p90) from the entrance point, against the 15–19 km municipality centroid
-	// the admin walk otherwise reaches; every located row passes @15 km and 36 of 2,000 that failed on the municipality
+	// the admin walk otherwise reaches. every located row passes @15 km and 36 of 2,000 that failed on the municipality
 	// pass on the code. The fold arrives with the next candidate rebuild.
 	"postalcode-jp.db",
 	// #920: the GeoNames-postal tail database — TEN countries in ingest order FI/CZ/SK/SI/DK/NO/HR/PL/SE/BE
-	// (57,221 rows; Belgium joined 2026-08-12 with 1,146 codes after the Overture Belgium parquet measured too thin —
+	// (57,221 rows. Belgium joined 2026-08-12 with 1,146 codes after the Overture Belgium parquet measured too thin —
 	// 203 codes, none of the eu-mixed panel's). GB rode in this database 2026-07-03 → 2026-08-05 and moved to
 	// Code-Point Open above. The swap is parity-conditional: the nine prior countries re-joined byte-identical
 	// (56,075 rows, worst coordinate delta 0).
@@ -181,7 +181,7 @@ export async function resolvePostcodeDatabases(
  */
 export const DEFAULT_LOCALITY_DATABASES: readonly string[] = [
 	"localities-nz-linz.db",
-	// The Prague municipal districts (`Praha 9` — the #42 pair rung's missing locality half; 22 rows
+	// The Prague municipal districts (`Praha 9` — the #42 pair rung's missing locality half. 22 rows
 	// from GeoNames CZ, `gazetteer build cz-districts`). Verified 2026-08-12: the Chabeřická panel row
 	// moved from a 6,733 km US answer to CZ at ~400 m.
 	"localities-cz-districts.db",
@@ -386,7 +386,7 @@ export interface BuildOptions {
 	importanceDB?: string | false
 	/**
 	 * Countries judged by the cross-source currency backfill (#1737 — deprecated-with-no-successor WOF localities
-	 * resurrected only under a GeoNames attestation; see `resurrectCurrencyHoles`). Default: the WOF-priority set — the
+	 * resurrected only under a GeoNames attestation. see `resurrectCurrencyHoles`). Default: the WOF-priority set — the
 	 * only countries whose admin comes from WOF repos, so the only ones that can carry this hole class. Countries without
 	 * a `<data-root>/geonames/<CC>.txt` dump are skipped loudly by the pass. Pass `false` to disable.
 	 */
@@ -502,7 +502,7 @@ export interface PublishOptions {
 	 */
 	uploadScript: string
 	/**
-	 * A staging dir; the candidate is symlinked under `<stageDir>/gazetteer/<version>/candidate.db`.
+	 * A staging dir. the candidate is symlinked under `<stageDir>/gazetteer/<version>/candidate.db`.
 	 */
 	stageDir: PathBuilderLike
 	/**
@@ -581,7 +581,7 @@ export async function publishGazetteer(opts: PublishOptions): Promise<PublishRes
 
 /**
  * A dated, immutable gazetteer version: `YYYY-MM-DD` + a lowercase suffix letter, e.g. `2026-06-27a`. Pass a `Date`
- * (the CLI does; the module never reads the clock implicitly).
+ * (the CLI does. the module never reads the clock implicitly).
  */
 export function defaultGazetteerVersion(now: Date, suffix = "a"): string {
 	const y = now.getUTCFullYear()

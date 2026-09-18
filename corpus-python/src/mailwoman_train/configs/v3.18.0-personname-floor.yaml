@@ -9,18 +9,18 @@
 #
 # THE ONE VARIABLE: locality-surface-lexicon-v3.json — 1-token surfaces in libpostal given_names ∪
 # surnames ∪ per-language personal_titles need importance ≥ 0.45 (metropolis tier: paris/lyon/nancy
-# stay — they're in the name lists too; a blanket exclusion would kill them). 242,584 entries.
+# stay — they're in the name lists too. a blanket exclusion would kill them). 242,584 entries.
 # C-verdict instrumentation carried: grade the heal+case grid, not just raw.
 #
 # PRE-REGISTERED (grade_evidence_bundle, step 3000):
 #   1. THE ORIGINAL BAR: locality marginal (zero=locality, asis, raw) ≥ −0.020 on alnum-hn (v3.17
 #      read −0.028) and bare-locality/street-hn hold ≥ −0.020.
-#   2. Gains hold: homonym bundle ON−OFF ≥ +0.050 asis-raw; lowercase-heal homonym ≥ +0.25.
+#   2. Gains hold: homonym bundle ON−OFF ≥ +0.050 asis-raw. lowercase-heal homonym ≥ +0.25.
 #   3. The user-register net: lowercase-heal all-class ON−OFF ≥ +0.015 (v3.17: +0.019) — the bundle
 #      must stay net-positive where users live.
 #   VERDICT: all three ⇒ the bundle recipe (bundle + absence-curriculum + three-law selectivity) is
 #   CONFIRMED BUILDABLE → the Track-2 productionization brief. Any miss ⇒ STOP for real — five runs
-#   is the axis's budget; the residual goes to the brief as the open problem.
+#   is the axis's budget. the residual goes to the brief as the open problem.
 #
 # Launch: cd corpus-python && modal run -d -m launch.train_remote --config v3.18.0-personname-floor.yaml --resume none
 #
@@ -54,7 +54,7 @@ data:
     AU: 1.0
     CA: 1.0 # New (Overture) — live locality, sidesteps NZ's dead dependent_locality
     MX: 1.0 # New (Overture) — BR dropped (0% OA-lineage + SN-garbage numbers)
-    NZ: 1.0 # v3.12 COMPANION BUG FIX (not the variable): the allowlist lacked NZ through the whole v3.11.x lineage — synth-nz drew zero rows (step-0 measured; the documented v3.8.2-era allowlist trap re-triggered). Restores the recipe's DECLARED 4-locale intent.
+    NZ: 1.0 # v3.12 COMPANION BUG FIX (not the variable): the allowlist lacked NZ through the whole v3.11.x lineage — synth-nz drew zero rows (step-0 measured. the documented v3.8.2-era allowlist trap re-triggered). Restores the recipe's DECLARED 4-locale intent.
   source_weights: # v3.1.0 weights + overture-latam (CA/MX/BR, dedicated source so it doesn't dilute the trained EU overture rows) + synth-no-fragment (the one new variable); synth-no-street-led ZEROED (its on-disk part predates --exclude-surfaces and is contaminated vs the board — see the overlay note).
     overture-latam: 6.0 # New — the CA/MX/BR Overture rows. 6.0/~142 ≈ 4.2%, within Fable's ≤5-8% new-mass band. Distinct from  (EU) so EU exposure is untouched.
     wof-admin: 2.0
@@ -95,9 +95,9 @@ data:
     # (matches fr-fragment). Bare streets + street+number with no postcode partner, + counters.
     synth-no-fragment: 12.0
     synth-gb: 10.0 # FEED: 6.1% stream × .328 dep-loc (probe-2 had this at 20.2% — the skew culprit)
-    synth-nz: 4.0 # FEED NEW: 2.4% stream × .792 (synth-nz-v2 800k; key also covers the old 2,990-row po-box recipe output — harmless, same country)
+    synth-nz: 4.0 # FEED NEW: 2.4% stream × .792 (synth-nz-v2 800k. key also covers the old 2,990-row po-box recipe output — harmless, same country)
     synth-es-pedania: 5.0 # FEED NEW: 3.0% stream × .303 (post-4b formatter fix)
-    synth-fr-lieudit: 3.0 # FEED NEW: 1.8% stream × 1.00 (BAN nom_ld, 4ce6821a; directly feeds the bare-locality regression class)
+    synth-fr-lieudit: 3.0 # FEED NEW: 1.8% stream × 1.00 (BAN nom_ld, 4ce6821a. directly feeds the bare-locality regression class)
   train_rows_per_epoch: 1000000
   val_rows: 4096
   coarse_filter: true
@@ -113,7 +113,7 @@ data:
   # #1104 country-lexicon channel — the dedicated country soft-feed vocabulary (feature_dim 2).
   country_lexicon_path: /data/gazetteer/country-surface-lexicon-v1.json
   # P-A street-type channel — the codex street-type lexicon (feature_dim 1). Same JSON schema as the
-  # gazetteer lexicon; the loader reuses load_gazetteer_lexicon + realign_gazetteer_to_pieces.
+  # gazetteer lexicon. the loader reuses load_gazetteer_lexicon + realign_gazetteer_to_pieces.
   street_type_lexicon_path: /data/gazetteer/street-type-lexicon-v1.json
   # v3.16.0 — the bundle's second channel (see header).
   locality_surface_lexicon_path: /data/gazetteer/locality-surface-lexicon-v3.json
@@ -125,7 +125,7 @@ data:
 model: # Verbatim from v2.4.1.
   hidden_size: 384
   use_span_boundary_head: true
-  use_deploc_head: false # P-A leaves the dep-loc head disabled — orthogonal to P-B's head experiment; don't confound the street-type read.
+  use_deploc_head: false # P-A leaves the dep-loc head disabled — orthogonal to P-B's head experiment. don't confound the street-type read.
   span_boundary_loss_weight: 0.5
   num_hidden_layers: 6
   num_attention_heads: 6
@@ -157,7 +157,7 @@ model: # Verbatim from v2.4.1.
   use_locality_surface_anchor: true
   locality_surface_feature_dim: 2
   # #1104 homograph-guard SOFTENER — the one variable vs v263. Scales the country_ambiguous dim by 0.5
-  # before the country_projection (bakes into the exported ONNX; no lexicon/inference change). v263's
+  # before the country_projection (bakes into the exported ONNX. no lexicon/inference change). v263's
   # hard guard (scale 1.0) over-suppressed homograph countries Georgia/Jordan (country-homograph F1
   # 89.8->82.6); softening should recover homograph recall without giving back the country F1 the
   # WOF-admin rows produced.

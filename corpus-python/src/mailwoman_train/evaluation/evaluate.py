@@ -190,7 +190,7 @@ def run_eval(
         # Confidences come from emission softmax regardless of decoder. With CRF, the
         # decoded sequence may diverge from per-token argmax — confidence here reflects
         # the model's per-token belief, not the path's marginal likelihood. That's the
-        # historical eval semantic; calibration plots stay comparable across v0.2.0 +
+        # historical eval semantic. calibration plots stay comparable across v0.2.0 +
         # v0.3.0 with this read.
         pred_confs = probs.max(dim=-1).values.tolist()
 

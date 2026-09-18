@@ -13,7 +13,7 @@
  *
  *   Standing rules encoded here (see epic #470 "pre-registered decision rules"):
  *
- *   - The release is pinned in every artifact path. The addresses theme is ALPHA; rows churn between
+ *   - The release is pinned in every artifact path. The addresses theme is ALPHA. rows churn between
  *       monthly releases. Two releases never mix in one artifact.
  *   - The per-row `sources` array is preserved verbatim — it is what makes leakage-free eval filtering
  *       possible (#472) and satisfies the provenance-per-row rule.
@@ -22,7 +22,7 @@
  *   The probe (fill-rates.json + fill-rates.md) runs against the LOCAL Parquet after ingest, so it is
  *   exact for what we materialized and costs no second remote scan.
  *
- *   Progress streams to stderr; the final summary is on stdout. The per-country Parquet + the
+ *   Progress streams to stderr. the final summary is on stdout. The per-country Parquet + the
  *   fill-rates report are written DIRECTLY under `<out>/<release>/` (Parquet/JSON artifacts, not a
  *   SQLite DB — no atomic temp-swap applies); this preserves the original
  *   `scripts/ingest-overture-addresses.ts` behavior verbatim.
@@ -134,7 +134,7 @@ const GazetteerOvertureIngest: CommandComponent<typeof spec> = ({ options }) => 
 		await db.run("SET s3_region='us-west-2';")
 		// Modest thread count + a hard memory ceiling: DuckDB's default (all cores) over the
 		// Overture addresses theme OOM-killed this box once (2026-06-19, naive read_parquet).
-		// COPY streams to disk, so the caps cost little; they bound scan parallelism + buffers.
+		// COPY streams to disk, so the caps cost little. they bound scan parallelism + buffers.
 		await db.run("SET threads=4;")
 		await db.run("SET memory_limit='8GB';")
 

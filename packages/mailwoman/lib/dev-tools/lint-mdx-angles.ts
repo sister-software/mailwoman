@@ -9,7 +9,7 @@
  *   session doc, the deep-dive review, the fill-rate record) — hence this check.
  *
  *   Checks STAGED docs markdown by default (pre-commit), or explicit paths when given. Skips fenced
- *   code blocks and inline code; flags raw `<` before a digit or `{` before a letter.
+ *   code blocks and inline code. flags raw `<` before a digit or `{` before a letter.
  *
  *   Stays quiet and fast — it runs on every `main` commit via the husky pre-commit hook. Run:
  *   mailwoman dev lint mdx-angles [files...]
@@ -70,7 +70,7 @@ function stagedDocsMarkdown(): string[] {
 async function violations(file: string): Promise<string[]> {
 	const hits: string[] = []
 	let fenced = false
-	// oxlint-disable-next-line mailwoman/prefer-spliterator -- A synchronous pre-commit check over staged MDX; the async spliterator would make this function and its caller async for files of a few hundred lines.
+	// oxlint-disable-next-line mailwoman/prefer-spliterator -- A synchronous pre-commit check over staged MDX. the async spliterator would make this function and its caller async for files of a few hundred lines.
 	const lines = (await readLocalTextFile(file)).split("\n")
 
 	for (const [i, line] of lines.entries()) {

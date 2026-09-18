@@ -6,11 +6,11 @@ with the class rules translated to German surface reality:
 
 - `street-particle` — the preposition-led class (Am/An der/Zur/Im/Unter den …), the DE analog of
   the FR particle class.
-- `date-name` — German date-streets (Straße des 17. Juni; digit + month names).
+- `date-name` — German date-streets (Straße des 17. Juni. digit + month names).
 - `admin-street-homonym` — data-driven per the operative definition: a street whose painter-folded
-  word n-grams hit a locality-surface-lexicon-v7 entry would get locality evidence painted; that
+  word n-grams hit a locality-surface-lexicon-v7 entry would get locality evidence painted. that
   is the class the DE fold can help or hurt. (German inflection — "Berliner Straße" ≠ "berlin" —
-  keeps this class smaller than FR's; the exact-match residue is the honest population.)
+  keeps this class smaller than FR's. the exact-match residue is the honest population.)
 - `street-housenumber` / `alnum-housenumber` — German order, number after street ("Hauptstraße
   12" / "12a").
 - `bare-street`, `bare-locality` (expect_no_street — the negative class is the point).
@@ -99,7 +99,7 @@ def main() -> None:
                     return True
         return False
 
-    # Seeded per-class reservoirs; one street surface appears at most once per class.
+    # Seeded per-class reservoirs. one street surface appears at most once per class.
     res: dict[str, list[dict[str, Any]]] = {k: [] for k in KLASSES}
     seen_counts: dict[str, int] = {k: 0 for k in KLASSES}
     seen_surfaces: dict[str, set[str]] = {k: set() for k in KLASSES}

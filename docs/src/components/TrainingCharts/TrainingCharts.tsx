@@ -48,7 +48,7 @@ const RESIDUAL_LOOSE = 7
 const SCIENTIFIC_NOTATION_BELOW = 0.001
 
 /**
- * Magnitude below which a tick keeps one decimal place; above it the value is abbreviated.
+ * Magnitude below which a tick keeps one decimal place. above it the value is abbreviated.
  */
 const COMPACT_NOTATION_ABOVE = 10_000
 
@@ -289,7 +289,7 @@ const SVGChart: React.FC<SVGChartProps> = ({ series, containerRef, onHover, scal
 			posMin = 1e-6
 		}
 
-		// all values non-positive; nominal floor
+		// all values non-positive. nominal floor
 		const posMax = Math.max(ymx, posMin * 10)
 		const logMin = Math.log10(posMin)
 		const logMax = Math.log10(posMax)

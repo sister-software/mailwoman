@@ -71,7 +71,7 @@ export const COUNTRY_AMBIGUOUS_BIT = 2
 export type CountryLexicon = GazetteerLexicon
 
 /**
- * Parse the country lexicon JSON (already `JSON.parse`d — keeps this module browser-safe; the caller reads).
+ * Parse the country lexicon JSON (already `JSON.parse`d — keeps this module browser-safe. the caller reads).
  */
 export function parseCountryLexicon(raw: {
 	feature_dim: number

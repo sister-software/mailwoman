@@ -7,11 +7,11 @@
  *   Claude Code Stop hook: run the assistant's finished reply through the Mailwoman Vale rules and
  *   hand the findings back, so the agent revises the reply instead of letting the jargon stand.
  *   The lint policy — rule set, severity split, finding format — lives in `vale-check-core.ts`,
- *   shared with the Codex adapter; this file owns only the Claude payload shape, the loop guard,
+ *   shared with the Codex adapter. this file owns only the Claude payload shape, the loop guard,
  *   and the output JSON.
  *
  *   Error-severity findings return `decision: "block"`, which sends the reason back for one
- *   corrective turn; warning-only findings return the non-blocking `systemMessage` for the agent to weigh. The
+ *   corrective turn. warning-only findings return the non-blocking `systemMessage` for the agent to weigh. The
  *   `stop_hook_active` guard caps the loop at one revision pass per stop: the revised reply is not
  *   re-linted, so a false positive costs one turn at most. Every failure path is silence, same
  *   contract as `symbol-precheck.ts` — a hook that throws on an unanticipated payload is a broken
@@ -40,7 +40,7 @@ async function readReply(payload: Record<string, unknown> | null): Promise<strin
 
 	if (typeof transcriptPath !== "string") return ""
 
-	// The wanted entry is the last assistant line; the substring pre-filter keeps only candidate
+	// The wanted entry is the last assistant line. the substring pre-filter keeps only candidate
 	// lines resident while the transcript streams forward.
 	const candidates = TextSpliterator.from(await readLocalTextFile(transcriptPath))
 		.filter((line) => line.includes('"assistant"'))

@@ -39,7 +39,7 @@
  *   ## Metadata contract (what the node carries afterward)
  *
  *   - `postcode_prefix` — the prefix string that resolved it.
- *   - `postcode_prefix_ancestors` — the ancestry the prefix asserts (coarsest-first; GB outward
+ *   - `postcode_prefix_ancestors` — the ancestry the prefix asserts (coarsest-first. GB outward
  *     nodes carry country → constituent-country → district).
  *   - `postcode_prefix_radius_p95_km` — the artifact's measured p95 radius, when the node carries a
  *     coordinate (M-3's receipt: a 1-digit US band and a GB outward code differ by 200×; never read
@@ -50,7 +50,7 @@
  *     Sheffield defect #1480 just fixed.
  *
  *   **D-rule: opt-in behind `ResolveOpts.postcodePrefixPrior`, default-OFF** (the PCN1 posture:
- *   data + loader + offline probe, no decode wiring; the header ships without `delta` until a
+ *   data + loader + offline probe, no decode wiring. the header ships without `delta` until a
  *   calibration measures one). Bars: B3-2 (≥60% of held-out units within 10 km, zero worse than the
  *   abstention arm), B3-3 (NI ≥95% country scope GB + NIR ancestry + correct district named, 0%
  *   coordinate), B3-5 (structural — no model inputs touched).

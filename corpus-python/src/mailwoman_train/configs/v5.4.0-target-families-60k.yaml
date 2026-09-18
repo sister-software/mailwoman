@@ -22,11 +22,11 @@
 #   source_reps    the six new sources name their exposure in REPS PER ROW (#1677) and the weight is
 #                  derived at launch from each source's row count and this run's sample budget. Weight
 #                  is not reps per row: the 277-row source that took 165 passes per row was picked at 1.0, the
-#                  smallest number in its config. The derivation prints at launch; read it.
+#                  smallest number in its config. The derivation prints at launch. read it.
 #
 #   receipts       one per family, so the audit fails if a family does not actually draw. The
 #                  seventh, `ve-locality-postcode-region`, is INHERITED from v5.3.0 and guards that
-#                  arm riding along; it is not a target of this one.
+#                  arm riding along. it is not a target of this one.
 #
 # The audit's REPS OUTLIER warning on this config lists seven sources and none of them is new here:
 # six carry v5.0.0's weights unchanged, and `synth-reviewed-postcode-tail` at 12.8 reps/row over 22
@@ -59,7 +59,7 @@
 #                    sector line, the Dhaka trailing postcode, and the base PK/BD/VN formats from
 #                    OpenStreetMap. ⚠ ODbL: all three sources are share-alike. A PROPRIETARY-weights
 #                    build must drop `osm`, `synth-pk-register` and `synth-bd-register` from
-#                    source_reps; a source absent from the mixture is dropped at load, which is the
+#                    source_reps. a source absent from the mixture is dropped at load, which is the
 #                    mechanism, and the license filter (`--exclude-share-alike`) is what keeps them
 #                    out of a proprietary CORPUS in the first place.
 #
@@ -70,7 +70,7 @@
 #
 # F1 is what BLOCKS a ship, not a target: `COMER parís.méxico`, the two `parís.méxico` rows and the two
 # GB `*-hill` rows must clear before any default-on ship. F4 rides its proven #1569 weight unchanged
-# (synth-suffix-boundary 2.5) — do not raise it chasing F1; that was measured not to move.
+# (synth-suffix-boundary 2.5) — do not raise it chasing F1. that was measured not to move.
 #
 # PRE-REGISTERED WATCH (#1677's discipline, #513's adjacency rule). Grade these before reading any
 # target metric, because relabeling one boundary loosens its neighbours: the bare-toponym rows
@@ -263,7 +263,7 @@ data:
   # Reps per row, not weights (#1677). 60,000 steps x batch 128 = 7,680,000 samples, so the six
   # sources below demand 1.0*142083 + 1.0*80081 + 8.0*4551 + 8.0*4944 + 8.0*5279 + 0.5*153965 =
   # 417,339 draws, 5.4% of the run. The big register sources take one pass each because they carry
-  # their diversity in the rows; the four-to-five-thousand-row sources take eight, which is the
+  # their diversity in the rows. the four-to-five-thousand-row sources take eight, which is the
   # exposure `synth-suffix-boundary` already draws at weight 2.5.
   source_reps:
     synth-sg-register: 1.0

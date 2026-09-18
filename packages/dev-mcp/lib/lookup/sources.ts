@@ -5,7 +5,7 @@
  *
  *   The five data sources behind `mwdev_lookup` that are not the FST: the candidate gazetteer, the WOF admin extracts,
  *   `poi.db`, the codex reference tables, and the postcode-anchor artifact the model is fed. `lookup.ts` owns the
- *   contract these all answer under; this file owns the probes.
+ *   contract these all answer under. this file owns the probes.
  *
  *   **Every one of them keys on something other than the string a human types**, and that is the whole reason this tool
  *   exists rather than a `SELECT … WHERE name = ?`:
@@ -143,7 +143,7 @@ function candidateSelect(hasNameRole: boolean): string {
  * - `importance: null` is UNMEASURED — the score source had no row for that place — while `population: 0` and a `(0, 0)`
  *   centroid are the build's own written values (the latter its unlocated sentinel).
  * - A `country` naming no `country_codes` entry means the artifact carries no rows for that country at all, so the miss
- *   is a coverage gap; a country it does carry, with rows under the key elsewhere, is a filter miss and reports the
+ *   is a coverage gap. a country it does carry, with rows under the key elsewhere, is a filter miss and reports the
  *   third state (`hit`, no entries).
  */
 export function lookupCandidate<DB>(
@@ -396,7 +396,7 @@ export interface CandidateDelta {
 
 /**
  * Diff two artifacts' answers to the same queries, row-aligned by query index. Covers the RETURNED rows only — both
- * sides truncate at the caller's limit, so a delta over deep key populations needs the limit raised to cover them; the
+ * sides truncate at the caller's limit, so a delta over deep key populations needs the limit raised to cover them. the
  * tool's note says so beside the numbers.
  */
 export function diffCandidateRows(rowsA: LookupRow[], rowsB: LookupRow[]): CandidateDelta[] {
@@ -463,7 +463,7 @@ export interface WOFExtract<DB> {
 /**
  * Which index reached a WOF record.
  *
- * The two answer different questions and only together cover the extract. `fts` is what the RESOLVER can reach; the
+ * The two answer different questions and only together cover the extract. `fts` is what the RESOLVER can reach. the
  * FTS5 content is built with `is_current != 0 AND is_deprecated = 0` applied, so a deprecated record is not merely
  * filtered at query time — it was never indexed. `names-exact` is the byte-exact probe on the indexed `names` table,
  * which carries deprecated records and is the only cheap way to see them.
@@ -486,7 +486,7 @@ interface WOFEntry extends PlaceIDProvenance {
 	longitude: number
 	/**
 	 * The containing place's id, straight off `spr.parent_id`. Emitted because a same-name pair is only readable as a
-	 * DUPLICATE — a district and its seat — when the parent link is visible; without it the two rows look like two
+	 * DUPLICATE — a district and its seat — when the parent link is visible. without it the two rows look like two
 	 * unrelated places that happen to tie.
 	 */
 	parent_id: number
@@ -546,12 +546,12 @@ function wofStatements(from: string, order: string, scoped: boolean): { rows: st
  * column as `مدينة السلطان قابوس` in OM.
  *
  * Two routes, because one index cannot answer both halves. The `place_search` FTS5 content is populated with
- * `is_current != 0 AND is_deprecated = 0` applied at BUILD time, so it can never show a deprecated record; the `names`
+ * `is_current != 0 AND is_deprecated = 0` applied at BUILD time, so it can never show a deprecated record. the `names`
  * table can, and is indexed. Rows the resolver cannot see are counted and named but kept OUT of `entries`, so a name
  * whose every record is deprecated reports the third state — known to WOF, nothing downstream.
  *
  * The FTS route ANDs tokens over `name` and `alt_names`, so a match is not a claim that the extract stores this exact
- * string; read the returned `name`. The `names` route is byte-exact under the index's binary collation, so case and
+ * string. read the returned `name`. The `names` route is byte-exact under the index's binary collation, so case and
  * punctuation matter there — which is why a double miss says what was checked rather than "WOF does not have it".
  */
 export function lookupWOF<DB>(

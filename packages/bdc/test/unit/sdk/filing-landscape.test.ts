@@ -22,7 +22,7 @@
  *     9), 6)` disagree for ~6% of real points. Derive the two sides independently and a genuinely
  *     surveyed block reads back as `unknown_block_count` while its own rows still populate `filings` — a
  *     self-contradiction. `build-bdc.ts` derives both `h3_cell` and the coverage cell from the same full
- *     res-9 index; see that file's docstring. The "builder/reader coverage-cell unification" describe
+ *     res-9 index. see that file's docstring. The "builder/reader coverage-cell unification" describe
  *     block below proves the agreement holds even for the DIVERGENT block, chosen specifically because
  *     the two derivations do disagree there (asserted inline first, so the test cannot pass vacuously).
  *   - **criterion 2 must exercise `readLayerCoverage`, not the zero-rows shortcut.** A geoid absent from the
@@ -34,7 +34,7 @@
  *     query, which has no "zero rows" shortcut available to it.
  *   - **The SQL `CASE` and the JS `speedBucketForDownloadSpeed` mirror must not drift.** "speed bucket
  *     boundaries" below is a table test over the exact boundary values plus a dedicated SQL-vs-JS
- *     agreement test; the "100-1000" bucket is otherwise never exercised by the criteria.
+ *     agreement test. the "100-1000" bucket is otherwise never exercised by the criteria.
  */
 
 import { BDC_H3_RESOLUTION, type BDCDatabase } from "@mailwoman/bdc/schema"
@@ -96,7 +96,7 @@ const PROVIDER_A = 130_077
 const PROVIDER_B = 130_080
 
 /**
- * 5 rows, one location each (`includeLocationIDs` stays default-off; one row per (geoid, provider, technology) triple
+ * 5 rows, one location each (`includeLocationIDs` stays default-off. one row per (geoid, provider, technology) triple
  * keeps the block-grain collapse a no-op, so `result.rows` and the hand-computed census in criterion 3 agree without
  * any surprise collapsing):
  *

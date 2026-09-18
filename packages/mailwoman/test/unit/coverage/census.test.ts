@@ -6,7 +6,7 @@
  *
  *   Each test here pins a way of getting the answer WRONG that has actually happened, because the failures in this
  *   file are all silent: a bare `NO` retyped to a boolean, a nested Arrow column read as a plain array, a glob that
- *   picks up a directory the loader excludes. None of them throws; each returns a confident number.
+ *   picks up a directory the loader excludes. None of them throws. each returns a confident number.
  */
 
 import { readLocalJSONFile, pathExists } from "@mailwoman/core/fs/readers"
@@ -145,7 +145,7 @@ describe("readBoardCoverage", () => {
 	})
 
 	it("attributes a row by its own country field, not its directory", async () => {
-		// Board rows live in a directory by convention and carry their country explicitly; the two disagree in practice.
+		// Board rows live in a directory by convention and carry their country explicitly. the two disagree in practice.
 		expect((await readBoardCoverage(join(root, "cases"))).get("IE")).toEqual({ rows: 1, passed: 1 })
 	})
 
@@ -175,7 +175,7 @@ describe.skipIf(!(await pathExists(CORPUS)))("buildCorpusCensus against a real d
 	it("counts street rows on a database whose PROJECTION drops the labels column", async () => {
 		// `getCursor(["country", "labels"])` returns `{country}` alone on the v0.17.0-era writer's databases — silently,
 		// with no error — while the v0.5.0 base returns both. A dropped label column reads as "this country has no
-		// street rows", which is indistinguishable from the truth. Before the fallback this database reported 0; it
+		// street rows", which is indistinguishable from the truth. Before the fallback this database reported 0. it
 		// carries 825,083 street rows out of 831,800.
 		const manifest = await readLocalJSONFile<Record<string, unknown>>(CORPUS)
 

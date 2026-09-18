@@ -12,7 +12,7 @@
  *   No correctness test can catch that: a quadratic and a linear implementation return identical results, so
  *   only the growth CURVE distinguishes them. Hence a ratio assertion, and hence a ratio rather than a
  *   millisecond budget — pinning absolute time makes a timing test a CI flake, while the ratio is the thing a
- *   complexity regression actually changes. Quadratic doubles to ~4x, linear to ~2x; the 3x threshold sits
+ *   complexity regression actually changes. Quadratic doubles to ~4x, linear to ~2x. the 3x threshold sits
  *   clear of a loaded runner without letting the real failure through.
  */
 

@@ -332,7 +332,7 @@ describe("filer schema", () => {
 		/**
 		 * The counterpart to the two tests above — and the reason `naming_node_id` is IN the primary key rather than a
 		 * payload column beside it. `relationship` is excluded from the key because two values for one pair at one instant
-		 * are a CONTRADICTION; two `naming_node_id`s are not. `"Acme Holdings Inc"` and `"ACME HOLDINGS, INC."`
+		 * are a CONTRADICTION. two `naming_node_id`s are not. `"Acme Holdings Inc"` and `"ACME HOLDINGS, INC."`
 		 * canonicalize to one `family_id`, so a filer that reported both spellings (two 499 rows the same day, or one
 		 * `bdcProviderID` on two provider-list rows) produces two rows differing in nothing else. Narrow the key and the
 		 * builder's `INSERT OR IGNORE` drops the second, taking that spelling's display name with it before any reader

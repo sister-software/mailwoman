@@ -7,7 +7,7 @@
  *
  *   Our own 376-assertion suite is a Pelias/addressit port (the retired rules parser's lineage), so
  *   it over-represents that lineage's cases. These three arenas come from outside it and together
- *   map the capability surface (formerly v0-vs-neural; the v7 excision #1151 deleted the rules arm,
+ *   map the capability surface (formerly v0-vs-neural. the v7 excision #1151 deleted the rules arm,
  *   so the arenas now grade neural alone — pass rates stay comparable, the harness's neural
  *   semantics are unchanged):
  *
@@ -155,7 +155,7 @@ export async function externalArenas(
 	await copyFileTo("data/eval/external/libpostal-cases.jsonl", join(outDir, "libpostal", "libpostal-cases.jsonl"))
 	await copyFileTo("data/eval/external/postal-cases.jsonl", join(outDir, "postal", "postal-cases.jsonl"))
 
-	// Harness writes its progress to <name>.stderr; we tail the last 40 summary lines off stdout.
+	// Harness writes its progress to <name>.stderr. we tail the last 40 summary lines off stdout.
 	const runArena = async (name: string, dir: string): Promise<void> => {
 		report(`== arena: ${name} ==`)
 

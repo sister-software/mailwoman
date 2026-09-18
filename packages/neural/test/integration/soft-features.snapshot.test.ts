@@ -59,7 +59,7 @@ describe("buildSoftFeatures — US postcode anchor hit", () => {
 		expect(soft.anchor!.features[3]).toEqual(us)
 		expect(soft.anchor!.features[4]).toEqual(us)
 		expect(soft.anchor!.features[0]).toEqual(new Array(ANCHOR_FEATURE_DIM).fill(0))
-		// US is index 0 in LOCALE_ORDER; lat/90, lon/180 pinned.
+		// US is index 0 in LOCALE_ORDER. lat/90, lon/180 pinned.
 		expect(us[0]).toBeCloseTo(1, 6)
 		expect(us[ANCHOR_FEATURE_DIM - 2]).toBeCloseTo(33.749 / 90, 6)
 		expect(us[ANCHOR_FEATURE_DIM - 1]).toBeCloseTo(-84.388 / 180, 6)
@@ -67,7 +67,7 @@ describe("buildSoftFeatures — US postcode anchor hit", () => {
 })
 
 describe("buildSoftFeatures — homograph gazetteer hit", () => {
-	// "Atlanta Georgia" — "Georgia" is the homograph; chars [8, 15).
+	// "Atlanta Georgia" — "Georgia" is the homograph. chars [8, 15).
 	const TEXT = "Atlanta Georgia"
 	const PIECES = [piece("▁Atlanta", 0, 7), piece("▁Geo", 8, 11), piece("rgia", 11, 15)]
 
@@ -85,7 +85,7 @@ describe("buildSoftFeatures — homograph gazetteer hit", () => {
 
 describe("buildSoftFeatures — suppress gazetteer near postcode (choreography)", () => {
 	// "GA 30301" — region code "GA" (chars [0,2)) sits one piece before the postcode "30301".
-	// The gazetteer fires `region` on GA; the anchor fires on the postcode. With suppression on, the
+	// The gazetteer fires `region` on GA. the anchor fires on the postcode. With suppression on, the
 	// GA clue is zeroed (it's within window=1 of the anchor hit) — the #464 v0.9.13 postcode fix.
 	const TEXT = "GA 30301"
 	const PIECES = [piece("▁GA", 0, 2), piece("▁303", 3, 6), piece("01", 6, 8)]

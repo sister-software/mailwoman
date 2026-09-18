@@ -44,7 +44,7 @@ async function help(cliPath: string, args: string[]): Promise<string> {
 }
 
 /**
- * Escape troff-significant characters. Leading dots/quotes control troff; hyphens in option names must be literal `\-`
+ * Escape troff-significant characters. Leading dots/quotes control troff. hyphens in option names must be literal `\-`
  * so `man` renders ASCII hyphens (grep-able flags).
  */
 function troffEscape(line: string): string {

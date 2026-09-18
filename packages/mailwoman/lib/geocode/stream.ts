@@ -18,7 +18,7 @@
  * Each worker rebuilds the classifier / WOF lookup / resolver / databases from {@link GeocodeStreamConfig}
  * (paths + locale) at startup — nothing but config crosses out, only the enriched record crosses back.
  * Records arrive in completion order. Worth threading only because geocoding is ms-scale per row
- * (~23ms measured) — far above the cross-thread cost; for light normalization, stop after normalizeCSV.
+ * (~23ms measured) — far above the cross-thread cost. for light normalization, stop after normalizeCSV.
  *
  * **Concurrency is low on purpose.** Geocoding is latency/memory-bound, not CPU-bound: each row makes
  * random reads into the multi-GB WOF SQLite, and the classifier already uses several cores per inference.

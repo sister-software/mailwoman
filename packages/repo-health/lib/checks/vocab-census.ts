@@ -2,14 +2,14 @@
  * @copyright Sister Software
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
- * @file Classifies every `Mailwoman.AmbiguousShorthand` hit by the REMEDY it needs, and reports each as a diagnostic.
+ * @file Classifies every `Mailwoman.AmbiguousShorthand` hit by the action it needs, and reports each as a diagnostic.
  *
  *   The sweep that removes these words is only safe if each site's replacement is decided by a rule rather than guessed
  *   at, one comment at a time — a careless reword drops the invariant or the measured number the comment existed to
  *   state. `shard` reached zero from 3,481 the same way: its four concepts were named first, so every site had one
  *   agreed replacement.
  *
- *   Three remedies, in ascending cost. A contract-tied name keeps its spelling and only needs backticks, because Vale
+ *   Three actions, in ascending cost. A contract-tied name keeps its spelling and only needs backticks, because Vale
  *   skips inline code. A MODIFIED reference carries the check's real name in the word before it, so `street-context
  *   gate` becomes `the street-context check`. A BARE reference says only "the gate", and which check that is can be
  *   learned solely by reading the surrounding paragraph.
@@ -32,13 +32,13 @@ const HIT_PATTERN = /^(.*?):(\d+):(\d+):Mailwoman\.AmbiguousShorthand(?:Code)?:'
 
 /**
  * Names that keep their spelling — `AGENTS.md` lists them as contract-tied. A hit naming one of these is a formatting
- * fix, not a rewrite. Empty: every contract-tied identifier that carried a banned word has been renamed; add a name
+ * fix, not a rewrite. Empty: every contract-tied identifier that carried a banned word has been renamed. add a name
  * here only when a new one must carry one, and record why in `AmbiguousShorthandCode.yml`.
  */
 const CONTRACT_TOKEN = /(?!)/
 
 /**
- * The remedy a hit needs.
+ * The action a hit needs.
  */
 export const Remedy = {
 	backtick: "backtick",
@@ -216,7 +216,7 @@ async function collectHits(context: RepoContext): Promise<string[]> {
 
 	// The CENSUS config, not the enforcing one: enforcement exempts the Vale fixtures, and the census
 	// needs one of them to trip so its positive control still means something. `@vvago/vale` is this
-	// package's devDependency for exactly this line; knip cannot see a specifier passed to a resolver,
+	// package's devDependency for exactly this line. knip cannot see a specifier passed to a resolver,
 	// so `knip.json` names the dependency as used.
 	const vale = await valeCommand(import.meta.url)
 	const config = resolvePath(root, "config/vale/.vale-code-census.ini")
@@ -225,7 +225,7 @@ async function collectHits(context: RepoContext): Promise<string[]> {
 	// resolves none of them, reports zero alerts, and exits 0 — the reading is identical to a clean tree.
 	// That is why the positive control below is not optional.
 	// Vale exits non-zero when it reports alerts, which is this command's expected outcome. Only a
-	// process error carries the output; a spawn failure has none and must not read as zero hits.
+	// process error carries the output. a spawn failure has none and must not read as zero hits.
 	const result = await runFile(vale.file, [...vale.argv, "--config", config, "--output", "line", ...files], {
 		cwd: root,
 		maxBuffer: 1 << 28,
@@ -264,7 +264,7 @@ const UNMEASURED: ReadonlyArray<readonly [path: string, reason: string]> = [
 
 /**
  * The `vocab-census` check: one error per ambiguous-shorthand hit Vale reports in tracked source outside the unmeasured
- * instrument files, each naming the remedy it needs.
+ * instrument files, each naming the action it needs.
  */
 export const vocabCensusCheck: RepoCheck = {
 	id: "vocab-census",
@@ -289,7 +289,7 @@ export const vocabCensusCheck: RepoCheck = {
 				// Indexed by line number, so the whole file is resident by necessity rather than by choice.
 				// `skipEmpty: false` is REQUIRED: the default drops blank lines, which shifts every line
 				// number after the first one and silently classifies each hit against a different line of
-				// source. Measured: the default moved 731 of 2,014 hits between remedy buckets.
+				// source. Measured: the default moved 731 of 2,014 hits between action buckets.
 				sources.set(
 					path,
 					TextSpliterator.from(await readLocalTextFile(resolvePath(context.repoRoot, path)), {

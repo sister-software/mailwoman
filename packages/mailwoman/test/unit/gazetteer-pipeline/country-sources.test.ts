@@ -7,7 +7,7 @@
  *
  *   The property under test is the DISTINCTION the check exists to draw: fourteen countries are two-source
  *   today because someone traded duplication for coverage, and a fifteenth appearing is an accident. A check
- *   that refused all multi-source countries would refuse the trade; one that accepted all of them would
+ *   that refused all multi-source countries would refuse the trade. one that accepted all of them would
  *   never catch the accident. Both failures print a clean result.
  */
 
@@ -145,7 +145,7 @@ describe("planCountryMove", () => {
 	const census = (over: number, geo: number, wof = 0) => ({ country: "TR", wof, overture: over, geonames: geo })
 
 	it("writes BOTH halves of a move — add to the target, remove from the source", () => {
-		// The half nothing enforced. Adding a country by cloning is half the job; the other half is removing
+		// The half nothing enforced. Adding a country by cloning is half the job. the other half is removing
 		// it from whichever list serves it today, and the build ships either way because verifyAdmin tests floors.
 		const plan = planCountryMove({
 			country: "tr",
@@ -177,7 +177,7 @@ describe("planCountryMove", () => {
 	})
 
 	it("multiplies the packed size out to the checkout cost", () => {
-		// GitHub reports packed size. Quoting it is how 65 GB arrived unannounced; a --countries tr sync
+		// GitHub reports packed size. Quoting it is how 65 GB arrived unannounced. a --countries tr sync
 		// reported 83.4 MB and wrote 633 MB.
 		const plan = planCountryMove({
 			country: "TR",

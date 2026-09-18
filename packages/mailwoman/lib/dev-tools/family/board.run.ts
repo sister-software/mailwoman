@@ -52,7 +52,7 @@ const FAMILY_ISSUE: Record<TargetFamily, string> = {
 }
 
 /**
- * The placetypes a district lookup admits, most specific first; the first placetype with a record wins.
+ * The placetypes a district lookup admits, most specific first. the first placetype with a record wins.
  */
 const DISTRICT_PLACETYPES = ["borough", "localadmin", "macrohood", "neighbourhood", "microhood", "locality"] as const
 

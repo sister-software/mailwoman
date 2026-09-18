@@ -88,7 +88,7 @@ export {
 export interface NeuralRunner {
 	infer: InferFunction
 	/**
-	 * The char-path graph's entry (#2164). Absent on a runner built for a SentencePiece graph; a classifier configured
+	 * The char-path graph's entry (#2164). Absent on a runner built for a SentencePiece graph. a classifier configured
 	 * with a `charEncoder` refuses a runner without it at construction rather than at the first parse.
 	 */
 	inferChars?: InferCharsFunction
@@ -243,7 +243,7 @@ export class NeuralAddressClassifier {
 		// Detection-restricted (mixed-case + non-ASCII untouched). Default-ON (#895 settled drift D2 — the geocode
 		// path had run it since #713 while the pipeline factory + raw classifier defaulted off); `false`
 		// restores the raw-case parse. ASCII title-case is char-for-char length-preserving, so token offsets
-		// are unaffected; the tree is built from the normalized text (values come out title-cased — the
+		// are unaffected. the tree is built from the normalized text (values come out title-cased — the
 		// SHOUTING is gone, the resolver name-matches case-insensitively).
 		const modelText = opts?.normalizeCase !== false ? normalizeInputCase(text) : text
 		const { tokens, localeCountry } = await this.#decode(modelText, opts)
@@ -287,7 +287,7 @@ export class NeuralAddressClassifier {
 	 * Shares the entire decode path with `parse` (one `#decode`, #481) and mirrors `parse`'s case normalization, so
 	 * `buildAddressTree(trace.text, trace.tokens)` reproduces `parse(text)`'s tree exactly — modulo `opts.calibrate`,
 	 * which `parse` forwards into the tree build to recalibrate node confidences and which the trace does not carry
-	 * (tokens/labels/spans still match; re-pass the calibrator to the rebuild if calibrated confidences matter).
+	 * (tokens/labels/spans still match. re-pass the calibrator to the rebuild if calibrated confidences matter).
 	 * Serializable by construction — see `./trace.js` for the schema and the spec reference.
 	 */
 	async traceParse(text: string, opts?: ParseOpts): Promise<NeuralParseTrace> {
@@ -347,7 +347,7 @@ export class NeuralAddressClassifier {
 
 	/**
 	 * The decode path (#481): tokenize → anchor/gazetteer features → infer → priors → CRF/argmax → tokens → repairs. Both
-	 * `parse` and `parseWithLogits` consume this — never fork it; the 2026-06 audit found three drift surfaces across
+	 * `parse` and `parseWithLogits` consume this — never fork it. the 2026-06 audit found three drift surfaces across
 	 * duplicated copies of this path.
 	 */
 	// Deliberately one function, long on purpose — every caller funnels through here so there is nowhere
@@ -432,7 +432,7 @@ export class NeuralAddressClassifier {
 		//
 		// The limit is reachable by ordinary input: 128 pieces is roughly 330 characters, which a
 		// form-concatenated delivery address clears. Dropping the tail is the runner's existing choice made
-		// visible; the alternative is throwing on a valid address. Note the tail is lost, not deferred —
+		// visible. the alternative is throwing on a valid address. Note the tail is lost, not deferred —
 		// components past the window never reach the model at all.
 		//
 		// `logits.length`, not a literal 128, so this holds for any `fixedSeqLen` — including models whose
@@ -478,7 +478,7 @@ export class NeuralAddressClassifier {
 
 		// Address-system conventions (#511 Tier A): resolve which system's rules apply — caller-pinned
 		// system, or the model's own locale-head detection under a high confidence bar. Null = no
-		// constraints; the parse below is byte-identical to the pre-conventions path.
+		// constraints. the parse below is byte-identical to the pre-conventions path.
 		const conventionsOpt = opts?.addressSystemConventions ?? this.cfg.addressSystemConventions
 		const { detectedSystem, systemSource } = resolveSystemVerdict(conventionsOpt, localeLogits)
 		const conventions = conventionsForSystem(detectedSystem)
@@ -568,7 +568,7 @@ export class NeuralAddressClassifier {
 		// PCN1 census observability rung: passed to the prior so its parent-candidate probes also probe the census,
 		// recording what it knows onto `pairProbeTrace`. Injected only when tracing — the prior writes census
 		// observations nowhere else, so on a plain `parse()` there is nothing for it to fill and no lookup to pay for.
-		// It never reaches a logit; the `placetypeCensus` record below is its entire output.
+		// It never reaches a logit. the `placetypeCensus` record below is its entire output.
 		const placetypeCensusOpt = opts?.placetypeCensus ?? this.cfg.placetypeCensus
 
 		const censusForProbe: PlacetypeCensusLike | undefined = trace && placetypeCensusOpt ? placetypeCensusOpt : undefined
@@ -679,7 +679,7 @@ export class NeuralAddressClassifier {
 
 		// Per-word BIO consistency repair (#727 + the admin-token fragmentation class). Opt-in — default
 		// OFF → byte-identical. Heals words whose pieces disagree (e.g. `VERMONT`→VER[loc]+MONT[region],
-		// `Lozère`→Loz[loc]+ère[region]) via a confidence-weighted vote over the post-prior emissions; a
+		// `Lozère`→Loz[loc]+ère[region]) via a confidence-weighted vote over the post-prior emissions. a
 		// word whose pieces already agree is untouched. See word-consistency.ts.
 		let healedConfidence: Map<number, number> | null = null
 

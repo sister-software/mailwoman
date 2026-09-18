@@ -11,7 +11,7 @@
  *   WHY IT IS A PRODUCT COMMITMENT. Refinement is what a person does when the answer was wrong: they type
  *   `Springfield`, get Missouri, and add `IL`. If adding the state can push the Illinois Springfield out of
  *   reach, the one repair a user knows how to make is the one that cannot be relied on. Every other law in
- *   this directory states that a rewrite of the same information changes nothing; this one is the only law
+ *   this directory states that a rewrite of the same information changes nothing. this one is the only law
  *   about information being added and the axis those four cannot see.
  *
  *   THE BASE IS DERIVED, NOT AUTHORED — AND THE DERIVATION RUNS BACKWARD. The other four laws take a

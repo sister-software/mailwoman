@@ -16,7 +16,7 @@ import type { LicenseKeyPublication } from "#license/publication"
  * The responsibility classes the summary reports.
  *
  * - `attribution`: credit the source where results derived from it are shown or redistributed.
- * - `share_alike`: a derived work or derived database carries the same license (ODbL's Derived Database; AGPL's copyleft
+ * - `share_alike`: a derived work or derived database carries the same license (ODbL's Derived Database. AGPL's copyleft
  *   on modifications).
  * - `source_offer`: users who interact with the software over a network must be offered its source, including
  *   modifications (AGPL-3.0 section 13).
@@ -49,7 +49,7 @@ const KNOWN_OBLIGATIONS: ReadonlyMap<string, readonly LicenseObligation[]> = new
 	["CC0-1.0", []],
 	["PDDL-1.0", []],
 	// A work of the United States Government (17 U.S.C. § 105): no copyright, so no obligation. SPDX has no identifier
-	// for it; the `LicenseRef` is defined in docs/engineering/reference/layer-contract.mdx.
+	// for it. the `LicenseRef` is defined in docs/engineering/reference/layer-contract.mdx.
 	["LicenseRef-USGov-Public-Domain", []],
 	// Licence Ouverte 2.0 (etalab), BAN's elected license.
 	["etalab-2.0", [LicenseObligation.Attribution]],
@@ -90,7 +90,7 @@ export interface LicenseSummary {
 
 /**
  * Split an SPDX expression into its identifiers. Handles `AND`, `OR`, `WITH` (the exception is kept with its license)
- * and parentheses; anything more exotic still splits on the operators, which is enough for a summary that reports what
+ * and parentheses. anything more exotic still splits on the operators, which is enough for a summary that reports what
  * it did not recognize.
  */
 export function licenseIdentifiers(expression: string): string[] {
@@ -135,7 +135,7 @@ export function summarizeLicense(expression: string): LicenseSummary {
 /**
  * The branch of mailwoman's own expression that applies, from what the configured key reads offline and, when a caller
  * has asked the well-known register, what it said. Only a `valid` key that the register has not retired or dropped
- * selects the commercial branch. The doctor passes both answers; the stamp, offline by design, passes the key alone.
+ * selects the commercial branch. The doctor passes both answers. the stamp, offline by design, passes the key alone.
  */
 export function appliedLicenseBranch(
 	expression: string,
@@ -174,7 +174,7 @@ const LICENSE_REF = /^LicenseRef-[A-Za-z0-9.-]+$/u
 
 /**
  * Whether an SPDX expression may be RECORDED in a layer manifest: every identifier is one the obligations table knows,
- * a `LicenseRef-…` this repository defines, or `NOASSERTION` (the publisher has stated no license; the doctor reports
+ * a `LicenseRef-…` this repository defines, or `NOASSERTION` (the publisher has stated no license. the doctor reports
  * that as degraded, which is the correct reading). Anything else is refused at build time, because a manifest is sealed
  * data and a vendor-suffixed identifier such as `PDDL-1.0-USGov-NRCS` would otherwise ship and read as unrecognized on
  * every machine that opens it.

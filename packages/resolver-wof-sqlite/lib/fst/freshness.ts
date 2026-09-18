@@ -24,7 +24,7 @@
  *   freshness-guard lesson, format edition), and a file below {@link MIN_STAMPED_FORMAT_VERSION}
  *   cannot carry a stamp at all — reported as its own reason rather than silently passing.
  *
- *   STALE IS A WARNING, NOT A FAULT. A dev tree with an old FST must still run; the artifact is a
+ *   STALE IS A WARNING, NOT A FAULT. A dev tree with an old FST must still run. the artifact is a
  *   decode-time bias list, not a correctness dependency. Callers print {@link formatFSTStaleWarning}
  *   and continue.
  */
@@ -70,7 +70,7 @@ const MD5_HEX_LENGTH = 32
  * What an FST was built from, recorded so a later reader can tell whether that thing still exists.
  *
  * `bytes` is not redundant with `md5` — it is the field that survives a truncated or half-written source and makes the
- * mismatch legible in the warning ("5,273,722,880 → 5,372,076,032" names the rebuild; a hex delta does not).
+ * mismatch legible in the warning ("5,273,722,880 → 5,372,076,032" names the rebuild. a hex delta does not).
  */
 export interface FSTSourceIdentity {
 	md5: string

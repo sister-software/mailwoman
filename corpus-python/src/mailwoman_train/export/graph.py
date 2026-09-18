@@ -93,7 +93,7 @@ def detect_channels(model: nn.Module) -> Channels:
         # Locale head (#511 Tier A / conventions layer): when the model carries the PR3
         # self-conditioning head, export its pooled posterior as a second output ("locale_logits",
         # shape [batch, num_locales], labels.LOCALE_COUNTRIES order). Consumers fetch outputs by
-        # name, so this is backward-compatible; without it the model's address-system detection is
+        # name, so this is backward-compatible. without it the model's address-system detection is
         # trained but UNREADABLE at inference — the gap the 2026-06-10 FR digit-split regression
         # exposed.
         locale=getattr(model, "locale_head", None) is not None,

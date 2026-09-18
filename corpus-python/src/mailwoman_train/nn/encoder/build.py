@@ -26,7 +26,7 @@ def build_model(cfg: Config, vocab_size: int, pad_token_id: int, char_vocab_size
     # v8 CJK Phase 2: the label vocabulary is per-config (data.label_set; "stage3" default keeps
     # every existing recipe byte-identical). The internal consumers of the module-global 33-label
     # maps (CRF init aside — that one is threaded) are flag-restricted features that have never trained
-    # against a non-default set; refuse the combination loudly rather than mislabel silently.
+    # against a non-default set. refuse the combination loudly rather than mislabel silently.
     from ...labels import resolve_label_set
 
     label_set = resolve_label_set(getattr(cfg.data, "label_set", "stage3"))
@@ -106,7 +106,7 @@ def build_model(cfg: Config, vocab_size: int, pad_token_id: int, char_vocab_size
         span_loss_weight=getattr(cfg.model, "span_loss_weight", 0.0),
         span_dim=getattr(cfg.model, "span_dim", 128),
         max_span=getattr(cfg.model, "max_span", 8),
-        # CharCNN front-end (#825). char_vocab_size threaded from the loader; the rest from cfg.model.
+        # CharCNN front-end (#825). char_vocab_size threaded from the loader. the rest from cfg.model.
         use_char_embed=getattr(cfg.model, "use_char_embed", False),
         char_vocab_size=char_vocab_size,
         char_embed_dim=getattr(cfg.model, "char_embed_dim", 64),

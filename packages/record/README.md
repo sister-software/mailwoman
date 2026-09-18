@@ -56,7 +56,7 @@ import { canonicalizeOrganizationName, type CanonicalizeOrgOpts } from "@mailwom
   matcher resolves places, not strings.
 - **Domain-scoped.** Organization canonicalization supports jurisdiction and
   domain context (e.g., `{jurisdiction: "ID"}` for Indonesian legal designations,
-  `{domain: "healthcare"}` to protect PT/SCA from collision with medical
+  `{domain: "healthcare"}` to guard PT/SCA from collision with medical
   abbreviations).
 - **Lean dependencies.** Only depends on `@mailwoman/formatter` for the
   canonical key.

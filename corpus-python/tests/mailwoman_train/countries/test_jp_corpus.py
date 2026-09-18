@@ -55,7 +55,7 @@ def test_hyphen_class_is_folded_in_numbers_and_left_alone_in_names() -> None:
 
 def test_interior_ideographic_space_is_removed_from_a_name() -> None:
     # 135 street values carry a U+3000 between the machi and the aza. Left in, it lands inside a
-    # district span; the written form closes it up.
+    # district span. the written form closes it up.
     assert normalize_name("西与賀町　字今津乙") == "西与賀町字今津乙"
 
 

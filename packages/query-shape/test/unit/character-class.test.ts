@@ -82,7 +82,7 @@ describe("classifyToken", () => {
 
 	it("returns 'mixed' for alphanumeric", () => {
 		expect(classifyToken("221B")).toBe("mixed")
-		expect(classifyToken("10118-1234")).toBe("digit") // hyphen excluded by tokenizer; standalone test
+		expect(classifyToken("10118-1234")).toBe("digit") // hyphen excluded by tokenizer. standalone test
 	})
 
 	it("recognizes CJK tokens", () => {
@@ -207,10 +207,10 @@ describe("scriptForCodepoint", () => {
 	 * Asserting only that what we CLAIM is a script really is one stops the table over-claiming and says nothing about
 	 * what it misses — and a range cannot express an exception, so a block holding two scripts gets drawn through. Both
 	 * of this file's misses were that: `COMMON_RANGES` took `0x3000..0x303f` whole, and Unicode assigns 々 (U+3005) and 〇
-	 * (U+3007) inside it to Han; it took `0x3099..0x30a0` whole, and U+309D..309F are Hiragana.
+	 * (U+3007) inside it to Han. it took `0x3099..0x30a0` whole, and U+309D..309F are Hiragana.
 	 *
 	 * The allowance is per script rather than global, and each number is a measurement of what is left uncovered rather
-	 * than a target. Tightening one is a change with its own evidence; a number that GROWS is a script the table stopped
+	 * than a target. Tightening one is a change with its own evidence. a number that GROWS is a script the table stopped
 	 * answering for.
 	 */
 	const UNCOVERED_ALLOWANCE: Readonly<Record<string, number>> = {

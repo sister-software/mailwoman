@@ -33,7 +33,7 @@ export interface RowScore extends ArmOutcome {
  *
  * The locality node is looked up over the placetypes the resolver's own `locality` tag expands to — locality, borough
  * and localadmin — because New England civil "towns" are `localadmin` in WOF, not `locality`. Mirroring the resolver's
- * `PLACETYPE_FILTER_GROUPS.locality` is what makes this metric count exactly what the resolver treats as a locality;
+ * `PLACETYPE_FILTER_GROUPS.locality` is what makes this metric count exactly what the resolver treats as a locality.
  * the bare `=== "locality"` filter it replaced silently discarded correct localadmin hits and under-reported rural US
  * locality-match by tens of points (#375 oracle-locality diagnostic).
  */

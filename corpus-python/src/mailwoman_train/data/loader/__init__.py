@@ -7,16 +7,16 @@ tensors in a batched ``DataLoader``-compatible shape.
 
 Why PyArrow + a generator and not ``datasets.load_dataset('parquet', streaming=True)``?
 
-- ``datasets`` would work; the row-group iterator path here is fewer moving parts, gives us
+- ``datasets`` would work. the row-group iterator path here is fewer moving parts, gives us
   direct per-row column projection (we never materialize ``tokens`` for rows we drop), and
   keeps the train loop deterministic for a fixed seed without the HF dataset shuffle buffer
   semantics.
-- The data loader is the hot path on a CPU-bound train run; ad-hoc streaming is fine.
+- The data loader is the hot path on a CPU-bound train run. ad-hoc streaming is fine.
 
 Per Phase 2 §2:
 
 - Lazy + streaming + memory-stable: row-group iteration, never reads a full parquet file.
-- Stratified sampling: ``country_weights`` are renormalized probabilities; rows are accepted
+- Stratified sampling: ``country_weights`` are renormalized probabilities. rows are accepted
   with probability proportional to their country's weight relative to the max.
 - Length filter: rows whose SP tokenization exceeds ``max_length`` are dropped.
 - Tokenizer alignment verification: re-tokenize a sample and assert the stored ``tokens``
@@ -24,8 +24,8 @@ Per Phase 2 §2:
 
 v0.5.0 char-offset labels (#519): parquet files whose schema carries
 ``span_starts``/``span_ends``/``span_tags`` stream the triple end-to-end — through the
-augmentations (which re-target it; see ``augment.py``) and the #511 relabel pass (char
-arithmetic; see ``relabel.py``) into ``encode_row``, which builds the per-char label array from
+augmentations (which re-target it. see ``augment.py``) and the #511 relabel pass (char
+arithmetic. see ``relabel.py``) into ``encode_row``, which builds the per-char label array from
 the spans. Frozen pre-v0.5.0 files carry no span columns and ride the legacy token path. A
 file with a partial column set, or a null span value in a span-schema file, is corrupt and
 raises loudly — never a silent fallback.

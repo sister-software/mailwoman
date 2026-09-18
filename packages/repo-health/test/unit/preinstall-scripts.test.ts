@@ -16,7 +16,7 @@
  *
  *   So these files keep their `node:*` imports behind a scoped `typescript/no-restricted-imports` disable. The list
  *   below is the executable half of that exemption. Add an entry when a workflow starts running a script before its
- *   install step; remove one when that ordering changes.
+ *   install step. remove one when that ordering changes.
  */
 
 import { readLocalTextFile } from "@mailwoman/core/fs/readers"

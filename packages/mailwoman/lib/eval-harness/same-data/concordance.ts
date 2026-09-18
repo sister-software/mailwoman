@@ -6,7 +6,7 @@
  *   The GeoNames-to-WOF identity join the same-data benchmark grades through (#2261), and the guard that
  *   decides when the join may be trusted.
  *
- *   The gold entity is a GeoNames row, so the truth stays open and independent of Mailwoman's own gazetteer;
+ *   The gold entity is a GeoNames row, so the truth stays open and independent of Mailwoman's own gazetteer.
  *   the candidates are WOF rows, because that is what the backend answers with. Without a published link
  *   between the two, correctness would have to be decided by distance, and distance is not identity — two
  *   same-named places a kilometre apart are different entities, and a correct selection 30 km from a large

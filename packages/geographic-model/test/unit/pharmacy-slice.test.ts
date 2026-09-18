@@ -8,7 +8,7 @@
  *
  *   Every assertion below is made against the COMMITTED artifact or against a fresh compile of the
  *   committed authoring files — never against a fixture built in this file. A fixture would prove that
- *   the compiler works, which `compile.test.ts` already covers; what is unproven until here is that the
+ *   the compiler works, which `compile.test.ts` already covers. what is unproven until here is that the
  *   records someone actually authored say what the frozen record set says they say.
  *
  *   WAVE 1 IS COMPLETE. All three records are authored — the `drugstore` concept, its US-scoped
@@ -58,7 +58,7 @@ const OBTAIN_MEDICATION = toConceptID("obtain_medication")
 const AFFORDS = toRelationID("affords")
 
 /**
- * The external category the record set maps into. The mapping names it as a string; this is the same string, resolved
+ * The external category the record set maps into. The mapping names it as a string. this is the same string, resolved
  * through the package that owns the vocabulary.
  */
 const POI_CATEGORY = toPOICategoryID("pharmacy")
@@ -287,7 +287,7 @@ describe("reading the record set through the runtime lookups", () => {
 	it("distinguishes a concept it carries from one it has never heard of", async () => {
 		const index = createGeographicModelIndex(await readCompiledGeographicModel())
 
-		// The model carries `pharmacy` and has derived nothing about it; it does not carry `chemist` at all, which
+		// The model carries `pharmacy` and has derived nothing about it. it does not carry `chemist` at all, which
 		// is a different answer and stays a different answer.
 		expect(index.derivedFactsAbout(PHARMACY)).toEqual([])
 		expect(index.derivedFactsAbout(toConceptID("chemist"))).toBeUndefined()

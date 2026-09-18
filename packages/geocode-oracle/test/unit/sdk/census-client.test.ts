@@ -3,7 +3,7 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  * @file Tests for {@linkcode createCensusGeocoderClient} and the Census match → `ComponentTag`
- *   mapping. Stub adapter plus injected clock throughout; no live network call, no wall-clock sleep.
+ *   mapping. Stub adapter plus injected clock throughout. no live network call, no wall-clock sleep.
  *
  *   The fixture is the Census Bureau's own documentation example (4600 Silver Hill Rd), with the
  *   component slots filled the way the live API fills them — every value uppercase, the house number

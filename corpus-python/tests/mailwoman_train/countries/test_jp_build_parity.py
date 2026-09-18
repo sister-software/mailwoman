@@ -129,7 +129,7 @@ def reference_args(parquet: Path, kenall: Path, out_dir: Path) -> argparse.Names
     return argparse.Namespace(
         parquet=str(parquet),
         kenall=str(kenall),
-        admin_db="",  # the kana register needs a WOF admin DB; an empty string declines it
+        admin_db="",  # the kana register needs a WOF admin DB. an empty string declines it
         out_dir=str(out_dir),
         train_rows=40,
         val_rows=8,

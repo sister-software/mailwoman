@@ -56,7 +56,7 @@ export interface RawSearchRow {
 	max_latitude: number | null
 	min_longitude: number | null
 	max_longitude: number | null
-	population: number | null // from the place_population aux table; null when missing
+	population: number | null // from the place_population aux table. null when missing
 	/**
 	 * From `place_importance.encyclopedic` when the extract's table carries the two-score split columns. NULL means the
 	 * place has no Wikipedia article, or the extract predates the split — absence either way, and never 0 (ROAD_TO_V9
@@ -103,8 +103,8 @@ export function fetchSearchRows<DB>(options: {
 	// promote it — "NY" then resolves to a token-matching foreign region (Highland, GB) instead of New
 	// York. Widen the window for short queries so the exact match is always present to be tiered.
 	// (Cross-country abbrev collisions — "VT" is BOTH Vermont and Viterbo — still need a country/
-	// postcode signal to disambiguate; this only rescues the window-drop class, not genuine ambiguity.
-	// With a `country` hint every abbrev resolves; bare + no-context lifts 7→10/15 US states.)
+	// postcode signal to disambiguate. this only rescues the window-drop class, not genuine ambiguity.
+	// With a `country` hint every abbrev resolves. bare + no-context lifts 7→10/15 US states.)
 	const ftsLimit =
 		query.text.trim().length <= SHORT_QUERY_MAX_LENGTH ? Math.max(limit * 4, SHORT_QUERY_OVERFETCH) : limit * 4
 
@@ -132,7 +132,7 @@ export function fetchSearchRows<DB>(options: {
 	}
 
 	// Bbox + near-with-radius are SQL-level filters via the R*Tree. We only emit the JOIN when
-	// the active extract has the R*Tree; missing-but-requested is silently treated as no-bbox-
+	// the active extract has the R*Tree. missing-but-requested is silently treated as no-bbox-
 	// filter so legacy DBs / extracts-without-bbox don't crash.
 	const extractHasBbox = hasBboxIndex.get(sch) === true
 	const useBboxJoin = (query.bbox || query.near?.maxDistanceKm !== undefined) && extractHasBbox
@@ -147,7 +147,7 @@ export function fetchSearchRows<DB>(options: {
 	}
 
 	// LEFT JOIN the population aux table when present. Missing-on-this-extract means the SELECT
-	// just doesn't include the population column; the post-scoring loop treats it as 0.
+	// just doesn't include the population column. the post-scoring loop treats it as 0.
 	const extractHasPopulation = hasPopulationIndex.get(sch) === true
 
 	const populationSelect = extractHasPopulation
@@ -165,7 +165,7 @@ export function fetchSearchRows<DB>(options: {
 
 	// Push the population boost into the ORDER BY when the index is available, so famous places
 	// (whose long alt-name lists hurt BM25) actually make it into the over-fetch window. The TS
-	// post-scoring will still compute the same boost for the final score; this just ensures the
+	// post-scoring will still compute the same boost for the final score. this just ensures the
 	// candidate set is right.
 	//
 	// Formula: rank_adjusted = bm25 - populationBoost * min(1.0, log10(1 + pop) / scaleLog10)
@@ -217,7 +217,7 @@ export function fetchSearchRows<DB>(options: {
 	// ("Paris" matches thousands of gap-fill villages) the bm25-based window above cannot admit
 	// the famous holder — its bm25 is length-poisoned by the row's alias bulk (measured ~15 pts,
 	// vs a +4.0 boost cap), so FR Paris never even reaches post-scoring. This fetch makes the
-	// prominent holders of a name pool-complete BY CONSTRUCTION; the exact-tier sort below
+	// prominent holders of a name pool-complete BY CONSTRUCTION. the exact-tier sort below
 	// decides whether they win. Skipped without a population index (nothing to order by).
 	if (extractHasPopulation) {
 		const popStmt = db.prepare(`

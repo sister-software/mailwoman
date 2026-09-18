@@ -29,7 +29,7 @@
 
 import type { CountryBBoxFact, CountryCoverageFact } from "@mailwoman/core/resolver"
 // resolver-wof-sqlite is an optional peer of mailwoman (the geocode.tsx convention) — runtime
-// imports are DYNAMIC inside the functions; type-only imports are erased and safe at module level.
+// imports are DYNAMIC inside the functions. type-only imports are erased and safe at module level.
 import type { GazetteerCoverageDatabase } from "@mailwoman/resolver-wof-sqlite/coverage-manifest-schema"
 import { COUNTRY_BBOX } from "@mailwoman/resolver/plausibility"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
@@ -47,7 +47,7 @@ const OSM_PANEL_SOURCE = "#928 promote OSM panel, night 34 (2026-07-06)"
 /**
  * The reviewed per-country hard-filter coverage record — every promote-eval verdict + measurement that grew (or
  * deliberately kept a country off) the hard-country safelist. This is the structured form of the receipts that lived in
- * the `HARD_PLACE_COUNTRY_SAFELIST` code comment; the derived safelist (`hardFilterSafe === true`) is asserted
+ * the `HARD_PLACE_COUNTRY_SAFELIST` code comment. the derived safelist (`hardFilterSafe === true`) is asserted
  * byte-identical to that constant in `coverage-manifest.test.ts`, so the two cannot drift silently.
  *
  * Grow this at promotes (with the panel receipt in `source`); the fact reaches production at the next gazetteer rebuild
@@ -140,7 +140,7 @@ export interface EmitCoverageManifestOptions {
 
 /**
  * Bake the coverage manifest into a candidate DB under construction. Called by `buildCandidate` between the candidate
- * build and the seal; standalone use is fine for tests/fixtures (never against a sealed artifact).
+ * build and the seal. standalone use is fine for tests/fixtures (never against a sealed artifact).
  */
 export async function emitCoverageManifest(opts: EmitCoverageManifestOptions): Promise<void> {
 	const { writeGazetteerCoverageManifest } = await import("@mailwoman/resolver-wof-sqlite")
@@ -153,7 +153,7 @@ export async function emitCoverageManifest(opts: EmitCoverageManifestOptions): P
 			bboxes: opts.bboxes ?? MEASURED_COUNTRY_BBOXES,
 		})
 	} finally {
-		// `kdb` wraps the same handle; destroy() owns the close.
+		// `kdb` wraps the same handle. destroy() owns the close.
 		await kdb.destroy()
 	}
 }

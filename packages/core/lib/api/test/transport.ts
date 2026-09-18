@@ -52,7 +52,7 @@ export interface StubOutcome {
 	statusText?: string
 	/**
 	 * The RAW body, as the transport would hand it to Axios's `transformResponse`. A string here is what an upstream
-	 * serving HTML under a 200 actually looks like; a `Buffer` is what Axios's Node adapter produces for `responseType:
+	 * serving HTML under a 200 actually looks like. a `Buffer` is what Axios's Node adapter produces for `responseType:
 	 * "arraybuffer"`. Anything else is JSON-serialized the way a JSON endpoint would.
 	 */
 	body?: unknown

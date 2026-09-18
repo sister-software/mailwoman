@@ -4,7 +4,7 @@
  * @author Teffen Ellis, et al.
  *
  *   Behavioral tests for `buildPlaceSearchFTS` — formerly exercised through the retired
- *   `mailwoman-wof-build-fts` bin; the build/no-op/rebuild semantics belong to the module, so the tests target it
+ *   `mailwoman-wof-build-fts` bin. the build/no-op/rebuild semantics belong to the module, so the tests target it
  *   directly.
  */
 

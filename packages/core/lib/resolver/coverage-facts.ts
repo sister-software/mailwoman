@@ -5,7 +5,7 @@
  *
  *   What a loaded gazetteer artifact declares about its own country coverage, and the one derivation the
  *   reader and the build share. A country absent from a coverage map was never measured — never measured and
- *   failed; the failed case is present with `hardFilterSafe: false`.
+ *   failed. the failed case is present with `hardFilterSafe: false`.
  */
 
 /**

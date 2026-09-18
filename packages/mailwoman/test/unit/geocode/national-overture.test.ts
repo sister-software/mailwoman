@@ -4,7 +4,7 @@
  * @author Teffen Ellis, et al.
  *
  *   The national Overture rooftop provider: a registered country with its database on disk answers a `zh`-keyed
- *   lookup; a registered country with no database, and an unregistered country, answer `{}` rather than a handle to
+ *   lookup. a registered country with no database, and an unregistered country, answer `{}` rather than a handle to
  *   nothing.
  */
 

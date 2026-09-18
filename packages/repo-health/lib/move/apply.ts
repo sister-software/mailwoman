@@ -39,7 +39,7 @@ export interface ModuleMoveResult {
 	manifestRewrites: ManifestRewrite[]
 	pathLiterals: PathLiteralRewrite[]
 	/**
-	 * Rewritten specifiers re-resolved to their target against the moved tree. Equal to `rewrites.length` on success; a
+	 * Rewritten specifiers re-resolved to their target against the moved tree. Equal to `rewrites.length` on success. a
 	 * shortfall throws rather than returning.
 	 */
 	verified: number

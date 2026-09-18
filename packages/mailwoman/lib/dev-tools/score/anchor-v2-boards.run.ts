@@ -15,7 +15,7 @@
  *
  *   Boards:
  *
- *   - `gb` — `mailwoman/eval-harness/fixtures/gb-golden.jsonl` (120 rows; 106 carry a postcode, 69 carry
+ *   - `gb` — `mailwoman/eval-harness/fixtures/gb-golden.jsonl` (120 rows. 106 carry a postcode, 69 carry
  *       a `dependent_locality`). Reports the postcode board (318 = 106 × 3), the `dependent_locality`
  *       board (207 = 69 × 3), and the same `dependent_locality` board with the input's commas STRIPPED
  *       — the third leg that record tracked as the cost of the anchor-off mitigation.
@@ -191,7 +191,7 @@ if (board === "gb") {
 			for (const [tag, gold] of Object.entries(row.expect ?? {})) {
 				if (!gold.length) continue
 
-				// The gold `street` is the whole street NAME; the model emits it as a family
+				// The gold `street` is the whole street NAME. the model emits it as a family
 				// (prefix/name/particle/suffix). `parity-corpus.ts`'s floor compares the assembled family, so a
 				// bare tag-vs-tag read of `street` scores a correct parse as a miss. Assemble the same family.
 				const emitted =

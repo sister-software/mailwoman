@@ -15,7 +15,7 @@
  *   5. Structural violations — illegal BIO transitions (I after O)
  *
  *   This is the pre-publish 2pp promote eval (night-shift skill: "run the full per-tag error analysis
- *   and compare against the current default release; abort the upload if any tag regresses >2pp").
+ *   and compare against the current default release. abort the upload if any tag regresses >2pp").
  *   It therefore builds the classifier via the canonical `createScorer`
  *   (`@mailwoman/neural/scorer`, #718) in STRICT mode, so the model is fed the full SHIP-CONFIG it
  *   was TRAINED against — anchor + gazetteer + conventions, per the model-card's `requires` block.
@@ -76,7 +76,7 @@ export interface ErrorAnalysisOptions {
 	postcodeRepair?: boolean
 	/**
 	 * Parse with the production word-consistency heal (`WORD_CONSISTENCY_SHIP_DEFAULT`, 2026-07-15). Off by default so
-	 * pre-flip baselines stay reproducible; pass it to grade the shipped pipeline configuration.
+	 * pre-flip baselines stay reproducible. pass it to grade the shipped pipeline configuration.
 	 */
 	wordConsistency?: boolean
 	/**

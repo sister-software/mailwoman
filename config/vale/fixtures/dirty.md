@@ -93,3 +93,5 @@ backticked, so the markdown parser hands neither to the rule.
 ```json
 { "licence": "ODbL", "placetype": "neighbourhood", "radius_metres": 400 }
 ```
+
+The dosage is not a measured quantity. Name the rows and the unit.

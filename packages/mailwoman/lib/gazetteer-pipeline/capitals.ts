@@ -9,7 +9,7 @@
  *   The consumer (`@mailwoman/resolver-wof-sqlite/capitals`) matches a candidate by country +
  *   proximity + name membership — all three conjuncts, because the first board run matched on
  *   coordinates alone and promoted capital-ADJACENT namesakes (North Salt Lake beside the Utah
- *   seat) instead of capitals; the alternate names are what keep exonym rows ("Vienna" for Wien)
+ *   seat) instead of capitals. the alternate names are what keep exonym rows ("Vienna" for Wien)
  *   matching without a hand-kept exonym list.
  *
  *   Feature codes are matched exactly: `PPLA2`–`PPLA4` (lower-order seats) and `PPLCH` (historical
@@ -94,14 +94,14 @@ const LEVEL_BY_FEATURE_CODE: Record<string, CapitalReferenceEntry["level"]> = {
 }
 
 /**
- * Coordinate decimals kept in the committed file (4 ≈ 11 m; the consumer matches at km radius).
+ * Coordinate decimals kept in the committed file (4 ≈ 11 m. the consumer matches at km radius).
  */
 const COORD_DECIMALS = 4
 
 const roundCoord = (value: number): number => Number(value.toFixed(COORD_DECIMALS))
 
 /**
- * Extract the capital/seat rows from ONE GeoNames dump (tab-separated, 19 columns; 0-indexed: 0 `geonameid`, 1 `name`,
+ * Extract the capital/seat rows from ONE GeoNames dump (tab-separated, 19 columns. 0-indexed: 0 `geonameid`, 1 `name`,
  * 2 `asciiname`, 3 `alternatenames`, 4/5 lat/lon, 6 feature class, 7 feature code, 8 country code). The folded name set
  * (`k`) covers name + asciiname + every alternate name, so exonym rows match at the consumer.
  */
@@ -229,7 +229,7 @@ export async function buildCapitalsReference(options: BuildCapitalsOptions): Pro
 		const nationals = rows.filter((r) => r.level === "national")
 
 		if (!nationals.length) {
-			// A stated capital with no PPLC row is a gap; a catalog row with no capital (AQ, BV) is not.
+			// A stated capital with no PPLC row is a gap. a catalog row with no capital (AQ, BV) is not.
 			if (capital) {
 				missingNational.push(country)
 			}

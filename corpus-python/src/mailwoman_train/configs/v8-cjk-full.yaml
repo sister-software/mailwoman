@@ -9,7 +9,7 @@
 #      label keeps its id, so the JP per-tag read is comparable against the 24k record label for label.
 #   2. The mixture. The corpus is the v8-cjk overlay: the eight JP train parts referenced where they
 #      already sit on the volume, plus ONE CN part of 126 rows the `cn-organizational-units` recipe labeled
-#      by the suffix grammar (train 126 / val 11 / board 14; docs on #2034). `source_weights` is the
+#      by the suffix grammar (train 126 / val 11 / board 14. docs on #2034). `source_weights` is the
 #      mixture knob — the loader samples a SOURCE per pull from this multinomial and restarts an exhausted
 #      source with a fresh shuffled pass — so CN's 2% share means the 126 rows are each presented roughly
 #      (24000 × 256 × 0.02) / 126 ≈ 975 times over the run: a rule-shaped tag learned from a small register,
@@ -17,14 +17,14 @@
 #      acceptance filter (a row survives with probability weight / max weight), and the first launch set
 #      CN to 0.02 there, which rejected 98% of the 126 rows and left the CN source with nothing to yield —
 #      the loader raised `generator raised StopIteration` before step 1 (app ap-sBZtCQpys7yNmVHN8TcsDb).
-#      Both countries accept every row; the mixture lives in source_weights. Set the CN source to 0.0 and
+#      Both countries accept every row. the mixture lives in source_weights. Set the CN source to 0.0 and
 #      this config is v8-jp-full with a wider head, which is the control if the JP read moves.
 #
 # --- WHY ONE HEAD AND NOT A CN MODEL (the distribution decision, operator 2026-09-05) ---------------------
 # The consumer-facing shape is ONE CJK weights package a consumer installs as a unit: #1177 Phase B makes
 # the CJK char model the second script-routed weights package beside the Latin SentencePiece model, and JP + CN
 # ride it together. A per-script CN model was refused on supply — 126 labeled rows cannot train a model
-# that stands on its own; they can supplement one.
+# that stands on its own. they can supplement one.
 #
 # Han unification is the cost this pays, measured before the spend (JP train/part-0000, 250,000 rows,
 # against the 126 CN train rows): 103 of the 203 distinct CN characters are shared code points, 55% of
@@ -36,7 +36,7 @@
 # a script marker beside the colliding numeral. The auxiliary locale head is not switched on for this:
 # `use_locale_conditioning` was off in v8-jp-full, CN is not in `LOCALE_COUNTRIES`, and adding both here
 # would be a third delta the 24k comparison could not attribute. If the JP read moves, the control above
-# (CN source 0.0) separates the head widening from the mixture; the locale head is the fix to try after.
+# (CN source 0.0) separates the head widening from the mixture. the locale head is the fix to try after.
 #
 # --- FROM SCRATCH, for the same two reasons v8-jp-full states: the classifier is (49, 384) here and
 # (47, 384) at the JP checkpoint, and the char vocabulary is re-sealed (2,237 JP characters plus every CN
@@ -59,7 +59,7 @@
 # --- Char mode is channel-free (D5): no anchor / gazetteer / country / evidence paths here, by contract.
 #
 # `precision`, `lr_schedule` and `grad_clip_norm` are spelled out because the trainer's default precision
-# is fp32 and v8-jp-full ran bf16; an omitted field here would be a silent third delta.
+# is fp32 and v8-jp-full ran bf16. an omitted field here would be a silent third delta.
 #
 # Launch order (`v8-cjk-full-2k.yaml` runs first and this file waits on its read):
 #   cd corpus-python && modal run -m launch.train_remote::sync --version v8cjk
@@ -82,7 +82,7 @@ data:
   coarse_filter: false
   # JP val 20,000 + CN val 11.
   val_rows: 20011
-  # The 49-label CJK head. Supported only on the char path; the SP path raises (#1349's lesson).
+  # The 49-label CJK head. Supported only on the char path. the SP path raises (#1349's lesson).
   label_set: stage3-cjk
   char_mode: char
   char_vocab_path: /data/corpus/versioned/v8-cjk-2026-09-05/char-vocab-cjk.json

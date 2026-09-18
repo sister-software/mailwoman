@@ -19,7 +19,7 @@ const config = createOxlintConfig({
 	// Left off here to match the repo's prior behavior.
 	headers: false,
 	restrictProcessGlobals: true,
-	// A number used as a comparison threshold needs a name; data tables (bbox rows, codepoint
+	// A number used as a comparison threshold needs a name. data tables (bbox rows, codepoint
 	// ranges, status maps) are left alone, which is why `no-magic-numbers` stays off.
 	unnamedThresholds: true,
 	// Exported module-level constants carry a JSDoc block saying what the value means and where it came
@@ -29,12 +29,12 @@ const config = createOxlintConfig({
 	// more than the missing comment did. Public surface is where a reader has no other context.
 	constantDocs: {
 		scope: "exported",
-		// Command modules export these as framework metadata; the
+		// Command modules export these as framework metadata. the
 		// `description` string is the `--help` text. A JSDoc block above them can only restate it.
 		ignoreNames: ["description", "args", "options", "alias", "isDefault"],
 	},
 	// An acronym is capitalized as a whole camelCase component: `parseJSON`, `POILookup`,
-	// `createWOFResolver`. The shipped list covers general programming vocabulary; everything below is
+	// `createWOFResolver`. The shipped list covers general programming vocabulary. everything below is
 	// this project's own, and the list is worth widening on sight — `outHtml` sat in three sibling
 	// files for months because a hand-maintained list only contains the acronyms someone thought to add.
 	acronymCasing: {
@@ -256,7 +256,7 @@ export default {
 			},
 		},
 		{
-			// A test file imports the package under test through its public exports and a helper by relative path; the
+			// A test file imports the package under test through its public exports and a helper by relative path. the
 			// `#` map is the package's private naming and stays inside `lib/`.
 			files: [
 				"packages/*/test/**/*.ts",

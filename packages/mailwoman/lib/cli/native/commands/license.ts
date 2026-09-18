@@ -251,7 +251,7 @@ function refusalFor(verification: LicenseKeyVerification): string | undefined {
 /**
  * The lid a token carries, when the self-service worker issued it. For a token this build cannot verify the payload is
  * read as written: the license's public status is the one thing worth asking about such a token, since it says whether
- * the remedy is an upgrade or a purchase.
+ * the action is an upgrade or a purchase.
  */
 function licenseIDOf(verification: LicenseKeyVerification, token: string): string | undefined {
 	const payload = "payload" in verification ? verification.payload : decodeLicenseKeyPayload(token)

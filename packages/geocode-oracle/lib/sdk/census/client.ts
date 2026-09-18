@@ -18,11 +18,11 @@
  *        result started with `PO BOX`, RETURNING A LOCALLY-PARSED ADDRESS WITHOUT ISSUING A REQUEST —
  *        so one branch of a method named "lookup" answered from a local parser and produced a record
  *        with no coordinate, silently, under the same return type. That is a reasonable shortcut in a
- *        pipeline that just needs an address record; it is disqualifying in an ORACLE, whose entire
+ *        pipeline that just needs an address record. it is disqualifying in an ORACLE, whose entire
  *        contract is "this is what the provider said". A PO Box the Census geocoder cannot match now
  *        raises the same 404 as any other unmatched address.
  *     2. **`vintage` is no longer sent to the `locations/*` endpoints.** It is a `geographies/*`
- *        parameter only; the original sent it on every call. Harmless in practice (the API ignores it)
+ *        parameter only. the original sent it on every call. Harmless in practice (the API ignores it)
  *        and wrong to keep, because it implied the two knobs were independent when the API requires
  *        them to agree — see {@linkcode CensusVintageName}.
  *
@@ -120,7 +120,7 @@ export interface CreateCensusGeocoderClientOptions {
 	 */
 	requestsPerMinute?: number
 	/**
-	 * Time source powering the pacer, the cooldown timer, and the retry backoff. Defaults to the system clock; tests
+	 * Time source powering the pacer, the cooldown timer, and the retry backoff. Defaults to the system clock. tests
 	 * inject a fake one so no suite sleeps on the wall clock.
 	 */
 	clock?: ClockLike
@@ -153,7 +153,7 @@ export interface CreateCensusGeocoderClientOptions {
 
 /**
  * A structured address, as the `locations/address` and `geographies/address` endpoints take it. Every field is
- * optional; the geocoder matches on whatever it is given, and more fields is a narrower search.
+ * optional. the geocoder matches on whatever it is given, and more fields is a narrower search.
  */
 export interface CensusAddressQuery {
 	/**
@@ -214,7 +214,7 @@ export class CensusGeocoderClient extends APIClient<CensusGeocoderClientConfig> 
 	 * Geocode an address and return every TIGER match, best first.
 	 *
 	 * `locations/*` — the address + coordinate only. Use {@linkcode CensusGeocoderClient.lookupGeography} when the census
-	 * block/tract attributes are wanted too; it is a different endpoint, not a flag on this one.
+	 * block/tract attributes are wanted too. it is a different endpoint, not a flag on this one.
 	 */
 	public async lookupAddress(input: CensusGeocoderInput): Promise<OracleGeocodeResult<CensusAddressMatch>[]> {
 		const { path, params } = buildQuery(input, "locations")
@@ -361,7 +361,7 @@ export function createCensusGeocoderClient(options: CreateCensusGeocoderClientOp
 			timeout: options.requestTimeoutMs ?? DEFAULT_REQUEST_TIMEOUT_MS,
 			responseType: "json",
 			// `silentJSONParsing` defaults to TRUE, which hands back the RAW STRING when a body fails to
-			// parse. The Census geocoder answers an overload with an HTML error page under a 200; returning
+			// parse. The Census geocoder answers an overload with an HTML error page under a 200. returning
 			// that as a `CensusGeocodeResponse` would surface as `result` being undefined at the call site
 			// rather than as an error, so parse failures must raise.
 			transitional: { silentJSONParsing: false },

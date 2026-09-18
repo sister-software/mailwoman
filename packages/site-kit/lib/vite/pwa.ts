@@ -5,7 +5,7 @@
  *
  *   The installable-PWA options every mailwoman site shares: `injectManifest` over `lib/service-worker.ts`, a precache
  *   of the shell and its hashed assets only, and a manifest whose identity is the origin. A model, a gazetteer
- *   database or a tile is never precached; those stay range-fetched on demand.
+ *   database or a tile is never precached. those stay range-fetched on demand.
  */
 
 import type { VitePWAOptions } from "vite-plugin-pwa"

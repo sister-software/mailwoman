@@ -22,7 +22,7 @@
 #   - Harness pass rate (PRIMARY release metric) improves as overconfident
 #     hallucinations soften and lose decode arguments.
 #   - Per-tag recall on the held-out TEST split stays within 2pp of v0.6.0
-#     (calibration should not cost recall; label smoothing is a regularizer,
+#     (calibration should not cost recall. label smoothing is a regularizer,
 #     not a capacity change).
 #
 # EARLY-KILL CHECK (NaN protocol / budget stewardship): checkpoints land every

@@ -68,7 +68,7 @@ export async function confirmLicenseKeyPublished(
 ): Promise<LicenseKeyPublication> {
 	await using client = new APIClient({
 		displayName: "license-keys",
-		// The doctor and `license verify --json` own stdout; the client's request line must not land in the document.
+		// The doctor and `license verify --json` own stdout. the client's request line must not land in the document.
 		logger: silentLogger(),
 		axios: { headers: { accept: "application/json" }, timeout: options.timeoutMs ?? 3000, ...options.axios },
 	})

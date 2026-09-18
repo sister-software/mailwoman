@@ -163,7 +163,7 @@ function parsePolicySpecs(policySpecs: readonly string[]): PolicyOverride[] {
 
 const ParseCommand: ParsedCommandComponent<ParseOptions> = ({ options, args }) => {
 	// The weights guard wraps the DEFAULT pipeline path only — explicit --model/--tokenizer paths and
-	// the legacy/benchmark/degraded paths keep their existing loading semantics untouched (plan 3;
+	// the legacy/benchmark/degraded paths keep their existing loading semantics untouched (plan 3.
 	// non-interactive absent-weights behavior stays byte-identical to pre-guard until plan 4).
 	const guardEligible =
 		options.benchmark === undefined &&
@@ -290,7 +290,7 @@ async function resolveWithCandidates(
 		opts.candidatesPerLookup = options.candidates + 1
 	}
 
-	// #42: the library default has been on since 2026-08-05; only the explicit --no-postcode-country-coherence
+	// #42: the library default has been on since 2026-08-05. only the explicit --no-postcode-country-coherence
 	// pin needs threading.
 	if (options.postcodeCountryCoherence === false) {
 		opts.postcodeCountryCoherence = false
@@ -316,7 +316,7 @@ async function resolveWithCandidates(
 		opts.defaultCountry = dc
 	}
 
-	// #895: the library default is ON; only the explicit --no-admin-coherence pin needs threading.
+	// #895: the library default is ON. only the explicit --no-admin-coherence pin needs threading.
 	if (options.adminCoherence === false) {
 		opts.adminCoherence = false
 	}
@@ -393,7 +393,7 @@ function emitDegradedBanner(options: ParseOptions): void {
 /**
  * #40 — announce every stage the coordinator degraded past. `runPipeline` catches a classifier / grouper / resolver
  * throw and keeps going (`PipelineResult.faults`), which used to mean a crashed model produced a tidy-looking parse
- * with nothing on stdout or stderr to say so. Same `⚠` register as the encoder-load warnings above; stderr only, so
+ * with nothing on stdout or stderr to say so. Same `⚠` register as the encoder-load warnings above. stderr only, so
  * stdout stays the machine-readable parse.
  */
 function emitFaultWarnings(result: { faults: ReadonlyArray<{ stage: string; name: string; message: string }> }): void {
@@ -408,7 +408,7 @@ function emitFaultWarnings(result: { faults: ReadonlyArray<{ stage: string; name
 /**
  * Encoder-less structural parse (plan 3), without the banner: the real pipeline stages (normalize → query-shape →
  * locale-hint → kind → grouper fast-paths) with no neural classifier. The tree carries what the structural stages can
- * prove (postcode_only / locality_only fast-paths populate it; free-form addresses may yield an empty tree). The caller
+ * prove (postcode_only / locality_only fast-paths populate it. free-form addresses may yield an empty tree). The caller
  * owns the degraded notice — either {@link emitDegradedBanner} or the precise absent/load-error warning `tryLoadNeural`
  * already printed — so no path degrades silently, and none double-warns.
  */
@@ -486,11 +486,11 @@ async function runPipeline(input: string, options: ParseOptions): Promise<string
 
 	// Scope the resolver so a bare region abbreviation (`NY`) resolves to the intended country's place
 	// rather than a higher-priority foreign homonym. Inferred from --locale unless --default-country
-	// overrides (or is `none`). Only meaningful on the --resolve path; harmless otherwise.
+	// overrides (or is `none`). Only meaningful on the --resolve path. harmless otherwise.
 	if (options.resolve) {
 		const { resolveCandidateDBPath } = await import("#resolver-backend")
 		// A script-routed input (a kanji or Hangul line under --locale en-US) ran on the family classifier, so the locale's
-		// inferred country is withheld; an explicit --default-country stays.
+		// inferred country is withheld. an explicit --default-country stays.
 		const routedAway = classifier ? (await classifier.forInput(input)) !== classifier.primary : false
 
 		const dc =
@@ -682,7 +682,7 @@ async function runBenchmark(input: string, options: ParseOptions, iterations: nu
 	)
 
 	lines.push("")
-	// `formatIEC` carries a minus itself; a growth needs the plus spelled out or the sign is only legible by absence.
+	// `formatIEC` carries a minus itself. a growth needs the plus spelled out or the sign is only legible by absence.
 	const heapDelta = collected.heapDelta
 
 	lines.push(`heap delta (post-warmup → post-bench): ${heapDelta > 0 ? "+" : ""}${ByteFormatter.formatIEC(heapDelta)}`)

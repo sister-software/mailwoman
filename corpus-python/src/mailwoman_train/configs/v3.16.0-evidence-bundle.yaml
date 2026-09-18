@@ -1,5 +1,5 @@
 # === v3.16.0-evidence-bundle — the Option-A BUNDLE probe: street-type + locality-surface channels
-# UNDER the anti-over-trust curriculum. (ROAD_TO_MAILWOMAN_V8_1_0 §8 build arc; operator go 2026-07-27.)
+# UNDER the anti-over-trust curriculum. (ROAD_TO_MAILWOMAN_V8_1_0 §8 build arc. operator go 2026-07-27.)
 #
 # HYPOTHESIS. P-A confirmed a lone street-type input channel moves the P-C target classes but drifts
 # into over-trust (house-number classes −0.070/−0.045 by 3k). The Option-A doctrine says the fix is
@@ -55,7 +55,7 @@ data:
     AU: 1.0
     CA: 1.0 # New (Overture) — live locality, sidesteps NZ's dead dependent_locality
     MX: 1.0 # New (Overture) — BR dropped (0% OA-lineage + SN-garbage numbers)
-    NZ: 1.0 # v3.12 COMPANION BUG FIX (not the variable): the allowlist lacked NZ through the whole v3.11.x lineage — synth-nz drew zero rows (step-0 measured; the documented v3.8.2-era allowlist trap re-triggered). Restores the recipe's DECLARED 4-locale intent.
+    NZ: 1.0 # v3.12 COMPANION BUG FIX (not the variable): the allowlist lacked NZ through the whole v3.11.x lineage — synth-nz drew zero rows (step-0 measured. the documented v3.8.2-era allowlist trap re-triggered). Restores the recipe's DECLARED 4-locale intent.
   source_weights: # v3.1.0 weights + overture-latam (CA/MX/BR, dedicated source so it doesn't dilute the trained EU overture rows) + synth-no-fragment (the one new variable); synth-no-street-led ZEROED (its on-disk part predates --exclude-surfaces and is contaminated vs the board — see the overlay note).
     overture-latam: 6.0 # New — the CA/MX/BR Overture rows. 6.0/~142 ≈ 4.2%, within Fable's ≤5-8% new-mass band. Distinct from  (EU) so EU exposure is untouched.
     wof-admin: 2.0
@@ -96,9 +96,9 @@ data:
     # (matches fr-fragment). Bare streets + street+number with no postcode partner, + counters.
     synth-no-fragment: 12.0
     synth-gb: 10.0 # FEED: 6.1% stream × .328 dep-loc (probe-2 had this at 20.2% — the skew culprit)
-    synth-nz: 4.0 # FEED NEW: 2.4% stream × .792 (synth-nz-v2 800k; key also covers the old 2,990-row po-box recipe output — harmless, same country)
+    synth-nz: 4.0 # FEED NEW: 2.4% stream × .792 (synth-nz-v2 800k. key also covers the old 2,990-row po-box recipe output — harmless, same country)
     synth-es-pedania: 5.0 # FEED NEW: 3.0% stream × .303 (post-4b formatter fix)
-    synth-fr-lieudit: 3.0 # FEED NEW: 1.8% stream × 1.00 (BAN nom_ld, 4ce6821a; directly feeds the bare-locality regression class)
+    synth-fr-lieudit: 3.0 # FEED NEW: 1.8% stream × 1.00 (BAN nom_ld, 4ce6821a. directly feeds the bare-locality regression class)
   train_rows_per_epoch: 1000000
   val_rows: 4096
   coarse_filter: true
@@ -114,7 +114,7 @@ data:
   # #1104 country-lexicon channel — the dedicated country soft-feed vocabulary (feature_dim 2).
   country_lexicon_path: /data/gazetteer/country-surface-lexicon-v1.json
   # P-A street-type channel — the codex street-type lexicon (feature_dim 1). Same JSON schema as the
-  # gazetteer lexicon; the loader reuses load_gazetteer_lexicon + realign_gazetteer_to_pieces.
+  # gazetteer lexicon. the loader reuses load_gazetteer_lexicon + realign_gazetteer_to_pieces.
   street_type_lexicon_path: /data/gazetteer/street-type-lexicon-v1.json
   # v3.16.0 — the bundle's second channel (see header).
   locality_surface_lexicon_path: /data/gazetteer/locality-surface-lexicon-v1.json
@@ -126,7 +126,7 @@ data:
 model: # Verbatim from v2.4.1.
   hidden_size: 384
   use_span_boundary_head: true
-  use_deploc_head: false # P-A leaves the dep-loc head disabled — orthogonal to P-B's head experiment; don't confound the street-type read.
+  use_deploc_head: false # P-A leaves the dep-loc head disabled — orthogonal to P-B's head experiment. don't confound the street-type read.
   span_boundary_loss_weight: 0.5
   num_hidden_layers: 6
   num_attention_heads: 6
@@ -158,7 +158,7 @@ model: # Verbatim from v2.4.1.
   use_locality_surface_anchor: true
   locality_surface_feature_dim: 2
   # #1104 homograph-guard SOFTENER — the one variable vs v263. Scales the country_ambiguous dim by 0.5
-  # before the country_projection (bakes into the exported ONNX; no lexicon/inference change). v263's
+  # before the country_projection (bakes into the exported ONNX. no lexicon/inference change). v263's
   # hard guard (scale 1.0) over-suppressed homograph countries Georgia/Jordan (country-homograph F1
   # 89.8->82.6); softening should recover homograph recall without giving back the country F1 the
   # WOF-admin rows produced.

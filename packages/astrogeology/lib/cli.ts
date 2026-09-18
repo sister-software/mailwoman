@@ -5,7 +5,7 @@
  * @author Teffen Ellis, et al.
  *
  *   `astrogeology` — the pipeline's bin: `fetch`, `build`, `verify`, `publish`, each a command module in the shape
- *   mailwoman's filesystem router runs (`spec` + a default Ink component). The first positional selects the module;
+ *   mailwoman's filesystem router runs (`spec` + a default Ink component). The first positional selects the module.
  *   the rest of the arguments are parsed against its spec, with `--help` answered before anything runs.
  */
 

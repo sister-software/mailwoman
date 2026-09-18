@@ -42,7 +42,7 @@ export const Form499CessationReason = {
 	 */
 	ReplacedByFiler: "replaced-by-filer",
 	/**
-	 * `This company still exists, however it is no longer providing telecommunications services.` The entity survives;
+	 * `This company still exists, however it is no longer providing telecommunications services.` The entity survives.
 	 * only the telecom operation ended. Distinct from {@linkcode Form499CessationReason.OutOfBusiness} and the difference
 	 * is required — one of these companies can still be somebody's parent.
 	 */
@@ -102,7 +102,7 @@ export interface Form499Lifecycle {
 	 */
 	reasons: Form499CessationReasonValue[]
 	/**
-	 * Notes matching none of the eight templates. Always `0` for the 2025-12-07 vintage; a non-zero count in a later
+	 * Notes matching none of the eight templates. Always `0` for the 2025-12-07 vintage. a non-zero count in a later
 	 * vintage means the FCC added a template and this file needs revisiting. Counted rather than silently dropped so that
 	 * fact can be measured instead of assumed.
 	 */

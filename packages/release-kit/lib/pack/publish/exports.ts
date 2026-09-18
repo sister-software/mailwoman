@@ -131,7 +131,7 @@ export function assertNoSourceTargets(label: string, transformed: unknown): void
 }
 
 /**
- * Walk a transformed exports map; return every concrete (non-pattern) file target.
+ * Walk a transformed exports map. return every concrete (non-pattern) file target.
  */
 export function collectExportTargets(exports: unknown): string[] {
 	const targets: string[] = []

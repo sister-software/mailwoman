@@ -53,13 +53,13 @@
 #      fall — recovering the locality surface must not turn a street before a state code into a
 #      locality.
 #
-#   2. US POSTCODE, the tag this flag was added to protect. The choreography's own receipt is about 3
+#   2. US POSTCODE, the tag this flag was added to guard. The choreography's own receipt is about 3
 #      points of US postcode under v0.9.12. Per-tag US postcode F1 may not regress against v5.7.0. A
 #      loss here is the expected cost of the change and the number that decides whether it ships.
 #
 #   3. The regression board, 1,029 cases. The 33 bare-admin rows added for this arc
 #      (`cases/us/family-city-state-postcode.jsonl`) carry 22 improvement targets and 6 reverse-risk
-#      rows; net improved-minus-regressed must be >= 0 and the six reverse-risk rows must stay passing.
+#      rows. net improved-minus-regressed must be >= 0 and the six reverse-risk rows must stay passing.
 #
 #   4. The D-rule, iron rule 6: no regression anywhere on FR, GB or DE.
 #
@@ -272,7 +272,7 @@ data:
   # Reps per row, not weights (#1677). 60,000 steps x batch 128 = 7,680,000 samples, so the nine
   # sources below demand 1.0*142083 + 1.0*80081 + 8.0*4551 + 8.0*4944 + 8.0*5279 + 0.5*153965 +
   # 1.0*20460 + 1.0*16000 + 4.0*13740 = 508,759 draws, 6.6% of the run. The big register sources take
-  # one pass each because they carry their diversity in the rows; the four-to-five-thousand-row ones
+  # one pass each because they carry their diversity in the rows. the four-to-five-thousand-row ones
   # take eight, which is the exposure `synth-suffix-boundary` already draws at weight 2.5.
   #
   # The two added lines are the arm's exposure decisions and the epoch audit is what confirms them —

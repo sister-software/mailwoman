@@ -33,7 +33,7 @@ export const PLACE_SEARCH_TABLE = "place_search"
  * an INDEXED TOKEN that sits between the aliases and breaks positional adjacency.
  *
  * Empirical probe (node:sqlite, `tokenize = 'unicode61 remove_diacritics 2'` — the exact config below). Bag = the
- * aliases "York" and "New City" joined by each candidate separator; query = the cross-boundary phrase `MATCH '"york
+ * aliases "York" and "New City" joined by each candidate separator. query = the cross-boundary phrase `MATCH '"york
  * new"'`:
  *
  * - `' '` (the pre-#523 join, no separator) — false HIT
@@ -50,7 +50,7 @@ export const PLACE_SEARCH_TABLE = "place_search"
  * - **Unreachable from queries**: `sanitizeFTSQuery` (Node + WASM resolvers) strips everything outside `\p{L}\p{N}` from
  *   token bodies, and U+E000 is neither — no user query can ever address the separator token. The demo's `sanitizeFTS`
  *   strips it explicitly.
- * - **Never in place names**: PUA codepoints are unassigned by definition; real-world WOF names don't carry them.
+ * - **Never in place names**: PUA codepoints are unassigned by definition. real-world WOF names don't carry them.
  *   Defensively, the INSERT below also strips any embedded U+E000 from source names so a poisoned row can't forge an
  *   alias boundary.
  * - **Survives GROUP_CONCAT**: verified — `GROUP_CONCAT(name, ' ' || char(57344) || ' ')` emits the codepoint intact
@@ -193,7 +193,7 @@ export interface BuildPlaceSearchFTSOpts {
  * Build (or rebuild, with `drop: true`) the `place_search` FTS5 virtual table and the `place_bbox` R*Tree virtual table
  * from the existing `spr` + `names` tables in a WOF SQLite distribution.
  *
- * The FTS5 index is used for name-based `MATCH` queries; the R*Tree is used for bbox + proximity filtering. Both are
+ * The FTS5 index is used for name-based `MATCH` queries. the R*Tree is used for bbox + proximity filtering. Both are
  * pure SQLite — no extensions required.
  *
  * Returns a `BuildPlaceSearchFTSResult` summary. Idempotent when `drop: false` — re-running against an already-indexed
@@ -291,7 +291,7 @@ export function buildPlaceSearchFTS<DB>(
 
 		// Only index places that have non-zero coordinates and a real bbox. WOF stores both the
 		// centroid (latitude/longitude) and the bounding box (min_*/max_*). A subset of rows have
-		// all-zero coordinates — likely placeholders for deprecated / unmapped entries; the
+		// all-zero coordinates — likely placeholders for deprecated / unmapped entries. the
 		// is_current / is_deprecated filter mostly catches them, but we double-check at insert.
 		db.exec(`
 			INSERT INTO ${PLACE_BBOX_TABLE} (id, min_lat, max_lat, min_lon, max_lon)

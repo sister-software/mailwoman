@@ -102,7 +102,7 @@ export default defineConfig({
 			// says the same thing the comment above says, except it says it in a form the package
 			// cannot correct. `import.meta.resolve("onnxruntime-web")` applies the `node` condition of
 			// the exports map the comment is describing, so an ORT upgrade that renames or relocates
-			// the Node bundle keeps resolving; the literal would have silently missed. Verified
+			// the Node bundle keeps resolving. the literal would have silently missed. Verified
 			// 2026-08-06 against onnxruntime-web 1.x: it resolves to `dist/ort.node.min.mjs`, the same
 			// file the literal named. `exports` has no `./dist/*` subpath, so the ROOT specifier is
 			// the only one that reaches it.
@@ -115,7 +115,7 @@ export default defineConfig({
 	test: {
 		// isolate: false — a shared module graph per worker. Measured 2026-08-01: core+neural together
 		// 8m23s → 1m30s (5.6×), full sweep 4m48s wall. Every test file used to re-transform and
-		// re-import the entire aliased workspace graph on its own; now each fork pays that once.
+		// re-import the entire aliased workspace graph on its own. now each fork pays that once.
 		// The old isolate:true justification (libpostal's top-level await breaking `class extends`
 		// under a shared graph) no longer reproduces — #481 made the libpostal resource a lazy
 		// getter, and the structural bare/subpath interleave is covered by the side-effect
@@ -153,12 +153,12 @@ export default defineConfig({
 			"**/packages/*/test/e2e/**",
 			"**/docs/test/build/**",
 			"**/docs/test/e2e/**",
-			// Agent worktrees under .claude/worktrees/ are isolated git checkouts; each contains a
+			// Agent worktrees under .claude/worktrees/ are isolated git checkouts. each contains a
 			// full copy of the repo's test files. Without this exclude, vitest descends into every
 			// active worktree and runs every test suite N×(worktree count) times.
 			"**/.claude/worktrees/**",
 			// `corpus-python/.venv` is a Python virtualenv that vendors a Svelte app (trackio) carrying
-			// its own *.test.js files. Vitest collected five of them; they normally surface as an
+			// its own *.test.js files. Vitest collected five of them. they normally surface as an
 			// unexplained `1 skipped`, and at `--maxWorkers=4` one FAILED the run outright with "No test
 			// suite found in file .../legend.test.js". CI never saw it — .venv is not checked in, so a
 			// fresh checkout collects 316 files against a working tree's 321 — but it is a real local

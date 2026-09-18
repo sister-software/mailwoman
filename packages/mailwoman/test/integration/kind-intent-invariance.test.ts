@@ -147,7 +147,7 @@ describe("ROAD_TO_V9 §4 — zero reclassification over the regression corpus", 
 	)
 
 	test("the LEXICON-WIRED classifier's top slot is byte-identical on every corpus row (#1649)", async () => {
-		// The geocode path now injects createKindClassifier({ poiLexicon }) for first refusal; an
+		// The geocode path now injects createKindClassifier({ poiLexicon }) for first refusal. an
 		// ADDRESS-shaped row whose top kind flips to a poi kind would silently abstain from geocoding.
 		// The category-query rows themselves are excluded — they are THING-queries and flipping is
 		// their entire point (each one's id carries the -cat- infix).
@@ -212,10 +212,10 @@ describe("ROAD_TO_V9 §4 — zero reclassification over the regression corpus", 
 	// world-structures boards (306 → 514 cases). The 15 additions are all bare famous-street
 	// rows ('Avenida Alvear', 'Gran Vía' …) — single street-name surfaces with no
 	// structural anchor, exactly the declared-fork shape the marker exists for. Deliberate pin
-	// move, reviewed row-by-row; not silent growth.
+	// move, reviewed row-by-row. not silent growth.
 	// 2026-08-11: corpus 514 → 523 with the bare-foreign-postcode board (#1589) — 9 postcode
 	// surfaces ('100 00', 'SW1A 1AA', 'N7 0BT', …), then 523 → 530 with the #1585 fuzzy-scope
-	// board (bare toponyms + two exact-match controls). None are fork-shaped; the fork list is
+	// board (bare toponyms + two exact-match controls). None are fork-shaped. the fork list is
 	// unchanged.
 	const EXPECTED_FORK_ROWS = [
 		"Antigua Guatemala",

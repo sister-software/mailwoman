@@ -114,7 +114,7 @@ describe("buildPlacetypeCensus", () => {
 
 		const london = result.nodes.find((node) => node.parent === "London")
 
-		// Shoreditch (neighbourhood) + Camden (borough) project onto one tag; the IE child and the metroarea do not count.
+		// Shoreditch (neighbourhood) + Camden (borough) project onto one tag. the IE child and the metroarea do not count.
 		expect(london?.counts.dependent_locality).toBe(2)
 		expect(london?.total).toBe(2)
 	})

@@ -10,7 +10,7 @@
 
 // STATIC on purpose: a dynamic-import destructure of this barrel gets tree-shaken by webpack's
 // usedExports analysis, which once shipped the WOF cascade as `TypeError: i is not a function`.
-// Static named imports are fully analyzable; do not re-dynamize.
+// Static named imports are fully analyzable. do not re-dynamize.
 import { type FlatTreeNode, flattenTreeNodes } from "@mailwoman/core/decoder"
 import type { AddressTree } from "@mailwoman/core/decoder/types"
 import type { ParseResult, ResolvedPlaceView } from "@mailwoman/core/pipeline/client-result"
@@ -54,10 +54,10 @@ export const DEFAULT_ADDRESS = "1600 Pennsylvania Ave NW, Washington, DC 20500"
  * `{country}` override): structural routing (locale-check) genuinely can't detect every locale from text shape (NZ's
  * 4-digit postcode isn't distinctive), so a preset PINS its country and {@link pairCountryForInput} hands it to
  * `selectPairIndexForText` when the input still equals the preset text. Free-typed input (no exact preset match) falls
- * back to structural detection — GB-with-postcode auto-fires; NZ free-text stays unfired (the accepted consequence of
+ * back to structural detection — GB-with-postcode auto-fires. NZ free-text stays unfired (the accepted consequence of
  * structural routing, the #1308-sibling reality).
  *
- * See also `PIPELINE_PRESETS` in `@mailwoman/react` (pipeline/presets.ts) — the package carries its own preset list;
+ * See also `PIPELINE_PRESETS` in `@mailwoman/react` (pipeline/presets.ts) — the package carries its own preset list.
  * reconciling the two lists is tracked outside this file.
  */
 export const EXAMPLE_ADDRESSES: Array<{ label: string; address: string; country: string }> = [
@@ -73,7 +73,7 @@ export const EXAMPLE_ADDRESSES: Array<{ label: string; address: string; country:
 	{ label: "Paris (street fall-through)", address: "181 Rue du Chevaleret, Paris", country: "fr" },
 	// GB dependent_locality (placetype-pair-prior arc) — a verified `gb-golden` board row
 	// (mailwoman/eval-harness/fixtures/gb-golden.jsonl). "Henbury" flips to dependent_locality via the en-gb pair-index
-	// prior; the `country: "gb"` pin selects it even if the user edits away the postcode (and structural detection also
+	// prior. the `country: "gb"` pin selects it even if the user edits away the postcode (and structural detection also
 	// picks gb while the UK postcode is present).
 	{
 		label: "Macclesfield (GB dependent_locality)",
@@ -93,7 +93,7 @@ export const EXAMPLE_ADDRESSES: Array<{ label: string; address: string; country:
  * when `input` still exactly equals that preset's text (trimmed), else `undefined` → the caller lets structural
  * detection decide. This is the stale-pin rule: the pin is tied to the preset's IDENTITY (its text), so the instant the
  * user edits the input it no longer matches and the parse drops to structural locale-check detection — clean and
- * stateless (no "active preset" tracking to drift). GB-with-postcode still auto-fires structurally; NZ free-text stays
+ * stateless (no "active preset" tracking to drift). GB-with-postcode still auto-fires structurally. NZ free-text stays
  * unfired.
  */
 export function pairCountryForInput(input: string): string | undefined {
@@ -163,14 +163,14 @@ export interface ClassifyStageDeps {
 	fst?: FSTMatcherLike | null
 	/**
 	 * The optional street-morphology matcher — the #1315 street-context check's signal source. The check only fires when
-	 * both this and `fst` are wired (core's `streetContextRequirementFor`), matching the node runtime pipeline's default;
+	 * both this and `fst` are wired (core's `streetContextRequirementFor`), matching the node runtime pipeline's default.
 	 * a `null`/omitted matcher parses with the check off, exactly the pre-artifact demo behavior.
 	 */
 	streetMorphology?: FSTMatcherLike | null
 	/**
 	 * The per-parse placetype-pair prior selector (#1278) — the loaded {@link SelectPairIndex}, or `null`/omitted when no
 	 * pair index was staged for this release. When present, `runClassifyStage` calls it on the input and passes the
-	 * result as the pipeline's `placetypePair` opt; the GB/NZ dependent_locality prior fires while US/FR inputs stay
+	 * result as the pipeline's `placetypePair` opt. the GB/NZ dependent_locality prior fires while US/FR inputs stay
 	 * byte-stable.
 	 */
 	selectPairIndex?: SelectPairIndex | null
@@ -208,8 +208,8 @@ export async function runClassifyStage(
 
 	// Placetype-pair prior (#1278): pick the per-parse index. A preset PINS its country (pairCountryForInput) — the
 	// phase-2 `{country}` override — so a locale structural routing can't detect from text (NZ: 4-digit postcode isn't
-	// distinctive) still fires while the input equals the preset text; the moment the user edits, the pin drops and we
-	// fall back to structural locale-check detection (GB-with-postcode auto-fires; NZ free-text stays unfired, the
+	// distinctive) still fires while the input equals the preset text. the moment the user edits, the pin drops and we
+	// fall back to structural locale-check detection (GB-with-postcode auto-fires. NZ free-text stays unfired, the
 	// accepted #1308-sibling consequence of structural routing). No index / no match → undefined → byte-stable.
 	const pinnedCountry = pairCountryForInput(input)
 	const placetypePair = deps.selectPairIndex?.(input, pinnedCountry ? { country: pinnedCountry } : undefined)

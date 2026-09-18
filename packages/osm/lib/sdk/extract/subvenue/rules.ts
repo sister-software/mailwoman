@@ -68,7 +68,7 @@ export interface SubVenueTagRule {
  * - `aeroway=aerodrome`, `railway=station`, `public_transport=station` — the containing venues.
  * - `amenity=university` / `amenity=college` / `amenity=hospital` — mapped to `campus`, which is a WOF placetype already
  *   in `WOF_VENUE_STRUCTURE_PLACETYPES`. `wof-osm-placetype-map.mdx` rates the WOF↔OSM mapping for `campus` as MODERATE
- *   confidence (no single tag; these three amenities plus `landuse=education`), so treat these rows as the weakest in
+ *   confidence (no single tag. these three amenities plus `landuse=education`), so treat these rows as the weakest in
  *   the table.
  *
  * Not here, deliberately: `indoor=*` (Simple Indoor Tagging). `wof-osm-placetype-map.mdx` establishes that concourses
@@ -98,7 +98,7 @@ export const SUBVENUE_LAYERS = ["points", "multipolygons"] as const
 
 /**
  * Tag keys GDAL's default `osmconf.ini` promotes to real OGR fields, PER LAYER. See the module docstring for why this
- * cannot be one flat set the way `extract-poi.ts`'s can. Only the keys this extractor reads are listed; the real
+ * cannot be one flat set the way `extract-poi.ts`'s can. Only the keys this extractor reads are listed. the real
  * `attributes=` lines are longer.
  */
 export const PROMOTED_KEYS_BY_LAYER: PromotedKeysByLayer = {
@@ -131,7 +131,7 @@ export function buildSubVenueSQL(layer: string, rules: readonly SubVenueTagRule[
 	const promoted = PROMOTED_KEYS_BY_LAYER[layer] ?? new Set<string>()
 	const cols = ["name"]
 
-	// `ref` is promoted on `points` only; on `multipolygons` it arrives inside `other_tags`, where the
+	// `ref` is promoted on `points` only. on `multipolygons` it arrives inside `other_tags`, where the
 	// JS-side decode picks it up without a dedicated column.
 	if (promoted.has("ref")) {
 		cols.push("ref")

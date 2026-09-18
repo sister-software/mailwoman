@@ -32,7 +32,7 @@ import { assertISODate } from "#sdk/guards"
 export interface EdgarSubsidiaryRow {
 	/**
 	 * Zero-padded 10-digit CIK of the filer whose Exhibit 21 disclosed this subsidiary — the PARENT. Validated the same
-	 * zero-padded 10-digit shape `edgar-filings.ts`'s `CIK` branded type requires; a malformed value throws (decision 8's
+	 * zero-padded 10-digit shape `edgar-filings.ts`'s `CIK` branded type requires. a malformed value throws (decision 8's
 	 * "malformed input is loud" discipline).
 	 */
 	cik: string
@@ -44,7 +44,7 @@ export interface EdgarSubsidiaryRow {
 	/**
 	 * Jurisdiction of incorporation, when Exhibit 21 gave one ({@linkcode parseExhibit21}'s own `unparseable` abstention
 	 * already dropped any row this couldn't confidently extract — this field is carried through for provenance/audit
-	 * only; nothing in this builder currently writes it to a column).
+	 * only. nothing in this builder currently writes it to a column).
 	 */
 	jurisdiction?: string
 	/**
@@ -58,7 +58,7 @@ export interface EdgarSubsidiaryRow {
 /**
  * One EDGAR subsidiary row's full write: the disclosure edge (always, authoritative) plus — only when the subsidiary
  * name canonically matches EXACTLY ONE FRN's legal name — the corroboration edge and its accompanying `filer_family`
- * row (inference, never authority; see `build-filer.ts`'s module docstring, "EDGAR Exhibit 21 ingest" section, for the
+ * row (inference, never authority. see `build-filer.ts`'s module docstring, "EDGAR Exhibit 21 ingest" section, for the
  * full rationale and the family-visibility precondition this is written to satisfy).
  */
 export function processEdgarSubsidiaryRow(

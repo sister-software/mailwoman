@@ -110,7 +110,7 @@ async function parseFeature(
 
 	// Label centroid first, math centroid as the fallback — same preference the postcode-locality builder applies.
 	// The math centroid is wrong exactly where it matters most: a multipolygon spanning overseas territories pulls it
-	// off the mainland entirely (France's geom: point is in Spain; lbl: is metropolitan France). Both coordinates are
+	// off the mainland entirely (France's geom: point is in Spain. lbl: is metropolitan France). Both coordinates are
 	// taken from the same source or neither: a lbl:latitude paired with a geom:longitude would be a point on neither
 	// centroid.
 	//
@@ -128,7 +128,7 @@ async function parseFeature(
 	// Settlement records only: a GeoNames LOCALITY anchor marks the urban seat, but its records for
 	// regions/counties are centroids, so consulting them there re-imports the very defect class this
 	// exists to fix (measured: the anchor moved the Texas region 172 km off its label placement).
-	// The census the rule is sized against is locality-scoped; so is the check.
+	// The census the rule is sized against is locality-scoped. so is the check.
 	if (placetype === "locality" && hasLbl && hasGeom && anchorLookup) {
 		const gnID = props["wof:concordances"]?.["gn:id"]
 
@@ -240,7 +240,7 @@ export interface IngestWOFResult {
 	skipped: number
 	/**
 	 * Records whose stored point is the GEOMETRIC centroid because the GeoNames anchor overrode the label preference
-	 * (`choice === "geom-by-anchor"`). Zero with no anchor lookup configured; a build that expected the adjudicator to
+	 * (`choice === "geom-by-anchor"`). Zero with no anchor lookup configured. a build that expected the adjudicator to
 	 * run reads this instead of assuming.
 	 */
 	labelPointOverrides: number

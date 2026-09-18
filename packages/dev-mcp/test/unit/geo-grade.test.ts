@@ -22,7 +22,7 @@ describe("distanceKm", () => {
 	})
 
 	it("measures a real displacement", () => {
-		// Lyon is ~391.5 km from Paris; the exact figure matters less than that it is not 0 and not Infinity.
+		// Lyon is ~391.5 km from Paris. the exact figure matters less than that it is not 0 and not Infinity.
 		expect(distanceKm({ lat: 45.764, lon: 4.8357 }, PARIS.lat, PARIS.lon)).toBeCloseTo(391.5, 1)
 	})
 })

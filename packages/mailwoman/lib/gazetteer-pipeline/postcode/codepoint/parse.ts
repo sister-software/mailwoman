@@ -29,7 +29,7 @@
  *   2. **Quoting applies to record boundaries as well as columns.** The current extract carries no embedded
  *      comma or newline, but both are legal inside a quoted CSV field. Parsing the byte stream with quote
  *      handling enabled keeps such a field intact even when its newline or closing quote crosses a read
- *      boundary; a line-first parser cannot repair the record after splitting it.
+ *      boundary. a line-first parser cannot repair the record after splitting it.
  */
 
 import { osgb36ToWGS84 } from "@mailwoman/spatial"
@@ -64,7 +64,7 @@ export type CodePointCountry = (typeof CODEPOINT_COUNTRY_CODES)[keyof typeof COD
  */
 export interface CodePointRecord {
 	/**
-	 * The postcode in OS's own spacing — outward code, one space, inward code (`SW1A 1AA`). This is the DISPLAY form; the
+	 * The postcode in OS's own spacing — outward code, one space, inward code (`SW1A 1AA`). This is the DISPLAY form. the
 	 * normalized lookup form is derived by the database builder via the #920 name law.
 	 */
 	postcode: string
@@ -161,7 +161,7 @@ export function splitCSVLine(line: string): string[] {
  * than materializing an array it would only iterate once.
  */
 export async function* readCodePointCSV(csvPath: string, stats: CodePointParseStats): AsyncGenerator<CodePointRecord> {
-	// These files have no header row; the column names ship separately in
+	// These files have no header row. the column names ship separately in
 	// `Doc/Code-Point_Open_Column_Headers.csv`.
 	for await (const row of CSVSpliterator.fromAsync<string[]>(csvPath, {
 		header: false,

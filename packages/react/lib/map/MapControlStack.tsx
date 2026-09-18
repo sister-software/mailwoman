@@ -63,7 +63,7 @@ export interface MapControlGroupProps {
 }
 
 /**
- * One capsule. Put related controls in the same group; give an unrelated one its own.
+ * One capsule. Put related controls in the same group. give an unrelated one its own.
  */
 export function MapControlGroup({ children, className }: MapControlGroupProps): ReactNode {
 	return <div className={cx("mw-map-control-group", className)}>{children}</div>

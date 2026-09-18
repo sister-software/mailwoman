@@ -12,7 +12,7 @@
  *   first-hit rung measured without the hint grades the gazetteer's population prior rather than autocomplete. Every
  *   rung therefore runs under the row's country, and a row with none is refused rather than graded.
  *
- *   NO NEW TRUTH. The ladder is derived from rows that already carry a coordinate and a tolerance; the full-string rung
+ *   NO NEW TRUTH. The ladder is derived from rows that already carry a coordinate and a tolerance. the full-string rung
  *   is the ordinary board grade for that row, and a difference there is a harness defect, not a finding.
  */
 
@@ -94,7 +94,7 @@ export const FIRST_KEYSTROKE_RUNGS = 3
 /**
  * The prefixes of one input, shortest first, ending with the full string.
  *
- * The first three single characters stand in for the first keystrokes; after that a rung opens at every token boundary
+ * The first three single characters stand in for the first keystrokes. after that a rung opens at every token boundary
  * — a run of whitespace or a comma — so `Rua Augusta 100, Lisboa` yields `R`, `Ru`, `Rua`, `Rua Augusta`, `Rua Augusta
  * 100`, `Rua Augusta 100, Lisboa`. Trailing separators are trimmed, because a user's screen does not send the space
  * until the next letter arrives.
@@ -377,7 +377,7 @@ export async function runAutocompleteLadder(
 		const matcher = fstLocale ? await matcherFor(fstLocale) : null
 		const rungs = ladderRungs(row.input)
 
-		// The first request of a process pays engine construction; it is not a rung's latency.
+		// The first request of a process pays engine construction. it is not a rung's latency.
 		if (!warmed) {
 			await deps.geocode(rungs.at(-1)!, geoOpts)
 			warmed = true

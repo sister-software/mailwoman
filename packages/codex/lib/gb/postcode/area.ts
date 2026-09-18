@@ -13,7 +13,7 @@
  *   four UK countries an area predominantly falls in — and even that has border exceptions:
  *
  *   - **TD** (Galashiels) and **SY** (Shrewsbury) straddle the Scotland/England and Wales/England
- *       borders respectively; each is assigned to its MAJORITY country here (TD → Scotland, SY →
+ *       borders respectively. each is assigned to its MAJORITY country here (TD → Scotland, SY →
  *       Wales). A handful of individual postcodes on the wrong side of the line are a gazetteer
  *       concern, not a thing this coarse table tries to model.
  *
@@ -79,7 +79,7 @@ export const GB_POSTCODE_AREA_COUNTRY: Record<string, UkCountryCode> = {
 /**
  * The two postcode areas whose assignment in {@link GB_POSTCODE_AREA_COUNTRY} is a MAJORITY call rather than a fact —
  * TD (Galashiels) straddles the Scotland/England border and SY (Shrewsbury) straddles the Wales/England border, and
- * both carry real postcodes on the other side of the line. The header above documents them in prose; this is the same
+ * both carry real postcodes on the other side of the line. The header above documents them in prose. this is the same
  * knowledge in a form a build can read, so an artifact that ASSERTS ancestry per postcode district can withhold the
  * constituent country here instead of asserting a coin-flip. Consumers that only want the coarse majority answer keep
  * using {@link countryOfPostcodeArea} and ignore this.

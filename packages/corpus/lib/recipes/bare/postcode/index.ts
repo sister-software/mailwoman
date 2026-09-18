@@ -43,7 +43,7 @@ import { normalizeGauntletSurface, readGauntletInputs } from "#tools/gauntlet-in
  *
  * `openaddresses/extracted/` rather than a cached zip, because the extracted tree is what survives on this lab and its
  * paths mirror the archive's member paths exactly (`cz/countrywide.csv`). Sweden publishes per municipality, so SE is
- * sixteen files; CZ, SK and NL are one countrywide file each.
+ * sixteen files. CZ, SK and NL are one countrywide file each.
  */
 interface PostcodeSource {
 	csv: PathBuilderLike
@@ -122,7 +122,7 @@ const WRITTEN_FORMS: ReadonlyMap<string, { locale: string; render: (compact: str
 
 /**
  * `10000` → `["100 00", "10000"]`. Sweden and Greece write five digits with the space after the third, exactly as
- * Czechia and Slovakia do; the compact form rides along because sources store it that way and a reader types it both
+ * Czechia and Slovakia do. the compact form rides along because sources store it that way and a reader types it both
  * ways.
  */
 function spacedThree(compact: string): string[] {
@@ -134,7 +134,7 @@ function spacedThree(compact: string): string[] {
 /**
  * Choose distinct postcodes without inheriting the publisher's row order.
  *
- * Sorting first makes the result independent of input-file order; the seeded sample then gives a reproducible spread
+ * Sorting first makes the result independent of input-file order. the seeded sample then gives a reproducible spread
  * across the complete set instead of taking the first municipality or numeric prefix that happens to fill the cap.
  */
 export function selectPostcodes(codes: Iterable<string>, limit: number, seed: number): string[] {
@@ -228,7 +228,7 @@ export const barePostcodeRecipe: CorpusRecipe = {
 		const codesByCountry = new Map(countries.map((country) => [country, new Set<string>()]))
 
 		// The second held-out register. `BARE_POSTCODE_EVAL_CASES` reserves the strings this recipe's author knew
-		// about; the gauntlet boards are older and separate, and `cz/bare-postcode.jsonl` was authored before this
+		// about. the gauntlet boards are older and separate, and `cz/bare-postcode.jsonl` was authored before this
 		// recipe existed. `100 00` and `110 00` reached the v0.30.0 parquet through that gap, after which those two
 		// board rows measured recall of two strings rather than the capability.
 		const boardInputs = await readGauntletInputs()

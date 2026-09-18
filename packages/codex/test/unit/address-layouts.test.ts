@@ -4,7 +4,7 @@
  * @author Teffen Ellis, et al.
  *
  *   Pins each layout against the libaddressinput `fmt` it was transcribed from, so the table cannot drift from its
- *   source unnoticed. A layout is data about a country's print order; a transcription error reads as a plausible
+ *   source unnoticed. A layout is data about a country's print order. a transcription error reads as a plausible
  *   address from somewhere else, which is the failure mode a diff against the source catches and a reader does not.
  *
  *   The comparison is over the SKELETON — the order of the fields and where the line breaks fall — not over the street
@@ -54,20 +54,20 @@ const FIELD: Readonly<Record<string, string>> = {
 }
 
 /**
- * Countries whose layout departs from the dataset skeleton, and why. An entry here is a decision; a departure without
+ * Countries whose layout departs from the dataset skeleton, and why. An entry here is a decision. a departure without
  * one is a transcription error.
  */
 const ACCEPTED_DEPARTURES: Readonly<Record<string, string>> = {
 	// The dataset has no %D for France. La Poste's line 5 is the lieu-dit, which `fr/recipes/lieudit` renders and the
 	// OpenCage FR template carries as a standalone `place` line, so the slot is kept between street and postcode.
 	FR: "the lieu-dit line, which La Poste specifies and libaddressinput omits",
-	// The dataset has no %D for Great Britain; Royal Mail's dependent locality is a real line above the post town.
+	// The dataset has no %D for Great Britain. Royal Mail's dependent locality is a real line above the post town.
 	GB: "the dependent-locality line above the post town",
-	// Japan's %A is one field below the prefecture; this table splits it into the tags the CJK model emits, and joins
+	// Japan's %A is one field below the prefecture. this table splits it into the tags the CJK model emits, and joins
 	// the prefecture to it, because on one line the whole admin run is unseparated and only the postal code takes a
 	// space.
 	JP: "the sub-prefecture run is split into its own tags, and the prefecture joins it rather than taking a line",
-	// China's %A is the street line only; the admin run above it is already %S%C%D in the dataset.
+	// China's %A is the street line only. the admin run above it is already %S%C%D in the dataset.
 	CN: "the street line is split into street and house number",
 	// Hong Kong's %S%n%C%n%A%n%O%n%N is the Chinese field order. This table holds one layout per country and the rest of
 	// the codex already describes HK as small-first — `isLargestFirstSystem("HK")` is false and `LINE_JOINS` has no HK
@@ -291,7 +291,7 @@ describe("the admin run keeps its tier order in every layout", () => {
 	 *
 	 * The sub-locality is the tier the generator AUTHORS wherever a `fmt` names no `%D`, and the one relation it has to
 	 * get right is which side of the locality it lands on: the sub-locality sits between the street and the locality in
-	 * either direction. Four generated skeletons (CR, KI, LV, RO) print the region between the street and the locality;
+	 * either direction. Four generated skeletons (CR, KI, LV, RO) print the region between the street and the locality.
 	 * that order is transcribed from the dataset rather than authored, and this check does not judge it.
 	 */
 	const TABLES = {

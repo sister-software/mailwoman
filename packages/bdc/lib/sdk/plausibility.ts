@@ -6,10 +6,10 @@
  *   `plausibilityCheck` (spec §3.2/§4) — the heart of the BDC plausibility vertical. Composes
  *   `filingLandscape` (`bdc/sdk/filing-landscape.ts`) + `nearestInfrastructure` into one evidence bundle
  *   over a single broadband-service claim, under the registry-backed doctrine's positive-evidence-only
- *   invariant (spec §4): a BDC filing or a nearby infrastructure hit can raise confidence; their absence
+ *   invariant (spec §4): a BDC filing or a nearby infrastructure hit can raise confidence. their absence
  *   can only ever read as "unknown" or "no supporting evidence found, coverage permitting" — never as
  *   "implausible." The four §7-2b acceptance criteria are asserted in `plausibility.test.ts`'s
- *   `describe("§7-2b criteria")` block; this module is designed for them but doesn't assert them itself.
+ *   `describe("§7-2b criteria")` block. this module is designed for them but doesn't assert them itself.
  *
  *   **Claim resolution (decision 4).** A claim's spatial key resolves two INDEPENDENT ways:
  *
@@ -62,14 +62,14 @@
  *   becomes its own `{ type: "physical_plant" }` entry, nearest-first, whatever `nearestInfrastructure`'s
  *   own ring/limit budget returns.
  *
- *   - The tech maps to `[]` categories (no physical falsifier claimed) → the step is skipped outright;
+ *   - The tech maps to `[]` categories (no physical falsifier claimed) → the step is skipped outright.
  *     no evidence entry, no abstain, and this axis is excluded from `coverage_confidence` (see below).
  *   - The tech implies categories but `deps.poi` is absent → `{ type: "abstain", reason:
  *     "requires_build_local_layer", layer: "poi" }` (decision 6 — the poi-executor abstain precedent).
  *   - The tech implies categories, `deps.poi` is present, but no coordinate is resolvable (a geoid-only
  *     claim) → no evidence entry, no abstain (see the claim-resolution note above); the axis degrades to
  *     UNKNOWN for `coverage_confidence` purposes.
- *   - Otherwise → `nearestInfrastructure` runs; each hit is emitted, and the searched point's own res-6
+ *   - Otherwise → `nearestInfrastructure` runs. each hit is emitted, and the searched point's own res-6
  *     coverage cell (independent of whether any hit was found — a covered-but-empty cell is real
  *     evidence the area was surveyed) is read directly via `readLayerCoverage` to determine the layer's
  *     coverage state for this claim.
@@ -193,7 +193,7 @@ export type PlausibilitySharedEvidence =
  * `coverage_confidence` alone folds several genuinely different situations into the same
  * `"low"`/`"insufficient_survey_data"` verdict (a tech with no physical falsifier at all vs. a real poi survey gap vs.
  * a geoid-only claim with no coordinate to search from); this axis state is what tells them apart. `"not_applicable"`
- * and `"no_coordinate"` are only ever produced for the physical axis; the filing axis only ever reaches `"covered"`,
+ * and `"no_coordinate"` are only ever produced for the physical axis. the filing axis only ever reaches `"covered"`,
  * `"layer_missing"`, or `"cell_unsurveyed"`.
  */
 export type PlausibilityCoverageAxisState =
@@ -255,7 +255,7 @@ export interface PlausibilityBundle {
 /**
  * Structural mirror of `mailwoman/geocode-core.ts`'s `GeocodeResult` — `@mailwoman/bdc` MUST NOT import from the
  * `mailwoman` workspace (`mailwoman/package.json` already depends on `@mailwoman/bdc`; the reverse edge would be
- * circular). Only the two fields this scorer actually consumes are typed here; a real `GeocodeResult` is structurally
+ * circular). Only the two fields this scorer actually consumes are typed here. a real `GeocodeResult` is structurally
  * assignable to this type without any adapter, so a caller wiring `deps.geocode` at the CLI/MCP layer can pass a thin
  * wrapper over `geocodeAddress` directly.
  */
@@ -284,7 +284,7 @@ export interface PlausibilityDeps {
 
 /**
  * Tech → physical-plant category mapping. Fiber implies the three infrastructure-extension categories a fiber network
- * plausibly touches; the three fixed-wireless codes imply a comms tower; every other code maps to `[]` — no physical
+ * plausibly touches. the three fixed-wireless codes imply a comms tower. every other code maps to `[]` — no physical
  * falsifier is claimed for it (see {@link physicalCategoriesForTechnology}).
  */
 export const PLAUSIBILITY_TECH_PHYSICAL_CATEGORIES: Readonly<Record<number, readonly string[]>> = {

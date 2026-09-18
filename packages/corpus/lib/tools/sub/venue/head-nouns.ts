@@ -13,7 +13,7 @@
  *   this table shipped 1,014 uncurated surfaces.
  *
  *   Everything derived lands `curated: false`. A derivation is a HYPOTHESIS about what the addressed
- *   form is; a locale's own data is what confirms or kills it.
+ *   form is. a locale's own data is what confirms or kills it.
  */
 
 import { isPresent } from "@mailwoman/core/objects"
@@ -39,7 +39,7 @@ function asciiFold(text: string): string {
  * Five, or the id's own length when that is shorter (`hall`, `gate`, `wing`, `pier` are four). Measured against the
  * committed Wikidata pull: at five, `terminal`/`terminál`/`terminale`/`terminali`/`terminála`/`terminalo` are all
  * accepted for `terminal` while `campo` and `campws` are both rejected for `campus` (they share four). At six the
- * Spanish `satélite` is lost; at four, Italian `campo` is admitted and it means FIELD.
+ * Spanish `satélite` is lost. at four, Italian `campo` is admitted and it means FIELD.
  */
 const HEAD_NOUN_PREFIX_FLOOR = 5
 
@@ -99,7 +99,7 @@ const SHARED_SUBSTRING_SCRIPT = /[\p{Script=Han}\p{Script=Hiragana}\p{Script=Kat
  *   fragment.
  *
  * The non-Latin branch deliberately emits SEVERAL candidates instead of picking one. Choosing between `航站` and `航站楼`
- * from Wikidata alone is guesswork; the Japan extract answers it by counting, and the promotion ledger records which
+ * from Wikidata alone is guesswork. the Japan extract answers it by counting, and the promotion ledger records which
  * count won. Everything derived lands `curated: false` — the derivation is a hypothesis about what the addressed form
  * is, and a locale's own data is what confirms or kills it.
  */

@@ -20,7 +20,7 @@
  *       Phase 4.3 overlays resolver provenance (`resolver:wof-admin:101751119`).
  *   - `lat` / `lon` — resolver-supplied centroid (Phase 4.3). Emitted only when both are set.
  *   - `place` — resolver-supplied normalized place URI like `wof:101751119` (Phase 4.3). Emitted only
- *       when `node.placeID` is set; distinct from `src` so callers that want the bare place id
+ *       when `node.placeID` is set. distinct from `src` so callers that want the bare place id
  *       without the vendor prefix have a direct attribute to read.
  *   - Root `<address>` carries `raw` — the full input string for round-trip.
  *

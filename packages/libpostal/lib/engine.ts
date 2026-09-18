@@ -4,7 +4,7 @@
  * @author Teffen Ellis, et al.
  *
  *   Engine contract + the `ComponentTag` → libpostal-label mapping. libpostal-specific knowledge
- *   lives here; the engine yields raw Mailwoman matches (a `ComponentTag` classification + covered
+ *   lives here. the engine yields raw Mailwoman matches (a `ComponentTag` classification + covered
  *   text) and {@link toLibpostalComponents} serializes them to libpostal's ordered `[{label,
  *   value}]` shape.
  */
@@ -28,7 +28,7 @@ export interface ParseMatch {
 }
 
 /**
- * Mailwoman `ComponentTag` → libpostal label. libpostal's label set is OSM-derived; ours is close but not identical, so
+ * Mailwoman `ComponentTag` → libpostal label. libpostal's label set is OSM-derived. ours is close but not identical, so
  * map the overlap and pass unmapped classifications through unchanged.
  */
 export const COMPONENT_TO_LIBPOSTAL: Record<string, string> = {

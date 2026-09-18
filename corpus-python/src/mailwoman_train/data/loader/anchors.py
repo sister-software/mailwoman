@@ -21,7 +21,7 @@ def load_anchor_lookup(path: str) -> dict[str, tuple[dict[str, float], float, fl
     dependency.
 
     MEMORY, measured 2026-08-05 (the loader-init cost a launch has to budget for): the 67,708-key
-    pilot lookup lands at 0.05 GB resident / 0.05 GB peak; the 2,286,339-key v2 lookup at 1.32 GB
+    pilot lookup lands at 0.05 GB resident / 0.05 GB peak. the 2,286,339-key v2 lookup at 1.32 GB
     resident / 1.37 GB peak, both dominated by ``json.load``'s intermediate rather than by the
     returned dict. Interning the posteriors was tried and REJECTED — 2.2M rows share
     ``{"GB": 1.0}``, but freeing the duplicate dicts returns them to pymalloc's arenas, not to the

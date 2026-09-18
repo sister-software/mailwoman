@@ -6,7 +6,7 @@ first-class hypothesis: every span up to ``max_span`` tokens gets a per-type sco
 transition table carries the address grammar (the level at which "must not follow" is well-posed —
 5-8 segments, not 40 subwords), and the whole segmentation is scored jointly.
 
-Phase 1 scope: scoring + loss + decode, evaluated in Python. Export/JS/rerank are later phases; see
+Phase 1 scope: scoring + loss + decode, evaluated in Python. Export/JS/rerank are later phases. see
 docs/superpowers/plans/2026-07-15-727-stage2-kbest-plan.md and the phase-1 plan beside it.
 
 fp32 discipline: the forward algorithm exponentiates sums over exponentially many segmentations. The
@@ -83,7 +83,7 @@ class SpanScorer(nn.Module):
     over a full bilinear because Phase 3 re-implements it in JS per candidate span — one add, one tanh,
     one matmul, no dynamic-shape ONNX op.
 
-    Spans that run past the sequence end are scored against a zero end-vector; the DP masks them out,
+    Spans that run past the sequence end are scored against a zero end-vector. the DP masks them out,
     so their value is never read.
     """
 

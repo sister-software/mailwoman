@@ -47,7 +47,7 @@ export type MultiPolygonCoords = number[][][][]
  * dependency, delete these and import them.
  *
  * Repo-health-ignore private-name-shadows-export -- kept local so a leaf lookup package stays off @mailwoman/core's ~11
- * MB of shipped data; see the docstring
+ * MB of shipped data. see the docstring
  */
 function pointInRing(lon: number, lat: number, ring: number[][]): boolean {
 	let inside = false
@@ -66,7 +66,7 @@ function pointInRing(lon: number, lat: number, ring: number[][]): boolean {
 	return inside
 }
 
-// repo-health-ignore private-name-shadows-export -- kept local so a leaf lookup package stays off @mailwoman/core's ~11 MB of shipped data; see the docstring
+// repo-health-ignore private-name-shadows-export -- kept local so a leaf lookup package stays off @mailwoman/core's ~11 MB of shipped data. see the docstring
 function pointInPolygon(lon: number, lat: number, polygon: number[][][]): boolean {
 	if (!polygon[0] || !pointInRing(lon, lat, polygon[0])) return false
 
@@ -121,7 +121,7 @@ export class NUTSLookup implements Disposable {
 	readonly #ownedDatabase?: DatabaseClient<NUTSDatabase>
 	#byLevelBox: ReturnType<DatabaseClient["prepare"]>
 	/**
-	 * Parsed geometry by NUTS id, most recently used last. The table is read-only, so an entry never goes stale; the
+	 * Parsed geometry by NUTS id, most recently used last. The table is read-only, so an entry never goes stale. the
 	 * cache is bounded because the shipped `nuts.db` carries 14.3 MB of geometry JSON over 2,010 regions, and a lookup
 	 * service that answers points across the whole EU would otherwise hold every region parsed.
 	 */

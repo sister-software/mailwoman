@@ -42,7 +42,7 @@ import { CSVSpliterator } from "spliterator"
 
 /**
  * Minimum address points a (CITY, DISTRICT) group needs before it warrants a database row. Below this the "centroid" is
- * a handful of rural delivery points and the name is as likely a farm check as a locality; 5 keeps 3,000-odd real
+ * a handful of rural delivery points and the name is as likely a farm check as a locality. 5 keeps 3,000-odd real
  * localities and drops the tail of one-off strings.
  */
 const MIN_GROUP_POINTS = 5
@@ -85,7 +85,7 @@ function cleanName(raw: string | undefined): string {
  * swapping conventions moves a percentile by up to one member row and with it every derived label point.
  *
  * Repo-health-ignore private-name-shadows-export -- the ceil-based nearest rank the shipped NZ label points were
- * computed with; core floors
+ * computed with. core floors
  */
 function percentileSorted(sorted: readonly number[], p: number): number {
 	const idx = Math.min(sorted.length - 1, Math.max(0, Math.ceil((p / 100) * sorted.length) - 1))
@@ -116,7 +116,7 @@ export async function buildNZLocalitiesDatabase(
 		throw new Error(`source md5 mismatch: computed ${sourceMD5}, sidecar ${sidecar} — re-verify the extract`)
 	}
 
-	// Pass 1 — aggregate (CITY, DISTRICT) → coordinate lists. ~2.1M rows; two float arrays per group.
+	// Pass 1 — aggregate (CITY, DISTRICT) → coordinate lists. ~2.1M rows. two float arrays per group.
 	const groups = new Map<string, { city: string; district: string; lats: number[]; lons: number[] }>()
 	let header: string[] | undefined
 

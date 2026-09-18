@@ -190,7 +190,7 @@ export interface PhotonForwardResult {
 	 */
 	primary: PhotonForwardInput
 	/**
-	 * Ranked alternative places (Springfield MA / IL / …), each a single-place input; excludes the primary.
+	 * Ranked alternative places (Springfield MA / IL / …), each a single-place input. excludes the primary.
 	 */
 	alternatives: PhotonForwardInput[]
 }

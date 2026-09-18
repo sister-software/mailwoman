@@ -123,7 +123,7 @@ export function padRowIndex(index: number): string {
 }
 
 /**
- * The register columns a panel builder reads to select and grade a row. `GeoNamesCity` satisfies it; the builders take
+ * The register columns a panel builder reads to select and grade a row. `GeoNamesCity` satisfies it. the builders take
  * this shape rather than that type so the grouping and gold helpers below are not tied to one register's reader.
  */
 export interface PanelSubject {

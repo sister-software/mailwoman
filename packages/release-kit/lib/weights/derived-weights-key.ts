@@ -36,7 +36,7 @@ import { Globerator } from "spliterator/node/fs"
  * source computes the fixed key, builds with the broken code, and the store then serves that artifact to every
  * fresh-compiled run forever. With the compiled bytes in the key, a stale compile keys separately from a fresh one, so
  * its output can never be served to a checkout whose compiled tree differs. (Transitive compiled imports are
- * deliberately not hashed — that would invalidate the store on every unrelated commit and delete its reason to exist;
+ * deliberately not hashed — that would invalidate the store on every unrelated commit and delete its reason to exist.
  * the direct builder modules are where both real incidents lived.)
  *
  * Add here whenever a new input starts feeding the build — a key that omits an input serves stale artifacts silently,
@@ -124,7 +124,7 @@ async function derivedWeightsInputs(): Promise<DerivedWeightsInput[]> {
 }
 
 /**
- * Hash an explicit input list. Exported for testing; production callers want {@link derivedWeightsKey}.
+ * Hash an explicit input list. Exported for testing. production callers want {@link derivedWeightsKey}.
  *
  * Sorted by name, so the caller's ordering cannot change the key. Each entry contributes its NAME and its bytes.
  *
@@ -179,13 +179,13 @@ export function derivedWeightsDir(key: string): string {
  * stale-compiled builder wrote, and served it as a HIT indefinitely (#1528). A `postcode-<cc>.bin` is refused when its
  * PCB1 header is malformed or its record count sits below the LOWEST calibrated floor for that country — for GB that is
  * the outward floor, so a legitimate outward-granularity bin is never false-refused while the empty/collapsed class
- * always is. The calibrated per-granularity check remains the builder's; this one only has the header to read.
+ * always is. The calibrated per-granularity check remains the builder's. this one only has the header to read.
  *
  * Non-postcode entries (pair indexes) pass — their reader validates a typed header on load, and no measured floor
  * exists for them yet.
  */
 /**
- * Magic (4) + u32 recordCount (4) + u8 countryCount (1) — the PCB1 prefix the serve check reads; anything shorter
+ * Magic (4) + u32 recordCount (4) + u8 countryCount (1) — the PCB1 prefix the serve check reads. anything shorter
  * cannot carry a record count at all.
  */
 const PCB1_HEADER_BYTES = 9

@@ -45,7 +45,7 @@ test("toFeatureCollection: wraps results as a GeoJSON FeatureCollection (geometr
 	expect(f.geometry).toEqual({ type: "Point", coordinates: [-77.0365, 38.8977] })
 	// boundingbox [south, north, west, east] → GeoJSON bbox [west, south, east, north]
 	expect(f.bbox).toEqual([-77.04, 38.89, -77.03, 38.9])
-	// the coordinate + boundingbox move OUT of properties; the rest stays.
+	// the coordinate + boundingbox move OUT of properties. the rest stays.
 	expect(f.properties["display_name"]).toBeDefined()
 	expect(f.properties["lat"]).toBeUndefined()
 	expect(f.properties["boundingbox"]).toBeUndefined()

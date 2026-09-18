@@ -15,11 +15,11 @@
  *   - `HOUSE_NUMBER_PREFIX` + `splitStreetLine(line)`: the one house-number/street split every
  *       US CSV adapter uses.
  *   - `canonicalDedupKey(row)`: normalized signature used to drop near-identical rows during a run.
- *       Adapter-internal dedup; cross-adapter dedup is the runner's job.
+ *       Adapter-internal dedup. cross-adapter dedup is the runner's job.
  *   - `streamingSha256()`: thin wrapper around `node:crypto` so the runner can hash JSONL output as it
  *       streams (avoids re-reading the JSONL for the manifest checksum).
  *   - `loadLibpostalDictionary(language, filename)`: the curated libpostal dictionary reader the
- *       street-decompose modules share — the one read this module performs; everything else here is
+ *       street-decompose modules share — the one read this module performs. everything else here is
  *       pure, and other side-effecting code goes in `./runner.ts`.
  */
 
@@ -35,7 +35,7 @@ import type { CanonicalRow, CorpusAdapter } from "#types"
 /**
  * Lookup table for corpus adapters.
  *
- * The CLI's `npx mailwoman corpus run <adapter-id>` resolves `<adapter-id>` against this registry; the same registry is
+ * The CLI's `npx mailwoman corpus run <adapter-id>` resolves `<adapter-id>` against this registry. the same registry is
  * iterated by the `corpus build` pipeline. Adapters do not self-register at module load — they're added explicitly so
  * the dependency graph stays traceable.
  */
@@ -62,7 +62,7 @@ export interface AdapterRegistry {
 }
 
 /**
- * Default in-memory registry. The runner constructs one per invocation; the CLI re-uses a shared singleton
+ * Default in-memory registry. The runner constructs one per invocation. the CLI re-uses a shared singleton
  * (`defaultAdapterRegistry`) populated by `./adapters/index.ts` as adapters come online.
  */
 export class InMemoryAdapterRegistry implements AdapterRegistry {
@@ -90,7 +90,7 @@ export class InMemoryAdapterRegistry implements AdapterRegistry {
 }
 
 /**
- * Process-wide default registry. Populated by `./adapters/index.ts` as adapters are built; imported by the CLI. Tests
+ * Process-wide default registry. Populated by `./adapters/index.ts` as adapters are built. imported by the CLI. Tests
  * should construct their own `InMemoryAdapterRegistry` to avoid cross-test pollution.
  */
 export const defaultAdapterRegistry = new InMemoryAdapterRegistry()
@@ -112,7 +112,7 @@ export function stableSourceID(adapterID: string, components: Partial<Record<Com
 
 /**
  * {@link stableSourceID} over arbitrary disambiguator keys — a variant index, a slot number, anything that is not a
- * `ComponentTag`. Every key handed in is sorted and hashed either way; only the key vocabulary differs, and the narrow
+ * `ComponentTag`. Every key handed in is sorted and hashed either way. only the key vocabulary differs, and the narrow
  * signature above is what stops an adapter hashing a misspelled component name.
  */
 export function stableSourceIDFromParts(
@@ -138,7 +138,7 @@ export function stableSourceIDFromParts(
  * The remainder must stay `(\S.*)` and must not become `(.+)`: `\s+` and `.` both match a tab, so `\s+(.+)$` lets the
  * engine split a run of tabs between the two groups every possible way before failing — quadratic backtracking on
  * attacker-shaped input. Requiring a non-space start removes the overlap. Group 2 is trimmed by the caller either way,
- * so the two forms are indistinguishable on real input; only the failure cost differs.
+ * so the two forms are indistinguishable on real input. only the failure cost differs.
  */
 export const HOUSE_NUMBER_PREFIX = /^(\d+(?:-\d+)?[A-Za-z]?)\s+(\S.*)$/
 
@@ -155,7 +155,7 @@ export interface SplitStreetLine {
  *
  * The US CSV sources follow USPS Publication 28 conventions with hand-entry drift. The leading digit run is the house
  * number (`"123 Main St"`, `"6450 W Indian School Rd"`), and the regex tolerates one trailing letter (`"123A Main St"`)
- * plus an optional hyphenated half (`"40-12 Bell Blvd"`, common in NYC and suburban garden-apartment numbering; Hawaii
+ * plus an optional hyphenated half (`"40-12 Bell Blvd"`, common in NYC and suburban garden-apartment numbering. Hawaii
  * uses it island-wide — `"47-470 Hui Aeko Place"`).
  *
  * Returns `null` for blank input. Anything that does not match the prefix shape (`"PO Box 1234"`, `"RR 2 Box 67"`, `"HC

@@ -10,7 +10,7 @@
  *   `NCERM_SMP_2105_0CC` carries no `smp_name`; the other thirteen do. A builder that read the schema off a
  *   sibling — the survey read `NCERM_SMP_2105_95CC` — fails on the twelfth layer with
  *   `ERROR 1: Unrecognized field name smp_name`, 66,000 features into a run. Loud, and only because ogr2ogr
- *   refuses an unknown column; a source that answered NULL instead would have shipped. So the `SELECT` is
+ *   refuses an unknown column. a source that answered NULL instead would have shipped. So the `SELECT` is
  *   built from the layer's own field list, and the tests below pin which columns may be absent and which may
  *   not.
  *
@@ -99,7 +99,7 @@ describe("the per-layer SELECT", () => {
 	})
 
 	it("tolerates the one layer that publishes no smp_name, rather than refusing it", async () => {
-		// `NCERM_SMP_2105_0CC` is the real case. The `SELECT` substitutes `NULL AS smp_name` and the ingest proceeds; the
+		// `NCERM_SMP_2105_0CC` is the real case. The `SELECT` substitutes `NULL AS smp_name` and the ingest proceeds. the
 		// failure that reaches the caller here is ogr2ogr failing to open a path that does not exist, which is the proof
 		// that the query itself was built.
 		const fields = FULL_SMP_FIELDS.filter((field) => field !== "smp_name").map((field) =>

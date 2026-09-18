@@ -4,7 +4,7 @@
  * @author Teffen Ellis, et al.
  * @file A forward geocode result as Nominatim's address block: the parse's named slots first, then the resolved
  *   ancestry labelled by tag the way Nominatim labels each ancestor by its address rank — a Japanese municipality is
- *   `city`, a prefecture `state`, a 大字 / 町名 `suburb`. The native `locality` / `region` slots stay what the parse said;
+ *   `city`, a prefecture `state`, a 大字 / 町名 `suburb`. The native `locality` / `region` slots stay what the parse said.
  *   only this compatibility surface reads the JP tiers into the Latin keys.
  */
 

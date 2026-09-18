@@ -58,7 +58,7 @@ function clientFor(name: EngineRigName): APIClient {
 			baseURL: assertScorableEndpoint(rig.endpoint),
 			timeout: RIG_TIMEOUT_MS,
 			headers: { "User-Agent": "mailwoman-dev-mcp" },
-			// A rig that is still warming answers 4xx/5xx; those are STATES here, read from the status field, not
+			// A rig that is still warming answers 4xx/5xx. those are STATES here, read from the status field, not
 			// exceptions to throw. `rigQuery` reports the code per row.
 			validateStatus: () => true,
 		},
@@ -102,7 +102,7 @@ function rigScriptPath(...segments: string[]): string {
 }
 
 /**
- * The rigs this tool can drive. `containers` is in START order; stop reverses it, because Elasticsearch must outlive
+ * The rigs this tool can drive. `containers` is in START order. stop reverses it, because Elasticsearch must outlive
  * the API that queries it.
  */
 export const ENGINE_RIGS = {

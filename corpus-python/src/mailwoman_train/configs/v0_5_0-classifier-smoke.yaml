@@ -82,7 +82,7 @@ model:
   crf_normalization: per_token
   crf_loss_weight: 1.0
   # v0.4.0 class-weight recipe — coarse-biased CE. Re-validate after the v0.5.0 corpus
-  # mix lands; the relative class frequencies will shift with the adversarial additions.
+  # mix lands. the relative class frequencies will shift with the adversarial additions.
   class_weights:
     O: 1.0
     B-country: 2.0
@@ -136,7 +136,7 @@ train:
   precision: bf16
   num_workers: 0
   csv_log_path: "{output_dir}/train_log.csv"
-  # Constant linear warmup → flat at learning_rate; no cosine decay. Per Thread F's
+  # Constant linear warmup → flat at learning_rate. no cosine decay. Per Thread F's
   # VERDICT_SMOKES.md mode A: sustained peak LR for the smoke window means dual-loss
   # divergence surfaces immediately rather than being masked by a decaying tail
   # (the v0.4.0 cw-only false-positive trap). Equivalent to passing
@@ -145,7 +145,7 @@ train:
 
 eval:
   # Golden v0.1.2 stays the eval anchor for v0.5.0. The non-Latin adversarial subset +
-  # kryptonite catalogue are new eval splits per the plan doc § Success metrics; their
+  # kryptonite catalogue are new eval splits per the plan doc § Success metrics. their
   # fixtures land alongside Thread D (reconcile).
   golden_dir: ""
   val_jsonl: ""

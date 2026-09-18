@@ -10,11 +10,11 @@
  *   records. `--falsehoods <dir>` adds JSONL row files (the external arena fixtures).
  *
  *   LINEAGE: ported neural-only from `harness-v0-neural.ts` at the `legacy-rules-final` seal tag.
- *   The v7 excision (#1151) deleted the rule-based parser, which was that harness's second arm; the
+ *   The v7 excision (#1151) deleted the rule-based parser, which was that harness's second arm. the
  *   three-bucket v0-vs-neural comparison it existed for closed with the capability map. The NEURAL
  *   arm here is semantically unchanged — same tag fold, same loose any-expected matcher — so neural
  *   pass rates remain comparable with historical arena reports. The `--assembled` arm (#478, grade
- *   `runPipeline` alongside raw neural) also survives; only the v0 arm and its buckets are gone.
+ *   `runPipeline` alongside raw neural) also survives. only the v0 arm and its buckets are gone.
  *
  *   Output: a markdown report on stdout + a JSON sidecar (`--out-json`) per-assertion containing
  *   `{ file, locale, input, expected, neural_pass, neural_actual, ... }` so downstream scripts
@@ -92,7 +92,7 @@ function parseArgs(): Args {
 
 	// node:util parseArgs (strict:false = old scan parity: unknown flags tolerated — including the
 	// retired `--symmetric-match` (only ever governed the deleted v0 arm's scoring) and the retired
-	// `--arbitrate` (#478 inc 3; the `arbitrate` PipelineOpt no longer exists)).
+	// `--arbitrate` (#478 inc 3. the `arbitrate` PipelineOpt no longer exists)).
 	const { values } = parseArguments({
 		options: {
 			"admin-fst": { type: "string" },
@@ -441,7 +441,7 @@ function expectedMatchesActual(expected: ClassificationRecord, actual: Classific
 			if (normLoose(expectedValues[i]!) !== normLoose(actualValues[i]!)) {
 				// Allow substring containment in either direction — the neural parser sometimes
 				// over- or under-spans (e.g. "5th Avenue" vs "Avenue"). The fixture suite is the
-				// authority on the EXPECTED span; we count a substring match as a partial pass.
+				// authority on the EXPECTED span. we count a substring match as a partial pass.
 				const exp = normLoose(expectedValues[i]!)
 				const act = normLoose(actualValues[i]!)
 
@@ -489,7 +489,7 @@ async function runAssertion(
 	pipeline?: ReturnType<typeof createRuntimePipeline>
 ): Promise<AssertionResult> {
 	// neural — one tree, loose semantics: pass if any of the expected solutions is matched by
-	// the top-1 neural output. This is the natural reading for a single-result parser; the
+	// the top-1 neural output. This is the natural reading for a single-result parser. the
 	// fixtures' multi-solution structure came from the retired multi-hypothesis rules API.
 	const tree = await neuralClassifier.parse(a.input, parseOpts)
 	const flat = decodeAsJSON(tree)
@@ -721,7 +721,7 @@ async function main(): Promise<void> {
 
 		// Gaz-trained models (v4.2.0+) must be fed the lexicon + the postcode-anchor lookup with
 		// near-postcode suppression — zero-filled clues depress country recall and fake an affix
-		// crash (the ship config; see CONTRIBUTING_MODEL_WORK eval invariants).
+		// crash (the ship config. see CONTRIBUTING_MODEL_WORK eval invariants).
 		let gazetteerLexicon: GazetteerLexicon | undefined
 
 		if (args.gazetteerLexiconPath) {

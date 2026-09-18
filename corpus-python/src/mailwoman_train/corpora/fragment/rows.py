@@ -239,9 +239,9 @@ def render_country_context(
 def render_country_leading(surface: str, region: str, locality: str) -> dict[str, Any]:
     """#1104 v2.9.1: a LEADING-position country admin row — "United States of America, Wyoming, Лорейн"
     (country first, then region, then locality). This is the golden WOF-admin distribution the v290
-    tail-only counterweight missed; the locality may be NON-Latin (transliterated WOF alt-names), which
+    tail-only counterweight missed. the locality may be NON-Latin (transliterated WOF alt-names), which
     is the point — it teaches country recognition when the locality context is non-Latin. Comma-joined
-    single-token-per-field groups; cursor-tracked spans."""
+    single-token-per-field groups. cursor-tracked spans."""
     fields = [("country", surface), ("region", region), ("locality", locality)]
     tokens: list[str] = []
     labels: list[str] = []

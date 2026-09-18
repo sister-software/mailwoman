@@ -19,7 +19,7 @@ Pre-registered shape (2026-07-18-v8-jp-char-encoder-design §d):
 - Stratified per-prefecture reservoir (47 prefectures, each with its own seeded reservoir), then a
   round-robin draw to the target count — Tokyo cannot drown Tottori.
 - Held-out board: municipalities whose bucket hash lands in the board range never appear in
-  train/val; board rows carry the gold fields + coordinate for the resolve-side scoring.
+  train/val. board rows carry the gold fields + coordinate for the resolve-side scoring.
 - Sanity checks (the JSON-hides-gaps scar): no all-O row, per-char BIO coverage printed, >= 45
   prefectures in train, board∩train municipality overlap must be empty — violations RAISE.
 
@@ -27,7 +27,7 @@ Spans are emitted BY CONSTRUCTION (the raw is concatenated from the labeled fiel
 the Phase-0 alignment risk stays retired: there is no search-based re-alignment to drift.
 
 Deviation from the execution plan's "locale-recipe build" note, recorded: the TS locale recipe is
-OA-CSV-oriented and the corpus-side ``overture-jp.corpus.jsonl`` drops the prefecture column; this
+OA-CSV-oriented and the corpus-side ``overture-jp.corpus.jsonl`` drops the prefecture column. this
 builder reads the parquet (pyarrow, row-group streaming) in the workspace whose loader consumes the
 result. Provenance and licensing follow the parquet's own sources column (OA/MLIT).
 

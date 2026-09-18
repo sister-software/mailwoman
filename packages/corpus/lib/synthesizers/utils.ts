@@ -23,7 +23,7 @@
  *   is now implemented ({@link typoInject}) — the "seed-aware API" the deferral asked for is
  *   resolved by seeding the PRNG from each row's `source_id`. It ships in {@link AUGMENTATIONS} but
  *   is kept OUT of the default set ({@link defaultAugmentationsForCountry}) until its on-model
- *   effect is measured; see the note there.
+ *   effect is measured. see the note there.
  */
 
 import type { BIOLabel, ComponentTag } from "@mailwoman/codex/component"
@@ -45,7 +45,7 @@ import { whitespaceTokenizer, type Tokenizer } from "#utils/tokenize"
 
 /**
  * An augmentation transforms a single row. Return `null` if the augmentation doesn't apply (e.g. accent-strip on a row
- * that has no accents; particle-strip on a US row).
+ * that has no accents. particle-strip on a US row).
  */
 export type Augmentation = (row: CanonicalRow) => CanonicalRow | null
 
@@ -163,7 +163,7 @@ export const accentStrip: Augmentation = (row) => {
 // existing `(row) => CanonicalRow | null` signature unchanged.
 
 /**
- * QWERTY adjacency for realistic single-key substitutions (lowercase; case is restored on apply).
+ * QWERTY adjacency for realistic single-key substitutions (lowercase. case is restored on apply).
  */
 const QWERTY_ADJACENCY: Record<string, string> = {
 	a: "qwsz",
@@ -200,7 +200,7 @@ const QWERTY_ADJACENCY: Record<string, string> = {
 const ALPHA_NAME = /^[\p{L}][\p{L} '.-]{3,}$/u
 
 /**
- * Djb2 → uint32 seed. Deterministic; no `Math.random` (banned here and breaks corpus reproducibility).
+ * Djb2 → uint32 seed. Deterministic. no `Math.random` (banned here and breaks corpus reproducibility).
  */
 function hashString(s: string): number {
 	let h = 5381
@@ -224,7 +224,7 @@ export const typoInject: Augmentation = (row) => {
 
 	// Count occurrences so we only edit an UNAMBIGUOUS target — a value that appears exactly once in
 	// raw and isn't a substring of another component. (e.g. "Cupertino" the locality is a substring of
-	// "Cupertino Avenue" the street; editing it would `replace` the street's occurrence and break the
+	// "Cupertino Avenue" the street. editing it would `replace` the street's occurrence and break the
 	// span. The substring contract `alignRow` enforces is why we filter rather than guess the position.)
 	const occurs = (needle: string): number => {
 		let n = 0
@@ -279,7 +279,7 @@ export const typoInject: Augmentation = (row) => {
 }
 
 // The augmentations below read US tables — state names, USPS suffixes, ZIP shapes — so each one is correct for a US
-// row and wrong for any other. `AUGMENTATIONS` is what scopes them; none checks the country itself.
+// row and wrong for any other. `AUGMENTATIONS` is what scopes them. none checks the country itself.
 
 /**
  * US state full ↔ alpha-2 mapping. Two-way: `STATE_TO_ABBR["Oregon"] = "OR"`.
@@ -657,7 +657,7 @@ export const AUGMENTATIONS: Record<string, Augmentation> = {
 }
 
 /**
- * Default augmentation set, by country. Phase 1: US + FR; others get the locale-agnostic set.
+ * Default augmentation set, by country. Phase 1: US + FR. others get the locale-agnostic set.
  */
 export function defaultAugmentationsForCountry(country: string): readonly Augmentation[] {
 	// `typoInject` (#530) is deliberately not in the default set. It is implemented, tested, and
@@ -689,7 +689,7 @@ export function defaultAugmentationsForCountry(country: string): readonly Augmen
 }
 
 /**
- * Run every augmentation against a row; collect the non-null outputs. The augmentations are pure, so callers can
+ * Run every augmentation against a row. collect the non-null outputs. The augmentations are pure, so callers can
  * compose them off this generator (e.g. nesting accent-strip ∘ state-abbreviate).
  */
 export function* synthesizeRow(
@@ -818,10 +818,10 @@ export function countryToLocale(country: string): string {
 // - Augmentations are unary `(CanonicalRow) -> CanonicalRow | null` and run through
 //   `synthesizeRow`. Composition is binary `(string, CanonicalRow) -> LabeledRow` and emits
 //   `LabeledRow` directly (it cannot defer labels to alignment without the embedded-token bug).
-// - Augmentations preserve provenance to a single source; compositions cite the address source
+// - Augmentations preserve provenance to a single source. compositions cite the address source
 //   in `synth.base_source_id` and carry the venue surface form on the `venue` component.
 // - Throttling (the issue calls for ~5-15% of training set) is a build-time policy, not an
-//   adapter-level concern — the build pipeline applies it; the primitive stays pure.
+//   adapter-level concern — the build pipeline applies it. the primitive stays pure.
 //
 // See `DECISIONS.md` for the rationale on why composition lives alongside augmentation but is
 // not part of the `AUGMENTATIONS` registry.
@@ -845,7 +845,7 @@ export interface ComposeAdversarialOptions {
 
 	/**
 	 * Separator inserted between the venue and the address `raw`. Default `", "`. Single space (`" "`) produces the
-	 * harder unpunctuated variant; newline (`"\n"`) the multi-line variant.
+	 * harder unpunctuated variant. newline (`"\n"`) the multi-line variant.
 	 */
 	separator?: string
 
@@ -865,7 +865,7 @@ export type ComposeResult = { kind: "labeled"; row: LabeledRow } | { kind: "quar
  * Compose a venue string + an address row into a single adversarial `LabeledRow`.
  *
  * The emitted row's `raw` is `${venue}${separator}${address.raw}`. Tokens are produced by tokenizing the two halves
- * independently and concatenating; labels are venue tokens → `B-venue` / `I-venue` followed by the address's labels
+ * independently and concatenating. labels are venue tokens → `B-venue` / `I-venue` followed by the address's labels
  * (obtained by aligning the input address in isolation). This deterministic boundary is the entire point of the
  * primitive: the embedded place-shaped tokens in the venue stay labeled as `venue`, never as the address's locality /
  * region / etc., even when they share surface forms.
@@ -901,7 +901,7 @@ export function composeAdversarialRow(
 	}
 
 	// Char-offset spans over the composed raw are only meaningful under NFC (#519) — the address
-	// half is enforced by alignRow; the venue is caller-supplied and checked here.
+	// half is enforced by alignRow. the venue is caller-supplied and checked here.
 	if (venueTrimmed.normalize("NFC") !== venueTrimmed) {
 		return { kind: "quarantined", row: { row: address, reason: "venue-not-nfc" } }
 	}

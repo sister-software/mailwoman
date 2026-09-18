@@ -88,7 +88,7 @@ def _train_gpu(
     """Run the CE-only classifier training on an A100.
 
     Pass ``--trackio`` (and optionally ``--trackio-space org/space``) to mirror metrics
-    to a Hugging Face Space dashboard. These override the YAML config's trackio fields;
+    to a Hugging Face Space dashboard. These override the YAML config's trackio fields.
     omit them to honor whatever the config sets (default: tracking off).
     """
     import sys
@@ -131,7 +131,7 @@ def _train_gpu(
     cfg = load_config(config_path)
 
     # Verify the corpus the config actually points at exists on the volume (post-config so the version
-    # isn't hardcoded). The data loader reads cfg.data.corpus_dir; fail loud here if it's missing.
+    # isn't hardcoded). The data loader reads cfg.data.corpus_dir. fail loud here if it's missing.
     train_dir = os.path.join(cfg.data.corpus_dir, "train")
     if not os.path.isdir(train_dir):
         raise RuntimeError(
@@ -221,7 +221,7 @@ def main(
     """
     Run the mailwoman training pipeline on Modal.
 
-    Stage what the recipe reads first, with its own sync; this entry point trains against whatever
+    Stage what the recipe reads first, with its own sync. this entry point trains against whatever
     is already on the volume and stages nothing.
 
     --config         Training config YAML filename

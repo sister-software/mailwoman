@@ -9,7 +9,7 @@
  *   Bitter-lesson-safe: only universal structural cues (proximity, punctuation, capitalization,
  *   hyphenation, format-shape repetition). No place-name dictionaries — a `LOCALITY_PHRASE`
  *   proposal means "this looks shaped like a multi-word capitalized run that could be a city name",
- *   not "this is a city name". Typing the span is the classifier's job; this layer only answers "do
+ *   not "this is a city name". Typing the span is the classifier's job. this layer only answers "do
  *   these tokens belong together?".
  *
  *   Per "possibilities not constraints", rules emit overlapping proposals freely. The reconciler
@@ -49,7 +49,7 @@ function isRegionAbbreviation(s: string): boolean {
 
 /**
  * True when token starts with an uppercase letter — the common Western proper-noun shape. Unicode-aware (`\p{Lu}`) so
- * accented Latin capitals (`Évellys`, `Étagnac`, `Ñuñoa`, `Ávila`) count as proper nouns too; an ASCII-only `[A-Z]`
+ * accented Latin capitals (`Évellys`, `Étagnac`, `Ñuñoa`, `Ávila`) count as proper nouns too. an ASCII-only `[A-Z]`
  * silently dropped those localities from the grouper (#425 residual).
  */
 function startsCapitalized(s: string): boolean {
@@ -71,7 +71,7 @@ function isStreetSuffix(token: string): boolean {
  * the grouper-audit promotes it to a spurious `locality`, burying the real city (#425 re-verification).
  *
  * Street-TYPES only — deliberately not the ambiguous area/development words ("Polígono", "Urbanización", "Lugar",
- * "Partida", "Borgo") that legitimately serve AS localities. This stays a bounded linguistic category; per-locale
+ * "Partida", "Borgo") that legitimately serve AS localities. This stays a bounded linguistic category. per-locale
  * breadth belongs in a future rule pack, not an exception pile.
  */
 const STREET_PREFIXES: ReadonlySet<string> = new Set([
@@ -124,7 +124,7 @@ function isStreetPrefix(token: string): boolean {
  * "Frankfurt **am** Main", "Rothenburg **ob der** Tauber". This is a BOUNDED linguistic category (place-name
  * connectives), not a gazetteer or a stopword dump — and it only ever fires when bracketed by capitalized content on
  * both sides (see `scoreLocalityPhrase`), so a stray "and"/"the" in a street phrase can't smuggle a particle through.
- * Keep coverage to the connectives that actually bridge place-name tokens; growing it into a per-locale stopword list
+ * Keep coverage to the connectives that actually bridge place-name tokens. growing it into a per-locale stopword list
  * is the wrong move — that pressure belongs on the gazetteer/reconciler, not here.
  */
 const PLACE_NAME_PARTICLES: ReadonlySet<string> = new Set([
@@ -302,7 +302,7 @@ export function hasUnitMarker(tokens: ReadonlyArray<SegmentToken>): boolean {
  * `NUMERIC` rule: emit one proposal per all-digit token. House numbers, postcodes (when no format hit), unit numbers
  * all surface here as a base hypothesis.
  *
- * Confidence drops for very long runs (5+ digits) where POSTCODE will typically win; the reconciler does the final
+ * Confidence drops for very long runs (5+ digits) where POSTCODE will typically win. the reconciler does the final
  * pick.
  */
 export function scoreNumeric(tokens: ReadonlyArray<SegmentToken>, text: string): PhraseProposal[] {
@@ -336,7 +336,7 @@ export function scorePostcode(shape: QueryShapeLike, text: string): PhrasePropos
 	const out: PhraseProposal[] = []
 
 	for (const hit of shape.knownFormats) {
-		// `po_box` is not a postcode; the kind classifier owns that signal. Skip non-postcode
+		// `po_box` is not a postcode. the kind classifier owns that signal. Skip non-postcode
 		// formats here so we don't pollute POSTCODE proposals.
 		if (hit.format === "po_box") continue
 
@@ -398,7 +398,7 @@ export function scoreRegionAbbreviation(
  * `HYPHENATED_COMPOUND` rule: tokens containing an internal hyphen. Captures `NY-NY` (venue disambiguation case),
  * `Saint-Denis` (French locality compound), `10118-1234` (ZIP+4 written as a single token).
  *
- * Internal hyphen is the cue; the rule doesn't pre-judge what the compound means — that's typing (classifier) or
+ * Internal hyphen is the cue. the rule doesn't pre-judge what the compound means — that's typing (classifier) or
  * reconcile work. A high confidence here just says "this is one unit, not two".
  */
 export function scoreHyphenatedCompound(tokens: ReadonlyArray<SegmentToken>, text: string): PhraseProposal[] {
@@ -425,7 +425,7 @@ export function scoreHyphenatedCompound(tokens: ReadonlyArray<SegmentToken>, tex
  * `STREET_PHRASE` rule: a token run that contains a street-type suffix. The span covers a leading numeric (house
  * number) when present, through the suffix token.
  *
- * Confidence reflects how canonical the run looks: NUMERIC + 1-3 capitalized words + SUFFIX scores highest; suffix-only
+ * Confidence reflects how canonical the run looks: NUMERIC + 1-3 capitalized words + SUFFIX scores highest. suffix-only
  * or non-leading-numeric variants score lower but still emit.
  */
 export function scoreStreetPhrase(tokens: ReadonlyArray<SegmentToken>, text: string): PhraseProposal[] {
@@ -504,7 +504,7 @@ export function scoreStreetPhrase(tokens: ReadonlyArray<SegmentToken>, text: str
 		const startTok = tokens[prefixIdx]!
 		const endTok = tokens[end]!
 
-		// Prefix + name scores moderately; a bare prefix still emits a low-confidence marker so the
+		// Prefix + name scores moderately. a bare prefix still emits a low-confidence marker so the
 		// audit types the leftover span `street`, never `locality`.
 		out.push({
 			span: makeSection(text, startTok.start, endTok.end),
@@ -603,7 +603,7 @@ export function scoreLocalityPhrase(
 				if (tokens[k] && k - (j + 1) <= 2 && isPlaceNameContent(tokens[k]!.body)) {
 					j = k
 
-					// jump onto the content token; the bridged particles stay inside the span
+					// jump onto the content token. the bridged particles stay inside the span
 					continue
 				}
 			}

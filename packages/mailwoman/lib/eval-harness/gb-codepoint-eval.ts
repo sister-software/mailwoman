@@ -9,12 +9,12 @@
  *   1. **The truth and the gazetteer share a source.** Our GB postcode tier is built FROM Code-Point Open
  *      (`codepoint-database.ts`), so grading against Code-Point centroids does not measure independent coordinate
  *      accuracy. What it does measure is the pipeline end-to-end: does a messy, real-shaped postcode string come back
- *      as the right unit-postcode point through parse → retrieval → resolution? That is the engine's claim; the
+ *      as the right unit-postcode point through parse → retrieval → resolution? That is the engine's claim. the
  *      data's accuracy is Ordnance Survey's.
  *   2. **The coordinate conversion cancels.** Truth is converted OSGB36 → WGS84 by the same `@mailwoman/spatial`
  *      routine the database build uses, so a systematic conversion bias would be invisible here. The conversion is
- *      pinned against the OSTN15 test set in its own suite; this eval adds nothing to that claim.
- *   3. **Premise-level accuracy is out of reach.** A unit postcode is tens of houses; there is no open GB register
+ *      pinned against the OSTN15 test set in its own suite. this eval adds nothing to that claim.
+ *   3. **Premise-level accuracy is out of reach.** A unit postcode is tens of houses. there is no open GB register
  *      to grade a rooftop answer against. The distance thresholds below are therefore postcode-scale (≤1 km) rather
  *      than rooftop-scale.
  *
@@ -67,7 +67,7 @@ const PQ_NO_COORDINATE = 90
 /**
  * Every postcode in the acquisition, folded to unspaced-uppercase — the existence oracle for the typo leg. A mutated
  * final letter frequently lands on a real neighbouring unit ("AB55 4BD" → "AB55 4BE"), and resolving those is correct
- * behavior; only a mutant absent from the register demands abstention. Reasoning "the mutant almost never exists" was
+ * behavior. only a mutant absent from the register demands abstention. Reasoning "the mutant almost never exists" was
  * measured wrong on the first run (346/600 resolved), which is why this set exists.
  */
 async function allPostcodes(csvDir: string): Promise<Set<string>> {
@@ -132,7 +132,7 @@ function legsFor(postcode: string): Array<{ leg: string; input: string }> {
 		{ leg: "lower_unspaced", input: postcode.toLowerCase().replaceAll(" ", "") },
 		{ leg: "uk_suffixed", input: `${postcode}, UK` },
 		// The leg that can fail, with the pass condition depending on whether the mutant exists: a real
-		// neighbouring unit must resolve like any postcode; a mutant absent from the register demands
+		// neighbouring unit must resolve like any postcode. a mutant absent from the register demands
 		// abstention — a "corrected" postcode is a different postcode (the BT3 9QQ → S3 9QQ trap class).
 		{ leg: "typo", input: mutateFinalLetter(postcode) },
 	]
@@ -141,7 +141,7 @@ function legsFor(postcode: string): Array<{ leg: string; input: string }> {
 /**
  * Deterministically swap the final letter for its alphabet successor (Z→A), skipping letters GB unit postcodes never
  * use in final position (C, I, K, M, O, V are excluded from the alphabet there — stepping into one guarantees the
- * mutant is invalid, which is fine; the pass condition is abstention either way).
+ * mutant is invalid, which is fine. the pass condition is abstention either way).
  */
 function mutateFinalLetter(postcode: string): string {
 	const last = postcode.at(-1)!

@@ -88,7 +88,7 @@ export function deserializeFSTWeb(input: ArrayBuffer | Uint8Array): FSTMatcher {
 
 	// Decode the state table and its transitions.
 	const stateEntrySize = version >= VERSION_WIDE_STATE_COUNTERS ? WIDE_STATE_ENTRY_SIZE : NARROW_STATE_ENTRY_SIZE
-	// v5 grew the place entry by the encyclopedic float; v4-and-below files are read at the old stride.
+	// v5 grew the place entry by the encyclopedic float. v4-and-below files are read at the old stride.
 	const placeEntrySize = isSplit ? SPLIT_PLACE_ENTRY_SIZE : LEGACY_PLACE_ENTRY_SIZE
 	const stateTableStart = pos
 	const edgeTableStart = stateTableStart + stateCount * stateEntrySize
@@ -127,7 +127,7 @@ export function deserializeFSTWeb(input: ArrayBuffer | Uint8Array): FSTMatcher {
 				parentChain.push(view.getUint32(pp + 24 + ci * 4, true))
 			}
 
-			// v1 stored a raw population u32 here; v2-v4 the conflated `importance` float; v5 the
+			// v1 stored a raw population u32 here. v2-v4 the conflated `importance` float. v5 the
 			// referential score. See the Node deserializer for why a v1 value is genuinely referential.
 			const referential = isV2
 				? view.getFloat32(pp + 12, true)

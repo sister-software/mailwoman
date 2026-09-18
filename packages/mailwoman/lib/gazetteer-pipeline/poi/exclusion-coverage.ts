@@ -8,7 +8,7 @@
  *   {@link CoverageBasis.Surveyed}.
  *
  *   Pure. The IO (ogr2ogr for the outline and the OSM rows, SQLite for the reference inventory) belongs to
- *   the command; everything decided here is decided from data already in memory, so the arithmetic behind a
+ *   the command. everything decided here is decided from data already in memory, so the arithmetic behind a
  *   completeness claim is testable over synthetic points.
  *
  *   Three rules hold the claim to its evidence:
@@ -20,7 +20,7 @@
  *   2. **Cells outside the region are never written.** Not at completeness 0, not at all: the region is
  *      what was measured, and the measurement says nothing about its outside.
  *   3. **One region, one completeness.** The estimate is regional, so it is recorded regionally rather than
- *      dressed up as per-cell precision it does not have. Per-cell variation needs a per-cell denominator;
+ *      dressed up as per-cell precision it does not have. Per-cell variation needs a per-cell denominator.
  *      measured against the pilot's own départements the pooled and stratified populations agreed to within
  *      0.7% (4,055 vs 4,042 under the primary protocol), which is what licenses the uniform value here and
  *      is not a result that transfers to another region unmeasured.

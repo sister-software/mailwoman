@@ -19,9 +19,9 @@
  *
  *   Idempotency: ZIPs already present in `--edges-dir` are skipped (size-verified). State database DBs
  *   already present in `--out-dir` are skipped unless `--force` is passed. The per-state CHILD owns
- *   its own DB's write; this driver only orchestrates downloads + child builds and writes the small
+ *   its own DB's write. this driver only orchestrates downloads + child builds and writes the small
  *   ranked-county cache, so there is no national-DB temp-then-rename here — large-artifact
- *   atomicity lives one level down in the database builder. Progress streams to stderr; the summary
+ *   atomicity lives one level down in the database builder. Progress streams to stderr. the summary
  *   lands on stdout.
  */
 
@@ -49,7 +49,7 @@ import {
 	useCommandTask,
 } from "#cli-kit"
 /**
- * A successful response; anything else is an error page or an unfollowed redirect.
+ * A successful response. anything else is an error page or an unfollowed redirect.
  */
 
 /**
@@ -61,7 +61,7 @@ import {
  */
 
 /**
- * Lowest 5xx status. Server-side failures are worth retrying; client errors are not.
+ * Lowest 5xx status. Server-side failures are worth retrying. client errors are not.
  */
 const HTTP_SERVER_ERROR_MIN = 500
 
@@ -176,7 +176,7 @@ interface CountyRecord {
 
 /**
  * Fetch and parse the Census Population Estimates CSV, then materialise the sorted county list. SUMLEV=050 rows are
- * county-level; STATE + COUNTY form the 5-digit GEOID (zero-padded).
+ * county-level. STATE + COUNTY form the 5-digit GEOID (zero-padded).
  */
 async function fetchAndBuildRanking(): Promise<CountyRecord[]> {
 	console.error("Fetching Census Population Estimates CSV (co-est2023-alldata.csv)…")
@@ -218,7 +218,7 @@ async function fetchAndBuildRanking(): Promise<CountyRecord[]> {
 }
 
 /**
- * Load (or generate) the ranked county list. On first run this downloads the Census CSV; on subsequent runs it reads
+ * Load (or generate) the ranked county list. On first run this downloads the Census CSV. on subsequent runs it reads
  * the cached JSON file.
  */
 async function loadRankedCounties(): Promise<CountyRecord[]> {
@@ -577,7 +577,7 @@ const SitusInterpolation: CommandComponent<typeof spec> = ({ options }) => {
 		console.error("")
 
 		// ── Step 4: build databases sequentially ─────────────────────────────────
-		// Sequential (not parallel): each database script uses DuckDB + SQLite; they're already
+		// Sequential (not parallel): each database script uses DuckDB + SQLite. they're already
 		// I/O + DuckDB-parallel internally. Running states concurrently risks memory OOM on the
 		// 32K-row state builds and complicates progress reporting.
 		const wallStart = Date.now()

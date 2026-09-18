@@ -9,7 +9,7 @@
 #   4. Longer training                       (train.max_steps=50000 + run-to-step-5000+)
 #
 # Item 5 of the issue plan (JS-side Viterbi + label vocab from model card) shipped
-# 2026-05-22 already; this config kicks off the Python-side retrain that wraps the work.
+# 2026-05-22 already. this config kicks off the Python-side retrain that wraps the work.
 #
 # Hand off:
 #   HSA_OVERRIDE_GFX_VERSION=11.0.0 CONFIG=src/mailwoman_train/configs/v0_4_0.yaml \
@@ -21,7 +21,7 @@
 data:
   # Reuses corpus-v0.3.0 — issue #116 §6 confirms the corpus need not be rebuilt
   # unless §4 source weights change significantly. Source weights have changed, but
-  # the underlying parquet files are unchanged; the loader's source_weights filter does
+  # the underlying parquet files are unchanged. the loader's source_weights filter does
   # the rebalancing at sampling time.
   corpus_dir: /data/corpus/versioned/v0.3.0/corpus-v0.3.0
   tokenizer_dir: /data/models/tokenizer/v0.1.0
@@ -31,7 +31,7 @@ data:
     FR: 1.0
   # v0.4.0 source-weight rebalance (issue #116 §4):
   # - usgov-nad dropped 2.0 → 1.0 (its 57.9M-row volume + venue+street+house_number
-  #   coverage pushed the corpus into a fine-label-heavy mix; let it be 1× instead of 2×)
+  #   coverage pushed the corpus into a fine-label-heavy mix. let it be 1× instead of 2×)
   # - wof-admin + wof-postalcode bumped 1.0 → 2.0 (re-prioritize coarse-only rows)
   # - ban + tiger unchanged (they carry both fine and coarse signal)
   source_weights:
@@ -51,7 +51,7 @@ data:
   coarse_filter: true
 
 model:
-  # Architecture unchanged — v0.3.0 + 9M params is enough; the v0.4.0 changes are
+  # Architecture unchanged — v0.3.0 + 9M params is enough. the v0.4.0 changes are
   # training-side. Hidden-size bump would be the v0.5.0 change if F1 still bottlenecks.
   hidden_size: 256
   num_hidden_layers: 6
@@ -67,14 +67,14 @@ model:
   label_smoothing: 0.0
   # v0.4.0 §1: per-token CRF NLL normalization. CRF NLL is now scaled per-token,
   # matching CE's natural magnitude — the dual loss is self-balancing. The
-  # ``crf_loss_weight`` knob below can be 1.0 cleanly; if training is stable, the
+  # ``crf_loss_weight`` knob below can be 1.0 cleanly. if training is stable, the
   # hand-tuning saga from v0.3.0 (1.0 → 0.1 → 0.05) is over.
   crf_normalization: per_token
   crf_loss_weight: 1.0
   # v0.4.0 §3: class-weighted CE biased toward coarse labels. The 21-label vocab
-  # pulled softmax mass off the coarse classes; weights here pull it back. Recipe
+  # pulled softmax mass off the coarse classes. weights here pull it back. Recipe
   # per issue #116: (1/freq)**0.5, then fine_classes ×0.5. These numbers are rough
-  # first-pass; refine after the first v0.4.0 eval if coarse recovery is partial.
+  # first-pass. refine after the first v0.4.0 eval if coarse recovery is partial.
   # The "O" class stays at 1.0 — most frequent, but we want it predicted accurately,
   # not under-predicted.
   class_weights:
@@ -110,7 +110,7 @@ train:
   grad_accum_steps: 4
   # v0.4.0 §2: lr back up to 5e-4 (v0.2.0 baseline). The per-token CRF norm + class
   # weights should let this run cleanly. If divergence recurs by step 2000, bisect
-  # down to 3e-4 first; v0.3.0's 1.5e-4 was only safe because crf_loss_weight=0.05
+  # down to 3e-4 first. v0.3.0's 1.5e-4 was only safe because crf_loss_weight=0.05
   # masked the dual-loss instability.
   learning_rate: 5.0e-4
   weight_decay: 0.01

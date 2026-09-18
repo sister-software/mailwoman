@@ -4,7 +4,7 @@
  * @author Teffen Ellis, et al.
  * @file Tests for {@linkcode RequestPacer} — the strict minimum-interval pacer.
  *
- *   Every timing assertion runs against an injected clock; nothing here sleeps on the wall clock.
+ *   Every timing assertion runs against an injected clock. nothing here sleeps on the wall clock.
  */
 
 import type { ClockLike } from "@mailwoman/core/api"

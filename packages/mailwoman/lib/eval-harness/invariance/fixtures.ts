@@ -30,7 +30,7 @@ export interface InvarianceRow {
 export async function loadSuite(path: string = DEFAULT_SUITE_PATH): Promise<InvarianceRow[]> {
 	await assertPathExists(path, "Invariance suite should exist")
 
-	// `from` takes the character sequence itself and would parse this path string as the document; a file is read by
+	// `from` takes the character sequence itself and would parse this path string as the document. a file is read by
 	// `fromAsync`, which resolves the resource first.
 	return Array.fromAsync(JSONSpliterator.fromAsync<InvarianceRow>(path, { comment: "//" }))
 }

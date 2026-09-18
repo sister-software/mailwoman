@@ -19,8 +19,8 @@
  *
  *   Tiering (same schema/semantics as the JP builder):
  *
- *   - Is_containing=1 : Hangul name-confirmed locality (the precise tier; correct granularity)
- *   - Is_containing=0 : point-nearest fallback (province + coordinate right; the unit may be finer)
+ *   - Is_containing=1 : Hangul name-confirmed locality (the precise tier. correct granularity)
+ *   - Is_containing=0 : point-nearest fallback (province + coordinate right. the unit may be finer)
  *
  *   The province (admin1 -> WOF region, Hangul-exact, 100%) is recorded in `meta` as the reliable
  *   coarse anchor. Build-from-source: GeoNames postal KR + our custom WOF admin-kr.db (built from
@@ -57,7 +57,7 @@ import {
 } from "#gazetteer-pipeline/postcode/locality/schema"
 
 /**
- * KR postcode points sit p50 ~1 km from the nearest locality; 20 km is a safe net.
+ * KR postcode points sit p50 ~1 km from the nearest locality. 20 km is a safe net.
  */
 const MATCH_RADIUS_KM = 20
 const HANGUL = /[가-힣]/
@@ -156,7 +156,7 @@ export async function buildPostcodeLocalityKR(args: PostcodeLocalityKROptions): 
 	const nearby = (lat: number, lon: number): Array<{ d: number; pid: number }> =>
 		grid.nearby(lat, lon, MATCH_RADIUS_KM).map(({ d, entry }) => ({ d, pid: entry.pid }))
 
-	// GeoNames postal KR: group by postcode (first row wins; multi-row postcodes cluster tightly).
+	// GeoNames postal KR: group by postcode (first row wins. multi-row postcodes cluster tightly).
 	const postal = new Map<string, [string, string, number, number]>()
 
 	// Streamed — `args.geonames` is a caller-supplied national dump.

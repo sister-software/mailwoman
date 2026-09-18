@@ -38,7 +38,7 @@ const DEFAULT_ZOOM = 2
 const MIN_ZOOM = 0
 
 /**
- * Deepest zoom the Web-Mercator tile pyramid is defined for. The archive's own `maxZoom` clamps further at runtime;
+ * Deepest zoom the Web-Mercator tile pyramid is defined for. The archive's own `maxZoom` clamps further at runtime.
  * this is only the range a flag value must fall inside to be meaningful at all.
  */
 const MAX_ZOOM = 24
@@ -179,7 +179,7 @@ interface ParsedFlags {
 }
 
 /**
- * `node:util`'s own rejections (unknown flag, missing value) name the flag but not the remedy, so they're re-thrown as
+ * `node:util`'s own rejections (unknown flag, missing value) name the flag but not the action, so they're re-thrown as
  * a {@link CLIArgsError} pointing at `--help`.
  */
 function readFlags(argv: readonly string[]): ParsedFlags {

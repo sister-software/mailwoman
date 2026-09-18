@@ -10,7 +10,7 @@
  *   from the OpenCage `address-formatting` templates (MIT), which model both slots, and it is read once: this table is
  *   the result, committed as data, so the layout generator needs no third-party package at run time.
  *
- *   210 of the 251 template countries name both slots; the other 41 say nothing, and their ABSENCE here is the answer
+ *   210 of the 251 template countries name both slots. the other 41 say nothing, and their ABSENCE here is the answer
  *   rather than a gap. A country this table does not name takes the number-first order, which
  *   `@mailwoman/codex/address-layouts`'s generator applies as its default.
  *

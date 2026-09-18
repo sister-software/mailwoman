@@ -18,7 +18,7 @@
  *   The SEALED input is opened READ-ONLY and never modified. Build discipline (house rules): aggregate
  *   in SQLite → stream via `.iterate()` → positional prepared INSERT (batched) into a staging DB →
  *   indexes → ANALYZE → atomic swap into place → SEAL 0444 → record md5 + the derivation provenance in
- *   `ban/street-centroids-<cc>.ATTRIBUTION.json`. Purely additive; it never touches the rooftop extract.
+ *   `ban/street-centroids-<cc>.ATTRIBUTION.json`. Purely additive. it never touches the rooftop extract.
  *
  *   Usage:
  *     node ban/out/scripts/build-street-centroid-extract.js            # fr, default paths
@@ -125,7 +125,7 @@ async function main(): Promise<void> {
 		await removePathIfPresent(tmp + sfx)
 	}
 
-	// The SEALED input — READ-ONLY, immutable; register the base-commune folder as a scalar SQL function.
+	// The SEALED input — READ-ONLY, immutable. register the base-commune folder as a scalar SQL function.
 	using src = new DatabaseClient<AddressPointDatabase>(args.source, { readOnly: true })
 
 	// SQLite hands a scalar function its argument as `unknown`, which erases the key brand. The value is
@@ -149,7 +149,7 @@ async function main(): Promise<void> {
 		)
 
 		// GROUP BY the sealed rooftop points into per-(street, postcode, commune) roll-ups. AVG(lat/lon) over the group's
-		// member points is the exact centroid; MIN/MAX is the extent; COUNT is the weight for the reader's cross-group mean.
+		// member points is the exact centroid. MIN/MAX is the extent. COUNT is the weight for the reader's cross-group mean.
 		// The base commune is emitted per group (2.2M calls), not per source row.
 		const agg = src.prepare(
 			`SELECT street_norm,

@@ -27,9 +27,9 @@
  *   AUDIT: every emitted row is label-checked on the RAW SURFACE via the #519 char-offset span
  *   triple. Any violation fails the build (throws). A JSON audit report lands next to the output.
  *
- *   External inputs (`--edges-dir`, opts.edgesDir; both already on disk — do not re-download):
+ *   External inputs (`--edges-dir`, opts.edgesDir. both already on disk — do not re-download):
  *
- *   - <edges-dir>/tl_2023_{17031,34027,50023}_edges.shp (unzipped TIGER 2023 EDGES; default
+ *   - <edges-dir>/tl_2023_{17031,34027,50023}_edges.shp (unzipped TIGER 2023 EDGES. default
  *       `$MAILWOMAN_DATA_ROOT/census/tiger2023-edges`, where `mailwoman situs interpolation` puts them)
  *   - `$MAILWOMAN_DATA_ROOT/oa-cache/us__il__cook.zip` (ZIP→city tails)
  */
@@ -88,7 +88,7 @@ interface Crossing {
 }
 
 /**
- * Junction forms. Weights favor the common connectors; the tight (unpadded) variants and leading phrases get enough
+ * Junction forms. Weights favor the common connectors. the tight (unpadded) variants and leading phrases get enough
  * mass to register (each ≥5%) — they're the audited gaps the old synth missed.
  */
 interface Form {
@@ -328,7 +328,7 @@ function renderRow(
 	const casing = weightedPick(CASES, random, (c) => c.w)
 	raw = casing.apply(raw)
 
-	// Components keep their original case; alignRow matches case-insensitively and labels the
+	// Components keep their original case. alignRow matches case-insensitively and labels the
 	// tokens of the (cased) raw — the parquet row carries tokens+labels only.
 	return { raw, components, formID: form.id, tailID: tail.id, caseID: casing.id }
 }

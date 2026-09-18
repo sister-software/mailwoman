@@ -9,7 +9,7 @@
  *   including its condition, the survey area with both its dates, and the coverage record stating that the
  *   authority mapped there.
  *
- *   THE ROUTE READS; IT NEVER ANSWERS. It takes a finished coordinate and returns a record. Nothing here is
+ *   THE ROUTE READS. IT NEVER ANSWERS. It takes a finished coordinate and returns a record. Nothing here is
  *   consulted while an answer is being chosen, no candidate is read, no result is added, removed or
  *   re-ordered, and no abstain is reached or avoided because of it.
  *
@@ -38,7 +38,7 @@
  *   A SECOND ROUTE RATHER THAN A WIDENED FIRST ONE. The flood layer's route carries a flood-shaped
  *   observation — a zone code, a containment path, the authority's zone definition — and this one carries a
  *   distribution, five shares and two dates. They share the marker CODE (`authority_designation`) and the
- *   `layer` mechanism family, which is what a reader branches on; folding them into one observation type
+ *   `layer` mechanism family, which is what a reader branches on. folding them into one observation type
  *   would need a union every consumer then has to narrow, for no field either of them shares.
  */
 

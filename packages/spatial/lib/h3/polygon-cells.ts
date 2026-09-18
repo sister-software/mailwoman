@@ -8,7 +8,7 @@
  *
  *   SHARED BY EVERY POLYGON LAYER RATHER THAN COPIED INTO EACH, because the traps below are properties of
  *   the TOOL rather than of any one product. `packages/flood` measured them; `packages/soil` inherits them
- *   unchanged; the layer contract's polygon-builder section states them as requirements. A second copy of
+ *   unchanged. the layer contract's polygon-builder section states them as requirements. A second copy of
  *   an allocator guard is a second place for it to stop guarding.
  *
  *   THE INDEX IS CELL-TOUCHES-POLYGON, NOT CENTRE-IN-POLYGON, AND A ZERO-CELL FEATURE FAILS THE BUILD.
@@ -20,7 +20,7 @@
  *   that reaches no cell rather than skipping it.
  *
  *   The `[lat, lng]` trap is avoided by not entering it. h3-js reads a vertex as `[lat, lng]` in its
- *   default mode; every call here passes `isGeoJSON = true` and hands it GeoJSON-order `[lon, lat]` rings,
+ *   default mode. every call here passes `isGeoJSON = true` and hands it GeoJSON-order `[lon, lat]` rings,
  *   which is the order an ingest already produces. Converting instead would put a transposition between the
  *   geometry and the index that nothing downstream could see.
  *
@@ -49,12 +49,12 @@
  *   tier is unchanged in meaning and only the fringe is coarser.
  *
  *   AND THE ESTIMATE IS A PREDICTION, SO AN ALLOCATION FAILURE IS RECOVERED RATHER THAN FATAL.
- *   {@linkcode classifyFeatureCells} steps the resolution down and retries; only a feature that fails at
+ *   {@linkcode classifyFeatureCells} steps the resolution down and retries. only a feature that fails at
  *   {@linkcode MIN_INDEX_RESOLUTION} is refused. Nothing is ever skipped, because a skipped feature is an
  *   invented absence.
  *
  *   BOUNDING THE CALL VOLUME IS THE CALLER'S JOB AND IT IS NOT OPTIONAL. The shortcuts here make a build
- *   faster; they are not what makes it reproducible. A builder runs the classification in child processes
+ *   faster. they are not what makes it reproducible. A builder runs the classification in child processes
  *   over ranges of the source's own stable ids, so each gets a heap that starts empty — see
  *   `packages/flood/lib/sdk/ingest/chunk.ts` and `packages/soil/lib/sdk/ingest/chunk.ts`.
  */
@@ -306,7 +306,7 @@ export function classifyFeatureCells(
 		)
 	}
 
-	// A cell can be full for one polygon of a MultiPolygon and merely touched by another; full wins, because the point
+	// A cell can be full for one polygon of a MultiPolygon and merely touched by another. full wins, because the point
 	// is inside either way.
 	const partial: H3Cell[] = []
 
@@ -323,7 +323,7 @@ export function classifyFeatureCells(
  * Split a cell set into same-resolution groups — what `compactCells` requires, and what an adaptively-indexed layer
  * cannot assume it already has.
  *
- * Pooling mixed resolutions throws inside h3; compacting only the target-resolution group would silently drop every
+ * Pooling mixed resolutions throws inside h3. compacting only the target-resolution group would silently drop every
  * coarsened feature's interior, which is the shape of failure that still produces an artifact.
  */
 export function groupCellsByResolution(cells: Iterable<string>): string[][] {
@@ -347,7 +347,7 @@ export function groupCellsByResolution(cells: Iterable<string>): string[][] {
  * Compact a cell set that may span several resolutions.
  *
  * `compactCells` takes one resolution at a time, and an adaptively-indexed layer's coarsened features sit at another —
- * so the set is grouped before compaction rather than pooled. Pooling would throw; compacting only the
+ * so the set is grouped before compaction rather than pooled. Pooling would throw. compacting only the
  * target-resolution group would silently drop every coarsened feature's interior, which is the shape of failure that
  * still produces an artifact.
  */
@@ -410,7 +410,7 @@ export function featureCellRows(cells: FeatureCells): Array<{
 	for (const cell of cells.partial) {
 		const short = shortCellToInt(cell)
 
-		// A cell cannot be both for one polygon; the classifier already subtracts the whole set, and this is belt and braces
+		// A cell cannot be both for one polygon. the classifier already subtracts the whole set, and this is belt and braces
 		// against a compaction that produced a parent the partial set also names.
 		if (wholeShort.has(short)) continue
 

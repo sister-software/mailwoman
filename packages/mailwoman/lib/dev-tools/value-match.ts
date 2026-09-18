@@ -18,7 +18,7 @@ export function norm(s: string): string {
 
 /**
  * Lower-case + trim only — no punctuation stripping, no whitespace collapse. The loose fold the harness-side
- * comparisons share; unlike {@link norm} it keeps interior whitespace and punctuation byte-for-byte, so substring
+ * comparisons share. unlike {@link norm} it keeps interior whitespace and punctuation byte-for-byte, so substring
  * containment still sees them.
  */
 export function normLoose(s: string | undefined): string {

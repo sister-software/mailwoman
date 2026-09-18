@@ -2,7 +2,7 @@
 #
 # Extends Stage 1 (country/region/locality/dependent_locality/postcode/subregion/cedex)
 # with three new label classes: venue / street / house_number. ACTIVE_BIO_LABELS in
-# labels.py auto-bumps to 21 entries; the model classifier head sizes off len(ACTIVE_*).
+# labels.py auto-bumps to 21 entries. the model classifier head sizes off len(ACTIVE_*).
 #
 # Training-time additions (v0.3.0):
 #   - Linear-chain CRF decoder on top of emissions. Adds 21² + 2·21 = 483 learnable
@@ -19,7 +19,7 @@
 data:
   # corpus-v0.3.0 — adds the US DOT NAD source (~97M structured 911-grade address
   # points, "venue/house_number/street" fully populated). Other sources unchanged
-  # from v0.2.0; OA-CA + SAMHSA deferred (see run-corpus-build.ts header).
+  # from v0.2.0. OA-CA + SAMHSA deferred (see run-corpus-build.ts header).
   corpus_dir: /data/corpus/versioned/v0.3.0/corpus-v0.3.0
   tokenizer_dir: /data/models/tokenizer/v0.1.0
   max_length: 128
@@ -29,7 +29,7 @@ data:
   # Per-source oversampling weights. v0.3.0 keeps the v0.2.0 weights for existing
   # sources + adds usgov-nad. NAD is unique in having full structured supervision
   # at venue+street+house_number granularity for the entire US residential +
-  # commercial address space; weight=2.0 lifts it without overwhelming the
+  # commercial address space. weight=2.0 lifts it without overwhelming the
   # geographic diversity of TIGER + the venue diversity of NPPES.
   source_weights:
     wof-admin: 1.0
@@ -47,7 +47,7 @@ data:
   val_rows: 4096
   # active_components_present (was coarse_components_present) — accepts rows with
   # any ACTIVE tag, including fine-only rows (BAN's house_number+street, TIGER's
-  # street-only segments). Keeps the existing key for ↔config-loader compat; the
+  # street-only segments). Keeps the existing key for ↔config-loader compat. the
   # implementation is the relaxed check in labels.py.
   coarse_filter: true
 
@@ -72,7 +72,7 @@ model:
   label_smoothing: 0.0
   # CRF down-weighted to 0.05 (was 1.0 → 0.1 → 0.05 across the three iteration runs).
   # CE per-token + log-bounded ≈ 1, CRF NLL per-sequence + unbounded ≈ 10–100.
-  # Equal-weight summing destabilizes; even 0.1 weight let the CRF gradient drift
+  # Equal-weight summing destabilizes. even 0.1 weight let the CRF gradient drift
   # the model into a worse plateau during warmup. 0.05 keeps CRF as a tiny
   # structural regularizer with negligible gradient magnitude.
   crf_loss_weight: 0.05

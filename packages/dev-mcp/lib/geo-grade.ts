@@ -171,7 +171,7 @@ function wilsonHalfWidth(successes: number, n: number): number {
  * The equivalence verdict as a sentence, which has three readings and not two.
  *
  * Failing an equivalence test does not mean the arms differ, and it does not mean nothing was learned — which of those
- * it means depends on where the point estimate fell. A difference already outside the bound is a difference; a small
+ * it means depends on where the point estimate fell. A difference already outside the bound is a difference. a small
  * difference with an interval too wide to place is an underpowered run. Wording both as "this is not a claim that the
  * arms differ" would flatly contradict the two-proportion z-test printed beside it, which on a lopsided pair of arms
  * reports a significant gap in the same paragraph.
@@ -205,7 +205,7 @@ function equivalence(
  * The standard error is the INDEPENDENT-samples one even though the rows are paired. That is the conservative direction
  * and it is chosen on purpose: paired arms over one input set are positively correlated, so the true paired variance is
  * smaller, so this interval is wider and equivalence is harder to declare. An equivalence claim that survives this test
- * survives the paired one; a claim that fails it may only be underpowered, which the sentence says.
+ * survives the paired one. a claim that fails it may only be underpowered, which the sentence says.
  */
 export function tostEquivalence(
 	successesA: number,

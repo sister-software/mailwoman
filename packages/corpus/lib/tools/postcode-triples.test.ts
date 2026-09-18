@@ -37,7 +37,7 @@ afterAll(() => root[Symbol.asyncDispose]())
  *
  * The real file has twelve columns and the reader takes four of them from non-adjacent positions — place is 2, admin1
  * is 3, admin2 is 5. Writing them in argument order and padding the gap keeps the fixture readable while still
- * exercising the real offsets; a fixture that packed them adjacently would pass against a reader with the wrong index.
+ * exercising the real offsets. a fixture that packed them adjacently would pass against a reader with the wrong index.
  */
 async function writeExport(
 	name: string,
@@ -76,7 +76,7 @@ describe("readTriplesFromGeonames", () => {
 		expect(triples).toHaveLength(2)
 		// The punctuated surface is the one people write, so it is the one that survives.
 		expect(triples[0]?.postcode).toBe("3750-000")
-		// admin2 is the locality; column 3 becomes the dependent locality.
+		// admin2 is the locality. column 3 becomes the dependent locality.
 		expect(triples[0]?.locality).toBe("Águeda")
 		expect(triples[0]?.dependentLocality).toBe("Borralha")
 	})
@@ -174,7 +174,7 @@ describe("applyLocalityQuota", () => {
 
 	it("bounds a hub locality WITHOUT deleting it", () => {
 		// `Schwedt/Oder` claims 9,222 DE postcodes against a median of 1. A threshold would drop the city entirely, which
-		// removes exactly the places a parser most needs to have seen; the quota keeps it and bounds the repetition.
+		// removes exactly the places a parser most needs to have seen. the quota keeps it and bounds the repetition.
 		const triples = Array.from({ length: 100 }, (_, i) => make("Schwedt/Oder", String(i)))
 
 		const kept = applyLocalityQuota(triples, 24)
@@ -184,7 +184,7 @@ describe("applyLocalityQuota", () => {
 	})
 
 	it("counts per COUNTRY as well as per locality", () => {
-		// Two countries can hold the same locality name; pooling them would halve each one's real quota.
+		// Two countries can hold the same locality name. pooling them would halve each one's real quota.
 		const triples = [make("Barcelona", "1"), { ...make("Barcelona", "2"), cc: "VE" }]
 
 		expect(applyLocalityQuota(triples, 1)).toHaveLength(2)
@@ -278,7 +278,7 @@ describe("regionWrittenForms", () => {
 		expect(surfaces).toEqual(["Islas Baleares", "Illes Balears", "Balearic Islands"])
 		expect(regionWrittenForms("Zamora", { official: ["Zamora"], coOfficial: [] })).toEqual(["Zamora"])
 
-		// The Catalan preferred name keeps the provincial generic; an envelope does not, so it dedupes with the Castilian.
+		// The Catalan preferred name keeps the provincial generic. an envelope does not, so it dedupes with the Castilian.
 		const barcelona = { official: ["Barcelona"], coOfficial: ["Província de Barcelona"] }
 		const corunna = { official: ["La Coruña"], coOfficial: ["Província d'A Coruña", "A Coruña"] }
 

@@ -31,7 +31,7 @@
  *   reproduced S-2's postcode column exactly in FR, US, IE, MX and ES — and differed on 13 of 47 GB rows, because the
  *   worktree S-2 ran in carried no `neural-weights-en-gb` artifacts and graded GB base-only. With the overlay linked,
  *   GB postcode-free goes 48.9% → 55.3% within 5 km, 42.6% → 36.2% beyond 100 km, p50 5.70 → 1.97 km. Five locales
- *   agreeing to the digit is what makes the sixth's disagreement attributable; run
+ *   agreeing to the digit is what makes the sixth's disagreement attributable. run
  *   `node neural-weights-<locale>/scripts/link-dev-weights.ts` for every overlay first, or the map measures the
  *   instrument.
  *
@@ -194,7 +194,7 @@ export function deleteSpan(input: string, at: number, length: number): string {
  * Four refusals, each one a class the corpus actually contains:
  *
  * 1. `empty` — the asserted value is the empty string. `us-dc-pennsylvania` asserts `postcode: ""` to pin that the slot
- *    stays empty; there is nothing to delete, and treating it as a deletion would manufacture support.
+ *    stays empty. there is nothing to delete, and treating it as a deletion would manufacture support.
  * 2. `not-verbatim` — the asserted value is not in the input (an assertion about the RESOLVED value, e.g. `country:
  *    "United States"` against an input saying `USA`). Deleting it would require guessing which span it came from.
  * 3. `ambiguous` — more than one boundary-safe occurrence, or the same value asserted for a second component. Either way
@@ -373,7 +373,7 @@ function timestampDir(now: Date): string {
 
 /**
  * Run the ablation layer over the curated corpus. Returns `pass` — which reports only whether the INSTRUMENT ran (at
- * least one measured cell). A map is not a check; nothing here can fail a ship.
+ * least one measured cell). A map is not a check. nothing here can fail a ship.
  */
 export async function runAblationLayer(
 	options: AblationLayerOptions = {}

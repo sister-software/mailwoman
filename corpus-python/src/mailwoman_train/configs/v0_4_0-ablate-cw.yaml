@@ -8,7 +8,7 @@
 # Result interpretation:
 #   - Trains stably to step ~2000+ → §3 was the offender (class_weights amplified
 #     gradients on rare labels enough to destabilize the loss landscape)
-#   - Also diverges → §3 isn't (only) the offender; pair with the §1 ablation result
+#   - Also diverges → §3 isn't (only) the offender. pair with the §1 ablation result
 #
 # Operator-conditional: do not kick off without their go-ahead.
 

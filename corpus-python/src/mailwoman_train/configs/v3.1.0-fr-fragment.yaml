@@ -1,15 +1,15 @@
 # === v3.1.0-fr-fragment — #727 T2. One variable vs the shipped v264: the synth-fr-fragment source. ===
 #
-# THE MEASURED PROBLEM (T1c, docs/articles/evals/2026-07-16-t1c-fragment-board-verdict.md; the FR
+# THE MEASURED PROBLEM (T1c, docs/articles/evals/2026-07-16-t1c-fragment-board-verdict.md. the FR
 # fragment board, n=400/class, 95% Wilson):
 #     street-housenumber   0.925 [0.895, 0.947]      <n> Rue X
 #     bare-street          0.215 [0.178, 0.258]          Rue X
-# Same streets, same model; the only difference is a leading number. The model has learned that a
+# Same streets, same model. the only difference is a leading number. The model has learned that a
 # house number LICENSES a street reading at all. Strip it and a designator-led phrase parses as a
 # LOCALITY, designator included:
 #     "Rue Montmartre" -> locality="Rue Montmartre"
 #     "Allee Poque"    -> locality="Allee Poque"
-# `Rue` can only mean street in French. This is not a mislabelled ambiguous toponym; it is a
+# `Rue` can only mean street in French. This is not a mislabelled ambiguous toponym. it is a
 # mislabelled `Rue`. The worst cell is date-name at 0.055, where a digit is present so the licence is
 # granted and the model emits street — then steals the digit as a house number and fragments the
 # phrase: "Allee du 11 Novembre" -> street="Allee du" + house_number="11" + street="Novembre".
@@ -38,7 +38,7 @@
 # street SURFACE, not by record row. Verified: 0 of 144,865 emitted rows carry a board surface. The
 # recipe THROWS without the list rather than mint rows that train on their own eval set.
 #
-# THE CHECK (pre-registered; baselines.json profile fragment-fr-v264, registered against the SHIPPED
+# THE CHECK (pre-registered. baselines.json profile fragment-fr-v264, registered against the SHIPPED
 # model at commit e45e0255):
 #   MOVE  : bare-street 0.215 · street-particle 0.273 · admin-street-homonym 0.087 · date-name 0.055
 #   GUARD : street-housenumber 0.925 · alnum-housenumber 0.925  (contextful — a source that fixes
@@ -50,7 +50,7 @@
 #   ALSO  : parity.street.hallucination_rate@v301-span 0.352 should FALL if T1c's diagnosis holds.
 # Read: `mailwoman eval fragment-board --weights-cache <dir>` + `mailwoman eval parity`.
 #
-# NOT A PROMOTE CHECK. The standing floors and the 2pp golden check are untouched; this checkpoint
+# NOT A PROMOTE CHECK. The standing floors and the 2pp golden check are untouched. this checkpoint
 # ships nowhere on its own. If the bare classes are flat: do not bump the weight and re-run — that is
 # the treadmill. One diagnostic (did the synth-fr-fragment rows actually reach the loader? check the manifest
 # read), then fork to the operator.
@@ -169,7 +169,7 @@ model: # Verbatim from v2.4.1.
   use_country_anchor: true
   country_feature_dim: 2
   # #1104 homograph-guard SOFTENER — the one variable vs v263. Scales the country_ambiguous dim by 0.5
-  # before the country_projection (bakes into the exported ONNX; no lexicon/inference change). v263's
+  # before the country_projection (bakes into the exported ONNX. no lexicon/inference change). v263's
   # hard guard (scale 1.0) over-suppressed homograph countries Georgia/Jordan (country-homograph F1
   # 89.8->82.6); softening should recover homograph recall without giving back the country F1 the
   # WOF-admin rows produced.
@@ -213,7 +213,7 @@ model: # Verbatim from v2.4.1.
 
 train: # Same-vocab init_from fine-tune off the shipped v261 (fresh optimizer; --resume none on a fresh
   # output_dir honors init_from, weights only). The new country_projection starts random and learns to
-  # route the cue; the encoder keeps v261's span-boundary + street grammar.
+  # route the cue. the encoder keeps v261's span-boundary + street grammar.
   output_dir: /data/output-v310-fr-fragment-s42/checkpoints
   seed: 42
   init_from: /data/output-v264-country-softguard-s42/checkpoints/step-008000

@@ -1,4 +1,4 @@
-"""Japan. Corpus from Overture-JP; registers from KEN_ALL and the national corporate register."""
+"""Japan. Corpus from Overture-JP. registers from KEN_ALL and the national corporate register."""
 
 from __future__ import annotations
 

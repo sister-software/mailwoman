@@ -9,7 +9,7 @@ from __future__ import annotations
 from ...config import Config
 from ..state import TrainState
 
-#: The five tags a reader scans first. The eval block prints these inline; the full per-tag table
+#: The five tags a reader scans first. The eval block prints these inline. the full per-tag table
 #: goes to the CSV, which is where a question about a rarer tag gets answered.
 HEADLINE_TAGS = ("locality", "region", "street", "house_number", "postcode")
 

@@ -167,7 +167,7 @@ describe("buildTruthFamilyGroups — the held-out ground truth", () => {
 	})
 
 	it("gives a multi-FRN registrant ONE truth family, taken from whichever registration disclosed the parent (C2)", () => {
-		// The parent is on 9100000011's filing; the registrant is scored under 9100000010. Before the C2 fix these were
+		// The parent is on 9100000011's filing. the registrant is scored under 9100000010. Before the C2 fix these were
 		// two ids in two different truth families — one legal entity asserted to be in two families at once.
 		expect(truth().get(FRN_SHARED_REGISTRANT_1)).toBe(truth().get(FRN_MERIDIAN_1))
 		expect(truth().has(FRN_SHARED_REGISTRANT_2)).toBe(false)
@@ -355,7 +355,7 @@ describe("filerLinkageEval — the control run (POSITIVE CONTROL: this is what d
 	it("finds the multi-FRN registrant's family through the registration that disclosed it", async () => {
 		const { control } = await runEval()
 
-		// The parent sits on 9100000011's filing; the registrant is scored under 9100000010. A prediction that read
+		// The parent sits on 9100000011's filing. the registrant is scored under 9100000010. A prediction that read
 		// only the representative FRN's own node would miss this.
 		expect(control.predictedFamilyIDsOf.get(FRN_SHARED_REGISTRANT_1)).toEqual([
 			"holding_company_name:meridian communications group",
@@ -473,7 +473,7 @@ describe("the standing guarantee: this baseline CAN be beaten", () => {
 	it("moves the score off zero when ownership arrives as filer_family rows", async () => {
 		const injected = await runInjected()
 
-		// 3 of the 6 truth-positive pairs are the Cascade ones; none of the Meridian pairs is reachable from this
+		// 3 of the 6 truth-positive pairs are the Cascade ones. none of the Meridian pairs is reachable from this
 		// injection, so recall lands at exactly one half with nothing falsely merged.
 		expect(injected.score.truePositivePairs).toBe(3)
 		expect(injected.score.falsePositivePairs).toBe(0)
@@ -500,7 +500,7 @@ describe("the standing guarantee: this baseline CAN be beaten", () => {
 
 	it("keeps the leakage check armed while the probe runs — the check sees the untouched build", async () => {
 		// The injection adds exactly the ownership rows the check refuses. It does not throw, because the check reads the
-		// census before the probe writes; break that ordering and this test starts throwing instead of scoring.
+		// census before the probe writes. break that ordering and this test starts throwing instead of scoring.
 		await expect(runInjected()).resolves.toBeDefined()
 	})
 

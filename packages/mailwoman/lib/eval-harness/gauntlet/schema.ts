@@ -67,7 +67,7 @@ export interface GauntletCaseTable {
 	 * OPT-IN multi-script rendering contract as JSON `{ tag: [rendering, …] }` (null = no contract). For a listed key the
 	 * grader asserts that `scriptRenderings(got)` contains every listed rendering, case-folded, and the same key in
 	 * {@linkcode expect_components} is superseded — see `check-case.ts`. Every list must be non-empty (the seed schema
-	 * refuses an empty one; the grader throws on one that reaches a built DB anyway).
+	 * refuses an empty one. the grader throws on one that reaches a built DB anyway).
 	 */
 	expect_component_renderings: string | null
 	/**
@@ -90,7 +90,7 @@ export interface GauntletCaseTable {
 	expect_lat: number | null
 	expect_lon: number | null
 	/**
-	 * Accepted great-circle tolerance in METERS (Pelias's distanceThresh; null defaults at runtime).
+	 * Accepted great-circle tolerance in METERS (Pelias's distanceThresh. null defaults at runtime).
 	 */
 	expect_tolerance_m: number | null
 	/**
@@ -135,7 +135,7 @@ export interface GauntletCaseTable {
 	/**
 	 * 1 = this row's expected outcome is NO COORDINATE — the resolver abstains rather than answering. The grade inverts:
 	 * any resolved coordinate fails the row. For the #1585 fuzzy-scope class, a scoped-empty typo correction must
-	 * abstain, not fall through to a world-fuzzy candidate; the abstain pin is the contract, and lands re-pinned to real
+	 * abstain, not fall through to a world-fuzzy candidate. the abstain pin is the contract, and lands re-pinned to real
 	 * coordinates once coverage arrives (the row's note says which artifact).
 	 */
 	expect_abstain: number | null

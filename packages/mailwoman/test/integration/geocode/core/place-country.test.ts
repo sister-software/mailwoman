@@ -6,7 +6,7 @@
  *   Unit tests for the coarse-placer soft-prior wiring in `geocodeAddress` (#244, M1 step C). Fakes
  *   the classifier + resolver so the test captures the `ResolveOpts` the cascade hands the resolver
  *   — no WOF / weights / databases needed. Pins the contract: a confident in-map guess injects an
- *   `anchorPosterior`; abstain / off-map / no-stage are byte-stable no-ops; an explicit
+ *   `anchorPosterior`. abstain / off-map / no-stage are byte-stable no-ops. an explicit
  *   `defaultCountry` still flows alongside.
  */
 
@@ -172,7 +172,7 @@ describe("geocodeAddress — the dominant-bearer guard on hardCountry (#1738)", 
 	// gap overturned GB Bristol's 0.884776 prominence lead and the answer moved 5,274 km to Connecticut.
 	// A prior that decides is not a prior.
 	//
-	// So a disagreeing bearer now withholds both. The outcome #1738 protects is unchanged — measured
+	// So a disagreeing bearer now withholds both. The outcome #1738 guards is unchanged — measured
 	// end to end, `1001 Boulevard Saint-Laurent, Montréal` still answers 45.5079245, -73.5593271, CA —
 	// and the board is identical on both arms (gauntlet 382/383, 449/591 resolved, same tier tally).
 	//

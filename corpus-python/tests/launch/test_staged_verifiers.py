@@ -41,7 +41,7 @@ def test_the_verifier_resolves_and_answers_a_verdict_per_check(version: str, tmp
 
 
 def test_the_registries_verifier_delegates_to_each_country(tmp_path) -> None:
-    """The region assembles; it does not restate. A restated Korean path passes every check a
+    """The region assembles. it does not restate. A restated Korean path passes every check a
     delegated one does, so nothing else would catch the drift back into one shared file."""
     from mailwoman_train.countries.cjk import staging as cjk
     from mailwoman_train.countries.jp import staging as jp

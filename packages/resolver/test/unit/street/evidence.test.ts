@@ -81,7 +81,7 @@ describe("pickByStreetEvidence — the v2 policy", () => {
 	})
 
 	test("G1: does NOT credit a truncated pure-type sibling even though it exists in the index", () => {
-		// "rue" is in the index but is pure type vocab → skipped; gold "Rue Guarnieri" is the real pick.
+		// "rue" is in the index but is pure type vocab → skipped. gold "Rue Guarnieri" is the real pick.
 		const evidence = mockEvidence(["rue", "Rue Guarnieri"])
 		const cands = [cand("rue", 5), cand("Rue Guarnieri", 4.5)]
 		const pick = pickByStreetEvidence(cands, evidence)

@@ -28,7 +28,7 @@
  *   reason:"requires_bdc_layer"|"requires_build_local_layer"}`) the scorer already produces for an omitted dep. The
  *   guards themselves (`assertBDCDatabaseExists`, `openBDCDatabaseIfPresent`, `openPlausibilityPOIDeps`) live in
  *   `./layer-guards.ts`, not here — they're pure, transport-independent logic with no need for the stdio connection
- *   this file opens at import time (which is exactly why this file can't be unit-tested directly; see
+ *   this file opens at import time (which is exactly why this file can't be unit-tested directly. see
  *   `layer-guards.test.ts` for their branch coverage).
  *
  *   `mailwoman_filer_lookup` follows the same "requires the layer unconditionally" discipline as
@@ -92,7 +92,7 @@ const poiDatabasePath = values["poi-db"]
 
 /**
  * The shared classifier + resolver, built exactly once on the first call that needs them (see the module header).
- * `NeuralAddressClassifier.loadFromWeights` auto-resolves the bundled `en-US` weights; the resolver backend prefers a
+ * `NeuralAddressClassifier.loadFromWeights` auto-resolves the bundled `en-US` weights. the resolver backend prefers a
  * configured candidate gazetteer (`$MAILWOMAN_CANDIDATE_DB`) and otherwise falls back to the admin-only WOF extracts
  * already on the data root — same selection `nominatim`/`photon`'s CLIs make.
  */
@@ -246,7 +246,7 @@ const deps: MCPToolDeps = {
 
 	async overpassExport(query) {
 		// Intent-only is enough here — the export just needs the parsed subject/anchor, never executed results
-		// ("we print the query; we never run it", poi-overpass.ts). Reuses the server's wired poi pipeline (a
+		// ("we print the query. we never run it", poi-overpass.ts). Reuses the server's wired poi pipeline (a
 		// real poi.db doesn't change the emitted OverpassQL) instead of forcing a second one-off pipeline.
 		const pipeline = await getPoiPipeline(poiDatabasePath)
 		const result = await pipeline(query)

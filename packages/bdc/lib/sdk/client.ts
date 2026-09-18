@@ -60,7 +60,7 @@ export const BDC_API_BASE_URL = "https://broadbandmap.fcc.gov/api/public"
  * as something this repo checked.
  *
  * This is the DEFAULT, not a clamp. `createSECClient` clamps because SEC's limit is verifiable, actively policed, and
- * published in fetchable HTML; none of that holds here, so pinning an unverified number as law would be false
+ * published in fetchable HTML. none of that holds here, so pinning an unverified number as law would be false
  * precision. {@linkcode CreateBDCClientOptions.requestsPerMinute} tunes it in either direction, and the throttle meter
  * (see {@linkcode BDCClient.throttleStats}) is how a real run reports what the setting actually cost.
  *
@@ -208,7 +208,7 @@ export interface BDCThrottleStats {
 	 */
 	elapsedMs: number
 	/**
-	 * Milliseconds this client spent asleep. Almost entirely throttle waits; a retry backoff after a 429/5xx also lands
+	 * Milliseconds this client spent asleep. Almost entirely throttle waits. a retry backoff after a 429/5xx also lands
 	 * here, which is deliberate — both are time the upstream's limits cost the run, and separating them would need a hook
 	 * `APIClient` does not expose.
 	 */
@@ -234,7 +234,7 @@ export interface BDCThrottleStats {
 export interface BDCClientConfig extends APIClientConfig {
 	/**
 	 * The username half of the credential pair. Named in the 401/403 explanation so a maintainer can see which account
-	 * was actually used; the key half is never echoed.
+	 * was actually used. the key half is never echoed.
 	 */
 	username: string
 	/**
@@ -293,7 +293,7 @@ function buildBDCURL(path: string, params: BDCQueryParams = {}): URL {
  * Rewrite a credential rejection into an error that names the cause. A bare "401 Unauthorized" from an FCC endpoint
  * reads as "the resource is missing" or "we're blocked", and this project has already lost a debugging cycle to exactly
  * that on a generic FCC 403. The status and URN are reconstructed identically, so a caller's `status === 401` branch is
- * unaffected; anything that is not a credential rejection is rethrown untouched.
+ * unaffected. anything that is not a credential rejection is rethrown untouched.
  */
 function explainCredentialFailure(error: unknown, url: URL, username: string): unknown {
 	if (!(error instanceof ResourceError)) return error
@@ -357,7 +357,7 @@ export class BDCClient extends APIClient<BDCClientConfig> {
 	 * cache, the request throttle, and bounded retry.
 	 *
 	 * `path` is appended to {@linkcode BDC_API_BASE_URL} as-is (a leading slash, e.g. `/map/listAsOfDates`). `params`
-	 * become the request's query string; the response body is returned UN-unwrapped — every BDC endpoint nests its
+	 * become the request's query string. the response body is returned UN-unwrapped — every BDC endpoint nests its
 	 * payload under a `data` key (`{ data: [...] }`), so callers pluck `.data` themselves at the call site.
 	 *
 	 * Concurrent calls for the same URL that both miss the cache share a single in-flight request — the cache
@@ -549,7 +549,7 @@ export function createBDCClient(options: CreateBDCClientOptions = {}): BDCClient
 		// must clear), so the budget's cooldown still fires, and it is a real wait: `APIClient` measures that
 		// cooldown to the end of the minute the window opened in, while the interval limit has by then spent
 		// only `(N-1) * 60000/N` ms of it. With both limits on 10/minute, arrivals run `0, 6, …, 54 s`; the
-		// 10th dispatch opens a `60000 - 54000 = 6000 ms` cooldown; the pacer's grant for #11 is discarded
+		// 10th dispatch opens a `60000 - 54000 = 6000 ms` cooldown. the pacer's grant for #11 is discarded
 		// across that wait (`acquireDispatchSlot` re-acquires rather than holding a stale grant, under-issuing
 		// by one — the safe direction), so #11 lands at 66 s and the pattern repeats. Steady state is 10
 		// requests per 66 s, ~9.1/minute — BELOW the published 10/minute, which is the conservative direction
@@ -599,7 +599,7 @@ export function createBDCClient(options: CreateBDCClientOptions = {}): BDCClient
 			responseType: "json",
 			// `silentJSONParsing` defaults to TRUE, which makes Axios hand back the RAW STRING when a body
 			// fails to parse instead of raising. An upstream serving an HTML error page under a 200 would
-			// then be returned as `T` and destructured into `undefined` at the call site; parse failures
+			// then be returned as `T` and destructured into `undefined` at the call site. parse failures
 			// must be errors.
 			transitional: { silentJSONParsing: false },
 			...options.axios,

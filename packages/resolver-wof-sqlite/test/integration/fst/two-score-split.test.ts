@@ -79,7 +79,7 @@ function downgradeToV4(v5: Buffer): Buffer {
 	}
 
 	out.writeUInt16LE(4, 4)
-	// This fixture carries no trailer; zero the offset so a reader reports no provenance.
+	// This fixture carries no trailer. zero the offset so a reader reports no provenance.
 	out.writeUInt32LE(0, 28)
 
 	return out

@@ -12,7 +12,7 @@
  *   {@linkcode resolveConfig} defaults in a throwaway script, which is the shared-constants failure mode: the
  *   two arms drift and nothing says so.
  *
- *   So the arm is a git worktree plus a subprocess. One process cannot hold two versions of a module; two
+ *   So the arm is a git worktree plus a subprocess. One process cannot hold two versions of a module. two
  *   processes can, and the child imports the worktree's source because that is the only source on its
  *   resolution path.
  *
@@ -245,7 +245,7 @@ export async function runWorktreeArm(args: {
 			try {
 				runFileSync("git", ["worktree", "remove", "--force", worktree], { cwd: repoRoot, stdio: "pipe" })
 			} catch {
-				// A failed removal must not mask the arm's own error; removing the parent directory and pruning
+				// A failed removal must not mask the arm's own error. removing the parent directory and pruning
 				// afterwards clean up regardless.
 			}
 		})
@@ -277,7 +277,7 @@ export async function runWorktreeArm(args: {
 			cwd: worktree,
 			input: stringifyJSON({ inputs, options }),
 			encoding: "utf8",
-			// A full board through a cold engine is minutes, and the payload is megabytes; both defaults are far
+			// A full board through a cold engine is minutes, and the payload is megabytes. both defaults are far
 			// too small and both failures look like a crash rather than a limit.
 			timeout: args.timeoutMs ?? 30 * 60 * 1000,
 			maxBuffer: 512 * 1024 * 1024,

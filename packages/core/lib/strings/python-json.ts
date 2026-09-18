@@ -24,7 +24,7 @@ import { stringifyJSON } from "#json"
  *
  *   Caveat: JS has a single number type, so a whole-valued float (e.g. an exact `5.0` coordinate)
  *   serializes as `5`, whereas Python's `float(5.0)` -> `"5.0"`. Real-world lat/lon land on exact
- *   integers vanishingly rarely; the builders that emit coordinates accept this edge.
+ *   integers vanishingly rarely. the builders that emit coordinates accept this edge.
  */
 
 /**

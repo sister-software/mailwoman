@@ -9,7 +9,7 @@
  *   export_onnx.py` (BertForTokenClassification w/ inputs `input_ids` + `attention_mask`, output
  *   `logits` shape `[batch, sequence, num_labels]`).
  *
- *   Lazy-loads on first `infer()` call unless `warmup: true` is passed; the constructor itself is
+ *   Lazy-loads on first `infer()` call unless `warmup: true` is passed. the constructor itself is
  *   cheap and synchronous.
  */
 
@@ -42,7 +42,7 @@ export interface ONNXRunnerOpts {
 	/**
 	 * Fixed sequence length the model expects. v0.1.0 / v0.2.0 quantization baked in 128 (the training-time max position)
 	 * even though the fp32 export specified dynamic axes — re-quantize with a different shape to override. Inputs shorter
-	 * than this are padded with id `0` and masked out via attention_mask=0; inputs longer are truncated.
+	 * than this are padded with id `0` and masked out via attention_mask=0. inputs longer are truncated.
 	 */
 	fixedSeqLen?: number
 	/**
@@ -82,7 +82,7 @@ export const DEFAULT_FIXED_SEQ_LEN = 128
  * tuned constant. Measured on a 16-core box:
  *
  * - One process, 120 warm parses: 1 thread 18.3 ms/parse, 2 threads 12.5, 4 threads 9.2, ORT's all-cores default 9.3.
- *   More threads win; the parallelism is doing real work.
+ *   More threads win. the parallelism is doing real work.
  * - Four concurrent processes, full geocode: 1 thread 32 req/s each, 2 threads 45, 4 threads 33. Fewer threads win,
  *   because N processes each sizing a pool to the machine oversubscribe it N-fold.
  *
@@ -166,7 +166,7 @@ export class ONNXRunner {
 	/**
 	 * Create the session on the configured execution providers, guarded: GPU providers (`cuda`/`webgpu`) throw at
 	 * create-time when their runtime/driver is missing, so on failure we retry on CPU alone. A box with the GPU runtime
-	 * uses it; a box without one transparently lands on CPU.
+	 * uses it. a box without one transparently lands on CPU.
 	 */
 	private async createSession(bytes: Uint8Array): Promise<ort.InferenceSession> {
 		try {
@@ -181,7 +181,7 @@ export class ONNXRunner {
 			// A requested GPU provider failed to initialize — fall back to CPU so inference still loads.
 			console.warn(
 				`[ONNXRunner] execution providers [${this.executionProviders.join(", ")}] failed to initialize ` +
-					// oxlint-disable-next-line mailwoman/prefer-spliterator -- In-memory error message; only its first line is logged.
+					// oxlint-disable-next-line mailwoman/prefer-spliterator -- In-memory error message. only its first line is logged.
 					`(${(error as Error).message.split("\n")[0]}); falling back to CPU.`
 			)
 
@@ -196,7 +196,7 @@ export class ONNXRunner {
 	/**
 	 * Run inference on a single token id sequence — see {@link InferFunction} for the parameter contract.
 	 *
-	 * Pads to `fixedSeqLen` (default 128) with id 0 + mask 0; truncates if longer. Output is trimmed back to the actual
+	 * Pads to `fixedSeqLen` (default 128) with id 0 + mask 0. truncates if longer. Output is trimmed back to the actual
 	 * input length. Every soft-feed channel is present-conditional on the graph's declared inputs, with the zero-fill
 	 * confidence=0 identity for a declared-but-unsupplied channel (`packSoftChannelFeeds`).
 	 */
@@ -237,7 +237,7 @@ export class ONNXRunner {
 
 	/**
 	 * Run a char-path graph (`char_ids` + `attention_mask`, no `input_ids`; #2164) on one encoding. The encoder already
-	 * padded to S, so no fixed sequence length applies; the output is trimmed to the real unit count. The char path is
+	 * padded to S, so no fixed sequence length applies. the output is trimmed to the real unit count. The char path is
 	 * channel-free by contract, so no soft-feed tensors are packed.
 	 */
 	inferChars: InferCharsFunction = async (charIDs, attentionMask) => {

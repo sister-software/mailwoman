@@ -183,7 +183,7 @@ interface EngineProtocol {
 /**
  * Index into an unknown JSON body.
  *
- * `isRecordLike` (`@mailwoman/core/objects`) is the shared predicate and does the actual test; this only adapts its
+ * `isRecordLike` (`@mailwoman/core/objects`) is the shared predicate and does the actual test. this only adapts its
  * `input is object` narrowing into something indexable, and answers `{}` for a non-record so a reader can chain without
  * a guard at every step.
  */
@@ -200,7 +200,7 @@ function readString(value: unknown): string | null {
  * `@mailwoman/spatial`'s own bounds.
  *
  * Two traps, both closed by the validator rather than by a finiteness test. `Number("")` is 0, so an empty string would
- * otherwise become a point in the Gulf of Guinea; and a latitude past ±90 is what a transposed pair looks like, which a
+ * otherwise become a point in the Gulf of Guinea. and a latitude past ±90 is what a transposed pair looks like, which a
  * finite-number check waves through and a distance metric then reports as an ordinary miss.
  */
 function readCoordinate(value: unknown, isValid: (candidate: number) => boolean): number | null {
@@ -217,7 +217,7 @@ function readCoordinate(value: unknown, isValid: (candidate: number) => boolean)
  * either drop-in's own schema. `@mailwoman/photon` and `@mailwoman/nominatim` do define the response shapes, and
  * reusing one here would have been the obvious economy — but this client exists to measure an upstream engine, and
  * parsing its answer through our reimplementation's idea of the format would make it blind to exactly the divergences
- * the comparison is for. RFC 7946 is shared ground; a drop-in's schema is a claim under test.
+ * the comparison is for. RFC 7946 is shared ground. a drop-in's schema is a claim under test.
  *
  * A feature whose geometry is not a point is a no-result with a reason, not a skip to the second feature: the protocol
  * scores position one, and an engine that answered with an unplaceable feature has said something different from an
@@ -360,7 +360,7 @@ export function assertScorableEndpoint(endpoint: string): string {
  * One external geocoder, paced and bounded-retried, answering the pre-registered protocol and nothing else.
  *
  * Response caching is deliberately off. Every other client in this repo caches because it is re-reading a slow remote
- * index; here the endpoint's answer is the measurement, and a cached one would be scored against an identity probe
+ * index. here the endpoint's answer is the measurement, and a cached one would be scored against an identity probe
  * taken now — reporting a vintage the number did not come from.
  */
 export class ExternalGeocoderClient extends APIClient {
@@ -405,7 +405,7 @@ export class ExternalGeocoderClient extends APIClient {
 	 * Ask the endpoint what it is, without scoring anything.
 	 *
 	 * Two requests: the engine's own status path, then one throwaway search. Both are needed. The status path is where
-	 * Nominatim keeps its data vintage and upstream Photon its import date; the search envelope is where Pelias keeps its
+	 * Nominatim keeps its data vintage and upstream Photon its import date. the search envelope is where Pelias keeps its
 	 * version. An endpoint that 404s the status path is not thereby broken — a compatible drop-in need not implement it —
 	 * but it is thereby unidentified, which the caller is told rather than left to assume.
 	 */

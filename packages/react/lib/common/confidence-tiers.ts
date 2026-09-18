@@ -15,7 +15,7 @@
 export const HIGH_CONFIDENCE_MIN = 0.8
 
 /**
- * At or above this the span is drawn as medium-confidence; below it, low.
+ * At or above this the span is drawn as medium-confidence. below it, low.
  */
 export const MID_CONFIDENCE_MIN = 0.5
 

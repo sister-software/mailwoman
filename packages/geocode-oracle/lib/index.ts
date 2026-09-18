@@ -29,7 +29,7 @@
  *
  *   WHAT IT IS NOT. Not truth, and not a check. Google and the Census Bureau disagree with each other
  *   and with the address as written, and both return a confident coordinate for addresses that do not
- *   exist. Nothing here should ever decide whether a build ships; a human reads it and decides what to
+ *   exist. Nothing here should ever decide whether a build ships. a human reads it and decides what to
  *   pin. `OracleGeocodeResult.raw` always carries the provider's untouched answer for exactly that
  *   reading.
  *

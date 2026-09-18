@@ -26,14 +26,14 @@
  *       `street[0,11]` vs `{house_number[0,3], street[4,11]}`, the two finer spans are accepted and
  *       the coarse subsuming span is dropped — keeping the street+house_number precondition intact
  *       (the thing #566 broke). The neural argmax path labels per-token, so it normally emits the
- *       finer decomposition itself; this tiebreak is the safety net when a coarse rule span
+ *       finer decomposition itself. this tiebreak is the safety net when a coarse rule span
  *       competes.
  *
  *   This policy is deliberately simple and deterministic. It is the change the inc-3 assembled check
  *   validates: if it drops too many house numbers (precondition regression) the comparator is where
  *   to look. (An alternative — earliest-end-first maximal-tiling, ignoring confidence — maximizes
  *   the _count_ of non-overlapping spans but can let a spurious tiny span evict a correct large
- *   one; confidence-primary guards against that.)
+ *   one. confidence-primary guards against that.)
  *
  *   Pure module: reads only `span.{start,end}` + `confidence`. Safe to import anywhere.
  */
@@ -58,7 +58,7 @@ function spansOverlap(a: ClassificationProposal["span"], b: ClassificationPropos
 export function resolveProposalOverlaps(proposals: readonly ClassificationProposal[]): ClassificationProposal[] {
 	if (proposals.length <= 1) return [...proposals]
 
-	// oxlint-disable-next-line unicorn/no-array-sort -- sorts a freshly-built array; toSorted would double-allocate on a hot path
+	// oxlint-disable-next-line unicorn/no-array-sort -- sorts a freshly-built array. toSorted would double-allocate on a hot path
 	const ranked = [...proposals].sort((a, b) => {
 		if (b.confidence !== a.confidence) return b.confidence - a.confidence // higher confidence first
 		const lenA = a.span.end - a.span.start
@@ -78,6 +78,6 @@ export function resolveProposalOverlaps(proposals: readonly ClassificationPropos
 		}
 	}
 
-	// oxlint-disable-next-line unicorn/no-array-sort -- sorts a freshly-built array; toSorted would double-allocate on a hot path
+	// oxlint-disable-next-line unicorn/no-array-sort -- sorts a freshly-built array. toSorted would double-allocate on a hot path
 	return kept.sort((a, b) => a.span.start - b.span.start)
 }

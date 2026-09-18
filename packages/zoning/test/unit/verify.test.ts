@@ -16,7 +16,7 @@
  *   point in a hole and report the artifact as wrong at exactly the locations the hole handling exists for.
  *
  *   THE NEGATIVE HALF IS PINNED HERE TOO. Donegal is the one local authority of 31 the Department does not
- *   publish, and Northern Ireland is a different jurisdiction entirely; both must read `unknown` with no
+ *   publish, and Northern Ireland is a different jurisdiction entirely. both must read `unknown` with no
  *   designation, and this is the check that would catch a builder generalizing the flood layer's
  *   Zone-1-by-absence rule.
  */

@@ -7,14 +7,14 @@
  *   matches from non-matches BETTER than the FS scorer itself? This is the honest, rigorous answer
  *   to "is the learned-scorer path worth it?" before investing in a full GBM/training pipeline.
  *
- *   The over-merge (co-located distinct providers fused; co-located same-entity name-drift split) is
+ *   The over-merge (co-located distinct providers fused. co-located same-entity name-drift split) is
  *   a FIELD-INTERACTION effect FS can't express: it scores each field independently. A learned
  *   model with INTERACTION features (spatial-agreement × name-disagreement) can. We test that
  *   directly, with a clean methodology — no clustering confound, no leakage:
  *
  *   1. Generate the same NPI-keyed records as the dedup benchmark (real registry + name-drift +
  *        address-variation), geocoded.
- *   2. Block → candidate pairs. For each: the FS agreement pattern + engineered interaction features;
+ *   2. Block → candidate pairs. For each: the FS agreement pattern + engineered interaction features.
  *        the label is same-NPI.
  *   3. Split the NPIs into train / test. A pair is train iff both endpoints are train-NPIs, test iff
  *        both test-NPIs — so no NPI's records leak across the split.
@@ -66,7 +66,7 @@ const CLEAR_WIN_F1_DELTA = 0.02
 const STRONG_EVIDENCE_Z = 3
 
 /**
- * Share of NPIs assigned to train; the rest are held out for test.
+ * Share of NPIs assigned to train. the rest are held out for test.
  */
 const TRAIN_SPLIT_FRACTION = 0.67
 
@@ -130,7 +130,7 @@ export async function scorerPairwiseEval(
 	const geocoder = await options.createGeocoder()
 
 	// `auth`/`taxonomy` ride as attributes so the SHARED featurizer's #625 roll-up features can read the
-	// authorized official; the FS arm ignores them (no discriminators configured).
+	// authorized official. the FS arm ignores them (no discriminators configured).
 	const mapping: ColumnMapping = {
 		id: "npi",
 		name: "name",
@@ -147,7 +147,7 @@ export async function scorerPairwiseEval(
 	geocoder[Symbol.dispose]()
 
 	// Block records and extract the collapsed-spatial and address-frequency features.
-	// comparisons; EM-fit it for the FS baseline. ---
+	// comparisons. EM-fit it for the FS baseline. ---
 	report?.("[D] blocking + features…")
 	const model = buildDefaultModel({ collapseSpatial: true, addressFrequency })
 	const { pairs } = block(records, defaultBlockingKeys())

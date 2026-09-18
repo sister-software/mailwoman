@@ -9,7 +9,7 @@
  *   `data/gazetteer/wof-build-manifest.json` is a build LOG (what ran, when, md5), not a recipe store.
  *
  *   Provenance of the lists: reconstructed 2026-07-07 from the live `admin-global-priority.db` — WOF rows
- *   (`id < 2e9`) → the priority countries; Overture divisions (`8e12 ≤ id < 9e12`) → the 86; the GeoNames
+ *   (`id < 2e9`) → the priority countries. Overture divisions (`8e12 ≤ id < 9e12`) → the 86. the GeoNames
  *   alias fold (`id ≥ 9e12`) → the 161. See RELEASING.md "Rebuilding + swapping the canonical admin
  *   gazetteer" and the #1021 PR.
  *
@@ -299,7 +299,7 @@ export const DEFAULT_GEONAMES_COUNTRIES = [
 ] as const
 
 /**
- * Pinned Overture release for the divisions theme (rows churn between monthly releases; never mix two).
+ * Pinned Overture release for the divisions theme (rows churn between monthly releases. never mix two).
  *
  * Overture DELETES old releases — the bucket held exactly two when this was last checked, so a pin survives on the
  * order of a month and then the build fails with `No files found that match the pattern`. Keep this equal to
@@ -317,7 +317,7 @@ export const DEFAULT_ADMIN_STAGING_SUFFIX = ".REBUILD.db"
  * The zero-coverage gap set — GeoNames-alias locales carrying NO WOF or Overture admin. These are the
  * `adminForCountries` targets for the GeoNames fold (#267): without the A-class fold (PCLI country + ADM1 regions +
  * locality ancestry linking), their localities are orphans and "City, Country" scoping breaks (#1023/#1026 — the
- * canonical recipe silently omitted this until 2026-07-07; the country nodes had come from coverage-expansion runs
+ * canonical recipe silently omitted this until 2026-07-07. the country nodes had come from coverage-expansion runs
  * outside the recipe). Countries with WOF/Overture admin are excluded by construction — folding their GeoNames admin
  * would double up (the #267 warning).
  */
@@ -334,7 +334,7 @@ export function geonamesAdminGapCountries(): string[] {
  *
  * It used to be the 14-country bilingual EU set this fold was born for (#743/#193 — FI hard-resolve 69.5 → 85.8 %),
  * from when the fold was a separate step run against an UNFOLDED admin. #1027 moved the fold inside `buildAdmin` and
- * widened it to 161 countries; the 14-country default outlived that and became the payload of the 2026-08-05 incident,
+ * widened it to 161 countries. the 14-country default outlived that and became the payload of the 2026-08-05 incident,
  * re-folding 212,993 places over the front of a 774,338-place range and leaving the rest of the world's names attached
  * to Austrian, Swiss and Lithuanian villages.
  */
@@ -355,21 +355,21 @@ export const DEFAULT_IMPORTANCE_DB = "admin-global-priority-importance.db"
 /**
  * The frozen artifact's ten countries, IN ITS INGEST ORDER (recovered from its per-country `spr.id` ranges: FI @
  * 9500000000000 … GB @ 9500000056075). The first nine are the #920 namesake-tail set the original
- * `--geonames-postal-countries` flag carried; GB was appended in a later pass from the `GB_full` dump and is 97 % of
+ * `--geonames-postal-countries` flag carried. GB was appended in a later pass from the `GB_full` dump and is 97 % of
  * the artifact (1,839,678 of 1,895,753 rows, ~946 MB). Keep the order: it is what makes a rebuild id-comparable to the
  * frozen database.
  */
 
 /**
- * The tail database's country set, in the frozen artifact's ingest order. GB moved to Code-Point Open on 2026-08-05;
+ * The tail database's country set, in the frozen artifact's ingest order. GB moved to Code-Point Open on 2026-08-05.
  * Belgium was added on 2026-08-12 (the eu-mixed lane). Any change here re-freezes the artifact: rebuild, run the parity
  * check against the previous database, and rotate via the .prev workflow.
  *
- * The first ten entries are order-critical; all later countries must be appended. Ids are positional in ingest order,
+ * The first ten entries are order-critical. all later countries must be appended. Ids are positional in ingest order,
  * so inserting a country shifts every following id. The parity check validates ids as well as counts for this reason.
  *
  * Historically this tail started as ten countries from #920. GeoNames publishes 121 countries, while the gazetteer had
- * a postcode tier for 28; the appended set adds the 93 with on-disk data and no tier. On rebuild this changed coverage
+ * a postcode tier for 28. the appended set adds the 93 with on-disk data and no tier. On rebuild this changed coverage
  * from 10 to 103 countries and from 57,221 to 505,784 codes, with no code loss and no id movement in the original ten.
  *
  * Prefer counts at resolver granularity. GeoNames postal publishes one row per (postcode, settlement) and duplicates
@@ -390,7 +390,7 @@ export const DEFAULT_GEONAMES_TAIL_COUNTRIES = [
 	"AD",
 	// AE is deliberately absent and is the largest single country GeoNames publishes here: 178,171 rows, more than
 	// RU + RO + KR combined. Every one is a `NNNNN NNNNN` pair at Dubai-area coordinates (lat 24.63–25.32, lon
-	// 54.91–56.20) — Makani BUILDING codes, not postcodes. The United Arab Emirates has no postal code system; mail
+	// 54.91–56.20) — Makani BUILDING codes, not postcodes. The United Arab Emirates has no postal code system. mail
 	// goes to PO boxes. Ingesting them as `placetype = 'postalcode'` would claim 178,171 postcodes for a country
 	// with none, and every coverage figure taken from that tier would inherit the claim.
 	//
@@ -497,7 +497,7 @@ export const DEFAULT_GEONAMES_TAIL_COUNTRIES = [
  * Default parent-coverage floor for crediting a sub-locality rung.
  *
  * This is the weakest number in the design and is deliberately a parameter. GB — the one country with a validated
- * reading — sits around 33%, so 5% is far below the only calibration point we have; it is set low on purpose, to catch
+ * reading — sits around 33%, so 5% is far below the only calibration point we have. it is set low on purpose, to catch
  * thin-but-real tiers rather than to certify them. A second calibration point should harden it.
  */
 export const DEFAULT_COVERAGE_FLOOR = 0.05

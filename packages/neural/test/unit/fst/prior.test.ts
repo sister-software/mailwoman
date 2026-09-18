@@ -25,7 +25,7 @@ const TOKENIZER_MODEL_PATH = workspacePath("neural", "test", "fixtures", "tokeni
 
 // Production tokenizer, conditional (mirrors weights.test.ts's `haveModel` skipIf idiom) — the bare-▁-orphan splits below
 // only occur in its vocab, not the small fixture's. Not present in stripped-down CI, so this whole block skips
-// there; it runs on the lab host where $MAILWOMAN_DATA_ROOT is populated.
+// there. it runs on the lab host where $MAILWOMAN_DATA_ROOT is populated.
 const PRODUCTION_TOKENIZER_PATH = dataRootPath("models", "tokenizer", "v0.9.0-multisplice", "tokenizer.model")
 const haveProductionTokenizer = await pathExists(PRODUCTION_TOKENIZER_PATH)
 
@@ -362,7 +362,7 @@ describe("normalizeFSTToken", () => {
 	})
 
 	it("applies NFKC normalization (ligatures and compatibility forms)", () => {
-		// NFKC unifies compatibility forms; for example, the NFKC form resolves superscript
+		// NFKC unifies compatibility forms. for example, the NFKC form resolves superscript
 		// and subscript characters to their base forms.
 		const result = normalizeFSTToken("ﬁnance") // 'ﬁ' is U+FB01 (fi ligature)
 		expect(result).toBe("finance")
@@ -373,7 +373,7 @@ describe("groupPiecesIntoWords with normalizeFSTToken", () => {
 	it("normalizes individual word groups correctly", () => {
 		const pieces = [{ piece: "▁Stockton" }, { piece: "-" }, { piece: "▁on" }, { piece: "-" }, { piece: "▁Tees" }]
 		const groups = groupPiecesIntoWords(pieces)
-		// Whitespace-delimited grouping; hyphens are punctuation, so they form separate empty groups
+		// Whitespace-delimited grouping. hyphens are punctuation, so they form separate empty groups
 		const nonEmptyGroups = groups.filter((g) => g.fstToken !== "")
 		expect(nonEmptyGroups.map((g) => g.fstToken)).toEqual(["stockton", "on", "tees"])
 	})
@@ -441,7 +441,7 @@ describe("groupPiecesIntoWords — interior punctuation (real fixture tokenizer)
 		// PENDING, so the next piece ("on", with no leading ▁ of its own) opens a fresh word instead of being
 		// dropped. This is not a fixture-vocab curiosity: the pattern is live and widespread in the PRODUCTION
 		// tokenizer (v0.9.0-multisplice) — "Newcastle upon Tyne", "Weston super Mare", "Kingston upon Hull" and
-		// a trailing "IL" all split this way; see the skipIf-conditional production-tokenizer block below.
+		// a trailing "IL" all split this way. see the skipIf-conditional production-tokenizer block below.
 		const tokenizer = await MailwomanTokenizer.loadFromFile(TOKENIZER_MODEL_PATH)
 		const { pieces } = tokenizer.encode("Stockton on the Forest")
 		const groups = groupPiecesIntoWords(pieces)

@@ -187,7 +187,7 @@ describe("street-type lexicon build", () => {
 			expect(j.code_entries[code], code).toBeUndefined()
 		}
 
-		// Directional codes stay (single-letter CA forms; none collide with a state).
+		// Directional codes stay (single-letter CA forms. none collide with a state).
 		expect(j.code_entries.N).toBe(1)
 		expect(j.code_entries.W).toBe(1)
 		// The canonical words behind the dropped codes are untouched.

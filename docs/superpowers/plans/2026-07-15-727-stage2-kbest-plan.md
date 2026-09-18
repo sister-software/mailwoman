@@ -103,7 +103,7 @@ hypothesis-space improvements were invisible. Before the first training run:
 
 ## Process changes (from the same conversation)
 
-- **Architecture arcs get a protected lane**: multi-night bets are scheduled as their own
+- **Architecture arcs get a guarded lane**: multi-night bets are scheduled as their own
   workstream with acceptance criteria at arc scope, not re-litigated against nightly splice
   opportunities each evening.
 - **Scar-tissue audit**: "CRF diverged" (v0.5.0, bf16, token-level) was treated as a standing
@@ -120,7 +120,7 @@ hypothesis-space improvements were invisible. Before the first training run:
 3. PT/RO tokenizer splice — fills the confirmed byte-fallback coverage gap; cheap, independent,
    and it feeds the span head's inputs too. Measure vocab growth vs #378 first (runbook stage-3
    note stands). [small, one training run]
-4. **The span-head training arc** (multi-night, protected lane): stage-1 aux head kept; span
+4. **The span-head training arc** (multi-night, guarded lane): stage-1 aux head kept; span
    scorer + segment transitions per the design above; kind-posterior soft channel + recall-weighted
    street loss (option C); fp32 partition math; export path + #378 check; k-best decode in
    neural/ + neural-web mirroring the probe.
@@ -131,7 +131,7 @@ hypothesis-space improvements were invisible. Before the first training run:
 
 ## Open for the operator
 
-- Ratify the protected-lane framing (item 4 will span multiple nights; the nightly cadence should
+- Ratify the guarded-lane framing (item 4 will span multiple nights; the nightly cadence should
   treat it as one arc, not re-decide it nightly).
 - The parity floors stay the acceptance criterion for the swap (option (a) of night-2's decision
   1); the coordinate-parity evidence now rides UNDER the floors as diagnosis, not as a

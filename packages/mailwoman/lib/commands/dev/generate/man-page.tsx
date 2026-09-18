@@ -4,7 +4,7 @@
  * @author Teffen Ellis, et al.
  *
  *   `mailwoman dev generate man-page` — regenerate the committed `man/mailwoman.1` from the compiled CLI's own help
- *   tree. Offline codegen; the freshness test under `test/unit/` fails on drift, and the pre-commit hook runs this when
+ *   tree. Offline codegen. the freshness test under `test/unit/` fails on drift, and the pre-commit hook runs this when
  *   a commit touches the command surface.
  */
 

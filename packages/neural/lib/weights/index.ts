@@ -7,7 +7,7 @@
  *
  *   The `@mailwoman/neural-weights-<locale>` packages ship the `model.onnx` + `tokenizer.model` files
  *   declared in their `files` array. At install time npm bundles those files alongside the
- *   package.json; at runtime we locate them by resolving the package.json then walking sideways.
+ *   package.json. at runtime we locate them by resolving the package.json then walking sideways.
  *
  *   Local development failure mode: the weights packages in the monorepo carry only metadata (package.json
  *
@@ -83,7 +83,7 @@ export function weightsPackageName(locale?: Intl.UnicodeBCP47LocaleIdentifier): 
  * <locale>`.
  *
  * THE ONE PLACE THAT LAYOUT IS SPELLED OUT. Hand-assembling a `node_modules/...` path is normally the smell that says a
- * package should have been located with `import.meta.resolve` or an exports subpath; this is the one site in the tree
+ * package should have been located with `import.meta.resolve` or an exports subpath. this is the one site in the tree
  * where it is the correct answer, and it warrants that by being the inverse of a resolution rather than a substitute
  * for one. The directory does not exist yet at the moment the layout is needed — `mailwoman parse --download-weights`
  * runs `npm install --prefix <cacheRoot>`, and an eval harness lays a CANDIDATE bundle out with
@@ -110,11 +110,11 @@ export interface ResolveWeightsOpts {
 	 */
 	locale?: string
 	/**
-	 * Explicit model.onnx path; takes precedence over package auto-resolve.
+	 * Explicit model.onnx path. takes precedence over package auto-resolve.
 	 */
 	modelPath?: string
 	/**
-	 * Explicit tokenizer.model path; takes precedence over package auto-resolve.
+	 * Explicit tokenizer.model path. takes precedence over package auto-resolve.
 	 */
 	tokenizerPath?: string
 	/**
@@ -257,7 +257,7 @@ export interface ResolvedWeights {
 	/**
 	 * Street-type evidence lexicon sibling (Option-A bundle, Phase 2). The GENERATION comes from the card's
 	 * `requires.street_type.lexicon` (#1510); a card that names none falls back to `street-type-lexicon-v3.json` with a
-	 * warning. Server tier only; ships at the promote whose model requires the bundle channels.
+	 * warning. Server tier only. ships at the promote whose model requires the bundle channels.
 	 */
 	streetTypeLexiconPath?: string
 	/**
@@ -287,7 +287,7 @@ export interface ResolvedWeights {
 	 * Path to the placetype-pair index (`pair-index-<cc>.bin`, PIX1 format, placetype-pair-prior arc) shipped beside the
 	 * resolved model. `undefined` when the package doesn't ship one. COUNTRY-SPECIFIC BY DESIGN — see
 	 * {@link resolvePairIndexSibling}: unlike the model/tokenizer/model-card, this artifact never falls back to a
-	 * `baseWeights` package (a shared base ships no locale-specific pairs to offer; en-us has none, en-gb ships its own
+	 * `baseWeights` package (a shared base ships no locale-specific pairs to offer. en-us has none, en-gb ships its own
 	 * locally). Read by `loadFromWeights` to construct a `PairIndexResolver` for the `placetypePair` prior default.
 	 */
 	pairIndexPath?: string
@@ -309,7 +309,7 @@ export interface ResolvedWeights {
 	/**
 	 * Every known sibling artifact, with where it came from — or `null` on both fields when it did not resolve.
 	 *
-	 * Required rather than diagnostic. Only `model.onnx` and `tokenizer.model` make resolution fail; the other ~11
+	 * Required rather than diagnostic. Only `model.onnx` and `tokenizer.model` make resolution fail. the other ~11
 	 * artifacts degrade to `undefined` by design, so a checkout that finds the two binaries parses successfully with no
 	 * lexicons, no FST and no pair index — scoring worse, and silently. That silence is affordable only while the
 	 * binaries and the siblings travel together, which the data-root overlay rung stopped guaranteeing. The report is
@@ -423,7 +423,7 @@ export async function resolveWeights(opts: ResolveWeightsOpts): Promise<Resolved
 
 	// 0. An EXPLICIT cacheRoot is authoritative — it names a candidate/package dir the caller wants
 	// graded (eval harnesses laying out a candidate bundle). In-repo the workspace weights package
-	// always resolves, so a fallback-ordered cache could never be reached for grading; the explicit
+	// always resolves, so a fallback-ordered cache could never be reached for grading. the explicit
 	// override exists precisely for that. The IMPLICIT default cache stays a fallback (step 2).
 	// An explicit root is also authoritative for data-only overlays. Such a package deliberately has no binaries of its
 	// own: resolveFromPackageDir follows its `mailwoman.baseWeights` declaration to the base package beside it. Checking
@@ -462,7 +462,7 @@ export async function resolveWeights(opts: ResolveWeightsOpts): Promise<Resolved
 		)
 	} catch (error) {
 		// A resolvable package with no binaries used to be terminal here, on the reasoning that a
-		// half-linked checkout must never silently load the wrong model. The reasoning held; the
+		// half-linked checkout must never silently load the wrong model. The reasoning held. the
 		// conclusion did not, because it is also the ordinary state of a fresh worktree — the binaries
 		// are not in git, so the workspace package always resolves and is always empty, and no later
 		// rung was reachable. Falling through preserves the guarantee: nothing is loaded silently, and
@@ -483,7 +483,7 @@ export async function resolveWeights(opts: ResolveWeightsOpts): Promise<Resolved
 	// Probed whenever the directory exists, not only when it holds both binaries. An overlay for a locale
 	// that declares `mailwoman.baseWeights` deliberately carries no model — en-nz's linker removes one to
 	// prove the fallback engages — so a precondition demanding the binaries skips exactly the locales the
-	// base mechanism exists for. `resolveFromPackageDir` resolves the base itself; a genuinely empty overlay
+	// base mechanism exists for. `resolveFromPackageDir` resolves the base itself. a genuinely empty overlay
 	// still throws "missing model files", which falls through to the cache below.
 	if (await pathExists(overlayDir)) {
 		try {
@@ -623,7 +623,7 @@ async function resolveFromPackageDir(
 	const gazetteerLexiconPath =
 		opts.tier === "pocket" ? undefined : (await pathExists(gazetteerCandidate)) ? gazetteerCandidate : undefined
 
-	// Country-lexicon sibling (#1104): ships with the server tier alongside the gazetteer; pocket is anchor-only.
+	// Country-lexicon sibling (#1104): ships with the server tier alongside the gazetteer. pocket is anchor-only.
 	const countryCandidate = resolvePath(packageDir, "country-surface-lexicon-v1.json")
 
 	const countryLexiconPath =
@@ -642,7 +642,7 @@ async function resolveFromPackageDir(
 	// only, never from baseDir like the model/tokenizer/model-card above. See resolvePairIndexSibling.
 	const pairIndexPath = await resolvePairIndexSibling(packageDir, country)
 
-	// Per-locale FST gazetteer sibling (`fst-<locale>.bin`) — path only; the caller's layer deserializes
+	// Per-locale FST gazetteer sibling (`fst-<locale>.bin`) — path only. the caller's layer deserializes
 	// (neural carries no resolver-wof-sqlite dependency). Country-scoped by construction: a locale model
 	// parsing foreign addresses simply gets no gazetteer bias for those places (the pair-index posture).
 	const fstCandidate = resolvePath(packageDir, `fst-${locale}.bin`)
@@ -765,7 +765,7 @@ async function resolvePairIndexSibling(packageDir: PathBuilder, country: string)
  * {@link resolveAnchorLookupSibling}'s binary-then-JSON ladder.
  *
  * What the artifact is FOR, today: OBSERVABILITY. `PlacetypeCensusResolver` answers "does this parent have children of
- * this KIND at all, and how much more often than the country at large" (presence + lift; within-parent share is ~100%
+ * this KIND at all, and how much more often than the country at large" (presence + lift. within-parent share is ~100%
  * everywhere, so a share-proportional consumer would read a constant). The pair prior probes it alongside each parent
  * candidate and records what it found on the parse trace (`TracePrior` of kind `placetypeCensus`) — nothing else. The
  * calibration rung's job is to read those traces and decide whether a δ is worth shipping.

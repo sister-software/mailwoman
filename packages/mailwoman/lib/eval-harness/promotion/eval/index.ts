@@ -28,12 +28,12 @@
  *       the per-tag battery on the int8 artifact and enforces the fp32↔int8 delta cap.
  *   - Demo-cascade smoke (#524): whole-stack parse→reconcile→resolve against the slim hot DB
  *       (MAILWOMAN_WOF_HOT_DB or the v4.4.0 stage default). Skips with a loud warning when the DB
- *       is absent; floor key `cascade.demo_smoke` (pass-rate %) for specs that eval on it.
+ *       is absent. floor key `cascade.demo_smoke` (pass-rate %) for specs that eval on it.
  *   - Mask-regression check (#718): when the spec declares requires_conventions, re-runs the ship
  *       artifact mask-off vs mask-on and fails the eval if any tag drops >2pp under the mask — the
  *       "second lock" beside createScorer's load-time capability delta check.
  *   - Collects headline numbers into <out-dir>/verdict.json with per-floor PASS/FAIL.
- *   - Exit 0 = every floor met and the mask-regression lock held; exit 1 = any miss.
+ *   - Exit 0 = every floor met and the mask-regression lock held. exit 1 = any miss.
  *
  *   Every leg runs in-process. The check spawned eight children (`per-locale-f1`, `score-affix` ×6,
  *   `score-country-homograph`, `de-order-eval`, `external-arenas`, `demo-cascade-smoke`,
@@ -44,9 +44,9 @@
  *   line-for-line, and the verdict assembler still reads exactly what it read before.
  *
  *   Error semantics are preserved leg-for-leg, because they are not uniform and the differences are
- *   deliberate. `nothrow` became try/catch-and-continue; a bare `$` (which threw on non-zero) became
- *   a call whose throw propagates; a leg whose non-zero exit ABORTED the run (arena, fr-recall)
- *   still returns 1; the two legs that merged `${stdout}${stderr}` into one `.md` keep two sinks and
+ *   deliberate. `nothrow` became try/catch-and-continue. a bare `$` (which threw on non-zero) became
+ *   a call whose throw propagates. a leg whose non-zero exit ABORTED the run (arena, fr-recall)
+ *   still returns 1. the two legs that merged `${stdout}${stderr}` into one `.md` keep two sinks and
  *   concatenate them in that order. `promotion-eval-sinks.test.ts` pins the table.
  *
  *   One deliberate difference, and it touches no artifact: a leg whose stderr the runner captured and
@@ -58,7 +58,7 @@
  *
  *   Lore encoded (the traps that bit before — see CONTRIBUTING_MODEL_WORK.mdx):
  *
- *   - Tokenizer comparability: the tokenizer path must contain the card's tokenizer_version; refuses to
+ *   - Tokenizer comparability: the tokenizer path must contain the card's tokenizer_version. refuses to
  *       grade otherwise (F1 across tokenizers is meaningless).
  *   - Gaz-fed flags: when the eval spec sets requires_gazetteer_lexicon, every scorer gets
  *       --gazetteer-lexicon + --suppress-gaz-near-postcode (zero-filled clues fake an affix crash
@@ -156,14 +156,14 @@ export interface PromotionEvalOptions {
 	/**
 	 * Package-shaped candidate weights dir `<root>/node_modules/@mailwoman/neural-weights-en-us` — the #718-safe path
 	 * that feeds anchor+gazetteer+country via loadFromWeights, the only in-distribution grade for a country-channel model
-	 * (v6.2.0+). Alternative to --model/--int8; takes precedence.
+	 * (v6.2.0+). Alternative to --model/--int8. takes precedence.
 	 */
 	weightsCache?: string
 	/**
 	 * Package-shaped INT8 candidate dir, same layout as {@linkcode PromotionEvalOptions.weightsCache} — pairing them runs
 	 * the dual fp32+int8 battery entirely package-shaped (#47). The `--model`+`--int8` dual under-feeds the country
 	 * channel (channel siblings never load), so its absolute floors are invalid and a release grade needed a second,
-	 * single-artifact `--weights-cache` run; a pair makes floors and deltas valid in one run. Requires
+	 * single-artifact `--weights-cache` run. a pair makes floors and deltas valid in one run. Requires
 	 * {@linkcode PromotionEvalOptions.weightsCache} (the fp32 arm) and excludes the `--model`/`--int8` flow.
 	 */
 	int8WeightsCache?: string
@@ -180,7 +180,7 @@ export interface PromotionEvalOptions {
 }
 
 /**
- * Resolve a `--spec` value to a real file. A path that exists wins verbatim; otherwise the basename is looked up in the
+ * Resolve a `--spec` value to a real file. A path that exists wins verbatim. otherwise the basename is looked up in the
  * `checks/` dir shipped beside this module — `new URL`-relative for the source tree, with a compiled-tree fallback (tsc
  * does not emit readFileSync'd JSON into `out/`, so `packages/mailwoman/out/eval-harness/` reads the source-tree copy
  * at `packages/mailwoman/lib/eval-harness/specs/`; the lint-rules.json pattern). Old `scripts/eval/checks/<spec>.json`
@@ -282,7 +282,7 @@ async function runLoreGuards(env: {
 	// A FAIL is only trustworthy if you know which bytes were graded. v1.9.2's first eval run
 	// false-FAILed (us.postcode 86.9) because it graded a stale/mislabeled artifact — the real model
 	// scored 97.5 under every config. Record md5 + the dynamic-quant fingerprint (count of
-	// DynamicQuantizeLinear nodes; 0 = fp32, >0 = int8) of every graded artifact, and hard-assert the
+	// DynamicQuantizeLinear nodes. 0 = fp32, >0 = int8) of every graded artifact, and hard-assert the
 	// obvious mislabels: --model must be fp32, --int8 must actually be quantized and differ from --model.
 	//
 	// Was `grep -c -a DynamicQuantizeLinear <path>`. grep -c counts MATCHING LINES, not occurrences, and
@@ -406,7 +406,7 @@ async function runLoreGuards(env: {
  * absent so CI stays green without it — but an eval spec that floors `cascade.demo_smoke` will then fail on the missing
  * sidecar (by design).
  *
- * Its own function because it is self-contained and `runPromotionEval` is at the statement ceiling; nothing about the
+ * Its own function because it is self-contained and `runPromotionEval` is at the statement ceiling. nothing about the
  * leg's behavior changed in the comparison.
  */
 async function runDemoCascadeLeg(env: {
@@ -556,7 +556,7 @@ export async function runPromotionEval(options: PromotionEvalOptions): Promise<n
 	if (guardExit !== null) return guardExit
 
 	// The spec-declared channel config every scorer shares. Was an argv fragment (`GAZ_ARGS`) spliced
-	// into eight command lines; it is now one typed object spread into eight calls, which is the same
+	// into eight command lines. it is now one typed object spread into eight calls, which is the same
 	// contract with the stringly-typed step removed.
 	const channelOptions: Pick<
 		ScoreAffixOptions,
@@ -715,7 +715,7 @@ export async function runPromotionEval(options: PromotionEvalOptions): Promise<n
 						out: `${OUT_DIR}/${tag}-deorder`,
 						// A repeated gazetteer query answers from a per-run memo: 59-63% of this leg's `findPlace` calls
 						// repeat a key, and US resolve costs 25.5 ms/row without it against 7.4 with. The databases are
-						// sealed, so a query is a pure function of its arguments; the memo shares hit objects between
+						// sealed, so a query is a pure function of its arguments. the memo shares hit objects between
 						// callers, so a caller that mutated one would change this leg's report.
 						lookupMemo: true,
 						// Five of the six runs feed no floor: the verdict reads one cell, the `native DE` anchor-ON
@@ -735,11 +735,11 @@ export async function runPromotionEval(options: PromotionEvalOptions): Promise<n
 		await writeLocalTextFile(`${renderLines(deorderOut)}${renderLines(deorderErr)}`, `${OUT_DIR}/${tag}-deorder.md`)
 	}
 
-	// --weights-cache alone grades the single shipped package (int8) in the primary slot; the verdict
+	// --weights-cache alone grades the single shipped package (int8) in the primary slot. the verdict
 	// reads the `fp32-*` files (its primary-artifact slot) with withInt8=false. Paired (#47), the
 	// fp32 arm takes the primary slot and the int8 arm runs the same battery from its own package, so
 	// floors and the delta cap are both graded in-distribution in one run. The --model path keeps the
-	// fp32 + optional int8 dual-artifact flow (deltas valid; absolute floors under-fed — the country
+	// fp32 + optional int8 dual-artifact flow (deltas valid. absolute floors under-fed — the country
 	// channel's siblings never load there).
 	if (WC) {
 		await runBattery(WC_MODEL, "fp32")
@@ -885,8 +885,8 @@ export async function runPromotionEval(options: PromotionEvalOptions): Promise<n
 	// F1 drops >2pp under the mask — a finer net than createScorer's load-time 5pp delta check (it catches
 	// INDIRECT mask harms, e.g. forbidding street_suffix depressing street). Weight-dependent, so it lives
 	// on the release path here, NOT Test CI (#582). Only meaningful when the spec declares a conventions
-	// mask; skipped = PASS otherwise. Its status folds into the final verdict below. In-process since the
-	// eval-harness migration; the report lines land in mask-regression.md as the child capture did, and a
+	// mask. skipped = PASS otherwise. Its status folds into the final verdict below. In-process since the
+	// eval-harness migration. the report lines land in mask-regression.md as the child capture did, and a
 	// throw is recorded there like the old child's stderr stack.
 	let MASK_CHECK_STATUS = 0
 

@@ -13,7 +13,7 @@
 # neutral-vs-0.1, resolver/differentiators stable (calibration barely moves ranking). This is
 # UNLIKELY to clear the operator's "significant harness gain" bar — it's a clean data point
 # that closes the staged ls=0.05 fork, run within budget. Promote only if harness improves
-# meaningfully and no tag regresses >2pp; else ship experimental / don't promote.
+# meaningfully and no tag regresses >2pp. else ship experimental / don't promote.
 #
 # Launch: cd corpus-python && modal run -d -m launch.train_remote --config v0_8_0-calibration-ls005.yaml --resume none --trackio
 

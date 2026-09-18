@@ -93,7 +93,7 @@ describe("readZipEntry", () => {
 
 	it("raises when no member matches", async () => {
 		const read = async () => {
-			// oxlint-disable-next-line no-unreachable-loop -- the generator raises before it can yield; the body never runs.
+			// oxlint-disable-next-line no-unreachable-loop -- the generator raises before it can yield. the body never runs.
 			for await (const _chunk of readZipEntry(archivePath, "absent.txt")) break
 		}
 

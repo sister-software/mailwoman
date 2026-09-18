@@ -20,7 +20,7 @@
  *
  *   WHAT IS NOT: `@mailwoman/neural/web-loader` composes those two into a `NeuralAddressClassifier`,
  *   which reaches `@mailwoman/core`. That the whole graph bundles under the `browser` condition is
- *   what the `bundle-graph` health check proves; this harness keeps the reduced graph because its
+ *   what the `bundle-graph` health check proves. this harness keeps the reduced graph because its
  *   subject is timing. The two node imports the reduced graph does meet (`node:fs/promises` in the
  *   tokenizer's `loadFromFile`, `node:module` in the emscripten preamble) are DYNAMIC and
  *   node-guarded, so marking them external is the entire accommodation. The cost of the reduction: the warm number is
@@ -28,11 +28,11 @@
  *   plan asked for, and the decoder is platform-free TS running identically on both hosts.
  *
  *   The demo additionally pulls the FST gazetteer (`fst-en-us.bin`, ~22 MB) through the runtime
- *   pipeline rather than through the neural loader. It is deliberately outside this accounting; add
+ *   pipeline rather than through the neural loader. It is deliberately outside this accounting. add
  *   it here only alongside the pipeline stage that fetches it.
  *
  *   BUDGETS ARE REGRESSION TRIPWIRES, NOT TARGETS. They are set generously against the first run on
- *   the lab workstation. A failure means the quantity moved a lot; the repair is to read the receipt
+ *   the lab workstation. A failure means the quantity moved a lot. the repair is to read the receipt
  *   this file prints, not to widen the constant.
  *
  *   Byte budgets assert RAW bytes rather than wire bytes: raw is the artifact-size regression signal
@@ -133,7 +133,7 @@ const WARM_P95_WASM_MS_BUDGET = 220
 
 /**
  * HTTP range requests a cold gazetteer session costs — opening `candidate.db` over sql.js-httpvfs plus the
- * candidate-table probes. The candidate table is clustered so a probe touches a handful of B-tree pages; the demo's own
+ * candidate-table probes. The candidate table is clustered so a probe touches a handful of B-tree pages. the demo's own
  * measured session was 38 requests. This budget is what fails when a schema or clustering change turns a probe into a
  * scan.
  */
@@ -143,7 +143,7 @@ const GAZETTEER_RANGE_REQUESTS_BUDGET = 120
  * Peak `performance.memory.usedJSHeapSize` across the whole browser session. V8 accounts `ArrayBuffer` storage and WASM
  * linear memory outside the JS heap, so this number does not include the ~53 MB of artifact bytes the session holds nor
  * ORT's own arena — it bounds the JS side only, which is where a leak in the runner or the tokenizer would show.
- * Measured at ~10 MiB on the first run; the budget is the "something is retaining objects per parse" regression check,
+ * Measured at ~10 MiB on the first run. the budget is the "something is retaining objects per parse" regression check,
  * not a memory target.
  */
 const PEAK_HEAP_BYTES_BUDGET = 268_435_456
@@ -717,7 +717,7 @@ async function bundleBrowserEntry(resolveDir: string): Promise<Buffer> {
 		minify: true,
 		write: false,
 		logLevel: "silent",
-		// Both are dynamic imports behind a node-environment guard; the browser never evaluates them.
+		// Both are dynamic imports behind a node-environment guard. the browser never evaluates them.
 		external: ["node:fs/promises", "node:module"],
 	})
 

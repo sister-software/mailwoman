@@ -114,7 +114,7 @@ export async function findStalePathLiterals(context: {
 		const lineOf = (position: number) => source.getLineAndCharacterOfPosition(position).line + 1
 
 		const visit = (node: ts.Node): void => {
-			// A no-substitution template literal resolves exactly as a quoted string does; one with substitutions
+			// A no-substitution template literal resolves exactly as a quoted string does. one with substitutions
 			// cannot be resolved and is out of this check's reach by construction.
 			if (ts.isStringLiteral(node) || ts.isNoSubstitutionTemplateLiteral(node)) {
 				const literal = node.text

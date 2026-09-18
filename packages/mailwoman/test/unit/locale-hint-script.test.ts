@@ -15,7 +15,7 @@
  *   THE CHINESE BOARD IS WHY THE FIELD IS A RANKED LIST AND NOT A VALUE. Its rows are a Han organizational unit beside
  *   a ROMANIZED province and country — `逊克二分场四队, HEILONGJIANG, CHINA` — so Latin writes more of the row than Han
  *   does and `script[0]` is `Latn` on most of them. Han is present on every row and is what a router would want. A
- *   consumer that reads the head of the list gets the majority script; one that asks whether a script is present gets
+ *   consumer that reads the head of the list gets the majority script. one that asks whether a script is present gets
  *   the answer this board exists to give.
  */
 

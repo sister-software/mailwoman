@@ -187,7 +187,7 @@ async function discoverCounties(state: string, vintage: number): Promise<string[
 }
 
 /**
- * Fetch one state's TIGER data at `level` into a SQLite DB. Yields progress; returns the final tally.
+ * Fetch one state's TIGER data at `level` into a SQLite DB. Yields progress. returns the final tally.
  */
 export async function* fetchTIGER(options: FetchTIGEROptions): AsyncGenerator<FetchTIGEREvent, FetchTIGERResult> {
 	const level = options.level ?? "tabblock20"
@@ -199,14 +199,14 @@ export async function* fetchTIGER(options: FetchTIGEROptions): AsyncGenerator<Fe
 
 	const cacheDir = join(dataRoot, "tiger", String(vintage), state)
 	// Default to a stable, vintage-agnostic `tiger.db` — the filename the corpus `tiger` adapter reads
-	// (run-corpus-build → `${ROOT}/tiger/tiger.db`). The vintage is a content detail, not a path one;
+	// (run-corpus-build → `${ROOT}/tiger/tiger.db`). The vintage is a content detail, not a path one.
 	// the per-table idempotent delete keeps a re-fetch (newer vintage) clean. The download CACHE stays
 	// vintage-partitioned below so zips don't collide across vintages.
 	const outPath = options.outPath ?? join(dataRoot, "tiger", "tiger.db")
 	await makeDirectories(cacheDir)
 	await makeDirectories(dirname(outPath))
 
-	// Source units: one (per-state) for block/place; one per county for addrfeat.
+	// Source units: one (per-state) for block/place. one per county for addrfeat.
 	const geoCodes = level === "addrfeat" ? await discoverCounties(state, vintage) : [""]
 
 	if (level === "addrfeat" && !geoCodes.length) {

@@ -14,7 +14,7 @@ from typing import Any
 # THERE IS NO COUNTRY COLUMN, and its absence is the point. The table used to read
 # ("Japanese (Katakana + Kanji)", "ja-JP", "JP", "jpan") and the generator stamped that JP on every row it
 # produced — so a US address rendered in katakana was written as a Japanese address. A script is a way of
-# writing; it names neither a territory nor, by itself, a language. The address being rendered keeps its own
+# writing. it names neither a territory nor, by itself, a language. The address being rendered keeps its own
 # country and locale, and these two fields say how the surface is written.
 #
 # `surface_language` is a BCP-47 LANGUAGE SUBTAG with no region: a US address rendered by Japanese convention

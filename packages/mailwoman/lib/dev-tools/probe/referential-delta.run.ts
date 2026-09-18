@@ -24,7 +24,7 @@
  *
  *   1. **Gazetteer census** — every place at or above saturation, and every NAME-COLLIDING pair where
  *      both bearers clear it. The second number is the population of cases where the tiebreak is
- *      required; if it is zero the tiebreak is insurance, if it is not, it is a bug fix.
+ *      required. if it is zero the tiebreak is insurance, if it is not, it is a bug fix.
  *   2. **Live query replay** — every board query plus the namesake families, run through the real
  *      `findPlace`, with the returned candidate list re-sorted under both the pre-split key and
  *      `compareReferential`. Any row whose id sequence differs is a real resolver delta and is printed.

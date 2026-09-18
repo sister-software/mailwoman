@@ -6,10 +6,10 @@
  *   Secondary-unit regex repair pass — parser-improvement backlog (2026-05-30).
  *
  *   The three-arena capability eval surfaced a persistent neural weakness: the model drops secondary
- *   units. "123 Main St Apt 456" → no unit label; the postal-standards secondary-unit edge class
+ *   units. "123 Main St Apt 456" → no unit label. the postal-standards secondary-unit edge class
  *   scored 0% neural. Units have a rigid surface shape (a designator keyword + an identifier), so —
  *   exactly like the postcode-repair pass (#35) — we can detect them deterministically and repair
- *   the BIO labels after decode but before `buildAddressTree`. The model is untouched; this is a
+ *   the BIO labels after decode but before `buildAddressTree`. The model is untouched. this is a
  *   decoder-side correction, the same "lowest risk" change family as postcode-repair.
  *
  *   PRECISION GUARDS (mirror postcode-repair — never regress a confident parse):
@@ -26,7 +26,7 @@
  *       postcode-repair) so "Apt 4 Springfield" can't leave a stray I-unit on "Springfield".
  *
  *   Opt-in via `ParseOpts.unitRepair` (postcode-repair earned default-on only after a measured
- *   +135/0; unit-repair stays opt-in until the v0.7.2 arena re-run quantifies its delta).
+ *   +135/0. unit-repair stays opt-in until the v0.7.2 arena re-run quantifies its delta).
  */
 
 import type { DecoderToken } from "@mailwoman/core/decoder"

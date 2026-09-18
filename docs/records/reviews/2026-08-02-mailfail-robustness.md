@@ -112,7 +112,7 @@ first THROW   : 325 chars (131 pieces)
 That is not exotic. Shipping systems, CRMs and government forms concatenate address lines to well
 past 325 characters routinely.
 
-**The 512-character drop-in cap does not protect against this.** `nominatim/cli.ts:67` and
+**The 512-character drop-in cap does not guard against this.** `nominatim/cli.ts:67` and
 `photon/cli.ts:60` both cap at `MAX_QUERY_LEN = 512`, with a comment explaining the cap exists
 because a long query "would exceed the model's input window." The cap is roughly 4× too loose: a
 415-character query — comfortably under it — tokenizes to 178 pieces and throws.

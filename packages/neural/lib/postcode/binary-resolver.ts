@@ -43,7 +43,7 @@ const REC_TAIL = 5
 export const LAT_Q = 32_767 / 90
 
 /**
- * Longitude quantization scale — the longitude half of the PCB1/PFX1 grid; see {@link LAT_Q}.
+ * Longitude quantization scale — the longitude half of the PCB1/PFX1 grid. see {@link LAT_Q}.
  */
 export const LON_Q = 32_767 / 180
 
@@ -81,10 +81,10 @@ function encodeKey(s: string, width: number, out: Uint8Array, offset: number): v
 
 /**
  * Serialize postcode entries into the flat binary. Entries are sorted by (postcode, country) so equal postcodes land in
- * adjacent records. Run in Node; consumed by {@link PostcodeBinaryResolver}.
+ * adjacent records. Run in Node. consumed by {@link PostcodeBinaryResolver}.
  */
 export function serializePostcodeBinary(entries: readonly PostcodeBinaryEntry[]): Uint8Array {
-	// oxlint-disable-next-line unicorn/no-array-sort -- sorts a freshly-built array; toSorted would double-allocate on a hot path
+	// oxlint-disable-next-line unicorn/no-array-sort -- sorts a freshly-built array. toSorted would double-allocate on a hot path
 	const sorted = [...entries].sort((a, b) =>
 		a.postcode < b.postcode
 			? -1
@@ -97,7 +97,7 @@ export function serializePostcodeBinary(entries: readonly PostcodeBinaryEntry[])
 						: 0
 	)
 
-	// oxlint-disable-next-line unicorn/no-array-sort -- sorts a freshly-built array; toSorted would double-allocate on a hot path
+	// oxlint-disable-next-line unicorn/no-array-sort -- sorts a freshly-built array. toSorted would double-allocate on a hot path
 	const countries = [...new Set(sorted.map((e) => e.country))].sort()
 	const countryIdx = new Map(countries.map((c, i) => [c, i]))
 	let keyWidth = 1

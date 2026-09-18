@@ -7,7 +7,7 @@
  *   journal freeze → ancestors closure → `ancestors(id)` index (before the −4 backfill — without it
  *   the backfill's per-candidate lookups full-scan the 13M-row table each time and the build stalls
  *   for hours, #1015) → `wof:hierarchy` −4 backfill (WOF ids only) → coincident_roles → indexes →
- *   ANALYZE → integrity check. Runs IN PLACE on the staging DB; the caller `VACUUM INTO`s the final
+ *   ANALYZE → integrity check. Runs IN PLACE on the staging DB. the caller `VACUUM INTO`s the final
  *   artifact afterwards.
  */
 
@@ -20,7 +20,7 @@ import { assertDatabaseIntegrity } from "@mailwoman/sqlite/sealed-db"
 export interface FreezeAdminOptions {
 	/**
 	 * Repos root for the `wof:hierarchy` −4 backfill (#440/#832 — NYC/London-class multi-parent orphans). Omit only in
-	 * fixture tests; a real build without it leaves those metros unreachable by the region-descendant filter.
+	 * fixture tests. a real build without it leaves those metros unreachable by the region-descendant filter.
 	 */
 	dataDir?: string
 	onPhase?: (phase: string, detail?: string) => void
@@ -71,7 +71,7 @@ export async function freezeAdmin(
 	const ancestorRows = populateAncestors(db)
 
 	// Index `ancestors(id)` NOW — before the −4 backfill probes it. `createUnifiedIndexes` (below) builds this same
-	// index, but it runs after the backfill; without it here the backfill's per-candidate lookups full-scan the
+	// index, but it runs after the backfill. without it here the backfill's per-candidate lookups full-scan the
 	// closure table each time (#1015). `IF NOT EXISTS` keeps the later createUnifiedIndexes a no-op.
 	phase("ancestors-index")
 	db.exec("CREATE INDEX IF NOT EXISTS ancestors_by_id ON ancestors(id)")
@@ -88,7 +88,7 @@ export async function freezeAdmin(
 				`WARNING: no */data geojson roots under ${opts.dataDir} — orphans like NYC stay unreachable`
 			)
 		} else {
-			// Only real WOF places have `wof:hierarchy` geojson; synthetic Overture/GeoNames rows (ids >=
+			// Only real WOF places have `wof:hierarchy` geojson. synthetic Overture/GeoNames rows (ids >=
 			// OVERTURE_ID_BASE) never do, and probing millions of them across every repo root turned this step into a
 			// ~40-min stall on the wide-coverage build (#1015). Their ancestry comes from the parent_id closure.
 			const bf = await backfillAncestorsFromHierarchy(db, geojsonRoots, { maxID: OVERTURE_ID_BASE })

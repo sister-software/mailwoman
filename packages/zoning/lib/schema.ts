@@ -8,7 +8,7 @@
  *   the published vocabularies, and the layer-contract tables from `@mailwoman/core/layers`.
  *
  *   THE LOCAL CODE IS `NOT NULL` AND THE CROSSWALK IS NULLABLE, WHICH IS THE VOCABULARY DECISION AS A
- *   CONSTRAINT. A source with no crosswalk produces a complete row; a source with no local code does not. The
+ *   CONSTRAINT. A source with no crosswalk produces a complete row. a source with no local code does not. The
  *   Department's own item description is what this transcribes: its national scheme "complements (rather than
  *   replaces) the existing statutory zoning used for each individual plan".
  *
@@ -20,11 +20,11 @@
  *
  *   `signed_area_m2` IS THE INGEST'S OWN RECEIPT AND ITS SIGN IS required. The service encodes hole roles
  *   by ring orientation with clockwise as the exterior, so a correctly-read feature stores a POSITIVE signed
- *   sum; the national total of those sums is what the build compares against the Department's own
+ *   sum. the national total of those sums is what the build compares against the Department's own
  *   `Shape__Area` statistic. Read with the holes it is 5,444.5 km²; read without them, 5,666.6 km².
  *
  *   `WITHOUT ROWID` ON THE CELL TABLE AND NEVER ON THE GEOMETRY TABLE. Small fixed-width rows probed by their
- *   exact primary key belong in the B-tree; a row carrying a geometry blob does not — clustering it into the
+ *   exact primary key belong in the B-tree. a row carrying a geometry blob does not — clustering it into the
  *   B-tree makes every index page a geometry page.
  *
  *   THE WHOLE-CELL SET IS COMPACTED PER FEATURE, SO IT IS MIXED-RESOLUTION. A row therefore carries its own
@@ -46,7 +46,7 @@ export const ZoningCellContainment = {
 	 */
 	Whole: "whole",
 	/**
-	 * The zone boundary crosses the cell. The index has narrowed the candidate polygons; the point test decides.
+	 * The zone boundary crosses the cell. The index has narrowed the candidate polygons. the point test decides.
 	 */
 	Partial: "partial",
 } as const
@@ -76,7 +76,7 @@ export interface ZoningAreaTable {
 	plan_id: string
 	/**
 	 * `ZONE_ORIG` — THE AUTHORITY'S OWN ZONE CODE, VERBATIM, in its own spelling including case and trailing space.
-	 * Compared case-insensitively where it must be compared; never stored normalized.
+	 * Compared case-insensitively where it must be compared. never stored normalized.
 	 */
 	local_code: string
 	/**
@@ -408,7 +408,7 @@ export async function createZoningCellTable(db: ZoningSchemaHandle): Promise<voi
 
 	await addCellIndexColumns(table, "area_id")
 		.addPrimaryKeyConstraint("zoning_cell_pk", ["h3_cell", "area_id"])
-		// `WITHOUT ROWID` has no first-class builder; the raw modifier is the idiomatic fallback.
+		// `WITHOUT ROWID` has no first-class builder. the raw modifier is the idiomatic fallback.
 		.modifyEnd(sql`without rowid`)
 		.execute()
 }

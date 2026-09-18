@@ -50,7 +50,7 @@ def apply_curricula(cfg: Config, tb: dict[str, Any], step: int) -> None:
     # sees each channel alone (the bundle must inform, never become a joint crutch).
     if getattr(cfg.train, "evidence_curriculum", False):
         # False-evidence noise is drawn first (v3.21.0, see perturb_evidence_noise) — then the
-        # absence zero-out draws over the noised batch; the rates compose independently.
+        # absence zero-out draws over the noised batch. the rates compose independently.
         noise_p = float(getattr(cfg.train, "evidence_noise_prob", 0.0))
         if noise_p > 0.0:
             for prefix in ("street_type", "locality_surface"):
@@ -108,7 +108,7 @@ def run_training_loop(
 ) -> None:
     """Step until the budget is met, then write the final artifacts.
 
-    `evaluate` is the val pass the loop calls on its own schedule; it is passed in rather than
+    `evaluate` is the val pass the loop calls on its own schedule. it is passed in rather than
     imported so this module does not depend on the metric stack it never reads.
     """
     model, optim, scheduler = state.model, state.optimizer, state.scheduler
@@ -121,7 +121,7 @@ def run_training_loop(
     log_every = max(1, cfg.train.log_every_steps)
     print(f"max_steps={cfg.train.max_steps} batch_size={cfg.train.batch_size}")
 
-    # The streaming iterator may exhaust before max_steps if row_limit is set;
+    # The streaming iterator may exhaust before max_steps if row_limit is set.
     # restart per "epoch" until step budget is met.
     epoch = 0
     while step < cfg.train.max_steps:
@@ -139,7 +139,7 @@ def run_training_loop(
             model.train()
             tb = to_tensor_batch(batch, device)
             apply_curricula(cfg, tb, step)
-            # Optimizer step happens every ``accum`` micro-batches; gradients accumulate
+            # Optimizer step happens every ``accum`` micro-batches. gradients accumulate
             # across the micro-batches in between. ``step`` counts *optimizer* steps,
             # not micro-steps, so it lines up with the cfg.train.max_steps budget.
             is_accum_boundary = ((micro_step + 1) % accum) == 0
@@ -192,7 +192,7 @@ def run_training_loop(
                 callback.on_step_end(state, step)
 
             # Evaluating costs a forward pass over the val split, so the loop decides when it
-            # happens; the callbacks only observe the result.
+            # happens. the callbacks only observe the result.
             if step % cfg.train.eval_every_steps == 0:
                 state.val = evaluate(cfg, state.tokenizer, model, device, max_rows=cfg.data.val_rows)
                 state.elapsed = time.time() - state.started

@@ -176,7 +176,7 @@ describe("decideArc", () => {
 
 	it("renders BOTH halves of the trade, not only the regressions", () => {
 		// The first version recorded regressedInputs and not improvedInputs, so every report it produced showed the
-		// losses as addresses and the wins as a bare count. A candidate is a trade; a reader cannot price one with a
+		// losses as addresses and the wins as a bare count. A candidate is a trade. a reader cannot price one with a
 		// side hidden.
 		const arc = decideArc(
 			leg("control", 0, 0, { differed: 0 }),
@@ -217,7 +217,7 @@ describe("decideArc", () => {
 describe("protectedCountries", () => {
 	it("protects both tier-1 locales, which the list it replaced did not", async () => {
 		// The defect in one assertion: `["FR", "GB", "DE"]` stood under a docstring reading "locales that iron rule 6
-		// protects unconditionally" while SCOPE's tier 1 read US and FR.
+		// guards unconditionally" while SCOPE's tier 1 read US and FR.
 		const countries = (await protectedCountries()).map((entry) => entry.country)
 
 		expect(countries).toContain("US")
@@ -235,7 +235,7 @@ describe("protectedCountries", () => {
 	})
 
 	it("reads tier 1 from the register rather than from a second copy of it", async () => {
-		// The derivation is the whole change: a tier-1 country added to `scope.config.json` is protected without an
+		// The derivation is the whole change: a tier-1 country added to `scope.config.json` is guarded without an
 		// edit here, which is the property the hand-written list could not have.
 		const scope = await readScopeConfig()
 		const widened = { ...scope, tiers: { ...scope.tiers, "1": [...(scope.tiers["1"] ?? []), "ZZ"] } }

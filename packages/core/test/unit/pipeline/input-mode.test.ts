@@ -5,7 +5,7 @@
  *
  *   Decision-A register mapping (Option-A evidence bundle, 2026-07-28): the kind→InputMode derivation
  *   the pipeline applies when a caller doesn't set the mode explicitly. The fence guards the register
- *   split the three-run verdict established — multi-component postal specifications run channels-off;
+ *   split the three-run verdict established — multi-component postal specifications run channels-off.
  *   single-thing lookups run channels-on.
  */
 

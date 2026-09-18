@@ -45,7 +45,7 @@ function fields(parts: Array<string | null>): string {
 //#region Rows
 
 /**
- * How many locale-head classes the row names. The head's axis is nine countries wide; the tail is uniformly flat on a
+ * How many locale-head classes the row names. The head's axis is nine countries wide. the tail is uniformly flat on a
  * confident parse, and three entries is what fits beside the rest of the row on a narrow pane.
  */
 const LOCALE_HEAD_ENTRIES = 3

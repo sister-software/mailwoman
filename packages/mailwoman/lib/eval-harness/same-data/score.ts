@@ -11,7 +11,7 @@
  *   proportion test would discard that pairing and widen the interval for nothing.
  *
  *   The decision is pooled and the per-stratum tables are descriptive. Exact power at alpha 0.05 two-sided:
- *   100 rows gives 0.74 against a true 12-point margin and 0.90 against 18 points; 50 rows gives 0.36 and
+ *   100 rows gives 0.74 against a true 12-point margin and 0.90 against 18 points. 50 rows gives 0.36 and
  *   0.58. Five per-stratum significance decisions at that power are five chances to find a win, so the power
  *   is spent once, pooled, at the registered 8-point margin.
  *
@@ -32,7 +32,7 @@ export const CONFIDENCE_BINS = [0, 0.2, 0.4, 0.6, 0.8, 1] as const
 
 /**
  * The largest discordant-pair count the exact test computes. The first term is `2 ** -n`, which is representable down
- * to about n = 1074; the bound is well inside that and refusing past it beats returning a silent zero.
+ * to about n = 1074. the bound is well inside that and refusing past it beats returning a silent zero.
  */
 const MAX_EXACT_N = 1000
 
@@ -97,7 +97,7 @@ export interface ArmMetrics {
 	arm: string
 	stratum: string
 	/**
-	 * Rows scored — after errored rows are removed. This is the row count, not the denominator of any rate below; each
+	 * Rows scored — after errored rows are removed. This is the row count, not the denominator of any rate below. each
 	 * rate carries its own.
 	 */
 	n: number
@@ -289,7 +289,7 @@ export function comparePaired(
 }
 
 /**
- * The registered decision, evaluated. Both conditions must hold; each is reported with what it read, so a refusal names
+ * The registered decision, evaluated. Both conditions must hold. each is reported with what it read, so a refusal names
  * the quantity that refused it.
  */
 export interface BenchmarkVerdict {

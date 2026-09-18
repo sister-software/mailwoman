@@ -63,7 +63,7 @@ class CoarseEncoderLosses(CoarseEncoderState):
                 **ce_kwargs,
             )
             if self.use_affix_head and affix_logits is not None:
-                # Affix-head CE over its 5 classes; targets via the label lut (ignore -100 rows).
+                # Affix-head CE over its 5 classes. targets via the label lut (ignore -100 rows).
                 safe = labels.clamp_min(0)
                 affix_targets = self.affix_target_lut[safe]
                 affix_targets = torch.where(labels.eq(-100), torch.full_like(affix_targets, -100), affix_targets)
@@ -72,7 +72,7 @@ class CoarseEncoderLosses(CoarseEncoderState):
                 )
                 ce_loss = ce_loss + affix_loss
             if self.crf is not None and attention_mask is not None and self.crf_loss_weight > 0:
-                # CRF NLL needs a (B, S) float mask. attention_mask is long-typed; cast.
+                # CRF NLL needs a (B, S) float mask. attention_mask is long-typed. cast.
                 # Replace IGNORE_INDEX positions in labels with 0 so gather doesn't OOB
                 # — those positions are zeroed by the mask anyway.
                 # v0.4.0: pass crf_normalization through — "per_token" mode produces a
@@ -103,7 +103,7 @@ class CoarseEncoderLosses(CoarseEncoderState):
                         mask=crf_mask,
                         reduction=crf_reduction,
                     )
-                # Dual loss: CE (per-token) keeps emissions discriminative; CRF NLL is
+                # Dual loss: CE (per-token) keeps emissions discriminative. CRF NLL is
                 # the structural regularizer. Under per_sequence normalization (v0.3.0),
                 # crf_loss_weight=0.05–0.1 is typical to balance magnitudes. Under
                 # per_token (v0.4.0), crf_loss_weight can be 1.0 cleanly.
@@ -145,7 +145,7 @@ class CoarseEncoderLosses(CoarseEncoderState):
         # PR3: auxiliary locale cross-entropy. Supervises the locale head against the row's
         # country so the pooled representation (and therefore the FiLM conditioning) actually
         # encodes "which country". fp32 CE over the small locale vocabulary. Rows whose country
-        # is unmapped carry IGNORE_INDEX and are skipped; a batch with no mapped row contributes
+        # is unmapped carry IGNORE_INDEX and are skipped. a batch with no mapped row contributes
         # nothing (guards the all-ignored 0/0 → NaN edge).
         if (
             self.use_locale_conditioning
@@ -165,7 +165,7 @@ class CoarseEncoderLosses(CoarseEncoderState):
         # Span-boundary auxiliary loss (#727). Per-token BCE on span START (B-*) and END (entity token
         # whose successor doesn't continue it), supervised from the BIO labels. Computed in fp32 — the
         # CRF NaN scar (v0.6.0) says any structural/transition-style leg gets fp32 headroom, and BCE
-        # over masked positions is cheap. Masked to real, non-ignore tokens; a batch with no valid
+        # over masked positions is cheap. Masked to real, non-ignore tokens. a batch with no valid
         # position contributes nothing (guards the 0/0 → NaN edge).
         if (
             self.use_span_boundary_head
@@ -205,7 +205,7 @@ class CoarseEncoderLosses(CoarseEncoderState):
             span_scores_out = self.span_scorer(hidden)
 
             if labels is not None and attention_mask is not None and self.span_loss_weight > 0:
-                assert self.semi_crf is not None  # nosec B101 — type narrowing; built in __init__ when use_span_scorer
+                assert self.semi_crf is not None  # nosec B101 — type narrowing. built in __init__ when use_span_scorer
                 lengths = attention_mask.sum(dim=1).long()
                 row_idxs: list[int] = []
                 segs: list[list[tuple[int, int, int]]] = []

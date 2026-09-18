@@ -43,7 +43,7 @@
  * ```
  *
  *   The intermediate files live alongside the final parquet files for reproducibility + debugging. Operators
- *   can `rm -rf intermediate/` after the build if disk is tight; the final `corpus-v<version>/` is
+ *   can `rm -rf intermediate/` after the build if disk is tight. the final `corpus-v<version>/` is
  *   self-contained.
  */
 
@@ -150,7 +150,7 @@ export interface BuildCorpusManifest {
  *
  * Memory profile: the function maintains an in-memory `Map<source_id, SplitName>` to bridge the align → parquet
  * hand-off. For Phase 1 fixture-scale runs (≤ 10⁴ rows) this is trivial. For real 5M+ runs, the map fits comfortably in
- * a few hundred MB; the canonical.jsonl and labeled.jsonl payloads stream and never sit in memory.
+ * a few hundred MB. the canonical.jsonl and labeled.jsonl payloads stream and never sit in memory.
  */
 export async function buildCorpus(opts: BuildCorpusOptions): Promise<BuildCorpusManifest> {
 	const adapters = opts.adapters ?? defaultAdapterRegistry.list()
@@ -178,7 +178,7 @@ export async function buildCorpus(opts: BuildCorpusOptions): Promise<BuildCorpus
 
 		// Opt-in resume (MAILWOMAN_RESUME=1): if a complete per-adapter canonical.jsonl + MANIFEST.json
 		// already exist, reuse them instead of re-emitting. The MANIFEST is written only after the
-		// canonical is fully flushed, so its presence guarantees completeness; row order is identical,
+		// canonical is fully flushed, so its presence guarantees completeness. row order is identical,
 		// so downstream holdout-split determinism is preserved. Recovers an align-phase crash without
 		// redoing the (expensive) emit phase. Default (unset) re-emits, preserving correctness. (2026-06-12.)
 		const adapterDir = join(intermediateDir, adapter.id)
@@ -211,7 +211,7 @@ export async function buildCorpus(opts: BuildCorpusOptions): Promise<BuildCorpus
 	// 2 + 3. Synthesis + alignment: stream every canonical.jsonl, optionally augment, align,
 	// and route each labeled row directly to its split-specific JSONL (`labeled-{train,val,test}.
 	// jsonl`). Memory cost is O(1) — the prior in-memory `splitInputs` array + `splitByIDMap`
-	// + `SplitManifest.{train,val,test}` arrays are gone; per-row split is decided inline via
+	// + `SplitManifest.{train,val,test}` arrays are gone. per-row split is decided inline via
 	// `splitForRow` (a pure function of source_id + region + holdout policy).
 	const labeledPaths: Record<SplitName, string> = {
 		train: join(intermediateDir, "labeled-train.jsonl"),
@@ -274,7 +274,7 @@ export async function buildCorpus(opts: BuildCorpusOptions): Promise<BuildCorpus
 					result = alignRow(r)
 				} catch (error) {
 					// Last-resort robustness (2026-06-12): no single row may crash a multi-hour build.
-					// alignRow's targeted paths normalize/quarantine known issues with specific reasons;
+					// alignRow's targeted paths normalize/quarantine known issues with specific reasons.
 					// this catches any UNKNOWN throw (e.g. assertSpanInvariants on an unforeseen span
 					// shape) → quarantine + continue. A spike in `align-threw` reasons is a finding.
 					writeQuarantine(r, `align-threw:${(error as Error).message.slice(0, 160)}`)
@@ -307,7 +307,7 @@ export async function buildCorpus(opts: BuildCorpusOptions): Promise<BuildCorpus
 	quarantineStream.end()
 	await Promise.all([...Object.values(labeledStreams).map((s) => once(s, "close")), once(quarantineStream, "close")])
 
-	// 4. Splits — manifest derived by streaming the per-split labeled files; no in-memory
+	// 4. Splits — manifest derived by streaming the per-split labeled files. no in-memory
 	// source-id arrays. `sort(1)` from coreutils produces the deterministic per-split .txt
 	// manifests with disk spill for splits that exceed in-memory thresholds.
 	opts.onProgress?.("split", `splitting ${aligned} aligned rows`)

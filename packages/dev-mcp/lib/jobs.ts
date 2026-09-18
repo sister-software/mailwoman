@@ -46,7 +46,7 @@ export interface JobSummary {
 /**
  * Cap on captured output per stream.
  *
- * A gauntlet log is tens of kilobytes; this is generous enough that no real run is truncated, and bounded so a runaway
+ * A gauntlet log is tens of kilobytes. this is generous enough that no real run is truncated, and bounded so a runaway
  * child cannot exhaust the server's heap. Truncation is REPORTED in the tail marker rather than silently applied — a
  * log that quietly lost its end would hide the verdict, which prints last.
  */

@@ -232,7 +232,7 @@ describe("scoreAblation — one deletion against its own anchor", () => {
 	})
 
 	it("breaks when the deletion moves the coordinate past the row's own tolerance", () => {
-		// ~1.1 km north of the anchor; inside a 5 km band and outside an 80 m rooftop pin.
+		// ~1.1 km north of the anchor. inside a 5 km band and outside an 80 m rooftop pin.
 		const moved = result({ lat: 40.7584 })
 
 		expect(scoreAblation(result(), moved, "75013", "postcode", 5).broken).toBe(false)
@@ -277,7 +277,7 @@ describe("isTierDrop — coarsening costs the user precision even at zero displa
 })
 
 /**
- * A row outcome with the fields a cell aggregates; the rest is filler the aggregation never reads.
+ * A row outcome with the fields a cell aggregates. the rest is filler the aggregation never reads.
  */
 function row(over: Partial<AblationRowOutcome>): AblationRowOutcome {
 	return {
@@ -388,7 +388,7 @@ describe("the support-0-is-absence rendering rule", () => {
 	it("renders a measured cell as broken/support — including a genuine zero BROKEN count", () => {
 		const [cell] = aggregateCells([row({ broken: false }), row({ caseID: "b", broken: false })], meta)
 
-		// This is the distinction the rule protects: 0 of 2 broken is a MEASUREMENT that the component did not
+		// This is the distinction the rule guards: 0 of 2 broken is a MEASUREMENT that the component did not
 		// matter here, and it must not read like the unmeasured cell above.
 		expect(formatAblationCell(cell)).toBe("0/2")
 		expect(formatAblationCell(cell)).not.toBe(ABLATION_ABSENT)
@@ -471,7 +471,7 @@ describe("ablationBoardID — a cell without a board is not a measurement", () =
 
 /**
  * The CLI → layer plumbing, pinned for the reason `pin-pin.test.ts` pins the resolver pin: a dropped option does not
- * throw. A dropped `--components` runs the whole corpus and prints a map that looks exactly like the one asked for; a
+ * throw. A dropped `--components` runs the whole corpus and prints a map that looks exactly like the one asked for. a
  * dropped `--limit` turns a smoke run into a forty-minute one.
  */
 describe("runAblationOptions — a CLI flag reaches the layer", () => {

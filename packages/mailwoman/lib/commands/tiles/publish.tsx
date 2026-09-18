@@ -4,7 +4,7 @@
  * @author Teffen Ellis, et al.
  *
  *   `mailwoman tiles publish` — upload a PMTiles archive to the Cloudflare R2 bucket the tile worker serves from. The
- *   upload itself is `publishTiles` in `#tiles/publish`, which the planetary pipeline calls as a function; this file
+ *   upload itself is `publishTiles` in `#tiles/publish`, which the planetary pipeline calls as a function. this file
  *   is the command's contract and its Ink rendering.
  */
 

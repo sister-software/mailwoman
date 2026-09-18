@@ -112,7 +112,7 @@ export const CONFORMANCE_SUITES: readonly ConformanceSuite[] = [
 		law: REFINEMENT_MONOTONICITY_LAW,
 		path: REFINEMENT_MONOTONICITY_SUITE_PATH,
 		audit: auditRefinementSuite,
-		// The step is named from the FULLER query to the coarser one, because that is the direction the derivation runs;
+		// The step is named from the FULLER query to the coarser one, because that is the direction the derivation runs.
 		// the law itself is stated the other way, which the head line already prints as base → variant.
 		detail: (fixture) => `    xform   : variant −${describeRefinementStep(fixture)} → base`,
 		coverage: describeRefinementCoverage,

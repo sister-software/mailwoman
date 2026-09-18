@@ -181,7 +181,7 @@ export function buildDesignatorLabelQuery(concepts: readonly SubVenueConcept[] =
  * budget.
  *
  * A caveat worth knowing before trusting a row: Wikidata's P31 on these is not clean. `Q1322696` (Kigali International
- * Airport) is typed as an airport terminal, so the result set mixes AIRPORTS in with terminals. The consumer filters;
+ * Airport) is typed as an airport terminal, so the result set mixes AIRPORTS in with terminals. The consumer filters.
  * this module fetches what the query returns.
  */
 export function buildTerminalInstanceQuery(classQID: string = TERMINAL_CLASS_QID): string {
@@ -215,7 +215,7 @@ export interface CreateWikidataClientOptions {
 	 */
 	cacheDir: string
 	/**
-	 * Time source powering the pacer and the retry backoff. Defaults to the system clock; tests inject a fake so no suite
+	 * Time source powering the pacer and the retry backoff. Defaults to the system clock. tests inject a fake so no suite
 	 * ever sleeps a real second.
 	 */
 	clock?: ClockLike
@@ -262,7 +262,7 @@ export function createWikidataClient(options: CreateWikidataClientOptions): Wiki
 				validate: (value) => isSPARQLResults(value.data?.data),
 			}),
 			ttl: WDQS_CACHE_TTL_MS,
-			// The TTL is chosen against Wikidata's edit cadence; letting a CDN header override it would
+			// The TTL is chosen against Wikidata's edit cadence. letting a CDN header override it would
 			// silently replace that reasoning with whatever varnish in front of WDQS happens to send.
 			interpretHeader: false,
 		},

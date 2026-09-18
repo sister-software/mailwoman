@@ -9,7 +9,7 @@
  *   race + geometry (e.g. a dot-density map).
  *
  *   Keyless public data. The per-state ZIP holds a pipe-delimited geographic header
- *   (`<st>geo<yr>.pl`) and three data segments; segment 1 (`<st>00001<yr>.pl`) carries P1 + P2. We
+ *   (`<st>geo<yr>.pl`) and three data segments. segment 1 (`<st>00001<yr>.pl`) carries P1 + P2. We
  *   join the header (filtered to SUMLEV 750 = block) to segment 1 by LOGRECNO. Field offsets are
  *   fixed by the 2020 P.L. layout (verified against the real files).
  *
@@ -74,7 +74,7 @@ export interface H1Counts {
 
 /**
  * The three H1 counts from one segment-2 row. The last field carries CRLF's trailing CR when the file has one, so each
- * field is trimmed before it is read as a number; a row whose counts do not add up is refused rather than stored.
+ * field is trimmed before it is read as a number. a row whose counts do not add up is refused rather than stored.
  */
 export function parseH1(fields: readonly string[]): H1Counts {
 	if (fields.length !== SEG2_FIELD_COUNT) {
@@ -167,7 +167,7 @@ async function eachLine(path: string, fn: (line: string) => void): Promise<void>
 }
 
 /**
- * Fetch one state's P.L. 94-171 block race counts into `pl_block`. Yields progress; returns the tally.
+ * Fetch one state's P.L. 94-171 block race counts into `pl_block`. Yields progress. returns the tally.
  */
 export async function* fetchRedistricting(
 	options: FetchRedistrictingOptions
@@ -221,7 +221,7 @@ export async function* fetchRedistricting(
 	yield { phase: "header", blocks: total }
 
 	// Pass 1b: segment 2 → H1 housing counts for the mapped LOGRECNOs. Read before segment 1 so a block's P2 and H1
-	// land in one row; a mapped block with no segment-2 row is a data defect the load refuses, never a zero.
+	// land in one row. a mapped block with no segment-2 row is a data defect the load refuses, never a zero.
 	const h1ByLogrecno = new Map<string, H1Counts>()
 
 	await eachLine(seg2Path, (line) => {

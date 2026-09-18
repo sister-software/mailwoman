@@ -11,7 +11,7 @@
  *   (FI 300/1k … PL 75/1k offender rows), and the controlled experiment showed postcode-extract
  *   coverage alone collapses it (FI 300→1, CZ 131→4): a resolvable postcode node feeds the
  *   resolver's coordinate-first sibling-postcode candidate injection, which binds the locality
- *   pick to its postcode neighborhood. The implementation already ships; it was coverage-starved.
+ *   pick to its postcode neighborhood. The implementation already ships. it was coverage-starved.
  *
  *   Two hard-won laws from the experiment are enforced here, in code, not in a runbook:
  *
@@ -66,7 +66,7 @@ export type PostcodePoint = readonly [number, number]
  * A medoid and the size of the group it came from.
  *
  * The counts are not stated in `@mailwoman/evidence`'s vocabulary. `EpistemicStatus` says what may be claimed about a
- * value and belongs to the answering path, where `epistemicStatusFor` derives it; these two integers describe the
+ * value and belongs to the answering path, where `epistemicStatusFor` derives it. these two integers describe the
  * source dump. Naming them `observed` / `derived` here would give those words a second, local meaning.
  */
 export interface MedoidSupport {
@@ -241,11 +241,11 @@ export async function ingestGeonamesPostal(
 			continue
 		}
 
-		// Group member settlement points per NORMALIZED code; remember one display form.
+		// Group member settlement points per NORMALIZED code. remember one display form.
 		const members = new Map<string, { display: string; pts: Array<[number, number]> }>()
 
 		// Streamed: a national dump is a caller-supplied size — GB's is 177 MB, and only the caller
-		// knows which country is next. `header: false` is required; the GeoNames postal dump is
+		// knows which country is next. `header: false` is required. the GeoNames postal dump is
 		// headerless, so row 1 would be consumed as column names and its postcode lost.
 		for await (const cols of readUnquotedTSV(file)) {
 			if (cols.length < GEONAMES_POSTAL_COLUMNS) continue

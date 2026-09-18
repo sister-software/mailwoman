@@ -30,7 +30,7 @@
  *     candidates. `Q340` (Montréal, Canada) sits on two French communes 182 km apart, neither with a
  *     population row. Nothing here says which, and both are wrong, so the id goes.
  *
- *   So the rule is: **coincident → keep all; else decisive population → keep the winner; else drop.**
+ *   So the rule is: **coincident → keep all. else decisive population → keep the winner. else drop.**
  *   Net effect 3,411 places lose a wrong score and fall back to the population proxy, while 10,186
  *   legitimate multi-role rows keep theirs.
  *
@@ -114,7 +114,7 @@ export function resolveConcordanceFanout(candidates: readonly FanoutCandidate[])
 	const top = sorted[0]!
 	const runnerUp = sorted[1]!
 
-	// A zero maximum is an absent population, not a small one; a tie is not evidence. Either way,
+	// A zero maximum is an absent population, not a small one. a tie is not evidence. Either way,
 	// picking a winner would be picking by row order.
 	if (top.population > 0 && top.population > runnerUp.population) {
 		return { verdict: "population", keep: [top.id] }

@@ -15,7 +15,7 @@
  *   The match searches all the municipality-ish WOF placetypes (locality + county + localadmin +
  *   borough), because CJK municipalities are split across them (regular cities → locality, wards →
  *   county/localadmin, Tokyo special wards → borough). Matching a single placetype was the 52/60%
- *   trap; cross-placetype is 94.3%.
+ *   trap. cross-placetype is 94.3%.
  *
  *   Output is the standard `postcode_locality` table, so the existing `postcode_area_resolution`
  *   resolver strategy consumes it unchanged (is_containing=1 for the name-matched municipality).
@@ -58,7 +58,7 @@ import {
 } from "#gazetteer-pipeline/postcode/locality/schema"
 
 /**
- * Digit at which a fractional remainder is exactly half. Above it the value rounds up; at it the tie is broken toward
+ * Digit at which a fractional remainder is exactly half. Above it the value rounds up. at it the tie is broken toward
  * even, which is what keeps repeated centroid rounding unbiased.
  */
 /**

@@ -10,7 +10,7 @@
  *   See: https://github.com/google/libaddressinput/wiki/AddressValidationMetadata
  *
  *   Replaces the bash `ssl-address-download.sh` (curl + jq). The country list lives at
- *   `…/ssl-address/data` as a `~`-delimited `.countries` string; each country's record is then
+ *   `…/ssl-address/data` as a `~`-delimited `.countries` string. each country's record is then
  *   fetched from `…/ssl-address/data/<CC>` and written to `<out-dir>/<CC>.json`.
  *
  *   ## Usage
@@ -21,8 +21,8 @@
  *
  *   ## Flags
  *
- *   - `--out-dir <path>` — destination directory; default `./ssl-address` (next to this script)
- *   - `--concurrency <n>` — parallel per-country fetches; default `8`
+ *   - `--out-dir <path>` — destination directory. default `./ssl-address` (next to this script)
+ *   - `--concurrency <n>` — parallel per-country fetches. default `8`
  */
 
 import { join } from "path-ts"

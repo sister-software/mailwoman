@@ -12,7 +12,7 @@
  *   code_entries + rules) so the Python painter (`gazetteer_anchor.py`) and the future TS painter
  *   consume them identically — train and inference share one computation.
  *
- *   THE FOUR-LAW SELECTIVITY (laws 1–3 each bought with a falsified training run, v3.16→v3.18; law
+ *   THE FOUR-LAW SELECTIVITY (laws 1–3 each bought with a falsified training run, v3.16→v3.18. law
  *   4 + the hygiene clauses bought with the v3.19.0 golden-US collapse — the flip census in
  *   `.superpowers/sdd/progress.md` 2026-07-28):
  *
@@ -33,7 +33,7 @@
  *      locality=null; "Missouri Break Ln, WY" region="Missouri"; "Frannie, Wyoming" lost its
  *      locality). Washington-the-city rows parse correctly without evidence — withholding beats
  *      corrupting. Scoped to US while US is the only covered country with single-word region names
- *      colliding this way; revisit per-country at each locale fold.
+ *      colliding this way. revisit per-country at each locale fold.
  *
  *   ALT-NAME SUB-PHRASE HYGIENE (also v3.19 tuition): a names-table alias whose folded form is a
  *   contiguous sub-phrase of its own primary name ("East" ⊂ "East Nashville", "Washington" ⊂
@@ -86,7 +86,7 @@ const LOCALITY_BIT = { locality: 1, locality_homograph: 2 }
  * `neural/gazetteer-inference.ts`): per whitespace word, strip leading/trailing non-letter/digit chars (KEEP internal —
  * "saint-thomas", "d'azur"), lowercase, single-space join. Lexicon entry keys must use this fold or they are
  * unreachable at paint time. Not the FST fold (`normalizeTokens` strips internal punctuation too) — the FST and painter
- * worlds fold differently by design; caught at Phase 2 when the locality builder briefly used the FST fold
+ * worlds fold differently by design. caught at Phase 2 when the locality builder briefly used the FST fold
  * ("Saint-Thomas" → "saintthomas" could never match the painter's "saint-thomas").
  */
 export function painterFold(surface: string): string[] {
@@ -118,7 +118,7 @@ export const EVIDENCE_SUPPLEMENTAL_DEGENERATE_SURFACES: readonly string[] = ["sc
 export async function loadDirectionalSurfaces(fold: (surface: string) => string[] = painterFold): Promise<Set<string>> {
 	// Memoized on the same grounds as loadPersonNameSurfaces: static dictionaries, process-lifetime,
 	// no invalidation key. Keyed by fold identity — the FST and painter folds must not share.
-	// The returned set is SHARED; every caller only iterates it.
+	// The returned set is SHARED. every caller only iterates it.
 	let hit = directionalSurfacesMemo.get(fold)
 
 	if (!hit) {
@@ -181,13 +181,13 @@ const DE_CITY_STATES: ReadonlySet<GermanStateCode> = new Set(["BE", "HB", "HH"])
 /**
  * Law-4 region vocabulary for DE (v7, the per-country revisit the law reserves at each locale fold): the 13
  * TERRITORIAL-state names — native, English exonym, and the everyday aliases the codex alias map carries (NRW,
- * Thueringen, …) — are region vocabulary, never locality evidence; painting "bayern" as a locality teaches the same
+ * Thueringen, …) — are region vocabulary, never locality evidence. painting "bayern" as a locality teaches the same
  * evidence→REGION rotation the v3.19 US flip census measured for state names.
  *
  * The city-states (Berlin, Hamburg, Bremen) are deliberately absent from the exclusion: the US analogy does not
  * transfer — Washington-the-state and Washington-the-city are different places (a rotation hazard), while
  * Berlin-the-Land and Berlin-the-Stadt are one coextensive place whose dominant reading in user text is the locality.
- * Withholding evidence there would gut the DE fold's value on the three largest cities; the model owns the residual
+ * Withholding evidence there would gut the DE fold's value on the three largest cities. the model owns the residual
  * region/locality call (model-first).
  */
 export function loadDERegionVocabulary(fold: (surface: string) => string[] = painterFold): Set<string> {
@@ -365,7 +365,7 @@ export async function buildLocalitySurfaceLexicon(opts: BuildLocalitySurfaceLexi
 		degenerate.add(painterFold(s).join(" "))
 	}
 
-	// Law 4 (v5; DE joined at v7): region vocabulary, scoped to the countries this build covers.
+	// Law 4 (v5. DE joined at v7): region vocabulary, scoped to the countries this build covers.
 	const regionVocabulary = new Set<string>()
 
 	if (countries.includes("US")) {
@@ -396,7 +396,7 @@ export async function buildLocalitySurfaceLexicon(opts: BuildLocalitySurfaceLexi
 
 	// Neighbourhood prominence rides the PARENT locality (v4): neighbourhoods structurally lack
 	// population rows, and refusing them on absent data is the meaning-of-zero trap — Montmartre is
-	// prominent BECAUSE Paris is. Resolved via the ancestors table; a neighbourhood surface's floor
+	// prominent BECAUSE Paris is. Resolved via the ancestors table. a neighbourhood surface's floor
 	// input is max(own importance, parent locality/localadmin importance).
 	const parentImportanceByID = new Map<number, number>()
 
@@ -491,7 +491,7 @@ export async function buildLocalitySurfaceLexicon(opts: BuildLocalitySurfaceLexi
 		add(row.name, row.id)
 	}
 
-	// Laws 2 + 3, applied post-scan (a surface's floor input is its MAX importance across carriers;
+	// Laws 2 + 3, applied post-scan (a surface's floor input is its MAX importance across carriers.
 	// own vs parent tracked separately so law 3 can refuse parent-laundered person-names).
 	for (const [key, imp] of oneTokenMaxImportance) {
 		if (!clearsProminenceFloor(key, imp.own, personNames, imp.parent)) {
@@ -557,7 +557,7 @@ export interface BuildStreetTypeLexiconOpts {
 
 /**
  * Street-type surfaces from the codex per-locale tables (fr/us/gb/de/ca). Canonical words (rue/avenue/street/straße)
- * are case-insensitive regardless of length — "rue" is 3 letters and must match lowercase; short abbreviation variants
+ * are case-insensitive regardless of length — "rue" is 3 letters and must match lowercase. short abbreviation variants
  * (r, av, ST) are case-SENSITIVE uppercase `code_entries` so they never fire on lowercase prose (the anchor-lexicon
  * short-code discipline).
  *

@@ -14,7 +14,7 @@
  *   imports `@mailwoman/codex`, so a source file here reaching back would close that loop. This file lives under
  *   `test/`, which nothing imports, and codex's own manifest stays free of core. The former home was
  *   `@mailwoman/core`, and `@mailwoman/core` imports `@mailwoman/codex`. A codex test reading the dataset would close
- *   that loop; this package already depends on both.
+ *   that loop. this package already depends on both.
  *
  *   The eleven hand-authored countries are not compared here. Those depart from the dataset on purpose, and
  *   `@mailwoman/codex`'s own test pins each departure against its reason.
@@ -57,7 +57,7 @@ const FIELD: Readonly<Record<string, string>> = {
  * - `dependent_locality`, for the 47 countries measured as printing one; `%D` appears in 14 of the 197 shipped `fmt`
  *   strings, and a country that really has the line still needs it. It takes a line of its own beside the locality, or
  *   a place inside the locality's line where that line also carries the street, so it is dropped wherever it sits
- *   rather than only as a line; WHERE the generator put it is what `address-layouts.test.ts` checks.
+ *   rather than only as a line. WHERE the generator put it is what `address-layouts.test.ts` checks.
  */
 const AUTHORED_SLOTS = new Set(["country", "dependent_locality"])
 

@@ -10,8 +10,8 @@
  *   clients through `@mailwoman/core/api`'s `APIClient`, and the rule draws its line at what that class is
  *   for: pacing, bounded retry, response caching and error mapping over small bodies and repeated calls. None
  *   of it applies to a multi-hundred-megabyte archive. Caching one through a JSON-validating disk cache would
- *   write a second, unreadable copy of a file already on disk; there is nothing to pace, because a transfer
- *   like this runs once per product vintage; and axios buffers any non-stream response type in memory. The
+ *   write a second, unreadable copy of a file already on disk. there is nothing to pace, because a transfer
+ *   like this runs once per product vintage. and axios buffers any non-stream response type in memory. The
  *   metadata reads around such a transfer do go through `APIClient`, and each caller's client module says so.
  *
  *   The `.part` rename is the rule. An interrupted transfer must never present as a complete file: the next

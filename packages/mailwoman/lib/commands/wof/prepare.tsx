@@ -3,7 +3,7 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Deprecation shim — `mailwoman wof prepare` moved. One-minor-version courtesy redirect; remove after.
+ *   Deprecation shim — `mailwoman wof prepare` moved. One-minor-version courtesy redirect. remove after.
  */
 
 import type { CommandSpec } from "#cli-kit"

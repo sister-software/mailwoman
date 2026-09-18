@@ -4,10 +4,10 @@
  * @author Teffen Ellis, et al.
  *
  *   Reconcile a Stripe account against the catalog, in three steps per object that the report keeps apart: find it by
- *   the key the catalog gives it (a lookup key, a metadata mark, a URL; never an id, so every page of a list is read
- *   and nothing in git names a Stripe object); compare what Stripe holds with what the catalog says; and, under
+ *   the key the catalog gives it (a lookup key, a metadata mark, a URL. never an id, so every page of a list is read
+ *   and nothing in git names a Stripe object). compare what Stripe holds with what the catalog says. and, under
  *   `apply`, create what is missing, update what an update can change, and replace what only a new object can carry.
- *   With `apply: false` nothing is written and the report says what would be, differences included; that is the plan
+ *   With `apply: false` nothing is written and the report says what would be, differences included. that is the plan
  *   an operator reads before the live run. The one value Stripe answers exactly once, the webhook signing secret, rides
  *   in the report and nowhere else.
  *
@@ -44,7 +44,7 @@ export interface ProvisionInput {
 	 */
 	siteOrigin: string
 	/**
-	 * The deployed worker's origin; the webhook destination is created only when it is known.
+	 * The deployed worker's origin. the webhook destination is created only when it is known.
 	 */
 	workerOrigin?: string
 	/**
@@ -67,7 +67,7 @@ const ProvisionedObjectSchema = z.object({
 	id: z.string().optional(),
 	action: ProvisionActionSchema,
 	/**
-	 * How the object Stripe holds still differs from the catalog after this run: everything found, under a read-only run;
+	 * How the object Stripe holds still differs from the catalog after this run: everything found, under a read-only run.
 	 * under `apply`, only what no update or replacement here can change.
 	 */
 	drift: z.array(z.string()).optional(),
@@ -134,7 +134,7 @@ export async function provisionShop(stripe: Stripe, input: ProvisionInput): Prom
 	const log = input.log ?? (() => {})
 	const urls = shopURLs(input.siteOrigin)
 
-	// Consent collection is required on every link; Stripe refuses it while the account's terms URL is unset, and a
+	// Consent collection is required on every link. Stripe refuses it while the account's terms URL is unset, and a
 	// refusal blocks that link rather than creating one the worker would refuse sessions from.
 	let consent = true
 
@@ -384,7 +384,7 @@ export async function provisionShop(stripe: Stripe, input: ProvisionInput): Prom
 		portal = portalReport(created, "created")
 	}
 
-	// The webhook destination, once the worker has an origin: found by URL, held to the event list; its API version
+	// The webhook destination, once the worker has an origin: found by URL, held to the event list. its API version
 	// cannot change, and a new destination is a new secret, so that difference is reported and left to the operator.
 	let webhook: ProvisionReport["webhook"]
 

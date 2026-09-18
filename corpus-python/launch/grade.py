@@ -6,7 +6,7 @@
 
 These run in the training image because the model does. A contrast forwards the same checkpoint
 twice — once with a channel as computed, once with it zeroed — so the difference is the channel and
-not a second training run; that is the only shape in which a feature's contribution is readable
+not a second training run. that is the only shape in which a feature's contribution is readable
 without a second GPU spend.
 """
 
@@ -32,7 +32,7 @@ def diagnose_suffix_plasticity(
     """Non-candidate #1569 plasticity probe: v4.3.1 with EWC disabled.
 
     This is diagnostic evidence only, never a third promotion attempt. It holds the corrected corpus,
-    initialization, optimizer family, batch size and model geometry fixed; disables EWC, uses a constant
+    initialization, optimizer family, batch size and model geometry fixed. disables EWC, uses a constant
     learning rate so a short probe does not disappear into a cosine tail, and saves every 500 steps.
     """
     import sys
@@ -163,7 +163,7 @@ def grade_street_type_contrast(step: int = 3000, show_flips: str = "", heal: boo
     improve street<->locality discrimination." For each ban-fragments-fr row we build the full feature
     set (anchor + gazetteer + country + street_type, faithful to training) via encode_row, run forward
     twice (street_type_features as-computed, then zeroed), argmax-decode the street span, and compare to
-    the gold street. The ON-OFF street-match delta per class is the verdict; the P-C classes (admin-
+    the gold street. The ON-OFF street-match delta per class is the verdict. the P-C classes (admin-
     street-homonym / bare-street / street-particle) are where the evidence hypothesis lives."""
     import json
     import subprocess
@@ -442,7 +442,7 @@ def grade_evidence_bundle(
     by: dict[str, list[int]] = {}
     for r in rows:
         raw = r["input"]
-        # Case variant (`case`): lower = production passthrough for uncapitalized users; upper = raw
+        # Case variant (`case`): lower = production passthrough for uncapitalized users. upper = raw
         # all-caps (production would title-case via normalizeCase first — this is the worst case).
         if case == "lower":
             raw = raw.lower()

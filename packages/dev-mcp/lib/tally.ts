@@ -48,7 +48,7 @@ export function readPath(value: unknown, path: string): { present: boolean; valu
 
 /**
  * Count distinct values at one dotted path across rows. Non-scalar values (objects) tally under their JSON form so a
- * structured field can still be tallied without a silent drop; scalars tally under `String(value)`.
+ * structured field can still be tallied without a silent drop. scalars tally under `String(value)`.
  */
 export function tallyPath(rows: ReadonlyArray<unknown>, path: string): Record<string, number> {
 	const counts: Record<string, number> = {}

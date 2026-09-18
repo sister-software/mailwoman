@@ -53,7 +53,7 @@ describe("featureCellRows", () => {
 			expect(row.resolution).toBeGreaterThan(0)
 		}
 
-		// A compacted whole row can be coarser than the index resolution; a partial row never is.
+		// A compacted whole row can be coarser than the index resolution. a partial row never is.
 		const partial = rows.filter((row) => row.containment === "partial")
 
 		expect(partial.every((row) => row.resolution === classified.resolution)).toBe(true)
@@ -93,7 +93,7 @@ describe("CoastalCellIndex", () => {
 		expect(nfi!.features).toBe(1)
 		expect(smp!.features).toBe(1)
 
-		// The band has an interior; the sliver is entirely fringe. So the two scenarios' partial shares are genuinely
+		// The band has an interior. the sliver is entirely fringe. So the two scenarios' partial shares are genuinely
 		// different numbers — and a pooled report would have averaged them into one that describes neither. The pooled
 		// value sits strictly between them, which is exactly why it cannot be read as either.
 		expect(nfi!.partialShare).toBeLessThan(1)

@@ -158,18 +158,18 @@ class LinearChainCRF(nn.Module):
             reduction: one of:
 
                 - ``"mean"`` (default, v0.3.0 behavior) — mean NLL over batch sequences.
-                  Per-sequence magnitude scales with sequence length; this is the form
+                  Per-sequence magnitude scales with sequence length. this is the form
                   v0.3.0's dual loss hand-weighted via ``crf_loss_weight=0.05``.
                 - ``"per_token"`` (v0.4.0) — sum NLL across batch, divide by total real
                   tokens. Self-balances against per-token CE, eliminating the need for
                   ``crf_loss_weight`` tuning. Matches AllenNLP / FLAIR defaults.
-                - ``"sum"`` — sum over batch sequences. Internal use; callers normalize.
+                - ``"sum"`` — sum over batch sequences. Internal use. callers normalize.
 
         ``mask[:, 0]`` must be all 1s (no leading padding) — callers control padding shape.
         """
         if emissions.dim() != 3:
             raise ValueError(f"emissions must be (B, S, N), got {tuple(emissions.shape)}")
-        # Squash -100 (IGNORE_INDEX) gold tags into 0 so gather doesn't index OOB; the
+        # Squash -100 (IGNORE_INDEX) gold tags into 0 so gather doesn't index OOB. the
         # mask will zero out their contribution regardless.
         safe_tags = tags.clamp(min=0)
 
@@ -331,7 +331,7 @@ class LinearChainCRF(nn.Module):
         Complexity: ``O(B * T * N² * K * log(N * K))`` where N=num_tags, K=k, T=seq_len.
         For N=21, K=5, T=128, B=32 this is ~10M ops — negligible compared to the encoder
         forward pass. Implemented per-row on CPU after `.cpu()` to keep the topk + backtrack
-        readable; the call site is inference, not training, so GPU residency doesn't matter.
+        readable. the call site is inference, not training, so GPU residency doesn't matter.
         """
         if k < 1:
             raise ValueError(f"k must be >= 1, got {k}")
@@ -386,10 +386,10 @@ def _row_top_k(
     # Use -inf to flag "no path here yet" so structurally-invalid extensions stay invalid.
     NEG_INF = float("-inf")
 
-    # t=0 init: only rank 0 is real; ranks 1..K-1 are -inf with no predecessor.
+    # t=0 init: only rank 0 is real. ranks 1..K-1 are -inf with no predecessor.
     score = torch.full((num_tags, k), NEG_INF, dtype=emissions.dtype)
     score[:, 0] = start_trans + emissions[0]
-    # backptr_tag[t][j, r] = prev_tag; backptr_rank[t][j, r] = prev_rank. Stored per-step.
+    # backptr_tag[t][j, r] = prev_tag. backptr_rank[t][j, r] = prev_rank. Stored per-step.
     backptr_tag: list[torch.Tensor] = []
     backptr_rank: list[torch.Tensor] = []
 
@@ -450,5 +450,5 @@ def _row_top_k(
             continue
         seq.reverse()
         paths.append(TopKPath(sequence=seq, score=float(v) - log_partition))
-    # topk already returned in desc order; keep that property after filtering.
+    # topk already returned in desc order. keep that property after filtering.
     return paths

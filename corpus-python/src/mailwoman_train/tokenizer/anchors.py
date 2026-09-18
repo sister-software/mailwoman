@@ -189,7 +189,7 @@ def realign_anchor_to_pieces_shaped(
     with the gold paths via ``_paint_anchor_chars`` / ``_project_anchor_chars_to_pieces`` — so this can only
     differ from gold in WHERE it paints, never in what it paints or how it lands on pieces. (The rare DE
     ``D-`` / Dutch-spaced shapes inherit the gold path's space-strip+upper normalization — a pre-existing
-    minor gap, not introduced here; the dominant NUM5/ZIP4/EU-numeric shapes normalize identically.)
+    minor gap, not introduced here. the dominant NUM5/ZIP4/EU-numeric shapes normalize identically.)
     """
     from ..features.postcode_shapes import collect_matches
 

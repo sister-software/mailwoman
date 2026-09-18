@@ -35,7 +35,7 @@ export interface ServiceFeature {
  * collection.
  *
  * A function rather than the client, and that is what makes the check's own logic testable. The comparison's value is
- * that it decides which of three outcomes a point gets; expressed against an HTTP client it could only ever be watched
+ * that it decides which of three outcomes a point gets. expressed against an HTTP client it could only ever be watched
  * on a live run, and a scripted reader lets those decisions be pinned. {@link createEAServiceReader} builds the real
  * one.
  */

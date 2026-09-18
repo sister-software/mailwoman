@@ -108,7 +108,7 @@ embedded JSON-LD. **That URL is not a grant.** It redirects to
 [usa.gov/government-copyright](https://www.usa.gov/government-copyright), the same page the flood survey
 found behind FEMA's license field, which declines a blanket grant: a government work is "something
 created by a U.S. government officer or employee as part of their official duties", but "Content on
-federal websites may include protected intellectual property used with the right holder's permission",
+federal websites may include guarded intellectual property used with the right holder's permission",
 and the reader is told to "Check with the federal agency or program that manages the website to make
 sure the materials are not restricted before using them."
 

@@ -3,7 +3,7 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   The bare-toponym street-miss fallback, split from `geocode-core.ts` (the max-lines cap; the
+ *   The bare-toponym street-miss fallback, split from `geocode-core.ts` (the max-lines cap. the
  *   geocode file holds the cascade, this one holds the retry). Contract in {@link applyStreetMissFallback}.
  */
 

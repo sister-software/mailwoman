@@ -20,7 +20,7 @@ import { userEvent } from "vitest/browser"
 import { renderComponent } from "../../render.tsx"
 
 /**
- * Poll `get` inside act() until truthy or timeout; never throws (returns null on timeout).
+ * Poll `get` inside act() until truthy or timeout. never throws (returns null on timeout).
  */
 async function settle<T>(get: () => T | null, timeout = 8000): Promise<T | null> {
 	const start = Date.now()
@@ -53,7 +53,7 @@ test("submit drives the result panel + a map marker over the fake runtime", asyn
 		/>
 	)
 
-	// ClientOnly mounts asynchronously; wait for the reused QueryForm input.
+	// ClientOnly mounts asynchronously. wait for the reused QueryForm input.
 	await vi.waitFor(() => expect(container.querySelector("#mw-pipeline-input")).toBeTruthy())
 
 	// The pill carries no submit button, the way the reference map apps carry none: a search field submits on Enter,

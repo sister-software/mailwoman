@@ -4,7 +4,7 @@
  * @author Teffen Ellis, et al.
  *
  *   `mailwoman dev generate country-reference` — regenerate `codex/country/reference-data.ts` (the
- *   per-country calling code + currency table) from mledoze/countries. Network codegen; the output
+ *   per-country calling code + currency table) from mledoze/countries. Network codegen. the output
  *   is committed for provenance.
  */
 

@@ -60,7 +60,7 @@ class CoarseEncoderConstruct(CoarseEncoderState):
 
         CRF NLL is per-sequence and unbounded — at random init it runs ~seq_len*log(num_tags),
         so ~380 against CE's ~3 per token, and equal-weight summing lets CRF gradients drown out
-        CE. `crf_loss_weight` 0.1 keeps the CRF a structural regularizer on the emissions;
+        CE. `crf_loss_weight` 0.1 keeps the CRF a structural regularizer on the emissions.
         weight 1.0 regressed val_macro_f1 from 0.26 to 0.17 by step 750. `crf_normalization`
         "per_token" divides by the real-token count for a magnitude comparable to per-token CE,
         which removes the hand-tuning that weight search needed; "per_sequence" is the older
@@ -106,7 +106,7 @@ class CoarseEncoderConstruct(CoarseEncoderState):
         (see `CharCNNEmbedding`) instead of read from a SentencePiece piece-ID table, so a whole
         word ("Čistá") is one token and diacritics never fragment the span. The SentencePiece
         table stays built and unused in that mode, which keeps the pretrain, MLM and save paths
-        working unchanged; the ship-slim path drops it once an architecture is chosen.
+        working unchanged. the ship-slim path drops it once an architecture is chosen.
 
         `phrase_input_projection` maps `(hidden + phrase_feature_dim) → hidden` so the body's
         stack keeps its declared `hidden_size`. It is None when phrase priors are off and the

@@ -139,10 +139,10 @@ export async function geocodeFirstSurface(
 			label: "Springfield General — IL vs MA",
 			detail: "identical name, ~1500 km apart",
 			sim: 1,
-			km: 15, // plotted on the far plateau (real distance ~1500 km; clamped into view)
+			km: 15, // plotted on the far plateau (real distance ~1500 km. clamped into view)
 		},
 		{
-			// "St" → "Street" canonicalizes to a high (not exact) name agreement; the trailing "Apt 2"
+			// "St" → "Street" canonicalizes to a high (not exact) name agreement. the trailing "Apt 2"
 			// keeps it off 1.0. Lands in the 0.88 "high" tier — same place, drifted-but-recognizable string.
 			label: "123 Main St vs 123 Main Street Apt 2",
 			detail: "same building, drifted string",

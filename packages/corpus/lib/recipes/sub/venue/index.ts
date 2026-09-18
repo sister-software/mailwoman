@@ -5,7 +5,7 @@
  *
  *   `sub-venue` recipe (#35 step 4) — teach the `unit` tag the venue-INTERIOR shapes it was
  *   never taught, so the modifier+designator class wins at the shipped `venueStructureBiasScale` of
- *   6.0 instead of needing ~11 nats. `docs/engineering/sub-venue-corpus-task.mdx` is the spec; the
+ *   6.0 instead of needing ~11 nats. `docs/engineering/sub-venue-corpus-task.mdx` is the spec. the
  *   vocabulary is `corpus/data/sub-venue-lexicon.json` (v0.2.0) and the curation ledger is
  *   `corpus/src/tools/sub-venue-promotions.ts`. The READ half — promotions, identifier
  *   distributions, name pools — is `sub-venue-sources.ts`; this file renders lines and emits rows.
@@ -58,7 +58,7 @@
  *        head, where the interior tags are `block`/`sub_block`/`building_number` — a different model, a
  *        different label set, and a different builder. A katakana `unit` row in this (Latin) feed
  *        would in any case be dropped by `country_weights`, which carries no `JP` key. The JP extract
- *        is harvested and ready; the leg belongs to the JP corpus.
+ *        is harvested and ready. the leg belongs to the JP corpus.
  */
 
 import { dataRootPath } from "@mailwoman/core/data-root"
@@ -206,7 +206,7 @@ export const US_IDENTIFIER_REGION_BORROWED_FROM = "GB"
 //#region Tunables
 
 /**
- * The row count this recipe output is built at, and the arithmetic behind it. `--count` overrides; this is the number
+ * The row count this recipe output is built at, and the arithmetic behind it. `--count` overrides. this is the number
  * to use absent a reason.
  *
  * The training sampler (`corpus-python/src/mailwoman_train/data_loader.py`, `_raw_row_stream`) draws SOURCES from a
@@ -248,7 +248,7 @@ const ATTESTED_FRACTION = 0.1
  * Within the SYNTHESIZED positives of an English leg: the split between the two proposal shapes.
  *
  * Modifier-heavy on purpose. Designator+identifier proposes at 0.85 confidence and already wins the decode at the
- * shipped 6.0; modifier+designator proposes at 0.6 and needs 5.87–10.65. The failing class is the one to teach, and the
+ * shipped 6.0. modifier+designator proposes at 0.6 and needs 5.87–10.65. The failing class is the one to teach, and the
  * passing one is here to not regress (`Concourse B` / `Terminal 5` / `Gate 12` / `Wing B` must stay correct).
  */
 const ENGLISH_MODIFIER_FORM_FRACTION = 0.6
@@ -263,12 +263,12 @@ const ENGLISH_MODIFIER_FORM_FRACTION = 0.6
  *
  * The `--exclude-surfaces` precedent from `fr-fragment` / `no-fragment`, applied by hand rather than by file because
  * the board lives in `mailwoman/` and `@mailwoman/corpus` cannot reach across that workspace boundary at run time. Keep
- * it in sync when the board grows; a recipe output that trains on its own eval set measures memorization.
+ * it in sync when the board grows. a recipe output that trains on its own eval set measures memorization.
  *
  * Note what this costs and why it is still right: reserving `east gate` / `west gate` removes the two GB surfaces the
  * board uses for its `modifier-designator-street` class, so the recipe teaches that class from the other real ones its
  * sources carry (`North Gate`, `South Gate`, `East Hall`, `West Hall`, `Lower Hall`, `East Campus`, …). The class is
- * taught; the board's own strings are not.
+ * taught. the board's own strings are not.
  */
 export const BOARD_RESERVED_SURFACES: readonly string[] = [
 	// gb-street-gate
@@ -416,7 +416,7 @@ export const NegativeClass = {
 	GateSuffixStreet: "gate-suffix-street",
 	/**
 	 * A PROMOTED phrase outside the shape its promotion covers — `Halle Rosengarten`, `PHOENIX Halle`. The other half of
-	 * an `identifier-required` ruling; see `LegPools.unpromotedShapes`.
+	 * an `identifier-required` ruling. see `LegPools.unpromotedShapes`.
 	 */
 	UnpromotedShape: "unpromoted-shape",
 } as const
@@ -536,7 +536,7 @@ function emitRow(
 	return true
 }
 
-// One draw per row: 25% carry no street; 55% put the sub-venue before the venue, the rest the venue first.
+// One draw per row: 25% carry no street. 55% put the sub-venue before the venue, the rest the venue first.
 const NO_STREET_SHARE = 0.25
 const SUBVENUE_FIRST_CUTOFF = 0.55
 
@@ -710,7 +710,7 @@ async function buildLegPools(
 		? await readExtractPools(`${paths.extractsDir}/${leg.extract}`, query)
 		: EMPTY_NAME_POOLS
 
-	// poi.db holds four countries; only these two legs are inside it.
+	// poi.db holds four countries. only these two legs are inside it.
 	const poiPools =
 		leg.country === "US" || leg.country === "FR" ? readPOIPools(paths.poiDB, leg.country, query) : EMPTY_NAME_POOLS
 

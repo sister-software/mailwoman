@@ -47,7 +47,7 @@ describe("checkReleaseListIdentity", () => {
 			join(root, "package.json")
 		)
 
-		// A workspace the field names must carry a manifest; the reader refuses a literal that does not.
+		// A workspace the field names must carry a manifest. the reader refuses a literal that does not.
 		for (const workspace of ["packages/a", "packages/b", "packages/frozen-one"]) {
 			await makeDirectories(join(root, workspace))
 			await writeLocalJSONFile({ name: workspace }, join(root, workspace, "package.json"))

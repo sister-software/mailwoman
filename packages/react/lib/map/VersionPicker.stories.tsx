@@ -4,7 +4,7 @@
  * @author Teffen Ellis, et al.
  *
  *   `<VersionPicker>` states over fake data — a stateful three-option picker, a disabled one, and the
- *   single-version case where the control renders nothing. No maplibre; plain DOM.
+ *   single-version case where the control renders nothing. No maplibre. plain DOM.
  */
 
 import type { Meta, StoryObj } from "@storybook/react-vite"

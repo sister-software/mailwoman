@@ -8,7 +8,7 @@
  *   `docs/superpowers/plans/2026-07-26-pair-index-hierarchy-design.md`). Deliberately a SEPARATE
  *   implementation from the builder — the expected pair set is re-derived here with one flat SQL
  *   query (CTE surface unions, SQL-side joins) instead of the builder's JS-side map joins, then
- *   folded and compared. Two independent code paths converging on the same set is the receipt; a
+ *   folded and compared. Two independent code paths converging on the same set is the receipt. a
  *   shared extraction module would verify only the serialization round-trip.
  *
  *   Checks, per country:

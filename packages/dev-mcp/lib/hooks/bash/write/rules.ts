@@ -4,7 +4,7 @@
  * @author Teffen Ellis, et al.
  *
  *   Which Bash commands may run, as a pure judgement over the command text. The hook adapter
- *   (`bash-write-guard.ts`) owns the payload and the output JSON; the POLICY lives here so a test can drive it without
+ *   (`bash-write-guard.ts`) owns the payload and the output JSON. the POLICY lives here so a test can drive it without
  *   spawning a process, and so importing it never reads stdin.
  *
  *   WHAT IT IS FOR. `symbol-precheck.ts` is registered under a `Write|Edit` matcher, so an edit made with a heredoc or
@@ -19,7 +19,7 @@
  *   WHAT IT CANNOT DO, stated because the first version's docstring claimed otherwise. A list of command words cannot
  *   stop a determined write: `node script.js`, `yarn some-script` and a compiled binary all run code this cannot read,
  *   and an admitted program may write whatever it likes. This RAISES THE COST of editing through Bash and makes the
- *   direct spellings fail loudly; it is not a sandbox. Anything that must be impossible belongs in file permissions.
+ *   direct spellings fail loudly. it is not a sandbox. Anything that must be impossible belongs in file permissions.
  *
  *   WHY A LIST OF WHAT IS ADMITTED. The refusing version shipped first and refused its own commit within the hour,
  *   because the message quoted an in-place editor in prose. A rule reading the whole command text cannot tell a writer
@@ -276,7 +276,7 @@ const INTERPRETER_HEREDOC = /<<(?!<)-?\s*['"]?[A-Za-z_]/u
 const REDIRECT = /(?:&|\d)?>>?\|?\s*(?:&[\d-]|(?<target>[^\s;|&<>]*))/gu
 
 /**
- * Shell grammar rather than commands. A loop header binds a variable to a word list; the words that open a body are
+ * Shell grammar rather than commands. A loop header binds a variable to a word list. the words that open a body are
  * dropped, and whatever follows is judged as a command.
  */
 const LOOP_HEADER = /^(?:for|select)\s+\w+\s+in\b/u
@@ -317,7 +317,7 @@ function commandSegments(stripped: string): Array<{ head: string; segment: strin
 		// `1`. It is removed rather than replaced, so no placeholder becomes a command word. Targets are judged
 		// separately, against the unmasked text.
 		.replaceAll(REDIRECT, " ")
-		// An opener starts a command of its own; a CLOSER does not end one. Replacing `)` with a separator too would
+		// An opener starts a command of its own. a CLOSER does not end one. Replacing `)` with a separator too would
 		// leave `comm -12 <(sort a) b` with a segment headed by `b`, and a filename is not a command.
 		//
 		// A BRACE only opens a group when whitespace follows it, and only closes one when whitespace or a separator
@@ -331,7 +331,7 @@ function commandSegments(stripped: string): Array<{ head: string; segment: strin
 	for (const rawSegment of expanded.split(/(?:&&|\|\||[;|&\n])/u)) {
 		const segment = rawSegment.trim()
 
-		// A loop header binds a name to a word list; the list is data, and the body follows the next separator.
+		// A loop header binds a name to a word list. the list is data, and the body follows the next separator.
 		if (!segment || LOOP_HEADER.test(segment)) continue
 
 		let words = segment.split(/\s+/u).filter((word) => word.length)

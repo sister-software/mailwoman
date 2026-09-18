@@ -4,7 +4,7 @@
  * @author Teffen Ellis, et al.
  *
  *   The `/trace` route: an input, a trace button, and the four-band model visualizer over the loaded classifier's
- *   decode-path trace. The runtime handle supplies the trace hook; a classifier bundle that predates it says so
+ *   decode-path trace. The runtime handle supplies the trace hook. a classifier bundle that predates it says so
  *   instead of rendering an empty visualizer.
  */
 

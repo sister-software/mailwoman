@@ -9,7 +9,7 @@ import { mailwomanCLIPath } from "mailwoman/cli-kit/metadata"
  * @author Teffen Ellis, et al.
  *
  *   Regression guard for `parse --default-country` (the resolver country scope). Without a country
- *   hint the WOF resolver resolves globally; the demo passes `country: "US"`, and this gives the
+ *   hint the WOF resolver resolves globally. the demo passes `country: "US"`, and this gives the
  *   CLI parity by inferring the country from `--locale` (overridable, `none` to disable).
  *
  *   Note (#595): a bare region abbreviation (`NY`) once landed on a foreign homonym (a Scottish
@@ -126,7 +126,7 @@ describe("--default-country schema validation", () => {
 })
 
 // End-to-end: needs the GLOBAL admin DB (the US-only DB can't reproduce the foreign homonym).
-// oxlint-disable-next-line vitest/valid-title, vitest/valid-describe-callback -- an aliased describe; the title and callback arrive where it is invoked
+// oxlint-disable-next-line vitest/valid-title, vitest/valid-describe-callback -- an aliased describe. the title and callback arrive where it is invoked
 const describeIfGlobal = describe.skipIf(!(await pathExists(GLOBAL_WOF)))
 
 describeIfGlobal(`parse --resolve against the global WOF (${GLOBAL_WOF})`, () => {

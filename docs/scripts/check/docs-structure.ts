@@ -3,7 +3,7 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Docs structural check (docs-architecture cleanup, Phase 4; frontmatter contract rewrite, docs-reorg
+ *   Docs structural check (docs-architecture cleanup, Phase 4. frontmatter contract rewrite, docs-reorg
  *   Phase 0 task 2). Static frontmatter parse only — no install, no Docusaurus build — so it runs in
  *   seconds as the first step of the Docs workflow (`.github/workflows/docs-build.yml`) and locally
  *   via `yarn workspace @mailwoman/docs lint:structure` (or `node docs/scripts/check/docs-structure.ts`
@@ -23,7 +23,7 @@
  *          manifest of entry pages and every recipe (`ROLE_REQUIRED_PAGES` /
  *          `ROLE_REQUIRED_DIRECTORIES`). Nothing invokes it now. It is kept because the pages it
  *          describes still exist unpublished under `docs/records/site-2026-08/`, so pointing the
- *          script at that tree remains a way to check them; delete it once nothing does.
+ *          script at that tree remains a way to check them. delete it once nothing does.
  *   2. Exact duplicate `title:` frontmatter across the published site.
  *   3. Orphan pages — published docs absent from every sidebar in `docs/sidebars.ts`.
  *   4. Relative links (`./`, `../`) that resolve to nothing, over the whole docs tree rather than the
@@ -170,7 +170,7 @@ function checkFrontmatterLegacy(pages: DocPage[]): string[] {
 
 /**
  * Flattens a `DocPage`'s parsed frontmatter into the plain `Record<string, unknown>` shape `validatePage` expects.
- * Declared keys with a scalar value carry that value; a declared key whose value is nested/non-scalar (an array, a
+ * Declared keys with a scalar value carry that value. a declared key whose value is nested/non-scalar (an array, a
  * block scalar — `docs-frontmatter.ts`'s parser records the key but not the value) carries `true`, which is enough for
  * a presence check but nothing a role rule here reads for content.
  */

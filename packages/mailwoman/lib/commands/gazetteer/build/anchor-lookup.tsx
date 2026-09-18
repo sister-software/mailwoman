@@ -3,7 +3,7 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   `mailwoman gazetteer build anchor-lookup` — the postcode→anchor JSON lookup (#239/#240; LIVE
+ *   `mailwoman gazetteer build anchor-lookup` — the postcode→anchor JSON lookup (#239/#240. LIVE
  *   consumer: `@mailwoman/neural`'s scorer + the eval harnesses). JSON artifact, write-once semantics
  *   (regenerate, don't edit).
  *

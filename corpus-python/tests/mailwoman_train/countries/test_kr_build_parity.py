@@ -136,7 +136,7 @@ REGIONS = [
 ]
 
 #: (name, status, road address, lot address, road postcode, lot postcode, x, y). The road forms are
-#: written to align against the index above; the last row aligns against neither, which is what puts
+#: written to align against the index above. the last row aligns against neither, which is what puts
 #: an unaligned permit on the registry board.
 PERMITS: list[tuple[str, str, str, str, str, str, str, str]] = [
     (

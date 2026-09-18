@@ -34,13 +34,13 @@
  *   `limits` carries the authority's own exclusions on every answer.
  *
  *   THE PLAN IS PART OF THE CLAIM, NEVER A PARAMETER OF IT. A zone exists inside a named Development Plan or
- *   Local Area Plan with a stated validity window; a reading that dropped the plan would answer a question no
+ *   Local Area Plan with a stated validity window. a reading that dropped the plan would answer a question no
  *   authority asked. And `currentPlan = 1` means "not superseded", not "in force today": 2,363 of 85,330 rows
  *   carry a `validTo` already in the past, so the window travels on every reading and the comparison against a
  *   date is the caller's, made against a clock this reader does not own.
  *
  *   THE PROBE IS STRUCTURE FIRST, GEOMETRY LAST. `cellToParent` up the compacted whole-cell chain answers an
- *   interior point with primary-key probes alone; only a cell a boundary crosses reaches the ray cast, and
+ *   interior point with primary-key probes alone. only a cell a boundary crosses reaches the ray cast, and
  *   then only against the polygons `zoning_cell` already named for that cell.
  *
  *   THE READER IS SYNCHRONOUS AND USES RAW PREPARED STATEMENTS, for the same reason the sibling layer readers
@@ -102,11 +102,11 @@ export type ZoningReadingKind = (typeof ZoningReadingKind)[keyof typeof ZoningRe
  */
 export const ZoningContainmentPath = {
 	/**
-	 * The cell lies wholly inside the zone; no geometry was read.
+	 * The cell lies wholly inside the zone. no geometry was read.
 	 */
 	WholeCell: "whole_cell",
 	/**
-	 * The cell is crossed by a boundary; the point was ray-cast against the polygons named for that cell.
+	 * The cell is crossed by a boundary. the point was ray-cast against the polygons named for that cell.
 	 */
 	RayCast: "ray_cast",
 	/**
@@ -190,7 +190,7 @@ export interface ZoningDesignation {
 	jurisdiction: ZoningJurisdiction
 	plan: ZoningPlan
 	/**
-	 * The authority states unzoned land POSITIVELY on a handful of rows. `true` here is the authority saying so; an
+	 * The authority states unzoned land POSITIVELY on a handful of rows. `true` here is the authority saying so. an
 	 * absent designation says nothing at all, which is the distinction this layer exists to keep.
 	 */
 	unzoned: boolean
@@ -203,7 +203,7 @@ export interface ZoningDesignation {
 export interface ZoningReading {
 	kind: ZoningReadingKind
 	/**
-	 * Every polygon containing the point, ordered by `area_id`. Usually one; several where a Local Area Plan overlays a
+	 * Every polygon containing the point, ordered by `area_id`. Usually one. several where a Local Area Plan overlays a
 	 * Development Plan over the same ground, which the source publishes as two rows.
 	 */
 	designations: ZoningDesignation[]
@@ -257,7 +257,7 @@ export interface ZoningLayerIdentity {
 	 */
 	mappedExtents: Array<{ extentID: string; source: string; statement: string; statementURL: string }>
 	/**
-	 * The coverage basis every row carries. Always `source_present` while `mappedExtents` is empty; checked at open time
+	 * The coverage basis every row carries. Always `source_present` while `mappedExtents` is empty. checked at open time
 	 * rather than assumed.
 	 */
 	coverageBasis: CoverageBasis
@@ -537,7 +537,7 @@ function readIdentity(database: DatabaseClient<ZoningDatabase>, databasePath: st
 	// THE EXCLUSION CHECK, AND IT IS A CONDITION RATHER THAN A CONVENTION. The Department publishes its coverage detail
 	// only inside a map viewer, so no row of this layer may license a claim that a location is unrestricted. A stronger
 	// basis reaching a caller would let an absent polygon be read as a designation of freedom to build over most of the
-	// map. The check itself is the contract's rather than this product's; the SENTENCE saying why is this product's.
+	// map. The check itself is the contract's rather than this product's. the SENTENCE saying why is this product's.
 	assertCoverageLicensesNoExclusion(
 		(database.prepare("SELECT DISTINCT basis FROM layer_coverage").all() as Array<{ basis: string | null }>).map(
 			(coverageRow) => coverageRow.basis

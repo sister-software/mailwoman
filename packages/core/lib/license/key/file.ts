@@ -5,7 +5,7 @@
  *
  *   The two files under `$MAILWOMAN_CONFIG_ROOT/license/` a self-service license leaves on a machine: the key, which
  *   `verifyConfiguredLicenseKey` reads after `MAILWOMAN_LICENSE_KEY`, so a refreshed token applies without an
- *   environment change; and the refresh credentials, the lid and per-license secret `mailwoman license refresh`
+ *   environment change. and the refresh credentials, the lid and per-license secret `mailwoman license refresh`
  *   presents, created 0600 because the secret is what fetches renewals. The key is a signed assertion, not a secret,
  *   and is written with the ordinary writer.
  */
@@ -34,7 +34,7 @@ export interface ConfiguredLicenseToken {
 
 /**
  * The token this installation has configured: the environment variable first, the key file second. `undefined` when
- * neither is set; a blank file reads as absent.
+ * neither is set. a blank file reads as absent.
  */
 export async function readConfiguredLicenseToken(): Promise<ConfiguredLicenseToken | undefined> {
 	const fromEnvironment = $public.MAILWOMAN_LICENSE_KEY
@@ -51,7 +51,7 @@ export async function readConfiguredLicenseToken(): Promise<ConfiguredLicenseTok
 }
 
 /**
- * Write the key file; answers its path.
+ * Write the key file. answers its path.
  */
 export async function writeLicenseKeyFile(token: string): Promise<string> {
 	const path = licenseKeyFilePath()
@@ -81,7 +81,7 @@ export async function readRefreshCredentials(): Promise<RefreshCredentials | und
 }
 
 /**
- * Write the refresh credentials, created 0600; answers the path.
+ * Write the refresh credentials, created 0600. answers the path.
  */
 export async function writeRefreshCredentials(credentials: RefreshCredentials): Promise<string> {
 	const path = licenseRefreshFilePath()

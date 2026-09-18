@@ -92,7 +92,7 @@ export function createGNAFAdapter(): CorpusAdapter {
 
 			// Input is the assembled component JSONL (one tuple per line). TextSpliterator auto-disposes on
 			// loop completion and on an early `break` (abort / limit), so the old explicit handle teardown is
-			// gone; the parse tolerates a trailing CR on CRLF sources and the `!line.trim()` guard skips blanks.
+			// gone. the parse tolerates a trailing CR on CRLF sources and the `!line.trim()` guard skips blanks.
 			// The render order rotates (i % 3), matching v1.9.1's rerender.
 			for await (const line of TextSpliterator.fromAsync(opts.inputPath)) {
 				if (opts.signal?.aborted) break

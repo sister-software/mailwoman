@@ -22,7 +22,7 @@
  *
  *   **SIC is that signal, and it is already free.** EDGAR's submissions payload — the same document
  *   `fetchTenKFilings` reads — carries the registrant's Standard Industrial Classification. Both false
- *   matches above fall outside the communications range; the real carriers land inside it.
+ *   matches above fall outside the communications range. the real carriers land inside it.
  *
  *   **The check is honest about what it costs.** Measured over the same 24 registrants, an SIC-only rule
  *   rejects 2 of 2 false matches and accepts 6 of 8 real carriers. The two it wrongly rejects are
@@ -34,7 +34,7 @@
  *   range is an unnamed decision about thousands.
  *
  *   **A rejection is an abstention, not a denial.** `corroborated: false` means no second source agreed,
- *   which is not evidence the match is wrong — absence is not impossibility. Callers count these; they do
+ *   which is not evidence the match is wrong — absence is not impossibility. Callers count these. they do
  *   not record them as negative facts.
  */
 
@@ -76,7 +76,7 @@ export const CIKCorroborationBasis = {
 	 */
 	NonTelecomSIC: "non-telecom-sic",
 	/**
-	 * EDGAR published no SIC for this registrant. Nothing to corroborate against; not a judgment.
+	 * EDGAR published no SIC for this registrant. Nothing to corroborate against. not a judgment.
 	 */
 	NoSIC: "no-sic",
 } as const
@@ -99,7 +99,7 @@ export interface CIKCorroborationOptions {
 	 * rather than a tiebreak.
 	 *
 	 * This is the escape valve for the Bandwidth/Ooma class — real carriers SEC files under a software SIC. Keep it a
-	 * list of specific registrants with a reason recorded alongside; the moment it grows into a range it has become the
+	 * list of specific registrants with a reason recorded alongside. the moment it grows into a range it has become the
 	 * widened allowlist this design rejected.
 	 */
 	pinnedCIKs?: ReadonlySet<string>

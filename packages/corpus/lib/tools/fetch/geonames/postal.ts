@@ -33,7 +33,7 @@
  *   GeoNames publishes ~80 countries, not all of them. Venezuela returns 404 — so a VE postcode recipe output cannot be
  *   built
  *   from this source at any effort, and that is an acquisition question rather than a build one. Ask for a country
- *   before assuming it is there; an absent country fails as one entry, never as the whole run.
+ *   before assuming it is there. an absent country fails as one entry, never as the whole run.
  *
  *   ## Row counts from this source overstate, for some countries by exactly 2×
  *

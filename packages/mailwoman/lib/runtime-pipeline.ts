@@ -112,7 +112,7 @@ export interface CreateRuntimePipelineOpts {
 	fst?: RuntimePipelineStages["fst"] | false
 	/**
 	 * Street-morphology matcher — the signal source for the FST street-context check (#1315), always consumed with the
-	 * morphology emission prior zeroed at the pipeline's classify call sites (the emission prior is US-golden-negative;
+	 * morphology emission prior zeroed at the pipeline's classify call sites (the emission prior is US-golden-negative.
 	 * the check alone is golden-flat and fragment-positive). DEFAULT-ON alongside the FST auto-load: the sealed
 	 * `fst-street-morphology.bin` artifact when available (weights-package sibling, else the data-root staging copy),
 	 * degrading to a per-process build from core's bundled libpostal dictionaries; `false` suppresses it.
@@ -132,7 +132,7 @@ export interface CreateRuntimePipelineOpts {
 	classifyKind?: RuntimePipelineStages["classifyKind"]
 	/**
 	 * Phrase grouper override (Stage 2.7). Defaults to the rule-based `@mailwoman/phrase-grouper`. v0.5.0 wires this in
-	 * as a required stage; callers should normally not override unless they have a learned span proposer (planned for
+	 * as a required stage. callers should normally not override unless they have a learned span proposer (planned for
 	 * v0.5.1).
 	 *
 	 * @see RuntimePipelineStages.groupPhrases
@@ -145,15 +145,15 @@ export interface CreateRuntimePipelineOpts {
 	 * - `undefined` (default) → the bundled placer ({@link loadDefaultPlaceCountry}, open-set @ 0.9) is lazy-loaded on the
 	 *   first pipeline call and applied (no prior if the model can't be resolved).
 	 * - A function → use it (a custom placer / threshold).
-	 * - `false` → disabled (no prior; byte-stable pre-M2 behavior).
+	 * - `false` → disabled (no prior. byte-stable pre-M2 behavior).
 	 *
 	 * @see RuntimePipelineStages.placeCountry
 	 */
 	placeCountry?: RuntimePipelineStages["placeCountry"] | false
 	/**
 	 * #690: default for `PipelineOpts.normalizeCase` on every call — title-case detected all-caps ASCII input before the
-	 * model (helps on all-caps registry/compliance data; detection-restricted, mixed-case untouched). The classifier is
-	 * **default-ON** since #895 (drift D2 settled), so leaving this unset runs it; set `false` here to pin the raw-case
+	 * model (helps on all-caps registry/compliance data. detection-restricted, mixed-case untouched). The classifier is
+	 * **default-ON** since #895 (drift D2 settled), so leaving this unset runs it. set `false` here to pin the raw-case
 	 * parse for every call. A per-call `runOpts.normalizeCase` overrides this.
 	 */
 	normalizeCase?: boolean
@@ -162,7 +162,7 @@ export interface CreateRuntimePipelineOpts {
 	 * the soft prior to a hard country filter (empty→unresolved). **DEFAULT-ON** (#743, 2026-06-22): the built-in
 	 * coverage safelist (`HARD_PLACE_COUNTRY_SAFELIST`) confines the hard filter to well-covered countries
 	 * (US/ES/IT/NL/DE/FR), so it's a pure win there and a no-op (soft prior) for the low-coverage tail (FI/PL) — no
-	 * recall regression. Pass `false` to opt out entirely; a per-call `runOpts.hardPlaceCountry` overrides this.
+	 * recall regression. Pass `false` to opt out entirely. a per-call `runOpts.hardPlaceCountry` overrides this.
 	 */
 	hardPlaceCountry?: boolean
 	/**
@@ -340,7 +340,7 @@ export function createRuntimePipeline(
 ): (raw: string, runOpts?: PipelineOpts) => Promise<PipelineResult> {
 	// #1177: default-ON since 2026-07-20 (promotion battery: 0/4,507 golden misroutes, 6/6 demo
 	// presets byte-identical). `undefined` → `true` (intent-only mode); an explicit `false` still
-	// disables; the object form (executes against a real poi.db) passes through unchanged. Follows
+	// disables. the object form (executes against a real poi.db) passes through unchanged. Follows
 	// the same `?? true` factory-default merge pattern as `hardPlaceCountry` below.
 	const poiQueryKindEffective = opts.poiQueryKind ?? true
 
@@ -365,7 +365,7 @@ export function createRuntimePipeline(
 	}
 
 	// The character-path CJK model was trained with the postal mark 〒 in front of every postcode and misreads the
-	// prefecture boundary without it; the SentencePiece path wants it stripped (`NormalizeOpts.postalMark`).
+	// prefecture boundary without it. the SentencePiece path wants it stripped (`NormalizeOpts.postalMark`).
 	// Decided per input: a script-routed classifier hands a kanji or Hangul line to the character path whatever the
 	// primary's encoder, so the mark is kept exactly when that path will read the text.
 	const classifierShape = opts.classifier as { encoder?: string; forInput?: unknown } | undefined
@@ -379,7 +379,7 @@ export function createRuntimePipeline(
 		computeQueryShape,
 		// Default kind classifier: rule-based from @mailwoman/kind-classifier. Caller can override.
 		// POI arc (default-ON since 2026-07-20). The poi-aware classifier only exists when the flag
-		// resolves truthy; an explicit classifyKind override always wins. The anchor re-parse runs this
+		// resolves truthy. an explicit classifyKind override always wins. The anchor re-parse runs this
 		// pipeline minus the poi stage: same stages object, but runPipeline never takes the poi branch
 		// because anchorStages.poiIntent is absent and anchorStages.classifyKind is the default.
 		classifyKind:
@@ -387,7 +387,7 @@ export function createRuntimePipeline(
 			(poiQueryKindEffective ? createKindClassifier({ poiLexicon: poiSubjectLookup }) : defaultClassifyKind),
 		// Default phrase grouper: rule-based from @mailwoman/phrase-grouper. Hard dep in v0.5.0 —
 		// not an opt-in shim. The plan doc framed Stage 2.7 as backward-compatible-opt-in for the
-		// v0.4.0 pipeline; we have no current users to migrate, so v0.5.0 ships it as a required
+		// v0.4.0 pipeline. we have no current users to migrate, so v0.5.0 ships it as a required
 		// stage. Override only with a compatible alternative (e.g. v0.5.1's learned span proposer).
 		groupPhrases: opts.groupPhrases ?? defaultGroupPhrases,
 		// The #727 phase-4c rerank wrap is applied lazily on the first call (below): an explicitly-passed
@@ -398,7 +398,7 @@ export function createRuntimePipeline(
 		fst: opts.fst === false ? undefined : opts.fst,
 		streetMorphology: opts.streetMorphology === false ? undefined : opts.streetMorphology,
 		resolver: opts.resolver,
-		// Coarse country router (#244) — DEFAULT-ON (#244 M2). A function override is wired here; the
+		// Coarse country router (#244) — DEFAULT-ON (#244 M2). A function override is wired here. the
 		// `undefined` default is lazy-loaded on the first call (below) so the sync factory stays sync;
 		// `false` disables it. A confident in-map guess feeds the resolver's anchorPosterior re-rank.
 		placeCountry: typeof opts.placeCountry === "function" ? opts.placeCountry : undefined,
@@ -507,7 +507,7 @@ export function createRuntimePipeline(
 				})
 			} catch {
 				// Missing/unreadable poi.db → degrade to the intent-only executor already wired above
-				// (build-local abstain still works; everything else falls back to bare intent).
+				// (build-local abstain still works. everything else falls back to bare intent).
 			}
 		}
 

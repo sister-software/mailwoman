@@ -8,7 +8,7 @@
  *
  *   The order is the whole point. On 2026-08-23 eight training runs were graded candidate-against-shipped and every one
  *   reported a regression that was, in substantial part, the cost of fine-tuning at all. The two controls that say so
- *   were run eighth and ninth. They were not skipped because anyone decided to skip them; they were skipped because
+ *   were run eighth and ninth. They were not skipped because anyone decided to skip them. they were skipped because
  *   running them is three more commands at the moment you already have a number in hand, and a number in hand feels
  *   like an answer. Making the controls the DEFAULT PATH rather than a discipline is the only fix that survives a
  *   fresh context.
@@ -41,7 +41,7 @@ import type { ComparedRow } from "#tool-kit"
  * It is DERIVED rather than written here because the written version drifted. `["FR", "GB", "DE"]` stood under a
  * docstring claiming iron rule 6's protection while `SCOPE.mdx` put US and FR in tier 1 — so a candidate regressing US
  * rows raised no D-rule reason at all, which is the one reading the rule exists to force. Tier-1 membership now comes
- * from the register the table is checked against, and every country protected beyond it carries its reason.
+ * from the register the table is checked against, and every country guarded beyond it carries its reason.
  */
 export async function protectedCountries(): Promise<ProtectedCountry[]> {
 	return dRuleCountries(await readScopeConfig())
@@ -92,7 +92,7 @@ export interface ArcResult {
 	attributableRegressions?: number
 	attributableNet?: number
 	/**
-	 * False when a control disqualified the measurement. The candidate numbers are still reported; they are just not
+	 * False when a control disqualified the measurement. The candidate numbers are still reported. they are just not
 	 * evidence about the candidate.
 	 */
 	attributable: boolean

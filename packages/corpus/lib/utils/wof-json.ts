@@ -61,7 +61,7 @@ export interface WOFRecord {
 	/**
 	 * Localized name variants from `name:*` properties.
 	 *
-	 * Keys are the raw `name:eng_x_preferred` form; values are the first non-empty string from the underlying array (WOF
+	 * Keys are the raw `name:eng_x_preferred` form. values are the first non-empty string from the underlying array (WOF
 	 * stores variants as arrays even when only one form is present). The canonical `wof:name` is not included here —
 	 * adapters add a synthetic `"default"` slot for it.
 	 */
@@ -84,7 +84,7 @@ export function isCurrentFeature(props: Record<string, unknown>): boolean {
 
 /**
  * Pull `name:*` localized variants off a WOF feature's properties. WOF stores variants as arrays (`["Saint
- * Petersburg"]`); we lift the first non-empty string. Multiple-value variants (rare; usually historical aliases) are
+ * Petersburg"]`). we lift the first non-empty string. Multiple-value variants (rare. usually historical aliases) are
  * not split into separate rows by this helper — adapters can opt in by iterating the underlying array if they need it.
  */
 export function extractNameVariants(props: Record<string, unknown>): Map<string, string> {
@@ -216,7 +216,7 @@ export async function* walkFeatures(repoDir: string, opts: { signal?: AbortSigna
  * corrupt fixtures shouldn't infinite-loop the adapter).
  *
  * Records whose ancestors aren't in `byID` (e.g. an FR locality whose region wasn't included in the cloned repo set)
- * get a shorter chain; the variant emission gracefully degrades.
+ * get a shorter chain. the variant emission gracefully degrades.
  *
  * `wof-admin-jp`'s `chainOf` walks the same parent-child relation over SQLite `spr` rows with an
  * outside-the-preloaded-set fallback query — a different substrate with a different escape hatch, kept separate on

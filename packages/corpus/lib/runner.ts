@@ -80,7 +80,7 @@ export interface RunAdapterOptions {
 	adapterOptions: AdapterOptions
 
 	/**
-	 * Root output directory; the runner creates `<outputDir>/<adapter.id>/` under it.
+	 * Root output directory. the runner creates `<outputDir>/<adapter.id>/` under it.
 	 */
 	outputDir: PathBuilderLike
 
@@ -265,7 +265,7 @@ export async function runAllAdapters(
 }
 
 /**
- * Validate an emitted row. Cheap; runs once per row. Catches adapter bugs early so the JSONL doesn't end up
+ * Validate an emitted row. Cheap. runs once per row. Catches adapter bugs early so the JSONL doesn't end up
  * half-malformed.
  */
 function assertEmittedRow(adapter: CorpusAdapter, row: CanonicalRow): void {
@@ -292,7 +292,7 @@ function assertEmittedRow(adapter: CorpusAdapter, row: CanonicalRow): void {
 
 /**
  * Promise-ify a single event emission. Used to await `drain` / `close` on the write stream. Exported for `build.ts`,
- * whose stage streams await `close` the same way; unlike a bare two-listener race, the loser listener is detached so a
+ * whose stage streams await `close` the same way. unlike a bare two-listener race, the loser listener is detached so a
  * long-lived stream does not accumulate one orphan handler per wait.
  */
 export function once(emitter: WriteStream, event: "drain" | "close"): Promise<void> {

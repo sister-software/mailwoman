@@ -17,7 +17,7 @@
 #      via decompose-mode. The bilingual subset gives a whisper of non-US
 #      anti-decompose signal without committing to full v0.7 locale expansion.
 #      Build pipeline: corpus/src/synthesize-no-street.ts +
-#      the no-street recipe (its script has since been retired; no `packages/corpus/lib/recipes/`
+#      the no-street recipe (its script has since been retired. no `packages/corpus/lib/recipes/`
 #      module carries it today) + scripts/extract-tuples-de-gb.py +
 #      scripts/jsonl-to-parquet.py.
 #

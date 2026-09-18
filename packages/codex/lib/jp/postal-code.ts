@@ -13,7 +13,7 @@
  *   - It is written **largest-to-smallest**: prefecture → city/ward → district → block → lot (`東京都 千代田区
  *       千代田 1-1`), the reverse of the US smallest-to-largest line order.
  *   - There are **essentially no street names**. Outside a few Kyoto-style exceptions, you do not
- *       navigate by named streets; you navigate by nested administrative areas and numbered
+ *       navigate by named streets. you navigate by nested administrative areas and numbered
  *       blocks/lots (丁目 / 番地 / 号 — see `address-unit.ts`).
  *
  *   With no street name to anchor on and a reverse field order, the **postcode is the single most
@@ -66,7 +66,7 @@ export function isJpPostalCode(input: unknown): input is PostalCode {
 /**
  * First digit of the postcode → a coarse region label. Japan Post's numbering grows roughly outward from Tokyo (`1xx`)
  * and is **approximate** at this granularity — a single leading digit spans large, irregular areas and the boundaries
- * are postal-routing, not administrative. Use it as a weak prior, never as a hard region assignment; the full code is
+ * are postal-routing, not administrative. Use it as a weak prior, never as a hard region assignment. the full code is
  * what actually anchors the address.
  *
  * Approximate — the labels below are illustrative routing regions, not precise prefecture sets.

@@ -7,7 +7,7 @@
  *
  *   It is a compass ROSE, the way the reference map apps draw it: a ringed dial carrying a two-tone needle whose red
  *   half points north and whose pale half points south. A single-color arrow cannot say which end is north, so a
- *   reader has to already know the convention to read it; two tones say it outright. There is no `N` on the dial —
+ *   reader has to already know the convention to read it. two tones say it outright. There is no `N` on the dial —
  *   at this size the letter and the needle's north tip want the same few pixels, and the tip is the clearer of them.
  *
  *   The whole dial counter-rotates the bearing, so the needle keeps pointing at true north while the map turns under

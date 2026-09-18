@@ -10,7 +10,7 @@
  *   mean data changed, never that a build iterated differently.
  *
  *   No Node imports — the builder runs anywhere the reader does. Serialization is a build-time
- *   operation all the same; the reader (`reader.ts`) is the runtime surface.
+ *   operation all the same. the reader (`reader.ts`) is the runtime surface.
  */
 
 import type { AncestrieHeader } from "#format"

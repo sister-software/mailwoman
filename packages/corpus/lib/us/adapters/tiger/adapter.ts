@@ -27,7 +27,7 @@
  *       consistency).
  *   - `packages/corpus/lib/us/fips-state.ts` — the FIPS → `{abbreviation, name}` lookup table
  *       (originally `tiger/state.ts`, AGPL-3.0 → AGPL-3.0). The full isp-nexus TIGER module ships a
- *       TypeORM-backed service layer; mailwoman only needs the lookup data so we don't carry the
+ *       TypeORM-backed service layer. mailwoman only needs the lookup data so we don't carry the
  *       service layer over.
  *
  *   License: stamped `"Public Domain"` per Census Bureau guidance on TIGER/Line. No per-row override

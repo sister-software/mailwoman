@@ -5,7 +5,7 @@
  *
  *   The shared frame of the PCN1/PIX1/PFX1 binary family (little-endian): a u32 magic, a u32
  *   headerLen, then headerLen bytes of UTF-8-encoded JSON. Each format's records follow the frame
- *   and stay with their owning module — the single-file writer+reader discipline is per format; this
+ *   and stay with their owning module — the single-file writer+reader discipline is per format. this
  *   module only keeps the three from restating the frame itself. Pure JS, no Node imports: the
  *   browser runtime loads the same artifacts.
  */

@@ -15,7 +15,7 @@
  *   `place_bbox` R*Tree, `mailwoman gazetteer build fts`) is a multi-GB build artifact that may not be on
  *   disk — either gap yields `null` and POI results simply carry no `ancestry` key at all (house
  *   meaning-of-zero: absence, never an empty array). The polygon sidecar (`wof-polygons.db`) is OPTIONAL
- *   too; without it every ancestry chain still resolves, just `containment: "approximate"`
+ *   too. without it every ancestry chain still resolves, just `containment: "approximate"`
  *   (`WOFReverseGeocoder`'s own centroid-descent fallback).
  *
  *   Admin DB resolution mirrors `resolver-backend.ts`'s `existingWOFDatabasePaths()` — the same default

@@ -11,7 +11,7 @@
  *   before deciding whether to build the `associatedStreet` / point-in-polygon recovery pass.
  *
  *   ⚠ ODbL: the OUTPUT extract is an OpenStreetMap Derived Database (share-alike). This code carries no
- *   OSM bytes; the obligation rides on the built `.db`. Source = `openstreetmap:<cc>`. See
+ *   OSM bytes. the obligation rides on the built `.db`. Source = `openstreetmap:<cc>`. See
  *   `osm/README.md` for the licensing boundary + the counsel sign-off required before any extract ships.
  *
  *   Usage:
@@ -182,7 +182,7 @@ async function main(): Promise<void> {
 			}
 
 			// Per-SURFACE locale routing (the Québec finishing move): a French-lead surface folds under the fr
-			// rules whatever the country default; the probe side routes with the same shared function.
+			// rules whatever the country default. the probe side routes with the same shared function.
 			const streetNorm = normalizeStreetForKeyLocale(street, streetLocaleForSurface(street, locale))
 			const number = rec.housenumber.trim().toLowerCase()
 

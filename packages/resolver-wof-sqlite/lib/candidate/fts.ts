@@ -8,7 +8,7 @@
  *   key, so the contiguous-probe lookup returns nothing). It indexes the NORMALIZED key (not the
  *   raw `name`), so a diacritic-stripped query (`munchen`) trigram-matches the stored `munchen`
  *   rather than missing a raw `München`. The trigram tokenizer makes `MATCH` a substring/fuzzy
- *   operation; the reader ({@link WOFCandidateTableLookup}) OR's the query's trigrams to fetch a
+ *   operation. the reader ({@link WOFCandidateTableLookup}) OR's the query's trigrams to fetch a
  *   loose set, then re-ranks it with a WORD-level similarity. The trigram index is the candidate
  *   GENERATOR, not the scorer — trigram Jaccard scores a true transposition correction below a wrong
  *   answer, because shared generic suffixes count as evidence and transpositions count against it.

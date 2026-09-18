@@ -34,13 +34,13 @@ export interface BuildSealedArtifactOptions<DB, Streamed, Result> {
 	 */
 	ingest: (database: DatabaseClient<DB>) => Promise<Streamed | undefined>
 	/**
-	 * The bounded child-process ingest, run while the parent holds no handle. Each child opens the temp file and appends;
+	 * The bounded child-process ingest, run while the parent holds no handle. Each child opens the temp file and appends.
 	 * chunks run one at a time, so there is exactly one writer at every instant.
 	 */
 	batched?: (tmpPath: string) => Promise<Streamed>
 	/**
 	 * Post-ingest work under the second handle: assertions over what was streamed, index/coverage/manifest writes,
-	 * dropping any scratch table. `VACUUM`, the seal and the swap follow; the artifact's on-disk size is measurable only
+	 * dropping any scratch table. `VACUUM`, the seal and the swap follow. the artifact's on-disk size is measurable only
 	 * after this returns and the swap lands.
 	 */
 	finish: (database: DatabaseClient<DB>, streamed: Streamed) => Promise<Result>

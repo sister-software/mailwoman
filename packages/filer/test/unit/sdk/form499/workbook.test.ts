@@ -121,7 +121,7 @@ describe("parseForm499Workbook — lifecycle and footprint", () => {
 
 describe("assertWorkbookHeader", () => {
 	it("accepts the real workbook's header", async () => {
-		// Reading the fixture at all exercises this; asserted directly so a failure names the guard.
+		// Reading the fixture at all exercises this. asserted directly so a failure names the guard.
 		await expect(readFixture()).resolves.toHaveLength(4)
 	})
 
@@ -184,7 +184,7 @@ describe("readOperatingStates", () => {
 
 describe("the fixture itself", () => {
 	it("is a real workbook, not a hand-authored one", async () => {
-		// XLSX is a ZIP; the magic bytes are the cheapest proof the file was not stubbed out.
+		// XLSX is a ZIP. the magic bytes are the cheapest proof the file was not stubbed out.
 		expect((await readLocalBuffer(WORKBOOK_PATH)).subarray(0, 2).toString("latin1")).toBe("PK")
 	})
 })

@@ -6,7 +6,7 @@
  *   A populated locality whose own same-name administrative parent dwarfs it.
  *
  *   `Aurangabad`, Maharashtra is a city of roughly 1.2 million. Its `locality` row records 19,172 while its
- *   same-name `county` row records 3,701,282. Nothing in the resolver is wrong there; the number is. That row is
+ *   same-name `county` row records 3,701,282. Nothing in the resolver is wrong there. the number is. That row is
  *   also why a ranking rule cannot settle #2267 — Irvington and Aurangabad are identical on every feature the
  *   ranker can read and opposite in which bearer the query means, so correcting the population resolves one and
  *   changing the ranking to accommodate the wrong number improves nothing.
@@ -88,7 +88,7 @@ interface Row {
 	parentPopulation: number
 	ratio: number
 	/**
-	 * Localities of this name in this country. High means a common village name; a handful means a real settlement and
+	 * Localities of this name in this country. High means a common village name. a handful means a real settlement and
 	 * its namesakes.
 	 */
 	nameBearers: number

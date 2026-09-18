@@ -8,7 +8,7 @@
  *   producer and a consumer that also import each other is an import cycle waiting to be discovered by a linter.
  *
  *   `AblationCell`'s first eleven fields are specified by the suggestion layer's design doc
- *   (`docs/superpowers/plans/2026-08-05-suggestion-layer.md` §C.5) and are owed exactly; everything after them is marked
+ *   (`docs/superpowers/plans/2026-08-05-suggestion-layer.md` §C.5) and are owed exactly. everything after them is marked
  *   ADDITIVE and says why it exists.
  */
 
@@ -21,7 +21,7 @@ import type { ResolutionTier } from "#eval-harness/gauntlet/schema"
 /**
  * The component classes this runner deletes — every tag the curated corpus actually asserts, and every one
  * {@linkcode componentOf} can read back off the assembled result (the slot a substitution would land in). A tag with no
- * result field could be deleted but not scored for substitution, which is half a measurement; adding one means adding
+ * result field could be deleted but not scored for substitution, which is half a measurement. adding one means adding
  * the field to `GauntletResult` first.
  */
 export const ABLATABLE_COMPONENTS = [
@@ -256,7 +256,7 @@ export interface AblationVariant {
  * One component's roll-up across every locale — the shared source for the console summary and the markdown report,
  * which had drifted apart by re-deriving these sums independently.
  *
- * Sums come from the CELLS; the displacement percentiles come from the pooled ROWS, because percentiles do not
+ * Sums come from the CELLS. the displacement percentiles come from the pooled ROWS, because percentiles do not
  * aggregate — a global p90 has to be taken over the pooled displacements, never over the per-cell p90s.
  */
 export interface AblationComponentAggregate {

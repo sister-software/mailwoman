@@ -4,7 +4,7 @@
  * @author Teffen Ellis, et al.
  *
  *   The libpostal-compatible Hono app: CORS + error safety net + routes + the emitted OpenAPI
- *   document. Engine-agnostic — the CLI wires the real parser; tests inject fixtures.
+ *   document. Engine-agnostic — the CLI wires the real parser. tests inject fixtures.
  */
 
 import { OpenAPIHono } from "@hono/zod-openapi"
@@ -18,7 +18,7 @@ import { registerLibpostalRoutes } from "#routes"
 
 /**
  * 100 KiB — express.json's default cap, the closest thing to a legacy precedent for this endpoint. There is no legacy
- * 413 contract to match; the `{ error: "request body too large" }` envelope below is a recorded free choice, shaped
+ * 413 contract to match. the `{ error: "request body too large" }` envelope below is a recorded free choice, shaped
  * like the rest of this API's error responses.
  */
 const MAX_BODY_BYTES = 102_400
@@ -38,7 +38,7 @@ export interface LibpostalAppOptions {
 	/**
 	 * The engine stamp behind the `Server` + `Link: rel="license"` headers on every response. Headers only: `/parse`
 	 * answers a bare array by protocol, so there is no body field to carry it. Absent when an embedding application
-	 * builds the app without the `mailwoman` package; the `libpostal` bin always passes one.
+	 * builds the app without the `mailwoman` package. the `libpostal` bin always passes one.
 	 */
 	engine?: EngineStamp
 }

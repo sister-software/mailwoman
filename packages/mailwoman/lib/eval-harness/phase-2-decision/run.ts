@@ -17,7 +17,7 @@
  *   different backend would report numbers that look like these and answer a different question.
  *
  *   THE RECEIPT CARRIES ARTIFACT IDENTITY AND SAYS WHERE IT DEVIATES. A run on a rebuilt `poi.db` or a bumped
- *   weights package is still a run; it is simply not comparable to the merged-PR receipts the ruler names as
+ *   weights package is still a run. it is simply not comparable to the merged-PR receipts the ruler names as
  *   baselines. So the observed identity is recorded beside the pins, every difference is named, and the
  *   verdict carries `comparability` — reported, never a decision input.
  *
@@ -131,7 +131,7 @@ export interface Phase2Receipt {
 	checks: Phase2CheckOutcome[]
 	verdict: Phase2Verdict
 	/**
-	 * Always `false`. The ruler maps measurements onto one decision; recording it is the operator's, per #1967.
+	 * Always `false`. The ruler maps measurements onto one decision. recording it is the operator's, per #1967.
 	 */
 	recorded: false
 	recordingNote: string
@@ -623,7 +623,7 @@ async function measureMarker(
 			detail: `marker kind ${first.kind}, code ${first.code}, mechanism ${first.mechanism}, evidence names assertion ${String((first.evidence as { assertion?: { id?: string } }).assertion?.id)}`,
 		}
 	} finally {
-		// The runtime pipeline never opens the artifact reader itself, so the route owns nothing to close; draining
+		// The runtime pipeline never opens the artifact reader itself, so the route owns nothing to close. draining
 		// keeps one query's firings from being attributed to the next.
 		route.takeObservations()
 	}

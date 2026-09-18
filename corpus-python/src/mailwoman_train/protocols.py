@@ -21,7 +21,7 @@ class CountryModule(Protocol):
 
     The implementer is a module, not an instance, which is why the settings are spelled as module
     constants. `BOARD_BUCKET_MIN` is the municipality-population floor above which rows go to the
-    held-out board rather than the training pool; each country sets its own, because the population
+    held-out board rather than the training pool. each country sets its own, because the population
     distributions differ.
     """
 

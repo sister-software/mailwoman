@@ -19,7 +19,7 @@ export async function readManifest<T>(path: string): Promise<T | null> {
 	if (!(await pathExists(path))) return null
 
 	// A read failure (e.g. the file vanished after the existsSync probe) maps to null like corrupt
-	// JSON does; tryParsingJSON returns null for the non-string sentinel.
+	// JSON does. tryParsingJSON returns null for the non-string sentinel.
 	const text = await readLocalTextFile(path).catch(() => null)
 
 	return tryParsingJSON<T>(text)

@@ -21,7 +21,7 @@
  *       it.
  *
  *   Output: GeoJSON (drops on the same map) + a table, each entity tagged with its bucket + source
- *   memberships. We produce the reconciled join; what a gap means — and whether it's real or a
+ *   memberships. We produce the reconciled join. what a gap means — and whether it's real or a
  *   sampling artifact — is the consumer's call, not ours. This is strictly a set-membership
  *   reconciliation, never an allegation.
  *

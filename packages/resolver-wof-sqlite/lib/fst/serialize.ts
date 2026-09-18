@@ -5,12 +5,12 @@
  *
  *   Binary serialization for the FST gazetteer. Format:
  *
- *   HEADER (32 bytes) magic [u8; 4] "FST\0" version u16 1 flags u16 0 (reserved) stateCount u32
+ *   HEADER (32 bytes) magic [u8. 4] "FST\0" version u16 1 flags u16 0 (reserved) stateCount u32
  *   edgeCount u32 total edges across all states placeCount u32 total place entries across all
  *   states stringCount u32 unique strings in string table stringBytes u32 total bytes of string
  *   data _reserved u32
  *
- *   STRING TABLE offsets [u32; stringCount + 1] byte offset into data (last = sentinel) data [u8;
+ *   STRING TABLE offsets [u32. stringCount + 1] byte offset into data (last = sentinel) data [u8.
  *   stringBytes] concatenated UTF-8
  *
  *   STATE TABLE [stateCount × 12 bytes] edgeStart u32 index into edge table placeStart u32 index into
@@ -20,9 +20,9 @@
  *
  *   PLACE TABLE [placeCount × 60 bytes at V5, 56 below] wofID u32 placetypeIdx u8 index into
  *   PLACETYPE_ORDER chainLen u8 0..8 crossCountryBranches u8 (header flags bit0 enables the read)
- *   placeFlags u8 (V5; bit0 = encyclopedic present) nameIdx u32 index into string table referential f32
+ *   placeFlags u8 (V5. bit0 = encyclopedic present) nameIdx u32 index into string table referential f32
  *   population-anchored likelihood [0,1] — was the conflated `importance` (V2–V4), was population u32
- *   (V1) lat f32 lon f32 chain [u32; 8] parent chain (unused slots = 0) encyclopedic f32 (V5 only;
+ *   (V1) lat f32 lon f32 chain [u32. 8] parent chain (unused slots = 0) encyclopedic f32 (V5 only.
  *   read only when placeFlags bit0 is set)
  *
  *   THE V5 BUMP IS THE TWO-SCORE SPLIT (ROAD_TO_V9 §2 R1). Through V4 one float carried whichever score
@@ -278,7 +278,7 @@ export function deserializeFST(buf: Buffer): FSTMatcher {
 
 	// Verify state-table offsets and transitions.
 	const stateEntrySize = version >= VERSION_WIDE_STATE_COUNTERS ? WIDE_STATE_ENTRY_SIZE : NARROW_STATE_ENTRY_SIZE
-	// v5 grew the place entry by the encyclopedic float; v4-and-below files are read at the old stride.
+	// v5 grew the place entry by the encyclopedic float. v4-and-below files are read at the old stride.
 	const placeEntrySize = version >= VERSION_TWO_SCORE_SPLIT ? SPLIT_PLACE_ENTRY_SIZE : LEGACY_PLACE_ENTRY_SIZE
 	const stateTableStart = pos
 	const edgeTableStart = stateTableStart + stateCount * stateEntrySize
@@ -317,7 +317,7 @@ export function deserializeFST(buf: Buffer): FSTMatcher {
 				parentChain.push(buf.readUInt32LE(pp + 24 + ci * 4))
 			}
 
-			// v1 stored a raw population u32 here; v2–v4 the conflated `importance` float; v5 the
+			// v1 stored a raw population u32 here. v2–v4 the conflated `importance` float. v5 the
 			// referential score. A v1 file's population is mapped through the same curve
 			// `referentialFromPopulation` uses, so its value is genuinely referential — the only
 			// generation of this format for which that can be said without reading the source database.

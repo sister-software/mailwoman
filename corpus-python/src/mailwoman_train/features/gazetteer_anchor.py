@@ -10,7 +10,7 @@ docs/articles/plan/reference/closed-vocab-fields-model-first.mdx).
 and unlike the postcode anchor: features are computed from the RAW SURFACE ONLY —
 never from gold labels — so the exact same computation runs at train and inference time (no leak,
 no skew). The matching rules live in the lexicon JSON (``rules``) and are mirrored verbatim here
-and in the TS inference matcher; the JSON is the single source both consumers load, so the two
+and in the TS inference matcher. the JSON is the single source both consumers load, so the two
 implementations cannot drift (the PLACETYPE_ORDER lesson).
 
 Char→piece projection mirrors ``realign_anchor_to_pieces`` exactly (each piece inherits the value
@@ -117,7 +117,7 @@ def gazetteer_char_paint(raw: str, lexicon: GazetteerLexicon) -> tuple[list[int]
             bits = lexicon.entries.get(key, 0)
             if n == 1:
                 # code_entries is case-sensitive: the surface must already be uppercase ("IN" the
-                # state code, not "in" the English word). Keys are uppercase; compare the raw
+                # state code, not "in" the English word). Keys are uppercase. compare the raw
                 # word_norm without folding case.
                 bits |= lexicon.code_entries.get(parts[0], 0)
             if bits:
@@ -169,11 +169,11 @@ def suppress_gazetteer_near_postcode(
     feature_dim: int,
     window: int = 1,
 ) -> tuple[list[list[float]], list[float]]:
-    """TRAIN-TIME channel choreography (#464, v0.9.13 postcode fix; DeepSeek 2026-06-10) — the mirror
+    """TRAIN-TIME channel choreography (#464, v0.9.13 postcode fix. DeepSeek 2026-06-10) — the mirror
     of TS ``suppressGazetteerNearPostcode``. Zero the gazetteer clue on pieces within ``window`` of a
     postcode-anchor hit (``anchor_confidence[i] > 0``) so the model never learns the biased
-    region->postcode CRF transition (the inference-only fix can't undo a weight-baked transition; the
-    cure is applying this at train time, keyed off the same anchor signal inference uses, so the two
+    region->postcode CRF transition (the inference-only fix can't undo a weight-baked transition. the
+    fix is applying this at train time, keyed off the same anchor signal inference uses, so the two
     stay consistent). Returns new (feats, confs); does not mutate.
     """
     n = len(confs)

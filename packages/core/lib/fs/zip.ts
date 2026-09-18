@@ -280,7 +280,7 @@ export interface ExtractZipEntriesOptions {
 /**
  * Extract members of an archive into `destinationDirectory`.
  *
- * Directory entries are skipped; a nested path is created as needed unless `flatten` is set. Members stream one at a
+ * Directory entries are skipped. a nested path is created as needed unless `flatten` is set. Members stream one at a
  * time, so this is bounded by the largest member rather than by the archive.
  *
  * @category Files
@@ -322,7 +322,7 @@ export async function extractZipEntries(
 /**
  * Verify every member's CRC-32 against the value its central-directory header claims — what `unzip -t` is for.
  *
- * This is a corruption check on a download, so it decompresses everything and keeps nothing; the archive is read one
+ * This is a corruption check on a download, so it decompresses everything and keeps nothing. the archive is read one
  * member at a time and the checksum is folded chunk by chunk, so memory is bounded by the inflate window.
  *
  * The CRC is computed here rather than delegated to yauzl's `validateCrc32`, which asserts `Cannot validate CRC32 for

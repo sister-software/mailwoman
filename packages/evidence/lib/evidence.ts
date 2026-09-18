@@ -4,7 +4,7 @@
  * @author Teffen Ellis, et al.
  * @file The typed evidence union. The difference between the kinds is what each is ALLOWED to do:
  *
- *   - `observation` — retrieved from a named source at a named vintage. Carries no score; a source either said it or
+ *   - `observation` — retrieved from a named source at a named vintage. Carries no score. a source either said it or
  *     did not.
  *   - `relation` — structural compatibility between entities. Carries an assertion, and a score only when that
  *     assertion is `inferred`.
@@ -61,7 +61,7 @@ export function observation(source: string, vintage: string | null, value: unkno
 }
 
 /**
- * A relation stated by a source is authoritative and carries no score; one we concluded is inferred and may. A score on
+ * A relation stated by a source is authoritative and carries no score. one we concluded is inferred and may. A score on
  * an authoritative relation is refused, because it means the link was concluded, not stated.
  */
 export function relation(input: RelationInput): Relation {

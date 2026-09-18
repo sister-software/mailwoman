@@ -5,7 +5,7 @@
  *
  *   `mailwoman dev generate country-population` — regenerate `codex/country/population.ts` (the
  *   per-country population table, #1650's prominence-race fallback) from GeoNames countryInfo.txt.
- *   Network codegen; the output is committed for provenance.
+ *   Network codegen. the output is committed for provenance.
  */
 
 import { Text } from "ink"

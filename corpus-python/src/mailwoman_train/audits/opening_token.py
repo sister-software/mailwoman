@@ -118,7 +118,7 @@ def census(
     ``augment_exclude_sources`` is honoured because both passes run `emit.emit_row`, the same function
     the trainer runs: a listed source bypasses augmentation entirely, so it emits exactly what it drew
     while its neighbours expand. `audit_epoch_mixture` reimplemented that step and omitted the
-    exclusion until #2243; all three now share one function.
+    exclusion until #2243. all three now share one function.
     """
 
     def stream(rng: random.Random) -> Iterator[dict[str, Any]]:

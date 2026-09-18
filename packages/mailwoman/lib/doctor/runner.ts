@@ -116,7 +116,7 @@ export interface DoctorDeps {
 	 */
 	readLayerIdentity(path: string): Promise<LayerIdentity>
 	/**
-	 * Every layer database the geocode session would attach, present or not; the doctor reports the license of each one
+	 * Every layer database the geocode session would attach, present or not. the doctor reports the license of each one
 	 * that is on disk.
 	 */
 	layerDatabases(): LayerDatabaseRef[]
@@ -134,12 +134,12 @@ export interface DoctorDeps {
 	 */
 	licenseKey(): Promise<LicenseKeyVerification | undefined>
 	/**
-	 * Ask mailwoman.ai's well-known register whether a key id is still listed. Called only when a key is configured;
+	 * Ask mailwoman.ai's well-known register whether a key id is still listed. Called only when a key is configured.
 	 * answers `unreachable` rather than throwing when there is no route.
 	 */
 	confirmLicenseKeyPublished(kid: string): Promise<LicenseKeyPublication>
 	/**
-	 * Ask the license worker whether a self-service license still stands. Called only when the configured key names one;
+	 * Ask the license worker whether a self-service license still stands. Called only when the configured key names one.
 	 * answers `unreachable` rather than throwing when there is no route.
 	 */
 	checkLicenseStatus(lid: string): Promise<LicenseStatusAnswer>

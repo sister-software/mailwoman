@@ -103,7 +103,7 @@ export const US_STATE_BY_ABBREVIATION: Readonly<Record<string, USStateInfo>> = O
 )
 
 /**
- * Lookup helper for adapters carrying 2-char USPS abbreviations (`"CA"`, `"VT"`). Case-folded; null for any value
+ * Lookup helper for adapters carrying 2-char USPS abbreviations (`"CA"`, `"VT"`). Case-folded. null for any value
  * outside the 50 states + DC + the five primary territories.
  */
 export function lookupStateAbbreviation(abbreviation: string | null | undefined): USStateInfo | null {

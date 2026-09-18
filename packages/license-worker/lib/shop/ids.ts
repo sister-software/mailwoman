@@ -5,7 +5,7 @@
  *
  *   The ids Stripe answered for the shop's objects, per mode, as data: `ids.json` beside this file is written by the
  *   provisioner and read by the worker (the Price allowlist) and by the site and the email (the Payment Links and the
- *   portal's login address). Nothing else names a Stripe id; a re-provisioned account changes this file and nothing
+ *   portal's login address). Nothing else names a Stripe id. a re-provisioned account changes this file and nothing
  *   else.
  */
 
@@ -26,7 +26,7 @@ export interface ShopIDs {
 export type ShopIDsByMode = Record<ShopMode, ShopIDs>
 
 /**
- * The recorded ids per Stripe mode, as `ids.json` holds them; the provisioner is the only writer.
+ * The recorded ids per Stripe mode, as `ids.json` holds them. the provisioner is the only writer.
  */
 export const SHOP_IDS: ShopIDsByMode = ids
 

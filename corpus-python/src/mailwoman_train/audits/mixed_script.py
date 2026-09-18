@@ -1,7 +1,7 @@
 """Audit script transitions inside gold address components.
 
 Row-level script diversity is not the same capability as a bilingual or mixed-script
-component. ``Rinrin, 高山市`` contains multiple scripts across components; a venue such as
+component. ``Rinrin, 高山市`` contains multiple scripts across components. a venue such as
 ``Four Seasons Inn四季酒家`` changes script inside one semantic span. This audit keeps those
 populations separate and reports the latter by component tag, country, and source.
 
@@ -66,7 +66,7 @@ _SCRIPT_MARKERS = (
 
 
 def character_script(char: str) -> str | None:
-    """Return a strong writing-system label; ignore digits, punctuation, marks, and symbols."""
+    """Return a strong writing-system label. ignore digits, punctuation, marks, and symbols."""
     if not unicodedata.category(char).startswith("L"):
         return None
     name = unicodedata.name(char, "")

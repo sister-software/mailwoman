@@ -11,7 +11,7 @@
  *   Query-side normalization is the shared normalizer (`street-normalize.ts`), selected per the extract's
  *   `streetLocale`, so build-side and probe-side keys agree by construction. The commune scope folds
  *   through `normalizeLocalityForKey` + `stripArrondissement` (BAN names Paris/Lyon/Marseille per
- *   arrondissement; a query names the base commune).
+ *   arrondissement. a query names the base commune).
  *
  *   Scope order is most-selective first: `postcode`, then the base commune. Each scope WEIGHTED-
  *   aggregates (by `point_count`) across the matched rows in SQL, so a commune-scope probe returns the
@@ -74,7 +74,7 @@ export class StreetCentroidSqliteLookup implements StreetCentroidLookup {
 	/**
 	 * @param dbPath Extract path.
 	 * @param opts.streetLocale The street-normalization locale this extract was BUILT with — must match, or every key
-	 *   misses. Defaults to `"fr"` (BAN is the French national register; the tier is FR-only today).
+	 *   misses. Defaults to `"fr"` (BAN is the French national register. the tier is FR-only today).
 	 */
 	constructor(dbPath: string, opts: { streetLocale?: StreetLocale } = {}) {
 		this.#db = new DatabaseClient<StreetCentroidDatabase>(dbPath, { readOnly: true })

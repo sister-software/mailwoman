@@ -21,7 +21,7 @@
  *   ```
  *
  *   sorted by (child, parent) UTF-16 code-unit order. `tagIdx` and `parentTagIdx` both index the
- *   header's `tagTable` — the copy of `COMPONENT_TAGS` embedded at serialize time (schema 3; u8 caps
+ *   header's `tagTable` — the copy of `COMPONENT_TAGS` embedded at serialize time (schema 3. u8 caps
  *   at 256 tags, asserted at serialize — the table is nowhere near that today), so the binary is
  *   self-describing and immune to reordering of the runtime tag union. Normative outside-contributor
  *   spec: `docs/engineering/reference/pix1.ksy` (kept honest by the layout-conformance test).
@@ -132,7 +132,7 @@ export interface PairIndexHeader {
 	 * The tag universe `tagIdx` and `parentTagIdx` index into, embedded at serialize time (a copy of `COMPONENT_TAGS` as
 	 * of the build). Makes the binary self-describing — an outside reader decodes tags with no mailwoman import — and
 	 * decouples every shipped artifact from the ORDER of the runtime tag union. The reader resolves each record's name
-	 * against the runtime's known tags and throws on a referenced unknown; unknown names no record references are
+	 * against the runtime's known tags and throws on a referenced unknown. unknown names no record references are
 	 * tolerated, so a binary built after the union grows still loads on an older reader as long as the new tag is
 	 * unused.
 	 */
@@ -155,8 +155,8 @@ export interface PairIndexHeader {
 	 * first piece — the path-fusion recovery change the task-8 transition-level probe measured (β=5: 13/17 comma-free GB
 	 * misses recovered, zero measured collateral on 47 correct rows + 200 venue-confound rows). Absent = no transition
 	 * term at all (today's emission-only behavior) — backward compatible (old binaries lack the field and keep working)
-	 * and forward compatible (old readers parse the header JSON and simply never consult the extra key; optional fields
-	 * ride the JSON header without a schema bump). Calibrated per country like `delta`: the GB artifact ships 5; the NZ
+	 * and forward compatible (old readers parse the header JSON and simply never consult the extra key. optional fields
+	 * ride the JSON header without a schema bump). Calibrated per country like `delta`: the GB artifact ships 5. the NZ
 	 * artifact deliberately ships without it (unmeasured there, and comma-free NZ is already at 99.2%).
 	 */
 	transitionBeta?: number
@@ -197,7 +197,7 @@ function pairKey(child: string, parent: string): string {
 
 /**
  * Serialize (header, entries) into the PIX1 flat binary. Entries are sorted by (child, parent) so the format is
- * deterministic regardless of input order. Run in Node; consumed by {@link PairIndexResolver}.
+ * deterministic regardless of input order. Run in Node. consumed by {@link PairIndexResolver}.
  *
  * Throws if `entries` contains a duplicate (child, parent) pair (dedupe upstream — see the file-header note on why this
  * isn't silently resolved here), if a child/parent string exceeds the u16 length prefix (65,535 UTF-8 bytes — no real
@@ -218,7 +218,7 @@ export function serializePairIndex(header: PairIndexHeaderInput, entries: readon
 
 	const tagIndex = new Map<ComponentTag, number>(COMPONENT_TAGS.map((tag, i) => [tag, i]))
 
-	// oxlint-disable-next-line unicorn/no-array-sort -- sorts a freshly-built array; toSorted would double-allocate on a hot path
+	// oxlint-disable-next-line unicorn/no-array-sort -- sorts a freshly-built array. toSorted would double-allocate on a hot path
 	const sorted = [...entries].sort((a, b) =>
 		a.child < b.child ? -1 : a.child > b.child ? 1 : a.parent < b.parent ? -1 : a.parent > b.parent ? 1 : 0
 	)
@@ -302,7 +302,7 @@ export function serializePairIndex(header: PairIndexHeaderInput, entries: readon
  * `country`/`delta`/`sourceMD5s` etc. before paying for the full entry parse — e.g.
  * `NeuralAddressClassifier.loadFromWeights`'s hard country restriction (`classifier.ts`) reads this first and only
  * constructs a `PairIndexResolver` (which walks every entry to build the probe `Map`) when the header's country matches
- * the resolved locale; a mismatch skips construction entirely rather than paying the full parse just to discard the
+ * the resolved locale. a mismatch skips construction entirely rather than paying the full parse just to discard the
  * result.
  */
 export function peekPairIndexHeader(bytes: Uint8Array): PairIndexHeader {
@@ -447,7 +447,7 @@ export class PairIndexResolver {
 /**
  * Minimal subset of `PairIndexResolver` a prior module consumes — structural typing so callers depend on the shape, not
  * the class (the `query-shape-prior.ts` "…Like" convention). `delta` is optional because a hand-built test double may
- * omit it; a real index's header carries the authoritative value. `transitionBeta` is optional in both senses: a test
+ * omit it. a real index's header carries the authoritative value. `transitionBeta` is optional in both senses: a test
  * double may omit it, and a real header legitimately lacks it (see {@link PairIndexHeader.transitionBeta} — absent means
  * no transition term, not a default).
  */

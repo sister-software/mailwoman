@@ -269,7 +269,7 @@ larger commitment than a fine-tune and should be scoped as one.
 
 ## What this does and does not license
 
-- **The share is not the remedy, and that is now measured rather than argued.** v4.10.0 held the extract
+- **The share is not the action, and that is now measured rather than argued.** v4.10.0 held the extract
   byte-identical and reduce exposure 3×; net went −20 → −13 and stopped there. Extrapolating the observed
   sub-linear fall, the share that stops hurting is below the share that teaches.
 - **It does license the corpus-authoring task**: this extract needs rows where a venue or a street

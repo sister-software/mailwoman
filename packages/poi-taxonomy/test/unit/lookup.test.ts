@@ -214,7 +214,7 @@ describe("full Overture snapshot + curated overlay", () => {
 			["drugstore", "identity"],
 		])
 
-		// The `drugstore → pharmacy` row is scoped to en-US; elsewhere the phrase means the category it names.
+		// The `drugstore → pharmacy` row is scoped to en-US. elsewhere the phrase means the category it names.
 		expect(lookupPOICategory("drugstore", "en-GB")[0]?.category.id).toBe("drugstore")
 		expect(lookupPOICategory("drugstore")[0]?.category.id).toBe("drugstore")
 

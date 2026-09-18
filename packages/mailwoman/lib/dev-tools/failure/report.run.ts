@@ -13,7 +13,7 @@
  *   model-comparison history alongside the other eval reports. MDX-safe (every dynamic cell is
  *   backtick-wrapped + pipe/backtick-escaped, so an address can't break the table or trip the angle-lint).
  *
- *   Usage (label=cacheRoot pairs; label=shipped uses the installed default):
+ *   Usage (label=cacheRoot pairs. label=shipped uses the installed default):
  *     node packages/mailwoman/lib/dev-tools/failure/report.run.ts \
  *       [--corpus golden:<dir>[:N]] [--out docs/articles/evals/competitive-parity/<file>.mdx] [--date YYYY-MM-DD] \
  *       shipped=shipped v257=$MAILWOMAN_TEMP_ROOT/v257-cache v261=$MAILWOMAN_TEMP_ROOT/v261-cache
@@ -59,7 +59,7 @@ interface Fixture {
 /**
  * Load the corpus. Default = the schema-correct parity corpus (street-family aware, campaign check).
  * `golden:<dir>[:<sampleN>]` = the golden dev set (broad label coverage INCLUDING country/region, which parity is
- * sparse on) — note its `street` gold is FLAT-schema (pre-split), so street reads confounded there;
+ * sparse on) — note its `street` gold is FLAT-schema (pre-split), so street reads confounded there.
  * country/region/locality/postcode/house_number are single-tag and valid.
  */
 async function loadCorpus(

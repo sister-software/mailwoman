@@ -4,7 +4,7 @@
  * @author Teffen Ellis, et al.
  *
  *   Deprecation-shim factory — the `mailwoman wof *` commands moved. Each sibling is one call naming its
- *   replacement; remove them, and this file with the last of them, after the one-minor-version courtesy window.
+ *   replacement. remove them, and this file with the last of them, after the one-minor-version courtesy window.
  */
 
 import { Text } from "ink"

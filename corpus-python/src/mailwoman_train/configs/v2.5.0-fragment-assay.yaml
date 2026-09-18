@@ -1,28 +1,28 @@
 # v2.5.0-fragment-assay — PROBE 1 of the parity campaign (night-1, 2026-07-13): the fragment-source
 # ASSAY, not a ship candidate. Refutes-or-confirms "data alone closes the fragment gap" on the
-# current architecture; the pre-registered read-out separator (campaign runbook) is:
+# current architecture. the pre-registered read-out separator (campaign runbook) is:
 #   token-F1 up + span-exact-match lag + trailing-number→postcode persisting  ⇒  #727 span-head
-#   ceiling confirmed → redirect budget to the structured-span-head arc; do not ship this.
+#   ceiling confirmed → redirect budget to the structured-span-head arc. do not ship this.
 #
 # RECIPE = v2.4.1-fr-nsplice-ft verbatim, with exactly these deltas (one change: the source):
 #   1. corpus_dir → v0.10.2-fragment-assay overlay (v0.10.1's 699 parquet files verbatim via manifest
 #      cross-dir refs + part-fragment.parquet: 123,272 rows, 16 OA locales + tiger-block US streets,
-#      BALANCED POLARITY — bare-street/street+trailing-number rows and bare-locality twins; the
+#      BALANCED POLARITY — bare-street/street+trailing-number rows and bare-locality twins. the
 #      #511 spread-scan measured recipe-output street surfaces ~46% street-family / ~54% admin in the base,
 #      so street-only rows would have taught "context-free name = street").
 #   2. source_weights += synth-fragment: 6.0 (the synth-nl-postcode moderate precedent, not the 12.0
 #      targeted-fix weight — an assay must not outvote the base).
 #   3. init_from → the shipped v241 step-012000 (same vocab, so the same-vocab fine-tune LR 1e-5 —
-#      v230 precedent — not the 5e-5 splice-adaptation LR; there are no new embedding rows to move).
-#   4. SHORT run, tight cadence (the v196 scar: long constant-LR fine-tunes overfit late; 40k was
+#      v230 precedent — not the 5e-5 splice-adaptation LR. there are no new embedding rows to move).
+#   4. SHORT run, tight cadence (the v196 scar: long constant-LR fine-tunes overfit late. 40k was
 #      flat, 80k regressed): 6000 steps, eval/save every 1000 → 6 conditional checkpoints, early read at
 #      2000 per the diagnostic-before-fix discipline.
-#   5. output_dir/run name → v250-fragment-assay (FRESH dir; init_from reads v241, never overwrites).
+#   5. output_dir/run name → v250-fragment-assay (FRESH dir. init_from reads v241, never overwrites).
 #
 # CHECKS when checkpoints land (grade with `mailwoman eval parity --weights-cache` — never --model
 # explicit paths, the #718 zero-fill trap): parity floors house_number ≥0.97 / postcode ≥0.97 /
-# street ≥0.90; fragment-dev (13,696 held-out rows, local scratchpad + volume copy) token-F1 and
-# span-exact-match; US/FR non-regression on the parity per-country table. NaN protocol standard.
+# street ≥0.90. fragment-dev (13,696 held-out rows, local scratchpad + volume copy) token-F1 and
+# span-exact-match. US/FR non-regression on the parity per-country table. NaN protocol standard.
 data:
   corpus_dir: /data/corpus/versioned/v0.10.2-fragment-assay/corpus-v0.10.2-fragment-assay
   tokenizer_dir: /data/models/tokenizer/v0.8.0-fr-nsplice

@@ -8,7 +8,7 @@
  *   POSITIVE HALF. A sample of points is answered from the sealed artifact and then re-asked of Soil Data
  *   Access — the same authority, a different distribution channel, and geometry this package has never
  *   touched. What is compared is the MAP UNIT the two channels put at the point, which is the thing a
- *   conversion can get wrong; comparing the derived capability class instead would let a wrong delineation
+ *   conversion can get wrong. comparing the derived capability class instead would let a wrong delineation
  *   agree by accident whenever two neighbouring map units happen to share a class.
  *
  *   NEGATIVE HALF, AND IT MATTERS AS MUCH. A sample of points in states with no rows must come back
@@ -24,7 +24,7 @@
  *   THE ARTIFACT'S OWN ANSWER IS THE CELL SUMMARY, AND THE POINT'S MAP UNIT IS UNDER IT. So the comparison
  *   reaches the GEOMETRY — the truth table — rather than the reduction: the reduction is a per-cell
  *   distribution and has no single map unit to compare. That makes this a check on the CONVERSION, which is
- *   what it is for; the reduction is checked by the fixtures and by the share-sum invariant.
+ *   what it is for. the reduction is checked by the fixtures and by the share-sum invariant.
  *
  *   IT REACHES IT THROUGH THE CELL INDEX, NOT THROUGH A BOUNDING-BOX SCAN. A `WHERE min_lat <= ? AND …` over
  *   the geometry table reads like a prefilter and is a full table scan: none of those columns is indexed and
@@ -121,7 +121,7 @@ export const OUTSIDE_PILOT_POINTS: ReadonlyArray<{ label: string; latitude: numb
  * conversion.
  *
  * One metre. The published shapefile carries nine decimals through this package's ingest and Soil Data Access renders
- * its own geometry independently; NRCS's own positional-accuracy statement says the difference between a boundary's
+ * its own geometry independently. NRCS's own positional-accuracy statement says the difference between a boundary's
  * field location and its digitized location "is unknown", so this tolerance is about the two RENDERINGS agreeing rather
  * than about ground truth. One metre is far below the median delineation, which is 24,863 m² — about 158 m across.
  */
@@ -234,7 +234,7 @@ function candidateDelineations(
 			rings: Uint8Array
 		}>) {
 			// DEDUPE ON THE DELINEATION, NEVER ON ITS MAP UNIT. A delineation reached through two resolutions is one
-			// delineation and must be tested once; two different delineations of the same map unit are two shapes covering
+			// delineation and must be tested once. two different delineations of the same map unit are two shapes covering
 			// different ground and must both be tested. Keying on the map unit drops the second, and it drops it silently —
 			// the point test simply finds nothing and the row reads as a disagreement with the authority. Measured at Iowa
 			// scale: one point in 60, where the artifact's own geometry does contain the point and the index-driven read
@@ -253,7 +253,7 @@ function candidateDelineations(
  * Which map unit the ARTIFACT's own geometry puts at a point, and how far the point is from that delineation's nearest
  * edge.
  *
- * The cell index narrows; the ray cast decides. The edge distance is measured against every candidate, so a near-miss
+ * The cell index narrows. the ray cast decides. The edge distance is measured against every candidate, so a near-miss
  * is reported with a distance rather than with nothing.
  */
 function localDelineationAt(

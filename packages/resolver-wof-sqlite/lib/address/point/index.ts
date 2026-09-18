@@ -7,10 +7,10 @@
  *   postcode (preferred), locality, or — for extracts whose points carry no scope tag (OSM, #247) —
  *   the resolved locality's BBOX. Query-side normalization is the shared normalizer
  *   (`street-normalize.ts`), selected per the extract's `streetLocale` so build-side and probe-side
- *   stay identical by construction (US delegates to the USPS pipeline; FR/DE/NL use the locale rules).
+ *   stay identical by construction (US delegates to the USPS pipeline. FR/DE/NL use the locale rules).
  *
  *   Matching is exact-after-normalization only — no fuzzy street matching in this tier (measure how
- *   far exact gets first; fuzz is a later, separate decision). Scope order is most-selective first:
+ *   far exact gets first. fuzz is a later, separate decision). Scope order is most-selective first:
  *   postcode, then locality, then the bbox fall-through (only when a bbox is supplied and the prior
  *   scopes missed). Multiple hits return the first by rowid — unit siblings share the building coord.
  */
@@ -74,7 +74,7 @@ export class AddressPointSqliteLookup<DB extends AddressPointDatabase = AddressP
 	 * @param opts.streetLocale The street-normalization locale this extract was BUILT with — must match, or every key
 	 *   misses. Defaults to `"us"` (the situs tier), so existing callers are unchanged.
 	 * @param opts.localityKeys Whether the extract's `locality_norm` is a full place name a query can be held to. The BAN
-	 *   and OSM extracts write the commune or `addr:city` in full; the US situs extract writes the NAD city field, which
+	 *   and OSM extracts write the commune or `addr:city` in full. the US situs extract writes the NAD city field, which
 	 *   several counties abbreviate (`addi` for Addison on 5,174 Texas rows, 327,264 Texas rows at four characters or
 	 *   fewer) or give as the parent town (`easton` for North Easton). A key like that can steer which row answers but
 	 *   cannot refuse one, so it never contradicts. Defaults from the street locale: `"us"` is abbreviated, the rest
@@ -200,7 +200,7 @@ export class AddressPointSqliteLookup<DB extends AddressPointDatabase = AddressP
 
 		// Letter-suffix spacing fallback: the registers disagree on the joint — BAN stores "3 a"
 		// (space-separated), G-NAF and most OA sources store "3a" — and the parsed surface can arrive
-		// either way. On a miss, retry the other spacing; on a double miss, the base number (the
+		// either way. On a miss, retry the other spacing. on a double miss, the base number (the
 		// register attests no 3A but does attest 3 — the adjacent-parcel approximation, priced the
 		// same as the range fallback's low end). Null-only throughout, and only for the
 		// digits+single-letter shape (never touches "12 1/2" or unit-containing forms).
@@ -283,7 +283,7 @@ export class AddressPointSqliteLookup<DB extends AddressPointDatabase = AddressP
 			// A register row that carries its own scope and was not found by the scoped rungs is a different address that
 			// happens to share the street and number inside the box: `10 rue de la République, 75008 Paris` reached
 			// Servon's `10 rue de la République` (postcode 77170) 26 km away this way, at rooftop tier and 1 m uncertainty.
-			// The rung exists for points with no scope of their own; a point whose scope disagrees with the query is a miss.
+			// The rung exists for points with no scope of their own. a point whose scope disagrees with the query is a miss.
 			row = candidate && !this.#scopeContradicts(candidate, query) ? candidate : undefined
 		}
 
@@ -293,7 +293,7 @@ export class AddressPointSqliteLookup<DB extends AddressPointDatabase = AddressP
 	/**
 	 * The query's locality folded the way the extract's builder folded its `locality_norm`. FR extracts key
 	 * arrondissement communes at the base city (both-sides fold, see the BAN builder + stripArrondissement), so "Paris
-	 * 13e Arrondissement" and "Paris" both hit; a no-op for every other locale.
+	 * 13e Arrondissement" and "Paris" both hit. a no-op for every other locale.
 	 */
 	#localityKey(locality: string): NameKey {
 		if (this.#locale === "fr") return stripArrondissement(normalizeLocalityForKey(locality))

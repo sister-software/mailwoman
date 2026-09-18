@@ -5,7 +5,7 @@
  *
  *   Reading an HTML `<table>` as a grid of cells, for documents that state tabular data as markup and
  *   nothing more — no schema, no column meanings, no domain vocabulary. What a caller gets back is the
- *   grid the document states; deciding what a column means is the caller's, in the caller's package.
+ *   grid the document states. deciding what a column means is the caller's, in the caller's package.
  *
  *   The whole document is parsed once, with `htmlparser2`, and every question below is answered against
  *   that tree. The regex readings this module replaced could not answer any of the three questions that

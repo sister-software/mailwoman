@@ -30,10 +30,10 @@ import { expandPlacetypeFilter } from "@mailwoman/codex/placetype-map"
 import { tryParsingJSON } from "@mailwoman/core/json"
 import { isPresent } from "@mailwoman/core/objects"
 import { referentialFromPopulation } from "@mailwoman/core/resolver"
-// The SHARED candidate schema (build-candidate.ts writes it; the Node WOFCandidateTableLookup reads it
+// The SHARED candidate schema (build-candidate.ts writes it. the Node WOFCandidateTableLookup reads it
 // too) — so this browser reader's row accesses are type-checked against the same column contract.
 import type { CandidateTable } from "@mailwoman/resolver-wof-sqlite/candidate-schema"
-// Browser-safe subpath (fts.ts's only node:sqlite import is type-only; aliased in
+// Browser-safe subpath (fts.ts's only node:sqlite import is type-only. aliased in
 // docs/plugins/demo-assets/workspace-aliases.ts) — the shared alias-bag parser keeps this backend's exact
 // tier identical to the Node + WASM resolvers'.
 import { ALIAS_SEPARATOR, aliasBagExactMatch } from "@mailwoman/resolver-wof-sqlite/fts"
@@ -109,7 +109,7 @@ export interface HTTPVFSWorker {
 	db: { exec(sql: string): Promise<Array<{ columns: string[]; values: unknown[][] }>> }
 	/**
 	 * Total bytes range-fetched from the DB so far (Comlink property read on the worker). Drives the live transfer
-	 * readout during warm-up; returns 0 if the worker doesn't expose the counter.
+	 * readout during warm-up. returns 0 if the worker doesn't expose the counter.
 	 */
 	bytesRead(): Promise<number>
 }
@@ -229,7 +229,7 @@ export class WOFHTTPVFSPlaceLookup implements MailwomanLookupLike {
 	/**
 	 * Table-existence probes batched as scalar subqueries — one statement, one worker round trip — instead of one
 	 * `sqlite_master` query per table. Worker fetches are synchronous XHR, so on a cold cache every extra round trip is a
-	 * full network RTT. Memoized as the in-flight promise so concurrent callers share it; a rejection clears the memo so
+	 * full network RTT. Memoized as the in-flight promise so concurrent callers share it. a rejection clears the memo so
 	 * a transient failure can retry.
 	 */
 	readonly #schema = memoizeResettable(() =>
@@ -252,7 +252,7 @@ export class WOFHTTPVFSPlaceLookup implements MailwomanLookupLike {
 	)
 
 	/**
-	 * The full dual-role relation, loaded once (in-flight-memoized; the relation is ~hundreds of rows).
+	 * The full dual-role relation, loaded once (in-flight-memoized. the relation is ~hundreds of rows).
 	 */
 	readonly #dualRolesMap = memoizeResettable(async (): Promise<Map<number, DualRole[]>> => {
 		const map = new Map<number, DualRole[]>()
@@ -303,7 +303,7 @@ export class WOFHTTPVFSPlaceLookup implements MailwomanLookupLike {
 
 	/**
 	 * Dual-role lookup (#402): a city-state / capital-seat place holds two admin tiers under one name (Berlin is both a
-	 * region and a locality). The `coincident_roles` relation pairs an `admin_id` with the `locality_id` it doubles as;
+	 * region and a locality). The `coincident_roles` relation pairs an `admin_id` with the `locality_id` it doubles as.
 	 * this returns the partner role for a resolved place in either direction, so the demo can badge "Berlin → also a
 	 * region (city-state)" whether the parse resolved the city or the state. Returns `[]` when the slim DB predates the
 	 * relation (existence-guarded) — degrades silently.
@@ -319,7 +319,7 @@ export class WOFHTTPVFSPlaceLookup implements MailwomanLookupLike {
 	 * abbreviation table, and a representative FTS5 join that walks the `place_search` index + `spr` b-tree roots.
 	 * Everything fetched is exactly what the first `findPlace` needs, so running this during browser idle time moves the
 	 * cold serial range round-trips off the user's first submit. Idempotent and safe to race with real queries (probes
-	 * are in-flight-memoized; the worker serializes execs).
+	 * are in-flight-memoized. the worker serializes execs).
 	 */
 	async warmUp(): Promise<void> {
 		const { hasPop, hasAbbr } = await this.#schema()
@@ -414,7 +414,7 @@ export class WOFHTTPVFSPlaceLookup implements MailwomanLookupLike {
 
 		// Exact-abbrev tier: a candidate whose region abbreviation equals the query ("VT" → Vermont) is
 		// an exact match, same tier as an exact name match — so it outranks a foreign region that merely
-		// token-matches "VT". Mirrors WOFWasmPlaceLookup; no-op on slim DBs without `place_abbr`.
+		// token-matches "VT". Mirrors WOFWasmPlaceLookup. no-op on slim DBs without `place_abbr`.
 		// Issued together with the main query — the queries are independent and the worker pipelines
 		// them, saving a main-thread→worker round-trip gap per lookup.
 		const [rows, abbrIDs] = await Promise.all([this.#worker.db.exec(sql).then(rowsFromExec), this.#abbrExactIDs(text)])
@@ -435,7 +435,7 @@ export class WOFHTTPVFSPlaceLookup implements MailwomanLookupLike {
 
 				// Alias tier: `alt_names` is the FTS row's alias bag, aliases joined on the
 				// boundary-preserving ALIAS_SEPARATOR (#523). The shared parser does a per-alias equality
-				// check, unrestricted; on a LEGACY bag (pre-#523 slim artifact, boundaries lost) it falls back
+				// check, unrestricted. on a LEGACY bag (pre-#523 slim artifact, boundaries lost) it falls back
 				// to padded containment conditioned on "no strictly exact candidate" so interior fragments
 				// ("York" inside "New York City") can't be false-promoted. Mirrors WOFWasmPlaceLookup.
 				const aliasExact =
@@ -624,7 +624,7 @@ export class WOFCandidateTableLookup implements MailwomanLookupLike {
 		if (requestedPlacetypes.length) {
 			// Shared placetype-equivalence expansion (a `locality` query must also reach borough /
 			// localadmin). Placetypes without a group entry — `postalcode`, `country`, `county` — pass
-			// through unchanged; the global candidate table carries rows for all of them.
+			// through unchanged. the global candidate table carries rows for all of them.
 			const ids = expandPlacetypeFilter(requestedPlacetypes)
 				.map((t) => placetypeToID.get(t))
 				.filter((v): v is number => v !== undefined)
@@ -672,7 +672,7 @@ export class WOFCandidateTableLookup implements MailwomanLookupLike {
 		if (!rows.length) {
 			// Query-side qualifier-strip fallback: an OA locality with a qualifier the gazetteer's
 			// canonical name omits ("Lenk im Simmental" → "Lenk", "Roche VD", "Odense S", "Hart b.Graz").
-			// Tried only on an exact miss; the cascade's region bbox disambiguates any base-name ambiguity.
+			// Tried only on an exact miss. the cascade's region bbox disambiguates any base-name ambiguity.
 			const strippedKey = normalizeLocalityForKey(stripLocalityQualifier(text))
 
 			if (strippedKey && strippedKey !== nameKey) {
@@ -694,7 +694,7 @@ export class WOFCandidateTableLookup implements MailwomanLookupLike {
 				lon: Number(row.longitude),
 				// `score` stays the RAW population rank — the walk's absolute `minWinningScore` floor must see
 				// real prominence, never a penalized value. `prominence` carries the bounded cross-country
-				// primary preference; the walk orders by `prominence ?? score`, same as the Node reader.
+				// primary preference. the walk orders by `prominence ?? score`, same as the Node reader.
 				score: -(row.neg_rank as number),
 				prominence: -Number(row.effectiveNegRank),
 				// Every candidate row is an exact normalized-name (or alias/abbrev) match — the cascade's

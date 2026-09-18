@@ -5,7 +5,7 @@
  *
  *   The tool table — the tested contract. `server.ts` only adapts it to the SDK's envelope.
  *
- *   Each tool module owns its MCP metadata and wiring; measurements live beside the package root.
+ *   Each tool module owns its MCP metadata and wiring. measurements live beside the package root.
  *
  *   Four tools that spawn the compiled CLI live in `../spawn-tools.ts` and are appended below.
  *
@@ -13,7 +13,7 @@
  *
  *   1. **A number never travels without its denominator.** `n_requested`, `n_evaluated`, `n_errored` are mandatory, and
  *      the confidence bound lives inside `summary` — the sentence an agent relays — rather than in a field it can drop.
- *   2. **Absence is reported as absence.** A stage that produced nothing says so and says why; nothing here fills in a
+ *   2. **Absence is reported as absence.** A stage that produced nothing says so and says why. nothing here fills in a
  *      value the pipeline did not produce.
  */
 

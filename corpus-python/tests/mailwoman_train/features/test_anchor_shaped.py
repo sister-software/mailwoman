@@ -4,7 +4,7 @@ The #723 root cause: training painted the postcode anchor only on gold ``postcod
 inference paints on postcode-SHAPED spans — so the model never trained on the anchor firing on a
 house-number-that-looks-like-a-ZIP and faceplanted on "12345 Main St". The shaped path closes that
 train/inference gap. The required assertion here is the CONTRAST: gold paints nothing on such a
-house number; shaped paints the anchor on it (the training signal the model needs to learn to override).
+house number. shaped paints the anchor on it (the training signal the model needs to learn to override).
 """
 
 from __future__ import annotations
@@ -96,7 +96,7 @@ PIECES_GB = [
 
 def test_shaped_paints_a_gb_unit_from_the_space_stripped_key():
     # THE KEY CONTRACT. The lookup is keyed `SW1A2AA` — space-stripped — and the shaped span is the
-    # full unit including the space. `neural/anchor-inference.ts`'s `spanMode: "shaped"` mirrors this;
+    # full unit including the space. `neural/anchor-inference.ts`'s `spanMode: "shaped"` mirrors this.
     # its default alnum-run scan cannot (it would probe `SW1A` and `2AA` separately).
     lookup = {"SW1A2AA": ({"GB": 1.0}, 51.50354, -0.1277)}
     feats, confs = realign_anchor_to_pieces_shaped(RAW_GB, PIECES_GB, lookup)

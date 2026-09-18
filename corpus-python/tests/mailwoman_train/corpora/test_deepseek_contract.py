@@ -87,7 +87,7 @@ def test_the_kryptonite_prompt_carries_the_category_and_its_examples() -> None:
 
 
 def test_every_script_and_category_is_well_formed() -> None:
-    """The two tables are hand-maintained; a row missing a field fails at request time, mid-spend."""
+    """The two tables are hand-maintained. a row missing a field fails at request time, mid-spend."""
     for label, language, script, slug in TRANSLIT_SCRIPTS:
         assert label and language and script and slug
         assert slug.islower() and " " not in slug
@@ -118,7 +118,7 @@ def test_every_script_and_category_is_well_formed() -> None:
     ],
 )
 def test_the_response_parser_keeps_only_the_object_lines(content: str, expected: int) -> None:
-    """Model output arrives fenced, prefaced and occasionally truncated; only whole objects count."""
+    """Model output arrives fenced, prefaced and occasionally truncated. only whole objects count."""
     assert len(parse_jsonl_response(content)) == expected
 
 

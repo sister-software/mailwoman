@@ -16,7 +16,7 @@
  *   The safety properties under test, in the order they matter:
  *
  *   1. A COHERENT default country always wins (no override, no metadata, byte-stable walk).
- *   2. Zero coherent countries abstains; TWO OR MORE coherent countries abstains.
+ *   2. Zero coherent countries abstains. TWO OR MORE coherent countries abstains.
  *   3. The pass is inert without a postcode, without a locality, without a default country, and
  *      whenever the flag is explicitly `false`.
  *
@@ -583,7 +583,7 @@ describe("findPostcodeCountryScope", () => {
 	})
 
 	// The CZ block of the 2026-08-09 panel: `Valy 117, 37901 Třeboň` under the en-US locale. `37901` shapes
-	// as [US, DE, FR] and the gazetteer holds it in US and CZ; only CZ has a Třeboň next to it.
+	// as [US, DE, FR] and the gazetteer holds it in US and CZ. only CZ has a Třeboň next to it.
 	it("recovers CZ for a 5-digit code the shape list calls US/DE/FR", async () => {
 		const backend = await makeBackend([PC_37901_CZ, PC_37901_US, TREBON_CZ])
 
@@ -1169,7 +1169,7 @@ describe("resolveTree + postcode-country coherence", () => {
 		// The 2026-08-11 contract flip (the staged-repoint e2e): with no default in force there is
 		// nothing to override, but the pair rung still CONSTRAINS — (75001, Paris) is coherent in FR
 		// alone (Paris TX sits ~150 km from the Addison ZIP), so the walk scopes to FR instead of
-		// resolving population-first. Only the pair rung runs on this arm; the single-sided rungs
+		// resolving population-first. Only the pair rung runs on this arm. the single-sided rungs
 		// keep needing the default as their domestic-plausibility guard.
 		const backend = await makeBackend(RIVOLI_POOL)
 

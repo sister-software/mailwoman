@@ -95,7 +95,7 @@ describe("MapRenderer", async () => {
 
 	it("falls back to an ancestor tile where the archive has no native coverage", async () => {
 		// The provider has one z8 tile and nothing deeper — the shape of a spatially sparse deep band outside its mask.
-		// Without the ancestor walk a z12 viewport here renders blank; with it, the z8 fill rasterizes at the z12
+		// Without the ancestor walk a z12 viewport here renders blank. with it, the z8 fill rasterizes at the z12
 		// projection.
 		const sparse = new MapRenderer(stubProvider())
 		const center = worldPxToLonLat(1000.5 * TILE_SIZE, 1500.5 * TILE_SIZE, 12)

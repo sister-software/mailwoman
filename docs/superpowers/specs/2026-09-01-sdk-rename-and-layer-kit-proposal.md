@@ -61,9 +61,9 @@ plus 88 breaking subpath changes.
 
 ## 2. Why the rename is not the fix
 
-The audit that prompted this work proposed the rename as the remedy for drift. Two things argue against it.
+The audit that prompted this work proposed the rename as the action for drift. Two things argue against it.
 
-**The remedy has already been tried, and it decayed.** The 2026-07-09 regroup moved `mailwoman/sdk/{cli,test}`
+**The action has already been tried, and it decayed.** The 2026-07-09 regroup moved `mailwoman/sdk/{cli,test}`
 to `cli-kit/` and `test-kit/`, added the one-line `AGENTS.md` rule, and stated that "`sdk` submodule meaning
 is restored: data acquisition only." By 2026-09-01 `filer/lib/sdk/` and `bdc/lib/sdk/` held domain analysis
 again. A directory name cannot enforce itself, and a second rename would be the same treatment applied to the

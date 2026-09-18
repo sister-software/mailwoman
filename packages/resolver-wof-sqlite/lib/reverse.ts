@@ -13,7 +13,7 @@
  *        `scripts/eval/pip-containment.py`) against the polygon sidecar DB (`wof-polygons.db`,
  *        `polygons(id, geom)` with GeoJSON text — built by `scripts/build-wof-polygons.mjs` for the
  *        demo map). A candidate whose polygon exists but rejects the point is a bbox false positive
- *        and is dropped entirely; a candidate with no polygon row stays eligible for the
+ *        and is dropped entirely. a candidate with no polygon row stays eligible for the
  *        approximate fallback.
  *   3. **Approximate descent** — WOF carries point geometry for most localities (#292: ~99% of JP
  *        municipalities; ~half of US localities have degenerate bboxes too), so the polygon walk
@@ -52,7 +52,7 @@ const MAX_ABS_LONGITUDE = 180
  * How the deepest returned place was confirmed:
  *
  * - `"polygon"` — the point ray-cast inside the place's real (DP-simplified) admin boundary.
- * - `"approximate"` — the place has no polygon on record; it won by nearest-centroid among the candidates whose bbox (or
+ * - `"approximate"` — the place has no polygon on record. it won by nearest-centroid among the candidates whose bbox (or
  *   parent) contains the point. The same honesty convention as the demo's approximate circles — country-dependent data
  *   reality, surfaced instead of hidden.
  */
@@ -116,7 +116,7 @@ const DEFAULT_MAX_APPROXIMATE_KM = 25
 
 /**
  * The tier ladder for the approximate descent, coarsest-first. Each tier is attempted among the CURRENT winner's
- * descendants; a tier with no rows is skipped (e.g. counties without localadmins jump straight to locality).
+ * descendants. a tier with no rows is skipped (e.g. counties without localadmins jump straight to locality).
  */
 const DESCENT_TIERS: readonly WOFPlacetype[] = [
 	"county",
@@ -167,7 +167,7 @@ export class WOFReverseGeocoder implements Disposable {
 	/**
 	 * Parsed-geometry cache. Reverse queries cluster geographically (an eval run hits the same ~15 county polygons 1400
 	 * times), so caching the JSON.parse pays for itself immediately. Bounded — cleared wholesale at the cap rather than
-	 * LRU-tracked; the polygons are DP-simplified and small, the cap exists only to keep a long-lived server process
+	 * LRU-tracked. the polygons are DP-simplified and small, the cap exists only to keep a long-lived server process
 	 * honest.
 	 */
 	readonly #geometryCache = new Map<number, ParsedGeometry | null>()
@@ -222,7 +222,7 @@ export class WOFReverseGeocoder implements Disposable {
 
 	/**
 	 * Synchronous core of {@link reverseGeocode} — every step underneath is already sync `node:sqlite`, so this is the
-	 * real implementation; the async method above exists only for call-site symmetry with `PlaceLookup.findPlace`.
+	 * real implementation. the async method above exists only for call-site symmetry with `PlaceLookup.findPlace`.
 	 * Exposed directly for callers that can't await mid-call (e.g. `mailwoman/poi-executor.ts`'s `createPOIExecutor`,
 	 * whose `POIIntentOutcome` return type is synchronous by contract — see `poi-intent.ts`'s `deps.execute`).
 	 */
@@ -397,7 +397,7 @@ export class WOFReverseGeocoder implements Disposable {
 	/**
 	 * Descendants of `parentID` at one placetype tier, pre-filtered to a centroid window around the query point (a
 	 * generous 4× the approximate cap — polygon-holding children may legitimately have far centroids, e.g. a sprawling
-	 * consolidated city; the precise cap is applied per-candidate in the caller, and only to centroid-fallback steps).
+	 * consolidated city. the precise cap is applied per-candidate in the caller, and only to centroid-fallback steps).
 	 */
 	#descendants(
 		parentID: number,

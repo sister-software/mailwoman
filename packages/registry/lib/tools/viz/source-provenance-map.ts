@@ -84,7 +84,7 @@ export async function sourceProvenanceMap(
 	using db = new DatabaseClient<AddressPointDatabase>(DB, { readOnly: true })
 
 	// Two stratified samples so the smaller source (OpenAddresses, ~1/6 of NY) stays visible next to NAD.
-	// abs(random()) % mod == 0 keeps a spatially-uniform ~1/mod fraction; LIMIT caps the marker count.
+	// abs(random()) % mod == 0 keeps a spatially-uniform ~1/mod fraction. LIMIT caps the marker count.
 	const sample = (where: string, mod: number): Row[] =>
 		db
 			.prepare(

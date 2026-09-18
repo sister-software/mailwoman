@@ -5,7 +5,7 @@
  *
  *   Types for the reviewed activity-phrase lexicon.
  *
- *   Entries recognize a typed phrase and name a committed attestation; world semantics live elsewhere.
+ *   Entries recognize a typed phrase and name a committed attestation. world semantics live elsewhere.
  */
 
 /**
@@ -42,7 +42,7 @@ export interface CommittedQueryAttestation {
 	 */
 	reference: string
 	/**
-	 * The committed query verbatim. A reader can grep for it; a test can require the phrase to end it.
+	 * The committed query verbatim. A reader can grep for it. a test can require the phrase to end it.
 	 */
 	detail: string
 }
@@ -54,7 +54,7 @@ export interface CommittedQueryAttestation {
 export type ActivityPhraseDerivation = "plural" | "nominalization" | "verb-phrase" | "possessive"
 
 /**
- * The phrase is a regular transformation of another entry in this lexicon. The base carries the authority; the
+ * The phrase is a regular transformation of another entry in this lexicon. The base carries the authority. the
  * derivation names the transformation.
  */
 export interface DerivedFormAttestation {

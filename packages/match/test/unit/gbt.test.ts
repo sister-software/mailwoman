@@ -13,7 +13,7 @@ import { describe, expect, it } from "vitest"
 /**
  * The Numerical-Recipes LCG, kept local ON PURPOSE. `@mailwoman/match` has no `@mailwoman/core` dependency, and taking
  * one so a test can reach `makeLcg` would pull core's ~11 MB of shipped data into a package that is otherwise pure
- * comparator math. Same trade recorded in nuts-lookup and timezone-lookup; see core/utils/python-random.ts for the
+ * comparator math. Same trade recorded in nuts-lookup and timezone-lookup. see core/utils/python-random.ts for the
  * shared implementation.
  */
 function lcg(seed: number): () => number {

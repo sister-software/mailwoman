@@ -21,7 +21,7 @@ import { describe, expect, test } from "vitest"
 const cliBin = await mailwomanCLIPath()
 
 /**
- * Strip ANSI escapes + ink spinner frames; isolate the JSON payload.
+ * Strip ANSI escapes + ink spinner frames. isolate the JSON payload.
  */
 function extractJSON(stdout: string): unknown {
 	const ansi = /\[[0-9;]*[a-zA-Z]/gu

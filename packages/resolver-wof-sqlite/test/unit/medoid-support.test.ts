@@ -58,7 +58,7 @@ describe("medoidPoint", () => {
 
 	it("does not let a repeated point drag the pick toward itself", () => {
 		// Two rows at the western member and one at each of the others. Counting rows would put the mean at
-		// 50.05 / 14.1 and elect the duplicate; counting distinct points keeps the true middle member.
+		// 50.05 / 14.1 and elect the duplicate. counting distinct points keeps the true middle member.
 		const members: PostcodePoint[] = [
 			[50, 14],
 			[50, 14],

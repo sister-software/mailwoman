@@ -8,7 +8,7 @@
  *   `docs/scripts/publish-demo-assets-to-r2.py` (boto3 + the R2 cache-control gotchas). The version
  *   defaults to today's date + `a` (e.g. `2026-06-27a`), the immutable convention.
  *
- *   Creds: `RCLONE_S3_PUBLIC_*` must be in the process env — `set -a; . ./.env; set +a` first. This
+ *   Creds: `RCLONE_S3_PUBLIC_*` must be in the process env — `set -a. . ./.env. set +a` first. This
  *   is an in-repo operator command (it needs the upload script + the demo's resources file).
  */
 

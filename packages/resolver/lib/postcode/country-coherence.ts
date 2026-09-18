@@ -87,8 +87,8 @@
  *   400 real US (ZIP, city) pairs from `postalcode-us.db` + 400 real FR (CP, commune) pairs from
  *   `postcode-locality-fr.db` — 800 pairs, **zero** border crossings, at both the 15 km and 25 km
  *   checks. The 22 US abstentions were pairs whose ZIP parent name is not an exact-matching locality
- *   in the admin gazetteer (a recall gap; abstention is the safe outcome). The confound board's
- *   verdicts were identical at 15, 25 AND 50 km, so the mechanism is not check-tuned; the default
+ *   in the admin gazetteer (a recall gap. abstention is the safe outcome). The confound board's
+ *   verdicts were identical at 15, 25 AND 50 km, so the mechanism is not check-tuned. the default
  *   below is the 25 km the scale run measured.
  *
  *   Cost: 2 lookups on the byte-stable path (postcode + locality under the default country), and at
@@ -103,7 +103,7 @@
  *   `docs/records/evals/2026-08-05-postcode-coherence-default-on-evidence.md`.
  */
 
-// `postcode-systems` has no dedicated export subpath; the barrel is where every other consumer
+// `postcode-systems` has no dedicated export subpath. the barrel is where every other consumer
 // (`neural/postcode-anchor.ts`) reaches it from.
 import { candidateSystemsForPostcode } from "@mailwoman/codex"
 import { firstNodeWhere, walkNodes, type AddressNode } from "@mailwoman/core/decoder"
@@ -111,7 +111,7 @@ import type { ResolvedPlace, ResolverBackend } from "@mailwoman/core/resolver"
 import { haversineKm } from "@mailwoman/spatial"
 
 /**
- * Default check radius (km) for the postcode↔locality consistency test. 25 km is what the 800-pair scale run measured;
+ * Default check radius (km) for the postcode↔locality consistency test. 25 km is what the 800-pair scale run measured.
  * the confound board returned identical verdicts at 15, 25 and 50, so this is a floor choice, not a tuned one.
  */
 export const POSTCODE_COUNTRY_COHERENCE_THRESHOLD_KM = 25
@@ -186,7 +186,7 @@ export interface PostcodeCountryScopeOpts {
 	/**
 	 * Optional narrowing of the shape half of the candidate-country set — the shape-coherence pass's intersection for a
 	 * confirmed postcode span (see `resolver/postcode-shape-coherence.ts`, #31 Mechanism 1). When present it REPLACES
-	 * `candidateSystemsForPostcode`'s own list; it is a pure subset of that list (codex systems ∩ confident sibling
+	 * `candidateSystemsForPostcode`'s own list. it is a pure subset of that list (codex systems ∩ confident sibling
 	 * systems). Upper-case ISO-3166 alpha-2, e.g. `["US"]` for a 5-digit code whose siblings all say US.
 	 *
 	 * It narrows the shape half only. Since #24 the candidate set also carries the countries the GAZETTEER holds this
@@ -204,7 +204,7 @@ function hasCoord(p: ResolvedPlace): boolean {
 }
 
 /**
- * Upper bound on locality values the pass will consider. A parse rarely tags more than two; the cap keeps a
+ * Upper bound on locality values the pass will consider. A parse rarely tags more than two. the cap keeps a
  * pathological tree from multiplying the pair sweep.
  */
 const MAX_LOCALITY_VALUES = 3
@@ -363,7 +363,7 @@ async function coherenceIn(
 	}
 
 	// Exact matches only. A fuzzy same-country hit ("Paris" → "Parish") is not evidence that the postcode
-	// belongs to this country; it is evidence that the FTS index is generous. Backends that do not stamp
+	// belongs to this country. it is evidence that the FTS index is generous. Backends that do not stamp
 	// `exactMatch` therefore contribute nothing here rather than contributing noise.
 	let best: { localityPlace: ResolvedPlace; distanceKm: number } | null = null
 
@@ -384,7 +384,7 @@ async function coherenceIn(
 /**
  * The country in which this address's postcode and locality are geographically consistent — or `null` to abstain.
  *
- * Order matters and is the whole safety argument. The caller's `defaultCountry` is tested first; a coherent default
+ * Order matters and is the whole safety argument. The caller's `defaultCountry` is tested first. a coherent default
  * short-circuits with `null` (nothing to correct, ≤2 lookups spent, the walk unchanged). Only when the default cannot
  * make the pair consistent are the codex shape's other candidate systems tried, and only a UNIQUE coherent alternative
  * produces a verdict — zero (no evidence) and two-or-more (a genuine tie) both abstain.
@@ -406,7 +406,7 @@ export async function findPostcodeCountryScope(
 	if (!postcode) return null
 
 	// #2248. A country the INPUT NAMED outranks every rung below, so this pass stands down rather than
-	// proposing a different one. The rungs infer a country from a postcode and a locality; that is the
+	// proposing a different one. The rungs infer a country from a postcode and a locality. that is the
 	// right question only while nothing in the address has answered it.
 	//
 	// `Maracaibo 4001, Zulia, Venezuela` is the worked case. `Zulia` is a Venezuelan REGION the parse
@@ -494,7 +494,7 @@ export async function findPostcodeCountryScope(
 	//    reasons, and in both the address's country was never in doubt — only unrepresentable as a pair:
 	//
 	//      - the gazetteer holds no postcodes for the country at all (CH, BE), so the postcode half can never
-	//        agree with anything no matter how good the locality evidence is; or
+	//        agree with anything no matter how good the locality evidence is. or
 	//      - the locality is a name no admin gazetteer carries (`Praha 3`, `Praha 9` — municipal districts).
 	//
 	//    So each half gets to speak alone, under conditions that keep this from becoming a guess. The

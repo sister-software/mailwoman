@@ -18,7 +18,7 @@
  *
  *   Both sequences must now delete the word before the cursor, and neither may leave a letter behind.
  *
- *   `script` is util-linux's, and the `-e` / `-c` spelling is too; the suite skips where that isn't the `script` on
+ *   `script` is util-linux's, and the `-e` / `-c` spelling is too. the suite skips where that isn't the `script` on
  *   PATH, exactly like `map-tui/cli.pty.test.ts`, which this harness is modelled on.
  */
 
@@ -94,7 +94,7 @@ async function driveInput(keys: string[]): Promise<string> {
 		await delay(KEYSTROKE_GAP_MS)
 	}
 
-	// Escape is the probe's quit; the kill is the belt-and-braces for a frame that never arrived.
+	// Escape is the probe's quit. the kill is the belt-and-braces for a frame that never arrived.
 	child.stdin.write(ESC)
 	await delay(KEYSTROKE_GAP_MS)
 	child.kill("SIGKILL")

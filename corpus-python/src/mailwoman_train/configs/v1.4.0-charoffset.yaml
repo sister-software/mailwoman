@@ -2,7 +2,7 @@
 # Identical recipe to v1.3.0-boundary-consolidation (the v4.4.0 ship), retargeted at the v0.5.0
 # CHAR-OFFSET corpus. This is the format-change run: same changes, same source mix, same checks — the
 # one variable is that labels now come from the #519 span triple (span_starts/ends/tags) instead of
-# per-token BIO. The loader's span path (PR #534) trains from the spans; encode_row realigns them to
+# per-token BIO. The loader's span path (PR #534) trains from the spans. encode_row realigns them to
 # SentencePiece pieces. Holding the recipe fixed is deliberate: it isolates "did the format change
 # move anything?" from any recipe drift.
 #
@@ -17,7 +17,7 @@
 # 1.89M val, 1.89M test. 18 weighted sources, all present (11 base + 7 re-emitted parity overlays).
 # KNOWN CAVEAT (stopgap, not a recipe choice): the corpus stores UTF-16 span offsets (#519); the
 # ~0.06% astral-script rows are skipped at load by the #558 iter_encoded guard. The lasting fix
-# (code-point re-align → corpus-v0.5.1) is DeepSeek's follow-on; it does not check this run.
+# (code-point re-align → corpus-v0.5.1) is DeepSeek's follow-on. it does not check this run.
 # Launch: cd corpus-python && modal run -d -m launch.train_remote --config v1.4.0-charoffset.yaml --resume none
 data:
   corpus_dir: /data/corpus/versioned/v0.5.0/corpus-v0.5.0

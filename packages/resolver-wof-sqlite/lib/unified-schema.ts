@@ -5,7 +5,7 @@
  *
  *   Schema for the unified WOF SQLite database we build from cloned WOF GeoJSON repos
  *   (`scripts/build-unified-wof.ts`). This is the CANONICAL gazetteer — we never use the
- *   off-the-shelf geocode.earth prebuilt dumps (they assign different WOF ids to the same place;
+ *   off-the-shelf geocode.earth prebuilt dumps (they assign different WOF ids to the same place.
  *   see the `feedback-custom-wof-db-only` memory). The table/column names match the resolver's
  *   expectations (`lookup.ts`) so `WOFSQLitePlaceLookup` works unchanged, INCLUDING the `ancestors`
  *   table (which lookup.ts's parent-constraint subquery needs) — see `populateAncestors`. The
@@ -85,7 +85,7 @@ export async function createUnifiedSchema(db: DatabaseClient<WOFDatabase>): Prom
 	// `ancestors` maps each place to every place above it in the hierarchy (and itself). The
 	// resolver's parent-constraint scopes a child lookup to a parent's descendants via
 	// `spr.id IN (SELECT id FROM ancestors WHERE ancestor_id = ?)`. The off-the-shelf WOF dumps
-	// ship this table; our build derives it from the parent_id chain (see populateAncestors) since
+	// ship this table. our build derives it from the parent_id chain (see populateAncestors) since
 	// we don't capture `wof:hierarchy`.
 	await db.schema
 		.createTable("ancestors")
@@ -101,7 +101,7 @@ export async function createUnifiedSchema(db: DatabaseClient<WOFDatabase>): Prom
  * Populate the `ancestors` table by walking each place's `parent_id` chain in `spr` (transitive closure, including the
  * place itself). Idempotent: drops + rebuilds the table contents. Returns the row count. Run after `spr` is fully
  * ingested (build-unified-wof freeze phase) or standalone on an existing unified DB (`scripts/add-ancestors.ts`).
- * Sentinel/negative parent_ids and cycles terminate the walk. ~4 rows/place average; a transaction keeps the ~5M
+ * Sentinel/negative parent_ids and cycles terminate the walk. ~4 rows/place average. a transaction keeps the ~5M
  * inserts fast.
  */
 export function populateAncestors<DB>(db: DatabaseClient<DB>): number {

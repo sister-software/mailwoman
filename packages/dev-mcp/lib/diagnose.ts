@@ -13,7 +13,7 @@
  *      that a truer understanding of addresses could break against.)
  *   2. **Failure shapes are MECHANISM-STATES, never address shapes.** Every predicate below reads pipeline facts —
  *      channels, constraints, ranks, lineage — and none reads what KIND of address the row is. A shape makes a claim about
- *      what the system did on this input; it cannot fossilize a wrong belief about how addresses work.
+ *      what the system did on this input. it cannot fossilize a wrong belief about how addresses work.
  *
  *   Classification is v1: transparent predicates over recorded pipeline facts, with no calibration. Every result says so in its
  *   own `calibration` field. A row that matches no shape and still fails its expectation is reported `unclassified`
@@ -29,7 +29,7 @@
  *      surface that reads it that way is lying about what conformal gives.
  *   2. **A separate conformal novelty detector** whose job is to ABSTAIN when no known shape fits.
  *   3. **Minting a new shape is a downstream clustering-and-review step**, not an operation conformal performs.
- *      Standard Mondrian CP assumes the taxonomy already exists; open-set conformal can flag that an observation
+ *      Standard Mondrian CP assumes the taxonomy already exists. open-set conformal can flag that an observation
  *      belongs to no known class, and what to do about that is our architecture, not the method's.
  *
  *   Two measured obstacles stand between v1 and that v2, both visible in this tool's own census and neither solved by
@@ -39,7 +39,7 @@
  *     n >= 1/alpha - 1 calibration rows before a threshold at error rate alpha exists at all (19 rows for alpha=0.05).
  *     On the 2026-08-19 board subset the shapes ran evidence_starved 113, retrieval_empty 95, scope_miss_readmission
  *     75, wrong_instance_detected 38, rank_flip 10, parse_shape_contradiction 3, mis_tag_in_vocabulary 1. The first
- *     four could carry calibration; the last three cannot, and splitting them into train/calibration halves makes it
+ *     four could carry calibration. the last three cannot, and splitting them into train/calibration halves makes it
  *     worse.
  *   - **These shapes are MULTI-LABEL and Mondrian partitions.** `by_shape` counts overlap by construction and the
  *     result says never to sum them, so "the class" a row calibrates under has to be defined first — earliest pipeline stage,
@@ -84,7 +84,7 @@ export { expectationCase, type ExpectationReading } from "#diagnose/expectation"
 const KNOWN_FORMAT_CONFIDENCE_FLOOR = 0.9
 
 /**
- * Row ids listed per shape before the list is capped. The `n` beside it is always the real count; this bounds the
+ * Row ids listed per shape before the list is capped. The `n` beside it is always the real count. this bounds the
  * PAYLOAD, never the measurement.
  */
 const SHAPE_ID_CAP = 20
@@ -515,7 +515,7 @@ export function matchShapes(facts: {
 	// The rule fires only when the scoped probe missed across the whole cascade and the unscoped fallback produced
 	// rows — so every candidate in that lookup is a re-admitted one, and a pick under the eval is a re-admitted pick.
 	// The per-candidate `regionScopeMiss` stamp does not reach `ResolveCandidateTrace`, so lookup granularity is all
-	// the trace can support; it suffices here because the rule's own condition covers the whole row set.
+	// the trace can support. it suffices here because the rule's own condition covers the whole row set.
 	if (lookups.some((lookup) => lookup.checks.includes("region_scope_miss") && lookup.picked)) {
 		shapes.push("scope_miss_readmission")
 	}
@@ -544,7 +544,7 @@ function channelMark(reading: ChannelReading): string {
 }
 
 /**
- * One line per row — the tool-kit renderer pattern. The structured account is what a diff reads; this is what a human
+ * One line per row — the tool-kit renderer pattern. The structured account is what a diff reads. this is what a human
  * reads in a transcript without an agent paraphrasing it, which is where detail goes missing.
  */
 export function renderAccount(account: Omit<RowAccount, "rendered">): string {
@@ -704,7 +704,7 @@ export function aggregateCounterfactuals(
  * The in-vocabulary mis-tag refinement of `unclassified` (#1722 v2 — the `bd-op2-london-college` class, where `Dhaka
  * 1205` decoded as street + house_number and the expected locality/postcode never existed): an expected component tag
  * the parse never produced, whose expected VALUE occurs verbatim in the input. A tag that exists with a WRONG value is
- * a different fact and stays out — that failure has a component to interrogate; this one does not.
+ * a different fact and stays out — that failure has a component to interrogate. this one does not.
  */
 function misTaggedInVocabulary(
 	item: ResolvedInput,
@@ -825,7 +825,7 @@ export async function runDiagnose(registry: EngineRegistryLike, args: Record<str
 
 	const rows: RowAccount[] = accounts.map((account) => ({ ...account, rendered: renderAccount(account) }))
 
-	// Stable partition, non-clean first — only the EMITTED order; every aggregate reads `rows` whole.
+	// Stable partition, non-clean first — only the EMITTED order. every aggregate reads `rows` whole.
 	const emittedRows = [
 		...rows.filter((row) => !row.shapes.includes("clean")),
 		...rows.filter((row) => row.shapes.includes("clean")),

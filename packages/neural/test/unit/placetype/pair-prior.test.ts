@@ -18,12 +18,12 @@
  *   The default became the `"auto"` probe CHAIN with the 2026-07-24 anchored adjacent-pair design
  *   (v1.1): segment path on ≥2 comma segments (byte-identical to explicit `"segment"` — asserted below
  *   as a chain-equivalence property), anchored-adjacent path on comma-free input. The "anchored
- *   adjacent-pair mode" section tests the new leg; the segment-mode tests all carry commas, so their
+ *   adjacent-pair mode" section tests the new leg. the segment-mode tests all carry commas, so their
  *   omitted-probeMode calls exercise the chain's segment leg unchanged.
  *
  *   The "identical adjacent segments" section covers the repeated-name-convention rule (NZ arc fix — see
  *   the module docstring's "Identity pairs" section): an (x, x) index entry biases only the first of two
- *   identical adjacent segments; the repeat draws no bias from the identity pair.
+ *   identical adjacent segments. the repeat draws no bias from the identity pair.
  */
 
 import { COMPONENT_TAGS, type ComponentTag } from "@mailwoman/codex/component"
@@ -48,7 +48,7 @@ const LABELS = STAGE2_BIO_LABELS
 const FIXTURE_TOKENIZER_PATH = workspacePath("neural", "test", "fixtures", "tokenizer-v0.1.0.model")
 
 // Production tokenizer, conditional (mirrors weights.test.ts's `haveModel` skipIf idiom). Not present in
-// stripped-down CI; runs on the lab host where $MAILWOMAN_DATA_ROOT is populated.
+// stripped-down CI. runs on the lab host where $MAILWOMAN_DATA_ROOT is populated.
 const PRODUCTION_TOKENIZER_PATH = dataRootPath("models", "tokenizer", "v0.9.0-multisplice", "tokenizer.model")
 const haveProductionTokenizer = await pathExists(PRODUCTION_TOKENIZER_PATH)
 
@@ -78,7 +78,7 @@ function makePieces(text: string): Array<{ piece: string; start: number; end: nu
 /**
  * Comma-preserving sibling of {@link makePieces}, for segment-mode tests: each word gets its own `▁`-prefixed piece (as
  * before), and each literal `,` gets its own bare (no `▁`) piece — the shape `groupPiecesIntoWords` absorbs as trailing
- * punctuation onto the PRECEDING word's group (real-tokenizer behavior; see that function's docstring, case 3). Words
+ * punctuation onto the PRECEDING word's group (real-tokenizer behavior. see that function's docstring, case 3). Words
  * split on `/\s+|,/` so "Fishburn, Stockton" tokenizes as `["Fishburn", "Stockton"]` with the comma handled separately
  * — a real SentencePiece tokenizer would split similarly (the comma rarely fuses into the same piece as the word it
  * follows).
@@ -398,7 +398,7 @@ describe("buildPlacetypePairPriors — end-to-end cross-form regression (real PI
 	// produces — pinned verbatim by `mailwoman/gazetteer-pipeline/pair-index.test.ts`'s "folds CITY/DISTRICT
 	// through normalizeFSTToken and tags dependent_locality" test (`{ child: "fishburn", parent:
 	// "stocktonontees", tag: "dependent_locality" }`) — and feeds it through the real `serializePairIndex` /
-	// `PairIndexResolver` binary round trip. If the builder's fold ever drifts, that sibling test catches it;
+	// `PairIndexResolver` binary round trip. If the builder's fold ever drifts, that sibling test catches it.
 	// this test locks in that the DECODE side (tokenizer → groupPiecesIntoWords → dual-key window probe →
 	// real PIX1 resolver) resolves it correctly once it exists.
 	const REAL_BUILDER_ENTRIES: PairIndexEntry[] = [
@@ -494,7 +494,7 @@ describe("buildPlacetypePairPriors — segment mode (the v1 default, now the ≥
 		const { matrix } = buildPlacetypePairPriors({ index, inputText: text }, pieces, LABELS)
 
 		expect(matrix[0]![labelCol("B-dependent_locality")]).toBe(6)
-		// The space-joined whole-segment form was tried and missed; the concat form is what actually hit.
+		// The space-joined whole-segment form was tried and missed. the concat form is what actually hit.
 		expect(index.calls).toContainEqual(["fishburn", "stockton on tees"])
 		expect(index.calls).toContainEqual(["fishburn", "stocktonontees"])
 	})
@@ -538,7 +538,7 @@ describe("buildPlacetypePairPriors — segment-parent same-field postcode strip 
 	it('GB: "Macclesfield SK11 9PD" parent segment folds to "macclesfield" — the pair fires (the fix)', () => {
 		const index = mockPairIndex({ "henbury|macclesfield": "dependent_locality" }, 6, undefined, "gb")
 		const text = "41 Hightree Drive, Henbury, Macclesfield SK11 9PD"
-		// groups: 0=41 1=Hightree 2=Drive(+,) 3=Henbury(+,) 4=Macclesfield 5=SK11 6=9PD; Henbury's first piece is 4.
+		// groups: 0=41 1=Hightree 2=Drive(+,) 3=Henbury(+,) 4=Macclesfield 5=SK11 6=9PD. Henbury's first piece is 4.
 		const pieces = makePiecesWithCommas(text)
 		const { matrix } = buildPlacetypePairPriors({ index, inputText: text }, pieces, LABELS)
 
@@ -553,7 +553,7 @@ describe("buildPlacetypePairPriors — segment-parent same-field postcode strip 
 	it('NZ: "Porirua 5026" parent segment folds to "porirua" — the pair fires (the fix)', () => {
 		const index = mockPairIndex({ "plimmerton|porirua": "dependent_locality" }, 6, undefined, "nz")
 		const text = "35 Steyne Avenue, Plimmerton, Porirua 5026"
-		// groups: 0=35 1=Steyne 2=Avenue(+,) 3=Plimmerton(+,) 4=Porirua 5=5026; Plimmerton's first piece is 4.
+		// groups: 0=35 1=Steyne 2=Avenue(+,) 3=Plimmerton(+,) 4=Porirua 5=5026. Plimmerton's first piece is 4.
 		const pieces = makePiecesWithCommas(text)
 		const { matrix } = buildPlacetypePairPriors({ index, inputText: text }, pieces, LABELS)
 
@@ -604,7 +604,7 @@ describe("buildPlacetypePairPriors — segment-parent same-field postcode strip 
 	it("comma-separated postcode (its own segment) → unchanged: the town's own field still flips the child, as before #1308", () => {
 		const index = mockPairIndex({ "plimmerton|porirua": "dependent_locality" }, 6, undefined, "nz")
 		const text = "35 Steyne Avenue, Plimmerton, Porirua, 5026"
-		// groups: 0=35 1=Steyne 2=Avenue(+,) 3=Plimmerton(+,) 4=Porirua(+,) 5=5026; Plimmerton's first piece is 4.
+		// groups: 0=35 1=Steyne 2=Avenue(+,) 3=Plimmerton(+,) 4=Porirua(+,) 5=5026. Plimmerton's first piece is 4.
 		const pieces = makePiecesWithCommas(text)
 		const { matrix } = buildPlacetypePairPriors({ index, inputText: text }, pieces, LABELS)
 
@@ -634,7 +634,7 @@ describe("buildPlacetypePairPriors — segment-parent same-field postcode strip 
 
 describe("buildPlacetypePairPriors — marker suppression must not cross segment boundaries", () => {
 	it('reviewer repro: "Fishburn, 5 Fishburn Road" biases Fishburn — successor "5" is in the NEXT segment, so it must never suppress', () => {
-		// Segment 0 is "Fishburn" alone; segment 1 is the whole 3-word "5 Fishburn Road" (no internal comma). Before
+		// Segment 0 is "Fishburn" alone. segment 1 is the whole 3-word "5 Fishburn Road" (no internal comma). Before
 		// the fix, `isMarkerSuppressed` read `nonEmptyGroups[x.endPos + 1]` unconditionally — for segment 0's
 		// candidate ("Fishburn"), that's segment 1's first word ("5"), a house-number shape, which wrongly vetoed
 		// "Fishburn" before it was ever probed. The comma between them means "5" can never be a suffix of

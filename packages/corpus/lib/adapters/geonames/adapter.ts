@@ -48,7 +48,7 @@ export const GEONAMES_ADAPTER_ID = "geonames"
 export const GEONAMES_DEFAULT_LICENSE = "CC-BY-4.0"
 
 /**
- * GeoNames main-table column indices (0-based; see the export README).
+ * GeoNames main-table column indices (0-based. see the export README).
  *
  * Exported because the register's layout is one fact with more than one reader — `@mailwoman/mailwoman`'s same-data
  * benchmark panel reads `cities15000.txt`, which is the same table filtered by population. A second hand-typed copy

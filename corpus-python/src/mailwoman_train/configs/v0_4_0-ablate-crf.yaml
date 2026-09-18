@@ -11,7 +11,7 @@
 # Result interpretation:
 #   - Trains stably to step ~2000+ at lr=5e-4 → §1 is the offender (per_token norm + weight=1.0
 #     is producing a CRF gradient that's still too large despite the normalization)
-#   - Also diverges → §1 isn't (only) the offender; pair with the §3 ablation
+#   - Also diverges → §1 isn't (only) the offender. pair with the §3 ablation
 #
 # Operator-conditional: do not kick off without their go-ahead.
 

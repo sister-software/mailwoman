@@ -6,7 +6,7 @@
  *   Phase-1 of the PR-based release flow: write the target version into the root `package.json` +
  *   every workspace listed in `.release-it.json` — and do nothing else. No git, no tags, no npm. The
  *   caller (`publish.yml`'s `prepare` job) commits the result onto a `release/v<version>` branch and
- *   opens the release PR; the tag + npm publish happen in the separate `publish` phase only after
+ *   opens the release PR. the tag + npm publish happen in the separate `publish` phase only after
  *   that PR has merged through the "Production Integrity" ruleset (PR + green `test` required on
  *   `main` — the ruleset that rejects release-it's direct push).
  *

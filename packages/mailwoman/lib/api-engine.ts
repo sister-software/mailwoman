@@ -115,7 +115,7 @@ async function readModelCard(): Promise<Record<string, unknown> | null> {
 		// map, so the subpath resolves as a plain file inside the package, and (unlike `node:module`'s
 		// `findPackageJSON`) `import.meta.resolve` realpaths through the workspace symlink — the same string the CJS
 		// `require.resolve` this replaced returned. It does not throw for a missing file inside a resolvable package,
-		// only for an unresolvable package; the `pathExists` below already checks every candidate, so that is a no-op
+		// only for an unresolvable package. the `pathExists` below already checks every candidate, so that is a no-op
 		// here.
 		candidates.push(resolveModulePath("@mailwoman/neural-weights-en-us/model-card.json"))
 	} catch {
@@ -140,7 +140,7 @@ async function readModelCard(): Promise<Record<string, unknown> | null> {
 }
 
 /**
- * Count canonical per-state databases (`<prefix>-us-<2-letter>.db`) in a data subdir; 0 if absent. Ported from
+ * Count canonical per-state databases (`<prefix>-us-<2-letter>.db`) in a data subdir. 0 if absent. Ported from
  * `HealthRouter`.
  */
 async function countDatabases(subdir: string, prefix: string): Promise<number> {
@@ -263,7 +263,7 @@ export async function createServeEngine(): Promise<ServeEngine> {
 		const parseClassifier = classifier
 
 		parse = async (address, opts) => {
-			// Decision A: explicit wire register wins; unset → the kind classifier decides (same derivation
+			// Decision A: explicit wire register wins. unset → the kind classifier decides (same derivation
 			// as the runtime pipeline / geocode-core — /v1/parse is the "plain parse" endpoint class).
 			const shape = computeQueryShape(address)
 
@@ -280,7 +280,7 @@ export async function createServeEngine(): Promise<ServeEngine> {
 			}
 		}
 	} catch {
-		// Weights unresolvable — leave parse undefined; the route answers 501 with its existing guard.
+		// Weights unresolvable — leave parse undefined. the route answers 501 with its existing guard.
 		console.error("createServeEngine: neural weights not found — /v1/parse disabled (501)")
 	}
 
@@ -324,7 +324,7 @@ export async function createServeEngine(): Promise<ServeEngine> {
 	// "documented wire shape looser than the domain type" idiom — `GeocodeOutcome` is a deliberately loose passthrough.
 	const geocode: GeocodeCallback = async (address, opts) => oneGeocode(deps, address, opts?.inputMode)
 
-	// Sequential loop — results land in input order; a thrown row is isolated to its own
+	// Sequential loop — results land in input order. a thrown row is isolated to its own
 	// `{ input, error }` slot. Rows are trimmed here (the route passes the raw validated array through).
 	//
 	// This was a bounded-concurrency worker pool (`MAILWOMAN_BATCH_CONCURRENCY`, default 8) until

@@ -172,7 +172,7 @@ describe.skipIf(!haveModel)("createNeuralProposalClassifier — e2e with v0.2.0 
 		const cls = createNeuralProposalClassifier({ id: "neural-v0.2.0-en-us", classifier: neural })
 		const proposals = await cls.classify(makeSection("Washington DC 20500"), {})
 		const tags = new Set(proposals.map((p) => p.component))
-		// Don't over-assert — the v0.2.0 model can miss country/region; insist on at least one of them.
+		// Don't over-assert — the v0.2.0 model can miss country/region. insist on at least one of them.
 		const coarseHit = COARSE_TAGS.some((tag) => tags.has(tag))
 		expect(coarseHit).toBe(true)
 

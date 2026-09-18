@@ -5,7 +5,7 @@
  *
  *   Address-system detection from the model's locale head (#511 Tier A — the consumer the head never
  *   had). The PR3 self-conditioning head predicts which country an address belongs to from the
- *   pooled sequence; v1.1.0+ exports surface it as the `locale_logits` ONNX output. This module
+ *   pooled sequence. v1.1.0+ exports surface it as the `locale_logits` ONNX output. This module
  *   turns that posterior into a `SystemCode` the conventions layer can act on.
  *
  *   Conservative by contract: below the confidence threshold, or for locales without a codex address
@@ -18,7 +18,7 @@ import type { SystemCode } from "@mailwoman/codex"
 import { LOCALE_COUNTRIES } from "#labels"
 import { softmax } from "#viterbi"
 
-// The pinned array lives in labels.ts beside the label vocabulary it mirrors; this module keeps its
+// The pinned array lives in labels.ts beside the label vocabulary it mirrors. this module keeps its
 // historical export name.
 export { LOCALE_COUNTRIES } from "#labels"
 

@@ -13,7 +13,7 @@
  *   builder — and a second copy of the zero-cell guard is a second place for it to stop guarding.
  *
  *   WHAT STAYS HERE IS WHAT IS SCENARIO-SHAPED. The flood layer accumulates per zone code, because a flood
- *   answer is a code from a two-value domain; the soil layer accumulates per delineation and weights by
+ *   answer is a code from a two-value domain. the soil layer accumulates per delineation and weights by
  *   covered area. An erosion answer is a SPECIFIC FRONTAGE POLYGON carrying its own distance, policy and
  *   defence, under one of twelve scenarios that must never be pooled — so this accumulates per (scenario,
  *   polygon) and reports per scenario.
@@ -87,7 +87,7 @@ export interface CellIndexMeasurement {
 	touchedCells: number
 	partialCells: number
 	/**
-	 * `partialCells / touchedCells` pooled. Reported for the size question only; the resolution is chosen on the
+	 * `partialCells / touchedCells` pooled. Reported for the size question only. the resolution is chosen on the
 	 * per-scenario shares above.
 	 */
 	pooledPartialShare: number

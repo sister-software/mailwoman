@@ -11,7 +11,7 @@
  *
  *   The measured case for this existing at all: on the triaged parity corpus the shipped decode gets
  *   street 0.573 while the span decode's top-10 CONTAINS the right answer 0.775 of the time
- *   (oracle@5 0.723). Rank-1 cannot reach that headroom; only a reranker can.
+ *   (oracle@5 0.723). Rank-1 cannot reach that headroom. only a reranker can.
  *
  *   ## Why this is deliberately, almost embarrassingly small
  *
@@ -22,7 +22,7 @@
  *   rebuilt that with extra steps.
  *
  *   So the rule is one bit of evidence, not a score: **drop hypotheses whose resolution is
- *   implausible; otherwise keep the model's own ranking.** The parse scores already share a partition
+ *   implausible. otherwise keep the model's own ranking.** The parse scores already share a partition
  *   function and are comparable within an input — the reranker's job is not to re-score them, it is to
  *   veto the ones the world says are wrong.
  *
@@ -40,7 +40,7 @@ import { isImplausibleResolution } from "#plausibility"
  */
 export interface RerankCandidate<T = unknown> {
 	/**
-	 * The parse's own score. Comparable to its siblings from the same input; not across inputs.
+	 * The parse's own score. Comparable to its siblings from the same input. not across inputs.
 	 */
 	score: number
 	/**

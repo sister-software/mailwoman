@@ -24,7 +24,7 @@ export interface PlanetaryPalette {
 	space: string
 	/**
 	 * Where a slope faces the light. With `shadow` and `accent` these are what make one body's relief differ from
-	 * another's; the tiles carry encoded elevation and no colour of their own.
+	 * another's. the tiles carry encoded elevation and no colour of their own.
 	 */
 	reliefHighlight: string
 	/**
@@ -72,7 +72,7 @@ const PLANETARY_NAMESPACE = "planetary"
 
 /**
  * The body's surface tone, under the relief. Under globe projection a background layer paints the SPHERE, not the
- * viewport, so this is the ground the hillshade shades and not the field around the globe; the app's stylesheet paints
+ * viewport, so this is the ground the hillshade shades and not the field around the globe. the app's stylesheet paints
  * that behind a transparent canvas.
  */
 export const PlanetarySpaceLayerID = LayerID(PLANETARY_NAMESPACE, "space")

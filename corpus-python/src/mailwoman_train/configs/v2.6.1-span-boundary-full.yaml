@@ -4,7 +4,7 @@
 # more training lowers the flip census further and lifts aggregate street. init_from the stable v257 (same
 # as v2.6.0), span_boundary_loss_weight 0.5 unchanged. Grade: flip census (does 2 -> lower?), parity
 # street (does the aggregate finally move?), gauntlet (stability). If street lifts -> this is the new
-# best candidate; if only the boundary class moves -> stage 2 (FSemi-CRF head) or a higher weight.
+# best candidate. if only the boundary class moves -> stage 2 (FSemi-CRF head) or a higher weight.
 data:
   corpus_dir: /data/corpus/versioned/v0.10.6-fragment-v5/corpus-v0.10.6-fragment-v5
   tokenizer_dir: /data/models/tokenizer/v0.9.0-multisplice

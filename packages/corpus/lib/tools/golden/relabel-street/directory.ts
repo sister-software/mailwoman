@@ -56,7 +56,7 @@ export interface RelabelGoldenOptions {
 	 */
 	input: string
 	/**
-	 * Output golden version dir. Created; never overwritten in place.
+	 * Output golden version dir. Created. never overwritten in place.
 	 */
 	output: string
 	/**
@@ -118,7 +118,7 @@ const DECK_WORTHY_UNCHANGED: ReadonlySet<GoldenRelabelClass> = new Set([
 /**
  * Relabel every `.jsonl` in a golden version dir, writing a new version dir plus a review deck and a MANIFEST that
  * records the convention, the parent, and the counts. Non-JSONL siblings (README, split manifests) are copied forward
- * so the new version is self-contained; nested split dirs (`dev/`, `test/`) are relabelled recursively.
+ * so the new version is self-contained. nested split dirs (`dev/`, `test/`) are relabelled recursively.
  */
 export async function relabelGoldenDirectory(
 	options: RelabelGoldenOptions,
@@ -145,7 +145,7 @@ export async function relabelGoldenDirectory(
 			}
 
 			if (!name.name.endsWith(".jsonl")) {
-				// MANIFEST is rewritten below; everything else (README, SPLIT-MANIFEST) rides forward.
+				// MANIFEST is rewritten below. everything else (README, SPLIT-MANIFEST) rides forward.
 				if (name.name !== "MANIFEST.json") {
 					await writeLocalFile(await readLocalBuffer(from), to)
 				}
@@ -272,7 +272,7 @@ export async function relabelGoldenDirectory(
 /**
  * Render the operator-facing half of the review deck: the flagged rows first (those are the ones asking for a ruling),
  * then the classes the tool LEFT FOLDED by name, then a sample of the ordinary corrections. The JSONL sibling carries
- * every row; this file is the one a human reads.
+ * every row. this file is the one a human reads.
  */
 function renderDeckMarkdown(deck: GoldenRelabelDeckEntry[], parent: string, version: string): string {
 	const span = (components: Record<string, string>): string =>

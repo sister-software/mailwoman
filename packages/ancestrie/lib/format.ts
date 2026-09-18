@@ -9,14 +9,14 @@
  *   the shared-function-not-shared-constants rule. All integers are little-endian, read and written
  *   through DataView so the artifact is byte-identical across platforms.
  *
- *   HEADER (48 bytes) magic [u8; 4] "ANCT" version u16 1 flags u16 0 (reserved) stateCount u32
+ *   HEADER (48 bytes) magic [u8. 4] "ANCT" version u16 1 flags u16 0 (reserved) stateCount u32
  *   edgeCount u32 total edges across all states entryRefCount u32 total state→entry references
  *   entryCount u32 unique entries parentIDCount u32 total parent ids across all entries stringCount
  *   u32 unique tokens stringBytes u32 total UTF-8 bytes of token data (unpadded) payloadBytes u32
  *   total payload bytes (unpadded) metadataOffset u32 byte offset of the metadata trailer (0 = none)
  *   _reserved u32
  *
- *   STRING TABLE offsets [u32; stringCount + 1] byte offset into data (last = sentinel) data [u8;
+ *   STRING TABLE offsets [u32. stringCount + 1] byte offset into data (last = sentinel) data [u8.
  *   stringBytes] concatenated UTF-8, zero-padded to a 4-byte boundary
  *
  *   STATE TABLE [stateCount × 16 bytes] edgeStart u32 index into edge table edgeCount u32
@@ -44,7 +44,7 @@
  *
  *   DAG CANONICALIZATION: an entry may declare multiple parents. The interval forest spans the
  *   PRIMARY parent only — `parentIDs[0]` — so `contains`/`descendantsOf` answer over that single
- *   tree; the full parent list is stored in the parent table and surfaced verbatim. A primary
+ *   tree. the full parent list is stored in the parent table and surfaced verbatim. A primary
  *   parent id that names no entry in the build makes its child a forest root (the declared id is
  *   still stored). A cycle in the primary-parent graph fails the seal.
  *
@@ -59,7 +59,7 @@
  *   METADATA (optional trailer, at metadataOffset) jsonLen u32, then jsonLen bytes of UTF-8 JSON.
  *
  *   CANONICAL OUTPUT: the serializer is deterministic and insertion-order-independent. Strings are
- *   interned in sorted order; trie states are numbered by a pre-order DFS that visits edges in
+ *   interned in sorted order. trie states are numbered by a pre-order DFS that visits edges in
  *   sorted-token order (root = 0); entry ordinals follow the interval forest's pre-order (roots and
  *   sibling lists sorted by id ascending). Sealing the same entry set twice — in any add order —
  *   yields identical bytes.
@@ -114,7 +114,7 @@ export const ID_INDEX_ENTRY_SIZE = 8
 export const ENTRY_FLAG_HAS_PAYLOAD = 1
 
 /**
- * Entry flags bit 1: the payload bytes are UTF-8 JSON and the reader parses them; unset means the payload is opaque
+ * Entry flags bit 1: the payload bytes are UTF-8 JSON and the reader parses them. unset means the payload is opaque
  * bytes handed back verbatim.
  */
 export const ENTRY_FLAG_PAYLOAD_JSON = 2
@@ -225,7 +225,7 @@ export function writeHeader(view: DataView, header: AncestrieHeader): void {
 }
 
 /**
- * Validate the magic and version, then decode the header. Throws on anything this module cannot read; never guesses at
+ * Validate the magic and version, then decode the header. Throws on anything this module cannot read. never guesses at
  * an unknown version's layout.
  */
 export function readHeader(view: DataView): AncestrieHeader {

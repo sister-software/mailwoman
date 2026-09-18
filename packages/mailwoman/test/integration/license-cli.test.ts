@@ -6,7 +6,7 @@
  *   `mailwoman license` end to end on the compiled CLI: `register` printing the derivation, `keygen` into a scratch
  *   config root, `issue` refused against a register that does not carry the new key, `verify` reading a token this build
  *   does not trust, and `adopt` and `refresh` refusing to write one. The compiled CLI ships its register, so no test can
- *   hand it a trusted key; what is asserted is every refusal by its word and that nothing is written on one. The worker
+ *   hand it a trusted key. what is asserted is every refusal by its word and that nothing is written on one. The worker
  *   is a fetch handler on a node listener, reached through `MAILWOMAN_LICENSE_URL`.
  */
 
@@ -115,7 +115,7 @@ describe("mailwoman license", () => {
 
 	/**
 	 * The worker's two customer routes and the well-known register, as a fetch handler: the refresh route answers the
-	 * self-service token for the right secret, `lapsed` for one lid, and the worker's 404 otherwise; the status route
+	 * self-service token for the right secret, `lapsed` for one lid, and the worker's 404 otherwise. the status route
 	 * answers `revoked`; the register lists no key, so the publication reads `unlisted` without reaching mailwoman.ai.
 	 */
 	async function stubWorker(token: string) {

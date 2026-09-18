@@ -32,7 +32,7 @@ describe("buildEmissionPriors", () => {
 			knownFormats: [{ format: "us_zip", span: { start: 27, end: 32 }, confidence: 0.6 }],
 		}
 
-		// Three tokens; only the last overlaps the postcode span.
+		// Three tokens. only the last overlaps the postcode span.
 		const toks = tokens([0, 3], [4, 7], [27, 32])
 		const m = buildEmissionPriors(shape, toks, LABELS)
 		const postcodeCol = LABELS.indexOf("B-postcode")
@@ -78,7 +78,7 @@ describe("buildEmissionPriors", () => {
 
 		const m = buildEmissionPriors(shape, tokens([0, 5]), LABELS)
 		const postcodeCol = LABELS.indexOf("B-postcode")
-		// All three hits map to B-postcode; bias is the max (not sum) → 0.6, not 1.8
+		// All three hits map to B-postcode. bias is the max (not sum) → 0.6, not 1.8
 		expect(m[0]?.[postcodeCol]).toBeCloseTo(0.6, 6)
 	})
 

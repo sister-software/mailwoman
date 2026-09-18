@@ -8,12 +8,12 @@
  *   `buildPostcodeDatabase`, never against a shipped artifact (the sealed-artifact invariant).
  *
  *   Fill priority (each pass touches only rows still `(0,0)`; a placeholder never overwrites a real
- *   coordinate; all passes are idempotent):
+ *   coordinate. all passes are idempotent):
  *
  *   1. US ONLY — Census ZCTA Gazetteer internal points (public domain), then GeoNames `US.txt` for the
  *      PO-box/unique-ZIP residual (`zcta-centroids.ts`, provenance in `centroid_source`).
  *   2. GeoNames postal (`<CC>.txt`) — the postcode's own centroid, string-matched (WOF ids stay the
- *      eval keys; corrects WOF mis-links like the Italian Milan→Liguria case). CC-BY 4.0 — any DB
+ *      eval keys. corrects WOF mis-links like the Italian Milan→Liguria case). CC-BY 4.0 — any DB
  *      shipping these rows must attribute "GeoNames (CC-BY 4.0)".
  *   3. WOF admin parent-borrow — the parent locality's centroid from the admin gazetteer.
  *   4. GeoJSON-hierarchy ancestor fallback (county, then region) for parents the admin DB lacks
@@ -245,7 +245,7 @@ async function geonamesFill(
 ): Promise<number> {
 	// The GeoNames UPDATE matches on (country, name); the build only indexes placetype/country/parent,
 	// so without this the per-postcode UPDATEs scan each country's rows (minutes on 400k+ rows). `kdb`
-	// wraps `db` for the DDL; the caller owns `db`'s lifecycle, so we don't destroy it here.
+	// wraps `db` for the DDL. the caller owns `db`'s lifecycle, so we don't destroy it here.
 	const kdb = db
 	await kdb.schema.createIndex("spr_by_country_name").ifNotExists().on("spr").columns(["country", "name"]).execute()
 
@@ -379,7 +379,7 @@ export async function fillPostcodeCentroids(
 	// Pass 2: GeoNames postal — runs first so the postcode's own centroid wins over the coarser parent-borrow.
 	if (opts.geonamesDir && (await pathExists(opts.geonamesDir))) {
 		// Where the US lives. The per-country directory is populated for locales fetched one at a time and
-		// has no US.txt; the combined dump does. Resolved through the data-root builder rather than by
+		// has no US.txt. the combined dump does. Resolved through the data-root builder rather than by
 		// walking up out of `geonamesDir`, which only lands correctly when that argument is the default.
 		const combinedPath = opts.geonamesCombined ?? dataRootPath("geonames", "allCountries-postal.txt")
 

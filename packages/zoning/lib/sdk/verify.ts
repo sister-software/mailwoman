@@ -23,7 +23,7 @@
  *   polygon is not a statement.
  *
  *   THE CHANNELS DIFFER IN COORDINATE PRECISION AND THAT IS WHY A BOUNDARY POINT IS NOT A FAILURE. The
- *   archive publishes nine decimals through this package's ingest; the service's own JSON rounds. A point
+ *   archive publishes nine decimals through this package's ingest. the service's own JSON rounds. A point
  *   within roughly a metre of a zone boundary can land on opposite sides of two renderings of the same edge.
  *   Those are reported as `boundary_tolerance` with their distance to the nearest edge, and the count is part
  *   of the receipt.
@@ -139,7 +139,7 @@ const PROBE_HALF_WIDTH_DEGREES = 0.0001
  * rather than to the conversion.
  *
  * Half a metre. The two channels render the same edge from the same source coordinates through different rounding, so a
- * point between the two renderings lands on opposite sides; half a metre is far below any real zoning boundary and far
+ * point between the two renderings lands on opposite sides. half a metre is far below any real zoning boundary and far
  * above the rounding difference.
  */
 const BOUNDARY_TOLERANCE_METRES = 0.5
@@ -156,7 +156,7 @@ export interface ServiceFeature {
  * The one call the verification makes against the service: the features it publishes near a point.
  *
  * A function rather than the client, and that is what makes the check's own logic testable. The comparison's value is
- * that it decides which of three outcomes a point gets; expressed against an HTTP client it could only ever be watched
+ * that it decides which of three outcomes a point gets. expressed against an HTTP client it could only ever be watched
  * on a live run, and a scripted reader lets those decisions be pinned. {@link createServiceReader} builds the real
  * one.
  */

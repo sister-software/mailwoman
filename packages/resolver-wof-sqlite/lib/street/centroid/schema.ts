@@ -139,7 +139,7 @@ export async function createStreetCentroidTable(db: Kysely<StreetCentroidDatabas
 /**
  * Create the probe indexes: the two geocoding-scope indexes (postcode, locality-base) the resolver reader relies on,
  * plus `idx_sc_name` — the #727 phase-4c name-existence key for a direct `name_key = ?` seek (the unscoped fragment
- * lookup; without it that query skip-scans `idx_sc_postcode` at ~5 ms/probe).
+ * lookup. without it that query skip-scans `idx_sc_postcode` at ~5 ms/probe).
  */
 export async function createStreetCentroidIndexes(db: Kysely<StreetCentroidDatabase>): Promise<void> {
 	await db.schema.createIndex("idx_sc_postcode").on("street_centroid").columns(["postcode", "street_norm"]).execute()

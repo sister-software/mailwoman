@@ -109,7 +109,7 @@ def load_or_build_model(
     else:
         model = build_model(
             cfg,
-            # Char mode never reads the SP token-embedding table; vocab_size=2 keeps the unused
+            # Char mode never reads the SP token-embedding table. vocab_size=2 keeps the unused
             # table at minimum width (an nn.Embedding needs >= pad_token_id + 1 rows).
             vocab_size=tokenizer.vocab_size if tokenizer is not None else 2,
             pad_token_id=tokenizer.pad_id if tokenizer is not None else 0,
@@ -118,7 +118,7 @@ def load_or_build_model(
         # Fine-tune from a pre-trained encoder: load MODEL weights only (no optimizer/scheduler/
         # step, unlike resume), so the supervised run starts fresh on the MLM-pretrained encoder.
         # The pretrain checkpoint's state_dict is key-identical (tied MLM head adds no params), so
-        # this loads cleanly; strict=False surfaces any head mismatch instead of raising.
+        # this loads cleanly. strict=False surfaces any head mismatch instead of raising.
         init_from = getattr(cfg.train, "init_from", "")
         if init_from:
             sd = torch.load(Path(init_from) / "pytorch_model.bin", map_location="cpu", weights_only=True)
@@ -143,7 +143,7 @@ def apply_freezes(cfg: Config, model: nn.Module) -> None:
     `build_optimizer` filters on `requires_grad`, so flipping the flag here is the whole hand-off —
     no explicit parameter list travels onward. Each setting raises rather than training nothing.
     """
-    # #492 frozen-encoder probe: freeze everything except the affix head; the optimizer sees
+    # #492 frozen-encoder probe: freeze everything except the affix head. the optimizer sees
     # only head params (a frozen param in AdamW is harmless but a filtered list is explicit).
     if getattr(cfg.train, "freeze_encoder", False):
         frozen = trainable = 0
@@ -293,7 +293,7 @@ def _report_resume_drift(cfg: Config, saved_cfg: dict[str, Any]) -> None:
 def build_regularizers(cfg: Config, model: nn.Module, device: torch.device) -> Regularizers:
     """Fisher capture + EWC (v8.3.0 Phase 1 — fisher.py has the design pointers).
 
-    Capture is armed for the FINAL window of the run; EWC loads the artifact + reference once, up
+    Capture is armed for the FINAL window of the run. EWC loads the artifact + reference once, up
     front, loudly.
     """
     out = Regularizers()

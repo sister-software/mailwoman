@@ -8,7 +8,7 @@
  *   Why this exists: the set was once unpinned (`>=`) and drifted between v0.9.3 and v0.9.7, silently
  *   breaking int8 quant for Safari WebGPU (the value_info/opset incident — see
  *   project-v4.1.0-release + the pinned block in corpus-python/launch/app.py, which is the SOURCE
- *   OF TRUTH this script reads). Run before any local quantize; CI-able (exit 1 on mismatch). A
+ *   OF TRUTH this script reads). Run before any local quantize. CI-able (exit 1 on mismatch). A
  *   bumped dep here is never a free upgrade — it must re-prove the Safari int8 graph (opset <= 17,
  *   value_info strip) end to end.
  *
@@ -31,7 +31,7 @@ if (!(await pathExists(PYTHON))) {
 
 /**
  * Local quantize needs only the QUANT subset (onnx, onnxruntime) — export runs on Modal, where the full image pins
- * apply. Export-side packages absent locally are a WARNING; present-but-mismatched is a FAILURE either way (a wrong
+ * apply. Export-side packages absent locally are a WARNING. present-but-mismatched is a FAILURE either way (a wrong
  * version is worse than a missing one).
  */
 const QUANT_PKGS = new Set(["onnx", "onnxruntime"])

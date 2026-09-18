@@ -4,7 +4,7 @@
  * @author Teffen Ellis, et al.
  *
  *   `mailwoman registry matcher-scale` — the pure-Node matcher scale eval (block → Fellegi-Sunter →
- *   cluster over synthetic geo-clustered records at increasing N; wall-clock + peak RSS). Emits the
+ *   cluster over synthetic geo-clustered records at increasing N. wall-clock + peak RSS). Emits the
  *   markdown report to stdout. Tip: run with `node --expose-gc` for cleaner per-size RSS.
  */
 

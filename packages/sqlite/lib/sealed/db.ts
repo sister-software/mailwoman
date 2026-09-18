@@ -5,7 +5,7 @@
  *
  *   The sealed-artifact invariant: every SQLite DB a build produces is a READ-ONLY asset. `sealDatabase`
  *   is the last step of every builder — checkpoint, freeze the journal, chmod 0444. `openBuiltClient`
- *   (`@mailwoman/sqlite/sealed`) is how anything opens a data artifact; a write-mode open of a sealed
+ *   (`@mailwoman/sqlite/sealed`) is how anything opens a data artifact. a write-mode open of a sealed
  *   file throws a NAMED error pointing at the rebuild command instead of a cryptic SQLITE_READONLY. Unsealing is deliberate and
  *   manual (`chmod u+w`), never programmatic — rebuild, don't mutate.
  *

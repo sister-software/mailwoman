@@ -1,6 +1,6 @@
 # Anchor pilot — anchor-off control (#239/#240): self-cond + German collapse recipe, anchor off, 3k steps.
 # Confirms the collapse still appears with this code+corpus (early-kill: P(B-locality|after postcode)<0.3).
-# Byte-identical to v0.9.0-pilot-selfcond except max_steps; anchor channel is default-off. The A/B control.
+# Byte-identical to v0.9.0-pilot-selfcond except max_steps. anchor channel is default-off. The A/B control.
 #
 # Tests one hypothesis: a model that infers the country from the whole address (an auxiliary
 # locale head over the pooled sequence) and FiLM-conditions its own per-token labeling on it
@@ -18,7 +18,7 @@
 #   - DE locality F1 >= 70% and rising
 #   - US/FR within ~1pp of v0.7.2 (no-regression on the incumbents)
 #   - locale_acc climbing (the aux head is actually learning "which country")
-# If the check holds, a follow-up extends to a full 100k run; if it fails, stop and diagnose ONE
+# If the check holds, a follow-up extends to a full 100k run. if it fails, stop and diagnose ONE
 # knob (NaN protocol).
 #
 # CORPUS: v0.4.1-de — the v0.4.0 (US/FR) base overlaid with the German `synth-german` source (200K train
@@ -45,7 +45,7 @@ data:
   tokenizer_dir: /data/models/tokenizer/v0.6.0-a0
   max_length: 128
   # US/FR/DE — the three-way pilot. FR comes from the `ban` source (Base Adresse Nationale),
-  # DE from `synth-german`. country_weights is an acceptance filter, not a count balancer; the MIX
+  # DE from `synth-german`. country_weights is an acceptance filter, not a count balancer. the MIX
   # is steered by source_weights below.
   country_weights:
     US: 1.0
@@ -87,11 +87,11 @@ model:
   attention_probs_dropout_prob: 0.1
   use_crf: true
   # CRF off via zero weight — head exists (parity) but contributes no loss. Avoids the
-  # CRF-under-bf16 NaN; keeps self-conditioning the only new behaviour in the loss.
+  # CRF-under-bf16 NaN. keeps self-conditioning the only new behaviour in the loss.
   crf_loss_weight: 0.0
   crf_normalization: per_sequence
   label_smoothing: 0.1
-  # PR3: the headline change. Self-conditioning on; the aux locale loss is a genuine but
+  # PR3: the headline change. Self-conditioning on. the aux locale loss is a genuine but
   # secondary objective behind the per-token BIO task. num_locales is derived from labels, not set
   # here (it can't drift from the aux-target vocabulary).
   use_locale_conditioning: true

@@ -11,7 +11,7 @@
  *   (`registry/models/dedup-gbt-en-us.ts`) that ships in the package.
  *
  *   Unlike the eval, this trains on all sampled NPIs (no held-out split) — the held-out F1 is the
- *   eval's job; this produces the shipped artifact. The eval (`learned-scorer-clustering-eval.ts`)
+ *   eval's job. this produces the shipped artifact. The eval (`learned-scorer-clustering-eval.ts`)
  *   then re-measures generalization against the FS baseline.
  *
  *   Run: `mailwoman registry train-scorer gbt [--state TX] [--npis 3000] [--wof <admin.db>]
@@ -41,7 +41,7 @@ import { scoreEntities } from "#tools/nppes/scoring"
 import { stateOption, uniqueQuantiles } from "#tools/shared"
 
 /**
- * Share of entities assigned to fit; the rest are held out.
+ * Share of entities assigned to fit. the rest are held out.
  */
 const FIT_SPLIT_FRACTION = 0.8
 
@@ -140,14 +140,14 @@ export async function trainDedupGBT(
 	const X = pairs.map(([a, b]) => featurize(a, b))
 	const Y = pairs.map(([a, b]) => (a.id === b.id ? 1 : 0))
 	const posRate = Y.reduce<number>((s, v) => s + v, 0) / Math.max(1, Y.length)
-	const W = Y.map((y) => (y === 1 ? 1 - posRate : posRate * COST)) // class-balanced; COST up-weights negatives
+	const W = Y.map((y) => (y === 1 ? 1 - posRate : posRate * COST)) // class-balanced. COST up-weights negatives
 	const hyperparams = { rounds: 120, depth: 3, lr: 0.3, minLeaf: 20 }
 
 	if (COST !== 1) {
 		report?.(`    cost-sensitive: negative class weighted ×${COST} (penalize over-merge)`)
 	}
 
-	// Calibrate the default link threshold; the GBT logit is not in FS-weight units.
+	// Calibrate the default link threshold. the GBT logit is not in FS-weight units.
 	// trained with class-balanced weights, so logit 0 (the balanced boundary) ignores the ~1% match base
 	// rate and over-merges. Split the NPIs 80/20, fit a calibration GBT on the 80%, and sweep the
 	// CLUSTERING threshold on the held-out 20% (the metric resolveEntities actually optimizes) for F1-max.

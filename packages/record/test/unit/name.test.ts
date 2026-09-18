@@ -87,7 +87,7 @@ describe("formatPersonName", () => {
 	it("keeps the particle with the surname in both styles", () => {
 		const name = parsePersonName("Dr Jane Q. Xavier de la Vega III")
 
-		// The parser stores the particle separately so the matcher can compare `Vega` on its own; printing them apart
+		// The parser stores the particle separately so the matcher can compare `Vega` on its own. printing them apart
 		// would produce a name nobody wrote.
 		expect(formatPersonName(name, "short")).toBe("Jane de la Vega")
 	})

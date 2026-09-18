@@ -5,7 +5,7 @@
  *
  *   Build the UN/LOCODE lookup DB from the UNECE code list CSV (datasets/un-locode `code-list.csv`:
  *   columns Change, Country, Location, Name, NameWoDiacritics, Subdivision, Status, Function, Date,
- *   IATA, Coordinates, Remarks). One row per assigned location; coordinates parsed where present.
+ *   IATA, Coordinates, Remarks). One row per assigned location. coordinates parsed where present.
  */
 
 import { DatabaseClient } from "@mailwoman/sqlite/client"

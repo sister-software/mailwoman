@@ -25,7 +25,7 @@ export interface PlacetypeTreeNode {
  * Build a nested tree of a placetype and its descendants, optionally filtered by role.
  *
  * The traversal mirrors {@linkcode Placetype.findChildren} — direct children only at each level, recursively. The
- * DAG-to-tree projection may repeat descendants under multiple parents; if you need each placetype to appear exactly
+ * DAG-to-tree projection may repeat descendants under multiple parents. if you need each placetype to appear exactly
  * once, use {@linkcode Placetype.findDescendants} for a flat de-duplicated set instead.
  */
 export function generatePlacetypeTree(placetype: Placetype, roles?: Iterable<PlacetypeRole> | null): PlacetypeTreeNode {

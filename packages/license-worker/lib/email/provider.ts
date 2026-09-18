@@ -5,7 +5,7 @@
  *
  *   The one thing the worker asks of an email provider: deliver a license message under the invoice id. The id rides
  *   as the idempotency key, and a provider that honours one (Resend) deduplicates a retried send after a failed
- *   ledger write; one that does not (Cloudflare's binding) can deliver that retry twice, and the ledger's
+ *   ledger write. one that does not (Cloudflare's binding) can deliver that retry twice, and the ledger's
  *   `email_state` is what keeps the window to that one crash.
  */
 
@@ -17,7 +17,7 @@ export interface LicenseEmail {
 	issued: string
 	expires: string
 	/**
-	 * The agreement version the license was bought under; the message links its page.
+	 * The agreement version the license was bought under. the message links its page.
 	 */
 	agreement: string
 	/**

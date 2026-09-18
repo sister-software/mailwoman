@@ -237,7 +237,7 @@ def write_board(out_dir: Path, selection: Selection, encoder: RowEncoder) -> lis
 
 
 def check_stratification(selection: Selection) -> set[str]:
-    """Violations RAISE; a corpus that fails one is not a corpus. Returns the board's 鄉鎮市區."""
+    """Violations RAISE. a corpus that fails one is not a corpus. Returns the board's 鄉鎮市區."""
     pool_units = {normalize_text(f"{row[0]}|{row[1]}") for row in selection.train} | {
         normalize_text(f"{row[0]}|{row[1]}") for row in selection.val
     }

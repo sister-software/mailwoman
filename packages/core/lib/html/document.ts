@@ -69,7 +69,7 @@ export interface MarkupQueryOptions {
 
 /**
  * The LOCAL name of an element — `gco:CharacterString` is `characterstring`. A namespace prefix is the publisher's
- * choice of alias and two documents from the same service can spell it differently; the local name is the contract.
+ * choice of alias and two documents from the same service can spell it differently. the local name is the contract.
  */
 function localName(name: string): string {
 	const colon = name.lastIndexOf(":")

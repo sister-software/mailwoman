@@ -39,7 +39,7 @@ export interface ScoringWeights {
  */
 export interface Convention {
 	/**
-	 * Ordered strategy names the dispatcher runs; the first to return a non-null result wins.
+	 * Ordered strategy names the dispatcher runs. the first to return a non-null result wins.
 	 */
 	candidateStrategies?: string[]
 	/**
@@ -60,7 +60,7 @@ export interface ResolvedConvention {
 
 /**
  * The base layer every ancestor chain starts from. Reproduces the pre-engine coordinate-first behavior exactly: try
- * `postcode_area_resolution`, else fall back to fuzzy name match; soft-score weights 0.6 / 0.3 / 0.1. Changing these
+ * `postcode_area_resolution`, else fall back to fuzzy name match. soft-score weights 0.6 / 0.3 / 0.1. Changing these
  * changes EU behavior — don't, without a byte-stability run.
  */
 export const WORLD_DEFAULT: ResolvedConvention = {
@@ -83,7 +83,7 @@ export const ADDRESS_CONVENTION_TABLE = "address_convention"
 
 /**
  * A named resolution primitive. Returns `null` to abstain (condition unmet / no data) → the dispatcher tries the next
- * strategy; returns an array (possibly empty) to claim the result.
+ * strategy. returns an array (possibly empty) to claim the result.
  */
 export type Strategy = (query: FindPlaceQuery, convention: ResolvedConvention) => Promise<PlaceCandidate[] | null>
 

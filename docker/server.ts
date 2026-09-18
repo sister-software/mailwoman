@@ -26,7 +26,7 @@
  *       `503` on `/v1/geocode` + `/v1/batch` (a clean degrade, not a crash).
  *     - When the weights themselves are unresolvable, `parse` is absent and `/v1/parse` answers `501`.
  *
- *   The container always listens on port 3000 on 0.0.0.0; remap with `docker run -p <host>:3000`. The
+ *   The container always listens on port 3000 on 0.0.0.0. remap with `docker run -p <host>:3000`. The
  *   drop-in servers (`@mailwoman/nominatim`, `@mailwoman/photon`, `@mailwoman/libpostal`) are also in
  *   the image and can be run as alternative commands — see `docker/README.md`.
  */
@@ -51,7 +51,7 @@ const DATA_ROOT = mailwomanDataRoot()
 /**
  * The WOF extract set to attach: {@link resolveWOFDatabasePaths} selects it (the `$MAILWOMAN_WOF_DB` comma-separated
  * override, else the conventional per-extract `wof/` paths). An explicit list is the operator's statement and passes
- * through unfiltered; the conventional set is probed, so a deployment missing a extract degrades to what is present.
+ * through unfiltered. the conventional set is probed, so a deployment missing a extract degrades to what is present.
  */
 function wofPaths(): Promise<string[]> {
 	const paths = resolveWOFDatabasePaths()

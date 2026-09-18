@@ -100,7 +100,7 @@ class Tokenizer:
             proto = self.sp.encode(raw, out_type=cast(Any, "immutable_proto"))
         except ValueError:
             # sentencepiece ≥0.2.2 renamed the proto out_type (Modal's pinned image keeps the old
-            # spelling; local dev venvs track newer). Identical pieces/offsets either way.
+            # spelling. local dev venvs track newer). Identical pieces/offsets either way.
             proto = self.sp.encode(raw, out_type=cast(Any, "proto"))
         # Build a byte→char index for the original raw string so we can map proto byte offsets.
         raw_bytes = raw.encode("utf-8")

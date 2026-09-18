@@ -179,7 +179,7 @@ describe("decodeSegmentationsKBest", () => {
 	})
 
 	it("respects a maxSpan narrower than the score tensor", () => {
-		// Grammar says 1; the tensor offers 3. Nothing longer than 1 may be emitted.
+		// Grammar says 1. the tensor offers 3. Nothing longer than 1 may be emitted.
 		for (const h of decodeSegmentationsKBest(scores(4, 3, 17), 4, grammar({ maxSpan: 1 }), 4)) {
 			for (const s of h.segments) {
 				expect(s).toHaveLength(1)

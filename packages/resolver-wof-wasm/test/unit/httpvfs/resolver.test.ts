@@ -6,7 +6,7 @@
  *   Unit tests for the demo's #741 postal-city side-index probe in the browser candidate lookup
  *   (`WOFCandidateTableLookup`), against a node:sqlite-backed stub worker that mimics
  *   sql.js-httpvfs's `db.exec` contract. Pins parity with the Node lookup: an exact `(name_key,
- *   postcode)` hit resolves a postal city to its geographic locality; a bare query, and a
+ *   postcode)` hit resolves a postal city to its geographic locality. a bare query, and a
  *   candidate.db without the side-index (today's production demo), are byte-stable.
  */
 

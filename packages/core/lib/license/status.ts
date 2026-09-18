@@ -68,7 +68,7 @@ function uncachedPost(url: string, data: unknown): CacheRequestConfig {
 function client(options: LicenseWorkerClientOptions): APIClient {
 	return new APIClient({
 		displayName: "license-worker",
-		// The doctor and `license refresh --json` own stdout; the client's request line must not land in the document.
+		// The doctor and `license refresh --json` own stdout. the client's request line must not land in the document.
 		logger: silentLogger(),
 		axios: {
 			baseURL: licenseWorkerURL(options.url),
@@ -105,7 +105,7 @@ export async function checkLicenseStatus(
 
 /**
  * Trade a lid and its secret for the current token. The worker answers the same 404 for an unknown lid and a wrong
- * secret, which is `not_found` here; the caller verifies the token offline before writing it anywhere.
+ * secret, which is `not_found` here. the caller verifies the token offline before writing it anywhere.
  */
 export async function refreshLicenseKey(
 	credentials: { lid: string; secret: string },

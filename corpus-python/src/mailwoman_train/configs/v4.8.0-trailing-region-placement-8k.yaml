@@ -43,7 +43,7 @@
 #
 # KR and TW are the one judgement call here: neither is on the board, but both carry corpus rows
 # (1,083,156 and 678,660) of the same wof-admin toponym class as CN and JP, which the board does carry.
-# #288 validates JP/KR/TW together; admitting two of the three would teach the model that Korean and
+# #288 validates JP/KR/TW together. admitting two of the three would teach the model that Korean and
 # Taiwanese toponyms are not places.
 #
 # COST of the expansion, measured rather than assumed: 0.778% of every epoch. country_weights is a
@@ -243,7 +243,7 @@ data:
     synth-fr-bare-street: 0.0 # SUPERSEDED (vintages must never co-feed)
     synth-fr-bare-street-v20: 0.0 # SUPERSEDED
     synth-fr-bare-street-v21: 0.0 # SUPERSEDED by -v22
-    synth-fr-bare-street-v22: 6.0 # weight held at v4.5.1's value; the v22 counter-forms are the run's one variable
+    synth-fr-bare-street-v22: 6.0 # weight held at v4.5.1's value. the v22 counter-forms are the run's one variable
     synth-si-bare-village: 12.0
     synth-no-street-led: 0.0
     synth-cz-pcfirst-preposition: 0.0 # SUPERSEDED (vintages must never co-feed)

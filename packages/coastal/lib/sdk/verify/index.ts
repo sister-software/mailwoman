@@ -19,7 +19,7 @@
  *   positive-only check would pass on an artifact that reported the entire country as designated.
  *
  *   THE CHANNELS DIFFER IN COORDINATE PRECISION AND THAT IS WHY A BOUNDARY POINT IS NOT A FAILURE. The
- *   geodatabase publishes nine decimals through this package's ingest; the OGC service publishes six. Six
+ *   geodatabase publishes nine decimals through this package's ingest. the OGC service publishes six. Six
  *   decimals is about 10 cm, so a point within roughly a metre of a zone boundary can land on opposite sides
  *   of two renderings of the same edge. Those are reported as `boundary_tolerance` with their distance to the
  *   nearest edge, and the count is part of the receipt.
@@ -123,7 +123,7 @@ export interface VerifyCoastalOptions {
 	points: ReadonlyArray<{ label: string; latitude: number; longitude: number; scenarioKey: string }>
 	outsidePoints?: ReadonlyArray<{ label: string; latitude: number; longitude: number }>
 	/**
-	 * The scenario the negative half is asked under. Every scenario must answer `unknown` at these points; one is checked
+	 * The scenario the negative half is asked under. Every scenario must answer `unknown` at these points. one is checked
 	 * because the negative half is about the artifact's extent rather than about a scenario's semantics.
 	 */
 	outsideScenarioKey: string

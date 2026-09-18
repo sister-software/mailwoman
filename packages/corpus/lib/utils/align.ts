@@ -20,7 +20,7 @@
  *        `I-<tag>`; no overlap → `O`.
  *   5. Emit the located char spans verbatim as `span_starts[]` / `span_ends[]` / `span_tags[]` (the
  *        v0.5.0 char-offset format, #519). The token quantization in step 4 is the part the v0.5.0
- *        rebuild deletes; during the transition both representations ride on every labeled row.
+ *        rebuild deletes. during the transition both representations ride on every labeled row.
  *
  *   Structural invariants the function preserves (the span ones loudly — a violation throws rather
  *   than quarantines, because it indicates a bug here, not bad source data):
@@ -29,7 +29,7 @@
  *   - Each component contributes at most one contiguous BIO run (no `B-tag … O … I-tag` gaps). This is
  *       enforced by greedy first-match span assignment + ordered token iteration.
  *   - The span triple is sorted ascending by start and non-overlapping.
- *   - `raw` is NFC-normalized (asserted per row; a non-NFC raw makes char offsets ambiguous downstream
+ *   - `raw` is NFC-normalized (asserted per row. a non-NFC raw makes char offsets ambiguous downstream
  *       — NFD `é` occupies two code units where NFC `é` occupies one — and silently so).
  */
 
@@ -58,7 +58,7 @@ export interface AlignOptions {
 	maxEditDistance?: number
 
 	/**
-	 * Case-insensitive comparison for substring search. Default `true`. The retained span in `raw` is the original case;
+	 * Case-insensitive comparison for substring search. Default `true`. The retained span in `raw` is the original case.
 	 * only matching is case-insensitive.
 	 */
 	caseInsensitive?: boolean
@@ -113,7 +113,7 @@ export function alignRow(row: CanonicalRow, opts: AlignOptions = {}): AlignmentR
 
 	// Longest value first: a short component must not claim a word that a longer, more specific
 	// component owns ("Alaska Regional Dr, Alaska" — region "Alaska" stealing the street's first
-	// word quarantined the street; pilot2's residual class). Emit order is unaffected — spans are
+	// word quarantined the street. pilot2's residual class). Emit order is unaffected — spans are
 	// re-sorted by start below.
 	const entries = (Object.entries(components) as Array<[ComponentTag, string | undefined]>).toSorted(
 		(a, b) => (b[1]?.length ?? 0) - (a[1]?.length ?? 0)
@@ -161,7 +161,7 @@ export function alignRow(row: CanonicalRow, opts: AlignOptions = {}): AlignmentR
 		tokens: tokens.map((t) => t.text),
 		labels,
 		// The v0.5.0 char-offset triple (#519): the located spans, emitted verbatim. The token
-		// quantization above is what the rebuild deletes; both ride during the transition.
+		// quantization above is what the rebuild deletes. both ride during the transition.
 		span_starts: componentSpans.map((s) => s.start),
 		span_ends: componentSpans.map((s) => s.end),
 		span_tags: componentSpans.map((s) => s.tag),
@@ -232,7 +232,7 @@ function locateSpan(args: {
 
 	// Pass 1: verbatim substring. Word-boundary-aligned matches are PREFERRED over intra-word ones
 	// — leftmost-substring alone let a short value claim the inside of an earlier word (region "AK"
-	// matched inside "Umak"/"Lake", scrambling every later span; caught by the v0.5.0 pilot build).
+	// matched inside "Umak"/"Lake", scrambling every later span. caught by the v0.5.0 pilot build).
 	// Intra-word matches stay allowed as the fallback because they are essential for affix
 	// supervision (street_suffix "straße" inside "Hauptstraße" has no boundary-aligned occurrence —
 	// sub-word spans are the point of the char-offset format).
@@ -296,7 +296,7 @@ function overlapsClaimed(start: number, end: number, claimed: Array<[number, num
 
 /**
  * Assign BIO labels to tokens given the component spans. Components must be sorted by start offset. For each token,
- * find the first component span that contains the token's start offset; if the token is the first one inside that span
+ * find the first component span that contains the token's start offset. if the token is the first one inside that span
  * emit `B-<tag>`, else `I-<tag>`.
  */
 function labelTokens(tokens: readonly TokenSpan[], spans: readonly ComponentSpan[]): readonly BIOLabel[] {

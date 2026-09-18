@@ -80,7 +80,7 @@ export interface AssertDatumTransformationOptions {
 	context: string
 	targetEPSG?: number
 	/**
-	 * The area-of-use to name in the `projsync` remedy the message prints.
+	 * The area-of-use to name in the `projsync` action the message prints.
 	 */
 	areaOfUse?: string
 }

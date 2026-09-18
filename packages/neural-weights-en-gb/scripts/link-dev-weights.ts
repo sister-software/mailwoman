@@ -8,7 +8,7 @@
  *   `@mailwoman/resolver-wof-sqlite/weights-overlay-linker`; this file is the manifest plus the one step no manifest
  *   expresses, the card-conditional GB postcode binary.
  *
- *   A single multilingual model serves both en-us and en-gb (byte-identical artifact; en-gb carries its own retrieval
+ *   A single multilingual model serves both en-us and en-gb (byte-identical artifact. en-gb carries its own retrieval
  *   data on top), so this overlay links the same pair the base does and holds it to en-us's `model-card.json`
  *   `files_md5` — one truth for the one artifact (en-gb's own card carries no `files_md5` block).
  *
@@ -102,7 +102,7 @@ const overlay = await materializeDevOverlay({
 //
 // The check that resolves both states is the CARD's `requires.anchor.span_mode`. `shaped` is declared
 // only by a model trained against a lookup with letter-containing keys (`pilot-anchor-lookup-v2` and
-// after), and that is precisely the model for which the bin helps. So: declared `shaped` → build it;
+// after), and that is precisely the model for which the bin helps. So: declared `shaped` → build it.
 // anything else → remove any stale copy, loudly. No flag, no lockstep constant to forget — the same
 // card the loader reads decides.
 //

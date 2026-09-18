@@ -13,7 +13,7 @@
  *   ancestrie's `ANCT`: ancestrie entries are id-keyed with one record per id, while an FST place row
  *   is per-(surface, place) — `crossCountryBranches` is a property of the SURFACE, so the same wofID
  *   legitimately carries different values under different aliases and cannot be represented id-keyed.
- *   The matcher, both deserializers, and the serializer therefore stay here; what migrated is the
+ *   The matcher, both deserializers, and the serializer therefore stay here. what migrated is the
  *   ALGORITHM, which is the half that drifts (the #861 share-the-function rule).
  */
 
@@ -42,7 +42,7 @@ export interface AutocompleteSuggestion {
 	placetype: string
 	/**
 	 * The REFERENTIAL likelihood the suggestion is ranked by (ROAD_TO_V9 §2). Autocomplete answers "which place does the
-	 * user mean", so it ranks referentially like everything else; encyclopedic importance rides along on
+	 * user mean", so it ranks referentially like everything else. encyclopedic importance rides along on
 	 * {@link AutocompleteSuggestion.encyclopedic} for display and never enters the order.
 	 */
 	referential: number
@@ -158,7 +158,7 @@ export function autocomplete(fst: FSTMatcher, query: string, opts: AutocompleteO
 		normalizedTokens,
 		depth: result.depth,
 		suggestions: result.suggestions.map((s) => {
-			// Every record this adapter serves carries its entry; the assertion documents the invariant.
+			// Every record this adapter serves carries its entry. the assertion documents the invariant.
 			const entry = s.payload!
 
 			return {

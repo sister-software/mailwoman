@@ -7,7 +7,7 @@
  *   coverage sentence that licenses a `designated` basis, and the attribution string OGL v3.0 requires.
  *
  *   THE ZONE DOMAIN IS CLOSED AND THE BUILDER THROWS ON A VALUE OUTSIDE IT. An unknown code is a
- *   source-schema change, which is the event a reader most needs to hear about; coercing it to a nearest
+ *   source-schema change, which is the event a reader most needs to hear about. coercing it to a nearest
  *   neighbour or to null converts "the source changed" into "there is nothing here".
  *
  *   The stored codes are `FZ2` and `FZ3`, not "Flood Zone 2"/"Flood Zone 3". The published metadata
@@ -74,7 +74,7 @@ export const EA_FLOOD_ZONE_CODES: ReadonlySet<string> = new Set(EA_FLOOD_ZONE_DE
 
 /**
  * Zone 1, which the product represents by ABSENCE. Not a row in `flood_zone_vocabulary`, because the authority ships no
- * Zone 1 polygon; carried here so a reader rendering a designated-absence answer can quote the definition it rests on.
+ * Zone 1 polygon. carried here so a reader rendering a designated-absence answer can quote the definition it rests on.
  */
 export const FLOOD_ZONE_1: FloodZoneDefinition = {
 	code: "FZ1",

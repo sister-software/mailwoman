@@ -102,7 +102,7 @@ export const D_RULE_COUNTRIES = ["FR", "GB", "DE"] as const
 
 `runArc` raises its blocking reason from exactly that list (`arc.ts:193`), so a candidate that regresses rows in
 the United States produces no `D-RULE` reason, under a docstring reading "Locales that iron rule 6 — the D-rule —
-protects unconditionally."
+guards unconditionally."
 
 Read against the board table above, the list looks less like an oversight and more like _the countries where a
 regression is detectable_ — GB 152, FR 67, DE 16 are three of the four best-covered. But US has 105 rows, second

@@ -10,13 +10,13 @@
 # maps DISTRICT->locality, CITY->dependent_locality (districtAsLocality). Eval holds out ~12% of NZ
 # localities (source-disjoint coord board).
 #
-# PRE-REGISTERED READ (written before the numbers; Fable design 2026-07-18):
+# PRE-REGISTERED READ (written before the numbers. Fable design 2026-07-18):
 #   TARGET (the point): NZ coordinate-acceptability EMERGES on the held-out NZ coord board (from ~0, the
 #     shipped model can't parse NZ suburb/city order). Bar set once the board is built (report the rate).
 #   GUARD (must not regress the 23): golden 2pp check — no shipped tag >2pp below v381. The battery MUST
 #     include the US #1101 comma-free board + the FR fragment board (the two hard-won results a new-locale
 #     gradient most plausibly erodes) + the Norway digit board (bare-street-hn 0.733, bare-pc 1.000).
-#   GUARD: the gauntlet passes; metamorphic INV[comma-drop] holds.
+#   GUARD: the gauntlet passes. metamorphic INV[comma-drop] holds.
 #   FORGETTING: source_weights is the knob (exact multinomial); synth-nz 4.2% is inside the ≤5-8% safe band.
 #   SILENT-DROP CHECK: confirm the loader's `Source index` log line shows synth-nz with nonzero pulls in the first steps
 #     (a country/source-key mismatch drops every NZ row and the run "passes" having trained on nothing new).
@@ -55,7 +55,7 @@ data:
     AU: 1.0
     NZ: 1.0 # New — the 24th trained country. Allowlist key (data_loader.py:249): absent → dropped, so this is what admits the synth-nz source.
   source_weights: # v3.1.0 weights + synth-no-fragment; + synth-nz (the one new source this run — NZ locale, 4.2% multinomial share, ≈ synth-german's).
-    synth-nz: 6.0 # NZ LINZ locale source (v0.12.0-nz overlay). 6.0/136.5 ≈ 4.2% of the source multinomial — within the ≤5-8% new-mass band that protects the 23 trained countries (Fable design 2026-07-18).
+    synth-nz: 6.0 # NZ LINZ locale source (v0.12.0-nz overlay). 6.0/136.5 ≈ 4.2% of the source multinomial — within the ≤5-8% new-mass band that guards the 23 trained countries (Fable design 2026-07-18).
     wof-admin: 2.0
     wof-postalcode: 2.0
     ban: 3.0
@@ -138,7 +138,7 @@ model: # Verbatim from v2.4.1.
   use_country_anchor: true
   country_feature_dim: 2
   # #1104 homograph-guard SOFTENER — the one variable vs v263. Scales the country_ambiguous dim by 0.5
-  # before the country_projection (bakes into the exported ONNX; no lexicon/inference change). v263's
+  # before the country_projection (bakes into the exported ONNX. no lexicon/inference change). v263's
   # hard guard (scale 1.0) over-suppressed homograph countries Georgia/Jordan (country-homograph F1
   # 89.8->82.6); softening should recover homograph recall without giving back the country F1 the
   # WOF-admin rows produced.
@@ -182,7 +182,7 @@ model: # Verbatim from v2.4.1.
 
 train: # NZ locale probe — init_from the shipped v381 (v7.0.0/6.5.0 weights), fresh optimizer, fresh
   # output_dir (--resume none honors init_from, weights only). The one new variable is the synth-nz
-  # source + NZ:1.0; the encoder keeps v381's grammar and fine-tunes NZ in at constant LR 1e-5. 2k probe.
+  # source + NZ:1.0. the encoder keeps v381's grammar and fine-tunes NZ in at constant LR 1e-5. 2k probe.
   output_dir: /data/output-v382-nz-probe-s42/checkpoints
   seed: 42
   init_from: /data/output-v381-punct-fix-full-s42/checkpoints/step-008000

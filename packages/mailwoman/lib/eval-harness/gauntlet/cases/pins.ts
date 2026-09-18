@@ -5,7 +5,7 @@
  *
  *   The board-pin contract as a script API (#1895): measure the committed corpus's three pins, read
  *   the constants the pin test carries, compare them, and rewrite exactly those constants. The Ink
- *   command (`mailwoman eval pins`) formats this; the admin-merge wrapper and the cheap CI check
+ *   command (`mailwoman eval pins`) formats this. the admin-merge wrapper and the cheap CI check
  *   call it directly. Loads only the committed JSONL — no model, no gazetteer, no warm engine —
  *   measured at ~2 s on the 651-row corpus.
  *

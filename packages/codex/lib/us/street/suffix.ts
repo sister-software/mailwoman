@@ -9,7 +9,7 @@
  *   lexicon builder, audits) read the identical record — no hand-mirrored copies. Two keys:
  *
  *   - `variants` — verbatim USPS Pub-28: canonical suffix → every recognized variant in
- *     USPS-published order; the first variant is the preferred USPS abbreviation (e.g.
+ *     USPS-published order. the first variant is the preferred USPS abbreviation (e.g.
  *     `AVENUE → ["AVE", ...]` — `AVE` is what the post office prints).
  *   - `nameProneCanonicals` — OUR curation, not Pub-28: canonicals also observed as ordinary
  *     proper-name heads in street names (PARK, HILL, CREEK…), from golden v0.1.3 + the OA street
@@ -39,7 +39,7 @@ export type USStreetSuffix = keyof typeof US_STREET_SUFFIX_VARIANTS
 
 /**
  * Pub-28 canonicals that are also common head nouns in street/place names ("Menlo PARK Road", "Blue HILL Rd") — the
- * ambiguous class behind #1569. Curated (golden v0.1.3 + OA street pool), not part of the USPS publication; see
+ * ambiguous class behind #1569. Curated (golden v0.1.3 + OA street pool), not part of the USPS publication. see
  * `nameProneCanonicals` in `./street-suffix.json`.
  */
 export const NAME_PRONE_US_SUFFIXES: ReadonlySet<USStreetSuffix> = new Set(

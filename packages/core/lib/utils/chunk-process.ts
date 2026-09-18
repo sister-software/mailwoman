@@ -17,7 +17,7 @@
  *   before its result still parses.
  *
  *   A NON-ZERO EXIT THROWS, AND THAT IS A CORRECTNESS RULE RATHER THAN A CONVENIENCE. A chunk that died
- *   mid-range has already written part of its rows into the shared artifact; continuing would seal a
+ *   mid-range has already written part of its rows into the shared artifact. continuing would seal a
  *   database missing rows nobody could name, which reads downstream as a smaller source rather than as a
  *   failure. The same applies to a chunk that exits cleanly having printed nothing.
  */
@@ -51,7 +51,7 @@ export interface RunChunkProcessOptions {
  * the two resolutions.
  *
  * THE PARENT HOLDS NO HANDLE WHILE THE CHUNKS RUN — its caller closed one before the batched ingest and opens another
- * after. Each child opens the same file and appends; chunks run one at a time, so there is exactly one writer at every
+ * after. Each child opens the same file and appends. chunks run one at a time, so there is exactly one writer at every
  * instant and no locking to reason about. A chunk that exits non-zero, or prints no result line, throws in
  * {@link runChunkProcess}: a chunk that died mid-range has written a partial set of rows, and continuing would seal an
  * artifact missing features nobody could name.

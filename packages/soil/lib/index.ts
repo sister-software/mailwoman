@@ -145,7 +145,7 @@ export interface SoilSurveyAreaRecord {
 export interface SoilCapabilityReading {
 	kind: SoilReadingKind
 	/**
-	 * The cell's distribution. Present on both designated readings; absent on `unknown`.
+	 * The cell's distribution. Present on both designated readings. absent on `unknown`.
 	 */
 	distribution?: SoilCapabilityDistribution
 	/**
@@ -331,7 +331,7 @@ export class SoilCapabilityLookup implements Disposable {
 	 *
 	 * A LINEAR SCAN, WHICH THE PILOT'S 99 SURVEY AREAS MAKE FREE AND A NATIONAL BUILD WOULD NOT. It returns on the first
 	 * containing rectangle, so the pilot costs a few dozen comparisons per geocode. At the 3,380 survey areas the country
-	 * holds this wants a bounding-box index; it is left as a scan because a structure sized for a set this build does not
+	 * holds this wants a bounding-box index. it is left as a scan because a structure sized for a set this build does not
 	 * hold would be untested at the size it was built for.
 	 */
 	#surveyAreaAt(latitude: number, longitude: number): SoilSurveyAreaRecord | undefined {

@@ -11,7 +11,7 @@
  *
  *   The builder reads geometry from shapefiles via DuckDB's spatial extension (raw `ST_Read` — see
  *   AGENTS.md "Database / inline SQL") and writes here through `node:sqlite`. The hot positional
- *   INSERT (a county's worth of edges) stays raw; its column list is derived from
+ *   INSERT (a county's worth of edges) stays raw. its column list is derived from
  *   {@link STREET_SEGMENT_COLUMNS} so it can't drift from the DDL.
  */
 
@@ -76,7 +76,7 @@ export interface StreetSegmentTable {
 /**
  * The extract's single-row calibration metadata (#374 doctrine, 2026-07-26): the conformal radius multiplier is a
  * property of the CALIBRATION SET the artifact was built against — so it ships IN the artifact (the pair-index δ
- * precedent, `neural/pair-index-resolver.ts`), not in caller code. Written once by the builder; read at open time by
+ * precedent, `neural/pair-index-resolver.ts`), not in caller code. Written once by the builder. read at open time by
  * {@link StreetInterpolator}. Extracts built before this table exists simply lack it — the reader degrades to
  * `undefined` and callers fall back to the in-code per-region table (never patch shipped DBs — rebuild).
  */

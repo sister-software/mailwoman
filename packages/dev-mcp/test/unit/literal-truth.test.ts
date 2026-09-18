@@ -87,7 +87,7 @@ describe("mwdev_inputs `matching` — class size", () => {
 		const expression = new RegExp("#\\s?\\d", "iu")
 		const matched = set.inputs.filter((row) => expression.test(row.input))
 
-		// Two match the pattern; only one is a unit. That is the point of returning the rows and not just the count —
+		// Two match the pattern. only one is a unit. That is the point of returning the rows and not just the count —
 		// `Coffee#1` is a brand name, and a bare count would have reported a class size of 2.
 		expect(matched.map((row) => row.input)).toEqual(["462 Queen St #101, Southington CT", "Coffee#1 Yeovil"])
 	})

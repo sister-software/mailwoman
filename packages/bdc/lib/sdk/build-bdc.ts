@@ -20,7 +20,7 @@
  *      `INSERT OR IGNORE` — the AGENTS.md "hot bulk write" carve-out, same discipline as the
  *      candidate-gazetteer builder — which is the direct replacement for the Redis
  *      set-membership check Nexus's `sync/commands/bdc/infer-locations.ts` used for this exact
- *      dedup (dedup semantics only; Nexus's Redis-backed location inference itself has no analog
+ *      dedup (dedup semantics only. Nexus's Redis-backed location inference itself has no analog
  *      here). `h3_cell` is computed only after staging, per distinct geoid, against the deduped set —
  *      so a duplicate row is never charged twice against `unknownGeoids` or `layer_coverage` either.
  *      The natural key's `location_id` component means the same (geoid, provider_id, technology_code)
@@ -139,7 +139,7 @@ export interface BuildBDCOptions {
 	includeLocationIDs?: boolean
 	/**
 	 * Resolve a 15-char census block GEOID to its centroid. Injected so tests supply a small fixture `Map` lookup instead
-	 * of touching a real TIGER database; the real (CLI-wired) implementation is
+	 * of touching a real TIGER database. the real (CLI-wired) implementation is
 	 * {@linkcode createTIGERBlockCentroidLookup}, which reads `tabblock20.GEOID` (uppercase — `TIGERBlockTable`) block
 	 * geometry. Returning `undefined` for an unknown geoid is required: the materialize pass counts it in `unknownGeoids`
 	 * and skips the row — it must never guess a cell.
@@ -181,7 +181,7 @@ export interface BuildBDCResult {
 	 * Rows materialized into `bdc_availability` (post-dedup, post-unknown-geoid-skip). In the default
 	 * (`includeLocationIDs: false`) mode this is per DISTINCT (geoid, provider_id, technology_code, speeds, low_latency,
 	 * business_residential_code) tuple, not per BSL — multiple BSLs at the same (geoid, provider_id, technology_code)
-	 * triple collapse to one row only when their speeds/flags also match; BSLs at the same triple with differing
+	 * triple collapse to one row only when their speeds/flags also match. BSLs at the same triple with differing
 	 * speeds/flags survive as separate rows (see the module docstring).
 	 */
 	rows: number
@@ -304,7 +304,7 @@ export function peekProviderID(csvBuffer: Buffer, csvPath?: string): ProviderID 
  * row is ~110 bytes, so this is three orders of magnitude of slack. A file shorter than this simply reads short —
  * {@linkcode peekProviderID} already reports a header-only or empty file by message.
  *
- * `provider_id` is a constant per file, so establishing it needs the first data row and nothing else; a whole-file read
+ * `provider_id` is a constant per file, so establishing it needs the first data row and nothing else. a whole-file read
  * was resident-loading 920 MB (one state × technology) to read one column of one row.
  */
 const PROVIDER_ID_PEEK_BYTES = 64 * 1024
@@ -358,13 +358,13 @@ async function groupProviderListRows(
  * Populate `bdc_provider` from `options.providers` (2a decision 8 / 3a decision 6) — see `schema.ts`'s
  * `BDCProviderTable` docstring for the full lossy-denormalization rationale. For each distinct `provider_id`:
  *
- * - Exactly one `frn` among its rows → that FRN is primary by construction; no `filerDB` query needed at all.
+ * - Exactly one `frn` among its rows → that FRN is primary by construction. no `filerDB` query needed at all.
  * - More than one distinct `frn` → `readFRNFilingCandidates` (`@mailwoman/filer/sdk`, lazily imported — see below) reads
  *   each FRN's own most recent IN-FORCE `form-499` filing edge from `filerDB`, `asOf` the given date, and
  *   `pickPrimaryFRN` picks the winner (decision 6: most recent 499 filing date wins). A `provider_id` whose FRNs carry
  *   no 499 filing to rank by inserts `frn: NULL` rather than guessing — `pickPrimaryFRN` throws on empty input, so this
  *   checks `candidates.length` first, mirroring `filerLookup`'s own `primary_frn: null` handling of the same case.
- * - `filerDB` is required the instant a multi-FRN `provider_id` is encountered; its absence throws immediately, naming
+ * - `filerDB` is required the instant a multi-FRN `provider_id` is encountered. its absence throws immediately, naming
  *   the offending `provider_id`, rather than silently picking an arbitrary FRN.
  * - `holding_company` gets the identical single-distinct-value shortcut `frn` gets: exactly one distinct non-null
  *   `holdingCompany` across a provider's rows means there's no conflict to resolve, so it's populated directly, no rule
@@ -484,7 +484,7 @@ export async function buildBDCDatabase(options: BuildBDCOptions): Promise<BuildB
 	// Build-tuning pragmas — identical to build-poi.ts's discipline.
 	db.exec("PRAGMA page_size=8192; PRAGMA journal_mode=OFF; PRAGMA synchronous=OFF; PRAGMA cache_size=-2000000;")
 
-	// Assigned at the end of the try — the tallies live inside its scope; the seal + swap do not.
+	// Assigned at the end of the try — the tallies live inside its scope. the seal + swap do not.
 	let result: BuildBDCResult
 
 	try {
@@ -564,7 +564,7 @@ export async function buildBDCDatabase(options: BuildBDCOptions): Promise<BuildB
 		// over every column EXCEPT `location_id` collapses those byte-identical BSL duplicates down to one row.
 		// IMPORTANT — this is not a guarantee of one row per (geoid, provider_id, technology_code) triple: BSLs at the
 		// same triple with differing speeds/flags are not the same tuple, so `SELECT DISTINCT` does not merge them —
-		// they survive as multiple NULL-`location_id` rows at that one triple. Accepted, not a bug; see the module
+		// they survive as multiple NULL-`location_id` rows at that one triple. Accepted, not a bug. see the module
 		// docstring and `filing-landscape.ts`'s docstring for the read-side consequence.
 		const stageStmt = options.includeLocationIDs
 			? db.prepare(

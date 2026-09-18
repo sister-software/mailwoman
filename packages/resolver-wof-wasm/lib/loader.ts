@@ -67,7 +67,7 @@ export async function loadSlimWOFDatabase(opts: LoadSlimOpts): Promise<{ db: Dat
 	// INSERT-from-dump and preserves the on-disk b-tree pages directly.
 	const db = new sqlite3.oo1.DB(":memory:", "ct")
 
-	// `allocFromTypedArray` has shape constraints across sqlite-wasm versions; the
+	// `allocFromTypedArray` has shape constraints across sqlite-wasm versions. the
 	// explicit alloc + HEAPU8.set pattern is the lowest-common-denominator path and
 	// avoids the "expecting 8/16/32/64" heap-shape mismatch seen on Node builds.
 	const p = sqlite3.wasm.alloc(bytes.byteLength)

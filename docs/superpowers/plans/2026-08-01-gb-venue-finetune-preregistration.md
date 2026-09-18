@@ -45,7 +45,7 @@ becomes the B11 template default. Ties break to the larger λ.
   config. No partial credit — six of six.
 - **B1 (the guarantee check, the sellable sentence)**: the full `v7.0.0-base` spec passes with NO
   floor waivers; gauntlet regression + metamorphic pass; canary zero-flip; the P0 fragment grid
-  within noise of the base. A Fisher-protected fine-tune must hold every base capability — that
+  within noise of the base. A Fisher-guarded fine-tune must hold every base capability — that
   is the product claim this run dogfoods.
 - **Receipt**: per-λ probe table, the chosen λ with its rationale, before/after on the six
   fixtures, battery deltas vs base.
@@ -92,7 +92,7 @@ default**, with a receipt.
 
 **B1 (the guarantee check): pass.** The 8k main (v4.1.1, weight 12, λ=1e4, md5 02b8c323…) passes
 the full v7.0.0-base spec (every floor, no waivers) and the full gauntlet (regression +
-metamorphic + held-out). The sellable sentence — "a Fisher-protected fine-tune holds every base
+metamorphic + held-out). The sellable sentence — "a Fisher-guarded fine-tune holds every base
 capability" — held on its first dogfood.
 
 **V1 (target): MISS — 2 of 6 full flips** (North Face - Covent Garden, East India Club), with

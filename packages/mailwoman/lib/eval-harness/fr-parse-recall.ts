@@ -12,7 +12,7 @@
  *
  *   CHECK-required (#949). This is a promotion-eval battery leg — the `fr.bare_street_intact`
  *   floor — not a one-off probe, which is why it lives here and not in `scripts/diagnostic/`. It sat
- *   in that drawer until the de-shell migration; the drawer is `.gitignore`d wholesale
+ *   in that drawer until the de-shell migration. the drawer is `.gitignore`d wholesale
  *   (`scripts/diagnostic/`), so the file survived only because it had been force-added to the index,
  *   and any sibling helper swept in beside it would have vanished. See `demo-cascade-rows.ts` for
  *   what that looks like when it goes wrong.
@@ -65,7 +65,7 @@ const MAX_REPORTED_FAILURES = 12
  * the French regression this floor exists to catch.
  *
  * Order matters. A candidate's own siblings come first, so grading a candidate never silently mixes in the shipped
- * lexicon; the data-root overlay is the dev-checkout answer; the tracked workspace is last and is only non-empty on a
+ * lexicon. the data-root overlay is the dev-checkout answer. the tracked workspace is last and is only non-empty on a
  * release checkout where `copy-weights.ts` has run.
  *
  * Throws with every path it tried rather than returning a default. A missing anchor lexicon changes the parse, so a
@@ -120,7 +120,7 @@ export interface FRParseRecallOptions {
 	fixture?: string
 	/**
 	 * Re-derive from the live OSM database instead of the fixture — the only way the fixture should ever change, and it
-	 * must be committed deliberately (the "pin the golden" discipline; a moving sample is a flaky floor).
+	 * must be committed deliberately (the "pin the golden" discipline. a moving sample is a flaky floor).
 	 */
 	fromDB?: boolean
 	/**
@@ -304,7 +304,7 @@ export async function frParseRecall(
 
 	if (args.json) {
 		// snake_case wire keys, 2-space indent, trailing newline — the sidecar shape is a contract with
-		// whatever reads it next; the migration keeps it byte-for-byte.
+		// whatever reads it next. the migration keeps it byte-for-byte.
 		await writeLocalTextFile(
 			prettyJSON({
 				bare_intact: bareOk,

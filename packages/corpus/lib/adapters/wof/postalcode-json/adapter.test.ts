@@ -51,7 +51,7 @@ describe("postcodeVariantsFor (pure)", () => {
 			"with-locality-region-country",
 		])
 
-		// The region carries its POSTAL surface form. WOF names the state in full; a US address writes the USPS code,
+		// The region carries its POSTAL surface form. WOF names the state in full. a US address writes the USPS code,
 		// and the adapter chooses that here so the printed span and the label are the same string.
 		expect(v[3]!.components).toEqual({
 			postcode: "97214",

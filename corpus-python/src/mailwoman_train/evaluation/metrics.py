@@ -25,7 +25,7 @@ def token_f1(
 
     Returns ``macro_f1`` plus per-BIO-label F1 (``f1.B-locality``, …), collapsed per-tag F1
     (``f1_tag.locality`` = (B + I) / 2) and per-tag support. The per-tag columns are what the CSV
-    log and dashboard read; the per-BIO ones are for debugging.
+    log and dashboard read. the per-BIO ones are for debugging.
 
     ``macro_f1`` averages only component labels with support above zero, and excludes ``O``. A
     zero-support tag would otherwise pin F1 at 0 and drag the macro down, which measures validation

@@ -130,7 +130,7 @@ async function runSource(source: FetchSourceID, options: Options): Promise<Fetch
 			return fetchGeonamesDumps(
 				{
 					...base,
-					// Undefined = every country the source's own countryInfo.txt catalogs; present dumps are skipped.
+					// Undefined = every country the source's own countryInfo.txt catalogs. present dumps are skipped.
 					countries: options.countries === undefined ? undefined : extractDelimited(options.countries),
 				},
 				reportToStderr

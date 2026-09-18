@@ -18,7 +18,7 @@
  *   `google` is BILLED, and the opt-in deliberately does not live on the tool argument. A tool argument is set by
  *   whoever is driving the agent, which for a spend decision is the wrong signature — so it is read from the daemon's
  *   config file plus a per-lifetime call cap that the result reports as it consumes. An agent cannot talk its way into
- *   spending money; the operator has to have written it down first.
+ *   spending money. the operator has to have written it down first.
  */
 
 import { dataRootPath } from "@mailwoman/core/data-root"
@@ -112,7 +112,7 @@ export class OracleMeter {
 
 	/**
 	 * Build a meter over the daemon's config file. The constructor cannot await the config read, so this static factory
-	 * does it; callers that already hold an {@linkcode OracleConfig} may keep using the constructor.
+	 * does it. callers that already hold an {@linkcode OracleConfig} may keep using the constructor.
 	 */
 	static async create(config?: OracleConfig): Promise<OracleMeter> {
 		return new OracleMeter(config ?? (await readOracleConfig()))

@@ -3,19 +3,19 @@
 # One change against v8-cjk-full (app ap-J0uaLu8mQutAWu4ZdtBNzZ, 0.9653 blended / 0.9757 municipality macro on the
 # 20,000-row JP board): the JP corpus is `v8-jp-kana-2026-09-06`, the same renderer, sampler and seed with a fifth
 # register, `kana_municipality`, weight 0.05 among the registers where the admin DB reads the municipality (73.5% of
-# municipality rows on the val split; 2,399 kanji keys): the municipality as its kana stem plus the kanji generic,
+# municipality rows on the val split. 2,399 kanji keys): the municipality as its kana stem plus the kanji generic,
 # 厚木市 → あつぎ市, 大阪市北区 → 大阪市きた区. The CN overlay (126 train /
 # 11 val / 14 board rows, `coarse-placer-cn-units` at source share 0.02) and the 49-label `stage3-cjk` head are
-# unchanged; the char vocabulary is re-sealed over the new JP train split plus the CN characters.
+# unchanged. the char vocabulary is re-sealed over the new JP train split plus the CN characters.
 #
 # WHY. Both 49-label runs (this recipe's JP + CN arm and its JP-only control) closed the municipality span before
 # the trailing 市 on かすみがうら市, the one official-kana municipality the board holds out: 598 and 398 of its 823
 # rows. The 47-label record missed 2. Hiragana + 市 as a municipality shape is what the corpus never showed the head
-# more than a handful of times; this register shows it on ~5% of rows.
+# more than a handful of times. this register shows it on ~5% of rows.
 #
 # --- WHAT THE RUN MUST SHOW (pre-registered, same instruments as the v8-cjk-full read) ----------------------
 #   * `かすみがうら市` on the JP board: rows failed of 823, against 598 (shared head) / 398 (control) / 2 (record).
-#     The register is aimed at this class; fewer than 100 failed rows is the reading that says it worked.
+#     The register is aimed at this class. fewer than 100 failed rows is the reading that says it worked.
 #   * JP board, blended coordinate-acceptability ≥ 0.9653 and municipality macro ≥ 0.9757 (the shared head's own
 #     reads): the register must not cost the rest of the board. More than 1 pp under either is the finding.
 #   * Per-register table: the new `kana_municipality` rows read beside native / arabic_chome / compact_folded /
@@ -23,7 +23,7 @@
 #   * CN board: `locality_unit` span exact-match on the 14 rows, read beside 10/14 (PyTorch) and 12/14 (served).
 #   * Board scorer: `score_jp_probe_board.py --label-set stage3-cjk` over the new jp-board.jsonl with the new char
 #     vocabulary and the new centroid table if the held-out municipalities moved (the sampler's seed is unchanged, so
-#     the same municipalities are expected to be held out; the build report says).
+#     the same municipalities are expected to be held out. the build report says).
 #
 # Launch:
 #   cd corpus-python && modal run -m launch.train_remote::sync --version v8cjk_kana
@@ -45,7 +45,7 @@ data:
   coarse_filter: false
   # JP val 20,000 + CN val 11.
   val_rows: 20011
-  # The 49-label CJK head. Supported only on the char path; the SP path raises (#1349's lesson).
+  # The 49-label CJK head. Supported only on the char path. the SP path raises (#1349's lesson).
   label_set: stage3-cjk
   char_mode: char
   char_vocab_path: /data/corpus/versioned/v8-cjk-kana-2026-09-06/char-vocab-cjk.json

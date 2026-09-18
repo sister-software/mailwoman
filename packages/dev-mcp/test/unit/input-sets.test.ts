@@ -121,7 +121,7 @@ describe.skipIf(!havePanel21)("resolveInputSet — panel v2.1", () => {
 		// v2.1 = v2 with the 25 city-only rows whose truth was copied from the hard-case board
 		// (`packages/mailwoman/lib/eval-harness/fixtures/hard-case-board.jsonl`, scored by
 		// `packages/mailwoman/lib/dev-tools/score/hard-case-board.run.ts`) (circular truth,
-		// #1725) re-sourced to independent Wikidata centroids. Same 420 rows, same order; v2 stays immutable.
+		// #1725) re-sourced to independent Wikidata centroids. Same 420 rows, same order. v2 stays immutable.
 		const set = await resolveInputSet({ kind: "panel", version: "v2.1" })
 
 		expect(set.n).toBe(420)

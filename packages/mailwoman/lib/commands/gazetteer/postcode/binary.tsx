@@ -25,13 +25,13 @@
  *   - `outward` — districts only: 2,863 keys / 0.03 MB. The only GB set that fits a browser bundle, and
  *       the command's original behaviour.
  *
- *   Every locale's key count is checked against a documented floor before anything is written; a build
+ *   Every locale's key count is checked against a documented floor before anything is written. a build
  *   below it exits NONZERO with a named reason rather than shipping a valid, empty binary.
  *
  *   Defaults to `POSTCODE_BINARY_SOURCES` (`gazetteer-pipeline/postcode/binary.ts`): US, NL/FR/DE/ES/IT
  *   from `postalcode-intl.db`, and GB from `postalcode-gb-codepoint.db` (the licence-clean OGL v3.0
  *   source). Each `.bin` is written DIRECTLY to `--out` (the original
- *   `scripts/build-postcode-binary.ts` behavior). Per-locale progress streams to stderr; the roll-up
+ *   `scripts/build-postcode-binary.ts` behavior). Per-locale progress streams to stderr. the roll-up
  *   lands on stdout.
  */
 
@@ -156,7 +156,7 @@ const GazetteerPostcodeBinary: CommandComponent<typeof spec> = ({ options }) => 
 			// The GB default is `unit` because that is what the anchor-v2 model was TRAINED against, and a
 			// serving bundle shipping anything coarser feeds the channel a different distribution than
 			// training painted. But this command's default `--out` is the BROWSER asset dir, where 20 MB is
-			// not a postcode binary, it is the whole page budget. The size is printed either way; this names
+			// not a postcode binary, it is the whole page budget. The size is printed either way. this names
 			// the setting rather than deciding for the operator. Which countries carry a browser granularity is
 			// the source table's to say.
 			const browserGranularity = browserGranularityFor(country)

@@ -5,7 +5,7 @@
  *
  *   `mailwoman eval ledger-append` — turn a promotion-eval out-dir into one row of
  *   `evals/scores-by-version.json` (#885). `eval promote` prints this command pre-filled on every
- *   `PASS`. Refuses duplicates without `--replace` and refuses un-excepted `FAIL` verdicts; exit codes
+ *   `PASS`. Refuses duplicates without `--replace` and refuses un-excepted `FAIL` verdicts. exit codes
  *   mirror the retired script (0 appended, 1 refused, 2 usage).
  */
 

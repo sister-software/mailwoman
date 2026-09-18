@@ -4,7 +4,7 @@
  * @author Teffen Ellis, et al.
  *
  *   `POST /v1/webhooks/stripe`. The body is read once as text and verified untouched. Stripe retries any non-2xx answer
- *   for three days, so the only 400 is a signature that does not verify, where a retry is the right outcome; an event
+ *   for three days, so the only 400 is a signature that does not verify, where a retry is the right outcome. an event
  *   that verifies but is not one this worker acts on, or is from the other Stripe mode, answers 200 and is logged, so
  *   a destination configured with a stray event type does not retry for three days. An event id already in the ledger
  *   answers 200 without running anything, so Stripe's redelivery is inert. Otherwise the handler runs first and the

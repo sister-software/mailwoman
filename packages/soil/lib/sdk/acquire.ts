@@ -12,7 +12,7 @@
  *   with 405 and ignores `Range`, so a length probe there is a full transfer.
  *
  *   THE VINTAGE IS THE REFRESH THE BUILD INGESTED, AND IT IS ONE DATE FOR THE WHOLE ARTIFACT. NRCS performs
- *   one coordinated Annual Soils Refresh, each October 1; grouping `sacatalog` by year of `saverest` returns
+ *   one coordinated Annual Soils Refresh, each October 1. grouping `sacatalog` by year of `saverest` returns
  *   2016: 1, 2025: 3,323, 2026: 56. So a region's areas share a refresh and the manifest can carry one
  *   `source_vintage` — the LATEST of the areas built, because that is the date after which nothing in the
  *   artifact changed. Every area's own date is kept per row in `soil_survey_area`, and so is the far older
@@ -113,7 +113,7 @@ export async function acquireRegion(options: AcquireRegionOptions): Promise<Acqu
 	}
 
 	// The LATEST refresh among the areas built, because that is the date after which nothing in this artifact changed.
-	// Taking the earliest would claim a currency the newest area does not have; taking today's date would claim one no
+	// Taking the earliest would claim a currency the newest area does not have. taking today's date would claim one no
 	// area has.
 	const sourceVintage = selected
 		.map((entry) => entry.saverest)

@@ -8,7 +8,7 @@
  *   Three decisions in this fold are silent when wrong and change the resulting curve: which tokens count toward a
  *   component's confidence, how they are folded to one number, and what happens to a component the truth row never
  *   mentions. The last has a wrong answer in both directions — grade it wrong and a partial-truth corpus scores correct
- *   output as hallucination; drop it silently and the curve covers a fraction of the parse without saying so.
+ *   output as hallucination. drop it silently and the curve covers a fraction of the parse without saying so.
  */
 
 import type { DecoderToken } from "@mailwoman/core/decoder"
@@ -120,7 +120,7 @@ describe("decodeReliabilitySample", () => {
 
 	it("EXCLUDES a row with no component truth rather than grading it", async () => {
 		// A literal input carries no truth. Counting it as wrong would manufacture errors out of rows nobody asserted
-		// anything about; counting it as right would do the opposite. Both are worse than saying so.
+		// anything about. counting it as right would do the opposite. Both are worse than saying so.
 		const run: GeocodeRunLike = {
 			result: { components: { street: "Main St" } },
 			trace: { parse: { tokens: [token("B-street", 0.8)] } },

@@ -9,7 +9,7 @@
 # ONE EFFECTIVE CHANGE: repair the load-time target labels. The v4.3.0/v4.3.1 runs were trained after the
 # affix relabel pass corrupted an already-decomposed terminal-only street into two suffixes. The corrected
 # 250k selectable-feed audit holds carrier prevalence fixed and moves the target stratum from 5,183/16,143
-# correct to 16,143/16,143; terminal contrast remains exactly 5,405/5,505. Removing two absent positive
+# correct to 16,143/16,143. terminal contrast remains exactly 5,405/5,505. Removing two absent positive
 # source weights is declarative cleanup only: the old loader already omitted them, so the sampled mix is
 # unchanged (33 positive sources, denominator 170.5, target share 7.04%).
 #
@@ -20,24 +20,24 @@
 # f3c4948ed446800390fb5ac7c59063ea9ed57d6b0c358f2f620286003e23e9f5.
 #
 # HISTORICAL RECIPE CORRECTION: the first 40/60 run moved a 100-row TRAIN target sample only 4→11 while
-# contrast was already 95/100 shipped (93/100 at 8k). This run reverses only the class mix to 80/20; total
+# contrast was already 95/100 shipped (93/100 at 8k). This run reverses only the class mix to 80/20. total
 # rows, source weight, optimizer, EWC and every bar below are unchanged.
 #
-# PRE-REGISTERED JOINT BOARD (golden v0.1.3 only; never mix v0.1.2):
+# PRE-REGISTERED JOINT BOARD (golden v0.1.3 only. never mix v0.1.2):
 # B1 target — 128 dev/us rows structurally classified `terminal-only` by the same corpus classifier.
 #   fp32 shipped baseline exact street+street_suffix = 6/128. PASS >=116/128, which recovers at
 #   least 110/122 current fp32 misses (>=90%). This reconciles #1569's rounded 125-miss issue text
 #   with the reproducible fp32 instrument instead of changing board membership after training.
 # B2 contrast — 48 dev/us rows structurally classified `terminal-contrast`; fp32 baseline exact
 #   street+street_suffix = 34/48. PASS >=34/48.
-# B3 D-rule — `mailwoman eval promote --spec v9.0.0-base` on every candidate save; zero known tier-1
+# B3 D-rule — `mailwoman eval promote --spec v9.0.0-base` on every candidate save. zero known tier-1
 #   regression. Compare fp32 candidate to fp32 shipped checkpoint with tokenizer v0.9.0-multisplice.
 # B4 opposite-direction #1519 guard — Tel Aviv-Yafo, Port Louis, Port of Spain. Baseline exact
-#   locality 0/3 and locality-token retention 3/7. Passes at retention >=3/7; exact is a tracked upside.
+#   locality 0/3 and locality-token retention 3/7. Passes at retention >=3/7. exact is a tracked upside.
 #   `Amphitheatre Parkway` is deliberately absent: under v0.1.3 it is correctly street
 #   `Amphitheatre` + suffix `Parkway`, not a truncation sentinel.
 # STOP: grade steps 2000/4000/6000/8000. Choose the earliest save clearing B1/B2/B4 + D-rule. If none
-# clears, stop and escalate to the pre-registered base-run hypothesis; no recipe treadmill and no #1570 decode patch.
+# clears, stop and escalate to the pre-registered base-run hypothesis. no recipe treadmill and no #1570 decode patch.
 
 data:
   corpus_dir: /data/corpus/versioned/v0.18.1-suffix-boundary/corpus-v0.18.1-suffix-boundary
@@ -69,7 +69,7 @@ data:
     AU: 1.0
     CA: 1.0
     MX: 1.0
-  source_weights: # v4.2.0 selectable mix + the one new source below; absent train sources removed.
+  source_weights: # v4.2.0 selectable mix + the one new source below. absent train sources removed.
     synth-house-venue: 2.0
     overture-latam: 6.0
     wof-admin: 2.0

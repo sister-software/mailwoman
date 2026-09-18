@@ -5,7 +5,7 @@
  *
  *   Regenerate `codex/country/reference-data.ts` — the per-country calling code (E.164) + currency
  *   (ISO 4217) table — from mledoze/countries (https://github.com/mledoze/countries, ODbL). The
- *   output is committed; this tool makes it reproducible (provenance), not a hand-typed dictionary.
+ *   output is committed. this tool makes it reproducible (provenance), not a hand-typed dictionary.
  *
  *   Calling-code rule: mledoze splits the code as `idd.root` + `idd.suffixes`. For most countries a
  *   single suffix completes the code (GB `+4` + `4` = 44); NANP members share root `+1` with their

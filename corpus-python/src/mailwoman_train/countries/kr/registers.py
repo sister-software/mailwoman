@@ -11,12 +11,12 @@ lot-number form is `<시도> <시군구> <법정동> [<리>] [산]<본번>[-<부
 
 Alignment is exact against the LABEL register's own key sets (`KeyIndex`, built from the 주소DB): the region must be
 a listed 시도, the 시군구 one the region lists, the road one that 시군구 lists, and the number a building number.
-A string that satisfies the whole key becomes a training row whose spans are the matched pieces; one that does not is
+A string that satisfies the whole key becomes a training row whose spans are the matched pieces. one that does not is
 a BOARD row — a typed address the model will be read on, never trained on. The alignment rate per file is measured
 and reported before any row enters a corpus, which is the rule `.notes/data-sources.md` sets for a noisy source.
 
 The coordinate transform shells out to GDAL's `gdaltransform` in bulk (EPSG:5174 → EPSG:4326), the one tool on the
-host that knows the Korean 1985 datum; PROJ's answer for Jongno's 197993.9 / 452032.96 is 126.978080 / 37.570582.
+host that knows the Korean 1985 datum. PROJ's answer for Jongno's 197993.9 / 452032.96 is 126.978080 / 37.570582.
 """
 
 from __future__ import annotations
@@ -122,7 +122,7 @@ def transform_coordinates(points: Sequence[tuple[float, float]]) -> list[tuple[f
     if not points:
         return []
     payload = "\n".join(f"{x} {y}" for x, y in points) + "\n"
-    result = subprocess.run(  # nosec B603, B607 — fixed argv list, no shell, trusted PATH binary; stdin is numbers
+    result = subprocess.run(  # nosec B603, B607 — fixed argv list, no shell, trusted PATH binary. stdin is numbers
         ["gdaltransform", "-s_srs", "EPSG:5174", "-t_srs", "EPSG:4326", "-output_xy"],
         input=payload,
         capture_output=True,
@@ -136,7 +136,7 @@ def transform_coordinates(points: Sequence[tuple[float, float]]) -> list[tuple[f
             out.append(None)
             continue
         lon, lat = float(parts[0]), float(parts[1])
-        # Korea's bounding box; a point outside it is a mis-keyed source coordinate, not a location.
+        # Korea's bounding box. a point outside it is a mis-keyed source coordinate, not a location.
         out.append((lon, lat) if 124.0 <= lon <= 132.0 and 33.0 <= lat <= 39.5 else None)
     if len(out) != len(points):
         raise RuntimeError(f"gdaltransform answered {len(out)} lines for {len(points)} points")
@@ -164,7 +164,7 @@ def align_road_address(text: str, index: KeyIndex) -> Aligned | None:
         return None
     region = tokens[0]
     width = index.sigungu_span(region, tokens, 1)
-    # A region with no 시군구 level (세종특별자치시) lists the empty string; its strings go region → road.
+    # A region with no 시군구 level (세종특별자치시) lists the empty string. its strings go region → road.
     if not width and "" not in index.sigungu_by_region.get(region, set()):
         return None
     sigungu = " ".join(tokens[1 : 1 + width])
@@ -181,7 +181,7 @@ def align_road_address(text: str, index: KeyIndex) -> Aligned | None:
     ):
         eupmyeon_at = road_at
         road_at += 1
-    # A road name is one token; a numbered branch (`대학로8길`) is part of that token in the register.
+    # A road name is one token. a numbered branch (`대학로8길`) is part of that token in the register.
     if road_at + 1 >= len(tokens) or tokens[road_at] not in roads:
         return None
     number_at_token = road_at + 1
@@ -262,7 +262,7 @@ def align_lot_address(text: str, index: KeyIndex) -> Aligned | None:
         return None
     region = tokens[0]
     width = index.sigungu_span(region, tokens, 1)
-    # A region with no 시군구 level (세종특별자치시) lists the empty string; its strings go region → road.
+    # A region with no 시군구 level (세종특별자치시) lists the empty string. its strings go region → road.
     if not width and "" not in index.sigungu_by_region.get(region, set()):
         return None
     sigungu = " ".join(tokens[1 : 1 + width])

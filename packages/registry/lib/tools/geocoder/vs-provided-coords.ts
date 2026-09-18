@@ -10,7 +10,7 @@
  *   its physical address. We geocode the address with mailwoman's real parser + resolver and
  *   measure the great-circle delta to the provided point — p50 / p90, broken down by the resolution
  *   tier we assign (address_point / interpolated / admin). This is an independent check of the
- *   geocoder on real facility addresses; it does not touch the matcher.
+ *   geocoder on real facility addresses. it does not touch the matcher.
  *
  *   The provided coordinate is treated as ground truth for _this_ eval, with the honest caveat that
  *   it is itself a third-party geocode of unknown provenance — a large delta is a discrepancy to

@@ -13,7 +13,7 @@ import { z } from "@hono/zod-openapi"
 import { featureCollectionSchema, featureSchema, stampedResponseSchema } from "@mailwoman/api-kit"
 
 /**
- * Photon feature properties — OSM-derived keys; tolerant of extras (`[key: string]: unknown` on the wire type).
+ * Photon feature properties — OSM-derived keys. tolerant of extras (`[key: string]: unknown` on the wire type).
  */
 export const PhotonPropertiesSchema = z
 	.object({
@@ -114,7 +114,7 @@ export const StampedPhotonFeatureCollectionSchema = stampedResponseSchema(
 /**
  * The real `/api` + `/reverse` 200 response union (#1052 doc accuracy): a GeoJSON FeatureCollection by default, or an
  * array of schema.org `Place` JSON-LD objects when `format=jsonld` — see `routes.ts`'s handlers (`photonToSchemaOrg`).
- * Doc-only; the wire behavior is unchanged.
+ * Doc-only. the wire behavior is unchanged.
  */
 export const PhotonResponseSchema = z
 	.union([StampedPhotonFeatureCollectionSchema, z.array(SchemaOrgPlaceSchema)])
@@ -122,12 +122,12 @@ export const PhotonResponseSchema = z
 
 /**
  * A query param that may legally repeat (or that a client may repeat without the validator being allowed to answer for
- * us). Validator-proof: accepts one value or many; the doc override keeps the emitted parameter schema exact.
+ * us). Validator-proof: accepts one value or many. the doc override keeps the emitted parameter schema exact.
  */
 const tolerantParam = z.union([z.string(), z.array(z.string())]).optional()
 
 /**
- * `GET /api` query — documented shape; presence/parsing enforced in-handler.
+ * `GET /api` query — documented shape. presence/parsing enforced in-handler.
  */
 export const searchQueryParams = z.object({
 	q: tolerantParam.openapi({ type: "string", description: "The query string to search for." }),

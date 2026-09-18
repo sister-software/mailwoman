@@ -13,14 +13,14 @@
  *   every reading names its scenario.
  *
  *   THE DOMAINS BELOW ARE CLOSED AND THE BUILDER THROWS ON A VALUE OUTSIDE THEM. An unknown code is a
- *   source-schema change, which is the event a reader most needs to hear about; coercing it to a nearest
+ *   source-schema change, which is the event a reader most needs to hear about. coercing it to a nearest
  *   neighbour or to null converts "the source changed" into "there is nothing here". Each one is a census
  *   of all twelve published layers rather than of one, taken from the 2024 geodatabase — a domain read from
  *   a single layer is a domain that throws on the day another layer carries its ninth value.
  *
  *   BLANK IS A SINGLE SPACE, NOT AN EMPTY STRING. Every "blank" value in this product is `" "`, on 87 rows
  *   across the twelve layers — the same 87 that carry `published = 0`, and all of them on SMP layers (13 to
- *   16 per layer; the NFI layers have none). A reader testing `=== ""` finds nothing and reports the
+ *   16 per layer. the NFI layers have none). A reader testing `=== ""` finds nothing and reports the
  *   anomalous rows as ordinary ones.
  *
  *   `def_type` IS DIRTY AND THE FOLD IS FOR COMPARING, NEVER FOR STORING. The census returns 14 distinct
@@ -31,7 +31,7 @@
  *   AND THE TWO POLICY FIELDS DO NOT AGREE WITH EACH OTHER ON SPELLING. `mt_smp` writes
  *   `No Active Intervention / Managed Realignment` where `lt_smp` writes
  *   `No Active Intervention/Managed Realignment` — same 72 rows, different spacing. Both spellings are in the
- *   domain below; neither is normalized away.
+ *   domain below. neither is normalized away.
  */
 
 /**
@@ -181,7 +181,7 @@ export interface CoastalScenario {
  * Whether a scenario's layer carries the four Shoreline Management Plan policy fields.
  *
  * The NFI layers omit them, and the reason is stated rather than worked around: under a no-future-intervention scenario
- * there is no policy to record. A builder that read `mt_smp` from an NFI layer gets a SQL error; one that defaulted it
+ * there is no policy to record. A builder that read `mt_smp` from an NFI layer gets a SQL error. one that defaulted it
  * to a blank would invent a policy the authority declines to state.
  */
 export function scenarioCarriesPolicy(scenario: CoastalScenario): boolean {
@@ -286,7 +286,7 @@ export const NCERM_BLANK = " "
 /**
  * The Shoreline Management Plan policy domain — `mt_smp` and `lt_smp` pooled.
  *
- * NINE spellings for eight policies, because the two fields disagree on the spacing around one slash. Both are members;
+ * NINE spellings for eight policies, because the two fields disagree on the spacing around one slash. Both are members.
  * neither is normalized.
  */
 export const NCERM_POLICY_VALUES: ReadonlySet<string> = new Set([
@@ -346,7 +346,7 @@ export const NCERM_POLICY_INTERPRETATION_VALUES: ReadonlySet<string> = new Set(
 /**
  * The defence-type domain, case-folded — twelve distinct defences behind fourteen published spellings.
  *
- * Membership is tested on the fold, because `Sheet piles` and `Sheet Piles` are one defence; the STORED value is the
+ * Membership is tested on the fold, because `Sheet piles` and `Sheet Piles` are one defence. the STORED value is the
  * source's own string, because normalizing it would put this package's spelling into an artifact that claims to repeat
  * the authority's.
  */

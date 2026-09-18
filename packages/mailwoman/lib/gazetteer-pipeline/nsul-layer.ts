@@ -22,7 +22,7 @@
  *
  *   ## Streaming
  *
- *   The eleven CSVs total 10.2 GB uncompressed; each is streamed straight out of the archive
+ *   The eleven CSVs total 10.2 GB uncompressed. each is streamed straight out of the archive
  *   (`readZipEntry` → `TextSpliterator`) with nothing but the inflate window and one line in memory, so
  *   the build never extracts to disk and never holds a region file whole.
  *
@@ -31,16 +31,16 @@
  *   Each NSUL row carries an OSGB36 grid reference (`GRIDGB1E`/`GRIDGB1N`). The build ignores it and
  *   joins the row's UPRN to `uprn.db`, copying OS's own WGS84 `lat`/`lon` and the res-9 `h3_cell`
  *   verbatim — the same reason `uprn-layer.ts` takes OS's WGS84 columns over a Helmert reprojection.
- *   A UPRN absent from `uprn.db` is counted `skipped-no-coordinate` and not written; a row whose
+ *   A UPRN absent from `uprn.db` is counted `skipped-no-coordinate` and not written. a row whose
  *   `PCDS` is empty (a postcode not in Code-Point Open) is counted `skipped-no-postcode` and not
  *   written.
  *
  *   ## Restricting
  *
- *   The archive md5 against the sidecar; an exact header match on every region file (schema drift
+ *   The archive md5 against the sidecar. an exact header match on every region file (schema drift
  *   fails loudly); the region set exactly the eleven GB regions (a missing or extra file fails loudly);
  *   the accounting identity `read = inserted + malformed + duplicate + no-postcode + no-coordinate`
- *   with malformed and duplicate expected zero; and a row floor (`NSUL_MINIMUM_PLAUSIBLE_ROWS`).
+ *   with malformed and duplicate expected zero. and a row floor (`NSUL_MINIMUM_PLAUSIBLE_ROWS`).
  *
  *   ## Coverage
  *
@@ -424,7 +424,7 @@ export interface BuildNSULLayerOptions {
 	 */
 	now?: Date
 	/**
-	 * ISO-8601 `layer_manifest.created_at`. Caller-supplied per the layer contract; defaults to `now`.
+	 * ISO-8601 `layer_manifest.created_at`. Caller-supplied per the layer contract. defaults to `now`.
 	 */
 	createdAt?: string
 	/**
@@ -436,7 +436,7 @@ export interface BuildNSULLayerOptions {
 	 */
 	minimumPlausibleRows?: number
 	/**
-	 * Injected region sources plus the vintage they carry — the fixture path. Skips the archive entirely; provenance
+	 * Injected region sources plus the vintage they carry — the fixture path. Skips the archive entirely. provenance
 	 * still comes from `sourceDir`'s sidecars when present.
 	 */
 	sources?: { vintage: NSULVintage; regions: NSULRegionSource[] }
@@ -455,7 +455,7 @@ export interface BuildNSULLayerResult {
 	 */
 	inserted: number
 	/**
-	 * Lines {@link classifyNSULLine} refused — expected zero; any are reported in `mismatches`.
+	 * Lines {@link classifyNSULLine} refused — expected zero. any are reported in `mismatches`.
 	 */
 	skippedMalformed: number
 	/**
@@ -463,7 +463,7 @@ export interface BuildNSULLayerResult {
 	 */
 	skippedDuplicate: number
 	/**
-	 * Lines whose `PCDS` is empty — the postcode is not in Code-Point Open. Expected non-zero; recorded, never a defect.
+	 * Lines whose `PCDS` is empty — the postcode is not in Code-Point Open. Expected non-zero. recorded, never a defect.
 	 */
 	skippedNoPostcode: number
 	/**
@@ -486,7 +486,7 @@ export interface BuildNSULLayerResult {
 	 */
 	uprnLayerVersion: string
 	/**
-	 * Every violated check, in words. Empty on a clean build; the caller decides whether to fail on them.
+	 * Every violated check, in words. Empty on a clean build. the caller decides whether to fail on them.
 	 */
 	mismatches: string[]
 	durationMs: number
@@ -552,7 +552,7 @@ interface IngestNSULSourcesOptions {
 
 /**
  * The ingest loop: stream every region, classify every line, join the coordinate, write, and account. Throws on header
- * drift; the caller owns the transaction and rolls it back.
+ * drift. the caller owns the transaction and rolls it back.
  */
 async function ingestNSULSources(options: IngestNSULSourcesOptions): Promise<NSULIngestCounts> {
 	const { sources, coordinateOf, write, parentCell, checkpoint, phase } = options
@@ -777,7 +777,7 @@ export async function buildNSULLayer(options: BuildNSULLayerOptions): Promise<Bu
 	await createLayerCoverageTable(kdb)
 
 	// Hot positional INSERT — raw prepared statement, per the AGENTS.md bulk-load carve-out. OR IGNORE so a
-	// source-side duplicate UPRN is COUNTED (via `changes === 0`) rather than aborting a 40M-row load; the
+	// source-side duplicate UPRN is COUNTED (via `changes === 0`) rather than aborting a 40M-row load. the
 	// accounting check then reports any as a defect.
 	const insert = kdb.prepare(
 		"INSERT OR IGNORE INTO uprn_postcode (uprn, pcds, pcds_compact, lat, lon, h3_cell) VALUES (?, ?, ?, ?, ?, ?)"

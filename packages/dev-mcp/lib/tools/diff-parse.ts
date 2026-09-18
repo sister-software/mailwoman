@@ -94,8 +94,8 @@ export const diffParseTool = (deps: DevToolDeps): DevTool => ({
 		const shown = changesOnly ? diffs.filter((d) => !d.identical) : diffs
 		const rendered = shown.slice(0, RENDERED_LIMIT).map((d) => renderParseDiff(d))
 
-		// Which EVENT dominates is the diagnosis. A run whose changes are mostly `retagged` is mislabelling; one whose
-		// changes are mostly `moved` has a boundary problem; one that is mostly `confidence` has not decided anything yet.
+		// Which EVENT dominates is the diagnosis. A run whose changes are mostly `retagged` is mislabelling. one whose
+		// changes are mostly `moved` has a boundary problem. one that is mostly `confidence` has not decided anything yet.
 		const events: Record<string, number> = {}
 
 		for (const d of shown) {

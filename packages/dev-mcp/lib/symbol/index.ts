@@ -63,7 +63,7 @@ export interface DeclarationSite {
 export interface FindDeclarationsOptions {
 	cwd: string
 	/**
-	 * The ripgrep executable. Injectable so the missing-binary path is testable; nothing in production overrides it.
+	 * The ripgrep executable. Injectable so the missing-binary path is testable. nothing in production overrides it.
 	 */
 	binary?: string
 	/**
@@ -108,7 +108,7 @@ function nameComponents(name: string): string[] {
  *
  * One-component runs are the vocabulary of the tree — `read`, `build`, `file`, `parse` — so a floor of one reports
  * nearly every name against nearly every other. Of the 2,950 exported function names under `packages/`, the count that
- * are a longer spelling of another exported name is 417 at a floor of one, 130 at two, and 45 at three; across
+ * are a longer spelling of another exported name is 417 at a floor of one, 130 at two, and 45 at three. across
  * different files, 348, 67 and 20. Two keeps the motivating case (`readWorkspaceDirectories` over
  * `workspaceDirectories`) while dropping the vocabulary, and it is why this constant takes an argument: the floor is
  * measurable rather than asserted.
@@ -190,7 +190,7 @@ export function findDeclarations(
 
 /**
  * The two declaration shapes, with `nameExpression` spliced in as the name to match. Callers supply either an
- * alternation of exact names or a substring expression; both are built from `\w`, which needs no regex escaping.
+ * alternation of exact names or a substring expression. both are built from `\w`, which needs no regex escaping.
  */
 function declarationPatterns(nameExpression: string): string[] {
 	return [

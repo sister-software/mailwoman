@@ -67,7 +67,7 @@ describe("canonicalizeOrganizationName — jurisdiction × domain collisions (#6
 		expect(org?.canonical).toBe("maju bersama")
 		expect(org?.designations).toEqual(["pt"])
 
-		// explicit general domain protects nothing — same result.
+		// explicit general domain guards nothing — same result.
 		expect(canonicalizeOrganizationName("Maju Bersama PT", { jurisdiction: "ID", domain: "general" })?.canonical).toBe(
 			"maju bersama"
 		)
@@ -94,7 +94,7 @@ describe("canonicalizeOrganizationName — jurisdiction × domain collisions (#6
 			"sca",
 		])
 
-		// but healthcare protects SCA even under FR jurisdiction.
+		// but healthcare guards SCA even under FR jurisdiction.
 		expect(
 			canonicalizeOrganizationName("Cardiac SCA Clinic", { jurisdiction: "FR", domain: "healthcare" })?.canonical
 		).toBe("cardiac sca clinic")

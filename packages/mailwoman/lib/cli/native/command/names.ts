@@ -7,7 +7,7 @@
  *   The router used to read a command's name off its filename, which made the layout a contract: moving
  *   `gazetteer/build/postcode-codepoint.tsx` into `build/postcode/` renamed the command, silently, and
  *   `mailwoman gazetteer build postcode-codepoint` — a name written into built databases as their `builder`
- *   provenance — stopped existing. A file's location is this repository's business; a command's name is the user's.
+ *   provenance — stopped existing. A file's location is this repository's business. a command's name is the user's.
  *
  *   So a PREFIX DIRECTORY is transparent to the command path: `build/postcode/codepoint.js` answers
  *   `build postcode-codepoint`. That is the same convention `repo-health`'s `prefix-directories` check enforces —

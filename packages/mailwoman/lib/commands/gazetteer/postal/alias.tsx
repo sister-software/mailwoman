@@ -11,16 +11,16 @@
  *   The signal: 45.9M US rows carry both `postal_city` (what the postal system calls the place — USPS
  *   "acceptable city names", vanity cities) and a geographic locality (`address_levels[2]`); 16.0M
  *   of them (34.9%) diverge. Aggregated per `(postcode, postal_city, geo_locality)` with observed
- *   counts, that divergence is the alias evidence: "postcode 10954's mail says Nanuet; the polygon
+ *   counts, that divergence is the alias evidence: "postcode 10954's mail says Nanuet. the polygon
  *   says Clarkstown".
  *
  *   SIBLING table by design (`postal_city_alias`, its own sqlite) — never mixed into the PIP-derived
  *   `postcode_locality` rows: one table = one provenance class (feedback-no-irrelevant-trivia). A
- *   count floor drops typo noise; everything kept is observed-in-the-wild N times, with N
+ *   count floor drops typo noise. everything kept is observed-in-the-wild N times, with N
  *   recorded.
  *
  *   Writes the output DB DIRECTLY (deletes any prior file, then builds in place) — same behavior as
- *   the original `scripts/build-postal-city-alias.ts`. Progress streams to stderr; the final
+ *   the original `scripts/build-postal-city-alias.ts`. Progress streams to stderr. the final
  *   summary is on stdout. @duckdb/node-api is an OPTIONAL peer, imported dynamically inside the
  *   build.
  */
@@ -99,7 +99,7 @@ const GazetteerPostalAlias: CommandComponent<typeof spec> = ({ options }) => {
 		kdb.exec("PRAGMA journal_mode = WAL;")
 		// DDL via the SHARED createPostalCityAliasTable builder — the exact table the reader + tests
 		// use, so this producer can't drift from postal-city-alias-schema.ts. DuckDB above is the raw
-		// parquet reader; the hot INSERT below stays on the raw `db` handle.
+		// parquet reader. the hot INSERT below stays on the raw `db` handle.
 		const { createPostalCityAliasTable } = await import("@mailwoman/resolver-wof-sqlite/postal")
 
 		await createPostalCityAliasTable(kdb)
@@ -127,7 +127,7 @@ const GazetteerPostalAlias: CommandComponent<typeof spec> = ({ options }) => {
 		}
 
 		kdb.exec("COMMIT")
-		// Indexes were created by createPostalCityAliasTable above; just checkpoint + compact.
+		// Indexes were created by createPostalCityAliasTable above. just checkpoint + compact.
 		kdb.exec("PRAGMA wal_checkpoint(TRUNCATE); VACUUM;")
 
 		return [

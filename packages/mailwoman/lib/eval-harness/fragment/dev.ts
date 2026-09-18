@@ -11,7 +11,7 @@
  *   - Trailing-number→postcode rate on street+number rows — persistence above noise confirms the
  *       numeric-neighbor confusion survives data.
  *
- *   Fixture: fragment-dev.jsonl (rows never trained on; schema = corpus rows). Grade candidates via
+ *   Fixture: fragment-dev.jsonl (rows never trained on. schema = corpus rows). Grade candidates via
  *   `--weights-cache` package-shaped dirs only (#718 zero-fill trap).
  */
 
@@ -38,7 +38,7 @@ interface DevRow {
 }
 
 /**
- * Score fragment-dev; narrates the separator metrics and returns them for programmatic use.
+ * Score fragment-dev. narrates the separator metrics and returns them for programmatic use.
  */
 export async function runFragmentDev(options: FragmentDevOptions): Promise<{
 	spanExact: number

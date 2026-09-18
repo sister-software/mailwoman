@@ -208,7 +208,7 @@ function regionRows(entry: SourceComposition): number {
 
 /**
  * The share of a source's region-containing rows held by its largest five regions. A source that writes all 56 codes
- * evenly reads near 5/56; one that writes a corner of the country reads near 1.
+ * evenly reads near 5/56. one that writes a corner of the country reads near 1.
  */
 function topFiveShare(entry: SourceComposition): number {
 	const counts = [...entry.byRegion.values()].toSorted((a, b) => b - a)

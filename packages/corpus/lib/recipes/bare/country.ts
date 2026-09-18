@@ -7,7 +7,7 @@
  *   country name, so the class is out of the model's training distribution and the tag is a coin
  *   flip: measured on the 2026-08-13 panel, France/Germany/United States/New Zealand parsed
  *   `country` while Japan/China/Nigeria/Australia/Deutschland parsed `locality`. The retrieval-side
- *   bare-country race (#1651) covers the answer either way; this recipe closes the PARSE half so the
+ *   bare-country race (#1651) covers the answer either way. this recipe closes the PARSE half so the
  *   tag itself is right.
  *
  *   Source is the codex country table — every ISO canonical English name plus the curated surface
@@ -60,7 +60,7 @@ export const bareCountryRecipe: CorpusRecipe = {
 	description: "The country name as the whole query (#1651 parse half): ISO names + curated endonyms, no codes",
 	mode: "generate",
 	async run(opts, write) {
-		// Seeded for parity with the other recipes; the surfaces themselves drive the content.
+		// Seeded for parity with the other recipes. the surfaces themselves drive the content.
 		makeMulberry32(opts.seed)
 		let read = 0
 		let emitted = 0

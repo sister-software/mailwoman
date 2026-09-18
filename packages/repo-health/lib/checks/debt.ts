@@ -4,7 +4,7 @@
  * @author Teffen Ellis, et al.
  * @file Monotonic debt counters for patterns that are too contextual for a blanket lint error.
  *
- *   Existing debt is recorded in `baseline.json` beside this package; the `debt` check reports a counter that grew as an
+ *   Existing debt is recorded in `baseline.json` beside this package. the `debt` check reports a counter that grew as an
  *   error and a counter that fell as a warning asking for the baseline to be ratcheted. WRITING the baseline is a
  *   mutation, so it is not a check: `mwops health baseline debt` calls {@link computeDebtCounters} through
  *   `lib/baseline.ts`, which the registry does not list. Never raise a counter to make a failure disappear.
@@ -54,7 +54,7 @@ export interface DebtCounters {
 	synchronousFilesystemCalls: number
 	/**
 	 * Raw NUL bytes in tracked TypeScript. A NUL makes grep classify the file as binary and skip it, so a guard that
-	 * carries one is invisible to the sweeps that would read it; the escaped form (`\\0`, `\\x00`) is byte-identical at
+	 * carries one is invisible to the sweeps that would read it. the escaped form (`\\0`, `\\x00`) is byte-identical at
 	 * runtime and stays visible.
 	 */
 	rawNULBytes: number
@@ -63,7 +63,7 @@ export interface DebtCounters {
 	 * tracked source: identifiers, comments and string literals alike.
 	 *
 	 * THIS SENTENCE DOES NOT NAME THE WORD, deliberately: a case-preserving sweep once rewrote the name to the
-	 * REPLACEMENT and left the doc describing a different word than the pattern counts. One constant holds the term;
+	 * REPLACEMENT and left the doc describing a different word than the pattern counts. One constant holds the term.
 	 * prose points at the constant.
 	 *
 	 * The vocabulary is being removed because the word stood for FOUR different things (corpus recipes, per-country
@@ -186,10 +186,10 @@ const SYNCHRONOUS_FILESYSTEM_CALLS = new Set([
  *
  * The baseline is ZERO. Workspaces that do not depend on `@mailwoman/core` — `api-kit`, `nuts-lookup`,
  * `timezone-lookup`, `un-locode-lookup`, `variant-aliases` — would install core's ~9 MB of data to replace a `mkdir` or
- * a `readFileSync`, and `oxlint.config.ts` exempts those files by name; they collapse the day the fs helpers can be
+ * a `readFileSync`, and `oxlint.config.ts` exempts those files by name. they collapse the day the fs helpers can be
  * reached without core's tarball.
  *
- * A bare identifier is counted; a property access is counted only when the receiver is spelled `fs`. That receiver rule
+ * A bare identifier is counted. a property access is counted only when the receiver is spelled `fs`. That receiver rule
  * is what separates this population from two unrelated ones that share a method name: `node:sqlite`'s
  * `DatabaseSync.closeSync()`, and an INJECTED dependency (`deps.existsSync`), which is a parameter a test substitutes
  * rather than a filesystem call the module makes.
@@ -209,7 +209,7 @@ function isSynchronousFilesystemCall(node: ts.Node): boolean {
 
 /**
  * `<stack>.push(...<expr>.children)` — the push half of a hand-rolled tree walk. The pop half is any `.pop()`, which
- * too many honest stacks share; the spread of `.children` is the tell.
+ * too many honest stacks share. the spread of `.children` is the tell.
  */
 function isChildrenSpreadPush(node: ts.Node): boolean {
 	return (
@@ -312,7 +312,7 @@ function visit(
  * count reported without one says less than it appears to.
  */
 const UNCOUNTED = [
-	// The runtime mirror and the idiom over it call the builtins on purpose; counting them would measure the
+	// The runtime mirror and the idiom over it call the builtins on purpose. counting them would measure the
 	// implementation rather than its callers.
 	"packages/core/lib/fs/",
 	// THIS FILE COUNTS ITSELF OTHERWISE, and the count could never reach zero: {@link BANNED_VOCABULARY} has to
@@ -322,10 +322,10 @@ const UNCOUNTED = [
 
 /**
  * The words being removed from the codebase, and the pattern {@link DebtCounters.bannedVocabulary} counts. The third
- * alternation is the boundary word; it stops before the North Yorkshire town and the surname. The second alternation
+ * alternation is the boundary word. it stops before the North Yorkshire town and the surname. The second alternation
  * carries a negative lookahead for the letter runs that continue it into an unrelated English word ("advantage") and
  * into six place names. It is case-sensitive on purpose: `availableVersions` and `localeVerdict` contain the letters
- * across a camelCase boundary that appear in eval rows and records; those survive verbatim by construction, not by
+ * across a camelCase boundary that appear in eval rows and records. those survive verbatim by construction, not by
  * allowlist. The last alternation stops before a coreutils flag (` -c`, ` -d`): a shell command in a fenced block is
  * the utility, not the word.
  *
@@ -360,10 +360,10 @@ const BANNED_VOCABULARY_ALLOWED: ReadonlyArray<readonly [prefix: string, reason:
 	// RECORDS ARE NOT EXEMPT, and that is a deliberate reversal. They were exempt on the reasoning that
 	// rewriting a record falsifies it — but a record names PATHS and IDENTIFIERS, not measurements, and a
 	// retired name in a record is read as a live one by the next agent. Every number, date and verdict is
-	// untouched; only the spelling of things that were renamed moved with them. Operator direction, and the
+	// untouched. only the spelling of things that were renamed moved with them. Operator direction, and the
 	// reason given was the operative one: agents pick the vocabulary back up from prose.
 	// CONTENT, not vocabulary. `shardza`, `sechshard` and `shykshard` are transliterated place names;
-	// `Bosshardt` and `Rashard` are real people's names; the eval rows are dated notes on committed board
+	// `Bosshardt` and `Rashard` are real people's names. the eval rows are dated notes on committed board
 	// cases. Renaming any of them would corrupt data to satisfy a style rule.
 	["packages/core/data/", "libpostal dictionaries — real given names and surnames"],
 	["data/", "address rows and reference tables carry real place names: Golden Gate Bridge, South Gate, Cut Bank"],

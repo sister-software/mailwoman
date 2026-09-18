@@ -4,8 +4,8 @@
  * @author Teffen Ellis, et al.
  *
  *   Contract tests for the Stage 2.7 span proposer (M2 + M3). Essential properties: unbalanced
- *   delimiters never propose; annotation confidence follows content shape (trailing-country groups
- *   stay below consumer floors); dual-path numeric readings emit both alternatives under one group;
+ *   delimiters never propose. annotation confidence follows content shape (trailing-country groups
+ *   stay below consumer floors). dual-path numeric readings emit both alternatives under one group.
  *   designator proposals are codex-conditioned and suppressed inside confident annotations.
  */
 
@@ -229,7 +229,7 @@ describe("venue-structure provenance", () => {
 	})
 
 	it("does not fire on a confound: the word must be a standalone token", () => {
-		// "Briggate" is one token. The GB `-gate` street names are the confound class this protects.
+		// "Briggate" is one token. The GB `-gate` street names are the confound class this guards.
 		expect(proposeSpans("12 Briggate, Leeds, LS1 6ER", withVenueStructure)).toEqual([])
 	})
 
@@ -260,7 +260,7 @@ describe("modifier + venue-interior designator", () => {
 	})
 
 	it("scores BELOW the designator+identifier form", () => {
-		// A qualifier before a designator is a shape ordinary street names also take; an identifier after one
+		// A qualifier before a designator is a shape ordinary street names also take. an identifier after one
 		// is nearly unambiguous. The weaker evidence must lose to a confident encoder more readily.
 		const [modifierSpan] = proposeSpans("West Wing, St Thomas' Hospital, London", withModifiers)
 		const [identifierSpan] = proposeSpans("Wing B, St Thomas' Hospital, London", withModifiers)

@@ -114,11 +114,11 @@ export interface CensusTigerLine {
 	side: "L" | "R"
 	/**
 	 * The TIGER/Line segment identifier. NOTE the wire key is `tigerLineId` with a lowercase `d` — a string contract, so
-	 * the house acronym-casing rule does not apply to it; the TS property name must match the wire.
+	 * the house acronym-casing rule does not apply to it. the TS property name must match the wire.
 	 *
 	 * @pattern ^\d+$
 	 */
-	// oxlint-disable-next-line sister-software/no-title-case-acronym -- the Census API's own wire key, not a name we chose; renaming it to `tigerLineID` would silently read `undefined` off every response.
+	// oxlint-disable-next-line sister-software/no-title-case-acronym -- the Census API's own wire key, not a name we chose. renaming it to `tigerLineID` would silently read `undefined` off every response.
 	tigerLineId: string
 }
 
@@ -172,7 +172,7 @@ export interface CensusAddressComponents {
 	 */
 	state: AdminLevel1Abbreviation | string
 	/**
-	 * The ZIP code. The geocoder returns the five-digit form; the plus-four variant is admitted for completeness.
+	 * The ZIP code. The geocoder returns the five-digit form. the plus-four variant is admitted for completeness.
 	 */
 	zip: ZipCode | ZipCodePlusFour | string
 	/**
@@ -208,7 +208,7 @@ export interface CensusAddressMatch {
 }
 
 /**
- * A `Census Blocks` entry from a `geographies/*` lookup. Every field is a TIGER attribute; the types come from
+ * A `Census Blocks` entry from a `geographies/*` lookup. Every field is a TIGER attribute. the types come from
  * `@mailwoman/tiger`.
  */
 export interface CensusBlockGeography {

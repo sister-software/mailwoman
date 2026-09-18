@@ -6,7 +6,7 @@ Per Phase 2 §7:
 - Dynamic axes for ``batch`` and ``sequence``.
 - Verify ONNX inference matches PyTorch inference within 1e-4 on a 1000-sample probe.
 - Output: ``/data/models/onnx/model-v0.1.0-en-us.onnx`` (and per spec, the same weights are
-  exported per-locale; Phase 3 may split them if size or load behavior demands).
+  exported per-locale. Phase 3 may split them if size or load behavior demands).
 
 `graph.py` decides what gets exported — which channels the model carries, whether that combination
 is exportable, and the wrapper and example inputs it needs. This module runs the export and checks
@@ -94,7 +94,7 @@ def verify_parity(
 ) -> dict[str, Any]:
     """Compare ONNX logits to PyTorch logits over a sample. Returns a metrics dict.
 
-    Logs the max absolute diff across samples; raises if any exceeds ``atol``.
+    Logs the max absolute diff across samples. raises if any exceeds ``atol``.
     """
     import onnxruntime as ort
 

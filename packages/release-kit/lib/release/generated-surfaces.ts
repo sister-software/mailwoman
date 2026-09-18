@@ -12,7 +12,7 @@
  *   Runs after `mwops release prepare-version` and requires a compiled tree — the generators
  *   spawn the compiled CLI (the Ink commands cannot run under bare type-stripping), and the caller
  *   compiles rather than trusting whatever `out/` a runner left behind. Reports each generated file's
- *   changed/unchanged state so the prepare job can stage exactly what moved; a second run on the
+ *   changed/unchanged state so the prepare job can stage exactly what moved. a second run on the
  *   same tree is a no-op by construction (the generators are deterministic over the compiled CLI).
  */
 
@@ -51,7 +51,7 @@ export async function releaseGeneratedSurfaces(
 		)
 	}
 
-	// Each generator is `node <entry> [args]` with the entry resolved against the repo root; two surfaces sharing a
+	// Each generator is `node <entry> [args]` with the entry resolved against the repo root. two surfaces sharing a
 	// generator run it once.
 	const generators = new Map(GENERATED_SURFACES.map((surface) => [surface.generator.join(" "), surface.generator]))
 

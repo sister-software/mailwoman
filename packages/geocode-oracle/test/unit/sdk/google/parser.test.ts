@@ -4,7 +4,7 @@
  * @author Teffen Ellis, et al.
  * @file Tests for the Google `address_components` → `ComponentTag` mapping.
  *
- *   Fixtures are hand-built from real Geocoding API response shapes; nothing here touches the network.
+ *   Fixtures are hand-built from real Geocoding API response shapes. nothing here touches the network.
  *   The cases are chosen to pin the four decisions that are not mechanical — the GB `postal_town`
  *   fall-through, the region short/long split, the ZIP+4 join, and the `GEOMETRIC_CENTER` tier
  *   disambiguation — plus the two deliberate divergences from the isp-nexus original (no uppercasing,

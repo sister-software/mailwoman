@@ -11,7 +11,7 @@
  *
  *   READ FROM DISK, NOT IMPORTED. `mailwoman` depends on `@mailwoman/corpus`, so this package cannot import the
  *   gauntlet loader without a cycle. A recipe is a build tool reading the repository it is built in, which is a file
- *   read rather than a dependency; the shipped package never calls this.
+ *   read rather than a dependency. the shipped package never calls this.
  */
 
 import { repoRootPath } from "@mailwoman/core/paths"
@@ -44,7 +44,7 @@ export function normalizeGauntletSurface(surface: string): string {
 /**
  * Every board row's `input`, normalized.
  *
- * Reads the whole corpus once; callers hold the result. A row that does not parse is SKIPPED rather than thrown on: the
+ * Reads the whole corpus once. callers hold the result. A row that does not parse is SKIPPED rather than thrown on: the
  * gauntlet loader is what validates the corpus, and a recipe that refused to build over a malformed board row would
  * turn one bad line into a stopped build for a check that is advisory to it.
  */
@@ -72,7 +72,7 @@ export async function readGauntletInputs(dir: PathBuilderLike = GAUNTLET_CASES_D
 				}
 			} catch {
 				// A file this cannot read or parse is skipped. The gauntlet loader is what validates the board corpus
-				// and reports the file and line; a recipe stopping its build over one malformed row would turn an
+				// and reports the file and line. a recipe stopping its build over one malformed row would turn an
 				// advisory check into a blocked build.
 				continue
 			}

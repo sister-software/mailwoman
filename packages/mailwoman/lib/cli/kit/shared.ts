@@ -66,12 +66,12 @@ export type CommandTaskState<T> =
 	| { status: "error"; message: string }
 
 /**
- * Run a command's one-shot async task and own the exit-code discipline: rejection renders the error state and exits 1;
+ * Run a command's one-shot async task and own the exit-code discipline: rejection renders the error state and exits 1.
  * resolution exits with `exitCode(result)` (default 0) — always after the final frame committed. Replaces the
  * copy-pasted useEffect/useState/setImmediate dance in every command.
  */
 /* oxlint-disable react-hooks/exhaustive-deps -- One-shot by design: the task/exitCode closures
-	 capture their options at mount; tracking them (fresh closure per render) would re-run the task
+	 capture their options at mount. tracking them (fresh closure per render) would re-run the task
 	 every render. The empty/[state] deps are the point. */
 export function useCommandTask<T>(task: () => Promise<T>, exitCode?: (result: T) => number): CommandTaskState<T> {
 	const [state, setState] = useState<CommandTaskState<T>>({ status: "running" })
@@ -150,7 +150,7 @@ export function lazyComponent<P extends object>(load: () => Promise<React.FC<P>>
 				live = false
 			}
 			// oxlint-disable-next-line react-hooks/exhaustive-deps -- `load` closes over a module specifier, which
-			// cannot change for the life of the process; tracking it would re-import on every render.
+			// cannot change for the life of the process. tracking it would re-import on every render.
 		}, [])
 
 		useEffect(() => {
@@ -391,7 +391,7 @@ export interface FormatLayerVerificationOptions<Row> {
 
 /**
  * The two verification summary lines every polygon-layer build prints, plus the per-row disagreement dump to stderr — a
- * disagreement count is not actionable on its own; the rows are, and the first thing anyone does with a non-zero count
+ * disagreement count is not actionable on its own. the rows are, and the first thing anyone does with a non-zero count
  * is ask which points.
  */
 export function formatLayerVerification<Row extends { outcome: string; label: string }>(
@@ -450,7 +450,7 @@ export function runProcessOrFail(
  * - Weights present but the encoder FAILED to load (corrupt / partial bundle, a bad explicit path) → the underlying error
  *   is surfaced, not swallowed.
  *
- * `onDegrade` receives the warning line; callers send it to stderr so piped stdout parsing is unaffected.
+ * `onDegrade` receives the warning line. callers send it to stderr so piped stdout parsing is unaffected.
  */
 export async function loadClassifierTolerant(
 	locale: string,

@@ -12,8 +12,8 @@
  *   FLOORS (spec §3.6, set off the v1 baseline): `overall ≥ 90%`, `abstain = 100%`, `address = 100%`
  *   (`POI_BOARD_FLOORS` / `evaluateFloors`, pre-registered in
  *   `docs/articles/evals/2026-07-19-poi-query-board-v1-baseline.md`). Floors are graded and printed on
- *   every run; a breach only turns into a non-zero exit under `--enforce`. Without `--enforce` the
- *   command stays report-only (exit 0 on case failures; a non-zero exit then means the HARNESS broke —
+ *   every run. a breach only turns into a non-zero exit under `--enforce`. Without `--enforce` the
+ *   command stays report-only (exit 0 on case failures. a non-zero exit then means the HARNESS broke —
  *   missing fixtures, missing db, a pipeline construction error — not a graded case failing).
  *
  *   Composition (`fixtures/poi-board.jsonl`, committed): ~22 category+anchor cases spanning all four
@@ -29,7 +29,7 @@
  *   THE ACTIVITY FAMILY NEEDS THE `--semantic-observation` ARM. Its five subjects reach no committed
  *   lexicon entry, so with the opt-in rung absent the query takes no POI branch at all and every one of
  *   them reads as `path=full`. They are tracked for that reason, and the floors are registered against
- *   the arm-OFF construction — the one that ships. Turning the arm on measures the capability; it does
+ *   the arm-OFF construction — the one that ships. Turning the arm on measures the capability. it does
  *   not move the floors, and a row that would move them is a row being counted.
  *
  *   TRACKED ROWS. A fixture may carry `status` + `bugRef`, the conformance layer's own convention
@@ -41,7 +41,7 @@
  *   expectation either — a row rewritten to assert the current wrong answer would fail the moment the
  *   defect is repaired.
  *
- *   Only REACHABLE behavior is scored — no brand/name-subject cases; that detection doesn't exist yet
+ *   Only REACHABLE behavior is scored — no brand/name-subject cases. that detection doesn't exist yet
  *   (spec §3.1 Phase 2). A `results` expectation's `maxNearestKm` is deliberately city-scale (25 km):
  *   this board grades whether the ANCHOR resolved to roughly the right place and the SUBJECT matched
  *   the right category, not sub-block precision.
@@ -560,7 +560,7 @@ export interface POIBoardReport {
 	 */
 	allCasesPassRate: number
 	/**
-	 * Pre-registered floors graded against this report (spec §3.6). Printed on every run; enforced under `--enforce`.
+	 * Pre-registered floors graded against this report (spec §3.6). Printed on every run. enforced under `--enforce`.
 	 */
 	floors: FloorEvaluation
 	/**

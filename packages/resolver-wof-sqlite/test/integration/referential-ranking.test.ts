@@ -4,7 +4,7 @@
  * @author Teffen Ellis, et al.
  *
  *   SAINT-DENIS — the canonical test for ROAD_TO_V9 §2's ratified policy: **the geocoder ranks by
- *   referential likelihood; encyclopedic importance is data, never the ranking key.**
+ *   referential likelihood. encyclopedic importance is data, never the ranking key.**
  *
  *   THE CASE, with the real numbers from `wof/fst-staging-2026-08-05/admin-global-priority-importance.db`
  *   (read 2026-08-06):

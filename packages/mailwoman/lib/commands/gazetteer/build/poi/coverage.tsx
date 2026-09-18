@@ -15,7 +15,7 @@
  *
  *   It is a MEASURING INSTRUMENT, and parameterized so the claim it makes can be re-run and audited — not
  *   so coverage can be widened by running it more places. A completeness estimate from two sources bounds
- *   sampling error only; it cannot see the dependence between the two sources, which pushes completeness up
+ *   sampling error only. it cannot see the dependence between the two sources, which pushes completeness up
  *   and is the direction that turns a data gap into confident negative evidence. Breadth waits on a basis
  *   that survives review, per `docs/superpowers/specs/2026-08-27-exclusion-grade-coverage-pilot.md`.
  *

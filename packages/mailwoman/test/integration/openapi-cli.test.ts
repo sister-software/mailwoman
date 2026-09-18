@@ -6,7 +6,7 @@
  *   CLI integration test for `mailwoman openapi`. Runs the compiled CLI
  *   (`out/cli.js` — the standing "use the compiled CLI" rule) against a stub `createMailwomanAPI({})`
  *   engine: no model, no gazetteer, no data-root env required. The per-package `/openapi.json` tests
- *   (`api/index.test.ts`) already pin the document's content in depth; this test only pins the CLI
+ *   (`api/index.test.ts`) already pin the document's content in depth. this test only pins the CLI
  *   wiring itself — that the command exists, prints a real v3.1.0 document to stdout with zero
  *   preamble, and that `--flavor 3.0` switches the diet. stderr carries the license notice the launcher
  *   prints after every command and nothing else: a model boot or a resolver banner would land there too.

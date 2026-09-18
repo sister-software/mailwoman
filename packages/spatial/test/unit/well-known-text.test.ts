@@ -32,7 +32,7 @@ const POLYGON: GeometryLiteral = {
 	],
 }
 
-// The 4-level MultiPolygon literal doesn't narrow against the GeometryLiteral union; cast it.
+// The 4-level MultiPolygon literal doesn't narrow against the GeometryLiteral union. cast it.
 const MULTIPOLYGON = {
 	type: "MultiPolygon",
 	coordinates: [

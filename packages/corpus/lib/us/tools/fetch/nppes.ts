@@ -14,7 +14,7 @@
  *   Uses Node's built-in fetch (gzip/brotli) to parse the HTML index and download the ZIP, and
  *   streaming sha256 instead of sha256sum. The ZIP is unpacked with the `unzip` binary via
  *   `node:child_process` (no clean Node equivalent for member listing + selective extraction). NOTE:
- *   the old bash fetcher used `curl --continue-at -` to resume a partial download; native fetch has
+ *   the old bash fetcher used `curl --continue-at -` to resume a partial download. native fetch has
  *   no resume, so a partial run re-downloads from the start.
  *
  *   Invoke via `mailwoman corpus fetch nppes --out-root <path>`. Idempotent: if dest CSV exists and
@@ -107,7 +107,7 @@ export async function fetchNPPES(options: FetchNPPESOptions, report?: (line: str
 		}
 	}
 
-	// MARK: Download ZIP (large; 60-minute timeout)
+	// MARK: Download ZIP (large. 60-minute timeout)
 
 	report?.(`  Downloading ${zipURL} ...`)
 

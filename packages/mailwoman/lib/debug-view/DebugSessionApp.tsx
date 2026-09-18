@@ -5,7 +5,7 @@
  *
  *   The interactive half of `mailwoman geocode --debug`: one component owning the whole session — the warm
  *   {@link createGeocodeSession}, the PMTiles handle behind the map pane, and focus/pan/zoom/scroll state.
- *   {@link DebugFrame} stays pure; everything below is the shell that feeds it.
+ *   {@link DebugFrame} stays pure. everything below is the shell that feeds it.
  *
  *   THE ALTERNATE SCREEN IS NOT THIS COMPONENT'S. `command.tsx` renders it through an Ink instance configured with
  *   `alternateScreen: true`, and Ink enters before its first frame and leaves from `unmount()` — which its
@@ -13,7 +13,7 @@
  *   all: Ink emits `\x1b[2J\x1b[3J\x1b[H` for a frame as tall as the terminal, and `3J` wipes the SCROLLBACK (the
  *   #1577 damage `geocode.tsx`'s one-shot path exists to avoid). On the alternate screen that clear costs nothing —
  *   the buffer has no scrollback of its own, and leaving it restores the primary buffer untouched. So this component
- *   may render a full-height frame from its first frame; there is no primary buffer underneath to protect.
+ *   may render a full-height frame from its first frame. there is no primary buffer underneath to guard.
  *
  *   FATAL is reachable only from the loading phase — a failed format guard, an empty query, or a session that could
  *   not open (missing weights/gazetteer, whose {@link CommandError} messages are the CLI's error contract). It is
@@ -411,7 +411,7 @@ export function DebugSessionApp({ initialInput, options }: DebugSessionAppProps)
 					if (requestID !== runRequestRef.current) return
 
 					setRun({ input: query, ...reran })
-					// A new result re-centers the map and re-anchors the output pane; a pan the user made against the
+					// A new result re-centers the map and re-anchors the output pane. a pan the user made against the
 					// PREVIOUS answer would otherwise leave the marker off screen.
 					setViewport(null)
 					setScrollOffset(0)

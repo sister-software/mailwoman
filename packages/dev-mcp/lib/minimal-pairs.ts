@@ -20,7 +20,7 @@
  *
  *   RUNGS ARE THE CALLER'S. Nothing here generates them, because generating them means asserting a component order,
  *   and a generator that is silently wrong about order for one locale would produce a confident table about a ladder
- *   nobody wrote. The caller supplies the minimal pairs; this measures them.
+ *   nobody wrote. The caller supplies the minimal pairs. this measures them.
  *
  *   A tag that is absent on a rung is reported absent. Gained, lost and changed are three different facts about a
  *   component, and collapsing them into "different" is what makes a diff table unreadable.

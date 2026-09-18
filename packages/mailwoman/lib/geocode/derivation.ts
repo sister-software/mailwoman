@@ -13,7 +13,7 @@ import { type DerivationNode, type DerivationProjection, observation, projectDer
 
 /**
  * The source name the trace's observations carry. The trace does not record the gazetteer extract's vintage, so the
- * observation carries `null` there; the answer's provenance names the artifact.
+ * observation carries `null` there. the answer's provenance names the artifact.
  */
 export const TRACE_SOURCE = "gazetteer"
 
@@ -52,7 +52,7 @@ export interface TraceCollector {
 	 */
 	traceSink: ResolveOpts["traceSink"]
 	/**
-	 * Attach the projected derivation to a finished result when a sink was supplied; otherwise return the result
+	 * Attach the projected derivation to a finished result when a sink was supplied. otherwise return the result
 	 * unchanged, without a field. The one branch lives here so the geocode core carries none.
 	 */
 	attach<T extends { epistemic_status: DerivationProjection["status"]; uncertainty_m: number | null }>(

@@ -50,7 +50,7 @@ export function resolveCells(
 	let wholeRows = 0
 
 	// One group per (delineation, resolution): `compactCells` takes a single resolution, and an adaptively-indexed layer
-	// has several. Pooling them throws; compacting only the target-resolution group would silently drop every coarsened
+	// has several. Pooling them throws. compacting only the target-resolution group would silently drop every coarsened
 	// delineation's interior.
 	database.exec("BEGIN")
 

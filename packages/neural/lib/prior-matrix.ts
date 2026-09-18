@@ -6,7 +6,7 @@
  *   Shared construction for the additive emission-prior builders (`query-shape-prior.ts`,
  *   `fst-prior.ts`, `street-morphology-prior.ts`, `span-proposal-prior.ts`,
  *   `placetype-pair-prior.ts`). Every builder starts from the same all-zeros `[seqLen][numLabels]`
- *   matrix and the same label→column index; what each writes into the matrix is its own contract and
+ *   matrix and the same label→column index. what each writes into the matrix is its own contract and
  *   stays in place.
  */
 

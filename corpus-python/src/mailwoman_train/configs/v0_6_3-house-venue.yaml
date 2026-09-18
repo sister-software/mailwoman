@@ -31,7 +31,7 @@
 #      reproducibility but are inactive in v0.6.3 training.
 #
 #   4. synth-street stays at weight 0.5 (v0.6.2's value, preserved). The
-#      v0.6.2 20K eval confirmed dep_loc fix at this weight; no reason to
+#      v0.6.2 20K eval confirmed dep_loc fix at this weight. no reason to
 #      revisit.
 #
 #   5. CRF stays disabled (CE-only). The fp32-CRF diagnostic (2026-05-28)
@@ -88,7 +88,7 @@ data:
     # === v0.6.3 corpus changes ===
     # synth-street unchanged from v0.6.2 (the dep_loc fix doesn't need this dial).
     synth-street: 0.5
-    # synth-no-street-v063 at half weight (v0.6.2b's setting; better trade-off
+    # synth-no-street-v063 at half weight (v0.6.2b's setting. better trade-off
     # per the 20K diagnostic). Source name distinct from v0.6.2's
     # `synth-no-street` so the two sources coexist on the volume — the v062
     # source is intentionally omitted from source_weights → dropped per

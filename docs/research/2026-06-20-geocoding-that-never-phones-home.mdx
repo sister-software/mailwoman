@@ -14,7 +14,7 @@ That's the pitch, and it's worth being clear about why it's unusual, because the
 
 ## The three options, and what each one costs you
 
-Start with a cloud API: Google, Mapbox, here, AWS, Azure. You send the address over the wire and get coordinates back, which is fast and globally accurate and, depending on who you signed with, comes with strings. Google's terms let you cache a coordinate for thirty days, then you must delete it, so if you geocode the same ten thousand delivery addresses every morning, you pay for them every morning. AWS won't let you cache autocomplete results at all, and bills storage at a higher tier when you do cache. The address always leaves your infrastructure, which is a non-starter the moment the address is the sensitive part: a shelter, a clinic, a protected residence.
+Start with a cloud API: Google, Mapbox, here, AWS, Azure. You send the address over the wire and get coordinates back, which is fast and globally accurate and, depending on who you signed with, comes with strings. Google's terms let you cache a coordinate for thirty days, then you must delete it, so if you geocode the same ten thousand delivery addresses every morning, you pay for them every morning. AWS won't let you cache autocomplete results at all, and bills storage at a higher tier when you do cache. The address always leaves your infrastructure, which is a non-starter the moment the address is the sensitive part: a shelter, a clinic, a guarded residence.
 
 Or self-host one: Nominatim, Pelias, Photon, all real software, free, and yours. The license was never the catch; the machine room is. Nominatim wants a Postgres/PostGIS install north of a terabyte of disk and a planet import measured in days. Pelias is Elasticsearch plus five supporting services and a 450 GB index. Photon is OpenSearch and a 64 GB heap. You own your data, absolutely. Youhave to operate a search cluster to use it, and none of them run anywhere near a browser.
 
@@ -34,7 +34,7 @@ Worth dwelling on the 29.8 MB, because the comparison is stark: roughly sixty ti
 
 ## Your queries never leave, and the results are yours forever
 
-This is the part that sells itself to anyone holding addresses they can't send to a third party. There's no storage clause because there's no server: nothing to retain, nothing to delete on a thirty-day clock, nothing to leak. You geocode once and keep the coordinate as long as you like. For healthcare, for anything touching protected addresses, "the data never leaves the device" stops being a feature and becomes the entire procurement requirement.
+This is the part that sells itself to anyone holding addresses they can't send to a third party. There's no storage clause because there's no server: nothing to retain, nothing to delete on a thirty-day clock, nothing to leak. You geocode once and keep the coordinate as long as you like. For healthcare, for anything touching guarded addresses, "the data never leaves the device" stops being a feature and becomes the entire procurement requirement.
 
 I'll be fair about the boundary here: geocode.earth's hosted Pelias and Smarty both already give you generous own-your-data terms, so this argument bites hardest against the rent-and-delete crowd, Google, AWS, and here. Against them it's decisive.
 

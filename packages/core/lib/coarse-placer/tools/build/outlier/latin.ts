@@ -13,7 +13,7 @@
  *   Discipline: countries split into TRAIN (their rows feed train/val `OTHER`) and HELDOUT (rows go
  *   only to the dedicated test file), so we can measure generalization to off-map countries the
  *   model never saw — not just memorization. The in-map test.jsonl is left UNTOUCHED so the
- *   before/after in-map regression check stays clean; the Latin metric lives in its own file.
+ *   before/after in-map regression check stays clean. the Latin metric lives in its own file.
  *
  *   Run after build-dataset + the exposure outliers (it appends). Re-runnable: it rewrites the
  *   dedicated test file and appends fresh `OTHER` rows (so don't run it twice onto the same splits
@@ -68,19 +68,19 @@ export interface BuildOutlierLatinResult {
 }
 
 /**
- * Off-map (not among the trained countries) and Latin-script. TRAIN feeds the `OTHER` class; HELDOUT is test-only — the
+ * Off-map (not among the trained countries) and Latin-script. TRAIN feeds the `OTHER` class. HELDOUT is test-only — the
  * generalization probe (unseen off-map countries should still route `OTHER`). #743: PL/PT/CZ moved from `OTHER` to
  * FIRST-CLASS in-map countries (they're now in COARSE_CLASSES), so they're removed here — keeping them would feed
  * contradictory gold (the same address labelled both PL and `OTHER`). That leaves BR/MX as the Latin off-map TRAIN
  * exposure and CA/LI as the heldout probe (the hard near-twins of in-map US/DE — an honest worst case). The in-map
  * expansion itself shrinks the off-map Latin surface, and the bulk `OTHER` exposure is non-Latin (build-
- * outlier-exposure.ts), so the thinner Latin train set is acceptable; watch OTHER-Latin recall in the openset eval.
+ * outlier-exposure.ts), so the thinner Latin train set is acceptable. watch OTHER-Latin recall in the openset eval.
  */
 const TRAIN_COUNTRIES = ["BR", "MX"]
 const HELDOUT_COUNTRIES = ["CA", "LI"]
 
 /**
- * Address_levels arrives as a list (node-api) or its string repr; pull the value strings out.
+ * Address_levels arrives as a list (node-api) or its string repr. pull the value strings out.
  */
 function levelValues(al: unknown): string[] {
 	if (Array.isArray(al)) return al.flatMap((x) => (x && x.value ? [String(x.value)] : []))
@@ -183,7 +183,7 @@ export async function buildOutlierLatin(
 
 	;(duck as { disconnect?: () => void }).disconnect?.()
 
-	// Append `OTHER` rows to train/val; write the dedicated Latin off-map test file.
+	// Append `OTHER` rows to train/val. write the dedicated Latin off-map test file.
 	await appendLocalTextFile(otherRowsJSONL(trainAppend), resolvePath(dataDir, "train.jsonl"))
 	await appendLocalTextFile(otherRowsJSONL(valAppend), resolvePath(dataDir, "val.jsonl"))
 

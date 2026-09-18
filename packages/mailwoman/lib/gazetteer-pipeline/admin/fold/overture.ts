@@ -4,7 +4,7 @@
  * @author Teffen Ellis, et al.
  *
  *   Overture `divisions`-theme backfill for the admin gazetteer — the zero-WOF-repo locales
- *   (project-eu-coverage-not-retrain, widened to the 86-country set; see `../defaults.ts`). Moved from
+ *   (project-eu-coverage-not-retrain, widened to the 86-country set. see `../defaults.ts`). Moved from
  *   `scripts/build-unified-wof.ts` (#1015/#1021) into the pipeline module.
  */
 
@@ -104,7 +104,7 @@ const HEX_RADIX = 16
  * Map each Overture GERS id to a synthetic integer id, derived from the GERS id itself.
  *
  * Consumers store these ids — gold rows, cached results, cross-artifact joins — so an id has to be a function of the
- * PLACE, not of the build that emitted it. GERS ids are stable by design; parquet scan order is not, and DuckDB's is a
+ * PLACE, not of the build that emitted it. GERS ids are stable by design. parquet scan order is not, and DuckDB's is a
  * threaded read over a LEFT JOIN.
  *
  * Assignment is `idBase + (hash(gers) mod span)`. Two GERS ids can land on the same slot — at ~1.6 M rows in a 1e12

@@ -13,7 +13,7 @@
 # CORPUS: /data/corpus/versioned/v0.5.0/corpus-v0.5.0 + the synth-fr-order recipe output appended (re-emitted
 # char-offset, assembled into the MANIFEST like the v0.5.0 overlays, staged via R2 -> sync_v050).
 # KNOWN CAVEAT carried from v4.5.0: UTF-16 span offsets (#519); ~0.06% astral rows skipped at load
-# (#558 guard). Code-point re-align (corpus-v0.5.1) is DeepSeek's parallel track; does not check this.
+# (#558 guard). Code-point re-align (corpus-v0.5.1) is DeepSeek's parallel track. does not check this.
 # Launch: cd corpus-python && modal run -d -m launch.train_remote --config v1.5.0-fr-order.yaml --resume none
 data:
   corpus_dir: /data/corpus/versioned/v0.5.0/corpus-v0.5.0
@@ -39,7 +39,7 @@ data:
     synth-intersection: 1.0
     synth-german: 6.0
     # THE #560 recovery change: reversed-order (postcode-first) FR — teaches the post-postcode
-    # house_number the canonical-only BAN training never showed. First-pass weight 3.0 (moderate; the
+    # house_number the canonical-only BAN training never showed. First-pass weight 3.0 (moderate. the
     # recipe output carries both orders via --reversed-fraction, so it won't over-skew canonical FR). Bump if
     # the step-2000 eval shows insufficient reversed-FR signal.
     synth-fr-order: 3.0

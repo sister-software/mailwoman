@@ -267,7 +267,7 @@ export interface LinkageEvalRegistrant {
 
 /**
  * Fold the corpus's FRNs into registrants. Two FRNs reported under the same `bdc_provider_id` are one legal entity with
- * two registrations; scoring them as two separate ids lets the truth partition assert that one company belongs to two
+ * two registrations. scoring them as two separate ids lets the truth partition assert that one company belongs to two
  * different corporate families at once, which is not a coherent thing for a truth partition to say and makes every
  * downstream count questionable.
  *
@@ -345,7 +345,7 @@ function singletonTruthGroup(representative: FRN): string {
  * `buildFilerDatabase` itself applies, so the corpus's spelling variants collapse onto the same truth group.
  *
  * Keyed by {@link LinkageEvalRegistrant.representative}. A registrant's parent may be disclosed on any of its Form 499
- * filings or provider-list rows; all of them count. Registrants that name the same parent land in one truth group, and
+ * filings or provider-list rows. all of them count. Registrants that name the same parent land in one truth group, and
  * a registrant naming two parents transitively joins both — hence the second union-find rather than a plain map.
  *
  * `managementCompany` is not a truth family here: see the module docstring for why operational control is held apart
@@ -369,7 +369,7 @@ export function buildTruthFamilyGroups(
 	// Accumulated per REGISTRANT, never per union-find root. Keying this on the root as it stands
 	// mid-loop means a later union that re-roots the component orphans the earlier key, and the family id recorded
 	// under it silently vanishes from the label — the label being what the corpus and pairs tables publish as truth. The
-	// partition stays right either way, so no score moves; the published string is what goes wrong. Unreachable on
+	// partition stays right either way, so no score moves. the published string is what goes wrong. Unreachable on
 	// today's corpus (no registrant names two parents) and reachable the moment one does.
 	const familyIDsOfRegistrant = new Map<FRN, Set<string>>()
 

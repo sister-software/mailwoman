@@ -10,13 +10,13 @@
 import type { Exclusion } from "@mailwoman/evidence"
 
 /**
- * A street-name existence probe. Backend-agnostic; the FR instance is BAN street-centroids, a future US instance is
+ * A street-name existence probe. Backend-agnostic. the FR instance is BAN street-centroids, a future US instance is
  * TIGER, etc. (per the registry-backed-structured-prediction doctrine tiers).
  */
 export interface StreetLocalityEvidence {
 	/**
 	 * True when `streetSurface` exists as a street name — optionally scoped to a locality or postcode when the hypothesis
-	 * carries one (fragments usually don't; unscoped is the measured mode). The implementation is responsible for folding
+	 * carries one (fragments usually don't. unscoped is the measured mode). The implementation is responsible for folding
 	 * the surface with {@link foldStreetSurface} so the caller passes raw text.
 	 *
 	 * POSITIVE EVIDENCE ONLY: return `false` on any doubt — a missing index, an unsupported country, a read error — so
@@ -105,7 +105,7 @@ export function isPureTypeVocabulary(foldedSurface: string): boolean {
  */
 export interface StreetCandidate<T = unknown> {
 	/**
-	 * The candidate's street surface (raw; folded internally). Empty string = no street parsed → never the evidence pick.
+	 * The candidate's street surface (raw. folded internally). Empty string = no street parsed → never the evidence pick.
 	 */
 	streetSurface: string
 	/**
@@ -164,7 +164,7 @@ export interface StreetEvidencePick<T = unknown> {
 /**
  * The measured v2 rerank policy. Given candidates in parse-score order (rank-1 first) and an evidence probe, return the
  * first candidate whose street surface passes all of: (1) exists in the index, (2) G1 — not pure type vocabulary, (3)
- * G2 — within `marginCap` of rank-1. If none passes, return rank-1 (fail-open). Positive evidence only; the model's
+ * G2 — within `marginCap` of rank-1. If none passes, return rank-1 (fail-open). Positive evidence only. the model's
  * order is preserved among equal-evidence candidates. This is the `resolver/rerank.ts` anti-Pelias discipline applied
  * to the name signal: one bit, no blending. `opts.exclusions` adds one more bit in the same fold: a coverage-licensed
  * absence demotes its candidate behind every un-excluded sibling and never removes it.
@@ -195,7 +195,7 @@ export function pickByStreetEvidence<T>(
 		}
 	}
 
-	// An excluded candidate is considered only after every un-excluded sibling; it is never dropped.
+	// An excluded candidate is considered only after every un-excluded sibling. it is never dropped.
 	const order = demoted.length ? [...considered, ...demoted] : considered
 
 	for (const i of order) {

@@ -59,7 +59,7 @@ const LogLevelColors = {
  * stream a shell keeps apart from the data. In a browser there is one console and this is that console.
  */
 function diagnosticsSink(): Console {
-	// oxlint-disable-next-line sister-software/no-process-globals -- the stream object itself, not configuration; a browser has no `process` and falls through
+	// oxlint-disable-next-line sister-software/no-process-globals -- the stream object itself, not configuration. a browser has no `process` and falls through
 	const stderr = globalThis.process?.stderr
 
 	const ConsoleConstructor = (

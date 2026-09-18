@@ -93,7 +93,7 @@ export class Placetype implements Disposable {
 		)
 
 		for await (const _definition of batchIterator) {
-			// `parallelMap` performs registration above; its yielded definitions have no further consumer.
+			// `parallelMap` performs registration above. its yielded definitions have no further consumer.
 		}
 	}
 

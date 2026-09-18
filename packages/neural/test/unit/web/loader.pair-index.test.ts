@@ -51,7 +51,7 @@ let capturedConfig: {
 	}
 } | null = null
 
-// The real tokenizer needs a valid SentencePiece model; stub the load (we feed dummy bytes).
+// The real tokenizer needs a valid SentencePiece model. stub the load (we feed dummy bytes).
 vi.mock("@mailwoman/neural/tokenizer", async (importOriginal) => ({
 	...(await importOriginal<typeof import("@mailwoman/neural/tokenizer")>()),
 	MailwomanTokenizer: { loadFromBase64: vi.fn(async () => ({ tokenizerStub: true })) },
@@ -292,7 +292,7 @@ describe("loadNeuralClassifierFromURLs — placetype-pair index (#1278)", () => 
 
 		const wired = capturedConfig?.placetypePair?.index
 		expect(wired).toBeInstanceOf(PairIndexResolver)
-		// Both load live now — nz is no longer restricted to null; it is available for a per-parse nz pick.
+		// Both load live now — nz is no longer restricted to null. it is available for a per-parse nz pick.
 		const [gb, nz] = result.pairIndexes
 		expect(gb).toEqual({ url: GB_INDEX, country: "gb", resolver: wired })
 		expect(nz!.country).toBe("nz")

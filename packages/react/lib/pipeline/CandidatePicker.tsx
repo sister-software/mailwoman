@@ -3,8 +3,8 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   `CandidatePicker` — the ranked list of alternate gazetteer candidates; clicking one selects it.
- *   Presentational; the selected index is owned by the caller (the pipeline hook).
+ *   `CandidatePicker` — the ranked list of alternate gazetteer candidates. clicking one selects it.
+ *   Presentational. the selected index is owned by the caller (the pipeline hook).
  *
  *   The row shows the RANK, not the score. `ResolvedPlaceView.score` is implementation-defined — its own type says
  *   "callers should treat as ordinal" — and the backends do not agree on a scale: the FTS regime is a negated bm25

@@ -47,7 +47,7 @@ export interface Phase2Verdict {
 	pinDeviations: string[]
 	/**
 	 * The default-change bar rows that do not read `met`. Recorded so nobody reads this decision as authorizing a default
-	 * change; never an input.
+	 * change. never an input.
 	 */
 	defaultChangeBarUnmetRows: number[]
 	reasons: string[]

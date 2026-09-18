@@ -1,7 +1,7 @@
 # v4.13.0 — THE NULL CONTROL (#1748 / #1821)
 #
 # No added source. The v0.22.0 base corpus, unchanged, fine-tuned for the same 4,000 steps at the same
-# seed and the same EWC brake as v4.11.0. The treatment is removed; everything else is held.
+# seed and the same EWC brake as v4.11.0. The treatment is removed. everything else is held.
 #
 # WHY THIS EXISTS. Five runs varied the treatment and never measured the placebo:
 #
@@ -194,7 +194,7 @@ data:
     synth-fr-bare-street: 0.0 # SUPERSEDED (vintages must never co-feed)
     synth-fr-bare-street-v20: 0.0 # SUPERSEDED
     synth-fr-bare-street-v21: 0.0 # SUPERSEDED by -v22
-    synth-fr-bare-street-v22: 6.0 # weight held at v4.5.1's value; the v22 counter-forms are the run's one variable
+    synth-fr-bare-street-v22: 6.0 # weight held at v4.5.1's value. the v22 counter-forms are the run's one variable
     synth-si-bare-village: 12.0
     synth-no-street-led: 0.0
     synth-cz-pcfirst-preposition: 0.0 # SUPERSEDED (vintages must never co-feed)

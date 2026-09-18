@@ -8,7 +8,7 @@
  *   authority's map assigns, the product and version it was read from, and the coverage record stating
  *   that the authority made a determination there.
  *
- *   THE ROUTE READS; IT NEVER ANSWERS. It takes a finished coordinate and returns a record. Nothing here
+ *   THE ROUTE READS. IT NEVER ANSWERS. It takes a finished coordinate and returns a record. Nothing here
  *   is consulted while an answer is being chosen, no candidate is read, no result is added, removed or
  *   re-ordered, and no abstain is reached or avoided because of it. A geocode with the route configured is
  *   the same geocode plus one advisory, which is a statement about construction rather than about a
@@ -16,7 +16,7 @@
  *
  *   PRESENCE IS THE SWITCH, AND IT IS A LAYER PATH. There is no boolean: a boolean would make the caller's
  *   factory construct the reader itself and put a sealed layer open on the default construction path. A
- *   session resolves the layer path, opens it if the file is there, and hands the route in; a session that
+ *   session resolves the layer path, opens it if the file is there, and hands the route in. a session that
  *   finds no file hands in nothing and is byte-identical to one built before this route existed.
  *
  *   WHAT IT REPORTS, AND WHAT IT REFUSES TO. Three readings come out of the layer and only two of them

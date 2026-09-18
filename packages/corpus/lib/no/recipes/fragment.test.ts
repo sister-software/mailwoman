@@ -7,7 +7,7 @@
  *
  *   Two invariants, both required (the fr-fragment lesson, transplanted):
  *
- *   1. THE SPLIT with a DIACRITIC surface. The board keeps diacritics; a diacritic-stripping norm
+ *   1. THE SPLIT with a DIACRITIC surface. The board keeps diacritics. a diacritic-stripping norm
  *      would leak `Tømmerlien` silently. Pinned in both directions.
  *   2. THE COUNTER-DISTRIBUTION. Teaching bare `{street} {number}` alone lets the model flip its
  *      default from "bare -> locality" to "bare -> street", and stop emitting postcode to win the
@@ -50,7 +50,7 @@ describe("no-fragment", () => {
 	})
 
 	it("emits the SIGNAL — a street with NO postcode/locality partner", async () => {
-		// counterProb 0 so every non-reserved row is a street fragment; bareStreetProb 0 so it carries
+		// counterProb 0 so every non-reserved row is a street fragment. bareStreetProb 0 so it carries
 		// its number. The point of the recipe: the street stands alone.
 		const { rows } = await run(TUPLES, ["nonexistent-surface"], { counterProb: 0, bareProb: 0 })
 		const signal = rows.filter((r) => r.components!.street)

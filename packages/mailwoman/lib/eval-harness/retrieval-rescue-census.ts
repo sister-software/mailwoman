@@ -9,11 +9,11 @@
  *
  *   The question this measures is the next release's framing: when a parse goes wrong, how often is the right answer
  *   already on hand? `COMER parís.méxico` is the worked case both ways — the shipped model wins it because a wrong but
- *   UNRESOLVABLE parse lets the incumbent abstain and the entity layer answer; the v5-line candidates lose it because a
+ *   UNRESOLVABLE parse lets the incumbent abstain and the entity layer answer. the v5-line candidates lose it because a
  *   wrong but RESOLVABLE parse (locality "COMER" → Comer, Georgia, US) silences the same on-hand answer.
  *
  *   Classification is pure and the runner is dumb: everything here is testable without a board, and the runner only
- *   feeds it results. This census emits no verdict about any check change — it names rows; the rows then get per-row
+ *   feeds it results. This census emits no verdict about any check change — it names rows. the rows then get per-row
  *   trace reads before any decode or resolver behavior moves (the decoder-grammar contract's graduation rule).
  */
 
@@ -24,12 +24,12 @@ import { DEFAULT_TOL_M } from "#eval-harness/gauntlet/check-case"
 /**
  * The six ways a truth-graded row can relate to the answers on hand, plus the ungraded bucket.
  *
- * - `correct_as_is` — the delivered answer is inside tolerance; no rescue question arises.
+ * - `correct_as_is` — the delivered answer is inside tolerance. no rescue question arises.
  * - `entity_rescued_already` — the #1585 wire fired (the result includes `entity`) and the answer is correct: the CURRENT
  *   mechanism already performed the rescue.
- * - `rescue_available_entity` — delivered answer wrong; the unconditional fork-entity probe holds a hit inside tolerance.
+ * - `rescue_available_entity` — delivered answer wrong. the unconditional fork-entity probe holds a hit inside tolerance.
  *   The check (incumbent resolved) is what stands between the row and the right answer.
- * - `rescue_available_rank` — delivered answer wrong; a NON-WINNING entry of the resolver's own `candidates` list is
+ * - `rescue_available_rank` — delivered answer wrong. a NON-WINNING entry of the resolver's own `candidates` list is
  *   inside tolerance. The ranking, not the retrieval, lost the row.
  * - `rescue_available_both` — both of the above hold.
  * - `no_rescue_on_hand` — delivered answer wrong and neither source holds the truth: these rows need retrieval or parse

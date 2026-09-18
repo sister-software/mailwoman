@@ -23,7 +23,7 @@
  *
  *   Which floor applies depends on whether libpostal's given_names/surnames/personal_titles carry
  *   the surface. Verified against the shipped dictionaries: paris, lyon, joseph, fargo and
- *   washington are person names; rennes, belleville, smallville, minot, rutland, plainfield,
+ *   washington are person names. rennes, belleville, smallville, minot, rutland, plainfield,
  *   cheyenne and roazhon are not. Fargo is the one that surprises — it needs the 0.45 tier, which is
  *   why it is seeded at 130 k rather than something merely above 10 k.
  */
@@ -174,7 +174,7 @@ describe("locality-surface build — fixture (four laws end to end)", () => {
 		expect(surfaces.lyon).toBeDefined()
 		// A given name at ordinary-town prominence is refused — the Rue-Joseph hazard.
 		expect(surfaces.joseph).toBeUndefined()
-		// A non-name surface at comparable prominence passes; only law 2 applies to it.
+		// A non-name surface at comparable prominence passes. only law 2 applies to it.
 		expect(surfaces.rennes).toBeDefined()
 	})
 

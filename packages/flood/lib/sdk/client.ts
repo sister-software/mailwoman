@@ -160,7 +160,7 @@ export function createEAFloodClient(options: CreateFloodClientOptions = {}): EAF
 /**
  * The ONS Open Geography boundary service — where "England" comes from.
  *
- * The EA states that its mapping "covers all of England" and does not publish where England is; the national
+ * The EA states that its mapping "covers all of England" and does not publish where England is. the national
  * statistical authority does. Realizing the coverage statement therefore takes a second authority's artifact, and which
  * one it was is written into `flood_map_extent` rather than left implicit.
  */

@@ -4,7 +4,7 @@
  * @author Teffen Ellis, et al.
  *
  *   The Korean 시군구 (si / gun / gu: the second administrative tier) as the road-name address register writes them,
- *   each under its 시/도 (the first tier). 249 pairs over 226 distinct names; a compound city is
+ *   each under its 시/도 (the first tier). 249 pairs over 226 distinct names. a compound city is
  *   one name (`성남시분당구`), the way the register keys it. 세종특별자치시 has no second tier and is absent.
  *
  *   Why a register: a character model closes a `subregion` span where the training set taught it names end, and a
@@ -13,7 +13,7 @@
  *   decode-time repair in `@mailwoman/neural` extends a run to the one name the following characters spell.
  *
  *   Source: 행정안전부 (Ministry of the Interior and Safety), 도로명주소 (juso.go.kr), 공공누리 제1유형 (KOGL Type 1):
- *   attribution required; commercial use, derivatives and redistribution permitted.
+ *   attribution required. commercial use, derivatives and redistribution permitted.
  */
 
 import { completeFromRegister } from "#register-completion"

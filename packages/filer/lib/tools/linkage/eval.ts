@@ -45,7 +45,7 @@ const EVAL_VALID_FROM = "2026-01-01"
  * The `asOf` date every `filer_family` read in this eval is scoped to — a fixed constant, later than the latest
  * `lastFiledAt` in the corpus and never "today", for the same reproducibility reason as the two constants above. A
  * family membership is a temporal fact in this schema (`valid_from`/`valid_to`), so "predicted same family" is only
- * well-defined relative to a date; this is that date.
+ * well-defined relative to a date. this is that date.
  */
 const EVAL_AS_OF = "2026-06-01"
 
@@ -130,7 +130,7 @@ const OWNERSHIP_BY_RELATIONSHIP = {
 	[FilerRelationship.ParentCompany]: true,
 	[FilerRelationship.Subsidiary]: true,
 	// Identity continuity over time, not control. A supersession chain says one registration became
-	// another; scoring it as ownership would let a withheld-parent run credit itself for recovering a
+	// another. scoring it as ownership would let a withheld-parent run credit itself for recovering a
 	// family fact it never saw. Operator ruling, 2026-08-07 — see FilerRelationship.SupersededBy.
 	[FilerRelationship.SupersededBy]: false,
 } as const satisfies Record<FilerRelationship, boolean>

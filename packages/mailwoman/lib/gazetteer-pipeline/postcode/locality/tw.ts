@@ -21,7 +21,7 @@
  *       delivery-point tail below district level (and the full 3+3 file is account-conditional at
  *       fpp.post.gov.tw since 2025). A resolver that answers "which district" needs exactly the
  *       3-digit table. Queries carrying a full 3+3 code need a prefix-truncation normalization
- *       upstream (noted on #473; not this table's concern).
+ *       upstream (noted on #473. not this table's concern).
  *   - NAME-ONLY matching (the JP/KR recipe) tops out at 63% here: WOF models TW districts across
  *       `county` (direct-municipality districts), `localadmin`, and `locality`, and the `county`
  *       rows carry NO Chinese names at all (eng/fra only — verified against both admin-tw.db and
@@ -105,7 +105,7 @@ const DISTRICT_SUFFIX = /[區鄉鎮市]$/
 const COUNTY_PREFIX_LENGTH = 3
 
 /**
- * Fold the 臺/台 orthographic variants (both are current; sources disagree row-by-row).
+ * Fold the 臺/台 orthographic variants (both are current. sources disagree row-by-row).
  */
 export function normHan(s: string): string {
 	return s
@@ -152,7 +152,7 @@ export interface PostalDistrict {
 }
 
 /**
- * Parse Chunghwa Post's `行政區經緯度(toPost).xml` (data.gov.tw dataset 25489). The document is flat and regular; entries
+ * Parse Chunghwa Post's `行政區經緯度(toPost).xml` (data.gov.tw dataset 25489). The document is flat and regular. entries
  * carry 行政區名 / 3碼郵遞區號 / 中心點經度 / 中心點緯度.
  */
 export async function loadPostalDistricts(path: string): Promise<PostalDistrict[]> {
@@ -219,7 +219,7 @@ export async function loadDistrictPolygons(path: string): Promise<DivisionPolygo
 	for await (const row of JSONSpliterator.fromAsync<DivisionRow>(path)) {
 		if (row.subtype !== "locality") continue
 
-		// DuckDB's JSON writer emits ST_AsGeoJSON output as a nested JSON object; tolerate a string too.
+		// DuckDB's JSON writer emits ST_AsGeoJSON output as a nested JSON object. tolerate a string too.
 		const geometry = typeof row.geometry === "string" ? parseJSONStrict<ParsedGeometry>(row.geometry) : row.geometry
 
 		let minLon = Infinity
@@ -333,7 +333,7 @@ function loadAdminIndexes(args: { adminDB: string }) {
 		})
 	}
 
-	// Chinese name forms (zho + Han-containing und) and romanized eng variants; canonical spr.name is romanized.
+	// Chinese name forms (zho + Han-containing und) and romanized eng variants. canonical spr.name is romanized.
 	for (const row of admin
 		.prepare(
 			`SELECT n.id, n.name, n.language FROM names n JOIN spr s ON s.id = n.id
@@ -472,7 +472,7 @@ export async function buildPostcodeLocalityTW(args: PostcodeLocalityTWOptions): 
 				hanMatches(p) || (enStem.length >= MIN_ENGLISH_STEM_LENGTH && p.engNames.has(enStem))
 
 			// 1. The district polygon: name match (full Chinese form), disambiguated by whether it contains
-			//    the OFFICIAL district center (中正區 exists in both Taipei and Keelung; each official
+			//    the OFFICIAL district center (中正區 exists in both Taipei and Keelung. each official
 			//    center falls in exactly its own polygon).
 			const namesakes = polygonsByName.get(districtHan) ?? []
 
@@ -482,9 +482,9 @@ export async function buildPostcodeLocalityTW(args: PostcodeLocalityTWOptions): 
 					: namesakes.find((p) => geometryContains(p.geometry, d.lon, d.lat) === true)
 
 			// 2. The WOF row, tiered:
-			//    a. district-tier (county/localadmin) point inside the polygon — real containment;
+			//    a. district-tier (county/localadmin) point inside the polygon — real containment.
 			//    b. wikidata concordance (division.wikidata ↔ WOF wd:id) — identity survives a sloppy WOF
-			//       point that fell outside its own polygon;
+			//       point that fell outside its own polygon.
 			//    c. Chinese-name match inside the polygon (locality/neighbourhood tiers);
 			//    d. no-polygon fallback: JP/KR-style authoritative-name + proximity net.
 			let hit: { d: number; place: AdminPlace } | undefined
@@ -511,7 +511,7 @@ export async function buildPostcodeLocalityTW(args: PostcodeLocalityTWOptions): 
 				// dropped eval PIP 86.4→85.2% (2026-07-02, n=3000 seed 42), because WOF's TW wd
 				// concordances are themselves misattached (890468273 "Zhongzheng Qu" carries KEELUNG's
 				// Q712871 while its point sits in Taipei). A point inside the polygon is at least
-				// coordinate-correct; a wrong-side concordance is wrong everywhere.
+				// coordinate-correct. a wrong-side concordance is wrong everywhere.
 				hit =
 					inside.find((c) => DISTRICT_TIER.has(c.place.placetype) && nameMatches(c.place)) ??
 					inside.find((c) => DISTRICT_TIER.has(c.place.placetype))

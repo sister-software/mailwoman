@@ -4,7 +4,7 @@
  * @author Teffen Ellis, et al.
  *
  *   The freshness contract between the committed corpus (`cases/<cc>/*.jsonl`) and its built artifact
- *   (`$MAILWOMAN_DATA_ROOT/gauntlet/regression.db`). The builder STAMPS what it wrote; every runner that
+ *   (`$MAILWOMAN_DATA_ROOT/gauntlet/regression.db`). The builder STAMPS what it wrote. every runner that
  *   grades against the DB REFUSES when the stamp disagrees with the corpus on disk right now.
  *
  *   MEASURED FAILURE, 2026-08-06: `eval gauntlet-build regression-db` was run from a compiled tree whose

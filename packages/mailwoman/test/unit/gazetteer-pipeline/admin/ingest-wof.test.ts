@@ -6,7 +6,7 @@
  *   The #1726 centroid pin: the WOF ingest prefers the label centroid over the math centroid, and never mixes the two.
  *
  *   The math centroid is wrong exactly where a point matters most — a multipolygon spanning overseas territories pulls
- *   it off the mainland (France's `geom:` point is 42.19, -2.74, inside Spain; its `lbl:` point is 46.71, 2.46,
+ *   it off the mainland (France's `geom:` point is 42.19, -2.74, inside Spain. its `lbl:` point is 46.71, 2.46,
  *   metropolitan France). Both fixtures below are shaped from that real record.
  */
 

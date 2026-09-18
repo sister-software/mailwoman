@@ -115,7 +115,7 @@ def train(input_path: Path, output_dir: Path, version: str) -> dict[str, Any]:
     output_dir.mkdir(parents=True, exist_ok=True)
     model_prefix = output_dir / "tokenizer"
 
-    # SentencePiece's trainer is one big native call; it streams the input file
+    # SentencePiece's trainer is one big native call. it streams the input file
     # internally so we don't need to load it.
     spm.SentencePieceTrainer.train(
         input=str(input_path),
@@ -124,13 +124,13 @@ def train(input_path: Path, output_dir: Path, version: str) -> dict[str, Any]:
         character_coverage=CHARACTER_COVERAGE,
         model_type=MODEL_TYPE,
         byte_fallback=BYTE_FALLBACK,
-        # Pad / unk / bos / eos are reserved at the small ids; the rest is unigram.
+        # Pad / unk / bos / eos are reserved at the small ids. the rest is unigram.
         pad_id=0,
         unk_id=1,
         bos_id=2,
         eos_id=3,
         # Reserve a generous user_defined symbol pool for BIO labels' surface forms
-        # if a future iteration wants them as atoms; harmless if unused.
+        # if a future iteration wants them as atoms. harmless if unused.
         user_defined_symbols=[],
     )
 
@@ -180,7 +180,7 @@ def main() -> int:
 
     source = args.input
     if source is None:
-        # SentencePiece's trainer takes a file path; if reading stdin, materialize.
+        # SentencePiece's trainer takes a file path. if reading stdin, materialize.
         with tempfile.NamedTemporaryFile("w", suffix=".txt", delete=False, encoding="utf-8") as tmp:
             tmp_path = Path(tmp.name)
             for line in iter_lines(None):

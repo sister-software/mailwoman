@@ -167,7 +167,7 @@ describe("localeScopeCheck", () => {
 	})
 
 	it("reports a protection for a country tier 1 already protects", async () => {
-		// Two sources for one fact is what the register replaced; reproducing it inside the register is the same defect
+		// Two sources for one fact is what the register replaced. reproducing it inside the register is the same defect
 		// one file further in.
 		const context = await plant({
 			scope: { ...REGISTER_MATCHING_THE_ROWS, dRuleProtected: { US: "belt and braces" } },

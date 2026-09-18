@@ -241,7 +241,7 @@ function renderCountry(
 
 // ── Homograph contrast (the model-first addition) ───────────────────────────────────────────────
 // True country-name homographs: the surface form is both a country and a US state/locality. Rendering
-// each both ways (foreign-city → country; US-ZIP → region/locality) is what teaches the CONTEXTUAL
+// each both ways (foreign-city → country. US-ZIP → region/locality) is what teaches the CONTEXTUAL
 // distinction. role: how the surface reads in US context.
 interface Homograph {
 	surface: string
@@ -420,7 +420,7 @@ export const countryBalancedRecipe: CorpusRecipe = {
 		const random = makeMulberry32(opts.seed)
 		const source = opts.sourceName ?? "synth-country"
 		const sources = opts.golden ? EVAL_SOURCES : SOURCES
-		const perSource = Math.ceil((count * 3) / sources.length) // over-read; balance locales
+		const perSource = Math.ceil((count * 3) / sources.length) // over-read. balance locales
 
 		const pool: CountryTuple[] = []
 

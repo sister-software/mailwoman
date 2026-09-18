@@ -4,7 +4,7 @@
  * @author Teffen Ellis, et al.
  *
  *   The LOCALE FRAGMENT BOARD — targeted failure classes with confidence intervals (#727 stage-2,
- *   Tier 1c). The second of the two standing boards; the first is the global parity floor
+ *   Tier 1c). The second of the two standing boards. the first is the global parity floor
  *   (`parity-corpus.ts`, broad, "do no harm").
  *
  *   A change ships when board 1 HOLDS and board 2 MOVES. Neither is a verdict alone. The span-head
@@ -72,7 +72,7 @@ export async function runFragmentBoard(options: FragmentBoardOptions = {}): Prom
 				`\nFR locale fragment board — ${fixtureCount} fixtures, BAN (Tier A), production config`,
 				`95% Wilson intervals. bare-locality scores the ABSENCE of a street (the hallucination class).\n`,
 			],
-			// hit = the scored assertion held. For positive classes that is street exact-match; for the
+			// hit = the scored assertion held. For positive classes that is street exact-match. for the
 			// negative class it is the ABSENCE of a street.
 			grade: (fixture, nodes) => {
 				const street = nodes

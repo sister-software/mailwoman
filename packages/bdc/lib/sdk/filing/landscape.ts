@@ -4,7 +4,7 @@
  * @author Teffen Ellis, et al.
  *
  *   `filing_landscape` reader — the FOUR PRE-REGISTERED ACCEPTANCE CRITERIA this whole phase
- *   is judged by. See `filing-landscape.test.ts` for the criterion tests; this module is only the reader.
+ *   is judged by. See `filing-landscape.test.ts` for the criterion tests. this module is only the reader.
  *
  *   Coverage check (the meaning-of-zero rule): a queried block counts as surveyed only when its res-6
  *   coverage cell is present in `layer_coverage` (via `readLayerCoverage`) — `undefined` means the area
@@ -149,7 +149,7 @@ export function res9ShortCellToRes6Parent(h3CellShortInt: number): number {
 
 /**
  * Read the provider/technology/speed-bucket filing census over a set of queried blocks (by `geoid` or by `h3Cell`,
- * never both). Always vintage-stamped; always throws on a broken manifest rather than answering unstamped; a queried
+ * never both). Always vintage-stamped. always throws on a broken manifest rather than answering unstamped. a queried
  * block with no coverage evidence is reported in `unknown_block_count` and never folded into a zero-filing claim.
  */
 export async function filingLandscape(

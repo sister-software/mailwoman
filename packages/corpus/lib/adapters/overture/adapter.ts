@@ -5,7 +5,7 @@
  *
  *   `overture`: Overture Maps Addresses adapter (epic #470 — the conditional corpus adapter, realized
  *   2026-06-20). Overture's global Addresses theme is the single-schema, well-normalized address
- *   dataset that fixes OpenAddresses' per-country patchiness (OA dropped Spain; OA-DE omits the
+ *   dataset that fixes OpenAddresses' per-country patchiness (OA dropped Spain. OA-DE omits the
  *   Bundesland) — it even re-hosts the OA Spain data the standalone OA bucket no longer serves.
  *
  *   This adapter consumes a per-country LINE-DELIMITED JSON dump of the corpus-relevant fields (`{
@@ -22,7 +22,7 @@
  *   measured loc-correct ES 21% / IT 59% / NL 64% vs FR/US ~98%).
  *
  *   `--country` is required (the JSONL is per-country and the rows omit a country field), matching
- *   `openaddresses`. License is Overture's CDLA-Permissive-2.0 (attribution; not share-alike).
+ *   `openaddresses`. License is Overture's CDLA-Permissive-2.0 (attribution. not share-alike).
  *
  *   | Field | ComponentTag | | --------- | ---------------------------------------------- | |
  *   `street` | `street` (keyword incl.; affix-relabel splits prefix) | | `number` | `house_number`
@@ -63,9 +63,9 @@ interface OvertureCorpusRow {
  * Whether an Overture `unit` value is a secondary-unit designator — something with a digit in it, or one bare word
  * (`EG`, `Penthouse`) — rather than a name. Overture-SG writes the ESTATE or BUILDING name in this field (91,818 of
  * 142,210 rows carry a multi-word name such as `SERANGOON GARDEN ESTATE`) and the literal `NIL` on 47,407 more, where
- * every other country's rows carry a digit-containing unit or nothing (DE 3,084 digit-containing of 40,837 non-empty;
+ * every other country's rows carry a digit-containing unit or nothing (DE 3,084 digit-containing of 40,837 non-empty.
  * NL and ES none name-shaped). A name taught as `unit` teaches that a trailing proper name is one, which is the shape
- * of the `#NNN`-unit defect the corpus exists to cure. Such a value is dropped here; a register recipe that wants the
+ * of the `#NNN`-unit defect the corpus exists to fix. Such a value is dropped here. a register recipe that wants the
  * building name as a `venue` reads the JSONL itself.
  */
 export function unitFieldIsDesignator(value: string): boolean {

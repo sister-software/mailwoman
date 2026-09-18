@@ -35,7 +35,7 @@ def _overlay_files(versioned: str, corpus: str) -> dict[str, bool]:
 
 
 def _contains(path: str, marker: str) -> bool:
-    """Whether a synced file holds a marker. A path check answers that the file arrived; this
+    """Whether a synced file holds a marker. A path check answers that the file arrived. this
     answers that the file that arrived is the one the recipe needs."""
     if not os.path.isfile(path):
         return False

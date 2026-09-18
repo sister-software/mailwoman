@@ -27,7 +27,7 @@
  *       importance build), so a delta there mixes the policy with a gazetteer generation.
  *
  *   The two binaries are otherwise identical builds — same `stateCount` (160,246), `placeCount`
- *   (236,257), `nameInsertions` (274,245), same exclusion policy. The trie is the same trie; only the
+ *   (236,257), `nameInsertions` (274,245), same exclusion policy. The trie is the same trie. only the
  *   importance floats differ. That is what makes this a single-variable ablation rather than a build diff.
  *
  *   WHY THIS RUNNER EXISTS AT ALL — the FST's reach is narrower than it looks. `eval oa-resolver`
@@ -40,9 +40,9 @@
  *   GRADING. Per row, both halves are reported because they fail differently:
  *
  *   1. `coord` — the resolved most-specific point within the row's DECLARED tolerance. A row with no
- *        coordinate is not graded here and is not counted as a miss; absence is absence.
+ *        coordinate is not graded here and is not counted as a miss. absence is absence.
  *   2. `place` — `expectPlaceID` / `expectPlaceName` when asserted. ROAD_TO_V9 §6 I2 records that the
- *        gauntlet stores these and never checks them; this board checks them, so a right-coordinate /
+ *        gauntlet stores these and never checks them. this board checks them, so a right-coordinate /
  *        wrong-place answer (a namesake landing inside a metro tolerance) is visible rather than credited.
  *
  *   Usage: node packages/mailwoman/lib/dev-tools/score/hard-case-board.run.ts [--arms none,pop,imp] [--out-json <p>]
@@ -111,7 +111,7 @@ for (const locale of locales) {
 }
 
 /**
- * `arm → locale → pipeline`. The FST is chosen per (arm, locale) because `fst-<locale>.bin` is country-scoped; a locale
+ * `arm → locale → pipeline`. The FST is chosen per (arm, locale) because `fst-<locale>.bin` is country-scoped. a locale
  * with no binary in an arm's dir gets `false`, which is the same state as the `none` arm for that locale — recorded
  * rather than papered over, since it is why an out-of-reach row cannot discriminate.
  */

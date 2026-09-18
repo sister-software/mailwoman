@@ -49,7 +49,7 @@ test("expandH3Cell: round-trips a cell whose base cell zeroes the leading nibble
 	expect(expandH3Cell(shortenH3Cell(cell), 15)).toBe(cell)
 })
 
-// A short cell derived from an integer key has lost its leading zeros; expansion has to restore them
+// A short cell derived from an integer key has lost its leading zeros. expansion has to restore them
 // rather than shift the digit path.
 test("expandH3Cell: accepts an unpadded short cell recovered from its integer form", () => {
 	const cell = latLngToCell(64.3025, 135.29175, 15) as H3Cell

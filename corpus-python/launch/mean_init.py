@@ -3,7 +3,7 @@
     modal run -m launch.train_remote::mean_init --splice ptro
 
 Thin by design, the way `syncs.py` is thin over `corpora.py`. The values live in `splices.py`, which
-imports no Modal and is therefore testable without the SDK; this supplies the volume, the image, and
+imports no Modal and is therefore testable without the SDK. this supplies the volume, the image, and
 the refusal when a result does not match what the table recorded.
 """
 

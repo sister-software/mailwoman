@@ -235,11 +235,11 @@ async function checkMCPBin(projDir: string, timeoutMs = 30_000): Promise<number>
 		stderr += d.toString()
 	})
 
-	// A never-started child (ENOENT — the bin wasn't shipped) or a dead one produces EPIPE on write; swallow it so
+	// A never-started child (ENOENT — the bin wasn't shipped) or a dead one produces EPIPE on write. swallow it so
 	// the real failure surfaces via the `error`/`exit` events below, not an uncaught stream error.
 	child.stdin.on("error", () => {})
 
-	// Parse newline-delimited JSON-RPC frames off stdout; resolve a waiter when its id's response lands.
+	// Parse newline-delimited JSON-RPC frames off stdout. resolve a waiter when its id's response lands.
 	let buffer = ""
 	const responses = new Map<number, { id: number; result?: { tools?: unknown[] }; error?: unknown }>()
 	const waiters = new Map<number, (msg: { result?: { tools?: unknown[] }; error?: unknown }) => void>()
@@ -345,7 +345,7 @@ async function checkMCPBin(projDir: string, timeoutMs = 30_000): Promise<number>
 			)
 		}
 
-		// Clean shutdown: closing stdin ends the stdio transport; the process (lazy deps, nothing loaded) must exit 0.
+		// Clean shutdown: closing stdin ends the stdio transport. the process (lazy deps, nothing loaded) must exit 0.
 		child.stdin.end()
 		let shutdownTimer: NodeJS.Timeout | undefined
 

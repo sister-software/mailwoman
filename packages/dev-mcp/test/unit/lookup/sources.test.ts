@@ -221,7 +221,7 @@ describe("lookupCandidate", () => {
 
 	it("restricts the qualifier-strip retry to primary rows, as the runtime does", async () => {
 		// #1626: an alias-keyed stripped hit is a scrape. `hart` carries a primary Hart and an alias row for
-		// Hyattsville; only the first may answer a stripped probe.
+		// Hyattsville. only the first may answer a stripped probe.
 		const db = await candidateFixture()
 		const [row] = lookupCandidate(db, ["Hart b.Graz"])
 

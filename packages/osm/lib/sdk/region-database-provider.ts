@@ -49,7 +49,7 @@ export class OSMRegionDatabaseProvider implements Disposable {
 
 	/**
 	 * Construct a provider and warm its existence map before answering. The constructor cannot await the probe, so this
-	 * static factory does; a caller that constructs directly must {@linkcode warm} before the first `for`.
+	 * static factory does. a caller that constructs directly must {@linkcode warm} before the first `for`.
 	 */
 	static async create(dataRoot: string): Promise<OSMRegionDatabaseProvider> {
 		const provider = new OSMRegionDatabaseProvider(dataRoot)

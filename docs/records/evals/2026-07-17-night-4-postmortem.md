@@ -4,7 +4,7 @@ Living document — sketched during the shift, finalized at hand-off.
 
 ## Shift charter
 
-Operator handoff 04:36 UTC: B1 (#727 stage-2 k-best, plan #1134) as the main arc (protected lane,
+Operator handoff 04:36 UTC: B1 (#727 stage-2 k-best, plan #1134) as the main arc (guarded lane,
 night 1), P1 (locality name-index #30) as a parallel agent. Publish + train authorized. Context
 coming in: v6.5.0 shipped this morning; the v1 rules parser deleted this evening (#1151, seal tag
 `legacy-rules-final`); the swap check runs on coordinate acceptability + the two-guard plausibility

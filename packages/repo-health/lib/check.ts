@@ -27,7 +27,7 @@ export type DiagnosticSeverity = (typeof DiagnosticSeverity)[keyof typeof Diagno
 export interface Diagnostic {
 	severity: DiagnosticSeverity
 	/**
-	 * One sentence a reader can act on; the file and line, when there is one, come separately.
+	 * One sentence a reader can act on. the file and line, when there is one, come separately.
 	 */
 	message: string
 	file?: string

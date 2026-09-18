@@ -59,7 +59,7 @@ export interface GauntletDeps extends Disposable {
 	 *
 	 * A base-only pass is not evidence that the production path passes — the overlay supplies the pair index and the
 	 * dependent-locality prior, so it changes the parse. A caller that turns a passing row into a durable claim, such as
-	 * the regression layer's promote suggestion, must ask this first and withhold the claim when it answers true;
+	 * the regression layer's promote suggestion, must ask this first and withhold the claim when it answers true.
 	 * otherwise a cache missing one package writes a base-only result into the board as a regression guard (#2223).
 	 *
 	 * Answers for the state AT CALL TIME. Overlays load lazily on the first row of their country, so ask after grading
@@ -139,7 +139,7 @@ export interface GauntletResolverPins {
 	/**
 	 * #1717 stage 2 — the admin-containment re-rank: a parsed region qualifier participates in locality-candidate
 	 * selection through the candidate gazetteer's ancestors sidecar. Library default off (D-rule), so the `true` pin is
-	 * the one that carries evidence today; the `false` pin grades the production default explicitly.
+	 * the one that carries evidence today. the `false` pin grades the production default explicitly.
 	 */
 	adminContainmentRerank?: boolean
 	/**
@@ -211,7 +211,7 @@ export function resolverPinDeps(pins: GauntletResolverPins | undefined): {
  * indistinguishable is not evidence about the pin.
  */
 export function describeResolverPins(pins: GauntletResolverPins | undefined): string {
-	// `resolverPinDeps` is pure and so cannot see the artifact-carrying pins; describing only what it returns is how
+	// `resolverPinDeps` is pure and so cannot see the artifact-carrying pins. describing only what it returns is how
 	// a pinned run prints as "production defaults" and two different configurations produce identical pin logs. That
 	// is precisely the failure this surface exists to prevent, so every pin is named here, not just the boolean ones.
 	// A non-boolean pin prints its VALUE. `spanRescoreWeakResolution` has three of them and they grade different
@@ -249,14 +249,14 @@ export interface GauntletGeocodeOpts {
 	defaultCountry?: string
 	/**
 	 * The case's country (ISO-3166 alpha-2) — selects the per-locale weights OVERLAY the classifier loads with (GB →
-	 * en-GB's pair-index, NZ → en-NZ's). Production routes by locale-hint; a harness that grades every row through the
+	 * en-GB's pair-index, NZ → en-NZ's). Production routes by locale-hint. a harness that grades every row through the
 	 * bare en-US package silently drops the deploc prior (caught 2026-08-01: 53 operator probes read "dependent_locality
 	 * never emitted" when the MECHANISM was fine and the INSTRUMENT was base-only). Absent → en-US.
 	 */
 	caseCountry?: string
 	/**
 	 * #1585 — the locale hint's country for the typo-fuzzy tier (geocodeAddress's `fuzzyCountryScope`). The runner
-	 * derives it from a row's `locale` field; forwarded verbatim like `defaultCountry`.
+	 * derives it from a row's `locale` field. forwarded verbatim like `defaultCountry`.
 	 */
 	fuzzyCountryScope?: string
 }
@@ -265,7 +265,7 @@ export interface GauntletGeocodeOpts {
  * #1024 drift guard: the materialized model the check is about to grade must match the en-us model-card's
  * `files_md5["model.onnx"]` — the card (source of truth) and `release.config.json` (what copy-weights.ts materializes
  * from) drifted once and the superseded model shipped past a silent check. Throws loudly on mismatch so the release
- * before:release step (RELEASING.md) blocks the ship. Only the shipped default is checked; a `--candidate` run grades a
+ * before:release step (RELEASING.md) blocks the ship. Only the shipped default is checked. a `--candidate` run grades a
  * different artifact by design. Soft-returns when the card / field is absent (a card-format problem is not this guard's
  * job) — the model file itself is always present here (the caller `existsSync`-conditional it).
  *
@@ -313,7 +313,7 @@ async function assertShippedModelMatchesCard(materializedMd5: string): Promise<v
  *
  * EXPECTATIONS COME FROM EACH PACKAGE'S OWN CARD (`files.postcode_anchor`), never from a list kept here. en-gb
  * deliberately ships no binary under the #1476 mitigation until the A4 assembly lands, and en-nz has no WOF NZ postcode
- * database to build one from; a hardcoded list would call both of those supported states broken, and would need editing
+ * database to build one from. a hardcoded list would call both of those supported states broken, and would need editing
  * every time a locale's posture changed — which is the same drift the card exists to prevent.
  *
  * A package that does not RESOLVE at all is not this guard's business: that is `classifierFor`'s loud base-only
@@ -357,7 +357,7 @@ export async function assertDeclaredAnchorBins(locales: readonly string[], cache
 
 /**
  * Build the geocode deps. `modelPath` swaps only the ONNX (same tokenizer/card/anchor/gazetteer soft-feed), so the
- * held-out check can grade a candidate against production fairly; omit it for the shipped default.
+ * held-out check can grade a candidate against production fairly. omit it for the shipped default.
  *
  * `tokenizerPath` (+ optional `modelCardPath`) additionally swaps the VOCAB — required to grade a tokenizer-SPLICE
  * candidate (#444/#884/#912), whose model has extra embedding rows a plain `modelPath` swap can never exercise (the
@@ -440,7 +440,7 @@ export async function buildGauntletDeps(opts: GauntletDepsOptions = {}): Promise
 
 	// Per-country overlay classifiers (2026-08-01): a case's country selects the weights OVERLAY so
 	// GB rows grade with en-GB's pair-index + transition-beta exactly as production's locale-hint
-	// routes them. Lazy + memoized; a missing overlay package (e.g. a candidate weights-cache built
+	// routes them. Lazy + memoized. a missing overlay package (e.g. a candidate weights-cache built
 	// without neural-weights-en-gb) falls back to the base classifier with one loud warning per
 	// locale — base-only grading must never be silent again (the meaning-of-zero rule).
 	// Every locale that ships its own weights overlay belongs here. A case whose country is absent grades through the
@@ -525,8 +525,8 @@ export async function buildGauntletDeps(opts: GauntletDepsOptions = {}): Promise
 
 	// #1880 — artifact-carrying pin (see GauntletResolverPins.capitalTier): the reference loads here
 	// and becomes the per-candidate capitalLevel closure, exactly as `createGeocodeSession` builds it.
-	// The tri-state mirrors the session: `false` pins the off arm; explicit `true` demands the
-	// reference; unset follows the default, which is on, and degrades on a reference-less artifact.
+	// The tri-state mirrors the session: `false` pins the off arm. explicit `true` demands the
+	// reference. unset follows the default, which is on, and degrades on a reference-less artifact.
 	const capitalIndex =
 		opts.pins?.capitalTier === false
 			? undefined
@@ -622,7 +622,7 @@ export async function buildGauntletDeps(opts: GauntletDepsOptions = {}): Promise
 	console.error(`[gauntlet] ${describeResolverPins(opts.pins)}`)
 
 	// The fork→entity probe's two signals — both or neither, tolerate-and-degrade like every optional
-	// artifact (a machine without poi.db grades the incumbent behavior; the fork-entity board rows are
+	// artifact (a machine without poi.db grades the incumbent behavior. the fork-entity board rows are
 	// improvement_target until it is present). Mirrors the CLI's wiring exactly, so the board grades
 	// what production runs.
 	let forkEntityDeps: Pick<GeocodeDeps, "poiLookup" | "isStreetGeneric"> = {}

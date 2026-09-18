@@ -7,7 +7,7 @@
  *
  *   The check's value is that it compares two verdicts rather than a file against itself, and its own logic
  *   is what decides which of three outcomes a point gets. A live run can only show that today's numbers
- *   came out; these cases show that a disagreement is reported as one, that a near-boundary difference is
+ *   came out. these cases show that a disagreement is reported as one, that a near-boundary difference is
  *   attributed to the channels rather than to the conversion, and — the half that matters most — that the
  *   negative check fails loudly on an artifact that would answer Zone 1 outside England.
  */
@@ -131,7 +131,7 @@ describe("verifyFloodDatabase", () => {
 	})
 
 	it("reports a containing polygon with no zone label as service_unlabelled, never as agreement", async () => {
-		// The artifact reads FZ3 here; the service's polygon contains the point and says nothing. Reading that as `null`
+		// The artifact reads FZ3 here. the service's polygon contains the point and says nothing. Reading that as `null`
 		// would let it agree with an absence reading elsewhere, which is the manufactured Zone 1 the contract forbids.
 		const result = await verifyFloodDatabase({
 			databasePath,

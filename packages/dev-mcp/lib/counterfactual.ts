@@ -11,7 +11,7 @@
  *   cannot attribute the change to either.
  *
  *   The setting space is fixed and enumerated here rather than derived from `EngineConfig`. Every setting in that
- *   interface is flippable in principle; these five are the ones whose flip is cheap (no second gazetteer, no second
+ *   interface is flippable in principle. these five are the ones whose flip is cheap (no second gazetteer, no second
  *   model) and whose meaning is stateable in one sentence. A setting that cannot apply to a row is reported as SKIPPED
  *   with its reason, never omitted — an absent setting and a setting that changed nothing are different facts.
  *
@@ -71,7 +71,7 @@ let overlayLocaleCache: Map<string, string> | null = null
  * Country (ISO alpha-2, upper) → the canonical locale tag of the weights overlay that scopes it.
  *
  * Derived from each overlay's own REGION SUBTAG, which is what makes this a derivation rather than a second table:
- * `en-gb` scopes GB because that is what the tag says. A country with two overlays would keep the first listed; none
+ * `en-gb` scopes GB because that is what the tag says. A country with two overlays would keep the first listed. none
  * exists today, and the manifest is the place that would have to decide.
  */
 async function overlayLocaleByCountry(): Promise<Map<string, string>> {

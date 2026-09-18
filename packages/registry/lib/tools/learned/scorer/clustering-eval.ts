@@ -15,7 +15,7 @@
  *   3. Cluster the EVAL records three ways via the same `resolveEntities` pipeline (block → score →
  *        connected-components) — once with the FS baseline, once with the GBT as the link scorer
  *        (the new `ResolveConfig.scorer` hook), once with the LR. Sweep the link threshold for
- *        each; take best F1.
+ *        each. take best F1.
  *   4. Report the eval clustering F1 (the dedup benchmark's metric): does the learned scorer beat the FS
  *        baseline on the ASSEMBLED output, not just pairwise ranking?
  *
@@ -129,7 +129,7 @@ export async function scorerClusteringEval(
 	const geocoder = await options.createGeocoder()
 
 	// `auth`/`taxonomy` ride as attributes so the SHARED featurizer's #625 roll-up features can read the
-	// authorized official; the FS arm ignores them (no discriminators configured).
+	// authorized official. the FS arm ignores them (no discriminators configured).
 	const mapping: ColumnMapping = {
 		id: "npi",
 		name: "name",
@@ -166,7 +166,7 @@ export async function scorerClusteringEval(
 	/**
 	 * One held-out-NPI split: train the GBT + LR on TRAIN pairs, then cluster the EVAL records three ways (FS baseline,
 	 * GBT scorer, LR scorer) through the same `resolveEntities` pipeline, sweeping the link threshold finely for each and
-	 * taking best F1. The geocode is shared across seeds; only the split, the trained scorers, and the eval subset move
+	 * taking best F1. The geocode is shared across seeds. only the split, the trained scorers, and the eval subset move
 	 * with the seed.
 	 */
 	function runSeed(seed: number): SeedResult {

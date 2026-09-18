@@ -68,7 +68,7 @@ export function componentOf(r: GauntletResult, key: string): string | null {
  * Latin/Cyrillic — the pair the Mongolian rows are written in — is the case this exists for.
  *
  * Anything not listed collapses to `"other"`: an unlisted script still forms one run, so a value written in it is never
- * shredded, it only cannot be told apart from another unlisted script. Adding a family here is safe; the only effect is
+ * shredded, it only cannot be told apart from another unlisted script. Adding a family here is safe. the only effect is
  * that two renderings previously fused into one `"other"` run become two.
  */
 const SCRIPT_FAMILIES: ReadonlyArray<readonly [string, RegExp]> = [
@@ -103,7 +103,7 @@ function scriptFamilyOf(char: string): string | null {
  * The dual-script rows (`mn-ws-gandantegchinlen-dual-script` and its siblings) carry the same address twice — a
  * Cyrillic/Mongolian rendering and a Latin/English one, slash-joined — so a parse that correctly tags both produces one
  * span holding both. Each maximal run of one script family, with the neutral characters BETWEEN two letters of that
- * family absorbed into it, is one rendering; the neutrals that sit at a family BOUNDARY are the joiner and belong to
+ * family absorbed into it, is one rendering. the neutrals that sit at a family BOUNDARY are the joiner and belong to
  * neither (`" / "`, `", "`, `" — "` all fall out the same way).
  *
  * A mono-script value yields exactly one rendering — the value itself, minus any leading/trailing non-letters — so it
@@ -193,7 +193,7 @@ function resolvedPlace(r: GauntletResult): GauntletResult["hierarchy"][number] |
 }
 
 /**
- * Assert one assembled result against its stored case; returns the mismatches (empty = the case passes).
+ * Assert one assembled result against its stored case. returns the mismatches (empty = the case passes).
  *
  * Four independent checks, all opt-in per row — a null column asserts nothing:
  *
@@ -217,7 +217,7 @@ export function checkCase(c: GauntletCaseTable, r: GauntletResult): string[] {
 	const issues: string[] = []
 
 	// The ABSTAIN contract (#1585): the row's expected outcome is no coordinate, so the grade inverts —
-	// any resolved coordinate fails it. Mutually exclusive with a pinned coordinate; a row carrying both
+	// any resolved coordinate fails it. Mutually exclusive with a pinned coordinate. a row carrying both
 	// is an authoring bug that must be loud, not a precedence question.
 	if (c.expect_abstain) {
 		if (c.expect_lat != null || c.expect_lon != null) {

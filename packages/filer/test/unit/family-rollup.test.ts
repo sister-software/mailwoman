@@ -92,7 +92,7 @@ async function seedManifest(
 
 const FAMILY_ID = "holding_company_name:bigco-inc"
 // The company node whose raw spelling produced FAMILY_ID (`filer_family.naming_node_id`).
-// These reader-contract fixtures write no matching `filer_edge`, so their `display_names` are `[]` either way;
+// These reader-contract fixtures write no matching `filer_edge`, so their `display_names` are `[]` either way.
 // the column is NOT NULL, so a value is still required on every insert.
 const NAMING_NODE_BIGCO = `${FilerIdentifierType.HoldingCompanyName}:BigCo Inc`
 const FRN_A = "frn:0001111111"
@@ -408,7 +408,7 @@ describe("familyRollup — general reader contract", () => {
 	 * These fixtures are hand-written (nodes, edges and family rows inserted directly) and each asserts a spelling the
 	 * reader must surface. They are not independent of the real canonicalizer, and deliberately so — `FAMILY_ID_SOLO` and
 	 * the multi-spelling pair below are minted through the real `mintFamilyID`, because made-up `family_id` constants
-	 * round-trip through a wrong join and hide the cross-family leak. What each test PROVES is the reader's join; what
+	 * round-trip through a wrong join and hide the cross-family leak. What each test PROVES is the reader's join. what
 	 * the real `mintFamilyID` calls establish is that the fixture's premise (these two spellings really do land in one
 	 * family) holds for real rather than by assumption. The end-to-end builder versions live in `filer-lookup.test.ts`.
 	 */
@@ -754,7 +754,7 @@ describe("familyRollup — general reader contract", () => {
 		/**
 		 * "Documented relationships only". `readFamilyDisplayNames` filters the naming edge to `assertion:
 		 * "authoritative"`. Nothing in the pipeline emits an inferred holding-/management-company edge today —
-		 * `cluster-filers.ts` writes `SameEntity` and nothing else — so this cannot be produced through the real builder;
+		 * `cluster-filers.ts` writes `SameEntity` and nothing else — so this cannot be produced through the real builder.
 		 * it is constructible only by hand, as here. The predicate is there because a `display_names` entry is presented as
 		 * a name this family's members actually REPORTED. Surfacing one recovered from a matcher's guess would restate that
 		 * guess as a filing, which is the same category of error as 3a's inferred/authoritative conflation — the reason

@@ -50,17 +50,17 @@ def to_config_dict(model: MailwomanCoarseEncoder) -> dict[str, Any]:
             if isinstance(model.class_weights, torch.Tensor)
             else None
         ),
-        # v0.5.0 thread C: phrase-prior conditioning. False on v0.4.0/v0.3.0 weights;
+        # v0.5.0 thread C: phrase-prior conditioning. False on v0.4.0/v0.3.0 weights.
         # True on v0.5.0+. Loaders branch on this flag to materialize the
         # ``phrase_input_projection`` layer.
         "use_phrase_priors": bool(model.use_phrase_priors),
         "phrase_feature_dim": int(model.phrase_feature_dim),
-        # PR3 self-conditioning. False/0 on pre-PR3 weights; loaders branch on the flag to
+        # PR3 self-conditioning. False/0 on pre-PR3 weights. loaders branch on the flag to
         # materialize locale_head / locale_film at the persisted num_locales width.
         "use_locale_conditioning": bool(model.use_locale_conditioning),
         "num_locales": int(model.num_locales),
         "locale_loss_weight": float(model.locale_loss_weight),
-        # Postcode-anchor channel (#239/#240). False/0 on pre-anchor weights; loaders branch on
+        # Postcode-anchor channel (#239/#240). False/0 on pre-anchor weights. loaders branch on
         # the flag to materialize anchor_projection / anchor_token_embedding at the feature width.
         "use_postcode_anchor": bool(model.use_postcode_anchor),
         "anchor_feature_dim": int(model.anchor_feature_dim),
@@ -68,7 +68,7 @@ def to_config_dict(model: MailwomanCoarseEncoder) -> dict[str, Any]:
         # Gazetteer-anchor channel (#464). False/0 on pre-gazetteer weights.
         "use_gazetteer_anchor": bool(model.use_gazetteer_anchor),
         "gazetteer_feature_dim": int(model.gazetteer_feature_dim),
-        # Country-lexicon channel (#1104). False/0 on pre-country weights; loaders branch on the flag
+        # Country-lexicon channel (#1104). False/0 on pre-country weights. loaders branch on the flag
         # to materialize country_projection / country_token_embedding at the feature width.
         "use_country_anchor": bool(model.use_country_anchor),
         "country_feature_dim": int(model.country_feature_dim),
@@ -84,7 +84,7 @@ def to_config_dict(model: MailwomanCoarseEncoder) -> dict[str, Any]:
         # load its trained weights — else the dep-loc columns silently fall back to the classifier.
         "use_deploc_head": bool(getattr(model, "use_deploc_head", False)),
         "use_conventions_loss_mask": bool(model.use_conventions_loss_mask),
-        # Span-boundary aux head (#727). Persisted so a resume rebuilds the head; the exported ONNX
+        # Span-boundary aux head (#727). Persisted so a resume rebuilds the head. the exported ONNX
         # ignores it (training-only, off the logits path).
         "use_span_boundary_head": bool(model.use_span_boundary_head),
         "span_boundary_loss_weight": float(model.span_boundary_loss_weight),
@@ -92,7 +92,7 @@ def to_config_dict(model: MailwomanCoarseEncoder) -> dict[str, Any]:
         "span_loss_weight": float(model.span_loss_weight),
         "span_dim": int(model.span_scorer.start_proj.out_features) if model.span_scorer else 128,
         "max_span": int(model.span_scorer.max_span) if model.span_scorer else 8,
-        # CharCNN front-end (#825). False/0 on SentencePiece checkpoints; loaders branch on the flag
+        # CharCNN front-end (#825). False/0 on SentencePiece checkpoints. loaders branch on the flag
         # to materialize the char_cnn module at the persisted char-vocab width + kernel geometry.
         "use_char_embed": bool(model.use_char_embed),
         "char_vocab_size": int(model.char_vocab_size),
@@ -200,11 +200,11 @@ def from_pretrained(encoder_class: type[MailwomanCoarseEncoder], model_dir: Path
     # map_location="cpu": checkpoints are written on an A100, and torch pickles the storage's
     # device. Without this, loading a GPU-trained checkpoint on a CPU-only box raises
     # "Attempting to deserialize object on a CUDA device" — which is every local grading run
-    # (the #727 phase-1 check hit exactly this). CPU is the safe landing spot; callers .to(device).
+    # (the #727 phase-1 check hit exactly this). CPU is the safe landing spot. callers .to(device).
     # Use weights_only=True if available (torch 2.4+) to avoid pickle-arbitrary-code warning.
     try:
-        sd = torch.load(model_dir / "pytorch_model.bin", weights_only=True, map_location="cpu")  # nosec B614 — weights_only=True; our own exported state_dict
+        sd = torch.load(model_dir / "pytorch_model.bin", weights_only=True, map_location="cpu")  # nosec B614 — weights_only=True. our own exported state_dict
     except TypeError:  # pragma: no cover — older torch
-        sd = torch.load(model_dir / "pytorch_model.bin", map_location="cpu")  # nosec B614 — same trusted artifact; weights_only=True unavailable pre-2.4
+        sd = torch.load(model_dir / "pytorch_model.bin", map_location="cpu")  # nosec B614 — same trusted artifact. weights_only=True unavailable pre-2.4
     model.load_state_dict(sd)
     return model

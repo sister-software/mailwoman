@@ -7,7 +7,7 @@
  *   than onnxruntime-node — the Phase-2 bench measured the node runtime, which is not what ships.
  *
  *   Reported, not asserted: a wall-clock threshold in CI is a flake generator. The number goes in the
- *   Phase-3 verdict; this file exists so it is reproducible.
+ *   Phase-3 verdict. this file exists so it is reproducible.
  *
  *   Lives in `test/full` rather than `test/unit` because it never runs on the fast leg: it is conditioned on two staged
  *   weights caches under `$MAILWOMAN_TEMP_ROOT` that no CI checkout carries, so it always skipped there while still

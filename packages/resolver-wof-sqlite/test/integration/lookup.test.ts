@@ -103,7 +103,7 @@ const FIXTURE: FixturePlace[] = [
 	// Localities
 	{
 		id: 101_751_119,
-		parent_id: 85_683_033, // FR region (not in fixture; irrelevant for the assertions)
+		parent_id: 85_683_033, // FR region (not in fixture. irrelevant for the assertions)
 		name: "Paris",
 		placetype: "locality",
 		country: "FR",
@@ -223,7 +223,7 @@ function buildFixtureDB(path = ":memory:"): DatabaseClient<WOFDatabase> {
 	const db = new DatabaseClient<WOFDatabase>(path)
 
 	// Schema mirrors the real WOF SQLite distribution at data.geocode.earth (subset of columns we
-	// actually read; full schema is documented in `schema.ts`). WOF lifecycle: both `is_current = -1`
+	// actually read. full schema is documented in `schema.ts`). WOF lifecycle: both `is_current = -1`
 	// (modern) and `is_current = 1` (legacy) mean current; `0` means not current. See #91.
 	db.exec(`
 		CREATE TABLE spr (
@@ -255,7 +255,7 @@ function buildFixtureDB(path = ":memory:"): DatabaseClient<WOFDatabase> {
 		);
 	`)
 
-	// Fixture places store centroid lat/lon; for bbox tests we use a small ~10 km square around each
+	// Fixture places store centroid lat/lon. for bbox tests we use a small ~10 km square around each
 	// centroid so R*Tree intersection queries have something realistic to bite on.
 	const insertSpr = db.prepare(
 		`INSERT INTO spr (
@@ -313,7 +313,7 @@ afterEach(() => {
 
 describe("WOFSQLitePlaceLookup against an inline WOF fixture", () => {
 	test('"Paris" with no country/parent filter returns both Paris,FR and Paris,US as localities', async () => {
-		// Without a popularity signal (real WOF has wof:population; v0.1 doesn't model it) the
+		// Without a popularity signal (real WOF has wof:population. v0.1 doesn't model it) the
 		// resolver has no reason to prefer one Paris over the other — both are valid candidates.
 		// Callers disambiguate via country / parentID / alt-name match.
 		const candidates = await lookup.findPlace({ text: "Paris" })
@@ -404,7 +404,7 @@ describe("WOFSQLitePlaceLookup against an inline WOF fixture", () => {
 	})
 
 	test("query with special characters is sanitized — `St. (Petersburg)` does not throw", async () => {
-		// No such place in the fixture; we only assert no SQL syntax error.
+		// No such place in the fixture. we only assert no SQL syntax error.
 		await expect(lookup.findPlace({ text: "St. (Petersburg)" })).resolves.toEqual([])
 	})
 
@@ -502,7 +502,7 @@ describe("WOFSQLitePlaceLookup ctor", () => {
 
 		try {
 			// The real code path: databasePath → `new DatabaseClient<WOFDatabase>(path, { readOnly: !opts.buildFTS })`.
-			// With buildFTS omitted this opens the 0444 file read-only; a write-mode open would throw here.
+			// With buildFTS omitted this opens the 0444 file read-only. a write-mode open would throw here.
 			ro = new WOFSQLitePlaceLookup({ databasePath: dbPath })
 			const candidates = await ro.findPlace({ text: "Paris", country: "US" })
 			expect(candidates.length).toBeGreaterThan(0)

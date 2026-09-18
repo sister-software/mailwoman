@@ -4,7 +4,7 @@
  * @author Teffen Ellis, et al.
  *
  *   Emit the per-country corpus JSONL the `@mailwoman/corpus` `osm` adapter reads, from a Geofabrik `.osm.pbf` extract.
- *   The heavy half (GDAL over the PBF) runs here; the adapter streams the result. See `sdk/corpus-jsonl.ts` for the row
+ *   The heavy half (GDAL over the PBF) runs here. the adapter streams the result. See `sdk/corpus-jsonl.ts` for the row
  *   shape and the ODbL note.
  *
  *   Usage:

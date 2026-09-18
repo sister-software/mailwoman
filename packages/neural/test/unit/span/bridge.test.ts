@@ -4,8 +4,8 @@
  * @author Teffen Ellis, et al.
  *
  *   Contract tests for punctuation-gap span bridging (the v4.4.0 corrective). Essential properties:
- *   dotted fragments merge through their punctuation O-tokens; space-only gaps never merge (the
- *   Saint-Albans guard); different tags never merge; the merged confidence is the minimum of the
+ *   dotted fragments merge through their punctuation O-tokens. space-only gaps never merge (the
+ *   Saint-Albans guard). different tags never merge. the merged confidence is the minimum of the
  *   fragments.
  */
 
@@ -49,7 +49,7 @@ describe("bridgePunctuationGaps", () => {
 
 	it("does NOT merge across separator punctuation (the FR comma class)", () => {
 		// "…47110, 9016…" — the model double-labels the house number as a second postcode
-		// fragment; the comma is the only thing keeping the spans honest. Never bridge it.
+		// fragment. the comma is the only thing keeping the spans honest. Never bridge it.
 		const text = "47110, 9016"
 		const input = [tok("47110", 0, "B-postcode"), tok(",", 5, "O"), tok("9016", 7, "B-postcode")]
 		expect(bridgePunctuationGaps(text, input)).toHaveLength(3)

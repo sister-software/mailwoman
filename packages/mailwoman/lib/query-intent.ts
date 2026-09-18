@@ -87,7 +87,7 @@ interface RankedPlaceLike {
 
 /**
  * Turn a resolver place into the shape {@linkcode dominanceMarginLog10} reads. `negRank` is `-prominence` because
- * prominence is `-negRank` on the backend that defines both; the double negation is the whole conversion and it is
+ * prominence is `-negRank` on the backend that defines both. the double negation is the whole conversion and it is
  * written out rather than folded so the sign is checkable.
  */
 function toAblationPlace(place: RankedPlaceLike, rank: number): AblationPlace | null {
@@ -198,7 +198,7 @@ export function declaredAmbiguityMarker(opts: DeclaredAmbiguityOpts): QueryInten
 			margin: Number(margin.toFixed(4)),
 			decisiveMarginLog10: DECISIVE_MARGIN_LOG10,
 			/**
-			 * Named so a consumer knows what the margin IS. `log10_population` on the candidate backend; on FTS the
+			 * Named so a consumer knows what the margin IS. `log10_population` on the candidate backend. on FTS the
 			 * prominence term is capped and proximity-contaminated, which the value states rather than hides.
 			 */
 			marginUnit: "resolver_prominence_delta",
@@ -245,7 +245,7 @@ export interface CoarserAnswerOpts {
 	 */
 	kinds: ReadonlyArray<QueryKind>
 	/**
-	 * The parsed components, by tag. Read for PRESENCE only; the values never enter the verdict.
+	 * The parsed components, by tag. Read for PRESENCE only. the values never enter the verdict.
 	 */
 	components: Readonly<Record<string, string | null | undefined>>
 	reachedTier: ResolutionTier

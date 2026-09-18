@@ -5,7 +5,7 @@
  */
 
 /* oxlint-disable unicorn/text-encoding-identifier-case -- these assertions mirror ParquetType enum
-   members (`"UTF8"`), not text-encoding identifiers; see the note in parquet.ts. */
+   members (`"UTF8"`), not text-encoding identifiers. see the note in parquet.ts. */
 
 import { readLocalJSONFile } from "@mailwoman/core/fs/readers"
 import { temporaryDirectory, type TemporaryDirectory } from "@mailwoman/core/fs/temporary"
@@ -377,7 +377,7 @@ describe("writeParquetFiles", () => {
 	})
 
 	it("skips splits not present in PerSplitRows (no empty parquet files written)", async () => {
-		// Only train provided; val + test omitted entirely.
+		// Only train provided. val + test omitted entirely.
 		const m = await writeParquetFiles(
 			{ train: asyncFrom([labeled({ source_id: "t-1" })]) },
 			{ outputDir: scratch.path, corpusVersion: "0.1.0" }

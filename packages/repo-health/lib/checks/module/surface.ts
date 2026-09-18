@@ -126,7 +126,7 @@ function surfaceHits(sourceFile: ts.SourceFile, surface: ModuleSurface): Surface
 }
 
 /**
- * AST-backed reading-surface heuristic. Warnings name the declaration kind that crossed its threshold; they do not
+ * AST-backed reading-surface heuristic. Warnings name the declaration kind that crossed its threshold. they do not
  * claim a decomposition boundary on the checker's behalf.
  */
 export const moduleSurfaceCheck: RepoCheck = {

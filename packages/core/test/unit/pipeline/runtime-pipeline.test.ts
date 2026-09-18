@@ -247,7 +247,7 @@ describe("runPipeline — stage composition", () => {
 			postcodeRepair: true,
 			enforceWordConsistency: WORD_CONSISTENCY_SHIP_DEFAULT,
 			// Decision A: the pipeline passes an explicit register on every parse. The default kind
-			// classifier (no fast-path) reads structured_address → formatted; an explicit
+			// classifier (no fast-path) reads structured_address → formatted. an explicit
 			// PipelineOpts.inputMode overrides (see the dedicated inputMode tests).
 			inputMode: "formatted",
 		})
@@ -755,7 +755,7 @@ describe("runPipeline — coarse-placer soft prior (#244)", () => {
 			{ resolveOpts: { anchorPosterior: { GB: 1 }, anchorWeight: 2 } }
 		)
 
-		// Caller's posterior wins; the coarse-placer is a no-op here.
+		// Caller's posterior wins. the coarse-placer is a no-op here.
 		expect(seen[0]).toEqual({ anchorPosterior: { GB: 1 }, anchorWeight: 2 })
 	})
 

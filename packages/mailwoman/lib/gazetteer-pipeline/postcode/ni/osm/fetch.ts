@@ -7,7 +7,7 @@
  *
  *   This is option (b) of the three `NORTHERN_IRELAND_OPTIONS_NOTE` (in `../codepoint/fetch.ts`) lays
  *   out for the `BT` hole that Code-Point Open leaves and that no OGL source can fill. Option (a) is
- *   licensing LPS Pointer at ~£9,224; option (c) — ship nothing — is what the GB database does today. (b)
+ *   licensing LPS Pointer at ~£9,224. option (c) — ship nothing — is what the GB database does today. (b)
  *   is partial and ODbL, so it lands at the **build-local tier**: this machine builds it, it never
  *   enters an npm tarball, and `DEFAULT_POSTCODE_DATABASES` is `existsSync`-filtered, which is the
  *   build-local mechanism. Same posture as `poi.db` and `@mailwoman/osm`.
@@ -15,7 +15,7 @@
  *   ## Why one query, saved verbatim
  *
  *   Overpass is a volunteer-run public endpoint with a published fair-use policy. The acquisition is a
- *   SINGLE request whose response is written to a dated directory and never re-fetched; every later
+ *   SINGLE request whose response is written to a dated directory and never re-fetched. every later
  *   build reads that file. So the reproducibility artifact is the response, not the query — a rebuilt
  *   database from the same `response.json` is byte-comparable, while a re-query against a live OSM would
  *   not be (OSM changes hourly, and that is a feature of the source, not a defect of the build).
@@ -29,7 +29,7 @@
  *   ## Licence
  *
  *   ODbL 1.0, share-alike on a Derived Database. The attribution is mandatory and rides in the database's
- *   own `meta` table; see {@link OSM_ATTRIBUTION} and {@link NI_OSM_BUILD_LOCAL_NOTE}.
+ *   own `meta` table. see {@link OSM_ATTRIBUTION} and {@link NI_OSM_BUILD_LOCAL_NOTE}.
  */
 
 import { APIClient } from "@mailwoman/core/api"
@@ -40,7 +40,7 @@ import { md5Hex } from "@mailwoman/core/utils"
 import { join } from "path-ts"
 
 /**
- * The public Overpass API endpoint. Volunteer-run; see https://operations.osmfoundation.org/policies/api/ — the
+ * The public Overpass API endpoint. Volunteer-run. see https://operations.osmfoundation.org/policies/api/ — the
  * acquisition makes exactly one request against it.
  */
 export const OVERPASS_ENDPOINT = "https://overpass-api.de/api/interpreter"
@@ -53,7 +53,7 @@ export const OVERPASS_ENDPOINT = "https://overpass-api.de/api/interpreter"
  * query at 97 s, the whole-NI bbox query at 115 s, and — decisively — a two-tenths-of-a-degree probe bbox at 95 s that
  * `overpass-api.de` answered 200 in 8 s from the same machine minutes later. A mirror that cannot serve an 8-second
  * query is an unhealthy host, not a capacity answer. Pass it via {@link AcquireNIPostcodesOptions.endpoint} if it
- * recovers; do not promote it to default on the strength of the wiki page.
+ * recovers. do not promote it to default on the strength of the wiki page.
  */
 export const OVERPASS_ENDPOINT_KUMI = "https://overpass.kumi.systems/api/interpreter"
 
@@ -63,7 +63,7 @@ export const OVERPASS_ENDPOINT_KUMI = "https://overpass.kumi.systems/api/interpr
  *
  * ## The spatial filter is a BBOX, not `area["ISO3166-2"="GB-NIR"]`
  *
- * The area form — `area["ISO3166-2"="GB-NIR"]->.ni; nwr(area.ni)["addr:postcode"~"^BT"];` — is the obvious way to write
+ * The area form — `area["ISO3166-2"="GB-NIR"]->.ni. nwr(area.ni)["addr:postcode"~"^BT"].` — is the obvious way to write
  * this, and both attempts at it on 2026-08-05 ended in an HTTP 504 from `overpass-api.de`'s gateway. An `(area)` filter
  * has no index to ride: Overpass enumerates the region's elements and tests each, so the whole of Northern Ireland is a
  * full scan. The bbox rides the spatial index instead, and the same instance answered this query 200 with 6,681,108
@@ -314,7 +314,7 @@ export async function acquireNIPostcodes(options: AcquireNIPostcodesOptions): Pr
 		data: new URLSearchParams({ data: NI_POSTCODE_OVERPASS_QUERY }).toString(),
 		headers: { "Content-Type": "application/x-www-form-urlencoded" },
 		responseType: "arraybuffer",
-		// The dated directory is the cache; a second response body in the disk cache would only be a
+		// The dated directory is the cache. a second response body in the disk cache would only be a
 		// second copy that can drift from the artifact the builder reads.
 		cache: false,
 	} as Parameters<APIClient["fetch"]>[0])

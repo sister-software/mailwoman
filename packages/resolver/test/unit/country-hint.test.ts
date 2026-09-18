@@ -138,7 +138,7 @@ describe("resolveTree + country_hint (#833 forward linkage)", () => {
 		const out = await resolver.resolveTree(augustaMeTree(true), {})
 		const loc = localityOf(out)
 
-		// region "ME" constrained to US → Maine; Augusta scopes to Maine → Augusta, Maine (not Sicily).
+		// region "ME" constrained to US → Maine. Augusta scopes to Maine → Augusta, Maine (not Sicily).
 		expect(loc?.lat).toBeCloseTo(44.31, 2)
 		expect(loc?.lon).toBeCloseTo(-69.78, 2)
 	})

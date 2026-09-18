@@ -19,15 +19,15 @@
  *
  *   The table is added to the `--db` IN PLACE (the original `scripts/build-importance.ts` behavior):
  *   the WOF DB must already carry `concordances` (and, for the fallback, `place_population`) — run
- *   `mailwoman gazetteer build admin` first. Step progress streams to stderr; the final tally lands on
+ *   `mailwoman gazetteer build admin` first. Step progress streams to stderr. the final tally lands on
  *   stdout.
  *
  *   THE JOIN IS NOT A FUNCTION (#1497). 7,061 Wikidata ids name more than one current WOF place, and
  *   before 2026-08-05 all of them received the same score — `Q18125` (Manchester, England) put 0.7397
  *   on a 53-person Minnesota village. `gazetteer-pipeline/importance-fanout.ts` decides which
  *   candidate a fanned-out id actually means (coincident → keep all, since 71.4% of the fan-out is
- *   one place modelled at several placetypes; else decisive population → keep the winner; else drop
- *   the id). Its module header carries the survey and the worked cases; read it before changing the
+ *   one place modelled at several placetypes. else decisive population → keep the winner. else drop
+ *   the id). Its module header carries the survey and the worked cases. read it before changing the
  *   rule. Dropped places are not left blank — they fall through to the population fallback below,
  *   which is what they had before Wikipedia importance existed.
  */
@@ -99,7 +99,7 @@ const GazetteerImportance: CommandComponent<typeof spec> = ({ options }) => {
 
 		const kdb = new DatabaseClient<PlaceImportanceDatabase>(dbPath, { open: true })
 
-		// DDL via the Kysely schema-builder; the hot INSERT loop below stays on the raw `db` handle.
+		// DDL via the Kysely schema-builder. the hot INSERT loop below stays on the raw `db` handle.
 
 		// Step 1: Load Wikidata concordances from WOF
 		console.error("Loading Wikidata concordances from WOF...")
@@ -228,7 +228,7 @@ const GazetteerImportance: CommandComponent<typeof spec> = ({ options }) => {
 		await createPlaceImportanceTable(kdb)
 
 		// A single WOF id can concord to MULTIPLE wikidata ids (the current global DB's concordances carry
-		// such multiplicities; a naive per-wikidata insert double-inserts the wof id and violates the `id`
+		// such multiplicities. a naive per-wikidata insert double-inserts the wof id and violates the `id`
 		// primary key). Collapse to the MAX importance per wof id first, then insert once each.
 		const wofEncyclopedic = new Map<number, number>()
 
@@ -297,7 +297,7 @@ const GazetteerImportance: CommandComponent<typeof spec> = ({ options }) => {
 		kdb.exec("COMMIT")
 
 		// The total is READ BACK, never derived by adding the two counters. The counters describe what
-		// this run tried to do; the table is what it did, and when those disagreed nobody noticed
+		// this run tried to do. the table is what it did, and when those disagreed nobody noticed
 		// because the derived number looked plausible. `SELECT count(*)` cannot drift.
 		const total = countRows(kdb, "place_importance")
 

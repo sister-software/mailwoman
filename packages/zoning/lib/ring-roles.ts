@@ -8,7 +8,7 @@
  *
  *   THE SERVICE ENCODES HOLE ROLES BY ORIENTATION RATHER THAN BY NESTING, AND IT DOES IT ON MOST FEATURES.
  *   Measured over the whole national export (85,330 features, 93,483 rings): 89,967 rings are clockwise and
- *   3,516 counter-clockwise; 84,021 features are wholly clockwise; and 1,309 features carry both windings.
+ *   3,516 counter-clockwise. 84,021 features are wholly clockwise. and 1,309 features carry both windings.
  *   Of those, 1,210 nest their holes inside one polygon part the way RFC 7946 expects, and the rest put every
  *   ring in its own `MultiPolygon` part — the largest feature in the country, Meath's `RA - Rural Area`,
  *   arrives as 107 single-ring parts of which 5 are clockwise and 102 counter-clockwise. So the source uses
@@ -73,7 +73,7 @@ export interface ResolvedRingRoles {
 	 * 74040 — Galway County Council, `Agriculture` — is a single three-vertex ring enclosing 3.0 × 10⁻⁷ m², a third of a
 	 * square micrometre. At that magnitude a ring's winding is floating-point noise rather than something the publisher
 	 * stated: the same ring reads clockwise in the source's own Irish Transverse Mercator metres and counter-clockwise
-	 * after reprojection. Refusing it would fail the build on the publisher's own data; dropping it would invent an
+	 * after reprojection. Refusing it would fail the build on the publisher's own data. dropping it would invent an
 	 * absence. So the largest ring by magnitude becomes the exterior, which is also the correct reading for a feature
 	 * published wholly inverted, and the count rides on the receipt rather than being implied to be zero.
 	 */

@@ -19,7 +19,7 @@ import { assignSyntheticIDs, foldedPlacetype, prepareInserts } from "mailwoman/g
 import { describe, expect, test } from "vitest"
 
 /**
- * GERS-shaped ids. Real ones are opaque 32-char hex strings; the shape matters only in that the hash sees the whole
+ * GERS-shaped ids. Real ones are opaque 32-char hex strings. the shape matters only in that the hash sees the whole
  * string.
  */
 const GERS = [
@@ -63,7 +63,7 @@ describe("assignSyntheticIDs", () => {
 
 		for (const id of ids) {
 			expect(id).toBeGreaterThanOrEqual(OVERTURE_ID_BASE)
-			// The GeoNames alias fold owns everything from 9e12 up; overlapping it would make one source's
+			// The GeoNames alias fold owns everything from 9e12 up. overlapping it would make one source's
 			// rows silently readable as the other's.
 			expect(id).toBeLessThan(9_000_000_000_000)
 		}

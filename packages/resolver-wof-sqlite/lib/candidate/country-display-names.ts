@@ -66,7 +66,7 @@ export function stageCountryDisplayNames(ctx: {
 
 		const k = normalizeLocalityForKey(name)
 
-		// The country's own key is already staged as its primary; INSERT OR IGNORE at materialization dedupes the
+		// The country's own key is already staged as its primary. INSERT OR IGNORE at materialization dedupes the
 		// rest, so this only skips the obvious self-alias.
 		if (!k || k === target.a.pkey) continue
 

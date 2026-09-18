@@ -50,7 +50,7 @@ def verify_record(record: dict[str, Any], tag_set: frozenset[str]) -> None:
 
 
 def split_number_unit(number: str, unit: str) -> tuple[str, str]:
-    """Fold the sub-number the source keeps in ``unit`` into the house number; what remains is the floor.
+    """Fold the sub-number the source keeps in ``unit`` into the house number. what remains is the floor.
 
     ``("２９８", "之１號")`` → ``("２９８之１號", "")``; ``("２０１號", "四樓")`` → ``("２０１號", "四樓")``;
     ``("１４", "之１附１號")`` → ``("１４之１附１號", "")``; ``("１５２號", "四樓之２")`` → ``("１５２號", "四樓之２")``.

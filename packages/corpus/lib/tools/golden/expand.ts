@@ -8,7 +8,7 @@
  *
  *   ## Why this approach
  *
- *   The Phase 2 golden set has 74 entries; session-notes.md called for ≥500/locale. Manual curation
+ *   The Phase 2 golden set has 74 entries. session-notes.md called for ≥500/locale. Manual curation
  *   doesn't scale. Pure-LLM generation (invent raw + labels from scratch) is too noisy — labels
  *   would be unverified.
  *
@@ -21,7 +21,7 @@
  *        component VALUES (locality string, postcode digits, etc.) are preserved verbatim.
  *   3. **Programmatic validator drops hallucinations** — every component value must appear as a
  *        substring (case-insensitive, whitespace-normalized) of the variant's raw. Failures dropped
- *        silently; cost is wasted tokens, never bad-labeled golden entries.
+ *        silently. cost is wasted tokens, never bad-labeled golden entries.
  *
  *   ## Usage
  *
@@ -69,7 +69,7 @@ const MAX_CANDIDATE_LENGTH = 500
 
 /**
  * The stream position the per-source subsample draws from. Fixed rather than supplied, because the point is that two
- * runs over one corpus choose the same seeds; a caller-supplied seed would make that the caller's problem to remember.
+ * runs over one corpus choose the same seeds. a caller-supplied seed would make that the caller's problem to remember.
  */
 const SUBSAMPLE_SEED = 20_260_913
 
@@ -265,7 +265,7 @@ async function loadSeeds(
 		report?.(`    ${src}: ${pool.length}`)
 	}
 
-	// Round-robin sample. Each source gives floor(count / nSources) seeds; rounding goes
+	// Round-robin sample. Each source gives floor(count / nSources) seeds. rounding goes
 	// to sources in alphabetical order. If a pool is smaller than its target, take all of it.
 	const sources = Array.from(bySource.keys()).toSorted()
 	const perSource = Math.floor(count / sources.length)
@@ -535,7 +535,7 @@ export async function expandGolden(
 
 						// Remove dropped components from the components map
 						for (const tag of goldenCandidate.dropped_components) {
-							// oxlint-disable-next-line typescript/no-dynamic-delete -- removing one key from a plain record; the object is not on a hot path
+							// oxlint-disable-next-line typescript/no-dynamic-delete -- removing one key from a plain record. the object is not on a hot path
 							delete goldenCandidate.components[tag]
 						}
 

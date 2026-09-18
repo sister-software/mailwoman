@@ -95,7 +95,7 @@ function carriesNonLatinLetter(value: string): boolean {
  * A dict whose witnesses are all digits or absent answers `undefined`, which leaves the country's own default in force
  * rather than guessing — the meaning-of-zero rule: no letters is not evidence of Latin.
  */
-// repo-health-ignore export-name-affix -- core's `scriptOf` takes a CODEPOINT and answers its ISO 15924 script; this
+// repo-health-ignore export-name-affix -- core's `scriptOf` takes a CODEPOINT and answers its ISO 15924 script. this
 // takes a dict and answers which of a country's two orders it is written for. Importing it is also impossible: this
 // package carries no runtime dependency, and core is 11 MB of shipped data.
 export function scriptOfComponents(components: ComponentDict): AddressScript | undefined {
@@ -158,7 +158,7 @@ function scriptIsFreeToDerive(country: string): boolean {
  *
  * Returns an empty string when the dict is empty, and when no layout names `country` — 55 of the 252 shipped country
  * records carry no usable skeleton, and answering nothing for one of those reports absence rather than inventing an
- * order. Throws nothing; a partial dict degrades to the parts the layout can print.
+ * order. Throws nothing. a partial dict degrades to the parts the layout can print.
  */
 export function formatAddress(components: ComponentDict, country: string, opts: FormatAddressOptions = {}): string {
 	return formatAddressRow(components, country, opts)?.raw ?? ""
@@ -198,7 +198,7 @@ export interface AddressRow {
  *
  * Returns null when nothing rendered — an empty dict, a country with no layout, or a dict whose every value falls in a
  * slot this country omits. Every corpus adapter asked both questions and paid for two renders to get them, then
- * recovered the alignment by searching the output string for each value; that search cannot tell a component the layout
+ * recovered the alignment by searching the output string for each value. that search cannot tell a component the layout
  * dropped from one whose value happens to sit inside another — `Paris` inside `Rue de Paris`. The render knows, so the
  * answer is read rather than inferred.
  */

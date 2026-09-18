@@ -33,7 +33,7 @@ export interface InputState {
 	/**
 	 * UTF-16 offset the cursor sits before, in `[0, value.length]`, and never inside a surrogate pair — every move and
 	 * every delete in this module steps by whole codepoints, so `value.slice(cursor)` is always a valid string. (Ink
-	 * measures and indexes in UTF-16 too; keeping the offset in the same units as the render is what makes the two agree.
+	 * measures and indexes in UTF-16 too. keeping the offset in the same units as the render is what makes the two agree.
 	 * See {@link stepLeft}.)
 	 */
 	cursor: number
@@ -73,7 +73,7 @@ function clampCursor(value: string, index: number): number {
 	const bounded = Math.max(0, Math.min(index, value.length))
 	const unit = value.charCodeAt(bounded)
 
-	// A low surrogate at the cursor means the offset landed inside a pair; the codepoint starts one unit back —
+	// A low surrogate at the cursor means the offset landed inside a pair. the codepoint starts one unit back —
 	// unless the string opens with an unpaired low surrogate, where there is no unit back to snap to.
 	return unit >= 0xdc_00 && unit <= 0xdf_ff ? Math.max(0, bounded - 1) : bounded
 }
@@ -216,7 +216,7 @@ export function QueryInput(props: QueryInputProps): ReactElement {
 				return
 			}
 
-			// Tab (focus) and escape (quit) belong to the session's own handler; consuming them here would make the
+			// Tab (focus) and escape (quit) belong to the session's own handler. consuming them here would make the
 			// field a trap the user cannot leave.
 			if (key.tab || key.escape) return
 

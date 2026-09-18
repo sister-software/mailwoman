@@ -46,7 +46,7 @@ CORPUS_VOLUME_ROOT = "corpus/versioned"
 # the version string is written once instead of two or four times.
 #: Both sides carry the inner `corpus-<version>` directory.
 NESTED = "nested"
-#: The bucket holds the parts directly; the volume gains the inner `corpus-<version>` directory.
+#: The bucket holds the parts directly. the volume gains the inner `corpus-<version>` directory.
 WRAPPED = "wrapped"
 #: Neither side carries it.
 FLAT = "flat"

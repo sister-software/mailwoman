@@ -114,7 +114,7 @@ const STREET_WORD_SET: ReadonlySet<string> = (() => {
 /**
  * True when a token is a Canadian street-type word in either language (case- and accent-insensitive) — `Street`,
  * `Crescent`, `Rue`, `Chemin`, `Côte`. Position-agnostic, because an English type trails the name and a French type
- * leads it; the matcher cannot lean on a side.
+ * leads it. the matcher cannot lean on a side.
  */
 export function isCanadianStreetWord(token: unknown): boolean {
 	if (typeof token !== "string") return false
@@ -147,7 +147,7 @@ export const CA_DIRECTIONALS: Record<string, "N" | "S" | "E" | "W"> = {
 
 /**
  * True when a token is a Canadian directional in either language (case- and accent-insensitive) — `N`, `NW`, `Nord`,
- * `Ouest`, `O`. Compound English quadrants (`NW`, `SE`) are accepted by decomposing into their single-letter halves;
+ * `Ouest`, `O`. Compound English quadrants (`NW`, `SE`) are accepted by decomposing into their single-letter halves.
  * the lone French `O` resolves to West.
  */
 export function isCanadianDirectional(token: unknown): boolean {

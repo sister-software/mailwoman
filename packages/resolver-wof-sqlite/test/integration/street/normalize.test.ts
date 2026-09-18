@@ -4,7 +4,7 @@
  * @author Teffen Ellis, et al.
  *
  *   The collision contract for the address-point normalizer (#476): variants that refer to the same
- *   street must normalize identically; distinct streets must not. Build-side and lookup-side both
+ *   street must normalize identically. distinct streets must not. Build-side and lookup-side both
  *   import the same function, so these tests are the whole correctness story for the keying.
  */
 
@@ -78,7 +78,7 @@ describe("normalizeLocalityForKey", () => {
 
 describe("canonicalizeRouteKey", () => {
 	it("folds TIGER and E911/Overture route spellings to the same key", () => {
-		// TIGER "State Rte 100" → normalizeStreetForKey → "state route 100" already; the E911
+		// TIGER "State Rte 100" → normalizeStreetForKey → "state route 100" already. the E911
 		// spelling needs the designator fold to meet it.
 		expect(canonicalizeRouteKey(normalizeStreetForKey("State Rte 100"))).toBe("state route 100")
 		expect(canonicalizeRouteKey(normalizeStreetForKey("VT ROUTE 100"))).toBe("state route 100")

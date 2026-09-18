@@ -17,16 +17,16 @@
  *   THREE THINGS MAKE IT GOLDEN-SAFE:
  *   1. ANCHOR CONDITION. The rerank fires only on an anchorless fragment — the class it was measured on.
  *      If the argmax parse already carries a `country` or `region`, the input is structured and the
- *      model is reliable; a name-index collision then does damage (it steals a token the model
+ *      model is reliable. a name-index collision then does damage (it steals a token the model
  *      correctly labeled — "France, Creuse, …" → the FR street "France" overrides the country; "Best
  *      Rd, VT" → a US street reranks against the FR index). Skipping anchored inputs is the primary
  *      cross-locale + collateral fix (full-pipeline golden, scored: net 0 exact, |Δ| < 0.3pp/tag).
  *   2. STREET-SPLICE, not tree-replace. The span head is a street-boundary specialist — its full
  *      segmentation decodes locality/region/postcode far worse than the BIO argmax head (replacing
  *      the whole tree cost golden fr −35pp). So the winning segmentation's street tokens are spliced
- *      into the ARGMAX tree; argmax owns every other tag.
+ *      into the ARGMAX tree. argmax owns every other tag.
  *   3. POSITIVE-EVIDENCE CHECK. The splice fires only for a street the atlas CONFIRMS exists. On a
- *      clean address the argmax street is already right + confirmed → the splice is a no-op; on a
+ *      clean address the argmax street is already right + confirmed → the splice is a no-op. on a
  *      fragment the argmax street is wrong/absent and the confirmed segmentation street replaces it.
  *      An unconfirmed street never overrides the model — the model owns every call the atlas can't
  *      confirm wrong. This is why golden holds to noise while FR fragments move +17.3pp.
@@ -161,7 +161,7 @@ function spliceStreetTree(
 
 	const streetSegs = hyp.segments.filter((s) => STREET_SEGMENT_TYPES.has(grammar.segmentTypes[s.typeID] ?? ""))
 
-	// No street in the winning hypothesis → nothing to splice; the argmax tree stands.
+	// No street in the winning hypothesis → nothing to splice. the argmax tree stands.
 	if (!streetSegs.length) {
 		return buildAddressTree(trace.text, tokens)
 	}
@@ -182,7 +182,7 @@ function spliceStreetTree(
 	}
 
 	// Any argmax street token not covered by the new street span is now stale → drop to O (it was part of the street
-	// the argmax path over-extended; the reranked span is authoritative for the street).
+	// the argmax path over-extended. the reranked span is authoritative for the street).
 	for (const idx of argmaxStreetIdx) {
 		tokens[idx]!.label = "O"
 	}

@@ -18,7 +18,7 @@
 # 8,000 steps.
 #
 # The check is unchanged and it is against the shipped model, because that is what publishing costs a
-# user. The null run is the right baseline for ATTRIBUTING a regression; it is not a licence to ship
+# user. The null run is the right baseline for ATTRIBUTING a regression. it is not a licence to ship
 # one.
 #   1. net improved-minus-regressed >= 0 on the 649-row board;
 #   2. FR, GB and DE show no regression anywhere (D-rule, iron rule 6);
@@ -199,7 +199,7 @@ data:
     synth-fr-bare-street: 0.0 # SUPERSEDED (vintages must never co-feed)
     synth-fr-bare-street-v20: 0.0 # SUPERSEDED
     synth-fr-bare-street-v21: 0.0 # SUPERSEDED by -v22
-    synth-fr-bare-street-v22: 6.0 # weight held at v4.5.1's value; the v22 counter-forms are the run's one variable
+    synth-fr-bare-street-v22: 6.0 # weight held at v4.5.1's value. the v22 counter-forms are the run's one variable
     synth-si-bare-village: 12.0
     synth-no-street-led: 0.0
     synth-cz-pcfirst-preposition: 0.0 # SUPERSEDED (vintages must never co-feed)

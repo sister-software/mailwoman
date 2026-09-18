@@ -12,7 +12,7 @@
  */
 export interface BatchedTransaction {
 	/**
-	 * Record one written row. Every `rowsPerCommit` rows the open transaction is committed and a new one opened; answers
+	 * Record one written row. Every `rowsPerCommit` rows the open transaction is committed and a new one opened. answers
 	 * `true` on the call that committed, so a caller can hang a progress report off the boundary.
 	 */
 	rowWritten(): boolean

@@ -13,7 +13,7 @@
  *   as the evenly-spaced form a curator typed into the board, and Stage 1 exists to make them one string.
  *
  *   THE LAW IS STATED OVER THE PIPELINE, NOT OVER {@link "@mailwoman/normalize"}. `collapseWhitespace` folding
- *   a run to one ASCII space is a unit fact about one module; that the ANSWER does not move is a fact about
+ *   a run to one ASCII space is a unit fact about one module. that the ANSWER does not move is a fact about
  *   the whole path, and only the second one is what a caller relies on. A row here therefore grades on the
  *   axis its own committed board row is graded on — the entity, the coordinate, or the parse — and never on
  *   the normalized string.
@@ -27,13 +27,13 @@
  *   NEWLINE IS OUT OF THIS LAW, AND THE REASON IS MECHANICAL. `collapseWhitespace` folds `[ \t]` runs to one
  *   ASCII space and PRESERVES `\n`/`\r`, because `@mailwoman/query-shape`'s segmentation grammar reads a
  *   newline as a segment separator on a par with a comma. Swapping a space for a newline therefore
- *   re-segments the query on purpose; it is a claim about the segmentation grammar, not about spacing. A tab
+ *   re-segments the query on purpose. it is a claim about the segmentation grammar, not about spacing. A tab
  *   is the opposite case and belongs here twice over: the same grammar treats a RAW tab as a separator too,
  *   and the collapse is what stops one from reaching it — so the `tabbed` arm is the executable statement
  *   that the collapse still shields that grammar.
  *
  *   A SPACE INSIDE A STRUCTURED IDENTIFIER IS NOT SPACING. `SW1A 2AA` is one code whose format grammar puts a
- *   space in the middle; doubling it or turning it into a tab writes a string outside that grammar, and
+ *   space in the middle. doubling it or turning it into a tab writes a string outside that grammar, and
  *   recognizing it is not an invariance this law may demand. The run-level transformations therefore skip
  *   those runs — detected through {@link "@mailwoman/codex"}'s own postcode shapes, never a local pattern —
  *   and a query whose only run is structural reports {@linkcode WHITESPACE_APPLICABILITY_RULES}'s

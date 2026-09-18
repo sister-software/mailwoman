@@ -4,7 +4,7 @@
  * @author Teffen Ellis, et al.
  * @file Every CLI flag fills a property some module names.
  *
- *   A command declares its flags in kebab case and reads them as properties; the router derives one from the other with
+ *   A command declares its flags in kebab case and reads them as properties. the router derives one from the other with
  *   `optionPropertyName`, whose table says which segments capitalize a whole acronym. A segment missing from that table
  *   title-cases instead, and the flag then reaches the component under a name nothing reads. Nothing reports it: the
  *   flag parses, passes validation, and does nothing, so the command succeeds and writes no file. Ten flags across

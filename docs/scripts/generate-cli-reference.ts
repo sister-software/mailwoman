@@ -16,7 +16,7 @@
  *   `prebuild` shells `mailwoman/out/cli.js` — so this adds no new prerequisite. Run `yarn compile`
  *   first.
  *
- *   SCOPE. The CLI carries 125 commands across 25 groups; most are the repo's own data-build,
+ *   SCOPE. The CLI carries 125 commands across 25 groups. most are the repo's own data-build,
  *   training and evaluation tooling, which only runs inside a checkout. {@link DOCUMENTED_GROUPS}
  *   names the groups a consumer of the published package runs, and every command in those groups is
  *   emitted — a new sibling appears on the page with no edit here. The remaining groups are listed
@@ -280,7 +280,7 @@ function collectCommands(node: CommandNode, prefix: readonly string[], into: CLI
 }
 
 // The PACKAGE ROOT, not the directory of the package's entry file. `dirname(resolveModulePath("mailwoman"))`
-// answered the same thing only while the entry sat at the package root; once source moved under `lib/` it started
+// answered the same thing only while the entry sat at the package root. once source moved under `lib/` it started
 // answering `mailwoman/lib`, and the `out/` joins below silently became `mailwoman/lib/out/…`.
 const packagePath = resolvePackageDirectory("mailwoman")
 

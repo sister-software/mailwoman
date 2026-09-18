@@ -5,7 +5,7 @@
  *
  *   The parse result as a client renders it: what the browser runtime produces after classify + resolve, and what
  *   `@mailwoman/react` takes as input. One definition, because a producer and a renderer that each write the shape
- *   agree only by accident. Every field a stage may leave unset is optional here; a renderer that needs a value it
+ *   agree only by accident. Every field a stage may leave unset is optional here. a renderer that needs a value it
  *   cannot see shows absence, never a default.
  */
 
@@ -67,7 +67,7 @@ export interface KindView {
 export interface ParseResult {
 	input: string
 	/**
-	 * The decoder's `AddressTree`, opaque here so this module stays free of the decoder's types; a renderer that walks it
+	 * The decoder's `AddressTree`, opaque here so this module stays free of the decoder's types. a renderer that walks it
 	 * imports `@mailwoman/core/decoder/types`.
 	 */
 	tree: unknown

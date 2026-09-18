@@ -18,12 +18,12 @@
  *       collapse-relevant European rows get a European centroid on a collision. The centroid is the
  *       secondary signal (the posterior + the categorical anchor cue do the work).
  *   - **source** (#525, the provenance-first rule): names the dataset the centroid came from — `wof`
- *       (our WOF postcode databases, which may carry provenanced backfills; see the `centroid_source`
+ *       (our WOF postcode databases, which may carry provenanced backfills. see the `centroid_source`
  *       table), `census-zcta-2024` (Census ZCTA Gazetteer fill, either already in the DB or joined
  *       here via `--zcta`), or `null` for a placeholder (membership only).
  *
  *   Sources (build-from-source, never prebuilt): postalcode-intl.db (DE/FR/ES/IT, inline centroids),
- *   postalcode-us.db (US; spr centroids are real post-backfill), postalcode-gb-codepoint.db (GB, OS
+ *   postalcode-us.db (US. spr centroids are real post-backfill), postalcode-gb-codepoint.db (GB, OS
  *   Code-Point Open under OGL v3), postalcode-nl-pc6.db (NL, CBS PC6 via PDOK under CC-BY 4.0).
  *
  *   ZCTA caveat: ZCTAs approximate delivery areas, not ZIPs — PO-box-only/unique ZIPs have no ZCTA
@@ -39,7 +39,7 @@
  *   `LOCALE_ORDER = [US, FR, DE, CA, GB, JP, ES, IT, NL]`), so slots 3–8 took no gradient across every
  *   run in the tree: a GB outward code is letter-containing by construction and could never appear as a
  *   key. Shipping `postcode-gb.bin` at inference then fed slot 4 a value the model had never seen, and
- *   cost 24 exact postcodes on the 120-row gb-golden board. `--include` is the cure — it widens the key
+ *   cost 24 exact postcodes on the 120-row gb-golden board. `--include` is the fix — it widens the key
  *   set so the letter-containing systems get a gradient at all. Widening the lookup ALONE is not enough:
  *   the retrain must ride with the inference-side parity fix (`buildAnchorFeatures`'s
  *   `spanMode: "shaped"`), because the default inference scan keys on `[A-Za-z0-9]+` runs and so can
@@ -52,7 +52,7 @@
  *   loaders below pass `name` through unchanged.
  *
  *   PORT NOTE (from scripts/build-pilot-anchor-lookup.py): faithful TypeScript port. The output is a
- *   JSON file written DIRECTLY to `--output` (no DB, no temp-then-move; matches the Python). The
+ *   JSON file written DIRECTLY to `--output` (no DB, no temp-then-move. matches the Python). The
  *   serializer reproduces Python's `json.dumps(..., ensure_ascii=False)` formatting (", " / ": "
  *   separators, integer-valued floats rendered with a trailing `.0`) so the emitted file matches
  *   the original. The WOF data root is resolved through `dataRootPath` (the one home for the
@@ -70,11 +70,11 @@ import type { WOFDatabase } from "@mailwoman/resolver-wof-sqlite/schema"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
 
 /**
- * Digit at which a fractional remainder is exactly half. Above it the value rounds up; at it the tie is broken toward
+ * Digit at which a fractional remainder is exactly half. Above it the value rounds up. at it the tie is broken toward
  * even, which is what keeps repeated centroid rounding unbiased.
  */
 /**
- * Columns a US Census gazetteer row carries; short rows are truncated and skipped.
+ * Columns a US Census gazetteer row carries. short rows are truncated and skipped.
  */
 const GAZETTEER_ROW_COLUMNS = 7
 
@@ -162,14 +162,14 @@ const GB_UNIT_KEY = /^[A-Z]{1,2}\d[A-Z\d]?\d[A-Z]{2}$/
 
 /**
  * A GB unit's inward code is always the last three characters (`\d[A-Z]{2}`) — the outward district is everything
- * before it. Structural, not a guess; it is the same split `neural/postcode-anchor.ts::gbOutwardCode` makes on the
+ * before it. Structural, not a guess. it is the same split `neural/postcode-anchor.ts::gbOutwardCode` makes on the
  * spaced form.
  */
 const GB_INWARD_LENGTH = 3
 
 /**
  * An NL PC6 key: four digits glued to two letters (`1012LG`). The CBS database stores the normalized form as `name` and
- * the display form (`1012 LG`) as an alt `names` row; the painter only ever sees the normalized one.
+ * the display form (`1012 LG`) as an alt `names` row. the painter only ever sees the normalized one.
  */
 const NL_PC6_KEY = /^\d{4}[A-Z]{2}$/
 
@@ -188,7 +188,7 @@ const NL_SOURCE = "cbs-pc6"
 
 /**
  * GB unit postcodes → centroid from `postalcode-gb-codepoint.db` (Ordnance Survey Code-Point Open, OGL v3.0 — 1,746,976
- * units, every one placed; the database's `meta` carries the full attribution string that must accompany any
+ * units, every one placed. the database's `meta` carries the full attribution string that must accompany any
  * redistribution). This is the LICENCE-CLEAN GB source: the retired GeoNames GB rows are not it, and Overture has no GB
  * postcodes at all. Coverage gap, measured not assumed: ZERO Northern Ireland (BT) codes — Code-Point Open is
  * England/Scotland/Wales only, and NI postcode geography is LPS-licensed (see the database's
@@ -375,7 +375,7 @@ export const ANCHOR_PILOT_COUNTRIES = ["DE", "FR", "US"] as const
  * The v2 country set (2026-08-05) — the pilot three plus every country with a licence-clean postcode source and a slot
  * in `LOCALE_ORDER`: GB (Code-Point Open, OGL v3), NL (CBS PC6, CC-BY 4.0), ES + IT (GeoNames-lineage rows in
  * `postalcode-intl.db`, CC-BY 4.0). ORDER IS CENTROID PRIORITY, and the pilot three lead so a 5-digit code that already
- * had a DE/FR/US centroid keeps it verbatim; ES/IT only ever ADD posterior mass and fill placeholders.
+ * had a DE/FR/US centroid keeps it verbatim. ES/IT only ever ADD posterior mass and fill placeholders.
  *
  * Not here, and why: **CA** (slot 3) — the built centroids live in `postalcode-ca-overture.db`, an Overture-derived
  * artifact (ODbL) that is build-local, not a redistributable training input. **JP** (slot 5) — `postalcode-jp.db`
@@ -400,7 +400,7 @@ const COUNTRY_LOADERS: Record<string, () => Map<string, Centroid>> = {
 }
 
 /**
- * Flush the output string every this many entries. The v2 set is ~2.2M keys / ~170 MB of JSON; accumulating that as one
+ * Flush the output string every this many entries. The v2 set is ~2.2M keys / ~170 MB of JSON. accumulating that as one
  * `Array.join` peaked well past a gigabyte, so the serializer streams instead. 4,096 keeps the intermediate string in
  * the low hundreds of KB.
  */
@@ -416,7 +416,7 @@ export interface AnchorLookupOptions {
 	include?: readonly string[]
 	/**
 	 * Emit GB outward-district keys beside the unit keys (see {@linkcode addGBOutwardKeys}). Defaults to `true` whenever
-	 * GB is included; ignored otherwise.
+	 * GB is included. ignored otherwise.
 	 */
 	gbOutward?: boolean
 }
@@ -515,7 +515,7 @@ export async function buildAnchorLookup(args: AnchorLookupOptions): Promise<Anch
 			letterKeyCount++
 		}
 
-		// centroid: the first source in `include` order with a non-zero centroid; never overwritten by ZCTA.
+		// centroid: the first source in `include` order with a non-zero centroid. never overwritten by ZCTA.
 		let lat = 0
 		let lon = 0
 		let source: string | null = null
@@ -547,7 +547,7 @@ export async function buildAnchorLookup(args: AnchorLookupOptions): Promise<Anch
 		written++
 
 		if (written % WRITE_FLUSH_ENTRIES === 0) {
-			// Backpressure honoured explicitly. `writeSync` blocked, which bounded memory for free; a stream buffers
+			// Backpressure honoured explicitly. `writeSync` blocked, which bounded memory for free. a stream buffers
 			// whatever it is handed, and at ~2.2M keys that is the cost this loop exists to avoid.
 			if (!output.write(buffer)) {
 				await once(output, "drain")

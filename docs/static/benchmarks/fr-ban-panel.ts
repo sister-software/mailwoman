@@ -19,13 +19,13 @@
 //   clean      "28 Avenue de l'Opéra, 75002 Paris"      — the canonical French order.
 //   reordered  "75002 Paris, 28 Avenue de l'Opéra"      — postcode and commune moved to the front.
 //
-// The second arm is the surface-form robustness test. Nothing about the target changed; only the
+// The second arm is the surface-form robustness test. Nothing about the target changed. only the
 // order of the same tokens did.
 //
 // DETERMINISM
 //
 // The panel is a committed file (`fr-ban-sample.json`), not a fresh draw, so two runs on two machines
-// grade the same 100 rows. `--resample` regenerates it from a local BAN extract using the seed below;
+// grade the same 100 rows. `--resample` regenerates it from a local BAN extract using the seed below.
 // the draw is a seeded pass over rowids, so the same seed against the same BAN release reproduces the
 // same panel byte for byte. A different BAN release renumbers the rows and will produce a different
 // panel — which is why the sample is committed rather than drawn at run time.
@@ -116,7 +116,7 @@ const { values: flags } = parseArguments({
 
 // This file is served at /benchmarks/fr-ban-panel.mjs and runs in a READER's project, where
 // `@mailwoman/core/env` — the blessed env helper inside this repo — is not a dependency.
-// oxlint-disable-next-line sister-software/no-process-globals -- shipped doc asset; runs outside this repo
+// oxlint-disable-next-line sister-software/no-process-globals -- shipped doc asset. runs outside this repo
 const dataRoot = flags["data-root"] ?? process.env.MAILWOMAN_DATA_ROOT
 
 if (!dataRoot) {

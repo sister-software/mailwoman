@@ -16,7 +16,7 @@
  *   The WOF adapters export their canonical ids — `wof-admin` and `wof-postalcode` — so existing
  *   `mailwoman corpus build` callsites do not need to change despite the Phase 1.5.1 SQLite →
  *   JSON-bundle pivot (`./wof-admin-json/` and `./wof-postalcode-json/` directories hold the
- *   implementations; the registered ids are unchanged).
+ *   implementations. the registered ids are unchanged).
  */
 
 import { geonamesAdapter } from "#adapters/geonames/adapter"

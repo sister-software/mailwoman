@@ -22,7 +22,7 @@ const hasCorpus = await pathExists(CORPUS_PATH)
 describe.skipIf(!hasCorpus)("audit — integration", () => {
 	it("emits a report without throwing on the v0.3.0 corpus + v0.4.0 config", async () => {
 		// audit() prints to stdout/stderr — we test that it doesn't throw and produces a stat line.
-		// More substantive output assertions are bypass-able since the printed report is the artifact;
+		// More substantive output assertions are bypass-able since the printed report is the artifact.
 		// a successful run is the contract.
 		await using tmpDirectory = await temporaryDirectory("audit-test-")
 		const tmp = tmpDirectory.path
@@ -52,7 +52,7 @@ describe("audit — config parser", () => {
 	it("parses source_weights block without bleeding into sibling keys (val_rows etc.)", async () => {
 		// White-box: re-import the parser via dynamic import + grep on stdout would couple us to
 		// printer formatting. Instead, write a small config + call audit() against an empty corpus
-		// dir; we verify the warning-output for "no parquet files" mentions the right sources (proving the
+		// dir. we verify the warning-output for "no parquet files" mentions the right sources (proving the
 		// parser found exactly the configured ones and not val_rows).
 		await using tmpDirectory = await temporaryDirectory("audit-parser-test-")
 		const tmp = tmpDirectory.path

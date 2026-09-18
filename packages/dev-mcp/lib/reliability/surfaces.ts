@@ -9,7 +9,7 @@
  *   shared curve can hide. The DECODE surface reads the per-token softmax the parser already computes, folded to the
  *   unit a consumer reads (the assembled component); its truth is an input set's component labels. The COARSE-PLACER
  *   surface reads a calibrated classifier's own output probability against a held-out country label. They share a
- *   reliability diagram because a reliability diagram is the same diagram; they share nothing else. A third surface —
+ *   reliability diagram because a reliability diagram is the same diagram. they share nothing else. A third surface —
  *   the locale head, the kind verdict, an evidence channel — should be added the same way rather than by widening
  *   either of these.
  *
@@ -30,7 +30,7 @@ import type { Observation } from "#reliability/index"
  * What to do with a produced component the truth row never mentions.
  *
  * `exclude` (default) keeps it out of the curve and counts it separately — correct whenever truth is PARTIAL, which is
- * every corpus wired here. `wrong` grades it as an error, correct only against COMPLETE truth; on a partial corpus it
+ * every corpus wired here. `wrong` grades it as an error, correct only against COMPLETE truth. on a partial corpus it
  * measures the corpus rather than the model.
  */
 export const UnassertedPolicy = {
@@ -66,7 +66,7 @@ export interface ExcludedRows {
  * Produced components no truth row asserted — the confidence mass riding on unverified output.
  *
  * Reported beside the curve rather than inside it. On a partial-truth corpus these are mostly correct components nobody
- * wrote an assertion for, so folding them in as errors measures the corpus; dropping them silently hides how much of
+ * wrote an assertion for, so folding them in as errors measures the corpus. dropping them silently hides how much of
  * the parse the curve does not cover. Neither is a number worth quoting, so both facts are returned.
  */
 export interface UnassertedCohort {
@@ -104,7 +104,7 @@ export interface EngineLike {
 /**
  * Reliability of the DECODE distribution, at the unit a consumer reads.
  *
- * The model emits a per-token softmax; a consumer reads an assembled component. So the confidence is folded across the
+ * The model emits a per-token softmax. a consumer reads an assembled component. So the confidence is folded across the
  * tokens carrying each tag ({@link ComponentAggregate}) and graded against the input set's component labels with the
  * harness's own rule — `componentMatches`, exact case-folded equality, SHARED rather than re-typed, because a local
  * copy of the correctness rule is how a calibration number quietly stops describing what the board describes.

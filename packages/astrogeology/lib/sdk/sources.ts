@@ -5,7 +5,7 @@
  *
  *   The source products, typed. A nomenclature archive is regenerated nightly by USGS and is pinned by SNAPSHOT: the
  *   fetch records the day's bytes and SHA-256 in the lock, and the build reads only the locked snapshot. A DEM is a
- *   stable product pinned by URL and byte count; the first fetch writes its SHA-256 and every later fetch refuses a
+ *   stable product pinned by URL and byte count. the first fetch writes its SHA-256 and every later fetch refuses a
  *   change. Every row is public domain (USGS `<useconst>`).
  */
 

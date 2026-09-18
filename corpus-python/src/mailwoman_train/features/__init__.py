@@ -16,7 +16,7 @@ The five, and what each is for:
 
 **Postcode anchor** (#239/#240) — a uniform country posterior over the locale set plus a 2-d
 centroid, painted on the postcode span. Position-local, which is the property the global locale FiLM
-lacks; the two compose, anchor at the input and FiLM after the blocks. Robustness comes from a
+lacks. the two compose, anchor at the input and FiLM after the blocks. Robustness comes from a
 confidence CURRICULUM applied upstream in the loader, so the model is perturbation-agnostic. It is
 painted beside the tokenizer rather than here, because locating a postcode span needs piece offsets.
 

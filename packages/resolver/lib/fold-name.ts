@@ -8,7 +8,7 @@
  *   otherwise import each other for it.
  *
  *   `@mailwoman/codex`'s `foldName` (`packages/codex/lib/normalize.ts`) is a near twin and is also
- *   correct; it differs in collapsing every non-alphanumeric RUN, whitespace included. The two are
+ *   correct. it differs in collapsing every non-alphanumeric RUN, whitespace included. The two are
  *   equivalent on the inputs either sees today. They are kept apart because this one answers to a
  *   comparison contract the resolver owns, not because the codex copy is wrong.
  */

@@ -7,7 +7,7 @@
  *   the dev/release weights recipe.
  *
  *   This file exists because the recipe had three homes. `release.config.json` names the artifacts and
- *   carries the reasoning in `lineage`; `copy-weights.ts` reads it for the release; and ten
+ *   carries the reasoning in `lineage`. `copy-weights.ts` reads it for the release. and ten
  *   each `neural-weights-<locale>` overlay's `scripts/link-dev-weights.ts` hardcoded a byte-identical copy of the
  *   same two paths for dev. The en-us copy's own docstring records what that cost:
  *
@@ -18,9 +18,9 @@
  *   Three legs, one of them pure duplication. This is the leg that goes.
  *
  *   THE BASE DIRECTORY IS PER KEY, and that is the trap this module exists to hold in one place. The model
- *   and tokenizer resolve against the DATA ROOT; three of the four lexicons resolve against the REPO
+ *   and tokenizer resolve against the DATA ROOT. three of the four lexicons resolve against the REPO
  *   (they are generated, committed files); `localitySurfaceLexicon` resolves against the DATA ROOT because
- *   it is built, not committed; and the postcode databases resolve against the data root's `wof/`. Nothing
+ *   it is built, not committed. and the postcode databases resolve against the data root's `wof/`. Nothing
  *   in the JSON marks which is which, so a reader that guessed one rule would silently resolve four of
  *   seven artifact classes to paths that do not exist — and every one of them degrades to `undefined`
  *   rather than failing.
@@ -100,7 +100,7 @@ export async function readWeightsRecipe(
 	const model = overrides.model ?? resolvePath(dataRoot, config.weights.model)
 	const tokenizer = overrides.tokenizer ?? resolvePath(dataRoot, config.weights.tokenizer)
 
-	// `copy-weights.ts` lets an absolute config entry pass through; matching that here keeps the two readers
+	// `copy-weights.ts` lets an absolute config entry pass through. matching that here keeps the two readers
 	// from disagreeing about what a leading slash means.
 	const underDataRoot = (rel: string, ...segments: string[]): string =>
 		rel.startsWith("/") ? rel : resolvePath(dataRoot, ...segments, rel)

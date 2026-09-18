@@ -40,7 +40,7 @@ const SPACE_SENTINEL = "▁"
 
 /**
  * A SentencePiece byte-fallback piece (`<0xHH>`) — the vocab's override for a character with no direct token (curly
- * quotes “”‘’, guillemets «», braces {} all hit this even on an otherwise-Latin-script vocab; see `tokenizer.ts`'s doc
+ * quotes “”‘’, guillemets «», braces {} all hit this even on an otherwise-Latin-script vocab. see `tokenizer.ts`'s doc
  * comment). The placeholder TEXT itself ("<0x7B>") contains hex digits and letters that `/[\p{L}\p{N}]/u` would misread
  * as real alnum content — without this guard, a byte-fallback piece's placeholder text leaks into `fstToken` as garbage
  * ("0x7bblock" instead of "block"), silently corrupting the FST/pair-index probe key for any place name written with
@@ -111,7 +111,7 @@ export interface FSTMatcherLike {
  *
  * The two mapped tiers carry one surface-conditional exception (#1903): a street-shaped surface — see
  * {@link isStreetShapedSurface} — draws no locality bias from a neighbourhood/localadmin entry. Direct `locality`
- * entries are never suppressed; a real locality named after a street keeps its bias.
+ * entries are never suppressed. a real locality named after a street keeps its bias.
  */
 export const PLACETYPE_TO_BIO: ReadonlyMap<string, string> = new Map([
 	["country", "country"],
@@ -171,7 +171,7 @@ export interface FSTEntryLike {
 /**
  * Collapse accepting entries to `max(importance)` PER BIO TAG — the only shape {@link applyBias} acts on.
  *
- * The per-place ranking inside a name is invisible to the decoder; only the per-tag max is not. A caller reporting
+ * The per-place ranking inside a name is invisible to the decoder. only the per-tag max is not. A caller reporting
  * anything finer would overstate what an importance change can do.
  *
  * `surfaceTokens` is the FST-normalized matched surface, and it is required because the collapse is
@@ -311,7 +311,7 @@ export type ImportanceLengthScaleMode = "off" | "suppression" | "both"
  * names, so a positive locality/region bias must be withheld when the matched span sits in a syntactically
  * street-headed position — conditioned on SYNTAX (street-type adjacency, house-number-left), never on the importance
  * value (`importance²` magnitude sharpening was measured and REJECTED: it re-imports exactly this collision).
- * Positive-evidence-only: the check can only scale the positive bias down when street context is present; its absence
+ * Positive-evidence-only: the check can only scale the positive bias down when street context is present. its absence
  * never penalizes, and a parse with no street context is byte-identical to the unrestricted path.
  *
  * The street-type signal source is the street-morphology FST (`fst-street-morphology.bin`, locale-general — catches
@@ -338,7 +338,7 @@ export interface FSTPriorOpts {
 	maxBias?: number
 	suppressionScale?: number
 	/**
-	 * See {@link ImportanceLengthScaleMode}. Default `suppression` (measured best; see the caller).
+	 * See {@link ImportanceLengthScaleMode}. Default `suppression` (measured best. see the caller).
 	 */
 	importanceLengthScaleMode?: ImportanceLengthScaleMode
 	/**
@@ -478,7 +478,7 @@ export function buildFSTEmissionPriors(
  *      `current.pieceIndices` (contributing nothing to `fstToken`; `normalizeFSTToken` strips punctuation anyway) but
  *      never resetting it, so the pieces that follow still have a `current` to land on ("Stockton-on-Tees", "Bishop's
  *      Stortford"). If a word is PENDING, this punctuation piece has nothing to attach to either — same empty-placeholder
- *      treatment as case 2 — and the state stays PENDING; the punctuation doesn't consume or clear the pending word, it
+ *      treatment as case 2 — and the state stays PENDING. the punctuation doesn't consume or clear the pending word, it
  *      just has nothing of its own to open.
  *
  * The pending state is what keeps `"Stockton , Lancashire"` from fusing "Stockton" and "Lancashire" into one group:
@@ -489,7 +489,7 @@ export function buildFSTEmissionPriors(
  *
  * Exported (alongside {@linkcode normalizeFSTToken} and the {@linkcode WordGroup} type) so consumers like the
  * street-morphology prior can reuse the same piece-grouping/normalization pipeline without duplication. Internal helper
- * signature; not part of the public neural API.
+ * signature. not part of the public neural API.
  */
 export function groupPiecesIntoWords(pieces: ReadonlyArray<{ piece: string }>): WordGroup[] {
 	const groups: WordGroup[] = []
@@ -517,7 +517,7 @@ export function groupPiecesIntoWords(pieces: ReadonlyArray<{ piece: string }>): 
 			const literal = p.piece.startsWith(SPACE_SENTINEL) ? p.piece.slice(SPACE_SENTINEL.length) : p.piece
 			current = { fstToken: literal, pieceIndices: [i] }
 		} else if (!hasAlnum) {
-			// Case 3, punctuation: interior (absorbed) if a word is open; otherwise it has nothing to attach to and
+			// Case 3, punctuation: interior (absorbed) if a word is open. otherwise it has nothing to attach to and
 			// stands alone — the pending state (if any) is left untouched for the next piece.
 			if (current) {
 				current.pieceIndices.push(i)
@@ -553,7 +553,7 @@ export function groupPiecesIntoWords(pieces: ReadonlyArray<{ piece: string }>): 
  * Normalize a whitespace word to FST-index form: NFKC → lowercase → strip punctuation and symbols.
  *
  * NFKC (compatibility decomposition + canonical composition) unifies ligatures, superscripts, and other decomposable
- * forms; it does not strip diacritics ("Álava" stays "álava", not "alava"). Both the FST builder and this runtime fold
+ * forms. it does not strip diacritics ("Álava" stays "álava", not "alava"). Both the FST builder and this runtime fold
  * use the same pipeline, so any index built from either is consistent — that consistency is the guarantee, not the
  * specific form (indexed and query surfaces agree on diacritics).
  *
@@ -606,7 +606,7 @@ function adjacentNonEmptyIndex(groups: WordGroup[], from: number, direction: 1 |
  *    "500 Washington" is street-headed, #1143). A house number before a street-type prefix ("500 rue …") needs no extra
  *    case: the prefix itself already satisfies condition 1.
  *
- * Composes with #1173's length-scaling inside {@linkcode applyBias} (length = weak lone match; context = strong match
+ * Composes with #1173's length-scaling inside {@linkcode applyBias} (length = weak lone match. context = strong match
  * in a street position); the suppression path is untouched.
  */
 function streetContextScale(

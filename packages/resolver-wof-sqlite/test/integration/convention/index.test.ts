@@ -55,7 +55,7 @@ describe("convention engine — merge + resolve", () => {
 	})
 
 	it("deep-merges country → region → locality with most-specific winning", () => {
-		// country sets a base strategy list + pc weight; region overrides the strategy list; locality
+		// country sets a base strategy list + pc weight. region overrides the strategy list. locality
 		// nudges name weight. The resolved convention reflects the most-specific value per field.
 		const source = new SeedConventionSource({
 			100: { candidateStrategies: ["postcode_area_resolution"], scoringWeights: { pc: 0.7 } }, // country (JP)
@@ -112,12 +112,12 @@ describe("convention engine — live dispatch", () => {
 	})
 
 	afterEach(() => {
-		// lookup[Symbol.dispose]() in each test closes db; nothing else to do.
+		// lookup[Symbol.dispose]() in each test closes db. nothing else to do.
 	})
 
 	it("default (empty source) → coordinate-first recovers the postcode's town from a typo", async () => {
 		using lookup = new WOFSQLitePlaceLookup({ database: db, buildFTS: true })
-		// "Plaun" won't FTS-match; postcode_area_resolution injects Plauen from the postcode.
+		// "Plaun" won't FTS-match. postcode_area_resolution injects Plauen from the postcode.
 		const r = await lookup.findPlace({ text: "Plaun", placetype: "locality", postcode: "08523", country: "DE" })
 		expect(r[0]?.name).toBe("Plauen")
 	})

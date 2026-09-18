@@ -55,7 +55,7 @@ export interface NPPESReportInput {
 	geocoded: number
 	trainEM: boolean
 	/**
-	 * The corpus-wide table the progression was fed; only its `total`/`distinct` are reported.
+	 * The corpus-wide table the progression was fed. only its `total`/`distinct` are reported.
 	 */
 	addressFrequency: TermFrequencyTable
 	/**

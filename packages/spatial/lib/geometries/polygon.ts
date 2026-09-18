@@ -148,7 +148,7 @@ export type MultiPolygonRings = readonly PolygonRings[]
  * Ray-cast a point against one linear ring — the even-odd crossing count. Shoot a ray along +lon and toggle on every
  * edge crossing.
  *
- * Points exactly on an edge are implementation-defined; either side is acceptable for geocoding, where admin boundaries
+ * Points exactly on an edge are implementation-defined. either side is acceptable for geocoding, where admin boundaries
  * are Douglas-Peucker–simplified before they ever reach us.
  */
 export function pointInRing(lon: number, lat: number, ring: ContainmentRing): boolean {

@@ -12,7 +12,7 @@ import { buildToolTable } from "@mailwoman/dev-mcp/tools"
 import { describe, expect, it } from "vitest"
 
 /**
- * The search reads the working tree and nothing else; a registry that throws on touch proves it.
+ * The search reads the working tree and nothing else. a registry that throws on touch proves it.
  */
 const noRegistry = new Proxy({} as EngineRegistryLike, {
 	get() {

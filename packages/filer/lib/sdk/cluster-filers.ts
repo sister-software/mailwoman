@@ -39,11 +39,11 @@
  *   exact canonicalized organization name, and the Fellegi-Sunter model's own organization comparison
  *   extracts that same field — so every candidate pair this module ever scores already has
  *   `similarity === 1.0` on that comparison, i.e. `NAME_LEVELS`' `"high"` (0.88) tier is dead code
- *   here; nothing below an exact canonical match ever reaches the scorer. Pass (b) is, in substance,
+ *   here. nothing below an exact canonical match ever reaches the scorer. Pass (b) is, in substance,
  *   `GROUP BY canonicalizeOrganizationName(legal_name)` **plus a hard identifier veto** — NOT
  *   approximate/fuzzy name linkage. (`@mailwoman/match`'s default blocking keys are geo/address/
  *   phone/email — filer.db carries none of those until ASR lands in Phase 3c, decision 2 — so the
- *   library defaults would propose zero candidate pairs; that's why blocking is overridden at all.)
+ *   library defaults would propose zero candidate pairs. that's why blocking is overridden at all.)
  *
  *   **The identifier veto (decision 5's real enforcement
  *   mechanism):** two different authoritative components always have
@@ -76,7 +76,7 @@
  *   (b) as it stands cannot discover a link between two nodes that pass (a) doesn't already connect —
  *   it can only ever CONFIRM/re-surface an existing authoritative grouping via name matching, never
  *   bridge two genuinely separate ones. This is intentional, not a bug to chase: a linker that discovers
- *   nothing is safe; a linker that discovers FALSE links (what the identifier veto above exists to
+ *   nothing is safe. a linker that discovers FALSE links (what the identifier veto above exists to
  *   prevent) is not — and 3a's decision 5 scope was authoritative-only anyway. Restoring genuine
  *   cross-component discovery power requires corroborating evidence BEYOND the canonical name (e.g. a
  *   normalized HQ address, a contact phone/email) — that data doesn't exist reliably in this crosswalk
@@ -121,7 +121,7 @@
  *
  *   **Cross-vintage supersession — the same-vintage idempotency claim above does not, by itself, extend
  *   to a rebuild at that same vintage.** `filer_edge`'s composite PK plus `INSERT ... ON CONFLICT DO
- *   NOTHING` only makes an unchanged same-vintage rerun idempotent; it does nothing for a rerun (same or
+ *   NOTHING` only makes an unchanged same-vintage rerun idempotent. it does nothing for a rerun (same or
  *   later vintage) whose underlying data changed. Unguarded, rerunning at vintage v2 after names
  *   diverged leaves `filer_cluster` correctly split back into singletons while the stale v1 inferred
  *   edge survives with `valid_to: null` ("still valid"), directly contradicting the current
@@ -186,13 +186,13 @@ const LEGAL_NAME_ATTRIBUTE_KEY = "legal_name"
  *
  * `buildDefaultModel`'s prior (`lambda: 0.0001`) alone contributes `log2(0.0001 / 0.9999) ≈ -13.29` bits — a large,
  * constant tax on every pair, since a match between two records drawn at random from the whole crosswalk is assumed
- * rare (the model was designed for the general case; it has no per-domain lambda change). Because pass (b)'s blocking
+ * rare (the model was designed for the general case. it has no per-domain lambda change). Because pass (b)'s blocking
  * key is an exact canonicalized-organization-name match, every candidate pair this module scores already carries the
  * organization comparison's `"exact"` level (`m: 0.8, u: 0.01` → `log2(80) ≈ +6.32` bits) — the identity signal
  * blocking selected for. `exactDiscriminators` (`frn`/`form499ID`/`providerID`) then contribute their own "different"
  * level (`m: 0.25, u: 0.92` → `log2(0.25/0.92) ≈ -1.88` bits each) whenever a candidate pair's code sets don't overlap
  * — which, for two different authoritative components, is the common case (their code sets are disjoint by
- * construction; components sharing a code would already be one authoritative component). Worst case, all three
+ * construction. components sharing a code would already be one authoritative component). Worst case, all three
  * discriminators disagree: `-13.29 + 6.32 - 3×1.88 ≈ -12.61` bits. `-13` sits just below that worst case (empirically
  * verified against `buildDefaultModel`'s current seed `m`/`u` constants) while staying above the zero-evidence floor
  * (`-13.29`, reachable only by a pair with no organization match at all — impossible here, since the blocking key is
@@ -209,7 +209,7 @@ export const INFERRED_LINK_THRESHOLD = -13
 const IDENTIFIER_VETO_KEYS = ["frn", "form499ID", "providerID"] as const
 
 /**
- * HARD VETO (decision 5's real enforcement mechanism; see the module docstring's "identifier veto" section). `true`
+ * HARD VETO (decision 5's real enforcement mechanism. see the module docstring's "identifier veto" section). `true`
  * when `a` and `b` share at least one code across any of {@link IDENTIFIER_VETO_KEYS}. In this domain, identifiers are
  * authoritative — two different FRNs mean two different registrants, full stop, no matter how similar the names look.
  *
@@ -239,7 +239,7 @@ export function hasSharedIdentifier(a: SourceRecord, b: SourceRecord): boolean {
 /**
  * The Fellegi-Sunter model used only inside {@linkcode scoreWithIdentifierVeto} — built once, at module load, since it
  * depends on nothing but a fixed comparison config (no per-call state). `collapseSpatial: true` matches
- * `resolveEntities`'s own default; the choice is moot in practice, since no `SourceRecord` this module builds ever
+ * `resolveEntities`'s own default. the choice is moot in practice, since no `SourceRecord` this module builds ever
  * populates `.address` (see the module docstring's "honest description" section), so the spatial comparison always
  * evaluates to "missing" regardless.
  */
@@ -264,7 +264,7 @@ function scoreWithIdentifierVeto(a: SourceRecord, b: SourceRecord): number {
 
 /**
  * Rows per `INSERT` statement when bulk-writing `filer_cluster` — keeps well under SQLite's bound parameter limit (3
- * columns/row) without needing a staging-table apparatus; this module reads the whole graph into memory for union-find
+ * columns/row) without needing a staging-table apparatus. this module reads the whole graph into memory for union-find
  * regardless, so there's no streaming/batch-commit concern the way `build-filer.ts` has.
  */
 const CLUSTER_INSERT_BATCH_SIZE = 500
@@ -385,7 +385,7 @@ async function readNodeInfo(
  * regardless of `relationship`, so a `HoldingCompany`/`ManagementCompany` edge (correctly typed authoritative by Task
  * 2's builder) silently merged every filer sharing that holding/management company into one entity cluster — the exact
  * conflation `filer_family` exists to keep separate. Restricting to `same_entity` is what makes an entity cluster mean
- * "these identifiers denote the same legal entity" and nothing broader; a holding-company edge asserts "A is held by
+ * "these identifiers denote the same legal entity" and nothing broader. a holding-company edge asserts "A is held by
  * B", a different claim that must never merge identities.
  */
 async function readAuthoritativeGroups(db: Kysely<FilerDatabase>): Promise<string[][]> {
@@ -514,7 +514,7 @@ async function buildInferredRecords(db: Kysely<FilerDatabase>): Promise<SourceRe
 		// `canonicalizeOrganizationName` returns a truthy object even when the whole input was designation
 		// tokens (e.g. a bare "LLC") and stripped down to an empty canonical string — `!organization` alone
 		// misses that case, inflating `recordsConsidered` with a record that
-		// can never usefully block (an empty-string blocking key never matches another record; see
+		// can never usefully block (an empty-string blocking key never matches another record. see
 		// `exactKey`, `match/blocking.ts`).
 		if (!organization || !organization.canonical) continue
 
@@ -550,7 +550,7 @@ async function buildInferredRecords(db: Kysely<FilerDatabase>): Promise<SourceRe
  * Pass (b): name-match `form499_id` nodes across the whole crosswalk via `resolveEntities` (decision 4: binding
  * `learnedScorer: false`, plus a hard identifier veto via a custom `scorer` — see {@linkcode scoreWithIdentifierVeto}
  * and the module docstring's "identifier veto" section), and record the outcome as `assertion: "inferred"` rows —
- * without touching any `assertion: "authoritative"` row (decision 5 / criterion 2, binding; see the module docstring).
+ * without touching any `assertion: "authoritative"` row (decision 5 / criterion 2, binding. see the module docstring).
  *
  * Writes:
  *
@@ -588,7 +588,7 @@ export async function clusterInferredLinks(
 		// enabled here) — but note the ACTUAL weight for every pair comes from `scorer` below, not from
 		// resolveEntities' own internal model built from this config (see scoreWithIdentifierVeto's docstring).
 		exactDiscriminators: [...IDENTIFIER_VETO_KEYS],
-		// Decision 4, BINDING: the bundled GBT is trained on NPPES healthcare dedup; its calibrated threshold isn't in
+		// Decision 4, BINDING: the bundled GBT is trained on NPPES healthcare dedup. its calibrated threshold isn't in
 		// Fellegi-Sunter weight units and has no business scoring corporate legal names. Redundant with `scorer` below
 		// (a custom `scorer` already bypasses the learned-scorer branch entirely) but kept explicit for intent.
 		learnedScorer: false,

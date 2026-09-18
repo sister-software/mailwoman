@@ -54,7 +54,7 @@ The weight-bump hypothesis is **falsified**. v1.5.1 (weight 6.0) scored fr.house
 
 **Conclusion — the both-order synth recipe plateaus at ~87% on this golden, and louder weight is actively harmful.** Likely mechanism: the generated synth distribution diverges from the real OA golden's reversed-order distribution; overweighting fits synth quirks at the expense of real rows. The German precedent (6.0) did not transfer — German's number is always _last_ (one position to learn); FR postcode-first makes the house_number position ambiguous (it can collide with the leading postcode), so more synth mass amplifies the collision.
 
-**This closes the v1.5.x weight thread** (committed to the operator: "the last weight experiment"). No third training run tonight. The change for a _future_ run is not weight — candidates: (a) more _real_ reversed-order data (BAN-sourced, not synth), (b) a postcode-anchor / position-aware signal that protects the postcode span, (c) accept ~87% as the direct intrinsic floor.
+**This closes the v1.5.x weight thread** (committed to the operator: "the last weight experiment"). No third training run tonight. The change for a _future_ run is not weight — candidates: (a) more _real_ reversed-order data (BAN-sourced, not synth), (b) a postcode-anchor / position-aware signal that guards the postcode span, (c) accept ~87% as the direct intrinsic floor.
 
 ### Ship decision — operator's call (flagged)
 
@@ -110,7 +110,7 @@ The orchestrator session became unresponsive (network) mid-shift after launching
 
 ## Open questions
 
-- **What recovers fr.house_number past the ~87% plateau, if not weight?** Falsified: weight (6.0 < 3.0). Untested candidates, for the operator to prioritize: (a) more _real_ reversed-order data from BAN rather than synth (the synth↔real distribution gap is the leading suspect); (b) a postcode-anchor / position-aware signal that protects the postcode span from being raided for a leading house number; (c) accept ~87% as the direct intrinsic floor and re-baseline the check. **Do NOT bump extract mass blindly** — v1.5.1 shows the synth extract can actively destabilize; more of it is not safe.
+- **What recovers fr.house_number past the ~87% plateau, if not weight?** Falsified: weight (6.0 < 3.0). Untested candidates, for the operator to prioritize: (a) more _real_ reversed-order data from BAN rather than synth (the synth↔real distribution gap is the leading suspect); (b) a postcode-anchor / position-aware signal that guards the postcode span from being raided for a leading house number; (c) accept ~87% as the direct intrinsic floor and re-baseline the check. **Do NOT bump extract mass blindly** — v1.5.1 shows the synth extract can actively destabilize; more of it is not safe.
 - **Ship v1.5.0 (87.4%) as v4.6.0, or hold v4.5.0?** It misses the 91 floor by 3.6pp but is +32.9pp over the shipped model on the hard golden. Operator's explicit call (re-baseline-and-ship vs hold). See "Ship decision" above.
 - **`__isCompiledTree` off-by-one?** The check-integrity fix bridged `core/out/data` locally; the deeper question (does repo.ts's compiled-tree detection resolve FALSE when it should be TRUE?) is critical and deferred to daylight review (#481).
 

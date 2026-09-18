@@ -1,7 +1,7 @@
 """The subcommands, as a registry.
 
 A command is a module exporting `NAME`, `add_parser` and `run` — `protocols.CLICommand`. Adding one
-is a module here and one line below; no other command's code is touched, and `build_parser` does
+is a module here and one line below. no other command's code is touched, and `build_parser` does
 not grow.
 
 The order is the order `--help` lists them: the pipeline as it runs, then the two tokenizer

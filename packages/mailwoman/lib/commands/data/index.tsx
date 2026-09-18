@@ -22,7 +22,7 @@ import { BUNDLES, PUBLIC_BUCKET_BASE_URL } from "#data/bundles"
 
 /**
  * Shown at the top of `mailwoman data --help`. Commander reuses it in the root command listing, so it is held to two
- * sentences; the long-form "why" lives in {@link overview}, which is what a bare `mailwoman data` prints.
+ * sentences. the long-form "why" lives in {@link overview}, which is what a bare `mailwoman data` prints.
  */
 export const description =
 	"Fetch the reference databases geocoding needs — far too large to ship inside the npm package. `data --list` " +

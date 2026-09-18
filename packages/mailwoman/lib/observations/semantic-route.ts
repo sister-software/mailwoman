@@ -10,20 +10,20 @@
  *   WHAT THE ROUTE DOES. It is a {@linkcode POIPhraseLookup} — the same injected-lexicon contract
  *   `@mailwoman/kind-classifier` already consumes — so a phrase it claims is served by the EXISTING
  *   executor exactly as if the user had typed the category. Four steps, none of which invents anything:
- *   a declared surface form names an activity concept; the compiled artifact says which entity kinds
- *   assert `affords` against that activity; a committed external mapping translates each of those
- *   concepts into a `@mailwoman/poi-taxonomy` category id; the category id goes back as positive
+ *   a declared surface form names an activity concept. the compiled artifact says which entity kinds
+ *   assert `affords` against that activity. a committed external mapping translates each of those
+ *   concepts into a `@mailwoman/poi-taxonomy` category id. the category id goes back as positive
  *   evidence. No ordering, no weight, no boost, no penalty is authored anywhere along it — the value the
  *   match reports as its `confidence` is the one the committed exact-phrase rung reports for the same
  *   kind of hit, and it decides which query KIND is chosen rather than how any candidate is ordered.
  *
  *   WHERE THE PHRASES COME FROM, AND WHY THEY ARE NOT DATA. The compiled artifact carries concepts,
- *   relations, mappings and provenance; it carries no phrase lexicon, and minting one as though it were
+ *   relations, mappings and provenance. it carries no phrase lexicon, and minting one as though it were
  *   data is what the boundary record's section 5.5 refuses. So the surface forms are a reviewed vocabulary
  *   of their own — `@mailwoman/activity-lexicon`, where every entry names the committed record that attests
  *   it and the locales the phrasing is used in. They stay out of `@mailwoman/poi-taxonomy` because that
  *   package's phrases are venue nouns, each naming one category, and an activity is afforded by a SET of
- *   kinds. The lexicon declares surface forms and an activity identifier; everything a reader would call
+ *   kinds. The lexicon declares surface forms and an activity identifier. everything a reader would call
  *   knowledge — which kinds afford the activity, under what modality, on whose authority — comes from the
  *   artifact.
  *
@@ -47,7 +47,7 @@
  *   code-point order, which is a stable listing and not a preference, and a reader who takes the first
  *   entry as the best one is reading rank into a sort key.
  *
- *   LOCALE SCOPE IS THE PHRASE'S AND BINDS TO THE CALLER; COUNTRY SCOPE IS THE ASSERTION'S AND BINDS TO
+ *   LOCALE SCOPE IS THE PHRASE'S AND BINDS TO THE CALLER. COUNTRY SCOPE IS THE ASSERTION'S AND BINDS TO
  *   THE PLACE. A phrase's locale scope says who uses that wording, so it is read here against the caller's
  *   locale. A `RelationAssertion`'s country list says where the establishments it describes exist, so it is
  *   judged against the country of the resolved ANCHOR, not the caller's locale — the locale is the lens the
@@ -445,7 +445,7 @@ export async function createSemanticObservationRoute(
 				matchedPhrase: declared.entry.phrase,
 				// The confidence the committed exact-phrase rung reports for the same kind of hit: `1` for a phrase used
 				// everywhere or one the locale names outright, and the halved value `@mailwoman/variant-aliases` reports when
-				// only the language agrees. It selects a query KIND; it orders no candidate, and no number here was chosen to
+				// only the language agrees. It selects a query KIND. it orders no candidate, and no number here was chosen to
 				// make one win. Every member of a set carries the same value, so the set cannot be ranked by it either.
 				confidence: localeMatch.confidence,
 				// These matches are one afforded set, not a preference list: the POI branch searches their union.

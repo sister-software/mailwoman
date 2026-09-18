@@ -11,13 +11,13 @@
  *   substantially an eval-order artifact (docs/articles/evals/resolver-geo/2026-06-06-anchor-pilot.md); this
  *   makes native-vs-international a first-class, repeatable measurement instead of a one-off.
  *   Self-emits every figure (each run writes its own .md), then prints a 2x2 + US/FR summary. NOTE:
- *   anchor on/off only differs for an anchor-trained (4-input) model; for a plain model both
+ *   anchor on/off only differs for an anchor-trained (4-input) model. for a plain model both
  *   columns are identical (the anchor inputs are ignored / absent).
  *
  *   `promotion-eval.ts` calls {@linkcode deOrderEval} IN-PROCESS and captures its report into
  *   `<out-dir>/<tag>-deorder.md` — the file the verdict assembler regex-reads for
  *   `de.native_locality` (the `native DE` row's anchor-ON cell). Each of the six inner
- *   `oaResolverEval` runs is likewise in-process now; their markdown still lands in
+ *   `oaResolverEval` runs is likewise in-process now. their markdown still lands in
  *   `<out>/<name>.md` and their narration in `<out>/<name>.log`, byte-for-byte as the child
  *   processes wrote them.
  *
@@ -190,7 +190,7 @@ export async function deOrderEval(
 
 		// The try/catch is the in-process spelling of the `nothrow:` this call used to carry.
 		// oa-resolver-eval signals its own internal regression by exiting non-zero even when it wrote a
-		// valid report; this is a MEASUREMENT harness (loc() reads the .md), so a thrown failure must not
+		// valid report. this is a MEASUREMENT harness (loc() reads the .md), so a thrown failure must not
 		// abort before the 2x2 summary prints (it false-failed de.native_locality). The two sinks stay
 		// separate because the child's stdout and stderr went to two different files.
 		const outLines: string[] = []

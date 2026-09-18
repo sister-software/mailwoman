@@ -56,7 +56,7 @@ export interface POIExecutorOpts {
 	 * because this executor's return type (`POIIntentOutcome`, no Promise) is called synchronously from `poi-intent.ts`'s
 	 * `deps.execute`. Absent = no reverse geocoder wired (missing admin gazetteer db, or `poiQueryKind: true` with no
 	 * `poiDatabasePath`) — results carry no `ancestry` key at all (house meaning-of-zero: absence, not an empty array).
-	 * `runtime-pipeline.ts` wires a `WOFReverseGeocoder`-backed sync adapter; this module never imports
+	 * `runtime-pipeline.ts` wires a `WOFReverseGeocoder`-backed sync adapter. this module never imports
 	 * `@mailwoman/resolver-wof-sqlite` itself — stays pure/testable with a stub fn.
 	 */
 	reverseGeocode?: (latitude: number, longitude: number) => ReadonlyArray<POIAncestryEntry> | undefined
@@ -69,7 +69,7 @@ export interface POIExecutorOpts {
  *    (trivially: no db, no local rows possible) as well as with a lookup present that comes back empty for the
  *    category.
  * 2. `anchor_required` — a category/brand subject with a lookup present but no resolvable center (name subjects don't need
- *    one; the FTS path searches un-anchored).
+ *    one. the FTS path searches un-anchored).
  * 3. No lookup + non-build-local subject → the bare intent, unchanged (intent-only mode).
  * 4. Otherwise: run `lookup.search(...)` and attach the mapped results.
  */
@@ -197,7 +197,7 @@ function decorateAncestry(result: POIResult, reverseGeocode: POIExecutorOpts["re
 /**
  * Spatial anchor for the search: the anchor tree's DEEPEST node carrying a resolved centroid (walking roots + one level
  * of children — the resolver decorates `lat`/`lon` on the nodes it wins, Phase 4.3), else the caller-supplied
- * `biasPoint` ("near me"), else undefined (category/brand callers abstain on this; name callers search un-anchored).
+ * `biasPoint` ("near me"), else undefined (category/brand callers abstain on this. name callers search un-anchored).
  *
  * Exported because an observer reading a finished outcome has to name the point the search was CENTRED ON, and the
  * outcome does not carry it. A second copy of this walk would answer a neighbouring coordinate whenever the anchor tree
@@ -218,7 +218,7 @@ export function resolvePOISearchCenter(intent: POIIntent): { latitude: number; l
 
 /**
  * The ISO 3166-1 alpha-2 country of the place the search is centred on, or `null` when the anchor did not resolve to
- * one. Read off the same node {@link resolvePOISearchCenter} reads, so the country and the coordinate name one place;
+ * one. Read off the same node {@link resolvePOISearchCenter} reads, so the country and the coordinate name one place.
  * when that node carries no country stamp the roots are consulted, since a resolved root names the country every
  * descendant shares. A `biasPoint` anchor has no resolved place and therefore no country.
  *

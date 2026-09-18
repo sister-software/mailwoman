@@ -64,7 +64,7 @@ You are renting a black box. When the black box is wrong, your only option is to
 
 ### Your query data is Google's training data
 
-Google's privacy policy does not guarantee that your geocoding queries are not used to improve Google's services. For most applications, this is acceptable — address data is not sensitive in the way that medical records or financial transactions are. For applications that deal with protected addresses (domestic violence shelters, witness protection, military facilities), sending address queries to a third party is a privacy violation.
+Google's privacy policy does not guarantee that your geocoding queries are not used to improve Google's services. For most applications, this is acceptable — address data is not sensitive in the way that medical records or financial transactions are. For applications that deal with guarded addresses (domestic violence shelters, witness protection, military facilities), sending address queries to a third party is a privacy violation.
 
 ### You are locked into Google's ontology
 
@@ -99,7 +99,7 @@ Owning your parser is the right choice when:
 - **You need auditable results.** When correctness matters (delivery routing, emergency services, government compliance), being able to trace a geocode back to its source data is non-negotiable.
 - **You operate in regions where Google is weak.** If a measured fraction of your addresses are in countries where Google's coverage is at the locality level, a regional gazetteer may outperform Google.
 - **You need a specific address model.** If your downstream systems use ISO 19160 address components or a custom schema, translating Google's components is a recurring development cost.
-- **You handle protected addresses.** If privacy regulations or internal policy prohibit sending addresses to third-party APIs, you need an in-house solution.
+- **You handle guarded addresses.** If privacy regulations or internal policy prohibit sending addresses to third-party APIs, you need an in-house solution.
 
 Mailwoman targets the "own your parser" niche — an alternative for applications where Google's terms, pricing, or opacity make the API unsuitable, not a Google competitor.
 

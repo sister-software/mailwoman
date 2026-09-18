@@ -53,7 +53,7 @@ const GazetteerGranularity: CommandComponent<typeof spec> = ({ options }) => {
 		}
 
 		const markdown = renderGranularityReport(rows, {
-			// Display the portable form; never bake the resolved lab path into a committed artifact.
+			// Display the portable form. never bake the resolved lab path into a committed artifact.
 			sourcePath: "$MAILWOMAN_DATA_ROOT/wof/admin-global-priority.db",
 			sourceMD5: await md5File(sourcePath),
 			buildDate: new Date().toISOString(),

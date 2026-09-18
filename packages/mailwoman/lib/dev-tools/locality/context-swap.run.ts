@@ -6,7 +6,7 @@
  *   Does a locality resolve differently because of its NAME, or because of the admin context around it? (#2311)
  *
  *   The bare admin surface reads 100.0% in Vermont and 2.3% in Arkansas over a region-stratified panel, a 97.7-point
- *   spread. `Greensboro Bend, VT 05842` and `Horseshoe Bend, AR 72512` share a tail word and a shape; one answers a
+ *   spread. `Greensboro Bend, VT 05842` and `Horseshoe Bend, AR 72512` share a tail word and a shape. one answers a
  *   locality and the other answers none.
  *
  *   This holds the locality fixed and varies what stands beside it. Two modes:
@@ -143,7 +143,7 @@ console.log(`| arm | rows | locality recovered |`)
 console.log(`| --- | --: | --: |`)
 
 /**
- * How many recovered rows to print under the table. The list shows what the arms render; the table carries the rate.
+ * How many recovered rows to print under the table. The list shows what the arms render. the table carries the rate.
  */
 const RESCUED_EXAMPLES = 8
 

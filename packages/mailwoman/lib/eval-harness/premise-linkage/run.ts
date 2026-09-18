@@ -18,7 +18,7 @@
  *
  *   - A REFUSAL is not a miss. It enters the eligible denominator only when the registered policy says
  *       a unique answer was required, and even then it stays `refused`.
- *   - An AMBIGUOUS answer is never `exact`. The provider declined to choose; collapsing to its first
+ *   - An AMBIGUOUS answer is never `exact`. The provider declined to choose. collapsing to its first
  *       candidate would manufacture the certainty it withheld.
  *   - A TRANSPORT FAILURE is not a refusal. It is `errored`: out of every rate, reported as its own
  *       count.
@@ -159,7 +159,7 @@ export function outcomeFor(
  *
  * The #1901 contract includes the provider's coordinate BESIDE Mailwoman's own and leaves the choice to the consumer.
  * This harness is that consumer, and the choice is stated here rather than implied: when the provider committed to a
- * premise, its coordinate is the one the authoritative arm asserted; everywhere else the arm's answer is Mailwoman's.
+ * premise, its coordinate is the one the authoritative arm asserted. everywhere else the arm's answer is Mailwoman's.
  */
 function gradedCoordinate(
 	result: GeocodeResult,
@@ -245,7 +245,7 @@ function isErrored(row: PremiseLinkageResultRow): boolean {
  * The rows an arm could have answered exactly.
  *
  * Ungradable rows always leave. Refusals leave only under `abstain_ok`, because an arm that was permitted to abstain
- * was not asked to be right on those rows; under `unique_required` they stay in the denominator and count against the
+ * was not asked to be right on those rows. under `unique_required` they stay in the denominator and count against the
  * exact rate — while remaining `refused` in the row itself.
  */
 function eligibleRows(
@@ -369,7 +369,7 @@ function compareArms(
 }
 
 /**
- * The pieces a controlled run supplies. A private config module exports these; the synthetic self-check builds them
+ * The pieces a controlled run supplies. A private config module exports these. the synthetic self-check builds them
  * from the shipped fixture.
  */
 export interface PremiseLinkageRunConfig {

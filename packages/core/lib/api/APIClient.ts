@@ -3,7 +3,7 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  * @file The default base for HTTP clients in this repo. Raw `fetch` duplicates throttling, caching, and
- *   error mapping that live here; new clients extend or instantiate this instead (see `AGENTS.md`).
+ *   error mapping that live here. new clients extend or instantiate this instead (see `AGENTS.md`).
  */
 
 import { isAsyncDisposable } from "async-init"
@@ -44,7 +44,7 @@ export interface APIClientConfig {
 	displayName: string
 	/**
 	 * Where the client's own lines go. Defaults to a console logger prefixed with `displayName`, which writes debug lines
-	 * to stdout; a caller that owns stdout passes `silentLogger()` or its own.
+	 * to stdout. a caller that owns stdout passes `silentLogger()` or its own.
 	 */
 	logger?: IRuntimeLogger
 
@@ -77,7 +77,7 @@ export interface APIClientConfig {
 	 *
 	 * OPT-IN, and absent by default: an `APIClient` without this makes exactly one attempt, which is what every existing
 	 * consumer has always done. 429/5xx/408 and network-class failures (dropped socket, DNS, timeout, mid-body-transfer
-	 * drop) are retried; a 403 never is — it means the request failed to identify itself, so retrying can only fail
+	 * drop) are retried. a 403 never is — it means the request failed to identify itself, so retrying can only fail
 	 * identically while burning rate budget.
 	 */
 	retry?: RetryOptions | boolean
@@ -192,7 +192,7 @@ export class APIClient<C extends APIClientConfig = APIClientConfig> extends Even
 	 * Error mapping happens here rather than in a response interceptor so the retry loop can see the raw `AxiosError`
 	 * (status and `Retry-After`) before it is summarized. The pacing/cooldown limit deliberately does not happen here —
 	 * it sits in the adapter (see the constructor), downstream of the cache, so a hit costs nothing. Every retry attempt
-	 * re-enters `this.axios(...)` and therefore re-enters that limit; a retry burst cannot outrun the pacer.
+	 * re-enters `this.axios(...)` and therefore re-enters that limit. a retry burst cannot outrun the pacer.
 	 */
 	public fetch = async <T>(options: AxiosRequestConfig): Promise<AxiosResponse<T>> => {
 		const method = options.method?.toUpperCase() || "GET"
@@ -244,7 +244,7 @@ export class APIClient<C extends APIClientConfig = APIClientConfig> extends Even
 	 * cooldown — measured at 40 dispatches inside 3ms against a configured budget of 2/minute, and 40 against 10/minute.
 	 *
 	 * The pacer is re-acquired on every pass of the loop, not taken once up front. A grant is a claim on a specific
-	 * instant; blocking on a cooldown after taking one leaves it stale, and every caller holding a stale grant spends it
+	 * instant. blocking on a cooldown after taking one leaves it stale, and every caller holding a stale grant spends it
 	 * the moment the cooldown lifts — measured as four pairs dispatching 0ms apart against a documented 100ms minimum
 	 * when both limits were configured together. Re-acquiring discards the stale grant (the pacer under-issues by one per
 	 * cooldown wait, which is the safe direction) and takes a fresh one for the instant we actually dispatch.

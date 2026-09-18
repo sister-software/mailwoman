@@ -52,7 +52,7 @@ from sentencepiece import sentencepiece_model_pb2 as sp_pb2
 # Deterministic sample size + seed so the corpus (and therefore the spliced vocab) is reproducible.
 _CORPUS_SAMPLE = 350_000
 _SEED = 42
-# A held-out English sample can be any ASCII address list; the assertion only needs English strings.
+# A held-out English sample can be any ASCII address list. the assertion only needs English strings.
 _ENGLISH_PROBE = [
     "109 Seminary Dr, Mill Valley, CA 94941",
     "5210 South Ingleside Avenue, Chicago, IL 60615",
@@ -170,7 +170,7 @@ def verify_source_identical(base_tokenizer: Path, spliced_tokenizer: Path, probe
     """Assert the source language tokenizes byte-identically under the spliced vocab. Raises on any diff.
 
     This is the disjoint-codepoint guarantee made concrete: an appended diacritic piece can't match any span
-    of an English string, so English segmentation is unchanged. Cheap and definitive; never skip it.
+    of an English string, so English segmentation is unchanged. Cheap and definitive. never skip it.
     """
     old = spm.SentencePieceProcessor(model_file=str(base_tokenizer))
     new = spm.SentencePieceProcessor(model_file=str(spliced_tokenizer))
@@ -249,10 +249,10 @@ def check_codepoint_overlap(
 def mean_init_embeddings(
     checkpoint_dir: Path, base_tokenizer: Path, spliced_tokenizer: Path, out_dir: Path
 ) -> tuple[int, int]:
-    """Expand ``checkpoint_dir``'s token_embeddings to the spliced vocab; mean-init the new rows (FVT).
+    """Expand ``checkpoint_dir``'s token_embeddings to the spliced vocab. mean-init the new rows (FVT).
 
     Each new row = the mean of the old tokenizer's constituent-piece embeddings for that piece's surface.
-    Only token_embeddings + the config's vocab_size change; the encoder, classifier, CRF, and anchor/gaz
+    Only token_embeddings + the config's vocab_size change. the encoder, classifier, CRF, and anchor/gaz
     heads are left byte-for-byte untouched (which is what makes source-language behaviour a guarantee).
     Returns (old_vocab, new_vocab). Torch is imported lazily so the tokenizer path stays torch-free.
     """

@@ -100,7 +100,7 @@ export interface BaselineSelection {
 }
 
 /**
- * The weights, registered. Exact agreement outranks any qualifier; a qualifier outranks similarity; similarity breaks
+ * The weights, registered. Exact agreement outranks any qualifier. a qualifier outranks similarity. similarity breaks
  * what remains, and the pool's canonical order breaks an exact tie.
  */
 const WEIGHT = { exact: 4, countryQualifier: 2, regionQualifier: 1, similarity: 1 } as const

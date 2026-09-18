@@ -16,7 +16,7 @@
  *
  *   1. Run the full cascade (parser → resolver with situs + interp extracts) on a holdout set. For each
  *        RESOLVED street-level row capture: (a) coordinate error in METERS (haversine to the true
- *        lat/lon) (b) claimed radius in METERS (uncertainty_m for interp hits; 10 m fixed floor for
+ *        lat/lon) (b) claimed radius in METERS (uncertainty_m for interp hits. 10 m fixed floor for
  *        situs hits)
  *   2. Nonconformity score per row: s_i = error_m / claimed_radius_m
  *   3. Conformal threshold Q̂ = the ⌈(n_cal + 1) × 0.9⌉ / n_cal empirical quantile of {s_i} over a
@@ -133,7 +133,7 @@ function seededShuffle<T>(arr: T[], seed: number): T[] {
 	const step = makeGlibcLcgFloat64((seed * 2_654_435_761 + 1) & 0xff_ff_ff_ff)
 
 	// The sampler takes the raw state MODULO the bound rather than scaling a float, which is why this reaches for
-	// `shuffleBy` and not `shuffleWith`. Both are the same walk; the published conformal thresholds were selected under
+	// `shuffleBy` and not `shuffleWith`. Both are the same walk. the published conformal thresholds were selected under
 	// this sampler, so it stays exactly as it is.
 	shuffleBy(out, (bound) => step() % bound)
 
@@ -370,7 +370,7 @@ async function main(): Promise<void> {
 
 		// innerRows, not the outer holdout `rows` — the previous lax scripts tsconfig let the wrong
 		// array through and the per-tier medians silently printed NaN (the headline Q/coverage were
-		// computed on the correct splits; only this breakdown was dead).
+		// computed on the correct splits. only this breakdown was dead).
 		const claimedMeds = median(innerRows.map((r) => r.claimedRadiusM)) ?? Number.NaN
 		const errMeds = median(innerRows.map((r) => r.errorM)) ?? Number.NaN
 
@@ -480,7 +480,7 @@ async function main(): Promise<void> {
 	console.log(hr)
 
 	// Print the concise three-line calibration summary.
-	// Characterise the dominant tier (address_point here; interp may lack sufficient rows).
+	// Characterise the dominant tier (address_point here. interp may lack sufficient rows).
 	const situsTC = tierConformal.find((x) => x.tier === "address_point")!
 	const interpTC = tierConformal.find((x) => x.tier === "interpolated")!
 

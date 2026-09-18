@@ -6,7 +6,7 @@
  *   Shared core of the reply prose check: run a finished agent reply through the Mailwoman Vale
  *   rules and render one verdict. The platform adapters — `vale-response-check.ts` (Claude Code)
  *   and `vale-response-check-codex.ts` (Codex) — own payload parsing, the loop guard, and the
- *   output JSON; the POLICY (which config, which severities block, how findings read) lives here
+ *   output JSON. the POLICY (which config, which severities block, how findings read) lives here
  *   so the two hooks cannot drift apart the way parallel copies do.
  *
  *   The rule set is `config/vale/.vale-chat.ini`: the shared Mailwoman style plus the MailwomanChat

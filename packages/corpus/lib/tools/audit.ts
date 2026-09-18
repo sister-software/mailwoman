@@ -12,7 +12,7 @@
  *   Would have caught v0.3.0's "NAD = 411/674 train files × 2.0 weight = ~75% of sampled mix"
  *   finding before the v0.3.0 retrospective surfaced it.
  *
- *   Emits warnings to stderr and the audit table to stdout; never throws on an empty corpus.
+ *   Emits warnings to stderr and the audit table to stdout. never throws on an empty corpus.
  */
 
 import { pathExists, readLocalBuffer, readLocalJSONFile } from "@mailwoman/core/fs/readers"
@@ -38,7 +38,7 @@ export interface AuditOpts {
 	corpusDir: PathBuilderLike
 	configPath?: string
 	/**
-	 * Sample at most N parquet files per split when counting sources. Default 100 for speed; bump to read the full set on
+	 * Sample at most N parquet files per split when counting sources. Default 100 for speed. bump to read the full set on
 	 * a slow run. The first row of each file determines its source — corpus-v0.2.0+ files are 100% source-segregated, so
 	 * a one-row read is authoritative.
 	 */
@@ -89,7 +89,7 @@ async function parseConfig(configPath: string): Promise<ParsedConfig | null> {
 
 		// Skip blank lines and comments.
 		if (/^[\t ]*(#|$)/.test(raw)) continue
-		// Lines indented more than `source_weights:` are entries; lines with ≤ indent end the block.
+		// Lines indented more than `source_weights:` are entries. lines with ≤ indent end the block.
 		const indent = raw.match(/^[\t ]*/)![0].length
 
 		if (indent <= blockIndent) {
@@ -162,7 +162,7 @@ function inferSourceFromFilename(filename: string): string {
 }
 
 /**
- * Known source name prefixes. Corpus-v0.3.0 uses these as `source_id` prefixes; matching against the longest prefix
+ * Known source name prefixes. Corpus-v0.3.0 uses these as `source_id` prefixes. matching against the longest prefix
  * that fits a given `first_source_id` recovers the canonical source name.
  *
  * Order matters: longer prefixes must be tried first so `usgov-nad-...` matches `usgov-nad` rather than `usgov`. Sorted
@@ -209,7 +209,7 @@ function sourceFromID(sourceID: string, knownPrefixes: readonly string[]): strin
  * source name. Falls back to scanParquetFiles when MANIFEST is absent.
  *
  * NOTE: corpus-v0.3.0 files can mix sources (see `last_source_id` differing from `first_source_id`). The first-row
- * source is an approximation; reading the parquet's full source column would be authoritative but requires a parquet
+ * source is an approximation. reading the parquet's full source column would be authoritative but requires a parquet
  * dep. For audit purposes the first-row approximation is accurate within ~5% for the corpus-v0.3.0 shape (most files
  * are >95% one source).
  */

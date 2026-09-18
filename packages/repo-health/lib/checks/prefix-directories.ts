@@ -175,7 +175,7 @@ export function planPrefixMoves(groups: readonly PrefixGroup[], trackedFiles: re
 
 	// A directory that is itself moving carries its contents with it, so a group inside one would claim the same file
 	// twice with two destinations — `lib/cli-native/command-router.ts` is both a `cli-` member through its directory
-	// and a `command-` member in its own right. The outer move wins this pass and the check re-reads afterwards; that
+	// and a `command-` member in its own right. The outer move wins this pass and the check re-reads afterwards. that
 	// is what the fix's repeated passes are for.
 	const movingDirectories = groups.flatMap((group) =>
 		group.members.filter((member) => member.kind === "directory" && member.name !== group.prefix).map((m) => m.path)
@@ -189,7 +189,7 @@ export function planPrefixMoves(groups: readonly PrefixGroup[], trackedFiles: re
 		for (const member of group.members) {
 			const stem = member.kind === "file" ? member.name.replace(SOURCE_FILE, "") : member.name
 			// The member named for the prefix heads the family rather than sitting beside it. A directory already is
-			// the destination and stays put; a file becomes the directory's index, which is the one name that reads as
+			// the destination and stays put. a file becomes the directory's index, which is the one name that reads as
 			// "the family itself" from inside it.
 			const head = stem === group.prefix
 

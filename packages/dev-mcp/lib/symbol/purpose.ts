@@ -43,7 +43,7 @@ export interface PurposeEntry {
 
 /**
  * The exported name a top-level statement declares, or `null`. A variable statement contributes its first declaration,
- * which is how `export const x = () => …` is written here; a statement declaring several names is not this shape.
+ * which is how `export const x = () => …` is written here. a statement declaring several names is not this shape.
  */
 function exportedName(statement: ts.Statement): string | null {
 	if (!ts.canHaveModifiers(statement)) return null

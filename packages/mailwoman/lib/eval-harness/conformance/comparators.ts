@@ -21,7 +21,7 @@
  *   at all.
  *
  *   An axis absent on both sides is `undecidable`, never `equivalent`. Two runs that resolved no place agree
- *   about nothing; two empty parses agree about nothing; two outcomes carrying no mechanism account agree
+ *   about nothing. two empty parses agree about nothing. two outcomes carrying no mechanism account agree
  *   about nothing. Reporting agreement there would let a law pass on a pair of total failures, and the
  *   reading would be indistinguishable from a law that genuinely holds. The reading says what it read, and
  *   the runner counts `undecidable` as a violation with the reason attached.
@@ -55,7 +55,7 @@ export interface ConformanceOutcome {
 	 *
 	 * The vocabulary is `@mailwoman/dev-mcp`'s `DIAGNOSE_SHAPES`, and it is deliberately not imported here: dev-mcp is a
 	 * private maintainer workspace that depends on `mailwoman`, so the dependency can only run in that direction, and a
-	 * second copy of the vocabulary would drift from the predicates that define it. The observer supplies the labels;
+	 * second copy of the vocabulary would drift from the predicates that define it. The observer supplies the labels.
 	 * this module compares them and reports what it was given.
 	 *
 	 * `undefined` means no account was attached — see the module docstring for why that is not an empty account.

@@ -292,7 +292,7 @@ describe("derived facts", () => {
 		const model = compileGeographicModel(fixture())
 		const facts = factsAbout(model, "veterinary_pharmacy")
 
-		// The authored `unusual` assertion stands alone; only the unrelated inherited pair is materialized.
+		// The authored `unusual` assertion stands alone. only the unrelated inherited pair is materialized.
 		expect(facts.map((fact) => fact.object)).toEqual(["purchase_goods"])
 	})
 

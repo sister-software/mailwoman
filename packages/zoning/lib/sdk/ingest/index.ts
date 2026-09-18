@@ -24,7 +24,7 @@
  *
  *   THE SOURCE IS NOT IN WGS84 AND SAYING SO IS THE CHECK. The bulk export is IRENET95 / Irish Transverse
  *   Mercator — metres, easting/northing, EPSG:2157 — declared in a top-level `crs` member RFC 7946 removed
- *   from the format. GDAL honours the legacy member; a strict reader ignores it and places Ireland's zoning
+ *   from the format. GDAL honours the legacy member. a strict reader ignores it and places Ireland's zoning
  *   at latitude 735,435. So the projection is asserted against the source's declared authority code before a
  *   single feature is read, and every reprojected vertex is asserted inside the Department's own declared
  *   extent — which is the check that catches a coordinate-order mistake the projection check cannot see.
@@ -32,7 +32,7 @@
  *   THE DATUM SHIFT NEEDS A GRID, AND ITS ABSENCE IS SILENT. PROJ substitutes a ballpark offset when the
  *   accurate transformation is unavailable and produces coordinates that are metres wrong and
  *   indistinguishable from correct ones. {@linkcode assertDatumTransformationAvailable} asks `projinfo` what
- *   PROJ would choose and refuses a ballpark; for this source it names
+ *   PROJ would choose and refuses a ballpark. for this source it names
  *   `Inverse of Irish Transverse Mercator + IRENET95 to WGS 84 (1), 1 m`.
  *
  *   THE PUBLISHER'S OWN AREA COLUMN IS NOT IN THE ARCHIVE. `Shape__Area` is a service field and the export
@@ -99,7 +99,7 @@ export interface ZoningIngestOptions {
 	 */
 	exportPath: string
 	/**
-	 * Stop after this many features — the fixtures and smoke rungs use it; a full build does not set it.
+	 * Stop after this many features — the fixtures and smoke rungs use it. a full build does not set it.
 	 */
 	limit?: number
 	/**
@@ -154,7 +154,7 @@ const COORDINATE_PRECISION = 9
 /**
  * How far outside the declared extent a vertex may fall before the ingest refuses.
  *
- * A declared extent is itself a rounded published value, so an exact test would be brittle; this margin is small enough
+ * A declared extent is itself a rounded published value, so an exact test would be brittle. this margin is small enough
  * that an unprojected or axis-swapped read — which lands degrees or whole hemispheres away — still fails.
  */
 const BBOX_MARGIN_DEGREES = 0.01

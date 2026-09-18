@@ -187,7 +187,7 @@ describe("synthesizeMilitaryPoBoxRow (#517)", () => {
 				...row,
 				source: "synth-po-box",
 				source_id: `mil:${seed}`,
-				// CanonicalRow requires a country; the military row carries only the locale it was minted for.
+				// CanonicalRow requires a country. the military row carries only the locale it was minted for.
 				country: row.locale.split("-")[1] ?? "US",
 				corpus_version: "0.0.0-test",
 				license: "synthetic fixture — not distributed",
@@ -211,7 +211,7 @@ describe("maybeNoisifyBoxNumber", () => {
 	})
 
 	it("applies noise when random <= 0.1", () => {
-		// Force noise application; verify something changes for a non-trivial number
+		// Force noise application. verify something changes for a non-trivial number
 		let attempts = 0
 
 		const rng = (() => {

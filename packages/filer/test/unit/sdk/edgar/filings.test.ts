@@ -8,8 +8,8 @@
  *   exercised against hand-rolled stubs satisfying {@link SECGetClient}/{@link SECDocumentClient} (one method
  *   each), never a real `createSECClient()` or an axios harness. Everything else is a pure function over an
  *   authored fixture or `filer/test-fixtures/edgar/lumen-2025-index-headers.html` — a real, vendored EDGAR
- *   accession manifest (162 documents per its own `PUBLIC-DOCUMENT-COUNT` header field; this file's own SGML
- *   `&lt;DOCUMENT&gt;` block count is 161 — four sequence numbers, including 18, have no block of their own in
+ *   accession manifest (162 documents per its own `PUBLIC-DOCUMENT-COUNT` header field. this file's own SGML
+ *   `&lt.DOCUMENT&gt.` block count is 161 — four sequence numbers, including 18, have no block of their own in
  *   this manifest, a real-EDGAR quirk this suite counts rather than papers over).
  */
 

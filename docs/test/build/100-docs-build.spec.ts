@@ -29,13 +29,13 @@ const DOCS_ROOT = resolvePath(__dirname, "../..")
 
 // Not `childEnv` from @mailwoman/core: importing workspace TypeScript pulls Playwright's loader into
 // the module graph, and it handles neither `.ts`-extension imports nor the project references behind
-// them. The helper is a spread over process.env; Playwright loads this spec outside the repo's helpers.
+// them. The helper is a spread over process.env. Playwright loads this spec outside the repo's helpers.
 // oxlint-disable-next-line sister-software/no-process-globals -- see above
 const processEnv = process.env
 
 /**
  * Build into a throwaway dir, not the workspace `build/`. The Playwright webServer serves `build/` for the browser
- * specs; building the health check there too would clobber the served site.
+ * specs. building the health check there too would clobber the served site.
  */
 const CHECK_OUT_DIR = tempRootPath("mailwoman-docs-build-check")
 
@@ -48,7 +48,7 @@ const PROBLEM_MARKERS = [/\[ERROR\]/, /\[WARNING\]/, /Broken link/i, /Error: /]
 
 test.describe("docs build", () => {
 	// A cold production build is minutes, not seconds — the project-level timeout (see config) covers
-	// it; this is a belt-and-braces guard for the single test body.
+	// it. this is a belt-and-braces guard for the single test body.
 	test.setTimeout(600_000)
 
 	test("completes with no warnings or errors", async () => {

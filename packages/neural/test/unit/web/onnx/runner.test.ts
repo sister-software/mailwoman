@@ -5,7 +5,7 @@
  *
  *   End-to-end smoke test for `WebONNXRunner` using the real `@mailwoman/neural-weights-en-us`
  *   package + the production tokenizer + the production decoder. Runs in Node — `onnxruntime-web`'s
- *   WASM execution provider works there too; WebGPU is skipped via `useWebGPU: false` since Node
+ *   WASM execution provider works there too. WebGPU is skipped via `useWebGPU: false` since Node
  *   doesn't have a WebGPU adapter to fall back from.
  *
  *   What this test guards:
@@ -27,7 +27,7 @@ import { describe, expect, test } from "vitest"
 
 // CI doesn't ship the v0.2.0 model files — they're operator-supplied via
 // `scripts/link-dev-weights.ts` after a training run. Skip the real-model tests when the weights
-// package's `model.onnx` isn't on disk; the runner's structural behavior still gets exercised by
+// package's `model.onnx` isn't on disk. the runner's structural behavior still gets exercised by
 // `web-onnx-runner.unit.test.ts`, which mocks the runtime and needs no model.
 async function probeWeights(): Promise<{ modelPath: string; tokenizerPath: string; modelCardPath?: string } | null> {
 	try {
@@ -48,7 +48,7 @@ describe.skipIf(!haveWeights)("WebONNXRunner", () => {
 	test("loads a real model and produces logits of the expected shape", async () => {
 		const modelBytes = new Uint8Array(await readLocalBuffer(weights!.modelPath))
 		const runner = await WebONNXRunner.fromBytes(modelBytes, { useWebGPU: false })
-		const tokenIDs = [1, 2, 3, 4, 5] // arbitrary; the SP vocab assigns these to common pieces
+		const tokenIDs = [1, 2, 3, 4, 5] // arbitrary. the SP vocab assigns these to common pieces
 		const result = await runner.infer(tokenIDs)
 
 		expect(result.numLabels).toBeGreaterThan(0)

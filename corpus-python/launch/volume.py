@@ -1,7 +1,7 @@
 """Reading the container's own view: what is on the volume, and what the image actually holds.
 
 Each of these answers a question the local machine cannot. The volume's container and CLI views are
-divergent, so `modal volume ls` is not evidence about what a run will see; the image's resolved
+divergent, so `modal volume ls` is not evidence about what a run will see. the image's resolved
 versions are decided when Modal last built the layer, not by `pyproject.toml`; and the torch-
 dependent tests skip on the local venv, so a loss-path change is unverified until it runs here.
 
@@ -26,7 +26,7 @@ def run_tests(pattern: str = "") -> None:
     import subprocess
     import sys
 
-    # The training image ships without pytest; install container-locally (ephemeral, ~3s).
+    # The training image ships without pytest. install container-locally (ephemeral, ~3s).
     subprocess.run([sys.executable, "-m", "pip", "install", "-q", "pytest"], check=True)  # noqa: S603
     args = [sys.executable, "-m", "pytest", f"{VOL_MOUNT}/corpus-python/src/mailwoman_train/", "-q"]
     if pattern:
@@ -84,7 +84,7 @@ def debug_volume(config_name: str = "v1.4.0-charoffset.yaml") -> None:
 def versions() -> None:
     """Print the export/quant toolchain versions baked into ``training_image``.
 
-    The pins in `launch/app.py` are what should be installed; this is what is installed. They can differ when
+    The pins in `launch/app.py` are what should be installed. this is what is installed. They can differ when
     a pin is edited without rebuilding, which is the state that produced an unreproducible int8
     graph.
     """

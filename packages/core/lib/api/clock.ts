@@ -8,7 +8,7 @@
  *   implementation moved down into `@mailwoman/core/api`. Keeping the injection point is the whole reason the pacing
  *   and backoff suites are deterministic and finish in milliseconds instead of sleeping on the wall
  *   clock — a rate-limit test that actually waits 100ms per grant costs 4s for a 40-call fan-out and
- *   is flaky under CI load; the same test against an injected clock is exact and instant.
+ *   is flaky under CI load. the same test against an injected clock is exact and instant.
  *
  *   Deliberately not `node:timers/promises`: `core/api` reaches a browser bundle (`docs`'s
  *   `DashboardMap` imports `@mailwoman/cartographer`, which barrels `tiles/api.ts`, which imports

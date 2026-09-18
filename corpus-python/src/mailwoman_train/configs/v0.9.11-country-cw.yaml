@@ -1,14 +1,14 @@
 # === v0.9.11-country-cw (#464) — STEP 2a: class-weight bump (B/I-country 2.0 -> 3.5). ====
 # One variable vs v0.9.10-country-bal: country class-weight 2.0 -> 3.5 (DeepSeek 3-5x), same balanced
 # corpus (v0.4.10-country-bal). Targets the v0.9.10 RECALL gap (40.7% on the homograph check) — the
-# model went precision-first/conservative (P=100, over-fire 0) and abstains when unsure; a higher
+# model went precision-first/conservative (P=100, over-fire 0) and abstains when unsure. a higher
 # miss-penalty should lift recall. The cheap change before the soft gazetteer anchor (step 2b) — if
 # this alone recovers recall without re-introducing over-fire, the anchor may be unneeded. Check: same
 # country-homograph eval (country F1 up, over-fire still 0, region/locality held, no spine regression).
 # The shipped v4.1.0 model is STARVED on `country` (P=R=F1=0 on the homograph eval — it never emits
-# the tag; the night-9 49-F1/23%-precision over-fire was a SEPARATE bad recipe output). So this fills a void,
+# the tag. the night-9 49-F1/23%-precision over-fire was a SEPARATE bad recipe output). So this fills a void,
 # the same way `unit` did — but the corpus is built to AVOID re-creating the over-fire, and the change
-# is MODEL-FIRST (no deterministic override; the gazetteer informs the model, never substitutes —
+# is MODEL-FIRST (no deterministic override. the gazetteer informs the model, never substitutes —
 # see docs/engineering/reference/closed-vocab-fields-model-first.mdx).
 #
 # One variable vs v4.1.0 (v0.9.7-unit-v3): the balanced country recipe output is overlaid on the shipped
@@ -26,7 +26,7 @@
 #   - `country` F1 >> 0 (was 0) and over-fire = 0 (no region/locality token mistagged as country).
 #   - `region` / `locality` F1 stay at the v4.1.0 baseline (region 76.9, locality 62.1 on the homograph eval).
 #   - No regression (within ~1pp, fp32-to-fp32): US house_number / postcode / street / locality;
-#     FR per-class floors; DE native-order (de-order-eval.ts). RETAIN unit >= 88 (unit-real-designators).
+#     FR per-class floors. DE native-order (de-order-eval.ts). RETAIN unit >= 88 (unit-real-designators).
 #   DECISION: country alive + over-fire 0 + region/locality held + no regression check -> candidate.
 #     If long-tail recall lags: bump class-weight B/I-country 2->3-4 + add the soft gazetteer anchor.
 #     If it over-fires: raise the homograph/negative balance (HOMOGRAPH_FRAC/ABBREV_FRAC) + rerun.

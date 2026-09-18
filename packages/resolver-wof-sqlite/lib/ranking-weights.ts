@@ -47,7 +47,7 @@ export interface RankingWeights {
 	/**
 	 * Magnitude of the bias-hint term inside the exact-tier PROMINENCE sort (the `bias`/viewport path). Deliberately
 	 * population-scale (default = populationBoost) so a candidate near the map view / the user beats a distant-but-bigger
-	 * namesake — "the map view wins" is the feature; same-region ties (all candidates far from every hint) still fall to
+	 * namesake — "the map view wins" is the feature. same-region ties (all candidates far from every hint) still fall to
 	 * population.
 	 */
 	biasBoost: number
@@ -104,16 +104,16 @@ export interface RankingWeights {
 	officialNameExact: boolean
 	/**
 	 * Minimum population for a candidate's official names to join the name-exact sub-tier. The #936 review's no-floor
-	 * census measured the boundary: ≥100k holders are the famous-exonym class (757 flips, intent-correct; 7 collisions,
+	 * census measured the boundary: ≥100k holders are the famous-exonym class (757 flips, intent-correct. 7 collisions,
 	 * none harmful) while 10k–100k holders are junk-dominated (3,481 flips led by short-form mis-tags — Villeneuve-Loubet
-	 * carrying "villeneuve" would bury five real villages of that name). Rank-time knob: tunable without re-ingest;
+	 * carrying "villeneuve" would bury five real villages of that name). Rank-time knob: tunable without re-ingest.
 	 * below-floor official names simply stay alias-tier (today's behavior).
 	 */
 	officialNameExactFloor: number
 }
 
 /**
- * The shipped weights. Every value is a measured decision — change one and re-run the resolver eval; the per-field docs
+ * The shipped weights. Every value is a measured decision — change one and re-run the resolver eval. the per-field docs
  * on {@link RankingWeights} say what each change moves and what motivated its current value.
  */
 export const DEFAULT_WEIGHTS: RankingWeights = {
@@ -142,7 +142,7 @@ export const DEFAULT_WEIGHTS: RankingWeights = {
 	// consulted — keeps population as an intra-tier prominence tiebreaker, not a cross-tier promoter.
 	// Fixes the 2-letter-region-abbrev bug ("ME" → Maine, not the more-populous Missouri).
 	exactMatchTiering: true,
-	// #936 option 3 — promoted to on by default 2026-07-03, the eval battery passing; see the RankingWeights docstring.
+	// #936 option 3 — promoted to on by default 2026-07-03, the eval battery passing. see the RankingWeights docstring.
 	officialNameExact: true,
 	officialNameExactFloor: 100_000,
 }

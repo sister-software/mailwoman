@@ -10,7 +10,7 @@
  *   decode byte-identical to a census absent — same emission matrix, same transition adjustments, and
  *   (end-to-end, on real weights) the same emissions/path/tokens. The 2026-08-04 wiring assessment
  *   ruled that no decode wiring ships before a calibration rung measures a δ, and the artifact header
- *   deliberately carries none; these assertions are what makes an accidental wiring fail loudly
+ *   deliberately carries none. these assertions are what makes an accidental wiring fail loudly
  *   instead of quietly moving a number nobody re-measured.
  *
  *   The doubles idiom is `placetype-pair-prior.test.ts`'s verbatim — hand-built pieces, a hand-built
@@ -212,7 +212,7 @@ describe("census observability — what lands on the trace", () => {
 // `link-dev-weights.ts` puts both the model and `pair-index-us.bin` in place, and the pair index is
 // required here: without it the prior never runs and there is no parent candidate to probe
 // alongside. The census artifact is BUILT into a temp dir rather than resolved from the data root,
-// which is read-only on the lab host; a fixture census is enough to prove the wiring.
+// which is read-only on the lab host. a fixture census is enough to prove the wiring.
 // Resolved rather than probed in the workspace: the binaries are not in git, so where they live is the
 // resolver's answer (package, data-root overlay, or user cache) and not a directory this file can name. A
 // skip-guard keyed on the wrong directory does not fail — it SKIPS, and the suite reports success while

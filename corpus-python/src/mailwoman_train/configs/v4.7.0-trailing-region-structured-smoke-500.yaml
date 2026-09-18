@@ -17,7 +17,7 @@
 # triples (FR 10,208, DE 3,538, ES 3,289, IT 873), joined from postalcode-intl.db parents through admin
 # localities to their region ancestors, hub-filtered at the p99. Eight catch-all localities
 # (Schwedt/Oder claims 9,222 postcodes against a p50 of 1) held 47% of the raw join. House numbers are
-# synthetic because a house number asserts no fact about a place; postcodes are not, because they do.
+# synthetic because a house number asserts no fact about a place. postcodes are not, because they do.
 # PT joins nothing, so pt-cs-lagos-trailing-region is expected to stay red.
 #
 # TRAINING SEMANTICS: verbatim v4.5.2 B11 fine-tune — init_from the v4.4.0 base with a fresh optimizer
@@ -93,7 +93,7 @@ data:
     synth-fr-bare-street: 0.0 # SUPERSEDED (vintages must never co-feed)
     synth-fr-bare-street-v20: 0.0 # SUPERSEDED
     synth-fr-bare-street-v21: 0.0 # SUPERSEDED by -v22
-    synth-fr-bare-street-v22: 6.0 # weight held at v4.5.1's value; the v22 counter-forms are the run's one variable
+    synth-fr-bare-street-v22: 6.0 # weight held at v4.5.1's value. the v22 counter-forms are the run's one variable
     synth-si-bare-village: 12.0
     synth-no-street-led: 0.0
     synth-cz-pcfirst-preposition: 0.0 # SUPERSEDED (vintages must never co-feed)

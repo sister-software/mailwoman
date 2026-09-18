@@ -58,7 +58,7 @@ data:
     synth-fr-order: 3.0
     synth-fr-admin-split: 6.0
     synth-unit: 1.5
-    synth-po-box-cedex: 1.5 # D2 REVERT (3.0 -> 1.5, the v385 share): the boost was fine-tune replay medicine; the base learns the class natively.
+    synth-po-box-cedex: 1.5 # D2 REVERT (3.0 -> 1.5, the v385 share): the boost was fine-tune replay medicine. the base learns the class natively.
     synth-affix: 2.0
     synth-country: 2.0
     overture: 3.0
@@ -170,7 +170,7 @@ train: # FINE-TUNE (B11 template): init_from the 7.0.0 base, fresh optimizer, EW
   grad_clip_norm: 1.0
   max_steps: 8000
   eval_every_steps: 2000
-  save_every_steps: 5000 # D1: every 5k; the over-trust watch grades every save from 40k on.
+  save_every_steps: 5000 # D1: every 5k. the over-trust watch grades every save from 40k on.
   log_every_steps: 100
   precision: bf16
   num_workers: 0

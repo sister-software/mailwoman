@@ -4,7 +4,7 @@
  * @author Teffen Ellis, et al.
  * @file The EDGAR chain, assembled — carrier names in, {@linkcode EdgarSubsidiaryRow}s out.
  *
- *   Every link existed and was tested in isolation before this file; nothing joined them, so nothing had
+ *   Every link existed and was tested in isolation before this file. nothing joined them, so nothing had
  *   ever produced a row `buildFilerDatabase` could consume. This is that join, and it is deliberately thin
  *   — the judgment lives in the pieces it calls, not here.
  *
@@ -19,7 +19,7 @@
  *
  *   **The corroboration check is not optional and cannot be turned off from here.** Resolving 24 telecom
  *   names by score alone returned the wrong company twice, at 0.829 and 0.886 — confident scores pointing
- *   at the wrong registrant. A caller may supply pins; it may not skip the check. That is why
+ *   at the wrong registrant. A caller may supply pins. it may not skip the check. That is why
  *   {@link EdgarIngestOptions} exposes `pinnedCIKs` and no bypass.
  *
  *   **Every drop is counted, none are thrown.** A name that resolves to nothing, a registrant SEC files
@@ -57,7 +57,7 @@ export interface SECIngestClient {
 }
 
 /**
- * Why a registrant produced no rows. Each is ordinary; none is an error.
+ * Why a registrant produced no rows. Each is ordinary. none is an error.
  */
 export const EdgarSkipReason = {
 	/**
@@ -248,7 +248,7 @@ async function collectForFiling(
  *
  * `tickers` is EDGAR's registrant index. `company_tickers.json` covers only registrants WITH A TICKER — 7,998 distinct
  * CIKs, and none of Cellco Partnership, Windstream, Zayo, Brightspeed, Consolidated, Hargray or Altice. This sector is
- * majority private-equity-owned, so a caller should build this list from `cik-lookup-data.txt` instead; the parameter
+ * majority private-equity-owned, so a caller should build this list from `cik-lookup-data.txt` instead. the parameter
  * takes whatever index the caller assembled rather than fetching one itself.
  *
  * Only the MOST RECENT 10-K is read. A registrant's older filings restate the same family with an earlier vintage, and
@@ -318,7 +318,7 @@ export async function collectEdgarSubsidiaryRows(
 			...(collected.rows.length
 				? {}
 				: {
-						// Zero rows and zero abstentions means the filing had no Exhibit 21 to read at all;
+						// Zero rows and zero abstentions means the filing had no Exhibit 21 to read at all.
 						// zero rows with abstentions means one was read and yielded nothing.
 						skipReason: collected.unparseable ? EdgarSkipReason.NoSubsidiaries : EdgarSkipReason.NoExhibit21,
 					}),

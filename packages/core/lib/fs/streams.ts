@@ -90,7 +90,7 @@ export async function* decodeByteStream(
  * Decode bytes already in memory from a legacy encoding, the one-shot sibling of {@link decodeByteStream}.
  *
  * Same reasoning, same reason not to reach for `TextDecoder`, and it lives here so a reader that finds one finds the
- * other. Use this when the whole file is a bounded size the publisher fixes; use the stream when it is not.
+ * other. Use this when the whole file is a bounded size the publisher fixes. use the stream when it is not.
  *
  * @category Files
  * @param encoding An `iconv-lite` label — `cp949`, `cp932`, `gbk`.

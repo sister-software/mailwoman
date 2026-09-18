@@ -10,15 +10,15 @@
  *
  *   **Why this is worth a client at all.** Form 499 gives one name per filer, free-text and inconsistently
  *   cased. CORES gives a second, independently-maintained name and address for the same FRN. Record
- *   linkage across FCC data failed historically because there was one name surface and it was dirty; two
+ *   linkage across FCC data failed historically because there was one name surface and it was dirty. two
  *   surfaces keyed on the same identifier is corroboration. FRN `0001753557` is the worked example that
  *   makes the case: it registers as `"Knology Total Communications, Inc."`, its contact organization is
  *   `"WOW! Internet, Cable and Phone"`, and the operator knows it as WideOpenWest. No name-only join
- *   connects those three; the FRN does, and CORES is what supplies the other two spellings.
+ *   connects those three. the FRN does, and CORES is what supplies the other two spellings.
  *
  *   **Two endpoints, and this is the one that answers.** `data.fcc.gov/api/frn/getInfo` is the documented
  *   JSON "FRN Conversions" API and it returns 403 at the Akamai edge from the lab host (retested
- *   2026-08-07; a descriptive User-Agent does not change it, so the block is host/IP-based). The 3a plan's
+ *   2026-08-07. a descriptive User-Agent does not change it, so the block is host/IP-based). The 3a plan's
  *   Task 9 stopped at a check on exactly that. `apps.fcc.gov/cores/searchDetail.do` — the HTML detail page —
  *   answers 200 from the same host with an ordinary descriptive User-Agent, no browser spoofing and no
  *   credentials. That is what this client uses.
@@ -41,10 +41,10 @@
  *      returns `null` and the caller decides.
  *   2. Nexus classified entities by substring-sniffing the name — `includes("CITY")` → municipal,
  *      `includes("RURAL")` → rural, any US state name → municipal. "Kansas City Telephone" is not a
- *      municipality. No classification happens here; the raw `entityType` CORES states is carried through
+ *      municipality. No classification happens here. the raw `entityType` CORES states is carried through
  *      verbatim and interpretation belongs to a caller that can corroborate it.
  *   3. Nexus ran the whole document through Prettier before parsing it, to normalize the markup. That is a
- *      formatter in a fetch path; the scan below tolerates the source markup as served.
+ *      formatter in a fetch path. the scan below tolerates the source markup as served.
  *
  *   The one Nexus idea kept wholesale is `normalizeDataCell`'s re-casing of UNIFORMLY-cased text — see
  *   {@linkcode recaseUniform}. FCC data is littered with `WINDSTREAM SERVICES LLC` beside

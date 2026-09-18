@@ -19,7 +19,7 @@
  *   Vintages live in `sources[]`, taken from the fetch manifests.
  *
  *   ── Where the stages live ────────────────────────────────────────────────────────────────────────
- *   Each stage carries the measurements that shaped it; the order they run in is
+ *   Each stage carries the measurements that shaped it. the order they run in is
  *   {@link buildSubVenueLexicon}'s own docstring, and it is required.
  *
  *   - `sub-venue/table.ts` — the emitted record schema plus the shipped seed vocabulary.
@@ -352,7 +352,7 @@ export interface GenerateSubVenueLexiconOptions {
  * Read the fetch outputs, build the table, and write it.
  *
  * The IO half only — every decision lives in {@link buildSubVenueLexicon}, which is pure. Run `oxfmt` over `outPath`
- * afterwards; repo law is that committed JSON is oxfmt-clean.
+ * afterwards. repo law is that committed JSON is oxfmt-clean.
  */
 export async function generateSubVenueLexicon(options: GenerateSubVenueLexiconOptions): Promise<SubVenueLexiconTable> {
 	const sources: SubVenueLexiconSource[] = []
@@ -391,7 +391,7 @@ export async function generateSubVenueLexicon(options: GenerateSubVenueLexiconOp
 			origin: `OpenStreetMap via Geofabrik (${basename(extract.path, ".jsonl")})`,
 			license: "ODbL (OpenStreetMap)",
 			// The extract's mtime — when the rows were produced. `corpus/AGENTS.md`'s standing warning that
-			// a file's mtime is not its DATA's vintage applies to a downloaded archive; this file is a build
+			// a file's mtime is not its DATA's vintage applies to a downloaded archive. this file is a build
 			// output of ours, so its mtime is exactly the right number.
 			retrieved: isoDate((await statPath(extract.path)).mtime),
 			rows: rows.length,

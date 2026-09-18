@@ -15,9 +15,9 @@
  *   called, and ranking belongs to `@mailwoman/resolver` and `@mailwoman/neural`.
  *
  *   **An authored assertion, a source observation, and a derived fact are three different types.** A
- *   {@link RelationAssertion} is authored by a curator and lives on the concept it is about; a
+ *   {@link RelationAssertion} is authored by a curator and lives on the concept it is about. a
  *   {@link SourceObservationRecord} records what a named external source states and never enters the
- *   concept table; a {@link DerivedFactRecord} names the procedure that produced it and every input
+ *   concept table. a {@link DerivedFactRecord} names the procedure that produced it and every input
  *   that procedure read. Their identifiers are separately branded, so one is not assignable where
  *   another is expected.
  *
@@ -26,7 +26,7 @@
  *   provenance, and each input carries source provenance in turn.
  *
  *   Identifier namespaces are per-table. A {@link ConceptID} and a {@link RelationID} may read the
- *   same string without colliding; the brands are what keep them apart in a consumer.
+ *   same string without colliding. the brands are what keep them apart in a consumer.
  *
  *   Consumed by `./validate.ts` (which refuses a document violating any rule above), by #1926's
  *   deterministic compiler, and by the first authored document in #1927.
@@ -43,7 +43,7 @@ import type { Tagged } from "type-fest"
 export type ConceptID = Tagged<string, "GeographicConceptID">
 
 /**
- * Brand a raw string as a {@link ConceptID}. Purely a compile-time assertion; the string is unchanged.
+ * Brand a raw string as a {@link ConceptID}. Purely a compile-time assertion. the string is unchanged.
  */
 export function toConceptID(id: string): ConceptID {
 	return id as ConceptID
@@ -55,7 +55,7 @@ export function toConceptID(id: string): ConceptID {
 export type RelationID = Tagged<string, "GeographicRelationID">
 
 /**
- * Brand a raw string as a {@link RelationID}. Purely a compile-time assertion; the string is unchanged.
+ * Brand a raw string as a {@link RelationID}. Purely a compile-time assertion. the string is unchanged.
  */
 export function toRelationID(id: string): RelationID {
 	return id as RelationID
@@ -67,7 +67,7 @@ export function toRelationID(id: string): RelationID {
 export type RuleID = Tagged<string, "GeographicRuleID">
 
 /**
- * Brand a raw string as a {@link RuleID}. Purely a compile-time assertion; the string is unchanged.
+ * Brand a raw string as a {@link RuleID}. Purely a compile-time assertion. the string is unchanged.
  */
 export function toRuleID(id: string): RuleID {
 	return id as RuleID
@@ -79,7 +79,7 @@ export function toRuleID(id: string): RuleID {
 export type MappingID = Tagged<string, "GeographicMappingID">
 
 /**
- * Brand a raw string as a {@link MappingID}. Purely a compile-time assertion; the string is unchanged.
+ * Brand a raw string as a {@link MappingID}. Purely a compile-time assertion. the string is unchanged.
  */
 export function toMappingID(id: string): MappingID {
 	return id as MappingID
@@ -91,7 +91,7 @@ export function toMappingID(id: string): MappingID {
 export type ObservationID = Tagged<string, "GeographicObservationID">
 
 /**
- * Brand a raw string as an {@link ObservationID}. Purely a compile-time assertion; the string is unchanged.
+ * Brand a raw string as an {@link ObservationID}. Purely a compile-time assertion. the string is unchanged.
  */
 export function toObservationID(id: string): ObservationID {
 	return id as ObservationID
@@ -103,7 +103,7 @@ export function toObservationID(id: string): ObservationID {
 export type DerivedFactID = Tagged<string, "GeographicDerivedFactID">
 
 /**
- * Brand a raw string as a {@link DerivedFactID}. Purely a compile-time assertion; the string is unchanged.
+ * Brand a raw string as a {@link DerivedFactID}. Purely a compile-time assertion. the string is unchanged.
  */
 export function toDerivedFactID(id: string): DerivedFactID {
 	return id as DerivedFactID
@@ -124,7 +124,7 @@ export const ConceptKind = {
 	 */
 	Establishment: "establishment",
 	/**
-	 * Something a person does, e.g. `obtain_medication`. The identifier is owned here; any statistics fitted against it
+	 * Something a person does, e.g. `obtain_medication`. The identifier is owned here. any statistics fitted against it
 	 * are owned by #1683.
 	 */
 	Activity: "activity",
@@ -140,7 +140,7 @@ export type ConceptKind = (typeof ConceptKind)[keyof typeof ConceptKind]
  */
 export const Modality = {
 	/**
-	 * Holds in every instance; a counter-example falsifies the record rather than qualifying it.
+	 * Holds in every instance. a counter-example falsifies the record rather than qualifying it.
 	 */
 	Necessary: "necessary",
 	/**
@@ -187,7 +187,7 @@ export const ConceptStatus = {
 	Draft: "draft",
 	Active: "active",
 	/**
-	 * Kept so existing references resolve; no new reference should be authored against it.
+	 * Kept so existing references resolve. no new reference should be authored against it.
 	 */
 	Deprecated: "deprecated",
 } as const
@@ -196,7 +196,7 @@ export type ConceptStatus = (typeof ConceptStatus)[keyof typeof ConceptStatus]
 
 /**
  * The external vocabularies a concept can be mapped into. One today, and the mapping record below is typed against it
- * directly; a second vocabulary turns {@link ExternalMappingRecord} into a union discriminated on `vocabulary`.
+ * directly. a second vocabulary turns {@link ExternalMappingRecord} into a union discriminated on `vocabulary`.
  */
 export const ExternalVocabulary = {
 	/**
@@ -284,7 +284,7 @@ export interface ConceptRecord {
 	description: string
 	kind: ConceptKind
 	/**
-	 * Broader concepts this one is a kind of. May be empty; may not name this concept, directly or around a cycle.
+	 * Broader concepts this one is a kind of. May be empty. may not name this concept, directly or around a cycle.
 	 */
 	isA: ConceptID[]
 	assertions: RelationAssertion[]
@@ -312,7 +312,7 @@ export interface ExternalMappingRecord {
  * A proposition a named external source states, recorded in this model's vocabulary.
  *
  * It is kept out of the concept table on purpose. An observation is evidence about the world that someone else
- * collected; promoting one into an authored assertion is a curation decision that has to be made and provenanced
+ * collected. promoting one into an authored assertion is a curation decision that has to be made and provenanced
  * explicitly, never by the record sitting in a convenient place.
  */
 export interface SourceObservationRecord {

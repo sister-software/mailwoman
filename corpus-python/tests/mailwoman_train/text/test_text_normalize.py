@@ -26,7 +26,7 @@ def test_fold_halfwidth_kana_folds_halfwidth_to_fullwidth() -> None:
 
 
 def test_fold_halfwidth_kana_leaves_the_prolonged_sound_mark_alone() -> None:
-    # U+30FC is a real katakana character inside a place name; folding it to "-" corrupts the name.
+    # U+30FC is a real katakana character inside a place name. folding it to "-" corrupts the name.
     assert fold_halfwidth_kana("コーヒー") == "コーヒー"
 
 
@@ -44,7 +44,7 @@ def test_int_to_kanji_inverts_kanji_to_int() -> None:
 
 
 def test_normalize_text_strips_an_ideographic_space() -> None:
-    # 135 street values carry U+3000 as a rendering artifact of the source; the written form closes
+    # 135 street values carry U+3000 as a rendering artifact of the source. the written form closes
     # it up. `str.split()` treats U+3000 as whitespace, which is why no explicit replace is needed.
     assert normalize_text("西与賀町　字今津乙") == "西与賀町字今津乙"
 

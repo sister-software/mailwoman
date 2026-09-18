@@ -60,7 +60,7 @@ function tokensPerSegment(
  * Synchronous, pure rule-based implementation. The async wrapper matches the pipeline contract.
  *
  * Emits overlapping proposals freely — the consumer (Stage 5 reconcile) picks the best non-overlapping subset under
- * semantic+hierarchical constraints. Confidence is a [0,1] score per proposal; relative ordering is what matters more
+ * semantic+hierarchical constraints. Confidence is a [0,1] score per proposal. relative ordering is what matters more
  * than absolute calibration at v0.5.0.
  *
  * The `_locale` parameter is reserved for future locale-aware rule packs (Japanese postcode/honorific patterns, French

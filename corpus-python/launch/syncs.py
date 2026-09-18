@@ -12,12 +12,12 @@ Two entry points, and the difference is whether the transfer is NAMED:
 
 `sync` runs a row of `launch/corpora.py`, which records what that version stages and what must be
 on the volume afterwards. `sync_assets` takes the paths on the command line and records nothing.
-Reach for `sync_assets` while a corpus is still being tried; add the row when it becomes a run
+Reach for `sync_assets` while a corpus is still being tried. add the row when it becomes a run
 somebody will repeat, because a transfer nobody can enumerate is a corpus that quietly stops being
 staged. Fifty-line clones — one per version, differing only in path strings — is how this file once
 reached fifty-seven of them.
 
-An overlay corpus ships only its own new parquet files; its MANIFEST names the base version's files by
+An overlay corpus ships only its own new parquet files. its MANIFEST names the base version's files by
 absolute `/data/...` path, so the base must already be on the volume. Neither entry point checks
 that — `audit_epoch_mixture` does, and it reports which file is missing.
 """

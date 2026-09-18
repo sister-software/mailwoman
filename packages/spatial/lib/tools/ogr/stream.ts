@@ -15,7 +15,7 @@ const STDERR_TAIL_CHARS = 800
 export interface OGRProcess {
 	stdout: NodeJS.ReadableStream
 	/**
-	 * Resolves on a clean exit; rejects with the exit code and the stderr tail otherwise. A truncated stream reads as a
+	 * Resolves on a clean exit. rejects with the exit code and the stderr tail otherwise. A truncated stream reads as a
 	 * short but well-formed feature list, which is exactly the partial result that must throw rather than be reported as
 	 * a smaller extract — so consume the stream fully, then await this.
 	 */
@@ -54,7 +54,7 @@ export function spawnOGR2OGR(args: readonly string[], context: string): OGRProce
 
 	// A failed spawn rejects `settled` before any consumer awaits it — the consumer is still draining the stream on a
 	// later tick, and a consumer that abandons the stream never awaits it at all — so an unobserved rejection would trip
-	// the process's unhandled-rejection hook. Observed at birth instead; every consumer still awaits the real verdict.
+	// the process's unhandled-rejection hook. Observed at birth instead. every consumer still awaits the real verdict.
 	settled.catch(() => undefined)
 
 	return {
@@ -73,7 +73,7 @@ export function spawnOGR2OGR(args: readonly string[], context: string): OGRProce
  *
  * Strips the RFC-8142 record separator (U+001E) GDAL MAY prefix records with — `.trim()` does not remove it (not
  * whitespace), so an RS-framed record would fail to parse and be silently skipped, all of them, and an empty extract
- * would read as a real absence. A malformed record is tolerated (skipped) rather than thrown; a non-zero exit throws
+ * would read as a real absence. A malformed record is tolerated (skipped) rather than thrown. a non-zero exit throws
  * after the stream drains.
  */
 export async function* ogr2ogrGeoJSONSeq<T>(args: readonly string[], context: string): AsyncGenerator<T> {

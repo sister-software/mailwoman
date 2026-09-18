@@ -4,7 +4,7 @@
  * @author Teffen Ellis, et al.
  *
  *   `mailwoman eval oa-resolver` — the OpenAddresses real-point resolver eval (the non-circular
- *   accuracy track + the neural-vs-Pelias head-to-head). Markdown report on stdout; self-emits via
+ *   accuracy track + the neural-vs-Pelias head-to-head). Markdown report on stdout. self-emits via
  *   `--out-md` (eval figures are never hand-typed into docs). See the eval-harness module docstring
  *   for the two-tier metric and every arm's rationale.
  */
@@ -88,7 +88,7 @@ const EvalOAResolver = harnessCommand(spec, async (options) => {
 		noAdminCoherence: adminCoherenceOff,
 		noPostcodeConsistency: postcodeConsistencyOff,
 		noPostcodeCountryCoherence: postcodeCountryCoherenceOff,
-		// CLI kebab derivation forces the lowercase-acronym prop above; the harness option keeps
+		// CLI kebab derivation forces the lowercase-acronym prop above. the harness option keeps
 		// the house spelling, so the rename happens here rather than in the eval's own contract.
 		...(adminFst ? { adminFST: adminFst } : {}),
 		// Same derivation, and the same rename — `--postcode-max-move-km` names #2301's cap, whose option spells the

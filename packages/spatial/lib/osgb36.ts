@@ -8,13 +8,13 @@
  *   Ordnance Survey ships its open products in eastings/northings on the National Grid, not in
  *   degrees — Code-Point Open, OS Open UPRN, OS Open Names all do. Nothing else in the repo speaks
  *   that coordinate system, so this module is the one place that converts it, and it lives in
- *   `@mailwoman/spatial` because that is the math home (`projection.ts` names the datums; this file
+ *   `@mailwoman/spatial` because that is the math home (`projection.ts` names the datums. this file
  *   moves between two of them).
  *
  *   Two steps, both from OS's own "A Guide to Coordinate Systems in Great Britain":
  *
  *   1. **Inverse transverse Mercator (Redfearn's series)** — National Grid E/N → OSGB36 geodetic
- *      lat/lon on the Airy 1830 ellipsoid. This step is exact to well below a millimetre; it is
+ *      lat/lon on the Airy 1830 ellipsoid. This step is exact to well below a millimetre. it is
  *      plain map-projection algebra with no empirical content, and {@link osgb36GridToAiryLatLon}
  *      reproduces the guide's Annexe C.2 worked example to **1.3e-5 arc-seconds (~0.4 mm)**, which
  *      is that example's own published rounding rather than our error.
@@ -28,7 +28,7 @@
  *
  *   OSGB36 is a 1936 theodolite triangulation, not a geocentric datum. Its distortions relative to
  *   WGS84 are irregular across GB — a couple of metres of local warp that no rigid-body transform can
- *   absorb. OS's exact answer is **OSTN15**, a published ~1.5 MB grid of per-cell E/N shifts; the
+ *   absorb. OS's exact answer is **OSTN15**, a published ~1.5 MB grid of per-cell E/N shifts. the
  *   seven-parameter Helmert implemented here is OS's own documented approximation to it, which the
  *   guide rates at "up to 3.5 m (95%)".
  *
@@ -74,7 +74,7 @@ const AIRY_1830_A = 6_377_563.396
 const AIRY_1830_B = 6_356_256.909
 
 /**
- * Semi-major axis of the GRS80 ellipsoid, in metres. WGS84's own semi-major axis is identical; the two ellipsoids
+ * Semi-major axis of the GRS80 ellipsoid, in metres. WGS84's own semi-major axis is identical. the two ellipsoids
  * differ only in the flattening's last digits (~0.1 mm at the pole), far below this module's error budget.
  */
 const GRS80_A = 6_378_137
@@ -122,7 +122,7 @@ const PPM = 1e-6
 
 /**
  * Convergence threshold for the meridional-arc iteration in {@link osgb36GridToAiryLatLon}, in METRES of northing. OS's
- * guide specifies 0.01 mm; this is that figure. It bounds the northing residual, not the latitude, which is why it is
+ * guide specifies 0.01 mm. this is that figure. It bounds the northing residual, not the latitude, which is why it is
  * expressed in metres and compared against `northing - N0 - M`.
  */
 const MERIDIONAL_ARC_TOLERANCE_M = 1e-5
@@ -146,7 +146,7 @@ const GEODETIC_LATITUDE_TOLERANCE_RAD = 1e-13
  * differ only in the sign of the three rotations, which is why citing the method code matters more than it looks: paste
  * these numbers into a library expecting 1032 and every result moves by roughly 20 m with no error raised.
  *
- * Getting a sign wrong here does not produce a subtly worse answer; it produces a coordinate tens to hundreds of metres
+ * Getting a sign wrong here does not produce a subtly worse answer. it produces a coordinate tens to hundreds of metres
  * out, in a consistent direction — which reads as a plausible coordinate. That is what the Annexe D test is for.
  */
 const OSGB36_TO_WGS84_HELMERT = {
@@ -214,7 +214,7 @@ export interface NationalGridPoint {
  * transverse Mercator series.
  *
  * This is the exact half of the pipeline — pure projection algebra, no datum shift. The result is still on Airy 1830,
- * so it is not a WGS84 coordinate and must not be handed to anything expecting one; feed it to
+ * so it is not a WGS84 coordinate and must not be handed to anything expecting one. feed it to
  * {@link osgb36AiryToWGS84}. Exported separately so the projection can be tested against OS's worked example
  * independently of the Helmert, which is the only way to tell a projection bug from a datum-shift bug.
  */
@@ -234,7 +234,7 @@ export function osgb36GridToAiryLatLon({ easting, northing }: NationalGridPoint)
 	const n3 = n2 * n
 
 	// Iterate latitude until the meridional arc `M` matches the northing. OS's guide specifies a 0.01 mm
-	// threshold; it converges in three or four passes anywhere in GB.
+	// threshold. it converges in three or four passes anywhere in GB.
 	let lat = lat0
 	let m = 0
 
@@ -296,7 +296,7 @@ export function osgb36GridToAiryLatLon({ easting, northing }: NationalGridPoint)
  *
  * This is the APPROXIMATE half — see the module docstring for the ±5 m budget and when it stops being acceptable.
  * Heights are not modelled: the input is treated as sitting on the Airy ellipsoid and the output's ellipsoidal height
- * is discarded. For a horizontal postcode centroid that costs well under a metre; for anything vertical it is wrong by
+ * is discarded. For a horizontal postcode centroid that costs well under a metre. for anything vertical it is wrong by
  * the ~50 m geoid–ellipsoid separation over GB, so this function does not pretend to return a height.
  */
 export function osgb36AiryToWGS84({ latitude, longitude }: GeodeticLatLon): GeodeticLatLon {
@@ -331,7 +331,7 @@ export function osgb36AiryToWGS84({ latitude, longitude }: GeodeticLatLon): Geod
 	let phi2 = Math.atan2(z2, p * (1 - e2GRS))
 	let phiPrev = 2 * Math.PI
 
-	// Converges in a handful of passes at GB latitudes; the guard bounds it regardless.
+	// Converges in a handful of passes at GB latitudes. the guard bounds it regardless.
 	for (let i = 0; i < 100 && Math.abs(phi2 - phiPrev) > GEODETIC_LATITUDE_TOLERANCE_RAD; i++) {
 		phiPrev = phi2
 

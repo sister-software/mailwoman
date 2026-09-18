@@ -21,7 +21,7 @@
  *      which concepts to go and read, which is the traversal it was supposed to be spared.
  *
  *   A relation declaring `transitive` or `inverse` is not closed over. Those fields are vocabulary
- *   describing what the relation means; materializing them is a reasoning step no executable need has
+ *   describing what the relation means. materializing them is a reasoning step no executable need has
  *   asked for, and the boundary record excludes general reasoning from this package. The day one is
  *   needed it arrives as its own named derivation beside this one.
  *
@@ -100,7 +100,7 @@ export class GeographicModelCompileError extends Error {
 }
 
 /**
- * The order derivation inputs are listed in. Grouping by table first keeps a long input list readable; the identifier
+ * The order derivation inputs are listed in. Grouping by table first keeps a long input list readable. the identifier
  * breaks ties inside a table.
  */
 const DERIVATION_INPUT_ORDER: readonly DerivationInputKind[] = [
@@ -234,7 +234,7 @@ function deriveInheritedFacts(
 			const ancestor = conceptByID.get(String(ancestorID))
 
 			// Validation refuses an `isA` naming an undeclared concept, and an assertion naming an undeclared relation,
-			// so both resolve for any document that reached the compiler. The guards keep the walk total; they do not
+			// so both resolve for any document that reached the compiler. The guards keep the walk total. they do not
 			// describe a state the artifact can hold.
 			if (!ancestor) continue
 

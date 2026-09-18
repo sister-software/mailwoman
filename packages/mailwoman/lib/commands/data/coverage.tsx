@@ -10,7 +10,7 @@
  *   it — and those two have wildly different answers.
  *
  *   It exists because the answer is held in five registers that do not agree, and reading any one of them alone
- *   produces a confident wrong answer. A published locale package is not training (only `en-us` ships a model; the
+ *   produces a confident wrong answer. A published locale package is not training (only `en-us` ships a model. the
  *   rest are data-only overlays). Corpus rows are not training (`country_weights` is a hard admission filter — a
  *   country absent from it trains on nothing, which is how Norway trained on zero rows across 44 configs). Training is
  *   not verification (a board row that is not `status: pass` tracks rather than checks). And the geocoder's coverage is

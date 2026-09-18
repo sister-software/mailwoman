@@ -14,7 +14,7 @@ test.describe("Demo — place autocomplete typeahead (#587)", () => {
 	})
 
 	test("autocompletes only the locality segment after the last comma", async ({ demo }) => {
-		// The typeahead walks the segment after the last comma; picking replaces just that segment.
+		// The typeahead walks the segment after the last comma. picking replaces just that segment.
 		await demo.goto()
 		const suggestions = await demo.readSuggestions("123 Main St, Chic")
 		expect(suggestions.join(" | "), `suggestions for "Chic": ${suggestions.join(", ")}`).toContain("Chicago")

@@ -74,7 +74,7 @@ score(S, T, H | x)  =  Σ_{(i,j,t) ∈ S} φ(i, j, t)   +   Σ_{(h,d,r) ∈ H} �
 ```
 
 maximized **jointly**. The stages of the intuitive pipeline — lexical cues, candidate spans,
-protected entities, inter-span grammar, address semantics — are the _terms of one objective_, not
+guarded entities, inter-span grammar, address semantics — are the _terms of one objective_, not
 sequential decisions: the overlapping name candidates in
 `Cafe at St Mary's, Church of St Mary the Virgin, St Mary's St, Shrewsbury SY1 1BX` cannot be
 committed before the inter-span grammar runs, because which candidates are real is decided by which

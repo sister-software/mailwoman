@@ -5,7 +5,7 @@
  *
  *   The WOF postcode-database build (`postalcode-<cc>.db`) — ingest the country's
  *   `whosonfirst-data-postalcode-<cc>` repo, fill the `(0,0)` placeholder centroids (US: Census ZCTA +
- *   GeoNames; all: GeoNames postal → admin parent-borrow → hierarchy-ancestor fallback), FTS, SEAL.
+ *   GeoNames. all: GeoNames postal → admin parent-borrow → hierarchy-ancestor fallback), FTS, SEAL.
  *   Replaces the reopen-and-mutate pair (`fill-zcta-centroids.ts` / `backfill-postcode-centroids.ts`)
  *   that patched shipped databases after the fact — the fills are build steps now, and the artifact is
  *   read-only from the moment it exists.
@@ -132,7 +132,7 @@ export async function buildPostcodeDatabase(opts: BuildPostcodeDatabaseOptions):
 
 		phase("ingest", `${ingest.placesIngested.toLocaleString()} postcodes`)
 
-		// US pass 1: Census ZCTA + GeoNames US (provenance-stamped in centroid_source; see zcta-centroids.ts).
+		// US pass 1: Census ZCTA + GeoNames US (provenance-stamped in centroid_source. see zcta-centroids.ts).
 
 		if (cc === "us") {
 			const zctaPath = opts.zctaPath ?? dataRootPath("census", "2024_Gaz_zcta_national.txt")

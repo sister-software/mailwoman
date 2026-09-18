@@ -41,7 +41,7 @@ async function readManifest(): Promise<{
 
 beforeAll(async () => {
 	server = createServer((req, res) => {
-		// PT is published; VE is not. Anything else is a 500, so a transfer failure stays distinguishable from both.
+		// PT is published. VE is not. Anything else is a 500, so a transfer failure stays distinguishable from both.
 		if (req.url === "/PT.zip") {
 			res.writeHead(200)
 			res.end("pt-payload")
@@ -71,7 +71,7 @@ beforeAll(async () => {
 afterAll(() => server[Symbol.asyncDispose]())
 
 /**
- * The retry COUNT is what these cases pin; the pause between attempts is not, and paying the shipped 5 s twice per
+ * The retry COUNT is what these cases pin. the pause between attempts is not, and paying the shipped 5 s twice per
  * failing transfer cost this file 20.1 s of the fast leg.
  */
 const RETRY_DELAY_MS = 1

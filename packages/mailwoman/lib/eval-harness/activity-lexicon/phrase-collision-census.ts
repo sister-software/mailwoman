@@ -292,8 +292,8 @@ function containsTokens(haystack: string[], needle: string[]): boolean {
  * Classify one colliding venue name against the probe string it collided with.
  *
  * The rule is stated in the module header and implemented here in the same order: an explicit query marker determines
- * the result; otherwise a name that is the probe adds nothing and is query-shaped, on whichever of the two remaining
- * tells applies; otherwise the name carries something the probe does not, and is an ordinary name.
+ * the result. otherwise a name that is the probe adds nothing and is query-shaped, on whichever of the two remaining
+ * tells applies. otherwise the name carries something the probe does not, and is an ordinary name.
  */
 export function classifyVenueName(name: string, probe: string): VenueNameVerdict {
 	const normalized = normalizeActivityPhrase(name)
@@ -320,7 +320,7 @@ export function classifyVenueName(name: string, probe: string): VenueNameVerdict
  *
  * Driven rather than restated: a recording lookup that answers nothing makes the shipped routine walk its whole
  * enumeration — the whole input, then each prefix before an anchor separator, stopping at its own token budget — and
- * the census keeps what it was asked. Two copies of that rule would be free to disagree; this cannot.
+ * the census keeps what it was asked. Two copies of that rule would be free to disagree. this cannot.
  */
 export function candidateSubjects(input: string): string[] {
 	const asked: string[] = []
@@ -475,7 +475,7 @@ export async function runPhraseCollisionCensus(options: PhraseCollisionCensusOpt
 				continue
 			}
 
-			// The key scan folds punctuation and diacritics; the shipped rung's comparison keeps them. So a name can be the
+			// The key scan folds punctuation and diacritics. the shipped rung's comparison keeps them. So a name can be the
 			// probe on tokens and differ on the rung's own test. Counted so the two readings never disagree silently.
 			if (tokens.length === probeTokens.length) {
 				foldOnlyMatches.push({ probe, name: venue.name })
@@ -528,7 +528,7 @@ export async function runPhraseCollisionCensus(options: PhraseCollisionCensusOpt
 }
 
 /**
- * How many containment rows the printer lists before summarizing. The committed report carries every one; the terminal
+ * How many containment rows the printer lists before summarizing. The committed report carries every one. the terminal
  * summary is a reader's first look, and a few hundred ordinary venue names past this point tell them nothing new.
  */
 const PRINTED_CONTAINMENT_ROWS = 40

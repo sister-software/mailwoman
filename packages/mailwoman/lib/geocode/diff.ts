@@ -210,7 +210,7 @@ export function diffGeocode(input: string, before: GeocodeArm, after: GeocodeArm
 /**
  * Metres below which a coordinate move is rendered as "same point".
  *
- * Int8 quantization and float round-tripping move a centroid by centimetres; rendering that as a delta buries the moves
+ * Int8 quantization and float round-tripping move a centroid by centimetres. rendering that as a delta buries the moves
  * that matter.
  */
 export const SAME_POINT_M = 1

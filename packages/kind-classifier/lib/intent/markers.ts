@@ -64,7 +64,7 @@ export function deriveIntentMarkers(
 			evidence: {
 				tokens,
 				/**
-				 * Both readings, named. The order is stable (pair first, then the admin reading) so a consumer can index it; it
+				 * Both readings, named. The order is stable (pair first, then the admin reading) so a consumer can index it. it
 				 * is not a ranking, and nothing downstream reads it as one.
 				 */
 				interpretations: ["two_toponyms", "locality_with_admin_context"],

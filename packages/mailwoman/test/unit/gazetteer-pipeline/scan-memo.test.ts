@@ -4,7 +4,7 @@
  * @author Teffen Ellis, et al.
  *
  *   The full-DB scans behind the locality-surface build are memoized by (path, mtimeMs, size). Two
- *   builds in one process — the FR and US passes — used to pay the scan twice; measured 2026-08-02
+ *   builds in one process — the FR and US passes — used to pay the scan twice. measured 2026-08-02
  *   that pair was 236.9s of a 253s CI leg.
  *
  *   The invalidation key is deliberately (mtimeMs, size) and not path alone: the WOF admin DB is a

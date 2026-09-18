@@ -7,11 +7,11 @@ import { stringifyJSON } from "@mailwoman/core/json"
  * @file The character encoder for char-path models — the runtime twin of `encode_row_units` in
  *   `corpus-python/src/mailwoman_train/char_tokenizer.py`, under the same contract (D1): one UNIT per Unicode code point,
  *   `char_ids (S, W)` where slot `j` of unit `[b, e)` is the code point at `b - ctx + j`, PAD outside the string or at
- *   and past `e + ctx`, UNK for a code point the sealed vocabulary lacks; the row truncated to S units and padded with
+ *   and past `e + ctx`, UNK for a code point the sealed vocabulary lacks. the row truncated to S units and padded with
  *   all-PAD unit rows carrying attention 0. A CJK model never meets SentencePiece: this is its whole tokenizer.
  *
  *   Code points, not UTF-16 units. Python indexes `str` by code point, so an astral character (𠮷) is one unit there
- *   and must be one unit here; iterating the string with `Array.from` is what keeps the two encoders producing the same
+ *   and must be one unit here. iterating the string with `Array.from` is what keeps the two encoders producing the same
  *   `char_ids` for the same text, which `test/unit/char-encoder.test.ts` pins against a fixture the Python side wrote.
  *
  *   This module is on the browser bundle (the classifier imports it), so it reaches no `node:` module: the vocabulary
@@ -26,7 +26,7 @@ export const PAD_CHAR_ID = 0
 
 /**
  * The unknown id: a code point the sealed vocabulary lacks. Fixed at 1 by `build_char_vocab`, which writes `<unk>`
- * second; every real character follows in code-point order.
+ * second. every real character follows in code-point order.
  */
 export const UNK_CHAR_ID = 1
 
@@ -163,7 +163,7 @@ export type EncoderDescriptor =
 
 /**
  * Read a parsed card's `encoder` block (#2164). A char card names its vocabulary sibling and the `(S, W, ctx)` contract
- * the model was trained under; a runtime that guessed any of the three would encode every row differently from training
+ * the model was trained under. a runtime that guessed any of the three would encode every row differently from training
  * and score confidently on garbage, so a char card missing one of them is refused rather than defaulted. Pure, so the
  * browser loader reads it from a fetched card and the node loader from a file.
  */

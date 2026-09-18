@@ -100,7 +100,7 @@ const MS_PER_MINUTE = 60_000
  * drift — Google's Place IDs, which its own documentation warns to treat as stale after a few days — is carried on the
  * result for provenance and is not what any assertion is pinned to.
  *
- * Not permanent, either. `sec-client.ts` warrants a century-long TTL because a filed SEC document is immutable by law;
+ * Not permanent, either. `sec-client.ts` warrants a century-long TTL because a filed SEC document is immutable by law.
  * nothing here is. Thirty days bounds how long a re-authored case can disagree with a fresh geocode without anyone
  * noticing, and deleting the cache directory is always the override.
  */
@@ -119,7 +119,7 @@ const DEFAULT_MAX_ATTEMPTS = 3
 const DEFAULT_BASE_RETRY_DELAY_MS = 500
 
 /**
- * Per-attempt socket-inactivity timeout, in milliseconds. A geocode response is a few kilobytes; anything slower than
+ * Per-attempt socket-inactivity timeout, in milliseconds. A geocode response is a few kilobytes. anything slower than
  * this has stalled.
  */
 const DEFAULT_REQUEST_TIMEOUT_MS = 30_000
@@ -157,7 +157,7 @@ export interface CreateGoogleGeocoderClientOptions {
 	 */
 	requestsPerMinute?: number
 	/**
-	 * Time source powering the pacer, the cooldown timer, and both retry backoffs. Defaults to the system clock; tests
+	 * Time source powering the pacer, the cooldown timer, and both retry backoffs. Defaults to the system clock. tests
 	 * inject a fake one so no suite ever sleeps on the wall clock.
 	 */
 	clock?: ClockLike
@@ -203,7 +203,7 @@ export interface CreateGoogleGeocoderClientOptions {
 }
 
 /**
- * Per-request overrides. These are the biasing changes the isp-nexus original hardcoded; see
+ * Per-request overrides. These are the biasing changes the isp-nexus original hardcoded. see
  * {@linkcode GeocodeRequestOptions.bounds} for the one that mattered.
  */
 export interface GeocodeRequestOptions {

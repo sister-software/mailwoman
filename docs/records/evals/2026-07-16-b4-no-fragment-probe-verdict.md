@@ -46,7 +46,7 @@ so there is no trade, but there is also no target win.
 
 Every French class drifted down. The CIs overlap, so no single cell is a clean violation, but the
 _consistency_ of the drift is the concern — 2k of extra fine-tuning is mildly eroding the fr-fragment
-win the extract is required to protect. A full 8k run would have more room to amplify that.
+win the extract is required to guard. A full 8k run would have more room to amplify that.
 
 **Deconfounded (2026-07-16, same session):** re-reading board 2 on **shipped v310** in the same
 session, same harness, same int8 export gives `0.733` overall — **identical to the T2 verdict**, cell

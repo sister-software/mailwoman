@@ -10,7 +10,7 @@
  *   SUPPORT ONE — a centroid with its own measured dispersion.
  *
  *   It exists to answer the abstention #1480 introduced. A unit postcode the gazetteer has never
- *   seen contributes nothing today; with PFX1 the UNIT still abstains and the PREFIX still speaks.
+ *   seen contributes nothing today. with PFX1 the UNIT still abstains and the PREFIX still speaks.
  *
  *   This file owns both ends of the format — `serializePostcodePrefixIndex` (Node, build tooling)
  *   and `PostcodePrefixIndexResolver` (browser and server alike) — the same single-file discipline
@@ -149,7 +149,7 @@ export interface PostcodePrefixNode {
 
 /**
  * Coverage tier of the source the index was built from, in the sense `docs/engineering/reference/layer-contract.mdx`
- * uses. Not part of the arc document's preregistered header; added because the NI source is ODbL and a share-alike
+ * uses. Not part of the arc document's preregistered header. added because the NI source is ODbL and a share-alike
  * obligation that does not travel with the artifact is a licensing defect waiting for the first consumer.
  */
 export type PostcodePrefixTier = "shipped" | "build-local"
@@ -197,7 +197,7 @@ export interface PostcodePrefixHeader {
 	attribution: string
 	/**
 	 * What a MISS means for this file — the meaning-of-zero statement, mandatory. A prefix absent from a complete
-	 * register does not exist; a prefix absent from a partial one may simply be unattested, and a consumer that cannot
+	 * register does not exist. a prefix absent from a partial one may simply be unattested, and a consumer that cannot
 	 * tell the two apart will read coverage as fact.
 	 */
 	coverageNote: string
@@ -498,7 +498,7 @@ export class PostcodePrefixIndexResolver implements PostcodePrefixIndexLike {
 	}
 
 	/**
-	 * Every node, in the file's sorted order. The round-trip verification reads this; a runtime consumer wants
+	 * Every node, in the file's sorted order. The round-trip verification reads this. a runtime consumer wants
 	 * {@link PostcodePrefixIndexResolver.probe}.
 	 */
 	nodes(): IterableIterator<PostcodePrefixNode> {

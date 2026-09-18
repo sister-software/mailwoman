@@ -9,7 +9,7 @@
  *
  *   The split is required. ESM evaluates every static import before a module's own body runs, so a preamble
  *   written in a statically imported command graph would execute after that graph had already initialized. Only
- *   `node:module` is imported statically here; command code arrives through dynamic imports after this body.
+ *   `node:module` is imported statically here. command code arrives through dynamic imports after this body.
  *
  *   So keep this file at one static import: anything added to the top of it is compiled before the cache exists and,
  *   if it reaches React, pins the development build.
@@ -20,7 +20,7 @@ import { parseArguments } from "@mailwoman/core/scripting/arguments"
 
 // The CLI compiles ~16 MB of source per invocation, and the loader/compiler/GC are ~85% of a `--help` run. V8's
 // on-disk code cache removes most of it: `--help` 1.34 s → 0.99 s, `parse` 2.95 s → 2.63 s. The cache is
-// content-addressed and self-invalidating, so a stale entry is not a failure mode; an unwritable cache directory is,
+// content-addressed and self-invalidating, so a stale entry is not a failure mode. an unwritable cache directory is,
 // and a CLI that cannot cache its compilation is a slow CLI rather than a broken one.
 try {
 	enableCompileCache()

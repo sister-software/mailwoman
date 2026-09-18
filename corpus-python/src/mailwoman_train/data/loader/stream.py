@@ -118,9 +118,9 @@ def iter_rows(
     both to survive. When ``source_weights`` is ``None`` (default), all sources pass.
 
     Memory: each buffered row is a dict of {raw: str, tokens: list[str], labels: list[str],
-    country: str, source: str}. For Stage 1 coarse rows, that's ~1 KB per row; default
+    country: str, source: str}. For Stage 1 coarse rows, that's ~1 KB per row. default
     131072 buffer is ~128 MB resident, well within budget. The v0.1.1 default of 16384
-    was sized for a 22M-row corpus; v0.2.0 ships 263M rows so the same 16k buffer would
+    was sized for a 22M-row corpus. v0.2.0 ships 263M rows so the same 16k buffer would
     sample only 0.006% per shuffle — within-file order would dominate. 128k buffer
     samples 0.05% which restores effective randomness without meaningful RAM impact.
     """

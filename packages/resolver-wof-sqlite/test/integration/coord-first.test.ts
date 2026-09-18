@@ -99,7 +99,7 @@ describe("coordinate-first locality resolution", () => {
 	it("preserves the actual placetype from spr when injecting a postcode-locality candidate (#523)", async () => {
 		// Brooklyn is a BOROUGH. When the postcode injection fetches it by id, the placetype must
 		// come from the spr row ("borough"), not a hard-coded "locality". The placetype filter
-		// expands locality→borough so the candidate passes; the assertion guards the label.
+		// expands locality→borough so the candidate passes. the assertion guards the label.
 		const r = await lookup.findPlace({ text: "Brooklyn", placetype: "locality", postcode: "11201", country: "US" })
 		expect(r.length).toBeGreaterThan(0)
 		expect(r[0]?.placetype).toBe("borough")

@@ -11,14 +11,14 @@
  *   provinces-after-capitals, UK unitary authorities, JP prefectures, NL province-capitals
  *   (Utrecht/Groningen), Shanghai. When an address surfaces only the admin role (the parser drops
  *   the locality span), the resolver has no locality to place. The hierarchy-completion step (#405)
- *   repairs that by consulting this relation; the table replaces #387's hardcoded 15 km constant
+ *   repairs that by consulting this relation. the table replaces #387's hardcoded 15 km constant
  *   with the gazetteer's own structure, so the runtime is an O(1) membership lookup with no
  *   distance math.
  *
  *   V1 is REGION-tier only (admin.placetype = `region`): the ~124 places matching the census across 9
  *   countries (IT/ES/GB/JP/KR/FR/DE/NL/CN). County-tier same-name coincidences are deliberately
  *   excluded — they're dominated by French cantons and JP counties (admin subdivisions named after
- *   a seat town, not dual-role cities) that don't hit the parser-drops-locality failure; genuine
+ *   a seat town, not dual-role cities) that don't hit the parser-drops-locality failure. genuine
  *   consolidated city-counties (US SF/Denver) are a separate follow-up needing a relative-size
  *   filter.
  *
@@ -26,11 +26,11 @@
  *   locality is a `descendant` of the admin (via the `ancestors` table), and their centroids are
  *   within a RELATIVE tolerance — `toleranceFraction × admin-bbox-diagonal`, floored at
  *   `minToleranceKm`. The relative term lets a large Italian province admit a city ~tens of km from
- *   its centroid while a tiny city-state stays tight; the floor catches city-states whose bbox is
+ *   its centroid while a tiny city-state stays tight. the floor catches city-states whose bbox is
  *   small (Bremen's centroids sit 9.3 km apart). The tolerance lives only here at build time — it
  *   never enters the resolver hot path.
  *
- *   `relationship_type` is recorded for debuggability / deferred per-type behavior; v1 completion is
+ *   `relationship_type` is recorded for debuggability / deferred per-type behavior. v1 completion is
  *   uniform (see #405). It's a coarse classification, not critical.
  *
  *   Mirrors the derived-table builder pattern in `fts.ts` (`buildPlaceSearchFTS`). Run incrementally
@@ -106,7 +106,7 @@ interface CandidateRow {
 }
 
 /**
- * Derive the coincident-roles relation into `db`. Additive — only creates/replaces the `coincident_roles` table; never
+ * Derive the coincident-roles relation into `db`. Additive — only creates/replaces the `coincident_roles` table. never
  * touches `spr`/`names`/`ancestors`. Idempotent.
  */
 export function buildCoincidentRoles(
@@ -217,7 +217,7 @@ export function coincidentRolesExists<DB>(db: DatabaseClient<DB>): boolean {
 
 /**
  * Load the relation into an in-memory map keyed by `admin_id` for O(1) runtime lookup (#405). Each admin may map to
- * MULTIPLE same-name descendants; the consumer disambiguates (min distance → population → abstain). Returns an empty
+ * MULTIPLE same-name descendants. the consumer disambiguates (min distance → population → abstain). Returns an empty
  * map when the table is absent.
  */
 export function loadCoincidentRoles<DB>(db: DatabaseClient<DB>): Map<number, CoincidentRole[]> {

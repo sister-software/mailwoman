@@ -51,7 +51,7 @@ test("buildCodexSpanLexicon: no systems → only the locale-general venue-struct
 	expect(lex.deliveryService).toBeUndefined()
 
 	// Every POSTAL designator is system-conditional and therefore absent — that half of the original assertion still holds
-	// and is what this test protects: a codex table must never leak in without its system.
+	// and is what this test guards: a codex table must never leak in without its system.
 	for (const postal of ["apt", "ste", "suite", "rm", "flat", "po box"]) {
 		expect(lex.unitDesignators.has(postal), `postal designator "${postal}" leaked with no systems loaded`).toBe(false)
 	}

@@ -145,7 +145,7 @@ of how calibration shakes out.
    visible at the character level even when fragmented at the subword
    level.
 2. **Postcode-aware tokenizer pre-pass.** A regex pass that
-   detects-and-protects postcode-shaped substrings (`/[A-Z]\d[A-Z]?\s*\d[A-Z]\d/`,
+   detects-and-guards postcode-shaped substrings (`/[A-Z]\d[A-Z]?\s*\d[A-Z]\d/`,
    etc.) before tokenization. Single token, single label, no fragmentation.
 3. **Explicit per-country postcode FST.** Treat postcodes the same way we
    treat admin names — a deterministic FST that recognizes country-

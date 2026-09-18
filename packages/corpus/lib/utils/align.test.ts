@@ -456,7 +456,7 @@ describe("alignRow — boundary-aligned match preference (the v0.5.0 pilot's Uma
 	})
 
 	it("longest value locates first — a region homonym cannot steal the street's word (pilot2 residual)", () => {
-		// "Alaska" is both the region and the street's first word; locating region first claimed
+		// "Alaska" is both the region and the street's first word. locating region first claimed
 		// [0,6) and quarantined the street. Longest-first gives the street its full surface, and
 		// the region then finds its own boundary-aligned occurrence.
 		const result = alignRow(

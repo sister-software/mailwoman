@@ -4,7 +4,7 @@
  * @author Teffen Ellis, et al.
  *
  *   The app's three client routes, read from `location.pathname` with no router. Cloudflare's SPA fallback serves
- *   `index.html` for every path, so the app decides what a path means; a path it does not know is not the geocoder,
+ *   `index.html` for every path, so the app decides what a path means. a path it does not know is not the geocoder,
  *   it is a not-found view, so a stale link fails visibly.
  */
 
@@ -36,7 +36,7 @@ export function routeForPath(pathname: string): Route | null {
 }
 
 /**
- * Which runtime the page mounts. `fake` is the canned runtime the shell smoke and the stories use; every other value,
+ * Which runtime the page mounts. `fake` is the canned runtime the shell smoke and the stories use. every other value,
  * and no value, is the real geocoder.
  */
 export type RuntimeMode = "real" | "fake"

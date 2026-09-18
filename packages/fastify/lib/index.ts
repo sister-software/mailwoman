@@ -58,7 +58,7 @@ export interface MailwomanFastifyOptions {
 	poiDatabasePath?: string
 	/**
 	 * Path to a WOF gazetteer database (a `candidate.db` or an admin `wof.db`) for the lazy-built pipeline's resolver.
-	 * Omitted → the lazy pipeline parses without a resolver (parse works; geocode returns no coordinates). Ignored when a
+	 * Omitted → the lazy pipeline parses without a resolver (parse works. geocode returns no coordinates). Ignored when a
 	 * pre-built `pipeline` is injected.
 	 */
 	resolveDatabasePath?: string
@@ -222,7 +222,7 @@ const pluginImpl: FastifyPluginAsync<MailwomanFastifyOptions> = async (fastify, 
 	// route's availability is deterministic regardless of how the injected pipeline was wired.
 	const poiEnabled = opts.poiDatabasePath !== undefined
 
-	// The pipeline + helpers resolve once, lazily. An injected pipeline is used as-is; otherwise it's built on the first
+	// The pipeline + helpers resolve once, lazily. An injected pipeline is used as-is. otherwise it's built on the first
 	// request (never at registration) so `fastify.register` stays cheap and side-effect-free.
 	let pipelinePromise: Promise<RuntimePipeline> | undefined
 

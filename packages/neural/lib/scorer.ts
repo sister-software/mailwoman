@@ -47,7 +47,7 @@ import { EVIDENCE_LEXICON_FAMILIES } from "#weights/lexicon"
 /**
  * Delta threshold for the capability-manifest check (#718/#719): a conventions row may forbid a tag only if the mask
  * does not provably destroy a real capability — i.e. `maskOffF1 − maskOnF1 ≤ 5pp`. A DELTA, not an absolute floor: a
- * tag the model emits at 0.80 is protected if the mask drops it to 0.0, but a tag the mask leaves intact (small/zero
+ * tag the model emits at 0.80 is guarded if the mask drops it to 0.0, but a tag the mask leaves intact (small/zero
  * delta) is legal regardless of its absolute F1.
  */
 export const CAPABILITY_DELTA_THRESHOLD = 0.05
@@ -69,7 +69,7 @@ export const DEFAULT_COUNTRY_LEXICON = "data/gazetteer/country-surface-lexicon-v
 
 /**
  * Memoized weights-package resolution for one scorer construction (#718 D1). The lexicon defaults and the anchor source
- * each fall back to the resolved weights package; memoizing replaces up to five `resolveWeights` walks per
+ * each fall back to the resolved weights package. memoizing replaces up to five `resolveWeights` walks per
  * `createScorer` call with at most one. A resolution failure memoizes as `null` — the same "no package" answer every
  * ladder treated a throw as.
  */
@@ -97,7 +97,7 @@ async function resolveDefaultLexicon(
 }
 
 /**
- * Resolve the anchor lookup source the scorer feeds (#718 D1). A caller-pinned path wins; otherwise prefer the
+ * Resolve the anchor lookup source the scorer feeds (#718 D1). A caller-pinned path wins. otherwise prefer the
  * operator's local pilot JSON (the eval's historical default — unchanged when present), else the soft-feed sibling the
  * weights package ships (`postcode-<cc>.bin` / `anchor-lookup.json`), so eval + serving read the same artifact. Returns
  * `undefined` when neither exists (the scorer then fails closed on a declared-required anchor, as before).
@@ -180,7 +180,7 @@ function assertShapedKeyerObligation(
 
 /**
  * Per-channel overrides for a deliberate, DECLARED ablation. Setting any of these to a value diverts the scorer from
- * the model-card's declared SHIP-CONFIG; the scorer honors it but emits a loud `console.error` warning (a stated
+ * the model-card's declared SHIP-CONFIG. the scorer honors it but emits a loud `console.error` warning (a stated
  * ablation is legal — silent OOD is not, #566/#685).
  */
 export interface ScorerOverrides {
@@ -248,7 +248,7 @@ export interface CreateScorerOpts {
 	fstPath?: PathBuilderLike
 	/**
 	 * Postcode→anchor lookup path — a JSON pilot lookup, or a PCB1 `.bin` (recognized by extension, so a candidate's own
-	 * `postcode-<cc>.bin` can be pinned; before that it was JSON-only and pointing at a binary threw a parse error).
+	 * `postcode-<cc>.bin` can be pinned. before that it was JSON-only and pointing at a binary threw a parse error).
 	 *
 	 * Default: {@link DEFAULT_ANCHOR_LOOKUP} when it exists, else the soft-feed sibling shipped in the
 	 * `@mailwoman/neural-weights-<locale>` package (#718 D1) — EXCEPT for a card declaring `span_mode: "shaped"`, which
@@ -275,7 +275,7 @@ export interface CreateScorerOpts {
 	countryLexiconPath?: string
 	/**
 	 * Locale tag (e.g. `"en-us"`) used to resolve the weights-package soft-feed siblings when the default `/mnt` /
-	 * repo-relative paths are absent (#718 D1). Only consulted for that fallback; the model/tokenizer/card are always
+	 * repo-relative paths are absent (#718 D1). Only consulted for that fallback. the model/tokenizer/card are always
 	 * explicit on this path.
 	 */
 	locale?: string
@@ -346,7 +346,7 @@ async function assertConventionsRespectCapabilities(
 	const manifest = await readCapabilityManifest(modelCardPath)
 
 	if (!manifest) {
-		// No certified capabilities → nothing to protect. Old cards still load (warn once per process).
+		// No certified capabilities → nothing to guard. Old cards still load (warn once per process).
 		if (!warnedNoCapabilities) {
 			warnedNoCapabilities = true
 
@@ -389,7 +389,7 @@ async function assertConventionsRespectCapabilities(
  * conventions + bridge + near-postcode suppression), failing closed in `strict` mode when a declared channel can't
  * actually be fed.
  *
- * Resolution of "what's required": the card's `requires` block when present; otherwise INFERRED from the ONNX graph's
+ * Resolution of "what's required": the card's `requires` block when present. otherwise INFERRED from the ONNX graph's
  * input names (back-compat for every pre-#718 bundle). Explicit `overrides` divert from the declaration with a loud
  * warning rather than a throw.
  */
@@ -414,7 +414,7 @@ export async function createScorer(opts: CreateScorerOpts): Promise<NeuralAddres
 		ONNXRunner.create(opts.modelPath),
 	])
 
-	// What the model DECLARES it needs. Card `requires` block is authoritative; older cards (no block)
+	// What the model DECLARES it needs. Card `requires` block is authoritative. older cards (no block)
 	// fall back to the ONNX graph's declared inputs — a model exporting anchor_features/gazetteer_features
 	// trained with those channels mandatory. Conventions/bridge are card-only (not graph-observable).
 	const declared: RequiredChannels =
@@ -530,7 +530,7 @@ export async function createScorer(opts: CreateScorerOpts): Promise<NeuralAddres
 	}
 
 	// Load evidence-bundle channels and their declared ablation states.
-	// Same load + fail-closed + declared-ablation pattern as the gazetteer; both lexicons share its
+	// Same load + fail-closed + declared-ablation pattern as the gazetteer. both lexicons share its
 	// JSON schema and parser. A bundle-trained card declares `street_type` + `locality_surface`.
 	// The repo preference is CARD-SCOPED — see {@link streetTypeRepoCandidate}. The locality-surface
 	// lexicon (13 MB, never in git) resolves from the weights package only.
@@ -624,7 +624,7 @@ export async function createScorer(opts: CreateScorerOpts): Promise<NeuralAddres
 			}
 		}
 	} else {
-		// Declaration drives it: required → the declared mode; not required → leave undefined (byte-stable).
+		// Declaration drives it: required → the declared mode. not required → leave undefined (byte-stable).
 		addressSystemConventions = conventionsRequired ? declaredConventionsMode : undefined
 
 		if (conventionsRequired && !addressSystemConventions) {
@@ -655,7 +655,7 @@ export async function createScorer(opts: CreateScorerOpts): Promise<NeuralAddres
 		...(streetTypeLexicon ? { streetTypeLexicon } : {}),
 		...(localitySurfaceLexicon ? { localitySurfaceLexicon } : {}),
 		suppressGazetteerNearPostcode,
-		// The card's `mode` is an open string; a non-SystemCode value degrades to a null conventions row
+		// The card's `mode` is an open string. a non-SystemCode value degrades to a null conventions row
 		// downstream, never a throw. Overlay cards may pin a concrete system (en-gb pins "gb", #1275).
 		...(addressSystemConventions ? { addressSystemConventions: addressSystemConventions as "auto" | SystemCode } : {}),
 		bridgePunctuationGaps,
@@ -663,7 +663,7 @@ export async function createScorer(opts: CreateScorerOpts): Promise<NeuralAddres
 }
 
 /**
- * Throw in strict mode; otherwise warn loudly and continue (deliberate below-config debugging). `ErrorClass` defaults
+ * Throw in strict mode. otherwise warn loudly and continue (deliberate below-config debugging). `ErrorClass` defaults
  * to {@link UnfedChannelError} (the channel-feed traps); the capability check passes {@link CapabilityViolationError} so
  * the two fail-closed families are distinguishable.
  */

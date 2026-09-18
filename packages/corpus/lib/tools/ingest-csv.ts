@@ -237,7 +237,7 @@ async function runIngest(opts: IngestOptions): Promise<void> {
 	let imported = 0
 	let headerSkipped = false
 
-	// node:sqlite has no `db.transaction(fn)` wrapper; use raw BEGIN/COMMIT around the batch.
+	// node:sqlite has no `db.transaction(fn)` wrapper. use raw BEGIN/COMMIT around the batch.
 	const doInsert = () => {
 		db.exec("BEGIN")
 
@@ -351,7 +351,7 @@ export interface IngestCSVOptions {
 /**
  * Ingest a CSV into SQLite: infer column types from a sample, create the table, import the rows. Throws when `input` is
  * missing. NOTE(phase1): progress narration still writes stderr directly — this predates the report-callback contract
- * and the write sites are deep in the type-inference helpers; thread a report param if a caller ever needs to capture
+ * and the write sites are deep in the type-inference helpers. thread a report param if a caller ever needs to capture
  * it.
  */
 export async function ingestCSV(options: IngestCSVOptions): Promise<void> {

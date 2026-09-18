@@ -13,7 +13,7 @@ blockwise provides accuracy the first consumer can't yet use and multiplies stor
 calibration shows the diagonal is too blunt.
 
 **Per-locale Fisher matrices: not in v1.** One Fisher over the full feed. A per-locale family
-(F_us, F_fr, …) enables "protect only what this customer doesn't touch" later — file it as the
+(F_us, F_fr, …) enables "guard only what this customer doesn't touch" later — file it as the
 v2 refinement once a real engagement asks for it.
 
 ## Implementation (training-side, small)
@@ -38,7 +38,7 @@ v2 refinement once a real engagement asks for it.
   is): sweep λ ∈ {0, 1e2, 1e4, 1e6} on a 2k-step probe; pick the largest λ that leaves the
   increment's target metric within noise of λ=0. That λ becomes the template default; a customer
   engagement inherits it and only revisits on a battery failure.
-- **The guarantee check** (the sellable sentence): a Fisher-protected fine-tune must hold every
+- **The guarantee check** (the sellable sentence): a Fisher-guarded fine-tune must hold every
   base capability within the noise-direct margins on the packaged battery. Base capabilities =
   the golden floors + the P0 fragment bars + the gauntlet; the customer's own canaries ride
   alongside. A check failure at the calibrated λ is a _finding about the customer data_, surfaced
@@ -54,7 +54,7 @@ v2 refinement once a real engagement asks for it.
 
 ## What this deliberately does not claim
 
-EWC protects against drift in _parameter space_, calibrated on _our_ distributions. It does not
+EWC guards against drift in _parameter space_, calibrated on _our_ distributions. It does not
 guarantee arbitrary customer data can't find a pathological direction — that is what the battery
 check is for. The two together (parameter-space brake + behavior-space check) are the direct
 guarantee; neither alone is.

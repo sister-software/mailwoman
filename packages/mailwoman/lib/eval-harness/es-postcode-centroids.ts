@@ -12,7 +12,7 @@
  *   anchor accuracy?
  *
  *   IT is OUT: Overture IT postcode fill = 0% (the #474 ingest check "≥80% else renegotiate" fails) —
- *   GeoNames stays IT's source; documented as an Overture gap.
+ *   GeoNames stays IT's source. documented as an Overture gap.
  *
  *   Run: mailwoman eval es-postcode-centroids [--parquet <path>] [--out <db>] [--country ES]
  */
@@ -86,7 +86,7 @@ export async function buildESPostcodeCentroids(options: ESPostcodeCentroidsOptio
 	)
 
 	// Per-postcode centroid: mean of points within 3σ of the per-postcode mean (population stddev).
-	// ES postcodes are 5-digit; left-pad numeric codes so leading zeros survive (eval truth uses "01001").
+	// ES postcodes are 5-digit. left-pad numeric codes so leading zeros survive (eval truth uses "01001").
 	// pcLen 0 = no lpad (use the raw Overture form). Correct when both the candidate database and the
 	// eval/query come from Overture (same surface form), and the only safe choice for non-numeric formats
 	// (PT "XXXX-XXX", SK/CZ "XXX XX", LV "LV-XXXX"). A positive pcLen left-pads numeric codes to that

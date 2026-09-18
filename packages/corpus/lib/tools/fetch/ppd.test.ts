@@ -34,7 +34,7 @@ const row = (
 		r.county,
 		"A",
 		"A",
-	].map((v, i) => (i === 11 ? r.town : v)) // town sits at index 11; PPD district (index 12) is dropped by the extractor
+	].map((v, i) => (i === 11 ? r.town : v)) // town sits at index 11. PPD district (index 12) is dropped by the extractor
 }
 
 async function run(rows: string[][]): Promise<{ lines: string[]; stats: PPDExtractStats }> {

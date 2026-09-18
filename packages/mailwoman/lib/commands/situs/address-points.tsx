@@ -6,7 +6,7 @@
  *   `mailwoman situs address-points --state VT` — build a per-state ADDRESS-POINT database (#476) from
  *   the pinned-release Overture Parquet: exact `(street, number)` within a `(postcode | locality)`
  *   scope → exact point. The geocoder's street-level opening move — when the point exists you look
- *   it up; you interpolate (#483) only on miss. This database is also the gold standard the future
+ *   it up. you interpolate (#483) only on miss. This database is also the gold standard the future
  *   TIGER interpolation is graded against.
  *
  *   `mailwoman situs address-points --country TW` — the NATIONAL shape of the same build, for a country whose
@@ -32,7 +32,7 @@
  *   parquet, for states Overture's US addresses theme does not carry (HI, NH).
  *
  *   Maintainer-only: needs the local parquet/CSV inputs + the @duckdb/node-api dev dep + the optional
- * @mailwoman/resolver-wof-sqlite peer (the shared schema + normalizer). Progress streams to stderr;
+ * @mailwoman/resolver-wof-sqlite peer (the shared schema + normalizer). Progress streams to stderr.
  *   the final summary lands on stdout. The build writes to a temp path, then atomically swaps into
  *   place (scripts/AGENTS.md) — the original script rebuilt in place.
  */
@@ -135,7 +135,7 @@ const SitusAddressPoints: CommandComponent<typeof spec> = ({ options }) => {
 			await import("#geocode/national-overture")
 
 		// A national build keys with the locale the provider will read it with — the one-function discipline across the
-		// build/probe boundary; an unregistered country throws here rather than keying with the wrong rules.
+		// build/probe boundary. an unregistered country throws here rather than keying with the wrong rules.
 		const nationalLocale = COUNTRY ? streetLocaleForOvertureCountry(COUNTRY) : undefined
 
 		const finalOut = resolvePath(
@@ -186,7 +186,7 @@ const SitusAddressPoints: CommandComponent<typeof spec> = ({ options }) => {
 		const allowedDatasets: Set<string> = new Set(extractDelimited(options.licenseFilter).map((d) => d.toLowerCase()))
 
 		await makeDirectories(dirname(finalOut))
-		// Build into a temp path; atomically swap on success (scripts/AGENTS.md).
+		// Build into a temp path. atomically swap on success (scripts/AGENTS.md).
 		const tmpOut = `${finalOut}.building-${process.pid}.db`
 
 		for (const sfx of ["", "-wal", "-shm"]) {
@@ -241,7 +241,7 @@ const SitusAddressPoints: CommandComponent<typeof spec> = ({ options }) => {
 
 		// STREAM the parquet scan in DuckDB DataChunks (~2048 rows each) rather than materialising the
 		// whole result — a 13.5M-row state (CA/FL/TX) blows the ~4GB V8 heap that way (OOM 2026-06-14).
-		// stream()+fetchChunk() keeps JS memory bounded to one chunk; the growing data lives in the
+		// stream()+fetchChunk() keeps JS memory bounded to one chunk. the growing data lives in the
 		// on-disk SQLite WAL inside a single transaction.
 		const oaCSVList = OA_MODE
 			? extractDelimited(options.oaCSV)
@@ -335,7 +335,7 @@ const SitusAddressPoints: CommandComponent<typeof spec> = ({ options }) => {
 					lon,
 					OA_MODE ? "openaddresses" : `overture:${r.dataset}`,
 					OA_MODE ? "openaddresses-latest" : String(options.release),
-					// The US and OA sources state no commune key; a national build carries the third admin level (the
+					// The US and OA sources state no commune key. a national build carries the third admin level (the
 					// Taiwanese 村里) here, the finest place the register names below the scope pair.
 					r.admin_code ? String(r.admin_code) : null,
 					null
@@ -409,7 +409,7 @@ const SitusAddressPoints: CommandComponent<typeof spec> = ({ options }) => {
 			schemaVersion: 1,
 			tier: LayerTier.BuildLocal,
 			// The manifest admits only an SPDX expression the obligations table knows. The US build records Overture's
-			// theme license; which source datasets it kept is the attribution beside it, since a database built with a
+			// theme license. which source datasets it kept is the attribution beside it, since a database built with a
 			// different allow-list carries different per-dataset terms. A national build records the theme license and
 			// the register's own.
 			license: COUNTRY ? licenseForOvertureCountry(COUNTRY) : "CDLA-Permissive-2.0",

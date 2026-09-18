@@ -14,7 +14,7 @@
  *
  *   The postcode anchor is a soft ranking channel, not a required model input. This suite pins the
  *   fix: one 404 is skipped (with a loud warn) and the classifier still loads with the survivors'
- *   anchors; all 404 collapses to the anchor-off identity (undefined lookup) and still loads.
+ *   anchors. all 404 collapses to the anchor-off identity (undefined lookup) and still loads.
  *
  *   Strategy mirrors `web-onnx-runner.unit.test.ts` — mock onnxruntime-web so no real model file is
  *   needed — plus partial mocks of `./tokenizer.ts` + `./classifier.ts` (which need a real
@@ -47,7 +47,7 @@ vi.mock("onnxruntime-web/webgpu", () => {
  */
 let capturedConfig: { postcodeAnchorLookup?: Map<string, unknown> } | null = null
 
-// The real tokenizer needs a valid SentencePiece model; stub the load (we feed dummy bytes).
+// The real tokenizer needs a valid SentencePiece model. stub the load (we feed dummy bytes).
 vi.mock("@mailwoman/neural/tokenizer", async (importOriginal) => ({
 	...(await importOriginal<typeof import("@mailwoman/neural/tokenizer")>()),
 	MailwomanTokenizer: { loadFromBase64: vi.fn(async () => ({ tokenizerStub: true })) },
@@ -159,7 +159,7 @@ describe("loadNeuralClassifierFromURLs — optional postcode-anchor binary toler
 		// ready fires: the load resolved and constructed a classifier.
 		expect(result.classifier).toBeDefined()
 
-		// The 200 binary's anchors are present; the 404 one is absent.
+		// The 200 binary's anchors are present. the 404 one is absent.
 		const lookup = capturedConfig?.postcodeAnchorLookup
 		expect(lookup).toBeInstanceOf(Map)
 		expect(lookup!.has("10001")).toBe(true) // US survived

@@ -78,7 +78,7 @@ export const spec = {
 const EvalGauntlet = harnessCommand(
 	spec,
 	async (options) => {
-		// The `*Off` names are CLI-only spellings of the off half of a tri-state; they are destructured out so neither
+		// The `*Off` names are CLI-only spellings of the off half of a tri-state. they are destructured out so neither
 		// ever reaches `runGauntlet` as a field of its own.
 		const {
 			postcodeCountryCoherenceOff,

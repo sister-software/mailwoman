@@ -62,7 +62,7 @@ describe("sanitizeFTSQuery — trailing-* prefix support", () => {
 		expect(names).toContain("62701")
 		expect(names).toContain("62702")
 		expect(names).toContain("62721")
-		// 90210 starts with 9; should not match
+		// 90210 starts with 9. should not match
 		expect(names).not.toContain("90210")
 	})
 
@@ -78,7 +78,7 @@ describe("sanitizeFTSQuery — trailing-* prefix support", () => {
 	})
 
 	test('phrase + prefix in one query (mixed): `Pari* TX` is `Pari* AND "TX"`', async () => {
-		// The fixture has Paris (FR) but no TX; the `AND` of `Pari*` (matches Paris) with `"TX"` (matches
+		// The fixture has Paris (FR) but no TX. the `AND` of `Pari*` (matches Paris) with `"TX"` (matches
 		// nothing in the fixture) returns empty.
 		const r = await lookup.findPlace({ text: "Pari* TX", placetype: "locality" })
 		expect(r).toEqual([])
@@ -104,8 +104,8 @@ describe("sanitizeFTSQuery — punctuation stripping (existing behavior, regress
 	})
 
 	test("`abc*xyz*` strips embedded * and keeps trailing → prefix `abcxyz*`", async () => {
-		// Confirm no crash from embedded asterisks; assertion is just "no SQL error". Result depends on
-		// fixture; here the prefix doesn't match anything.
+		// Confirm no crash from embedded asterisks. assertion is just "no SQL error". Result depends on
+		// fixture. here the prefix doesn't match anything.
 		await expect(lookup.findPlace({ text: "abc*xyz*", placetype: "postalcode" })).resolves.toBeInstanceOf(Array)
 	})
 })
@@ -137,7 +137,7 @@ describe("sanitizeFTSQuery — intra-token punctuation SPLITS for non-postcode q
 
 	test("postcode-typed queries KEEP the #920 fused name-law shape", async () => {
 		// A spaced/hyphenated postcode query must still fuse per token — the postal names are stored
-		// collapsed. `62-701` fused per-token is `62701`, matching the stored row; split it would be
+		// collapsed. `62-701` fused per-token is `62701`, matching the stored row. split it would be
 		// `"62" "701"`, which unicode61 also tokenizes to match — but the fuse is the contract the
 		// geonames-postal name law was built against, so pin it explicitly.
 		const r = await lookup.findPlace({ text: "62-701", placetype: "postalcode" })

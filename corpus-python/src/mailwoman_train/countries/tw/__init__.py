@@ -1,4 +1,4 @@
-"""Taiwan. Corpus from Overture-TW; registers from the GCIS business register."""
+"""Taiwan. Corpus from Overture-TW. registers from the GCIS business register."""
 
 from __future__ import annotations
 

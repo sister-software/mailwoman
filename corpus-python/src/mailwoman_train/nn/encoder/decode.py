@@ -1,6 +1,6 @@
 """Reading tag sequences out of the logits.
 
-`forward` answers logits; these two answer tags. They are the only inference paths that consult
+`forward` answers logits. these two answer tags. They are the only inference paths that consult
 the CRF, and the only ones that trim each row to its mask length, so a caller gets one list per
 row with no padding in it.
 """
@@ -25,7 +25,7 @@ class CoarseEncoderDecode(CoarseEncoderState):
     ) -> list[list[int]]:
         """Best-path tag IDs per row. Returns variable-length lists (mask-trimmed).
 
-        Uses CRF Viterbi when the layer is present; falls back to per-token argmax
+        Uses CRF Viterbi when the layer is present. falls back to per-token argmax
         otherwise (the v0.2.0 behavior — kept for ablation / pre-CRF checkpoints).
         """
         out = self.forward(

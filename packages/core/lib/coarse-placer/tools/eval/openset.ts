@@ -17,7 +17,7 @@
  *
  *   - Maxprob : softmax max over the 11 in-map classes (the verdict's baseline detector)
  *   - P_inmap : 1 - P(OTHER) (trust the model's own `OTHER` head)
- *   - Energy : logsumexp(z) (free-energy; higher = more in-map)
+ *   - Energy : logsumexp(z) (free-energy. higher = more in-map)
  *   - Maxlogit : max(z)
  *   - Maha : -min_c (z-μ_c)ᵀ Σ⁻¹ (z-μ_c), class-conditional Gaussians (tied Σ) fit on in-map TRAIN
  *       logits (Lee et al. 2018, in the 11-dim in-map-logit space — the linear model's only dense
@@ -25,7 +25,7 @@
  *
  *   In-map accuracy = of the 11-country test rows, fraction not rejected and argmax-in-map == truth.
  *   heldout caught = of the never-trained off-map families (baltic/oceania/middle-east), fraction
- *   rejected. Both move with the threshold; the Pareto is the whole story.
+ *   rejected. Both move with the threshold. the Pareto is the whole story.
  *
  *   Run: `mailwoman placer eval openset [--model <dir>] [--out-md <path>]`
  */
@@ -44,7 +44,7 @@ import { readLocalJSONFile } from "#fs/readers"
 import { writeLocalFile } from "#fs/writers"
 
 /**
- * Steps in the threshold sweep; finer than the reporting precision so the knee is not missed.
+ * Steps in the threshold sweep. finer than the reporting precision so the knee is not missed.
  */
 const QUANTILE_SWEEP_STEPS = 200
 
@@ -400,7 +400,7 @@ export async function evalOpenSet(
 		return { t, inMapAcc: (100 * keepCorrect) / inSplit.length, heldCaught: (100 * caught) / heldSplit.length }
 	}
 
-	// For each score: KEEP (route in-map) iff score >= threshold; else REJECT (→ OTHER).
+	// For each score: KEEP (route in-map) iff score >= threshold. else REJECT (→ OTHER).
 	// in-map accuracy = keep & correctRoute. heldout caught = rejected.
 	function paretoFor(scoreKey: ScoreKey) {
 		// Candidate thresholds: quantiles of the union of scores.

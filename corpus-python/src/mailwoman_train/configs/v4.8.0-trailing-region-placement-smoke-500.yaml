@@ -3,7 +3,7 @@
 # Not an experiment. This exists to prove the config LOADS and the source is REACHED before the real
 # run spends GPU: the 134-country map, the v0.25.0 corpus dir, and the source weight re-weighted to its target reps are all
 # new, and each fails silently rather than loudly. Read the completeness audit and the per-source row
-# counts in its log; ignore its metrics, which 500 steps cannot inform.
+# counts in its log. ignore its metrics, which 500 steps cannot inform.
 #
 # What v4.7.0 got wrong, and it was not the exposure. Its recipe emitted the postcode only at the HEAD
 # (`const head = ... ${postcode} `), so every one of its 17,908 rows was postcode-LEADING. That was
@@ -48,7 +48,7 @@
 #
 # KR and TW are the one judgement call here: neither is on the board, but both carry corpus rows
 # (1,083,156 and 678,660) of the same wof-admin toponym class as CN and JP, which the board does carry.
-# #288 validates JP/KR/TW together; admitting two of the three would teach the model that Korean and
+# #288 validates JP/KR/TW together. admitting two of the three would teach the model that Korean and
 # Taiwanese toponyms are not places.
 #
 # COST of the expansion, measured rather than assumed: 0.778% of every epoch. country_weights is a
@@ -248,7 +248,7 @@ data:
     synth-fr-bare-street: 0.0 # SUPERSEDED (vintages must never co-feed)
     synth-fr-bare-street-v20: 0.0 # SUPERSEDED
     synth-fr-bare-street-v21: 0.0 # SUPERSEDED by -v22
-    synth-fr-bare-street-v22: 6.0 # weight held at v4.5.1's value; the v22 counter-forms are the run's one variable
+    synth-fr-bare-street-v22: 6.0 # weight held at v4.5.1's value. the v22 counter-forms are the run's one variable
     synth-si-bare-village: 12.0
     synth-no-street-led: 0.0
     synth-cz-pcfirst-preposition: 0.0 # SUPERSEDED (vintages must never co-feed)

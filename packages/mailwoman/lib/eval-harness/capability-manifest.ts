@@ -11,13 +11,13 @@
  *   codex `forbiddenTags` row would suppress. The `createScorer` loader (neural/scorer.ts) reads
  *   this `capabilities` block and FAILS CLOSED when a conventions mask would forbid a tag the model
  *   is CERTIFIED to emit — conditional by a DELTA (`maskOffF1 − maskOnF1 > 5pp`), not an absolute floor,
- *   so a tag the model emits at 0.80 is still protected if the mask drops it to 0.0 (the exact #719
+ *   so a tag the model emits at 0.80 is still guarded if the mask drops it to 0.0 (the exact #719
  *   shape: FR `street_prefix` collapsed 80.0 → 0.0 under the old blanket prefix+suffix forbid).
  *
  *   Tiers (the two SHIP-CONFIGs the model is fed under):
  *
  *   - `server`: anchor + gazetteer channels on (the production default — what `createScorer` builds).
- *   - `pocket`: anchor on, gazetteer off (the lighter on-device feed; not yet a serving target).
+ *   - `pocket`: anchor on, gazetteer off (the lighter on-device feed. not yet a serving target).
  *
  *   For each tier × locale × {mask-off, mask-on} we run the model and compute UNFOLDED exact-match
  *   per-tag F1 (same implementation as `score-affix.ts` — split `street_prefix`/`street`/`street_suffix`
@@ -89,7 +89,7 @@ export interface CapabilityManifestOptions {
  * Serving tiers and their channel feed (vs the model-card SHIP-CONFIG, expressed as overrides).
  */
 const TIERS: Record<string, ScorerOverrides> = {
-	// Production default — anchor + gazetteer both fed (no override needed; createScorer's defaults).
+	// Production default — anchor + gazetteer both fed (no override needed. createScorer's defaults).
 	server: {},
 	// On-device lighter feed — anchor on, gazetteer ablated. `overrides.gazetteer:false` warns loudly
 	// (a DECLARED ablation), which is correct: pocket is a deliberate below-ship-config tier.
@@ -144,7 +144,7 @@ async function buildManifest(paths: ResolvedPaths): Promise<Capabilities> {
 			console.error(`\n[${tier}/${spec.system}] n=${rows.length} (${spec.files.join(", ")})`)
 
 			// The generator constructs its scorers WHILE the card's `capabilities` block may not yet
-			// exist; the loader's delta check is a no-op until the block is written. After a `--write`,
+			// exist. the loader's delta check is a no-op until the block is written. After a `--write`,
 			// regenerating uses the already-written block, but mask-OFF construction never trips the
 			// check (it only fires for a forbidden CERTIFIED tag, and mask-off forbids none).
 			// `inputMode: "formatted"`: certification probes are formatted postal addresses, whose
@@ -201,7 +201,7 @@ async function buildManifest(paths: ResolvedPaths): Promise<Capabilities> {
 //#region Entry
 
 /**
- * Measure the per-tier × system × tag capability manifest; optionally patch it into the model card.
+ * Measure the per-tier × system × tag capability manifest. optionally patch it into the model card.
  */
 export async function generateCapabilityManifest(options: CapabilityManifestOptions = {}): Promise<void> {
 	const paths: ResolvedPaths = {
@@ -220,7 +220,7 @@ export async function generateCapabilityManifest(options: CapabilityManifestOpti
 	console.log(prettyJSON({ capabilities }))
 
 	if (WRITE) {
-		// Provenance key alongside the tier keys; ignored by readers (`lookupTagCapability` skips it).
+		// Provenance key alongside the tier keys. ignored by readers (`lookupTagCapability` skips it).
 		;(capabilities as Record<string, unknown>).$comment =
 			"Per-tier (server=anchor+gazetteer; pocket=anchor-only) × address-system × tag capability " +
 			"manifest (#718/#719). maskOffF1 = measured per-tag exact-match F1 with the conventions mask " +

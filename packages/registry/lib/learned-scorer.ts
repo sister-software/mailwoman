@@ -18,7 +18,7 @@
  *   Both take the comparison set as INPUT (rather than importing {@link buildDefaultModel}) so this
  *   module has no dependency cycle with `resolve.ts`. The contract that keeps train ≡ inference:
  *   feed the comparisons from `buildDefaultModel({ collapseSpatial: true, addressFrequency })` —
- *   the model's structure (and thus the feature layout) is fixed by that config; only the frequency
+ *   the model's structure (and thus the feature layout) is fixed by that config. only the frequency
  *   VALUES differ between the training corpus and the matched set, which is the point (the model
  *   generalizes, as the cross-state eval showed).
  */

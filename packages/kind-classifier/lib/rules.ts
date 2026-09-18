@@ -46,7 +46,7 @@ export const MAX_LOCALITY_ONLY_LENGTH = 30
 const VENUE_PHRASE_MIN_WORDS = 2
 
 /**
- * Upper bound of the short-phrase venue window; see {@link VENUE_PHRASE_MIN_WORDS}.
+ * Upper bound of the short-phrase venue window. see {@link VENUE_PHRASE_MIN_WORDS}.
  */
 const VENUE_PHRASE_MAX_WORDS = 4
 
@@ -88,7 +88,7 @@ const INTERSECTION_PATTERNS = [
 ]
 
 /**
- * `po_box` rule: high-confidence iff QueryShape detected a po_box format hit. Confidence comes directly from the hit;
+ * `po_box` rule: high-confidence iff QueryShape detected a po_box format hit. Confidence comes directly from the hit.
  * covers all locale variants (US "PO Box 123", FR "BP 42", etc.).
  */
 export function scorePoBox(_input: NormalizedInputLite, shape: QueryShapeLike): number {

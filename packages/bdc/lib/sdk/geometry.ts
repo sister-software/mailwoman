@@ -104,7 +104,7 @@ export function geometryCentroid(geometryJSON: string | null): { lat: number; lo
 /**
  * The production `blockCentroids` supplier: opens the TIGER blocks database READ-ONLY and probes `tabblock20.GEOID`
  * (uppercase) per lookup, decoding its GeoJSON `geometry` column via {@linkcode geometryCentroid}. The factory awaits
- * its read-only open; the per-lookup probe and the `BuildBDCOptions.blockCentroids` interface stay synchronous — a
+ * its read-only open. the per-lookup probe and the `BuildBDCOptions.blockCentroids` interface stay synchronous — a
  * plain sync function (the same sync-by-interface discipline AGENTS.md documents for the resolver ladder), so the
  * returned closure uses `node:sqlite`'s raw `.prepare()`/`.get()` directly rather than Kysely. The connection is left
  * open for the caller's process lifetime (a read-path lookup, not a build) — same lifecycle as the resolver-wof-sqlite

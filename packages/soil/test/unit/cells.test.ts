@@ -8,7 +8,7 @@
  *   THE INVERSION IS PINNED HERE AS A PROPERTY, NOT AS A NUMBER. A polygon smaller than a cell produces
  *   only `partial` cells — that is what makes this layer's containment index answer almost nothing on its
  *   own — while a polygon several cells across produces an interior that compacts. The measured shares on
- *   the real product are in the workspace README; what this file pins is that the two shapes behave
+ *   the real product are in the workspace README. what this file pins is that the two shapes behave
  *   differently at all, which is the fact the resolution choice rests on.
  */
 

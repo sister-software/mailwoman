@@ -7,7 +7,7 @@
  *
  *   Re-homed from Nexus's `sync/fcc/universal-service.ts` (relicense-by-copy, no provenance
  *   headers) — ONLY the 17-column vocabulary (:27-44) and the `principalCommType` → classification
- *   mapping (:164-176) survive the port; everything else about the Nexus loader is rewritten:
+ *   mapping (:164-176) survive the port. everything else about the Nexus loader is rewritten:
  *
  *   - The Nexus loader reads the ENTIRE TSV into memory via `fs.readFile`, then parses it with the
  *     `csv` package configured `relax_column_count_less: true` — a short row is silently truncated,
@@ -22,7 +22,7 @@
  *     never carry data.
  *   - `frn` is parsed through {@linkcode toFRN} (decision 3's zero-padded 10-digit branded string).
  *   - Nexus's row type carries `holdingCompany` and `managementCompany` as two separate string
- *     fields; this port keeps both (spec §3.1 finding 1 — ownership and operational control are
+ *     fields. this port keeps both (spec §3.1 finding 1 — ownership and operational control are
  *     different assertions, not synonyms to collapse into one).
  *
  *   On the DC agent: the 499 "DC agent" is the registered agent for service of process, a role
@@ -113,7 +113,7 @@ export interface Form499Row {
 	customerInquiriesTelephone: string
 	customerInquiriesAddress: string
 	/**
-	 * The DC agent's display name — the registered agent for service of process. Plain attribute only; see the module
+	 * The DC agent's display name — the registered agent for service of process. Plain attribute only. see the module
 	 * docstring. Never treat this (or the other `dcAgent*` fields) as evidence that two filers sharing an agent are
 	 * related.
 	 */

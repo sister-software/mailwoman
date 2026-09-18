@@ -6,7 +6,7 @@
  *   `mailwoman corpus run <adapter-id> --input <path> --out <dir> [--country XX] [--limit N]`
  *
  *   CLI shim around `runAdapter` from `@mailwoman/corpus`. Resolves `<adapter-id>` against the
- *   default registry; refuses with a clear, non-zero exit if the id isn't known (and lists the
+ *   default registry. refuses with a clear, non-zero exit if the id isn't known (and lists the
  *   registered ids). On success, prints a one-line summary and the path to the manifest file.
  */
 

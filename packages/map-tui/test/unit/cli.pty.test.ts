@@ -48,7 +48,7 @@ const TEST_TIMEOUT_MS = 40_000
 
 /**
  * `script` is util-linux's, and this test's `-e` / `-c` spelling is too. macOS ships a BSD `script` with different
- * flags; rather than maintain two invocations for a smoke test, the suite runs where CI runs.
+ * flags. rather than maintain two invocations for a smoke test, the suite runs where CI runs.
  */
 async function hasLinuxScript(): Promise<boolean> {
 	if (process.platform !== "linux") return false

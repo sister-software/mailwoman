@@ -8,7 +8,7 @@
  *   IMPORT DISCIPLINE — the reason this file exists apart from `worker.ts`: everything here must be loadable by the
  *   never-stale shim, so it imports Node builtins only. Importing anything from the mailwoman graph (even a type-only
  *   module that transitively reaches runtime code) would re-create the staleness the split removes. The worker's
- *   message shapes are re-declared structurally rather than imported for exactly that reason; the protocol test forks
+ *   message shapes are re-declared structurally rather than imported for exactly that reason. the protocol test forks
  *   the real worker, so a drift between the two declarations fails there, not silently.
  *
  *   Restart semantics, stated where a caller will read them:

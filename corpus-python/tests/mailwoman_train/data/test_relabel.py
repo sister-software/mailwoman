@@ -2,7 +2,7 @@
 
 The critical property is BUILDER PARITY: split_street_span must agree with the affix recipe's
 ``parseStreet`` (`packages/corpus/lib/recipes/street/affix.ts`) on every case, or the pass introduces a third
-labeling and re-creates the contradiction it exists to cure.
+labeling and re-creates the contradiction it exists to fix.
 """
 
 import json
@@ -85,7 +85,7 @@ class TestSplitBuilderParity:
         # CONTRACT CHANGE 2026-08-10 (#1569 five-whys): this case was the blanket rejection that
         # taught the training feed to absorb true suffixes ('Cherry Hill' ends name-prone-shaped,
         # but the trailing TRUE suffix licenses the split — TS allowNameProneTail semantics).
-        # Previously pinned as None; see TestPositionalLicensing for the full new contract.
+        # Previously pinned as None. see TestPositionalLicensing for the full new contract.
         assert split("W Cherry Hill Rd") == (1, 1)
 
     def test_period_not_stripped(self):
@@ -250,7 +250,7 @@ class TestRelabelSpans:
 
     def test_dotted_suffix_is_conservative_on_the_span_path(self):
         # "Main St.": the corpus tokenizer dropped the period, so the TOKEN path sees "St" and
-        # splits; the span path sees the whitespace word "St." (builder parity: parseStreet
+        # splits. the span path sees the whitespace word "St." (builder parity: parseStreet
         # splits raw words, "St." is not in the lexicon) and leaves the span whole. The span path
         # is the v0.5.0 source of truth — conservative beats a third labeling.
         row = {
@@ -418,7 +418,7 @@ class TestPositionalLicensing:
 
     def test_v1_artifact_without_name_prone_keeps_the_old_blanket_rejection(self):
         """Back-compat: a v1 lexicon (no ``name_prone`` key) must reproduce the pre-licensing
-        behavior byte-for-byte — old runs stay reproducible; the fix rides the v2 artifact."""
+        behavior byte-for-byte — old runs stay reproducible. the fix rides the v2 artifact."""
         import dataclasses
 
         lex_v1 = dataclasses.replace(LEX, name_prone=frozenset())

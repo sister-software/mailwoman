@@ -17,7 +17,7 @@
  *   Note this is a SHAPE test, not a gazetteer-membership test. A bare `68161` matches the US,
  *   German, French, Spanish and Italian 5-digit shapes, so it returns `["us", "de", "fr", "es", "it"]` —
  *   the shape alone cannot split the numeric-postcode systems. The anchor uses real gazetteer membership for the finer
- *   call; this function answers the coarser, model-free "which systems is this shape even eligible
+ *   call. this function answers the coarser, model-free "which systems is this shape even eligible
  *   for".
  */
 
@@ -88,7 +88,7 @@ export function candidateSystemsForPostcode(postcode: string): SystemCode[] {
  * contains, so promoting it would trade a good answer for a worse one. Two systems are the other way round, and
  * membership here is earned by MEASUREMENT of the code's granularity, never by "the code has letters in it":
  *
- * - **NL PC6** (`1012 LG`) — ~8 addresses per code; the CBS polygon centroid (#977, the original carve-out).
+ * - **NL PC6** (`1012 LG`) — ~8 addresses per code. the CBS polygon centroid (#977, the original carve-out).
  * - **GB unit** (`N7 0BT`) — ~15 addresses per code, 1,751,733 shipped from OS Code-Point Open. Measured 2026-08-10
  *   against the panel-v2 GB rooftop truth: unit centroid within 1 km on 15/15 rows, median 38 m, max 100 m, while the
  *   locality centroid the ladder returned instead was 5.1–14.6 km out.
@@ -141,7 +141,7 @@ const alnum = (s: string): string => s.replaceAll(/[^\p{L}\p{N}]/gu, "").toUpper
  * True when a resolved postcode is an exact hit on a unit-grade code — the #977 three-way guard, shared by the Node
  * ladder and the demo pin ranking:
  *
- * 1. The PARSED span is a full unit shape ({@link UNIT_GRADE_POSTCODE}), not a stem the user typed;
+ * 1. The PARSED span is a full unit shape ({@link UNIT_GRADE_POSTCODE}), not a stem the user typed.
  * 2. The node resolved (a coordinate is present — checked by the caller); and
  * 3. The resolver's own hit is the full code, not a coarsened prefix (a 4-digit NL stem or a GB outward district is
  *    AREA-class, and promoting it is the exact trade the epoch convention forbids).
@@ -192,7 +192,7 @@ export function isUnitGradePostcodeHit(parsed: string, resolverName: string | un
  * Overture-SG register (`postalcode-sg-overture.db` folded, each row geocoded as `<number> <street> Singapore
  * <postcode>` and graded on its own point): the postcode point answers 300 of 300 within 1 km (p99 0.16 km);
  * locality-first answers 185, and the other 115 take the "Singapore" locality centroid (p75 6.30 km, p90 11.43 km, p99
- * 24.18 km). The postcode point is closer on those 115 and equal on the rest; it is never farther.
+ * 24.18 km). The postcode point is closer on those 115 and equal on the rest. it is never farther.
  */
 export const AREA_POSTCODE_FINER_THAN_LOCALITY: ReadonlySet<string> = new Set(["DE", "JP", "SG"])
 

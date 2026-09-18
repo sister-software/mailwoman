@@ -23,7 +23,7 @@ import type { GeocodeResult } from "#geocode/result"
 
 /**
  * The map pane's initial zoom for a freshly-geocoded result, before any interactive pan/zoom. Tight for a house-grade
- * fix; progressively wider for whatever admin tier the resolve actually reached, so an admin-only fallback doesn't open
+ * fix. progressively wider for whatever admin tier the resolve actually reached, so an admin-only fallback doesn't open
  * on a single-building zoom over a whole region or country.
  */
 export function initialZoomForTier(result: GeocodeResult): number {
@@ -49,7 +49,7 @@ export function initialZoomForTier(result: GeocodeResult): number {
 /**
  * `--debug` is its own rendered surface (a captured Ink frame) — combining it with a `--format` shorthand, or with an
  * explicit non-default `--format` value, has no defensible reading. Thrown with {@link CommandError} so it reports
- * through the standard error state (exit code 1) on the static path; the interactive session runs the same guard as the
+ * through the standard error state (exit code 1) on the static path. the interactive session runs the same guard as the
  * first statement of its mount effect, before it takes the alternate screen, matching `resolveFormat`'s
  * two-shorthands-at-once check in `cli-native/commands/geocode.ts`.
  */

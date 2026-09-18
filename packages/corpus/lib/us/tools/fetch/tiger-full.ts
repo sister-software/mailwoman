@@ -13,7 +13,7 @@ import { APIClient, pluckResponseData } from "@mailwoman/core/api"
  *
  *   Each state's ZIPs land in `<outRoot>/tiger/addrfeat/state-<statefips>/` with a per-state
  *   `MANIFEST.json` recording filename, sha256, and bytes for every county ZIP so re-runs can skip
- *   already-verified files. (Extraction + ogr2ogr ingestion happen later, in the `tiger` adapter;
+ *   already-verified files. (Extraction + ogr2ogr ingestion happen later, in the `tiger` adapter.
  *   this module is download + provenance only.)
  *
  *   Invoke via `mailwoman corpus fetch tiger-full --out-root <path>`. Native `fetch` streams each
@@ -37,12 +37,12 @@ import { readManifest, streamDownload, writeManifest } from "#tools/fetch/downlo
  * than data.
  */
 /**
- * Lowest 2xx status; anything below is informational.
+ * Lowest 2xx status. anything below is informational.
  */
 const HTTP_OK = 200
 
 /**
- * Lowest 3xx status; at or above it the response is a redirect or an error, not a body.
+ * Lowest 3xx status. at or above it the response is a redirect or an error, not a body.
  */
 const HTTP_REDIRECT = 300
 
@@ -146,7 +146,7 @@ export async function fetchTigerFull(
 	report?.(`=== Fetching TIGER 2024 ADDRFEAT directory listing...`)
 
 	// `responseType: "text"` — an Apache directory index, scraped below. The per-county ARCHIVE downloads
-	// stay on raw `fetch` (they stream to disk; see `downloadOne`).
+	// stay on raw `fetch` (they stream to disk. see `downloadOne`).
 	const listingRes = await new APIClient({
 		displayName: "tiger-listing",
 		retry: true,

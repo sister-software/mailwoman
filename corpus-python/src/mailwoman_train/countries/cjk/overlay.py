@@ -23,7 +23,7 @@ source defect (an interior U+3000 inside a district name). A CN row's Latin admi
 included, so the label array is well-formed. The other JP checks (fits S, every span covers exactly its own text, every tag in
 the active set, the array builds) are kept.
 
-Usage (local artifact; the manifest paths are written for the volume):
+Usage (local artifact. the manifest paths are written for the volume):
 
     uv run python -m mailwoman_train.countries.cjk.overlay \\
         --jp-corpus $MAILWOMAN_DATA_ROOT/corpus/versioned/v8-jp-full-2026-08-04 \\

@@ -4,15 +4,15 @@
  * @author Teffen Ellis, et al.
  *
  *   The POI brand lexicon builder — part 1 of 2 (part 2 wires `lookupPOIBrand` into the runtime
- *   pipeline; no pipeline wiring here). Reads a BUILT `poi.db` (Overture Places, the `poi` table
+ *   pipeline. no pipeline wiring here). Reads a BUILT `poi.db` (Overture Places, the `poi` table
  *   `build-poi.ts` materializes) READ-ONLY via `node:sqlite` and aggregates its `(brand_wikidata,
  *   name)` pairs into a `@mailwoman/poi-taxonomy` brand table: one row per Wikidata QID, its
  *   most-frequently observed name plus alias spellings that clear a noise floor.
  *
  *   The output (`poi-taxonomy/data/brands.json`) is COMMITTED — a rebuild against the same `poi.db`
  *   must be byte-identical. Every ordering decision in {@linkcode aggregateBrands} is an explicit,
- *   deterministic tie-break (rows desc → QID asc for brands; count desc → name asc for the modal
- *   pick; alphabetical for aliases), never left to SQL row order or `Map` iteration order.
+ *   deterministic tie-break (rows desc → QID asc for brands. count desc → name asc for the modal
+ *   pick. alphabetical for aliases), never left to SQL row order or `Map` iteration order.
  *
  *   Two phases, split the way `build-poi.ts` splits ingest from materialize, so the aggregation
  *   logic is unit-testable without touching sqlite:

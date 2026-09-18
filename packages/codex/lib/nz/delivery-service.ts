@@ -33,7 +33,7 @@
  *   mail, accessed 2026-06-11) name only the six types above. However, real NZ mail and the postal
  *   arena's gold rows carry "Private Box" as a colloquial synonym for a numbered PO Box (same
  *   numbered format, different label). Operator ruling 2026-06-11: "Private Box = recognize-as-used
- *   — codex documents it unofficial/colloquial with the 'officially invalid' citation; the extract
+ *   — codex documents it unofficial/colloquial with the 'officially invalid' citation. the extract
  *   teaches recognition (validity and recognition are separate disciplines, same as the AU legacy
  *   flags)." This is encoded in {@link NZ_PRIVATE_BOX_ALIAS} — a distinct export from
  *   {@link NZ_DELIVERY_SERVICE_TYPES} so callers can choose whether to include the unofficial form.
@@ -60,7 +60,7 @@ export interface NZDeliveryServiceType {
 	 */
 	description: string
 	/**
-	 * Identifier rule: PO Box/Response Bag/CMB identifiers are mandatory if allocated; Private Bag may legitimately have
+	 * Identifier rule: PO Box/Response Bag/CMB identifiers are mandatory if allocated. Private Bag may legitimately have
 	 * none ("not used … for Private Bags that do not have an identifier allocated by New Zealand Post"); Counter Delivery
 	 * and Poste Restante never carry one.
 	 */
@@ -105,7 +105,7 @@ export type NZDeliveryServiceTypeName = (typeof NZ_DELIVERY_SERVICE_TYPES)[numbe
  * standards pages (nzpost.co.nz/business/shipping-in-nz/addressing-standards and
  * nzpost.co.nz/personal/sending-in-nz/how-to-address-mail, accessed 2026-06-11) do not list it as a valid type. Real NZ
  * mail and the postal arena's gold rows nonetheless carry it as a colloquial synonym for a numbered PO Box. Operator
- * ruling 2026-06-11 authorizes its inclusion here for recognition only, with this citation; corpus synthesis should
+ * ruling 2026-06-11 authorizes its inclusion here for recognition only, with this citation. corpus synthesis should
  * treat it as a non-prescriptive form.
  */
 export const NZ_PRIVATE_BOX_ALIAS = {
@@ -114,7 +114,7 @@ export const NZ_PRIVATE_BOX_ALIAS = {
 	 */
 	type: "Private Box",
 	/**
-	 * The description of validity status — NOT a valid ADV358 Delivery Service Type; a colloquial NZ synonym for a
+	 * The description of validity status — NOT a valid ADV358 Delivery Service Type. a colloquial NZ synonym for a
 	 * numbered PO Box (same format as "PO Box <number>").
 	 */
 	description: "Colloquial NZ synonym for a numbered PO Box — NOT a valid ADV358 Delivery Service Type",
@@ -201,7 +201,7 @@ export interface NZDeliveryServiceMatch {
  * for "PB 39990" (an error of form per ADV358).
  *
  * When `type` is "Private Box", the result has `colloquial: true` — indicating the colloquial alias (not an ADV358
- * Delivery Service Type; see {@link NZ_PRIVATE_BOX_ALIAS} and operator ruling 2026-06-11). Callers that want only
+ * Delivery Service Type. see {@link NZ_PRIVATE_BOX_ALIAS} and operator ruling 2026-06-11). Callers that want only
  * formally-valid ADV358 types should check `!result.colloquial`.
  */
 export function matchNZDeliveryService(input: unknown): NZDeliveryServiceMatch | null {

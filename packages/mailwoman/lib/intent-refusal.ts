@@ -8,14 +8,14 @@
  *   string asks for a THING, not an address — the address lanes can only manufacture confident
  *   nonsense from it ("Statue of Liberty" resolved Of, Trabzon through a fuzzy locality; "Restaurants
  *   in London" resolved London, Kentucky). The geocode ABSTAINS with the verdict's intent markers
- *   attached; POI-lane answering lives in the runtime pipeline's poiIntent stage. The refusal is a
+ *   attached. POI-lane answering lives in the runtime pipeline's poiIntent stage. The refusal is a
  *   VERDICT, not a miss — {@link thingQueryRefusalMarkers} lets the register-flip retry stand down (a retry
- *   with a pinned register would skip this check and resolve the refused nonsense; measured on the
+ *   with a pinned register would skip this check and resolve the refused nonsense. measured on the
  *   harness's "Pharmacy near me" → a Hungarian namesake).
  *
  *   Checks: injected classifier only (absent → byte-identical geocoding), no explicit register pin —
  *   a caller-supplied tree does not skip it (the CLI session pre-parses every query as an
- *   optimization; a pre-parse of "train station" is still a thing-query). The kind-intent invariance
+ *   optimization. a pre-parse of "train station" is still a thing-query). The kind-intent invariance
  *   receipt proves the top slot never flips on an ADDRESS-shaped corpus row under the wired lexicon.
  *
  *   Pure over its arguments — no geocode-core import, so no module cycle: the caller assembles the

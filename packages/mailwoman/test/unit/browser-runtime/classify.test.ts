@@ -170,7 +170,7 @@ describe("runCascade (shared resolveTree over the candidate lookup)", () => {
 
 	test("cross-country postcode check: a foreign postcode match cannot out-pin the parsed city", async () => {
 		// "10115"-class: the postcode string resolves to a DE row, the city is a US locality — the
-		// locality wins the pin; the postcode stays in the hit list.
+		// locality wins the pin. the postcode stays in the hit list.
 		const lookup = stubLookup([
 			{ id: 30, name: "10115", placetype: "postalcode", country: "DE", lat: 52.53, lon: 13.38, score: 2 },
 			{ id: 31, name: "New York", placetype: "locality", country: "US", lat: 40.71, lon: -74, score: 9 },

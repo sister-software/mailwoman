@@ -147,7 +147,7 @@ async function findDatabases(dataRoot: string, maxDepth: number): Promise<{ path
 		try {
 			entries = await Globerator.from("*", { cwd: dir, withFileTypes: true, onlyFiles: false }).toArray()
 		} catch {
-			// An unreadable directory is not a finding about provenance; skip it rather than fail the report.
+			// An unreadable directory is not a finding about provenance. skip it rather than fail the report.
 			return
 		}
 

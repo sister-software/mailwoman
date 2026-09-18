@@ -8,7 +8,7 @@
  *   The package is intentionally engine-agnostic: {@link createNominatimApp} takes a
  *   {@link NominatimEngine} (the thing that actually parses + resolves) and exposes it under the
  *   endpoint shapes + response format a Nominatim client expects. The CLI (`./cli.ts`) wires the
- *   real Mailwoman engine; tests can inject a fake. This keeps the compat surface isolated from the
+ *   real Mailwoman engine. tests can inject a fake. This keeps the compat surface isolated from the
  *   resolver wiring.
  *
  *   Implementation is staged across the epic (#801): #804 the result formatter, #802 `/search`, #803

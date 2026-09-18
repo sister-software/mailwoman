@@ -73,7 +73,7 @@ export interface ProximityRerankable {
 
 /**
  * Population plus nearness on one additive scale. Exported for tests and for a caller that wants the value without the
- * sort; ordinary callers want {@link applyProximityRerank}.
+ * sort. ordinary callers want {@link applyProximityRerank}.
  */
 export function combinedProminence(candidate: ProximityRerankable, bias: readonly ProximityBias[]): number {
 	const popBase = candidate.prominence ?? candidate.score
@@ -112,7 +112,7 @@ export function applyProximityRerank<T extends ProximityRerankable>(
 
 			return { c, i, p: c.prominence }
 		})
-		// oxlint-disable-next-line unicorn/no-array-sort -- sorts a freshly-built array; toSorted would double-allocate on a hot path
+		// oxlint-disable-next-line unicorn/no-array-sort -- sorts a freshly-built array. toSorted would double-allocate on a hot path
 		.sort((a, b) => b.p - a.p || a.i - b.i)
 		.forEach((x, j) => (candidates[j] = x.c))
 

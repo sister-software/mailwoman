@@ -112,7 +112,7 @@ export interface TracePiece {
 }
 
 /**
- * The full trace of one `traceParse` call. Field-by-field provenance lives in the spec's trace contract table; the one
+ * The full trace of one `traceParse` call. Field-by-field provenance lives in the spec's trace contract table. the one
  * deviation from that table is that vocab ids ride on `pieces[].id` rather than a parallel `ids` array (same
  * information, one fewer alignment invariant).
  */

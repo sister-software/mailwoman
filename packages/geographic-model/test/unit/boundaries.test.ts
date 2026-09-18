@@ -9,7 +9,7 @@
  *
  *   Both are written to keep failing usefully as the package grows, rather than to describe today's
  *   empty state: the first reads `@mailwoman/core`'s manifest, so it answers the same question after
- *   the schema and the compiler land; the second reads whatever the public entry point exports, so a
+ *   the schema and the compiler land. the second reads whatever the public entry point exports, so a
  *   later ordering API trips it on the commit that adds it.
  */
 
@@ -61,7 +61,7 @@ describe("the geographic model's recorded dependency direction", () => {
 
 		// Core ships the pipeline contract and its reference data to every consumer, so a world-semantics
 		// dependency there is one every drop-in API inherits. Reversing the direction amends the boundary
-		// record; it is not a convenience during implementation.
+		// record. it is not a convenience during implementation.
 		expect(declaring).toEqual([])
 	})
 })

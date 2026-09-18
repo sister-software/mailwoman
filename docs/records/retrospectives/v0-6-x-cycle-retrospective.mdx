@@ -230,7 +230,7 @@ The diagnostic confirms postcode `<90%` on most countries (US 80.5%, FR
    char-bigram embedding alongside subword tokens. The postcode shape
    becomes visible at character level even when fragmented at subword
    level. Architecture change (~50KB extra params), but contained.
-2. **Postcode-aware tokenizer pre-pass** — regex detects and protects
+2. **Postcode-aware tokenizer pre-pass** — regex detects and guards
    postcode-shaped substrings (`/[A-Z]\d[A-Z]?\s*\d[A-Z]\d/` etc.)
    before SentencePiece runs. Single token, single label, no
    fragmentation. Simpler to ship than (1) but requires per-country

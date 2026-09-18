@@ -44,7 +44,7 @@ export interface CountryCoverageTable {
 	 */
 	country: string
 	/**
-	 * 0/1 — the promotion-eval verdict (a verdict column, not re-derived from the rate; see the fact type's docstring).
+	 * 0/1 — the promotion-eval verdict (a verdict column, not re-derived from the rate. see the fact type's docstring).
 	 */
 	hard_filter_safe: number
 	/**
@@ -113,7 +113,7 @@ export async function createCountryCoverageTable(db: Kysely<GazetteerCoverageDat
 		.addColumn("sample_size", "integer")
 		.addColumn("measured_at", "text", (c) => c.notNull())
 		.addColumn("source", "text", (c) => c.notNull())
-		// `WITHOUT ROWID` has no first-class builder; the raw modifier is the idiomatic fallback.
+		// `WITHOUT ROWID` has no first-class builder. the raw modifier is the idiomatic fallback.
 		.modifyEnd(sql`without rowid`)
 		.execute()
 }
@@ -137,7 +137,7 @@ export async function createCountryBBoxTable(db: Kysely<GazetteerCoverageDatabas
 
 /**
  * Write the coverage manifest into a candidate DB UNDER CONSTRUCTION (pre-seal — a shipped DB is never patched, rebuild
- * instead). Creates both tables and inserts the facts; call exactly once, from the gazetteer build.
+ * instead). Creates both tables and inserts the facts. call exactly once, from the gazetteer build.
  */
 export async function writeGazetteerCoverageManifest(
 	db: Kysely<GazetteerCoverageDatabase>,

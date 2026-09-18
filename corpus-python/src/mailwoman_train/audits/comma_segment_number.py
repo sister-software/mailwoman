@@ -7,7 +7,7 @@ HOUSE NUMBER (`15, 07691 Portopetro, Illes Balears, Spain`) and as a POSTCODE. S
 read against the rows it would newly claim, and that is a count.
 
 LEADING AND NON-LEADING ARE SEPARATE COUNTS. A number opening the row is the house-number surface
-several recipes already emit and is not in competition with the proposed unit; a number in a LATER
+several recipes already emit and is not in competition with the proposed unit. a number in a LATER
 segment is the exact shape, and its current readings are the evidence the decision rests on.
 
 The sampling mirrors `audit_epoch_mixture` and the other two censuses — same stream, same seed

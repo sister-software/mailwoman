@@ -123,7 +123,7 @@ revision declared explicitly: `eval parity` now grades the ship-config parse; fl
 
 1. **Merge order** — #1132 first (the stack base), then #1136/#1137 rebase to `main` and get real
    CI. #1133/#1134/#1135 are independent.
-2. **Ratify the protected lane** for the span-head arc (plan item 4). It spans multiple nights; the
+2. **Ratify the guarded lane** for the span-head arc (plan item 4). It spans multiple nights; the
    nightly cadence is precisely what has kept it unbuilt for ~200 model versions.
 3. **v267 disposition** — worth a proper multi-leg pre-registration (incl. a pt-BR leg), or park it?
    The RO byte-fallback fix is real (4/5 → 5/5) but the corpus exposure is 13/321 fixtures.

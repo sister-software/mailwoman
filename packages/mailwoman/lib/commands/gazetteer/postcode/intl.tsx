@@ -27,9 +27,9 @@
  *   Optionally folds the database straight into a COPY of an existing candidate gazetteer (`--fold-into
  *   <src> --fold-out <dst>`), mirroring `build-candidate` pass-4's row construction, so a
  *   demo-ready DB falls out without a full rebuild. The database itself is the durable artifact for
- *   the canonical rebuild; the fold is the fast path to verify + stage.
+ *   the canonical rebuild. the fold is the fast path to verify + stage.
  *
- *   Progress streams to stderr; the final summary is on stdout.
+ *   Progress streams to stderr. the final summary is on stdout.
  *
  *   NOTE: the database `--out` DB is written DIRECTLY (the table is dropped + recreated in place on
  *   re-run), and `--fold-out` is a build-on-copy of `--fold-into` — neither uses an atomic

@@ -18,13 +18,13 @@ import type { CommercialPlan } from "#plans"
 export const AGREEMENT_VERSION = "commercial-2026-10"
 
 /**
- * The Payment Link custom field that collects the licensee's legal name; the worker reads the session field by this
+ * The Payment Link custom field that collects the licensee's legal name. the worker reads the session field by this
  * key.
  */
 export const LICENSEE_FIELD_KEY = "licensee_legal_name"
 
 /**
- * The Payment Link metadata key Stripe copies onto each Checkout Session; the worker reads the agreement version from
+ * The Payment Link metadata key Stripe copies onto each Checkout Session. the worker reads the agreement version from
  * it.
  */
 export const AGREEMENT_METADATA_KEY = "agreement_version"
@@ -49,7 +49,7 @@ export interface CheckoutCollection {
 	billing_address_collection: "required"
 	consent_collection: { terms_of_service: "required" }
 	/**
-	 * The promotion-code field on the checkout page; the codes themselves live in the dashboard.
+	 * The promotion-code field on the checkout page. the codes themselves live in the dashboard.
 	 */
 	allow_promotion_codes: true
 	/**
@@ -61,7 +61,7 @@ export interface CheckoutCollection {
 }
 
 /**
- * The fields of the collection a Payment Link can change after creation; the provisioner holds an existing link to
+ * The fields of the collection a Payment Link can change after creation. the provisioner holds an existing link to
  * these, and a change to any other field is a new link.
  */
 export const RECONCILED_LINK_FIELDS = {

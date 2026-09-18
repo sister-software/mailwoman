@@ -99,13 +99,13 @@ test("buildPostcodeNIOSM: #920 laws, the malformed drop, and the ODbL/meaning-of
 	expect(result.stats.points).toBe(5)
 	expect(result.stats.skippedMalformed).toBe(1)
 	expect(result.stats.skippedNoCoordinate).toBe(1)
-	// A drop counter says something broke; the named value says which value it was. `"BT36 4RU,"` is a typo, not a bug.
+	// A drop counter says something broke. the named value says which value it was. `"BT36 4RU,"` is a typo, not a bug.
 	expect(result.stats.malformedValues).toEqual({ "BT36 4RU,": 1 })
 	// Ways and relations are not a footnote — 2 of the 5 surviving points come from `center`.
 	expect(result.stats.pointsByType).toEqual({ node: 3, way: 2 })
 	expect(result.districts).toBe(2)
 	expect(result.sectors).toBe(2)
-	// Every internal identity holds; nothing is silently unaccounted for.
+	// Every internal identity holds. nothing is silently unaccounted for.
 	expect(result.reconciliationFailures).toEqual([])
 	// The data extract, not the wall clock — the date that actually describes the rows.
 	expect(result.osmTimestamp).toBe("2026-08-05T13:14:01Z")
@@ -115,7 +115,7 @@ test("buildPostcodeNIOSM: #920 laws, the malformed drop, and the ODbL/meaning-of
 
 	await using db = new DatabaseClient<WOFDatabase>(out, { readOnly: true })
 
-	// Name law: `spr.name` is the sanitized-query token shape; the display form is an alt `names` row.
+	// Name law: `spr.name` is the sanitized-query token shape. the display form is an alt `names` row.
 	const names = db.prepare("SELECT id, name FROM spr ORDER BY name").all() as Array<{ id: number; name: string }>
 	expect(names.map((n) => n.name)).toEqual(["BT15GS", "BT39QQ"])
 	// Ids come from this database's own range, and sorting by name makes them a function of the postcode set

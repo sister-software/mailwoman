@@ -82,7 +82,7 @@
  *
  *   (Before: 46.730606, -116.998988 — after: 55.7505412, 37.6174782.) Every other board row is
  *   byte-identical. Two characterized changes: Berlin's candidate list grew 4 → 5 (Berlín, SV — pop
- *   11,313 — admitted via its "Berlin" alias; the winner is still Berlin, DE, and its margin stays
+ *   11,313 — admitted via its "Berlin" alias. the winner is still Berlin, DE, and its margin stays
  *   decisive), and Warsaw's winner moved ~200 m to the WOF "Warszawa" row (pop 1,863,845, admitted
  *   via its "Warsaw" alias) from the GeoNames "Warsaw" row (pop 1,702,139) — same city, same country.
  *   The gauntlet's `ru-cs-moscow` case (gold Москва, 25 km bar) flips from 8,374.9 km off to 0.7 km —

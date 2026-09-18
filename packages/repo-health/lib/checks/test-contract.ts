@@ -69,7 +69,7 @@ export const testContractCheck: RepoCheck = {
 				const sourceFile = ts.createSourceFile(filePath, sourceText, ts.ScriptTarget.Latest, true)
 
 				// Type-only specifiers count here: tests are consumers of the package CONTRACT, types included. A relative
-				// specifier that stays inside `test/` names a test helper, which has no contract to bypass; one that leaves
+				// specifier that stays inside `test/` names a test helper, which has no contract to bypass. one that leaves
 				// `test/` reaches the package's source by location, and the `#` map is refused in tests by
 				// `mailwoman/no-private-import-in-test`, so the module needs an `exports` entry instead.
 				const testRoot = resolvePath(workspaceRoot, "test")

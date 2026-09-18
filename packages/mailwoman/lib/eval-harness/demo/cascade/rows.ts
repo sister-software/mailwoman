@@ -16,7 +16,7 @@
  *   `scripts/diagnostic/` drawer while leaving its only importer — `demo-cascade-smoke.ts`, a
  *   promotion-eval battery leg — behind in `scripts/eval/`. The commit message's "check spawn targets
  *   verified present post-move" was true of the spawn TARGET and false of its dependency, so the
- *   cascade leg has been an `ERR_MODULE_NOT_FOUND` ever since; it was spawned with `nothrow` and only
+ *   cascade leg has been an `ERR_MODULE_NOT_FOUND` ever since. it was spawned with `nothrow` and only
  *   when a `wof-hot.db` was present, which is why nothing surfaced it for four weeks.
  */
 

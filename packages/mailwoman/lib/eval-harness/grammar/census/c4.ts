@@ -206,7 +206,7 @@ export interface C4FeatureVectorCount {
 }
 
 /**
- * Representative full-input receipts printed per feature vector; the JSON row ledger remains complete.
+ * Representative full-input receipts printed per feature vector. the JSON row ledger remains complete.
  */
 const FEATURE_VECTOR_EXAMPLE_LIMIT = 3
 

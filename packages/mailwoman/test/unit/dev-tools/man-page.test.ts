@@ -5,7 +5,7 @@
  *
  *   Freshness guard for the committed man page. `man/mailwoman.1` is generated from the CLI's own help tree by
  *   `mailwoman dev generate man-page`, and a help-text edit that forgets to regenerate would ship a manual that
- *   contradicts `--help`. Re-renders here (in memory, no tree write) and compares byte-for-byte; the fix on failure is
+ *   contradicts `--help`. Re-renders here (in memory, no tree write) and compares byte-for-byte. the fix on failure is
  *   one command, named in the assertion. Also pins the npm wiring — a page that ships without `package.json#man` never
  *   reaches `man mailwoman`.
  */

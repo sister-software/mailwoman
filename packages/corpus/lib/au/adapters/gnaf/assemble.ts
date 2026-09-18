@@ -4,16 +4,16 @@
  * @author Teffen Ellis, et al.
  *
  *   Assemble a sampled, component-labeled Australian address set from G-NAF (the Geocoded National
- *   Address File — Geoscape Australia, Open G-NAF licence; any derived artifact must attribute
+ *   Address File — Geoscape Australia, Open G-NAF licence. any derived artifact must attribute
  *   "Geoscape Australia"). G-NAF is a relational PSV distribution (~16.9M addresses);
  *   reconstructing a street address joins three tables — ADDRESS_DETAIL (number, postcode, the
  *   PIDs) → STREET_LOCALITY (street name + type) → LOCALITY (suburb). State is the per-file prefix
  *   (ACT/NSW/…).
  *
- *   Streaming + in-memory join via the house {@link PSVSpliterator} (pipe-separated; header names key each row) — NOT
+ *   Streaming + in-memory join via the house {@link PSVSpliterator} (pipe-separated. header names key each row) — NOT
  *   raw `read_csv` SQL, which a flat-file join doesn't need and
  *   which the #183–190 cleanup retired. The two lookup tables (STREET_LOCALITY ~765k rows, LOCALITY
- *   ~16k) fit as Maps; ADDRESS_DETAIL is streamed once and reservoir-sampled, so memory stays
+ *   ~16k) fit as Maps. ADDRESS_DETAIL is streamed once and reservoir-sampled, so memory stays
  *   bounded (the OOM lesson from the Overture ingest).
  *
  *   No coordinates: the output feeds the PARSER ({@link ../gnaf/adapter}, #208) — teaching the model

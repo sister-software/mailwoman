@@ -34,7 +34,7 @@
  *
  *   Reading `out` as "no bias applies" is the trap this field exists to prevent, and the builder's first
  *   version fell into it by DECLARING `popBias: 0` for every `out` row instead of measuring. Both fields are
- *   measured for every row, always; a zero here means the FST accepted nothing for that surface, which is
+ *   measured for every row, always. a zero here means the FST accepted nothing for that surface, which is
  *   a fact about the gazetteer rather than a default.
  *
  *   MEANING OF ZERO, ON TOLERANCES. A coordinate assertion is all-or-nothing and never defaulted: a row

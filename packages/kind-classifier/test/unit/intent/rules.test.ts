@@ -137,7 +137,7 @@ describe("route_pair — two toponyms, no grammar between them", () => {
 		"12 rue de Rome Paris",
 		"10118",
 		"Paris London Berlin",
-		// A comma is the admin-context marker; the hard-case board's `comma_control` register.
+		// A comma is the admin-context marker. the hard-case board's `comma_control` register.
 		"Athens, Georgia",
 		"Portland, ME",
 	]

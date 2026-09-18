@@ -4,7 +4,7 @@ The loop owns this object and mutates the reading fields before each dispatch, s
 observing one moment sees the same numbers. That matters for `elapsed`: the console line and the
 CSV row it accompanies carry one reading, not two clock calls a few microseconds apart.
 
-Callbacks read; the loop writes. A callback that assigns to a field here is steering the run, which
+Callbacks read. the loop writes. A callback that assigns to a field here is steering the run, which
 is what `protocols.TrainCallback` forbids.
 """
 

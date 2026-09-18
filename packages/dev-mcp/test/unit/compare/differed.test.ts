@@ -5,7 +5,7 @@
  * @file The coordinate-level `differed` predicate reads a row's own tolerance, and a tier change is its own flag.
  *
  *   The row that set these: `4900 Airport Pkwy, Addison TX 75001` (`us-addison-zip-75001`, tolerance 100 m, tier
- *   `address_point`). A reader change moved its answer from the rooftop to an interpolated point 198 m away; both arms
+ *   `address_point`). A reader change moved its answer from the rooftop to an interpolated point 198 m away. both arms
  *   were hits at 1 km, so the protocol thresholds alone read the pair as identical.
  */
 

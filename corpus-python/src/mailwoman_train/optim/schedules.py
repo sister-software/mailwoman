@@ -1,7 +1,7 @@
 """Learning-rate schedules, and the restamp a resume needs.
 
 Three shapes, chosen by `train.lr_schedule`. The restamp exists because loading an optimizer state
-dict silently discards the live config's learning rates; see `restamp_resume_lrs`.
+dict silently discards the live config's learning rates. see `restamp_resume_lrs`.
 """
 
 from __future__ import annotations
@@ -31,7 +31,7 @@ def linear_cooldown(optimizer: AdamW, cooldown_start: int, max_steps: int) -> La
     set to that checkpoint's CURRENT (tail) LR: the multiplier holds 1.0 through the start, so
     the schedule-aware restamp continues the parent's LR exactly, then decays linearly to zero
     at ``max_steps``. Approximates the matched-schedule endpoint of a mid-cosine checkpoint
-    without a full rerun (Hägele et al. 2024, arXiv:2405.18392; MiniCPM, arXiv:2404.06395;
+    without a full rerun (Hägele et al. 2024, arXiv:2405.18392. MiniCPM, arXiv:2404.06395.
     Chinchilla's schedule-matching finding).
     """
     span = max(1, max_steps - cooldown_start)
@@ -82,7 +82,7 @@ def restamp_resume_lrs(
     silently ignores any rate change in the config and trains at the old value, while the startup
     log reports the new one as if it had taken effect. This puts the config's values back.
 
-    Two rates are involved and they are not the same number. The config specifies a PEAK rate; a
+    Two rates are involved and they are not the same number. The config specifies a PEAK rate. a
     group's current rate is that peak times wherever the schedule has got to. Writing the peak
     directly gives the first resumed step a rate far above where the run left off — resuming a
     nearly-converged model at step 55,000 measured 8.808e-06 jumping to 5.000e-04 before the next

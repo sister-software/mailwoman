@@ -19,7 +19,7 @@
  *       it.
  *
  *   This is strictly a **set-membership reconciliation, never a determination.** We produce the
- *   reconciled join and surface the candidate set; what a gap means — and whether it is real, a
+ *   reconciled join and surface the candidate set. what a gap means — and whether it is real, a
  *   sampling artifact, or actionable — is entirely the data consumer's call. Nothing here is an
  *   allegation. {@link reconciliationReport} bakes that caveat in by construction.
  *

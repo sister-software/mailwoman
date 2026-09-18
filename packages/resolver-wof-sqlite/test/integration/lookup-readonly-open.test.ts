@@ -10,7 +10,7 @@
  *   Why this needs a construction spy rather than a plain 0444 open: SQLite silently DOWNGRADES a write-mode open to
  *   read-only on an owned read-only file, so a 0444 open succeeds under the old `readOnly: false` too and cannot
  *   distinguish old code from new. Recording the `readOnly` option actually passed to `DatabaseSync` is the reliable
- *   signal. (`lookup.test.ts` keeps an end-to-end 0444 smoke test proving a sealed file resolves; this file proves the
+ *   signal. (`lookup.test.ts` keeps an end-to-end 0444 smoke test proving a sealed file resolves. this file proves the
  *   invariant.)
  */
 

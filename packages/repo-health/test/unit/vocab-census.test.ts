@@ -2,11 +2,11 @@
  * @copyright Sister Software
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
- * @file Fixture cases for the remedy classifier.
+ * @file Fixture cases for the action classifier.
  *
  *   The classifier decides how ~2,000 comments get rewritten, so a case it silently reclassifies
  *   moves work between buckets with no failing check — the same shape as a false negative in any
- *   other measuring tool. Each case below states one line of real source and the remedy it warrants.
+ *   other measuring tool. Each case below states one line of real source and the action it warrants.
  */
 
 import { classify, Remedy } from "@mailwoman/repo-health/checks/vocab-census"

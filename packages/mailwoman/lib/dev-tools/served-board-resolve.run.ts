@@ -6,7 +6,7 @@
  *   gazetteer, graded on the board's own coordinate (#2164 step 6, the half a parse board cannot read).
  *
  *   The parse board and this one answer different questions. A parse board decodes spans and looks a predicted
- *   (region, locality) pair up in a centroid table; this runs the pipeline a caller runs and grades the coordinate it
+ *   (region, locality) pair up in a centroid table. this runs the pipeline a caller runs and grades the coordinate it
  *   returns. A locale can read well on the first and resolve nothing on the second, so `SCOPE.mdx`'s rule — a locale is
  *   claimed when a coordinate-graded eval exists for it — is answered here.
  *
@@ -17,7 +17,7 @@
  *   map routes `prefecture` / `municipality` / `district` (0 of 300 rows resolved without it), the admin ladder carries
  *   the JP rungs with `municipality` above `district` (202 vs 271 of 300 accepted @15 km), and the normalizer keeps the
  *   postal mark 〒 for the character path (171 vs 202 with the map and a district-first ladder). The resolver's scoped
- *   pair for a compound municipality (`compoundMunicipality`, #2175) then took 271 to 282 of 300; the same split
+ *   pair for a compound municipality (`compoundMunicipality`, #2175) then took 271 to 282 of 300. the same split
  *   applied UNSCOPED before the walk had read 251, because a bare ward resolves a namesake in another city.
  *
  *   Usage: node packages/mailwoman/lib/dev-tools/served-board-resolve.run.ts [--board <jsonl>] [--locale ja-JP]

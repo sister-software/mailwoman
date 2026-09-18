@@ -26,8 +26,8 @@
  *   borrowing one would name a state this probe never observes.
  *
  *   CONTROLS COME IN TWO GROUPS, AND BOTH DECIDE. `same_category` rows are the venue-noun form of the
- *   same intent, which passes today; they catch a semantic arm that breaks what already works.
- *   `adjacent` rows are a different category at the same anchor and a bare-category abstain; they catch
+ *   same intent, which passes today. they catch a semantic arm that breaks what already works.
+ *   `adjacent` rows are a different category at the same anchor and a bare-category abstain. they catch
  *   the opposite failure — an arm that answers `pharmacy` for everything would leave the first group
  *   green. A control set that cannot fail is not a control set.
  */
@@ -56,7 +56,7 @@ import {
  * - `no_poi_branch` — the coordinator never took the POI branch, so there is no POI outcome at all. This is the measured
  *   baseline shape for every target row: an activity phrase scores `0` against the phrase lexicon, so the input is
  *   answered as an address parse of a sentence.
- * - `poi_abstain` — the branch was taken and declined; the reason travels beside the shape.
+ * - `poi_abstain` — the branch was taken and declined. the reason travels beside the shape.
  * - `poi_intent_no_results` — the branch was taken, an intent was formed, and the executor returned nothing.
  * - `poi_intent_results` — the branch was taken and at least one row came back. The only shape the primary metric can
  *   grade, since the comparator reads the top result.
@@ -83,7 +83,7 @@ export function poiOutcomeShape(outcome: POIBoardOutcome): POIOutcomeShape {
 }
 
 /**
- * The closed set of comparators this probe may register. One entry today; adding one is a reviewed instrument, never an
+ * The closed set of comparators this probe may register. One entry today. adding one is a reviewed instrument, never an
  * inline callback in the definition file.
  */
 export const PROBE_COMPARATORS = ["poi_board_assembled_answer"] as const
@@ -142,7 +142,7 @@ export interface ProbeTargetRow extends POIBoardFixture {
 }
 
 /**
- * The two control groups. Both decide; see the module header for why one alone is vacuous.
+ * The two control groups. Both decide. see the module header for why one alone is vacuous.
  */
 export const PROBE_CONTROL_GROUPS = ["same_category", "adjacent"] as const
 

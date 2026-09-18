@@ -79,7 +79,7 @@ export interface GeocoderControlsProps {
 	 */
 	map?: MapInstance | null
 	/**
-	 * Fired with the query whenever one is submitted, before the parse starts. The host writes it into the URL; this
+	 * Fired with the query whenever one is submitted, before the parse starts. The host writes it into the URL. this
 	 * package never touches `location`, because the address bar is the app's state, not a control's.
 	 */
 	onSubmitQuery?: (query: string) => void
@@ -130,7 +130,7 @@ const DRAG_TRAVEL_PX = 3
 const OVERSCROLL_PROMOTE_PX = 8
 
 /**
- * The chrome. Everything positioned here floats over the map; nothing occupies a column of the page.
+ * The chrome. Everything positioned here floats over the map. nothing occupies a column of the page.
  */
 export function GeocoderControls({
 	runtime,
@@ -288,7 +288,7 @@ export function GeocoderControls({
 	 * itself should come down — that is what the reference sheets do, and it is what makes a drawer dismissable
 	 * without first hunting for the pill. A rubber band in that position says the gesture was heard and refused.
 	 *
-	 * The pull is only armed here; it becomes a drag after 8px of downward travel, so a tap stays a tap and a flick
+	 * The pull is only armed here. it becomes a drag after 8px of downward travel, so a tap stays a tap and a flick
 	 * upward stays a scroll.
 	 */
 	const onPanelPointerDown = useCallback((event: React.PointerEvent<HTMLElement>) => {

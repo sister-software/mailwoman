@@ -48,7 +48,7 @@ const PLACER_TEST_SPLIT = ["data", "coarse-placer", "test.jsonl"] as const
 
 /**
  * The eval positions the placer work actually argued over, so a reader comparing against that record does not have to
- * re-derive the rows. A caller may pass their own; these are a starting table, not a claim about where the eval
+ * re-derive the rows. A caller may pass their own. these are a starting table, not a claim about where the eval
  * belongs.
  */
 const DEFAULT_THRESHOLDS = [0.5, 0.6, 0.7, 0.8, 0.85, 0.9, 0.95, 0.99] as const

@@ -116,7 +116,7 @@ const REMOVED_MARK: Partial<Record<PunctuationTransformationName, string>> = {
  * `parse_whole_strict` and `component_map` both grade component VALUES, and a component value is the span the parser
  * quoted from the query — so a transformation that rewrites a token rewrites the value with it, and the comparator
  * reports the transformation rather than anything the pipeline decided. `resolution_identity` reads namespaced place
- * ids and `assembled_coordinate` reads a coordinate; neither can carry a mark.
+ * ids and `assembled_coordinate` reads a coordinate. neither can carry a mark.
  */
 const TEXT_ECHOING_COMPARATORS = new Set<OutcomeComparatorName>(["parse_whole_strict", "component_map"])
 

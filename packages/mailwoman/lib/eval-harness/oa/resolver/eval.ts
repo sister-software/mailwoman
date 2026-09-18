@@ -23,7 +23,7 @@
  *
  *   The gap is not always small. Measured on 604 bare `«city», «ST» «ZIP»` rows (#2303), this eval reads 33.9%
  *   locality-match against the production path's 54.3%, and calls `Chicago, IL 60639` a miss where production answers
- *   `locality: Chicago`. The classifier tags the city `street` on both; the pipeline recovers some of them. So an
+ *   `locality: Chicago`. The classifier tags the city `street` on both. the pipeline recovers some of them. So an
  *   absolute number from here is a statement about the MODEL, and a claim about what a caller receives needs
  *   `buildGauntletDeps` or the board.
  *
@@ -40,7 +40,7 @@
  *
  *   1. Admin-match Acc@1 — did we resolve to the expected locality (and/or region), by name? This is the
  *        granularity-independent resolver-quality number.
- *   2. Coord error p50/p90 — reported separately as the admin-centroid tier; the street-level tier
+ *   2. Coord error p50/p90 — reported separately as the admin-centroid tier. the street-level tier
  *        (TIGER) will own the sub-km bar later.
  *
  *   `postcodeAnchor` adds a `neural+anchor` row: neural's admin match, but the COORDINATE taken
@@ -62,7 +62,7 @@
  *
  *   `--anchor-off` (#887) ablates the model's postcode-anchor INPUT channel — the sanctioned,
  *   declared ablation (`overrides.anchor=false` through createScorer, warn-not-throw per the #718
- *   fail-closed check). de-order-eval.ts uses it for the 2x2 anchor-OFF column; the old
+ *   fail-closed check). de-order-eval.ts uses it for the 2x2 anchor-OFF column. the old
  *   empty-anchor.json idiom (a lookup that parses to size 0) is refused by the check. Distinct from
  *   `--postcode-anchor`, which swaps the resolved COORDINATE, not the model input.
  */
@@ -216,7 +216,7 @@ export async function oaResolverEval(
 
 		// onnxruntime-node accumulates native tensor memory across runs faster than JS GC reclaims it
 		// (~380-parse SIGKILL on the lab box — it crashed the promotion-eval's de-order step tonight).
-		// Periodic forced GC reclaims it; run with `node --expose-gc`. No-op without the flag. (#787 pattern.)
+		// Periodic forced GC reclaims it. run with `node --expose-gc`. No-op without the flag. (#787 pattern.)
 		if (i % 50 === 0) {
 			;(globalThis as { gc?: () => void }).gc?.()
 		}
@@ -273,7 +273,7 @@ export async function oaResolverEval(
 			})
 		}
 
-		// neural + address-points (#476): same admin flags; coordinate from the exact point on hit.
+		// neural + address-points (#476): same admin flags. coordinate from the exact point on hit.
 		if (runAddrPt) {
 			const hit = nDecorated ? findAddressPointHit(nDecorated) : null
 			const apErr = hit ? haversineKm(hit.lat, hit.lon, row.lat, row.lon) : ns.err
@@ -286,7 +286,7 @@ export async function oaResolverEval(
 		}
 
 		// neural + interpolation (#483): the full street-level cascade — exact point if present, else the
-		// interpolated estimate, else the admin centroid. Same admin flags; only the COORDINATE changes.
+		// interpolated estimate, else the admin centroid. Same admin flags. only the COORDINATE changes.
 		if (runInterp) {
 			const exact = nDecorated ? findAddressPointHit(nDecorated) : null
 			const interp = nDecorated ? findInterpolatedHit(nDecorated) : null
@@ -407,7 +407,7 @@ export async function oaResolverEval(
 		reportError(`wrote ${resolvedRows.length} resolved rows → ${options.outResolved || ""}`)
 	}
 
-	// self-emitted; eval figures are never hand-typed into docs)
+	// self-emitted. eval figures are never hand-typed into docs)
 	const markdown = await renderOaResolverReport({
 		agg,
 		assembledAgg,

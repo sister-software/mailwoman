@@ -23,7 +23,7 @@ converged on the same answers. Sources are listed at the end._
    "leading-token" shortcut without supplying a real discriminator, the model drops to the
    _next_-simplest spurious cue ("leading _digit_"), which is exactly why `47110` fragments into
    house_number `4` + postcode `7110`.
-3. **The right changes are not weight.** Highest-ROI: protect the postcode span using the
+3. **The right changes are not weight.** Highest-ROI: guard the postcode span using the
    postcode-anchor signal **we already compute** (a CRF transition penalty / consistency term against
    relabeling postcode-anchored tokens as house_number), and gazetteer-conditional disambiguation (a number
    appearing right before a known locality is overwhelmingly a postcode). Then curriculum/denoising of

@@ -4,7 +4,7 @@
  * @author Teffen Ellis, et al.
  *
  *   `TreeView` — the parse's containment tree as nested lists with a guide rail per level. The tag tint follows the
- *   confidence tier; the value and score render in monospace.
+ *   confidence tier. the value and score render in monospace.
  */
 
 import type { ReactNode } from "react"

@@ -1,6 +1,6 @@
 /**
  * Shipped-model parser baseline for the permanent multilingual bare-street board added 2026-08-09. The gauntlet stores
- * the assembled street as its contract; this report also prints the internal street-family decomposition so an intact
+ * the assembled street as its contract. this report also prints the internal street-family decomposition so an intact
  * assembled value cannot hide a bad `street`/`street_suffix` boundary.
  *
  * Usage: node packages/mailwoman/lib/dev-tools/score/street-name-boundaries.run.ts

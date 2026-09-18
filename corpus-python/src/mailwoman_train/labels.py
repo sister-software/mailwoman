@@ -15,14 +15,14 @@ exportable so historical checkpoints + eval reports can be diffed against today'
   Decomposes ``street`` into prefix/suffix and adds unit/po_box/intersection.
 - ``STAGE4_TAGS`` (23 tags) / ``STAGE4_BIO_LABELS`` (47) — the secondary-address family
   (#1100/#456): unit/level/building designator↔id pairs + entrance/staircase. DEFINED but not
-  active; activation is coupled to a retrain + the JS union bump (see the Stage 4 block below).
+  active. activation is coupled to a retrain + the JS union bump (see the Stage 4 block below).
 
 ``ACTIVE_TAGS`` / ``ACTIVE_BIO_LABELS`` always point at the *current* training round's
-vocabulary. Bump these together with a new STAGE-N constant when ship-line moves; never
+vocabulary. Bump these together with a new STAGE-N constant when ship-line moves. never
 mutate an older STAGE-N constant.
 
 Drift check: keep ``ACTIVE_TAGS`` in sync with the JS ``ComponentTag`` union. If a new
-tag lands in ``component.ts``, decide whether it belongs in the next active set; if so,
+tag lands in ``component.ts``, decide whether it belongs in the next active set. if so,
 add it to a new STAGE-N constant in the same commit and shift ACTIVE_*.
 """
 
@@ -54,7 +54,7 @@ STAGE1_BIO_LABELS: Final[tuple[str, ...]] = (
 
 
 # Fine tags added in Stage 2. Order is stable across runs so label IDs are reproducible
-# within a stage. Never reorder within a stage; always append for a new stage.
+# within a stage. Never reorder within a stage. always append for a new stage.
 STAGE2_FINE_TAGS: Final[tuple[str, ...]] = (
     "venue",
     "street",
@@ -75,7 +75,7 @@ STAGE2_BIO_LABELS: Final[tuple[str, ...]] = (
 
 # Fine tags added in Stage 3. Extends Stage 2 by decomposing the monolithic `street` tag
 # into prefix/suffix and adding unit/po_box/intersection. The golden eval set already has
-# these tags; corpus adapters need to emit them for training. The schema, formatting, and
+# these tags. corpus adapters need to emit them for training. The schema, formatting, and
 # runtime pipeline are already Stage 3-ready (core/types/component.ts).
 STAGE3_FINE_TAGS: Final[tuple[str, ...]] = (
     "street_prefix",
@@ -147,7 +147,7 @@ STAGE4_BIO_LABELS: Final[tuple[str, ...]] = (
 # (block 丁目, sub_block 番地, building_number 号) + building_name (romaji buildings). Per the
 # encoder-design D4 rule, COMPACT numbers (2-3-16) stay whole-span ``house_number`` — the fine
 # number tags are for the long designator form (2丁目3番16号) only. Not a universal stage: the JP
-# CHAR model trains with ``stage3-jp``; the Latin model stays on STAGE3; STAGE4 (the
+# CHAR model trains with ``stage3-jp``. the Latin model stays on STAGE3. STAGE4 (the
 # secondary-address family above — numerically also 47 BIO, a coincidence) remains its own future
 # activation.
 JP_FINE_TAGS: Final[tuple[str, ...]] = (
@@ -173,7 +173,7 @@ STAGE3_JP_BIO_LABELS: Final[tuple[str, ...]] = (
 
 #
 # One tag, ``locality_unit``, for the whole ordinal chain China's rural and state-farm addresses
-# carry below the named settlement (``三分场八队``: No. 3 sub-farm, No. 8 production team; the XPCC
+# carry below the named settlement (``三分场八队``: No. 3 sub-farm, No. 8 production team. the XPCC
 # ``一四三团十二连``; the villager group ``民权三组``). Which rung each generic names is a deterministic
 # reading of the suffix (``分场``/``大队``/``队``/``连``/``团``/``组``), done after decode by
 # ``@mailwoman/core``'s CN unit reader, so the label set does not grow with every ladder found
@@ -229,7 +229,7 @@ ID_TO_LABEL: Final[dict[int, str]] = {i: label for label, i in LABEL_TO_ID.items
 
 #
 # The label vocabulary became per-MODEL when the JP sibling model activated (the JP head is 47
-# labels while the Latin head stays 33). ``resolve_label_set`` is the single lookup; the module
+# labels while the Latin head stays 33). ``resolve_label_set`` is the single lookup. the module
 # globals above remain the STAGE3 default so every existing consumer is byte-identical. A consumer
 # that supports only the default must RAISE on a non-default set, never silently collapse (the
 # #1349 lesson: a label-space mismatch that zero-fills is invisible until fingerprinted).
@@ -278,7 +278,7 @@ IGNORE_INDEX: Final[int] = -100
 # region Locale conditioning (PR3 / self-conditioning)
 
 # Country (ISO 3166-1 alpha-2) → locale class id for the auxiliary self-conditioning head.
-# The head predicts which country an address belongs to from the POOLED sequence; that
+# The head predicts which country an address belongs to from the POOLED sequence. that
 # posterior conditions the per-token labeling (model.py FiLM) and is the LocalePosterior the
 # resolver consumes. The probe behind PR3 showed the postcode alone pins the country only
 # 28–44% of the time, so the model must infer it from the whole string — this map is the

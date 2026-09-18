@@ -19,7 +19,7 @@
  *   - **Never re-point a remote silently.** Changing `origin` changes what the next build ingests. A checkout aimed at
  *       upstream while a fork exists is REPORTED, and re-pointing is a separate opt-in.
  *   - **Never touch a dirty tree or a clone carrying local commits.** Corrections are authored in these directories
- *       before they are pushed; a helpful `git reset` here destroys work that exists nowhere else.
+ *       before they are pushed. a helpful `git reset` here destroys work that exists nowhere else.
  *   - **Never force a shallow clone forward.** Every WOF checkout in the lab is `--depth 1`, which is not merely small:
  *       `git show <commit> --name-status` on one reports every file as `A`, so a diff against it reads as "this commit
  *       added 72,679 files". The plan carries the shallowness so a reader knows the history they are about to consult

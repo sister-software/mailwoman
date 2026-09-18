@@ -22,7 +22,7 @@
  *   red row is never removed to make the exit code zero.
  *
  *   THE OBSERVER IS CHOSEN FROM THE ROWS. `candidate_admissibility` reads the resolver's interior, which the
- *   walk records only when a sink asks it to; the other five comparators read the assembled answer and would
+ *   walk records only when a sink asks it to. the other five comparators read the assembled answer and would
  *   pay for bookkeeping nobody reads. So the run picks the traced observer exactly when a loaded row names
  *   that comparator, and says which one it picked.
  *
@@ -33,7 +33,7 @@
  *   A LAW MAY REPORT ITS OWN BREADTH. A hold count answers "did the rows the suite states hold", never "how
  *   much of the population could the suite have stated" — and for a law whose eligibility is a property of the
  *   query text those are different numbers. `ConformanceSuite.coverage` prints the second one beside the
- *   first; the committed corpus is read only for a run that includes such a law.
+ *   first. the committed corpus is read only for a run that includes such a law.
  */
 
 import { type ConformanceFixture, loadConformanceFixtures } from "#eval-harness/conformance/fixture"
@@ -53,7 +53,7 @@ import { buildGauntletDeps, type GauntletDepsOptions } from "#eval-harness/gaunt
 /**
  * Load every named suite into one fixture list, refusing an id that two files both claim.
  *
- * The per-file loader already refuses a duplicate within its own file; ids name rows in failure output, so two suites
+ * The per-file loader already refuses a duplicate within its own file. ids name rows in failure output, so two suites
  * sharing one would produce a report line a reader cannot trace back to a file.
  */
 async function loadSuites(paths: readonly string[]): Promise<ConformanceFixture[]> {

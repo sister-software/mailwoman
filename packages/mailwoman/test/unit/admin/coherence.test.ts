@@ -57,7 +57,7 @@ describe("assessAdminCoherence — region verdicts", () => {
 	it("contradicted on a cross-language variant form — the stated v1 bound", () => {
 		// "Thüringen" folds to "thuringen", the stored exonym "Thuringia" to "thuringia": fold
 		// equality cannot bridge the variant, and v1 deliberately does not consult the gazetteer's
-		// alias table. Documented in the module docstring; this test pins the bound.
+		// alias table. Documented in the module docstring. this test pins the bound.
 		const winner: AdminCoherenceWinner = {
 			tag: "locality",
 			countryCode: "DE",
@@ -281,7 +281,7 @@ describe("regionVerdict — the fold-bound closures (2026-08-18)", () => {
 			{ tag: "locality", countryCode: "US", ancestry: [{ placetype: "region", name: "Western Australia" }] }
 		)
 
-		// A US winner whose ancestry claims Western Australia is genuinely incoherent; the scoped table must not
+		// A US winner whose ancestry claims Western Australia is genuinely incoherent. the scoped table must not
 		// bridge it.
 		expect(report.region).toBe("contradicted")
 	})

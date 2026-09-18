@@ -5,7 +5,7 @@
  * @file `scope.config.json` and `SCOPE.mdx`'s tier table name the same countries, and every shipping locale is placed.
  *
  *   The defect this was written for is a hand-written list drifting from the table it claims to encode.
- *   `D_RULE_COUNTRIES` read `["FR", "GB", "DE"]` under a docstring saying iron rule 6 protected those locales
+ *   `D_RULE_COUNTRIES` read `["FR", "GB", "DE"]` under a docstring saying iron rule 6 guarded those locales
  *   unconditionally, while the tier table put US and FR in tier 1 — so a candidate that regressed US rows raised no
  *   D-rule reason at all. Nothing failed, because a list that does not name a country answers nothing for it and every
  *   consumer reads that as an absence rather than an error. The list is now derived from the register, and this check
@@ -13,7 +13,7 @@
  *
  *   IT CHECKS MEMBERSHIP, NOT EVIDENCE. The table's third column is prose with citations — coordinate panels, n, issue
  *   links — and generating that from JSON would move paragraphs into a config to satisfy a parser. The doc owns the
- *   evidence; the register owns which countries each tier holds; this refuses a disagreement in either direction.
+ *   evidence. the register owns which countries each tier holds. this refuses a disagreement in either direction.
  *
  *   THE SECOND INVARIANT IS THE ONE THE FIRST CANNOT SEE. Two registers can agree with each other and both omit a
  *   country that ships. GB, IN and NZ are in that state today: three published weights packages, no tier between them,

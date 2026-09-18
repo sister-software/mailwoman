@@ -74,7 +74,7 @@ export class SQLiteStreetNameLookup implements StreetLocalityEvidence, Disposabl
 
 		if (!norm) return false
 
-		// Scoped lookups tighten precision when the hypothesis carries a locality/postcode; a scoped MISS falls back to the
+		// Scoped lookups tighten precision when the hypothesis carries a locality/postcode. a scoped MISS falls back to the
 		// unscoped probe (index incompleteness in the scope column is not evidence of absence — positive-evidence rule).
 		if (
 			scope?.locality &&

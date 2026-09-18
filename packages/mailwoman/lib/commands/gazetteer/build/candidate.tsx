@@ -6,7 +6,7 @@
  *   `mailwoman gazetteer build` — the durable GeoNames-alias upstream fold + the byte-range candidate
  *   build (FTS5-trigram fuzzy index baked in), in one command. Every decision the 2026-06-27 manual
  *   rebuild needed (which countries fold, which postcode databases, FTS) is a default here. Progress
- *   streams to stderr; the final summary is on stdout. See RELEASING.md Step 5.
+ *   streams to stderr. the final summary is on stdout. See RELEASING.md Step 5.
  */
 
 import { tryStat } from "@mailwoman/core/fs/readers"
@@ -72,7 +72,7 @@ const GazetteerBuildCandidate: CommandComponent<typeof spec> = ({ options }) => 
 		let adminDB = adminIn
 
 		// A fold output that predates its admin database carries the admin database's old coordinates (the Frankfurt
-		// read of 2026-09-06): refused unless asked for, since the remedy is `--fold` on this same command.
+		// read of 2026-09-06): refused unless asked for, since the action is `--fold` on this same command.
 		if (!options.fold && !options.allowStaleFold) {
 			const source = foldSourceAdminPath(adminIn)
 			const [foldStat, adminStat] = await Promise.all([tryStat(adminIn), source ? tryStat(source) : null])

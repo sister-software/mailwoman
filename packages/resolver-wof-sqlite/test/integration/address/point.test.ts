@@ -112,7 +112,7 @@ beforeAll(async () => {
 	// An OSM-shaped row with no scope of its own — the case the bbox rung exists for.
 	insert.run("mill lane", "mill lane", "7", null, null, null, "Mill Lane", 51.5, -0.1, "osm", "r")
 	// A NAD-shaped US row whose city field is ABBREVIATED — the Texas extract writes `addi` for Addison on 5,174 rows. The
-	// board's `us-addison-zip-75001` (status pass) is this row; a locality check that reads the truncation as a
+	// board's `us-addison-zip-75001` (status pass) is this row. a locality check that reads the truncation as a
 	// different place loses it to interpolation.
 	const airportKey = normalizeStreetForKey("Airport Pkwy")
 
@@ -180,7 +180,7 @@ describe("AddressPointSqliteLookup", () => {
 	})
 
 	it("unit siblings share the building coordinate through every rung", () => {
-		// The fixture has unit rows for 32 (unit 6 etc. in the real register; here the plain row) — a
+		// The fixture has unit rows for 32 (unit 6 etc. in the real register. here the plain row) — a
 		// range surface resolving through the low-end rung lands the same building coordinate the
 		// plain-number probe returns, so a unit-containing query can never be worse than its base.
 		const base = lookup.find({ street: "Osborne Drive", number: "32", postcode: "4505" })
@@ -250,7 +250,7 @@ describe("the postcode rung's locality contradiction (#1631)", () => {
 	})
 
 	// `us-addison-zip-75001`: the US extract's key is the NAD abbreviation `addi`, the query says Addison. An abbreviated
-	// key steers the choice among same-postcode rows but never refuses one, so the postcode-only row answers at rooftop;
+	// key steers the choice among same-postcode rows but never refuses one, so the postcode-only row answers at rooftop.
 	// exact comparison sent this row to interpolation 198 m away.
 	it("never refuses on the locality under the US extract, whose keys are abbreviated (#1631 follow-up)", () => {
 		const hit = lookup.find({ street: "Airport Pkwy", number: "4900", postcode: "75001", locality: "Addison" })

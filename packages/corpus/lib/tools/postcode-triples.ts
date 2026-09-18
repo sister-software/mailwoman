@@ -104,7 +104,7 @@ export type GeonamesLocalityColumn = "place" | "admin2"
  *
  * AU and ZA are the worked examples of the bar. Both look like obvious additions and neither qualifies: the board's AU
  * rows are bare-city (`Melbourne`, `Sydney, Australia`) and carry no postcode at all, so nothing here says where AU
- * writes it; and ZA's `14 Long St, Green Point, Cape Town, 8001` carries no REGION, which this recipe requires — a fact
+ * writes it. and ZA's `14 Long St, Green Point, Cape Town, 8001` carries no REGION, which this recipe requires — a fact
  * its GeoNames export agrees with, at 100% place and 0% admin1.
  */
 export const POSTCODE_CONVENTIONS: ReadonlyMap<
@@ -121,14 +121,14 @@ export const POSTCODE_CONVENTIONS: ReadonlyMap<
 	["PT", { placement: "leading", locale: "pt-PT" }],
 	["MX", { placement: "leading", locale: "es-MX" }],
 	// `…, Barcelona 6001, Anzoátegui, Venezuela` — the four `ve_city_postcode_trailing_state` rows. No postcode source
-	// on disk and GeoNames does not publish VE, so this entry currently yields nothing; it is here because the
+	// on disk and GeoNames does not publish VE, so this entry currently yields nothing. it is here because the
 	// placement is what makes the absence legible.
 	["VE", { placement: "after_locality", locale: "es-VE" }],
 	// `12 MG Road, Indiranagar, Bengaluru, Karnataka 560038, India` — three `in_*` rows, and `AGENTS.md` says the same
 	// ("en-IN is absent because the PIN goes last"). The one trailing placement with real data behind it.
 	["IN", { placement: "after_region", locale: "en-IN" }],
 	// `Washington, DC 20003` — the #2303 class, and the same placement as IN. Attested by the four
-	// `us_city_state_postcode` board rows, which is the bar this table sets; the US had no entry here at all, so no
+	// `us_city_state_postcode` board rows, which is the bar this table sets. the US had no entry here at all, so no
 	// recipe emitted a US city in front of a state code and a ZIP without a street ahead of it, and the model reads
 	// the bare city as a street 45.7% of the time. `localityColumn` is what keeps it from training counties.
 	["US", { placement: "after_region", locale: "en-US", localityColumn: "place" }],
@@ -179,7 +179,7 @@ export function applyLocalityQuota<T extends { cc: string; locality: string }>(
 /**
  * Take at most `budget` tuples per COUNTRY, in the order they arrive.
  *
- * A per-locality quota bounds how often one place repeats; it cannot bound a country. IN has 128,152 distinct
+ * A per-locality quota bounds how often one place repeats. it cannot bound a country. IN has 128,152 distinct
  * localities, so even at a quota of one it contributes 63,533 rows against 39,790 from the other seven combined — the
  * recipe would teach the trailing surface as an Indian fact rather than a general one, and at 103,323 rows it would
  * take 30% of an 8,000-step run's sample budget at three reps per row.
@@ -442,7 +442,7 @@ function createSurfaceReader(db: DatabaseClient<WOFDatabase>): SurfaceReader {
 		region(cc, id, sprName) {
 			const officialLanguages = officialLanguagesAlpha3(cc)
 			const official = namesIn(preferredNames(id), officialLanguages)
-			// The co-official table is keyed by the region's name in the first official language; a region the names
+			// The co-official table is keyed by the region's name in the first official language. a region the names
 			// table has no such name for is looked up by its `spr.name`, which for a monolingual country is the same string.
 			const regionLanguages = regionLanguagesAlpha3(cc, official[0] ?? sprName)
 			const coOfficialLanguages = regionLanguages.filter((language) => !officialLanguages.includes(language))

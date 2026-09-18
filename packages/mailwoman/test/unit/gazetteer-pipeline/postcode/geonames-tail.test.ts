@@ -76,7 +76,7 @@ test("buildPostcodeGeonamesTail: #920 laws survive a rebuild, and a missing dump
 
 	await using db = new DatabaseClient<WOFDatabase>(out, { readOnly: true })
 
-	// Name law: `spr.name` is the sanitized-query token shape; the display form is an alt `names` row.
+	// Name law: `spr.name` is the sanitized-query token shape. the display form is an alt `names` row.
 	const names = db.prepare("SELECT name FROM spr WHERE country='CZ' ORDER BY name").all() as Array<{ name: string }>
 	expect(names.map((n) => n.name)).toEqual(["11000", "12000"])
 

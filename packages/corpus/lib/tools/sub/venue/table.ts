@@ -92,7 +92,7 @@ export interface SubVenueSurface {
 	 *
 	 * It does not exclude Turkish: `İ` (U+0130) is `\p{Script=Latin}`, so the guard admits it and `toLowerCase` folds it
 	 * to `i` plus a combining dot above. A Turkish surface therefore round-trips through a form its own locale would not
-	 * write. Nothing shipped depends on that today; a Turkish designator would.
+	 * write. Nothing shipped depends on that today. a Turkish designator would.
 	 */
 	phrase: string
 	/**
@@ -133,7 +133,7 @@ export interface SubVenueSurface {
 	 * The rule-assigned designator of the FEATURES that carried this phrase, with a count each — `platform:3205
 	 * campus:49` for GB's `hall`. Empty for vocabulary sources.
 	 *
-	 * This is the confound axis. A `hall` on a `platform` row is a British bus stop named after a village hall; a `hall`
+	 * This is the confound axis. A `hall` on a `platform` row is a British bus stop named after a village hall. a `hall`
 	 * on a `terminal` row is a real German departure hall. Without it, a surface's `observations` count is a magnitude
 	 * with no sign — see the repo's "meaning of zero" rule, which applies just as hard to a large number.
 	 */
@@ -249,7 +249,7 @@ export const SHIPPED_MODIFIER_SEED: readonly string[] = [
  * C` as a target shape, so the record has to exist before a recipe can generate it.
  *
  * None is `modifierEligible`: that claim needs a confound board per term and per locale, and `sub-venue-promotions.ts`
- * is where those live. A promotion marks a SURFACE usable; it does not widen the modifier grammar.
+ * is where those live. A promotion marks a SURFACE usable. it does not widen the modifier grammar.
  */
 export const PROPOSED_DESIGNATORS: ReadonlyArray<{
 	id: string
@@ -266,7 +266,7 @@ export const PROPOSED_DESIGNATORS: ReadonlyArray<{
 
 /**
  * `designatorID` → Wikidata QID, mirroring `fetch/wikidata-subvenue.ts`'s `SUBVENUE_CONCEPTS`. Re-declared here so the
- * builder stays a pure function over PARSED input rather than reaching into a fetch module for a constant; the test
+ * builder stays a pure function over PARSED input rather than reaching into a fetch module for a constant. the test
  * pins the two against each other.
  */
 export const CONCEPT_QIDS: Readonly<Record<string, string>> = {

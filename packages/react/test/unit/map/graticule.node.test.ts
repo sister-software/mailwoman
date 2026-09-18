@@ -21,7 +21,7 @@ describe("buildGraticule", () => {
 	})
 
 	test("draws a meridian every step and a parallel every step", () => {
-		// 360/15 = 24 meridians; parallels run from -70 to +80 inclusive of neither pole = 11.
+		// 360/15 = 24 meridians. parallels run from -70 to +80 inclusive of neither pole = 11.
 		const meridians = lines.filter((line) => line.every((point) => point[0] === line[0]![0]))
 		const parallels = lines.filter((line) => line.every((point) => point[1] === line[0]![1]))
 

@@ -3,7 +3,7 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  * @file Google Geocoding result → mailwoman {@linkcode OracleGeocodeResult}. This is the DOMAIN half of
- *   the isp-nexus port; everything else in this workspace is plumbing that was rewritten rather than
+ *   the isp-nexus port. everything else in this workspace is plumbing that was rewritten rather than
  *   carried over.
  *
  *   What was salvaged from `isp-nexus/universe/mailwoman/sdk/google/parser.ts`: the idea of indexing
@@ -20,7 +20,7 @@
  *        yields `"ZZ"` for every non-US address — i.e. a constant. `@mailwoman/address-id` derives its
  *        own prefix (or `xx`), so the whole path is gone.
  *     3. **The nine-significant-digit round.** `parseFloat(lat.toPrecision(9))` was applied to both
- *        axes. Google returns seven decimal places; nine significant digits keeps all of them for a
+ *        axes. Google returns seven decimal places. nine significant digits keeps all of them for a
  *        two-digit latitude and drops the last for a three-digit longitude, so the round was
  *        asymmetric between hemispheres and bought nothing. Coordinates pass through untouched.
  *
@@ -79,12 +79,12 @@ const COMPONENT_RULES: readonly ComponentRule[] = [
 	{ types: ["street_number"], tag: "house_number", form: "short" },
 	{ types: ["route"], tag: "street", form: "long" },
 	// Google splits a unit designator across three types depending on how the address was written.
-	// Any of them is the unit line; the first one present wins.
+	// Any of them is the unit line. the first one present wins.
 	{ types: ["subpremise"], tag: "unit", form: "short" },
 	{ types: ["room"], tag: "unit", form: "short" },
 	{ types: ["floor"], tag: "unit", form: "short" },
 	{ types: ["post_box"], tag: "po_box", form: "short" },
-	// A named building or business. `premise` is the building itself; the POI types are what a query
+	// A named building or business. `premise` is the building itself. the POI types are what a query
 	// like "Eiffel Tower" comes back as.
 	{ types: ["premise"], tag: "venue", form: "long" },
 	{ types: ["point_of_interest", "establishment"], tag: "venue", form: "long" },
@@ -181,7 +181,7 @@ export function buildGoogleComponents(result: GoogleGeocodeResult): ComponentDic
 
 	// ZIP+4 arrives as a SEPARATE component, and an address written with one writes it hyphenated onto
 	// the ZIP (`10001-1234`). Appending is what makes the oracle's `postcode` comparable to a parser
-	// output for the same input; leaving the suffix on `raw` alone would make every ZIP+4 case look
+	// output for the same input. leaving the suffix on `raw` alone would make every ZIP+4 case look
 	// like a mismatch on the last five characters.
 	const postcodeSuffix = index.get("postal_code_suffix")
 
@@ -197,7 +197,7 @@ export function buildGoogleComponents(result: GoogleGeocodeResult): ComponentDic
  *
  * Three of the four are unambiguous. `GEOMETRIC_CENTER` is not: Google documents it as the centre of "a polyline (for
  * example, a street) or polygon (region)", which spans both the `street` and `admin` tiers depending on which shape it
- * was. A `route` value in the result's own `types` identifies a street; otherwise this reports `admin`, which
+ * was. A `route` value in the result's own `types` identifies a street. otherwise this reports `admin`, which
  * UNDER-claims. That direction is deliberate — an oracle that over-claims precision is worse than one that
  * under-claims, because a case author pinning `expectTier` from it would encode a tolerance the parser can never earn.
  *

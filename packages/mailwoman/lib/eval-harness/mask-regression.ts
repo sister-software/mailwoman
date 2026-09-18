@@ -36,7 +36,7 @@
  *
  *   `mailwoman eval mask-regression --model <int8.onnx> --tokenizer <spm> --model-card <json>`
  *
- *   PASS = no tag regresses more than the threshold under the mask; FAIL = at least one tag
+ *   PASS = no tag regresses more than the threshold under the mask. FAIL = at least one tag
  *   regresses (the offending `(locale, tag, maskOff, maskOn, delta)` rows are printed).
  *
  *   `threshold` overrides the default 0.02 (2pp). `json` writes the full per-tag delta table (every
@@ -153,7 +153,7 @@ export async function maskRegressionCheck(
 
 		// `inputMode: "formatted"`, the same mode the capability-manifest generator grades (#2048). The rows are
 		// formatted postal addresses, and on those the production pipeline derives `formatted` and runs the
-		// evidence-bundle channels off as a declared ablation; grading them in the bare-library default measured a
+		// evidence-bundle channels off as a declared ablation. grading them in the bare-library default measured a
 		// path production never takes on these inputs. The per-tag numbers before this change grade `fragmented`.
 		const { off, on } = await scoreConventionsMaskOffOn(
 			rows,

@@ -50,6 +50,6 @@ export async function readPackagedTable<T>(filename: string): Promise<T> {
 
 	// A corrupt shipped table is a broken build, and the SyntaxError names the offset. `poi-taxonomy` declares zero
 	// dependencies, so `@mailwoman/core`'s parse wrappers are deliberately out of reach.
-	// oxlint-disable-next-line no-restricted-properties -- zero-dependency leaf; corrupt shipped data must throw with its offset
+	// oxlint-disable-next-line no-restricted-properties -- zero-dependency leaf. corrupt shipped data must throw with its offset
 	return (await readLocalJSONFile(path)) as T
 }

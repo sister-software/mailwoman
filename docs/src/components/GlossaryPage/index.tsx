@@ -66,7 +66,7 @@ export default function GlossaryPage({ glossaryData, tagMeta, backlinks }: Gloss
 		brokenLinks.collectAnchor(termAnchor(term))
 	}
 
-	// Tooltip deep-links (/glossary#some-term) race the router's hash scroll against first render;
+	// Tooltip deep-links (/glossary#some-term) race the router's hash scroll against first render.
 	// the target doesn't exist yet when Docusaurus tries to scroll. Re-run the jump after mount.
 	useEffect(() => {
 		const hash = decodeURIComponent(globalThis.location.hash.slice(1))
@@ -108,8 +108,8 @@ export default function GlossaryPage({ glossaryData, tagMeta, backlinks }: Gloss
 		})
 	}, [terms, search, enabled])
 
-	// Category sections in tags.yml declaration order; a term appears once, under its first
-	// *enabled* tag. With everything enabled that's the primary tag; when a category is toggled
+	// Category sections in tags.yml declaration order. a term appears once, under its first
+	// *enabled* tag. With everything enabled that's the primary tag. when a category is toggled
 	// off, its cross-tagged terms migrate to their next enabled tag instead of stranding the
 	// disabled category's section on the page.
 	const sections = useMemo(() => {

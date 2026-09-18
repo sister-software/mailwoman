@@ -65,7 +65,7 @@ const PMB_ROWS: ReadonlyArray<{ input: string; expectPOBox: string }> = [
 
 const METRES_PER_KM = 1000
 
-// A probe written to price a corpus change has to be able to point at the model that change produced; without this it
+// A probe written to price a corpus change has to be able to point at the model that change produced. without this it
 // can only ever grade the installed one, which is the arm the change is measured AGAINST.
 const deps = await buildGauntletDeps(values["weights-cache"] ? { weightsCacheRoot: values["weights-cache"] } : {})
 const unitReport = []

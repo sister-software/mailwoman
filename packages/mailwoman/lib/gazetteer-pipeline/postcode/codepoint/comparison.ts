@@ -38,7 +38,7 @@ const M_PER_KM = 1000
 
 /**
  * A postcode present in one database and absent from the other, summarized by postcode AREA rather than listed. The
- * full list runs to six figures; the area histogram is what tells you whether a gap is structural (a whole area
+ * full list runs to six figures. the area histogram is what tells you whether a gap is structural (a whole area
  * missing) or diffuse (churn spread across all of them).
  */
 export interface AreaHistogram {
@@ -86,7 +86,7 @@ export interface ProbeResult {
 
 /**
  * The "only in the incumbent" set, split into the three things it actually contains. Reporting it as one number is what
- * makes a swap look like a 92,704-postcode regression; the split is what makes it a decision.
+ * makes a swap look like a 92,704-postcode regression. the split is what makes it a decision.
  */
 export interface IncumbentOnlyBreakdown {
 	total: number
@@ -150,7 +150,7 @@ const CROWN_DEPENDENCY_AREAS = ["IM", "GY", "JE"] as const
  * right or wrong rather than merely as different.
  *
  * Chosen for (a) being individually verifiable by a reader, and (b) spanning England, Scotland and Wales plus both
- * coordinate extremes of the join. `expected` is the landmark's own position; a Code-Point centroid is the postcode
+ * coordinate extremes of the join. `expected` is the landmark's own position. a Code-Point centroid is the postcode
  * unit's mean delivery point, so tens of metres of offset is correct behaviour and not error. The looser entries (the
  * three city-centre probes near 500-900 m) are loose because the LANDMARK coordinate is a district rather than a door —
  * both databases agree with each other there to within 3 m, which is the comparison this list is actually making.
@@ -204,7 +204,7 @@ export interface RunCodePointCheckOptions {
 }
 
 /**
- * Run the check. Both databases are opened read-only; nothing is written anywhere.
+ * Run the check. Both databases are opened read-only. nothing is written anywhere.
  *
  * Memory: the incumbent's GB rows are held in a `Map` of ~1.84 M entries (~250 MB) so the join is a single pass over
  * each side rather than a SQL `ATTACH` join across two 800 MB+ files. Measured at ~40 s end to end.

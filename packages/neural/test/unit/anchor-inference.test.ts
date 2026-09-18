@@ -83,7 +83,7 @@ describe("buildAnchorFeatures — alignment onto SP pieces", () => {
  * The 2026-08-05 train-parity fix (`docs/records/evals/2026-08-05-en-gb-anchor-off.md`). Two obligations:
  *
  * 1. The DEFAULT stays byte-identical to the pre-fix scan — graded against a verbatim copy of it, not against a hash, so
- *    the oracle is readable;
+ *    the oracle is readable.
  * 2. `spanMode: "shaped"` keys a span exactly the way `mailwoman_train/tokenizer.py::_paint_anchor_chars` does
  *    (`raw[begin:end].replace(" ", "").upper()`) and paints the span's full extent.
  */
@@ -231,7 +231,7 @@ describe("buildAnchorFeatures — span modes", () => {
 	})
 
 	it("(c) an unknown GB unit falls back to its outward district, painting the WHOLE unit span", () => {
-		// SW1A 1AA is not in V2; its outward SW1A is. NI codes behave the same way — Code-Point Open has none.
+		// SW1A 1AA is not in V2. its outward SW1A is. NI codes behave the same way — Code-Point Open has none.
 		const text = "London SW1A 1AA"
 		const spanStart = text.indexOf("SW1A 1AA")
 		const pieces = piecesFor(text)

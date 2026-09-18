@@ -9,7 +9,7 @@ invariants. Runs in seconds on CPU.
 Covered scope:
 
 - Encoder builds cleanly with ``use_phrase_priors=True`` + the v0.5.0 ``hidden_size``
-  baseline (256 — unchanged from v0.3.0/v0.4.0; the hidden_size bump is deferred per the
+  baseline (256 — unchanged from v0.3.0/v0.4.0. the hidden_size bump is deferred per the
   Thread C-s scope).
 - ``forward`` returns logits of shape ``(B, S, num_labels)``; loss is ``None`` when labels
   are omitted (forward-pass smoke skips supervision).
@@ -69,7 +69,7 @@ def _build_encoder(use_phrase_priors: bool, use_crf: bool = True) -> MailwomanCo
 
 def _stub_batch(bsz: int = 2, seq_len: int = 8) -> dict[str, torch.Tensor]:
     """Synthesise a small batch. When ``bsz >= 2``, row 0 is padded to length 5 to
-    exercise the variable-length mask path; row 1 (and beyond) stays full."""
+    exercise the variable-length mask path. row 1 (and beyond) stays full."""
     torch.manual_seed(0)
     input_ids = torch.randint(1, VOCAB_SIZE, (bsz, seq_len))
     input_ids[:, 0] = 1  # avoid pad_token at position 0 (mask would be 0 there).
@@ -126,7 +126,7 @@ def test_phrase_kind_taxonomy_matches_ts_contract():
     Order is the encoding contract — the i-th kind here is the same kind that downstream
     corpus loaders one-hot at slot ``PHRASE_BIE_DIM + i``. If TS adds a new kind, this
     list and ``core/pipeline/types.ts``'s ``PhraseKind`` must move together in the same
-    commit; otherwise the model card's ``phrase_kind_vocab`` silently mis-aligns.
+    commit. otherwise the model card's ``phrase_kind_vocab`` silently mis-aligns.
     """
     assert PHRASE_KINDS == (
         "NUMERIC",
@@ -220,7 +220,7 @@ def test_predict_top_k_shapes_and_ordering():
 
     for b, row in enumerate(paths):
         assert isinstance(row, list)
-        assert 1 <= len(row) <= 5  # at least argmax; at most k
+        assert 1 <= len(row) <= 5  # at least argmax. at most k
         # Descending score order.
         for prev, curr in zip(row, row[1:], strict=False):
             assert prev.score >= curr.score
@@ -361,7 +361,7 @@ def test_v0_5_0_smoke_config_loads_and_matches_thread_c_scope():
     - phrase priors on (the headline change)
     - hidden_size unchanged at the v0.3.0/v0.4.0 baseline (256) — the bump is out of scope
     - class_weights written against the 21-class STAGE2 BIO vocab (the active set when the
-      config was authored; ACTIVE has since moved to STAGE3's 33 — the STAGE2 vocabulary is
+      config was authored. ACTIVE has since moved to STAGE3's 33 — the STAGE2 vocabulary is
       an intact prefix of the lineage, so every weight still names a live label)
     - constant-LR smoke per VERDICT_SMOKES.md (driven via CLI flag, not the YAML)
     """

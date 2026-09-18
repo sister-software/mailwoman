@@ -15,7 +15,7 @@ Usage:
         [--temperature 1.0]
 
 ``--temperature`` scales the log-probs (the emissions were not trained against these potentials, so
-the relative magnitude is a free parameter; 1.0 = raw log-probs).
+the relative magnitude is a free parameter. 1.0 = raw log-probs).
 """
 
 from __future__ import annotations

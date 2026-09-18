@@ -180,7 +180,7 @@ describe("streamRows (lazy delimited ingest)", () => {
 	it("preserves empty fields — consecutive delimiters do not collapse (NPPES-style alignment)", async () => {
 		// The regression spliterator 3.1.0's column tokenizer failed: a row with consecutive empties must
 		// keep every column, or every value after the empty run shifts left (a 330-col NPPES row collapses
-		// to ~40 + misaligns). Fixed upstream in 3.2.0; pinned here because it's fatal if it regresses.
+		// to ~40 + misaligns). Fixed upstream in 3.2.0. pinned here because it's fatal if it regresses.
 		const file = join(await tmp(), "f.tsv")
 		await writeLocalTextFile("npi\torg\tlast\tfirst\tstate\n123\t\t\t\tNE\n", file)
 		const rows: Record<string, string>[] = []
@@ -194,7 +194,7 @@ describe("streamRows (lazy delimited ingest)", () => {
 	})
 
 	it("parses quoted fields — embedded delimiters, embedded newlines, doubled quotes (NPPES-style quoting)", async () => {
-		// New with spliterator 3.2.0's end-to-end quote handling; the previous manual-split
+		// New with spliterator 3.2.0's end-to-end quote handling. the previous manual-split
 		// implementation assumed unquoted files.
 		const file = join(await tmp(), "f.csv")
 		await writeLocalTextFile('npi,org,city\n123,"Acme, LLC",Portland\n456,"Multi\nLine ""Quoted"" Org",Seattle\n', file)

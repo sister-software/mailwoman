@@ -153,7 +153,7 @@ Constructs Lab began it. Terms of use §1.2 and §1.3, verbatim:
 > "**1.2. Content.** From time to time, the content on the website may include, among other things,
 > information, software, processes, maps, **geospatial data**, text, illustrations, displays, images,
 > trademarks, designs, icons, photographs, video, and audio (collectively, the "Website Content"), all of
-> which are owned by either LUAI or LUL and are protected by United States and international copyright,
+> which are owned by either LUAI or LUL and are guarded by United States and international copyright,
 > trademark, patent, trade secret, and other intellectual property or proprietary rights laws."
 
 > "**1.3. Limitations.** Unless you have our express written permission, you may not use, host, store,

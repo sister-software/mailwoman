@@ -16,7 +16,7 @@
  *   2. Throws when a synthetic FR forbid re-adds `street_prefix` (a certified tag at maskOff 80) — the
  *        exact #719 shape. This verifies that the guard would have caught the original bug at load time.
  *
- *   Requires the production v1.5.0 int8 + its real feed channels on disk; skips otherwise (mirrors
+ *   Requires the production v1.5.0 int8 + its real feed channels on disk. skips otherwise (mirrors
  *   weights.test.ts) so stripped-down CI still passes.
  */
 
@@ -87,7 +87,7 @@ describe.skipIf(!haveAll)("createScorer capability delta check (#718/#719)", () 
 	})
 
 	test("pocket tier is conditional against its own certified capabilities", async () => {
-		// The pocket tier (anchor-only) also certifies FR street_prefix with a non-zero maskOff F1; a
+		// The pocket tier (anchor-only) also certifies FR street_prefix with a non-zero maskOff F1. a
 		// forbid there is equally illegal. Confirms the tier selector actually reads the pocket cell.
 		// Don't pin the F1 literal — it's model-card-dependent (v1.8.0 certifies ~78, not the older 80),
 		// so match the message shape, not the number.

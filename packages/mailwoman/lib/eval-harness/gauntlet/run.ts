@@ -6,9 +6,9 @@
  *   THE Gauntlet eval — runs all three layers and emits one combined verdict, so a model ship checks on the
  *   full-pipeline integration net, not just per-tag F1 (the whole point of building it; #566 lesson):
  *
- *     1. regression  — the curated executable bug log; a fixed bug must stay fixed (conditioned on status=pass).
- *     2. metamorphic — un-gameable INV/DIR relations; surface-form robustness (conditional minus tracked xfails).
- *     3. held-out    — candidate-vs-prod z-test on a fresh draw; the generalization check (only with --candidate).
+ *     1. regression  — the curated executable bug log. a fixed bug must stay fixed (conditioned on status=pass).
+ *     2. metamorphic — un-gameable INV/DIR relations. surface-form robustness (conditional minus tracked xfails).
+ *     3. held-out    — candidate-vs-prod z-test on a fresh draw. the generalization check (only with --candidate).
  *
  *   Self-check (shipped default):  mailwoman eval gauntlet
  *   Promote check (a candidate):    mailwoman eval gauntlet --candidate ./out/v195/model.onnx [--source us]
@@ -28,10 +28,10 @@
  *   The last of those is the resolver-pin pin (#42, added 2026-08-05). The check could swap the MODEL under test but
  *   not the resolver configuration, so a resolver pin proposed for default-on had no way through the D-rule's
  *   standard instrument — it could only be argued from bespoke probes. Run the check unpinned and pinned and diff the
- *   verdicts; the layers stamp which configuration they graded, and the regression layer reports how many cases the
+ *   verdicts. the layers stamp which configuration they graded, and the regression layer reports how many cases the
  *   pin actually fired on (an unchanged verdict from a mechanism that never ran proves nothing).
  *
- *   The retired `scripts/eval/gauntlet/run.ts` ran each layer in its own child process; the layers are
+ *   The retired `scripts/eval/gauntlet/run.ts` ran each layer in its own child process. the layers are
  *   in-process modules now — a layer that THROWS is caught, printed, and counted as a failed layer, preserving the
  *   old isolated-failure semantics without the spawn.
  *
@@ -77,7 +77,7 @@ export interface GauntletRunOptions {
 	card?: string
 	/**
 	 * Package-shaped candidate weights dir (`<root>/node_modules/@mailwoman/neural-weights-en-us`) — the #718-safe path
-	 * for a splice/multisplice candidate; mirrors `eval parity --weights-cache`. Takes precedence over
+	 * for a splice/multisplice candidate. mirrors `eval parity --weights-cache`. Takes precedence over
 	 * `candidate`/`tokenizer`.
 	 */
 	weightsCacheRoot?: string
@@ -220,7 +220,7 @@ async function runLayer(layer: GauntletLayer, options: GauntletRunOptions): Prom
 }
 
 /**
- * Run the Gauntlet. With `layer` set, runs that single layer and returns its exit code verbatim; otherwise runs the
+ * Run the Gauntlet. With `layer` set, runs that single layer and returns its exit code verbatim. otherwise runs the
  * combined check (regression + metamorphic, plus held-out when a candidate is given) and returns 0 only when every
  * layer passes.
  */

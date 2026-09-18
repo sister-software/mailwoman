@@ -3,13 +3,13 @@
 The SentencePiece path (``tokenizer.py``) fragments diacritic-heavy tokens ("Čistá" -> [▁,Č,is,t,á])
 because the English-trained unigram vocab has no multi-char subwords containing diacritics — a 3.3x
 fertility tax on Slavic that breaks span boundaries and geocodes to the wrong city. The CharCNN front-end
-sidesteps that: tokenize into WORDS (whitespace tokens; one char per token for CJK later) and compose each
+sidesteps that: tokenize into WORDS (whitespace tokens. one char per token for CJK later) and compose each
 word's embedding from its CHARACTERS, so the tokenizer never gets to isolate a diacritic into its own piece.
 
 This module is the data side of that fix:
 
 - ``build_char_vocab`` — scan a corpus sample and assign an ID to every character seen (0 = PAD, 1 = UNK).
-  A few thousand entries covers Latin+diacritics; it stays small even when CJK is added later (the char
+  A few thousand entries covers Latin+diacritics. it stays small even when CJK is added later (the char
   table is tiny vs a 48k subword vocab), which is exactly why char-composition scales to CJK where
   subword-vocab expansion does not.
 - ``encode_row_charword`` — turn ``raw`` + whitespace ``tokens`` + per-token ``labels`` into the model
@@ -18,7 +18,7 @@ This module is the data side of that fix:
   ``tokens``/``labels`` (already word-aligned) — no SentencePiece sub-token projection.
 
 Deliberately minimal for the de-risk probe: no anchor / gazetteer / phrase channels (those project per
-SP-piece today; the probe compares a bare char model against a bare SentencePiece model on the same
+SP-piece today. the probe compares a bare char model against a bare SentencePiece model on the same
 corpus, isolating the embedding front-end). The channels get a per-word re-alignment once the probe
 confirms the fix reaches the coordinate.
 """
@@ -94,10 +94,10 @@ def encode_row_units(
     Per-unit labels come from ``char_labels`` (a per-char BIO array over ``raw``, e.g. from
     ``tokenizer.char_label_array_from_spans``): each unit takes its first non-whitespace char's
     label (an all-whitespace unit gets ``O``), collapsed to the label set — used AS-IS for both
-    modes. ``label_to_id``/``collapse`` default to the module-global STAGE3 vocabulary; a
+    modes. ``label_to_id``/``collapse`` default to the module-global STAGE3 vocabulary. a
     non-default model (the JP 47-label head) passes its ``LabelSet``'s pair (v8 CJK Phase 2). A span-derived char array is already unit-correct: the span-leading unit's first char is
     ``B-``, a continuation unit's first char is ``I-``, and two ADJACENT same-family spans each keep
-    their own ``B-``. (The contract note sketched a piece-path-style B/I re-flip for word mode; that
+    their own ``B-``. (The contract note sketched a piece-path-style B/I re-flip for word mode. that
     re-flip would MERGE adjacent same-family entities — first-char-as-is is strictly more faithful,
     the deliberate deviation.)
     """
@@ -145,7 +145,7 @@ def encode_row_charword(
 ) -> dict[str, list[Any]]:
     """Encode one row into ``char_ids`` ``(max_tokens, max_word_len)`` + ``attention_mask`` + ``labels``.
 
-    Each whitespace token becomes one position; its characters map to char IDs (unknown -> UNK), truncated
+    Each whitespace token becomes one position. its characters map to char IDs (unknown -> UNK), truncated
     /padded to ``max_word_len``. The per-word BIO label is the corpus token label collapsed to the active
     set. Word count is truncated to ``max_tokens`` and padded with all-PAD word rows (masked out).
     """

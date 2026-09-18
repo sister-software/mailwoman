@@ -42,14 +42,14 @@ export const spec = {
 
 // NOTE(retrofit): long-running — exempt from useCommandTask (no one-shot task or exit-code dance to
 // move: the process deliberately never exits, WorkerStatus is event-subscription UI with cleanup, and
-// ChildThread's effect boots the @mailwoman/api Hono app over a node listener; there is no
+// ChildThread's effect boots the @mailwoman/api Hono app over a node listener. there is no
 // `setImmediate(process.exit)` here — SIGINT/SIGTERM now dispose the server after it drains).
 
 const ClusterManager: ParsedCommandComponent<ServerConfig> = ({ options: { cpus = availableParallelism() } }) => {
 	const [workers, setWorkers] = useState<Worker[]>()
 
 	useEffect(() => {
-		// eslint-disable-next-line react-hooks/set-state-in-effect -- one-shot cluster bootstrap; refactor pending
+		// eslint-disable-next-line react-hooks/set-state-in-effect -- one-shot cluster bootstrap. refactor pending
 		setWorkers(Array.from({ length: cpus }, () => cluster.fork()))
 
 		// Tracks whether any worker has ever reached "listening" — distinguishes a genuine boot
@@ -216,7 +216,7 @@ const ChildThread: ParsedCommandComponent<ServerConfig> = ({ options: { port, ho
 				// cluster worker `id`s synchronously (1, 2, 3, ...) at fork() time in the PRIMARY, before any
 				// worker's async preflight resolves — so `cluster.worker.id === 1` deterministically picks the
 				// FIRST-forked worker, regardless of which worker's preflight check happens to finish first.
-				// Only that one worker prints; the rest exit silently. Chosen over a primary-side pre-fork
+				// Only that one worker prints. the rest exit silently. Chosen over a primary-side pre-fork
 				// check (the primary doesn't otherwise call createServeEngine() at all, and duplicating its
 				// import/db-existence check there just to avoid forking would be the more invasive change) and
 				// over routing the message back through the primary's cluster "exit" handler (would require an

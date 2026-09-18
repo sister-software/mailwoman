@@ -5,7 +5,7 @@ launch.train_remote::<name>` able to find a function defined in any module of th
 second app object here would produce functions nothing can launch.
 
 Nothing in this module runs remotely. The secrets read the local checkout at deploy time and the
-image pins the export/quant toolchain; both are evaluated at import, in the container as well as
+image pins the export/quant toolchain. both are evaluated at import, in the container as well as
 locally, which is why each tolerates the container's empty environment rather than raising in it.
 """
 

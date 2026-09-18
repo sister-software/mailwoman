@@ -4,7 +4,7 @@
  * @author Teffen Ellis, et al.
  *
  *   Refinement monotonicity read off the resolver's own candidate tables (#1923). Pure — it takes two lists
- *   of {@linkcode ResolveNodeTrace} and returns a reading; it never runs a geocode and never asks a backend
+ *   of {@linkcode ResolveNodeTrace} and returns a reading. it never runs a geocode and never asks a backend
  *   anything.
  *
  *   WHAT THE LAW SAYS. Adding information to a query must not make an admissible candidate inadmissible. It
@@ -44,7 +44,7 @@ import type { ResolveCandidateTrace, ResolveNodeTrace } from "@mailwoman/core/re
  * The closed set of accounts a candidate can be assigned. Every candidate observed on either side gets exactly one, and
  * the name states what was READ rather than what it implies for the verdict.
  *
- * - `held` — present in both pools. Its rank may have moved; a rank change is reported and never fails, because the law
+ * - `held` — present in both pools. Its rank may have moved. a rank change is reported and never fails, because the law
  *   is about admissibility and a reordering leaves every candidate admissible.
  * - `contradicted` — gone, and the refined lookup ran under a country scope the candidate's own country fails. The
  *   removal is explained by the information the query added, which is the one removal the law permits.
@@ -61,7 +61,7 @@ export const CANDIDATE_ACCOUNTS = ["held", "contradicted", "rescoped", "beyond_w
 export type CandidateAccount = (typeof CANDIDATE_ACCOUNTS)[number]
 
 /**
- * Which pool a candidate was observed in. `held` candidates are in both; the other two name the side that has it.
+ * Which pool a candidate was observed in. `held` candidates are in both. the other two name the side that has it.
  */
 export const CANDIDATE_DIRECTIONS = ["held", "removed", "added"] as const
 
@@ -153,7 +153,7 @@ export interface LookupFold {
 	 */
 	checks: string[]
 	/**
-	 * The provenance of the pick, or `null` when the lookup resolved nothing. `null` is a claim; absence of the fold is
+	 * The provenance of the pick, or `null` when the lookup resolved nothing. `null` is a claim. absence of the fold is
 	 * the thing that means nobody asked.
 	 */
 	pickedSource: string | null
@@ -285,7 +285,7 @@ export type CandidateAccountCounts = Record<CandidateAccount, number>
  */
 export interface RefinementReading {
 	/**
-	 * - `refines` — every removal is accounted for and every addition is explained; the law holds over the observed pool.
+	 * - `refines` — every removal is accounted for and every addition is explained. the law holds over the observed pool.
 	 * - `diverges` — a candidate left the pool unexplained, or one entered it unexplained.
 	 * - `unmeasured` — no unexplained movement, but at least one removal sat at a fetch window, so the law is UNPROVEN
 	 *   rather than holding.

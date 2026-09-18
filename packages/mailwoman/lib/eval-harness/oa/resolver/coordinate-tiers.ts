@@ -41,7 +41,7 @@ export async function buildCoordinateTiers(options: OAResolverEvalOptions) {
 	// when it has a placed candidate for the eval's country, else falls back to the resolver coord. So the
 	// row isolates exactly what the anchor sharpens: where, not which place.
 	// `--address-points <db>` (#476): the street-level exact-point tier. Adds `addressPoints` to
-	// resolveOpts; the `neural+addrpt` row keeps neural's admin flags but takes the COORDINATE from
+	// resolveOpts. the `neural+addrpt` row keeps neural's admin flags but takes the COORDINATE from
 	// the address-point hit when present (the tier's whole contribution is "where", street-level).
 	const addressPointsDB = options.addressPoints || ""
 	let addressPoints: AddressPointLookup | null = null
@@ -52,7 +52,7 @@ export async function buildCoordinateTiers(options: OAResolverEvalOptions) {
 	}
 
 	// `--interpolation <segments-db>` (#483): the house-number interpolation tier (StreetInterpolator,
-	// tiger-range). Adds `interpolation` to resolveOpts; the `neural+interp` row takes the COORDINATE
+	// tiger-range). Adds `interpolation` to resolveOpts. the `neural+interp` row takes the COORDINATE
 	// from the exact point when present, else the interpolated estimate, else the admin centroid — the
 	// full street-level coordinate cascade. The delta vs `neural+addrpt` is interpolation's lift on the
 	// long tail of valid-but-unlisted numbers the exact tier misses.

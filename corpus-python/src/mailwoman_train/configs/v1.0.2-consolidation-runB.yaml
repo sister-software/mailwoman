@@ -1,7 +1,7 @@
 # === v1.0.0-consolidation (#466) — the v0-PARITY FLAG-PLANT ======================================
 # One model carrying every PROVEN parity change, at a LARGER step budget (the cumulative-dilution
 # lesson: never stack N sources into a fixed 20k budget — give them room). This is not a single-variable
-# experiment; it's the integration run. Changes folded in:
+# experiment. it's the integration run. Changes folded in:
 #   - unit          (shipped v4.1.0)                      → synth-unit 1.5
 #   - affix         (multi-locale reroll, #469)           → synth-affix 2.0  (corpus v0.4.11-affix-ml)
 #   - country       (balanced recipe output, #464)        → synth-country 2.0 (corpus v0.4.10-country-bal)
@@ -10,13 +10,13 @@
 # po_box/cedex DEFERRED (matcher-proven 100%; coverage recipes are a follow-up, not in this flag-plant).
 #
 # Corpus v0.4.12-consolidation = the v0.4.11-affix-ml parquet files (base+unit+german+deepseek+MULTI-LOCALE affix)
-# + the v0.4.10-country-bal balanced country parquet file, referenced verbatim (pure manifest concat; every
+# + the v0.4.10-country-bal balanced country parquet file, referenced verbatim (pure manifest concat. every
 # parquet already on the volume). Recipe inherits v0.9.13 (gazetteer anchor + country class-weight 3.5).
 #
 # Two deliberate changes vs v0.9.13:
 #   1. max_steps 20k → 40k. The solo affix reroll (v0.9.14) showed fixed-budget dilution (FR
 #      house_number 92→87, US street 80.4→79.0) when 40K balance rows competed for 20k steps. A larger
-#      budget is the prescribed fix; 40k ≈ 2x exposure per source.
+#      budget is the prescribed fix. 40k ≈ 2x exposure per source.
 #   2. gazetteer_curriculum is off and gazetteer_choreography is on. The curriculum (random clue zero-out) only
 #      recovered +0.6 of the −3.7 US-postcode dip in v0.9.13. The choreography (zero the clue on tokens
 #      ADJACENT to a postcode-anchor hit, train+inference paired) is the targeted, DeepSeek-diagnosed
@@ -30,9 +30,9 @@
 #   - US postcode back to baseline (≥ 97, fp32) — the choreography must absorb the v0.9.12 −3.7.
 #   - FR postcode ≥ 99.5 AND FR house_number ≥ 91 (the v0.9.14 watch-item — confirm the bigger budget
 #     recovers it).
-#   - US spine (street/locality/region/house_number) ≥ v0.9.8; DE native-order locality ≥ 83.8.
-#   DECISION: all hold → v0-parity FLAG-PLANT; ship candidate (int8 → v4.2.0). Any tag short → the
-#     dilution isn't budget-bound; fall back to weight-merge (#466's titled approach) or raise that
+#   - US spine (street/locality/region/house_number) ≥ v0.9.8. DE native-order locality ≥ 83.8.
+#   DECISION: all hold → v0-parity FLAG-PLANT. ship candidate (int8 → v4.2.0). Any tag short → the
+#     dilution isn't budget-bound. fall back to weight-merge (#466's titled approach) or raise that
 #     source's weight/budget. Measure: score-country-homograph.ts + score-affix.ts (incl. unit) +
 #     per-locale-f1.ts (US/FR, --tokenizer + --model-anchor-lookup + --gazetteer-lexicon) +
 #     de-order-eval.ts, all fp32.
@@ -152,7 +152,7 @@ model:
 train:
   # Run B: init_from the CLEAN consolidation step-040000 (weights only, fresh optimizer) into a new dir
   # — avoids Run A's 5x-biased momentum (DeepSeek) and avoids destructive deletes of Run A's checkpoints.
-  # 20k steps on the 040000 weights ≈ the "+20k → 60k" continuation; the equilibrium is set by the
+  # 20k steps on the 040000 weights ≈ the "+20k → 60k" continuation. the equilibrium is set by the
   # sampling weights, not the optimizer init. Launch with --resume none so init_from takes effect.
   output_dir: /data/output-v101-runB-s42/checkpoints
   init_from: /data/output-v100-consolidation-s42/checkpoints/step-040000

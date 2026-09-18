@@ -46,7 +46,7 @@ export function foldStaleness(
 }
 
 /**
- * The refusal a build prints for a stale fold: both timestamps and the remedy, since the fix is a flag on the same
+ * The refusal a build prints for a stale fold: both timestamps and the action, since the fix is a flag on the same
  * command.
  */
 export function foldStalenessMessage(staleness: FoldStaleness): string {

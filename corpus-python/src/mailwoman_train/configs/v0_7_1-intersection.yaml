@@ -4,7 +4,7 @@
 # but left the PRIMARY harness pass rate flat, because the harness is COVERAGE-
 # bound. The single largest gap is INTERSECTIONS: 65/376 harness assertions (17%)
 # at 0% neural, because the model assigns intersection_a/b ~0.0001 probability —
-# it never had training signal (no intersection synthesis generator existed; real-
+# it never had training signal (no intersection synthesis generator existed. real-
 # data adapters don't emit intersection-formatted rows). See the night-3
 # postmortem §0c-§0d.
 #

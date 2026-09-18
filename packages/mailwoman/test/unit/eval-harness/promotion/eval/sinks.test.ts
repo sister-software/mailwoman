@@ -64,7 +64,7 @@ describe("renderLines — child stdout parity", () => {
 
 /**
  * How a leg's failure reaches the runner, and what the check does about it. Each row is the behavior the child-process
- * spawn had; the migration must not change any of them.
+ * spawn had. the migration must not change any of them.
  */
 const LEG_SEMANTICS = [
 	{

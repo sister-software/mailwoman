@@ -52,7 +52,7 @@ describe("collectMissingFileEntries", () => {
 	})
 
 	it("accepts a directory entry satisfied by a member beneath it", () => {
-		// `out/` is how cartographer/spatial/tiger declare their build output; tar may not list the
+		// `out/` is how cartographer/spatial/tiger declare their build output. tar may not list the
 		// directory node itself, only its contents.
 		expect(collectMissingFileEntries(["out/"], new Set(["./out/index.js"]))).toEqual([])
 		expect(collectMissingFileEntries(["out"], new Set(["./out/index.js"]))).toEqual([])
@@ -119,7 +119,7 @@ describe("collectMissingBinTargets", () => {
 	})
 
 	it("reads both spellings npm accepts", () => {
-		// The string form names the package itself; the map form names each command.
+		// The string form names the package itself. the map form names each command.
 		expect(collectMissingBinTargets("./out/cli.js", new Set())).toEqual(["./out/cli.js"])
 
 		expect(collectMissingBinTargets({ mailwoman: "./out/cli.js", mw: "./out/cli.js" }, new Set())).toEqual([

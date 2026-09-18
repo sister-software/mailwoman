@@ -6,7 +6,7 @@
  *   The host-only chrome around the geocoder, composed for `@mailwoman/react/map`'s `panels` injection point: the
  *   about box, the release line, the geo-bias row, the permalink, the calibration and dev-mode toggles, the result
  *   panel with its visualizers, the decode-path drawer, the map controls and the version compare. Everything here is
- *   presentation over the runtime handle; nothing here loads or resolves.
+ *   presentation over the runtime handle. nothing here loads or resolves.
  */
 
 import type { ParseResult } from "@mailwoman/core/pipeline/client-result"
@@ -75,7 +75,7 @@ export function useGeocoderPanels({ handle, debugDefault }: GeocoderPanelsOption
 	/* oxlint-disable react/no-unstable-nested-components -- render props, not components: the controls call each member (`panels.result({…})`) rather than mounting it */
 	return useMemo<GeocoderPanels>(
 		() => ({
-			// The sheet's own title and its capsule button are the disclosure; a second one inside would repeat them.
+			// The sheet's own title and its capsule button are the disclosure. a second one inside would repeat them.
 			header: <About collapsible={false} />,
 			releaseInfo: selectedRelease ? (
 				<p style={{ margin: "0 0 0.75rem", fontSize: "0.85rem", opacity: 0.75 }}>

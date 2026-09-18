@@ -288,7 +288,7 @@ const prescriptionLookup = (phrase: string): ReadonlyArray<POIPhraseMatch> =>
 	phrase === "prescription" ? PRESCRIPTION_SET : []
 
 describe("the place binding of a country-scoped claim (#1999)", () => {
-	// The US-scoped drugstore claim is about US establishments; a French anchor is where the search looks, so the claim
+	// The US-scoped drugstore claim is about US establishments. a French anchor is where the search looks, so the claim
 	// falls out there and the receipt says so. The caller's locale is en-US throughout — it is the lens, not the place.
 	it("drops a scoped category at an anchor outside its scope, and records what fell out", async () => {
 		const stage = createPOIIntentStage({
@@ -389,7 +389,7 @@ describe("the place binding of a country-scoped claim (#1999)", () => {
 		expect(outcome.intent.subject).not.toHaveProperty("countryBinding")
 	})
 
-	// A category two authorities reach stays when either holds at the anchor; the scope is on the claim, not the id.
+	// A category two authorities reach stays when either holds at the anchor. the scope is on the claim, not the id.
 	it("bindCountryScope keeps a category that an unscoped hit also reaches", () => {
 		const scoped: POIPhraseMatch = { ...PRESCRIPTION_SET[1]!, countryScope: ["US"] }
 
@@ -401,7 +401,7 @@ describe("the place binding of a country-scoped claim (#1999)", () => {
 
 		expect(bindCountryScope([PRESCRIPTION_SET[1]!], "FR")).toBeNull()
 
-		// The scope's own casing is folded; the anchor country arrives upper-case from `resolvePOIAnchorCountry`.
+		// The scope's own casing is folded. the anchor country arrives upper-case from `resolvePOIAnchorCountry`.
 		const lowerScoped: POIPhraseMatch = { ...PRESCRIPTION_SET[0]!, countryScope: ["us"] }
 
 		expect(bindCountryScope([lowerScoped], "US")?.categoryIDs).toEqual(["drugstore"])
@@ -409,7 +409,7 @@ describe("the place binding of a country-scoped claim (#1999)", () => {
 })
 
 // placeCountry/streetEvidence lazy-load bundled data on first call — off for hermetic tests
-// (fresh worktrees may lack linked dev weights; the poi arc doesn't touch either stage).
+// (fresh worktrees may lack linked dev weights. the poi arc doesn't touch either stage).
 const HERMETIC = { placeCountry: false as const, streetEvidence: false as const }
 
 describe("createRuntimePipeline poiQueryKind flag", () => {
@@ -669,7 +669,7 @@ describe("createRuntimePipeline poiQueryKind flag", () => {
 		if (first.poiIntent?.type !== "intent") throw new Error("unreachable")
 
 		expect(first.poiIntent.results).toBeUndefined()
-		// Second call must not throw either (lazy resolve happens once; degrade is sticky).
+		// Second call must not throw either (lazy resolve happens once. degrade is sticky).
 		const second = await pipeline("hospital near Springfield")
 		expect(second.poiIntent?.type).toBe("intent")
 	})

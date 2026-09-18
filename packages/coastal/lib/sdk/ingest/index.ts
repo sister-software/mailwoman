@@ -17,7 +17,7 @@
  *   mistake the projection check cannot see.
  *
  *   THE DATUM SHIFT NEEDS A GRID, AND ITS ABSENCE IS SILENT. OSGB36 to WGS84 is accurate to a metre only
- *   through the OSTN15 grid; without it PROJ substitutes a ballpark offset and produces coordinates that are
+ *   through the OSTN15 grid. without it PROJ substitutes a ballpark offset and produces coordinates that are
  *   metres wrong and indistinguishable from correct ones. On the sibling flood product that showed up only as
  *   eight disagreements out of 59 against the authority's own service.
  *   {@linkcode assertDatumTransformationAvailable} refuses the build rather than letting the whole layer
@@ -106,7 +106,7 @@ export interface CoastalIngestOptions {
 	 */
 	geodatabasePath: string
 	/**
-	 * Stop after this many features per layer — the fixtures and smoke rungs use it; a full build does not set it.
+	 * Stop after this many features per layer — the fixtures and smoke rungs use it. a full build does not set it.
 	 */
 	limit?: number
 	/**
@@ -155,7 +155,7 @@ const COORDINATE_PRECISION = 9
 /**
  * How far outside the declared extent a vertex may fall before the ingest refuses.
  *
- * A declared extent is itself a rounded published value, so an exact test would be brittle; this margin is small enough
+ * A declared extent is itself a rounded published value, so an exact test would be brittle. this margin is small enough
  * that an unprojected or axis-swapped read — which lands degrees or whole hemispheres away — still fails.
  */
 const BBOX_MARGIN_DEGREES = 0.01
@@ -528,7 +528,7 @@ export async function createGeodatabaseFeatureSource(options: GeodatabaseSourceO
 
 	// Every layer's identity is read UP FRONT and kept, because the fourteen layers do not share one schema and the
 	// `SELECT` for each is built from its own field list. Re-reading it per stream would work and would cost a second
-	// `ogrinfo` per layer; keeping it makes the identity the source declared and the identity the query was built from
+	// `ogrinfo` per layer. keeping it makes the identity the source declared and the identity the query was built from
 	// the same object.
 	const identities = new Map<string, CoastalLayerIdentity>()
 

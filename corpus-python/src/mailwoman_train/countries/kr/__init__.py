@@ -1,4 +1,4 @@
-"""Korea. Corpus from the Juso road-name address register; permits from the building register."""
+"""Korea. Corpus from the Juso road-name address register. permits from the building register."""
 
 from __future__ import annotations
 

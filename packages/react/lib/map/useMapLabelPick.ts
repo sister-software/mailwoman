@@ -29,7 +29,7 @@ import type { MapInstance, MapLayerMouseEvent } from "react-map-gl/maplibre"
 const LABEL_LAYER = /_label|^places_/
 
 /**
- * Properties a label carries its text under, in the order they are trusted. `name` is protomaps' own; the localized
+ * Properties a label carries its text under, in the order they are trusted. `name` is protomaps' own. the localized
  * variants appear on styles built for a specific script.
  */
 const NAME_KEYS = ["name", "name:en", "name_en"] as const
@@ -98,7 +98,7 @@ export function useMapLabelPick(map: MapInstance | null, onPick: (name: string) 
 
 				const canvas = map.getCanvas()
 
-				// The drag cursor belongs to the pan gesture; overriding it mid-drag would fight the map for the pointer.
+				// The drag cursor belongs to the pan gesture. overriding it mid-drag would fight the map for the pointer.
 				if (canvas.style.cursor === "grabbing") return
 
 				canvas.style.cursor = labelNameAt(map, event.point, layers) ? "pointer" : ""

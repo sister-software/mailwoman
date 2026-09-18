@@ -5,7 +5,7 @@
  *
  *   Weight-resolution + `loadFromWeights` end-to-end tests.
  *
- *   - Explicit-path tests run unconditionally (use the committed dev tokenizer fixture; require the
+ *   - Explicit-path tests run unconditionally (use the committed dev tokenizer fixture. require the
  *       host-side ONNX model path).
  *   - Auto-resolve tests symlink the dev weights into `@mailwoman/neural-weights-en-us` first and then
  *       attempt `loadFromWeights({locale: "en-us"})`. They skip if the dev model isn't on disk so
@@ -15,7 +15,7 @@
  *       must fall through to the en-us package dir (`source` suffixed `+base`) while its own
  *       `pair-index-gb.bin` resolves locally. As of 6.7.0 en-gb also ships its own `model-card.json`
  *       (#1249's overlay-local path), so the card-less fallback for `modelCardPath` is dormant for en-gb
- *       (model/tokenizer still fall through to base; only the card resolves locally, per
+ *       (model/tokenizer still fall through to base. only the card resolves locally, per
  *       `resolveFromPackageDir`'s precedence). Since 2026-08-05 (#1467) en-gb also asserts no anchor
  *       lookup, and both halves of that — the resolver's answer and the `files` manifest — are pinned:
  *       the encoder's GB anchor slot is untrained, so re-adding `postcode-gb.bin` without a retrain is
@@ -81,7 +81,7 @@ const haveModel = await pathExists(MODEL_PATH)
  * sites in this file were invoking them, most in pairs, for a result that cannot change after the first: measured
  * 2026-08-02 the file was 96.6s of a 253s CI leg.
  *
- * The rebuild semantics survive memoization. The first call does the freshness check and any rebuild; every later call
+ * The rebuild semantics survive memoization. The first call does the freshness check and any rebuild. every later call
  * was re-verifying state the first one already made fresh, and no test asserts the ACT of re-linking. Nothing in this
  * file deletes a real `neural-weights-*` artifact mid-run (the two `rmSync`/`symlinkSync` sites work on temp fixtures),
  * so the memo cannot go stale underneath a later test. If that ever changes, this is what has to be reconsidered.
@@ -263,7 +263,7 @@ describe("resolveWeights — package auto-resolve", () => {
 	// So this assertion is a regression check, not a description: the failure it exists to catch is someone
 	// re-adding postcode-gb.bin — to `files`, to release.config.json's postcodeDBByCountry, to the
 	// publish workflow's fetch list, or by hand into the package dir — WITHOUT the retrain that feeds
-	// slot 4. That change produces no error and no warning on its own; it just quietly makes GB worse.
+	// slot 4. That change produces no error and no warning on its own. it just quietly makes GB worse.
 	// 9.0.0 (ROAD_TO_V9 A4): the GB anchor slot is TRAINED (v4.2.0 base, Fisher receipts in the
 	// en-gb card) and postcode-gb.bin is back — the card declares span_mode "shaped" and the dev
 	// linker builds the bin off that card check. The #1467 "has no anchor lookup" posture this test
@@ -274,7 +274,7 @@ describe("resolveWeights — package auto-resolve", () => {
 			ensureDevWeightsLinked("en-us", "en-gb")
 
 			const r = await resolveWeights({ locale: "en-gb" })
-			// `+base` is exercised hermetically below; here the point is that en-gb RESOLVES.
+			// `+base` is exercised hermetically below. here the point is that en-gb RESOLVES.
 			expect(r.source).toMatch(/^(package|overlay):/)
 			expect(r.modelPath).toMatch(/\/model\.onnx$/)
 			expect(r.tokenizerPath).toMatch(/\/tokenizer\.model$/)
@@ -295,7 +295,7 @@ describe("resolveWeights — package auto-resolve", () => {
 	)
 
 	// The packaging half of the same regression check. The assertion above reads the RESOLVER's answer, which is
-	// derived from the package DIRECTORY; this one reads the package MANIFEST. They can disagree — a
+	// derived from the package DIRECTORY. this one reads the package MANIFEST. They can disagree — a
 	// tarball ships what `files` names, a dev worktree resolves what is on disk — and each failure mode
 	// has its own repair, so neither assertion substitutes for the other.
 	// Restated 2026-08-06 (ROAD_TO_V9 §1 A4) as a COUPLING rather than a bare absence. #1467's rule was
@@ -539,7 +539,7 @@ describe("NeuralAddressClassifier.loadFromWeights — placetype-pair prior (smok
 
 			// Beta-less view of the same index bytes: probe + delta identical, transitionBeta (and parentDelta,
 			// which arrived with the same generation of changes) withheld. On the 7.0.0 base this leg pinned the
-			// pre-β miss; on the v4.4.0 base the 2026-08-11 sweep measured 190/191 PPD rows recovering in both
+			// pre-β miss. on the v4.4.0 base the 2026-08-11 sweep measured 190/191 PPD rows recovering in both
 			// legs, so the leg now asserts the self-recovery — the wiring proof (applied:true) is unchanged, and
 			// a regression of this class fails here first (see the header comment for the re-pin recipe).
 			const betaLessView: PairIndexLike = { probe: (c, p) => resolver.probe(c, p), delta: resolver.delta }
@@ -591,7 +591,7 @@ describe("loadFromWeights — pair-index country check (warn branch)", () => {
 			ensureDevWeightsLinked("en-us")
 
 			// ASK THE RESOLVER where the artifacts are. This used to name the workspace directory, which held
-			// them only while the dev linkers materialized into the tracked package; they now land in the
+			// them only while the dev linkers materialized into the tracked package. they now land in the
 			// data-root overlay, and a fixture mirroring an empty directory produces a cache with no binaries —
 			// so the resolve under test silently answers from somewhere else and the eval never fires.
 			const packageDir = dirname((await resolveWeights({ locale: "en-us" })).modelPath)

@@ -72,3 +72,5 @@ tokens:
   - '\bcarr(?:y|ies|ied) the (?:[\w-]+ )?(?:cost|win|loss|regression)\b'
   # Training shorthand that omits the actual operation.
   - '\btake (?:this|it|that|the [\w-]+) to \d+k\b'
+  # Protection language hides the concrete behavior or invariant being maintained.
+  - '\bprotect(?:s|ed)?\b'

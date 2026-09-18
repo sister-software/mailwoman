@@ -73,7 +73,7 @@ def test_every_registered_country_satisfies_the_protocol() -> None:
 
 
 def test_each_country_names_the_label_set_its_rows_are_tagged_against() -> None:
-    """Japan's head is its own; Korea and Taiwan share the CJK head. A country that silently
+    """Japan's head is its own. Korea and Taiwan share the CJK head. A country that silently
     inherited the wrong one would train against labels its rows never carry."""
     assert country_module("jp").LABEL_SET_NAME == "stage3-jp"
     assert country_module("kr").LABEL_SET_NAME == "stage3-cjk"
@@ -84,7 +84,7 @@ def test_the_board_floor_is_per_country() -> None:
     """The municipality-population floor above which a row is held out for the board.
 
     Japan's is higher than Korea's and Taiwan's because its municipality sizes are distributed
-    differently; a single shared constant would move two countries' boards to fix one.
+    differently. a single shared constant would move two countries' boards to fix one.
     """
     assert country_module("jp").BOARD_BUCKET_MIN == 97
     assert country_module("kr").BOARD_BUCKET_MIN == 90

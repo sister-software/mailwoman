@@ -130,7 +130,7 @@ export function LayerToggleControl({ map }: LayerToggleControlProps) {
 			const visibility = group.visible ? "none" : "visible"
 
 			for (const layerID of group.layerIDs) {
-				// A layer can leave the style between the read and the click; the group's other layers still switch.
+				// A layer can leave the style between the read and the click. the group's other layers still switch.
 				try {
 					map.setLayoutProperty(layerID, "visibility", visibility)
 				} catch {

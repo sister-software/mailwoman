@@ -16,7 +16,7 @@
  *   for {@linkcode filerLinkageEval}'s use: a predicted family's id is derived from the canonicalized
  *   parent name, so there is no correspondence problem to solve and no alignment step to get wrong — the
  *   only question that matters is "are these two records correctly judged together or apart," which is
- *   well-defined over pairs without an alignment step. (The scorecard states the same rationale; keep the
+ *   well-defined over pairs without an alignment step. (The scorecard states the same rationale. keep the
  *   two in step — a module and its published page disagreeing about why a metric was chosen is its own
  *   defect.) `registry/tools/train-gbt.ts`'s (unexported) `clusterF1` makes the identical pairwise choice
  *   for an analogous problem (does `resolveEntities`' clustering recover the true NPI grouping?) —
@@ -100,7 +100,7 @@ export interface PairwiseGroupingScore {
  * group id per id — see {@linkcode groupPredicateFromMap}), but a PREDICTED grouping need not be a partition at all.
  * {@linkcode filerLinkageEval} is the worked case: a registrant can belong to SEVERAL corporate families at once
  * (`filer_family` admits more than one membership per node), and two registrants are predicted-same when their family
- * SETS intersect — an overlap relation, not an equivalence class. A single group-id map cannot express that; a
+ * SETS intersect — an overlap relation, not an equivalence class. A single group-id map cannot express that. a
  * predicate can.
  */
 export function scorePairwiseGrouping<ID>(
@@ -139,7 +139,7 @@ export function scorePairwiseGrouping<ID>(
 	const recall = truthPositivePairs > 0 ? truePositivePairs / truthPositivePairs : null
 
 	// `null` in, `null` out — never `0`. `0` is reserved for the case both components are DEFINED and the
-	// prediction still recovered nothing, which is a measurement; an undefined component is the absence of one.
+	// prediction still recovered nothing, which is a measurement. an undefined component is the absence of one.
 	let f1: number | null = null
 
 	if (precision !== null && recall !== null) {

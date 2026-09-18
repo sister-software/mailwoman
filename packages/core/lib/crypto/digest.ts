@@ -5,7 +5,7 @@
  *
  *   SHA-256 on `crypto.subtle` and the hex rendering of a byte string: the digest the license key id, the register and
  *   the license worker share. `@mailwoman/core/hash` keeps the synchronous `node:crypto` digests for files and build
- *   scripts; this module is the one a Worker or a browser can import.
+ *   scripts. this module is the one a Worker or a browser can import.
  */
 
 export async function sha256Bytes(data: Uint8Array<ArrayBuffer>): Promise<Uint8Array<ArrayBuffer>> {

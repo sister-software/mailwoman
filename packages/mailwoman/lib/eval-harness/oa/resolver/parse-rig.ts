@@ -187,7 +187,7 @@ export async function buildParseRig(
 export function resolveOptsFrom(options: OAResolverEvalOptions, defaultCountry: string): Record<string, unknown> {
 	// `--hierarchy-completion` (#405, generalizes #387's `--city-state-fallback`): recover the locality
 	// the parser drops for a DUAL-ROLE place (city-state or capital-seat province), via the precomputed
-	// coincident-roles relation (#403). Opt-in, default-off → by default this eval is byte-identical;
+	// coincident-roles relation (#403). Opt-in, default-off → by default this eval is byte-identical.
 	// pass it to measure the before/after. Applied to both the neural and rules resolve paths (they
 	// share `resolveOpts`), so the comparison stays fair. `--city-state-fallback` kept as an alias.
 	const hierarchyCompletion = options.hierarchyCompletion ?? false

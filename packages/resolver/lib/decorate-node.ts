@@ -66,7 +66,7 @@ export function decorateNode(
 		delete node.lon
 	}
 
-	node.placeID = `wof:${resolved.id}` // v1: only WOF resolvers; the URI scheme stays this simple
+	node.placeID = `wof:${resolved.id}` // v1: only WOF resolvers. the URI scheme stays this simple
 	// Record the resolver's ranking score and the resolved place's canonical name. The name is the
 	// gazetteer's truth for the place we picked — distinct from `node.value` (the raw input span). It
 	// lets consumers display the canonical name and lets the end-to-end eval check the resolver chose
@@ -74,10 +74,10 @@ export function decorateNode(
 	node.metadata = { ...node.metadata, resolver_score: resolved.score, resolver_name: resolved.name }
 
 	// The winner's PROMINENCE, when the backend computed one. `alternatives` below are full `ResolvedPlace`s and
-	// already carry theirs; without this stamp the WINNER's is the one value in the ranked list that gets dropped,
+	// already carry theirs. without this stamp the WINNER's is the one value in the ranked list that gets dropped,
 	// which makes a top-1-vs-top-2 margin uncomputable from the tree — and that margin is what
 	// `mailwoman/query-intent.ts` reads to decide whether a bare-toponym answer was a clear win. Additive metadata
-	// only; nothing in the resolve reads it back.
+	// only. nothing in the resolve reads it back.
 	if (resolved.prominence !== undefined) {
 		node.metadata["resolver_prominence"] = resolved.prominence
 	}
@@ -116,7 +116,7 @@ export function decorateNode(
 
 	// Fallback-observability (#718): a broader admin tier (macroregion/macrocounty) stood in for the
 	// true region/county because no exact-type candidate existed. Additive annotation only — the
-	// resolved coordinate/identity above is untouched; this just lets a consumer / QA pass see it.
+	// resolved coordinate/identity above is untouched. this just lets a consumer / QA pass see it.
 	if (resolved.resolutionQuality) {
 		node.metadata["resolution_quality"] = resolved.resolutionQuality
 	}

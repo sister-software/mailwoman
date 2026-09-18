@@ -249,7 +249,7 @@ describe("ANCHOR_SEPARATOR split behaviour (byte-identical across the linearizat
 	})
 
 	it("skips a leading separator (index === 0 guard) — no split before the first token", () => {
-		// Leading comma: the sole separator is at index 0 and is skipped; the whole-input path already missed → null.
+		// Leading comma: the sole separator is at index 0 and is skipped. the whole-input path already missed → null.
 		expect(matchPOISubject(", Boston", "en-US", subjectLookup)).toBeNull()
 	})
 
@@ -331,7 +331,7 @@ describe("ANCHOR_SEPARATOR is linear (ReDoS safety)", () => {
 		const m = matchPOISubject(pathological, "en-US", neverHits)
 		const elapsed = performance.now() - start
 		expect(m).toBeNull()
-		// The old O(n²) form took seconds on 1e5 chars; the linear form completes in single-digit ms. 100ms is a
+		// The old O(n²) form took seconds on 1e5 chars. the linear form completes in single-digit ms. 100ms is a
 		// generous ceiling that still fails loudly if quadratic backtracking returns.
 		expect(elapsed).toBeLessThan(100)
 	})

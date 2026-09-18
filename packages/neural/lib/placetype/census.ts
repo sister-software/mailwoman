@@ -13,7 +13,7 @@
  *   Why both artifacts exist, rather than folding the census's links into the pair index: a pair
  *   entry ASSERTS a surface is a dependent locality, so every batch of them needs a venue-confound
  *   board before it ships (the law-1 directional class — "East Acton" opening a venue name). A
- *   census node asserts nothing about any surface; it can only tilt a reading the model already
+ *   census node asserts nothing about any surface. it can only tilt a reading the model already
  *   entertains under a parent it already identified. That makes the census the safe way to cover
  *   the long tail the pair batches will never individually clear.
  *

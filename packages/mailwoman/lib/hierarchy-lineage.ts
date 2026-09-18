@@ -9,19 +9,19 @@
  *   and contributes its entry beside the locality winner, whether or not any place on earth has that containment chain.
  *   The recorded instance: `24 37 42nd St, Astoria, NY 11103` shipped a hierarchy of Astoria-the-OREGON-locality under
  *   New-York-the-region — two correct-looking fragments composing a chain that exists nowhere. Silently mixing the
- *   winner's lineage with independently resolved fragments is the defect; this module makes the mixing explicit.
+ *   winner's lineage with independently resolved fragments is the defect. this module makes the mixing explicit.
  *
  *   Each entry gains a tri-state `in_winner_lineage`:
  *
  *   - `true` — the winner's own ancestors sidecar vouches for this entry (or the entry is the winner).
  *   - `false` — the entry resolved independently to a place outside the winner's containment chain: the chimera
- *     fragment, and the statement the #1722 account layer reads as "parsed region resolved independently to X; winner
+ *     fragment, and the statement the #1722 account layer reads as "parsed region resolved independently to X. winner
  *     sits in Y".
  *   - absent — no sidecar to ask (the backend/artifact carries no `ancestors()`), or the entry has no place identity.
  *     Absence is "unverifiable", never "false" (the meaning-of-zero rule).
  *
  *   The winner-chain-AS-hierarchy representation (the issue's other sanctioned close) belongs to the #1717 stage-2
- *   containment re-rank, where the winner's chain becomes the natural assembly; until then the shipped shape keeps its
+ *   containment re-rank, where the winner's chain becomes the natural assembly. until then the shipped shape keeps its
  *   parse-anchored entries and states each one's standing.
  */
 
@@ -147,7 +147,7 @@ export interface LineageAnchor {
  * Annotate `entries` in place with `in_winner_lineage` against `anchor`'s stamped ancestor chain.
  *
  * Grading is by place identity (`wof:<id>`), never by name — a name match across instances is exactly the confusion the
- * field exists to expose. Without a sidecar only the anchor's own entry can be vouched for; every other entry stays
+ * field exists to expose. Without a sidecar only the anchor's own entry can be vouched for. every other entry stays
  * ungraded rather than guessed.
  */
 export function annotateHierarchyLineage(

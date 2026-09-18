@@ -8,7 +8,7 @@
  *   not in mailwoman's training corpus (Overture/NAD/BAN), so it measures genuine US generalization, the
  *   complement to the FR/BAN draw. Public domain (US Government work).
  *
- *   Writes a semicolon CSV pool (address;city;state;zip;lat;lon) to $MAILWOMAN_DATA_ROOT/corpus/staging/
+ *   Writes a semicolon CSV pool (address.city.state.zip.lat.lon) to $MAILWOMAN_DATA_ROOT/corpus/staging/
  *   fdic-us.csv, build-on-copy. The pool is the FAST draw — holdout.ts reservoir-samples it in milliseconds
  *   instead of streaming the 5 GB BAN file. Re-run to refresh (FDIC re-indexes ~monthly).
  *
@@ -124,7 +124,7 @@ export async function buildFDICHoldout(): Promise<void> {
 				continue
 			}
 
-			// Semicolons can't appear in a US street address/city; no escaping needed.
+			// Semicolons can't appear in a US street address/city. no escaping needed.
 			sink.write(`${address};${city};${state};${zip};${lat};${lon}\n`)
 
 			written++

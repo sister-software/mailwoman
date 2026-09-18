@@ -120,7 +120,7 @@ describe("NeuralAddressClassifier.traceParse", () => {
 
 		expect(queryShapePrior).toEqual({ kind: "queryShape", applied: false })
 
-		// The span proposer is default-ON; whether it fires depends on the text. The contract is
+		// The span proposer is default-ON. whether it fires depends on the text. The contract is
 		// every kind, in application order — asserted against the exported constant, so a new prior
 		// added to #decode without its participation record fails here instead of silently vanishing
 		// from traces.
@@ -234,7 +234,7 @@ describe("NeuralAddressClassifier.traceParse", () => {
 		const text = "London SW1A 1AA"
 		const { pieces } = tokenizer.encode(text)
 
-		// Everything decodes O; the postcode-repair pass should add the "SW1A 1AA" postcode span.
+		// Everything decodes O. the postcode-repair pass should add the "SW1A 1AA" postcode span.
 		const logits = pieces.map(() => {
 			const row = Array.from<number>({ length: STAGE2_BIO_LABELS.length }).fill(0)
 			row[STAGE2_BIO_LABELS.indexOf("O")] = 2
@@ -370,7 +370,7 @@ describe("NeuralAddressClassifier.traceParse", () => {
 		// "P.O. Box" fragments: label the alphanumeric pieces street (a STAGE2 tag — the fake
 		// classifier runs the 21-label set, and the bridge is tag-agnostic), leave the dot pieces O.
 		// The bridge merges the fragments across the unlabeled intra-token punctuation, DROPPING
-		// tokens; the trace contract still promises per-piece before/after (char-offset projection).
+		// tokens. the trace contract still promises per-piece before/after (char-offset projection).
 		const text = "P.O. Box 123"
 		const { pieces } = tokenizer.encode(text)
 		const oIdx = STAGE2_BIO_LABELS.indexOf("O")
@@ -426,7 +426,7 @@ describe("NeuralAddressClassifier.traceParse", () => {
 		expect(trace.anchor).toBeDefined()
 		expect(trace.anchor!.confidence).toHaveLength(pieces.length)
 		expect(trace.anchor!.features).toHaveLength(pieces.length)
-		// The ZIP's pieces carry the anchor hit; leading pieces don't.
+		// The ZIP's pieces carry the anchor hit. leading pieces don't.
 		expect(Math.max(...trace.anchor!.confidence)).toBeGreaterThan(0)
 		// Serializable by construction: a JSON round-trip preserves the channel byte-for-byte.
 		expect(structuredClone(trace.anchor)).toEqual(trace.anchor)

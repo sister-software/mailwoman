@@ -3,7 +3,7 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  * @file The scoped pair probe for a compound JP municipality: the ward answers under its city, never a namesake
- *   elsewhere; a town answers under the prefecture when its county has no key; a plain miss stays a miss.
+ *   elsewhere. a town answers under the prefecture when its county has no key. a plain miss stays a miss.
  */
 
 import { expandPlacetypeFilter } from "@mailwoman/codex/placetype-map"
@@ -85,7 +85,7 @@ const PLACES: ResolvedPlace[] = [
 		lon: 140.45,
 		score: 9,
 	},
-	// The town under its prefecture; the county 猿島郡 has no record at all.
+	// The town under its prefecture. the county 猿島郡 has no record at all.
 	{
 		id: GOKA,
 		name: "五霞町",
@@ -148,7 +148,7 @@ describe("compound JP municipality — the scoped pair", () => {
 			answered: "tail",
 		})
 
-		// The tail probe carried the city as its parent; no unscoped probe of the bare ward was made.
+		// The tail probe carried the city as its parent. no unscoped probe of the bare ward was made.
 		const wardProbes = backend.calls.filter((call) => call.text === "西区")
 
 		expect(wardProbes).toHaveLength(1)

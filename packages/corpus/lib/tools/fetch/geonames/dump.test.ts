@@ -4,7 +4,7 @@
  * @author Teffen Ellis, et al.
  * @file `fetchGeonamesDumps` — catalog-driven coverage, the zip→txt extraction, and the two presence traps: a country
  *   the source does not publish (404 ≠ transfer failure, the geonames-postal lesson) and a present `<CC>.txt` that is
- *   not a gazetteer dump at all (GeoNames' postal exports share the basename; seven tier-1 postal files sat at these
+ *   not a gazetteer dump at all (GeoNames' postal exports share the basename. seven tier-1 postal files sat at these
  *   paths reading as coverage until the capitals build found them capital-less).
  */
 
@@ -130,7 +130,7 @@ describe("fetchGeonamesDumps", () => {
 
 		const outRoot = scratch.path
 
-		// AA is already a real dump; BB is a 12-column postal export squatting on the dump filename.
+		// AA is already a real dump. BB is a 12-column postal export squatting on the dump filename.
 		await writeLocalFile(dumpRow(1, "Aa City", "PPLC", "AA"), join(outRoot, "AA.txt"))
 
 		await writeLocalTextFile(

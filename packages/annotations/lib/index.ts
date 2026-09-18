@@ -75,7 +75,7 @@ export interface NUTS {
 }
 
 /**
- * The native enrichment set. Every field is optional; an annotator fills the fields it owns. camelCase throughout,
+ * The native enrichment set. Every field is optional. an annotator fills the fields it owns. camelCase throughout,
  * structured sub-objects — the internal representation the serializers map from.
  */
 export interface AnnotationSet {
@@ -342,7 +342,7 @@ export interface SchemaOrgPlace {
 }
 
 /**
- * The neutral resolved-address input {@link toSchemaOrg} serializes. Every field is optional; an absent field is omitted
+ * The neutral resolved-address input {@link toSchemaOrg} serializes. Every field is optional. an absent field is omitted
  * from the output entirely (no `null`s). Mirrors the {@link OpenCageAnnotations} precedent: one native shape, a
  * dedicated serializer per wire format.
  */
@@ -374,8 +374,8 @@ export interface SchemaOrgInput {
 /**
  * Collapse parsed street parts into one opaque `streetAddress` line — the schema.org lossy-by-design collapse (house
  * number + street + unit → a single space-joined string). Parts are number-FIRST, correct for the shipped en-US / fr-FR
- * tiers; callers with `@mailwoman/formatter` render locale-aware (e.g. de-DE number-last) instead. Blank parts are
- * dropped; an all-empty input yields `""`.
+ * tiers. callers with `@mailwoman/formatter` render locale-aware (e.g. de-DE number-last) instead. Blank parts are
+ * dropped. an all-empty input yields `""`.
  */
 export function composeStreetAddress(parts: { houseNumber?: string; street?: string; unit?: string }): string {
 	return [parts.houseNumber, parts.street, parts.unit]
@@ -389,7 +389,7 @@ export function composeStreetAddress(parts: { houseNumber?: string; street?: str
  * PostalAddress }` (#1052). An OUTPUT PROJECTION, lossy by design: `streetAddress` is one opaque string, and
  * tiers/confidence/provenance don't fit the core vocabulary, so they're dropped rather than shoehorned into an
  * extension property. Only populated fields are emitted — absent fields are omitted entirely (never `null`).
- * `addressCountry` is ISO-3166 alpha-2 (uppercased). `geo` is emitted only when both coordinates are finite; the
+ * `addressCountry` is ISO-3166 alpha-2 (uppercased). `geo` is emitted only when both coordinates are finite. the
  * `address` block only when at least one address field is present.
  */
 export function toSchemaOrg(input: SchemaOrgInput): SchemaOrgPlace {

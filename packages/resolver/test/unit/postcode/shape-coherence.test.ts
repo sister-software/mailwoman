@@ -8,7 +8,7 @@
  *   siblings. The pre-registered bars, per `docs/superpowers/plans/2026-08-05-postcode-structure-arc.md`:
  *
  *   - **B1-1** — byte-stability where it must be inert: a confirmed span (shape ∩ confident siblings
- *     ≠ ∅) adds `postcode_shape_systems` metadata and nothing else; resolution is byte-identical to
+ *     ≠ ∅) adds `postcode_shape_systems` metadata and nothing else. resolution is byte-identical to
  *     the flag-off walk.
  *   - **B1-2** — the M-1 exclusion board: ≥90% of the mechanism's "speaks population" (confident
  *     siblings present) is excluded with the correct sibling tag surviving. 4 real Gauntlet spans
@@ -243,7 +243,7 @@ describe("applyPostcodeShapeCoherence — ABSTENTIONS (B1-2 documented, B1-3 con
 
 	it("confounds: 'Sydney NSW 2000, Australia' stays CONFIRMED — the default country is never a signal", () => {
 		// B1-3: reached under a US default, 2000 must not be excluded — that would delete the
-		// evidence the country-scope pass needs. The mechanism has no defaultCountry input at all;
+		// evidence the country-scope pass needs. The mechanism has no defaultCountry input at all.
 		// the only signals are the tree's own country/region tokens.
 		const roots = [postcodeNode("2000"), node({ tag: "country", value: "Australia" })]
 
@@ -281,7 +281,7 @@ describe("isShapeExcludedPostcode", () => {
 
 describe("firstPostcodeValue integration — excluded spans never become the address's postcode", () => {
 	it("skips a stamped-excluded span when selecting the tree's postcode", async () => {
-		// Two postcode spans; the letter-containing one is excluded, the US 5-digit one is not.
+		// Two postcode spans. the letter-containing one is excluded, the US 5-digit one is not.
 		const excluded = postcodeNode("SW1A 2AA")
 		const good = postcodeNode("80503")
 

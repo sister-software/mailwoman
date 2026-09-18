@@ -12,9 +12,9 @@
  *   ## Acquisition
  *
  *   Open UPRN is an OS OpenData product on the same public **OS Downloads API** as Code-Point Open
- *   (two unauthenticated GETs; the listing carries OS's own md5 + byte size, which the download is
+ *   (two unauthenticated GETs. the listing carries OS's own md5 + byte size, which the download is
  *   verified against). The API client is shared with `postcode/codepoint/fetch.ts` — the client is
- *   product-neutral even though its module home is not; hoisting the whole fetch trio out of
+ *   product-neutral even though its module home is not. hoisting the whole fetch trio out of
  *   `postcode/codepoint/` is the follow-up when a third OS product arrives. Acquisitions land in a
  *   dated `$MAILWOMAN_DATA_ROOT/os-uprn/<YYYY-MM-DD>/` directory with an `acquisition.json` + `.md5`
  *   sidecar, so an offline rebuild recovers provenance without re-asking an API whose answer has
@@ -33,7 +33,7 @@
  *   lines), so there is no upstream oracle to reconcile against. What checks instead: the archive md5
  *   against OS's published digest, an exact header match (schema drift fails loudly), the accounting
  *   identity `read = inserted + malformed + duplicate` with malformed and duplicate both expected
- *   zero, and a row floor (the 2026-08 extract holds 41,629,393 rows; the product only grows, so a count
+ *   zero, and a row floor (the 2026-08 extract holds 41,629,393 rows. the product only grows, so a count
  *   under the floor means a truncated read, not a smaller Britain).
  *
  *   ## Coverage
@@ -100,7 +100,7 @@ export const OPEN_UPRN_LICENSE_URL = "https://www.nationalarchives.gov.uk/doc/op
 
 /**
  * The attribution OS requires of OS OpenData redistributors, in the wording the archive's own `licence.txt` uses.
- * `year` is the OS copyright year as stated in that licence text — not the build year; republishing a 2026 extract in
+ * `year` is the OS copyright year as stated in that licence text — not the build year. republishing a 2026 extract in
  * 2027 still attributes the 2026 data.
  */
 export function openUPRNAttribution(year: number): string {
@@ -108,7 +108,7 @@ export function openUPRNAttribution(year: number): string {
 }
 
 /**
- * The exact CSV header of the product. Verified against the 2026-08 extract; a drifted header fails the build loudly
+ * The exact CSV header of the product. Verified against the 2026-08 extract. a drifted header fails the build loudly
  * rather than silently mapping columns by position.
  */
 export const OPEN_UPRN_HEADER = "UPRN,X_COORDINATE,Y_COORDINATE,LATITUDE,LONGITUDE"
@@ -158,7 +158,7 @@ export interface OpenUPRNProduct {
 }
 
 /**
- * The three label lines of the archive's `versions.txt` — no row counts, no checksums; just enough to date the extract.
+ * The three label lines of the archive's `versions.txt` — no row counts, no checksums. just enough to date the extract.
  */
 export interface OpenUPRNVersions {
 	/**
@@ -360,7 +360,7 @@ export interface ExtractOpenUPRNResult {
 }
 
 /**
- * Decode a small provenance text file whose encoding OS does not declare. Strict UTF-8 first; a failure falls back to
+ * Decode a small provenance text file whose encoding OS does not declare. Strict UTF-8 first. a failure falls back to
  * Latin-1, whose only plausible non-ASCII byte here is `0xA9` (`©`) — the Code-Point mojibake lesson.
  */
 function decodeProvenanceText(bytes: Uint8Array): string {
@@ -459,7 +459,7 @@ export interface BuildUPRNLayerOptions {
 	 */
 	now?: Date
 	/**
-	 * ISO-8601 `layer_manifest.created_at`. Caller-supplied per the layer contract; defaults to `now`.
+	 * ISO-8601 `layer_manifest.created_at`. Caller-supplied per the layer contract. defaults to `now`.
 	 */
 	createdAt?: string
 	/**
@@ -472,7 +472,7 @@ export interface BuildUPRNLayerOptions {
 	minimumPlausibleRows?: number
 	/**
 	 * Injected extraction result — the fixture path, the `build-poi.ts` `rows` precedent. Skips download and unzip
-	 * entirely; provenance still comes from `sourceDir`'s `acquisition.json` when one is present.
+	 * entirely. provenance still comes from `sourceDir`'s `acquisition.json` when one is present.
 	 */
 	extracted?: ExtractOpenUPRNResult
 	onPhase?: (phase: string, detail?: string) => void
@@ -490,7 +490,7 @@ export interface BuildUPRNLayerResult {
 	 */
 	inserted: number
 	/**
-	 * Lines that failed {@link parseOpenUPRNLine} — expected to be 0; any are reported in `mismatches`.
+	 * Lines that failed {@link parseOpenUPRNLine} — expected to be 0. any are reported in `mismatches`.
 	 */
 	skippedMalformed: number
 	/**
@@ -508,7 +508,7 @@ export interface BuildUPRNLayerResult {
 	osVersion: string
 	versions: OpenUPRNVersions
 	/**
-	 * Every violated check, in words. Empty on a clean build; the caller decides whether to fail on them.
+	 * Every violated check, in words. Empty on a clean build. the caller decides whether to fail on them.
 	 */
 	mismatches: string[]
 	durationMs: number
@@ -550,7 +550,7 @@ export async function buildUPRNLayer(options: BuildUPRNLayerOptions): Promise<Bu
 	const out = options.out ?? dataRootPath("uprn", "uprn.db")
 	const minimumPlausibleRows = options.minimumPlausibleRows ?? OPEN_UPRN_MINIMUM_PLAUSIBLE_ROWS
 
-	// Acquire the source; offline rebuilds recover provenance from acquisition.json, and when that
+	// Acquire the source. offline rebuilds recover provenance from acquisition.json, and when that
 	// is missing, the layer records the ABSENCE in words (the Code-Point discipline).
 	let archiveMD5: string
 	let osVersion: string
@@ -621,7 +621,7 @@ export async function buildUPRNLayer(options: BuildUPRNLayerOptions): Promise<Bu
 	await createLayerCoverageTable(kdb)
 
 	// Hot positional INSERT — raw prepared statement, per the AGENTS.md bulk-load carve-out. OR IGNORE so a
-	// source-side duplicate UPRN is COUNTED (via `changes === 0`) rather than aborting a 41M-row load; the
+	// source-side duplicate UPRN is COUNTED (via `changes === 0`) rather than aborting a 41M-row load. the
 	// accounting check then reports any as a defect.
 	const insert = kdb.prepare("INSERT OR IGNORE INTO uprn (uprn, lat, lon, h3_cell) VALUES (?, ?, ?, ?)")
 
@@ -692,7 +692,7 @@ export async function buildUPRNLayer(options: BuildUPRNLayerOptions): Promise<Bu
 	kdb.exec("COMMIT")
 	phase("ingest", `${inserted.toLocaleString()} UPRNs (${read.toLocaleString()} lines read)`)
 
-	// Validate against the available product evidence; no upstream row-count manifest exists, so the
+	// Validate against the available product evidence. no upstream row-count manifest exists, so the
 	// checks are internal consistency plus the truncation floor.
 	const mismatches: string[] = []
 

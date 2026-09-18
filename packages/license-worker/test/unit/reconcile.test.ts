@@ -247,7 +247,7 @@ describe("reconciliation", () => {
 	it("revokes a license whose charge Stripe reads as fully refunded although no refund event reached the ledger, and leaves a partial refund standing", async () => {
 		const email = recordingEmail()
 
-		// The missed-invoice sweep mints the refunded payment; the drift sweep of the same pass reads the charge.
+		// The missed-invoice sweep mints the refunded payment. the drift sweep of the same pass reads the charge.
 		const refunded = await fixture("13", { chargeRefunded: 25_000 })
 		const refundedDeps = { stripe: refunded.stripe, ledger: refunded.ledger, email: email.provider }
 		const report = await reconcileLedger(refunded.worker, refundedDeps, { sinceSeconds: WEEK })

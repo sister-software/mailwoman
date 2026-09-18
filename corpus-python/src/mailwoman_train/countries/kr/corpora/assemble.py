@@ -3,7 +3,7 @@
 Four passes, two output corpora, one shared RNG. The first paragraph above is what `--help` prints,
 so it stays a sentence about what the command does.
 
-`survey.py` runs the two measuring passes; this module runs the two SELECTING ones and writes what
+`survey.py` runs the two measuring passes. this module runs the two SELECTING ones and writes what
 they choose. Passes 3 and 4 draw from the same `random.Random`, and
 `tests/mailwoman_train/countries/test_kr_build_parity.py` pins what comes out — hoisting one draw
 above another re-renders both corpora.

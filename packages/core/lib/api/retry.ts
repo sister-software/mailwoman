@@ -36,10 +36,10 @@ const HTTP_SERVER_ERROR_MAX = 599
 /**
  * A hard ceiling on how long a single retry wait is ever allowed to be, REGARDLESS of what a server-supplied
  * `Retry-After` asks for. Honoring `Retry-After` is the right side of most fair-access policies, but an unbounded
- * honor-anything policy would let a pathological (or misconfigured) server hang a bulk crawl for hours; 60s is generous
+ * honor-anything policy would let a pathological (or misconfigured) server hang a bulk crawl for hours. 60s is generous
  * for anything a real rate limiter would plausibly ask for. Also the fallback used when `Retry-After` is present but
  * unparseable — a malformed header is still the server asking us to back off, and guessing long is the safe failure
- * mode; guessing short (the exponential default) risks hammering a server that explicitly asked for space.
+ * mode. guessing short (the exponential default) risks hammering a server that explicitly asked for space.
  */
 export const MAX_RETRY_AFTER_MS = 60_000
 
@@ -139,7 +139,7 @@ export function isRetryableStatus(status: number): boolean {
 
 /**
  * Read the `Retry-After` header off an Axios error's response, if it carried one. Axios lower-cases response header
- * names, but `AxiosHeaders` lookups are case-insensitive anyway; the lower-case spelling is used for the plain-object
+ * names, but `AxiosHeaders` lookups are case-insensitive anyway. the lower-case spelling is used for the plain-object
  * shape a stubbed adapter may return.
  */
 function retryAfterFrom(error: AxiosError): number | null {

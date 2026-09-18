@@ -13,7 +13,7 @@
  *   candidate row. Decided by the two consumers:
  *
  *   1. The admin-coherence check needs the WINNER's chain as (placetype, name) pairs in one probe.
- *      A fixed-slot `[id;8]` chain answers with ids, and every id then needs a name lookup the
+ *      A fixed-slot `[id.8]` chain answers with ids, and every id then needs a name lookup the
  *      artifact has no per-id table for — up to 8 indirections where the closure row has zero.
  *   2. The account layer needs every candidate under a `name_key` enumerable with its chain from
  *      one artifact probe ("present-but-outranked, discriminated by containment"). That is the
@@ -37,7 +37,7 @@
  *   at build time: `a` contains `d` ⟺ `a.pre <= d.pre AND d.post <= a.post` — O(1) in either
  *   direction with no chain scan and no knowledge of either side's tier — and the descendants of
  *   `a` are the contiguous range `pre BETWEEN a.pre AND a.post`. Interval labels are classically
- *   avoided for their relabel-on-update cost; this database is a sealed read-only artifact rebuilt
+ *   avoided for their relabel-on-update cost. this database is a sealed read-only artifact rebuilt
  *   whole, which is exactly the regime where that cost is void.
  *
  *   THE DAG CAVEAT, and the recorded choice: WOF places can carry more than one parent (multiple
@@ -46,7 +46,7 @@
  *   interval forest links each place to one canonical parent: its depth-1 edge — the finest
  *   containment tier, lowest ancestor id — the same MIN-stability convention the candidate table's
  *   `region_id` stamp uses. A containment question about a NON-canonical hierarchy must consult the
- *   closure rows; the interval answer for it is `false`, which is why interval verdicts are
+ *   closure rows. the interval answer for it is `false`, which is why interval verdicts are
  *   "contained along the canonical hierarchy", never "not contained at all".
  *
  *   ABSENCE SEMANTICS (meaning-of-zero): a place with no `candidate_interval` row has no recorded
@@ -64,7 +64,7 @@ import type { NameKey } from "#street/normalize"
 
 /**
  * The deepest chain the sidecar stores per place. WOF containment within the resolvable placetypes (country …
- * microhood) never legitimately exceeds this; anything past it is source noise the build drops (and counts) rather than
+ * microhood) never legitimately exceeds this. anything past it is source noise the build drops (and counts) rather than
  * stores.
  */
 export const MAX_ANCESTOR_DEPTH = 8
@@ -76,7 +76,7 @@ export const MAX_ANCESTOR_DEPTH = 8
 export const CANDIDATE_ANCESTOR_TABLE = "candidate_ancestor"
 
 /**
- * The interval-label table's name — the closure table's seal-time sibling; existence-restricted the same way.
+ * The interval-label table's name — the closure table's seal-time sibling. existence-restricted the same way.
  */
 export const CANDIDATE_INTERVAL_TABLE = "candidate_interval"
 
@@ -114,7 +114,7 @@ export interface CandidateAncestorTable {
 
 /**
  * Pre/post-order labels over the canonical-parent forest — one row per place with recorded ancestry (see the module
- * docstring for absence semantics). `pre < post` always; labels are unique across the artifact.
+ * docstring for absence semantics). `pre < post` always. labels are unique across the artifact.
  */
 export interface CandidateIntervalTable {
 	spr_id: number
@@ -158,7 +158,7 @@ export async function createCandidateAncestorTable(db: Kysely<CandidateDatabase>
 		.addColumn("parent_name", "text", (c) => c.notNull())
 		.addColumn("parent_name_key", "text", (c) => c.notNull())
 		.addPrimaryKeyConstraint("candidate_ancestor_pk", ["spr_id", "depth"])
-		// `WITHOUT ROWID` has no first-class builder; the raw modifier is the idiomatic fallback.
+		// `WITHOUT ROWID` has no first-class builder. the raw modifier is the idiomatic fallback.
 		.modifyEnd(sql`without rowid`)
 		.execute()
 }

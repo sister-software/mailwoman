@@ -12,7 +12,7 @@
  *   paying the cold start each time.
  *
  *   An engine is one {@link GeocodeSession} plus the configuration that produced it, addressed by a content hash of
- *   that configuration. Two flag settings over one model share nothing at construction and are nearly free to compare;
+ *   that configuration. Two flag settings over one model share nothing at construction and are nearly free to compare.
  *   two models or two gazetteers are two resident multi-gigabyte footprints, which is a fact a caller should know
  *   before it waits.
  *
@@ -24,7 +24,7 @@
  *   explicitly: eviction returns less RSS than killing a worker would, and there is no in-process module reload, which
  *   is why {@link EngineRegistry.acquire} REFUSES on a source edit rather than pretending to reload (see
  *   `tree-fingerprint.ts`). Building the supervisor is the right next step if warmth across agent restarts proves to
- *   matter; it is not needed to test whether a warm engine changes which panel gets measured.
+ *   matter. it is not needed to test whether a warm engine changes which panel gets measured.
  */
 
 import { sha256Hex } from "@mailwoman/core/hash"
@@ -72,7 +72,7 @@ export interface EngineConfig {
 	postcode_containment_coherence?: boolean
 	admin_containment_rerank?: boolean
 	/**
-	 * The opt-in venue tier (#1684's POI half) — off by default in production; this change exists so the promotion
+	 * The opt-in venue tier (#1684's POI half) — off by default in production. this change exists so the promotion
 	 * battery measures it with the standard tooling.
 	 */
 	poi_venue_tier?: boolean
@@ -107,7 +107,7 @@ export interface EngineConfig {
  * Resolving before recording is what makes a confound check possible at all. Two arms whose STATED configs differ in
  * one field can differ in three effective ones — `--country-scope auto` means "scope on FTS, no scope on candidate"
  * (`docs/engineering/reference/resolver-backends.mdx`), so switching backend also switches country scoping. A
- * comparison that reads stated configs cannot see that; one that reads effective configs can.
+ * comparison that reads stated configs cannot see that. one that reads effective configs can.
  */
 /**
  * Which `GeocodeSessionOptions` key each `EngineConfig` key becomes.
@@ -173,7 +173,7 @@ export function resolveConfig(config: EngineConfig): GeocodeSessionOptions {
 	// The hand-copied table this replaces drifted on three values (postcodeShapeCoherence,
 	// postcodeContainmentCoherence, placeCountryThreshold: true/true/0.5 vs the shipped
 	// false/false/0.9), so every unset-change measurement graded a configuration production does not
-	// ship. Comparisons where both arms shared the drift stayed internally valid; absolute numbers
+	// ship. Comparisons where both arms shared the drift stayed internally valid. absolute numbers
 	// did not. `resolve-config.test.ts` pins this function against the factory field by field.
 	const production = createGeocodeCommandOptions()
 
@@ -209,7 +209,7 @@ export function resolveConfig(config: EngineConfig): GeocodeSessionOptions {
  * `resolveWeights` honours an explicit `cacheRoot` only when that directory holds `model.onnx` and `tokenizer.model`,
  * and otherwise walks on to the installed workspace package — which in this repo always resolves. So the failure mode
  * of a mis-typed or half-staged candidate is not an error: it is a full run of the shipped model, reported under the
- * candidate's label, with every number plausible. `promotion-eval.ts` refuses the same way and for the same reason;
+ * candidate's label, with every number plausible. `promotion-eval.ts` refuses the same way and for the same reason.
  * this is that guard on the warm path, sharing its check rather than re-deriving the layout.
  *
  * Runs before the session build, so a bad path costs a `stat` rather than the ~1.4 s construction.
@@ -372,7 +372,7 @@ export class EngineRegistry implements EngineRegistryLike {
 		}
 
 		// Refuse against the BOOT fingerprint, not merely against whatever is resident. A resident engine under a
-		// different digest is one symptom of a moved tree; an empty registry under a moved tree is the other, and it
+		// different digest is one symptom of a moved tree. an empty registry under a moved tree is the other, and it
 		// is the dangerous one, because there is nothing stale left to notice. Both are the same fact — this process
 		// cannot import the new source — so both refuse here.
 		if (current.digest !== this.#bootFingerprint.digest) {

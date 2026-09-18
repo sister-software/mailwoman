@@ -9,7 +9,7 @@
  *   matches the extract the builder wrote) and caches the open handle per country. Wire its bound `for`
  *   into `GeocodeDeps.nationalExtracts`.
  *
- *   BAN is a French national register, so the registry is deliberately FR-only today; the shape
+ *   BAN is a French national register, so the registry is deliberately FR-only today. the shape
  *   generalises to any other national open register (the coverage story, one country at a time).
  */
 
@@ -54,7 +54,7 @@ export class BANRegionDatabaseProvider implements Disposable {
 
 	/**
 	 * Construct a provider and warm its existence map before answering. The constructor cannot await the probe, so this
-	 * static factory does; a caller that constructs directly must {@linkcode warm} before the first `for`.
+	 * static factory does. a caller that constructs directly must {@linkcode warm} before the first `for`.
 	 */
 	static async create(dataRoot: string): Promise<BANRegionDatabaseProvider> {
 		const provider = new BANRegionDatabaseProvider(dataRoot)

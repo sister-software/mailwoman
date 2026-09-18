@@ -4,7 +4,7 @@
  * @author Teffen Ellis, et al.
  *
  *   `serveNode` under a cluster worker, the shape `mailwoman serve` runs in. The in-process test in `index.test.ts`
- *   never exercises Node's cluster child, which calls `server.address()` on the listening server; this one forks the
+ *   never exercises Node's cluster child, which calls `server.address()` on the listening server. this one forks the
  *   fixture as a real process and reads what the primary reports.
  */
 

@@ -33,7 +33,7 @@ import type { AddressTree } from "#decoder/types"
 /**
  * What happened to one span between the two arms.
  *
- * `unchanged` is emitted rather than dropped so a renderer can show context lines; a caller wanting only the changes
+ * `unchanged` is emitted rather than dropped so a renderer can show context lines. a caller wanting only the changes
  * filters on {@linkcode isChange}.
  */
 export type SpanDeltaKind = "added" | "removed" | "retagged" | "moved" | "confidence" | "unchanged"

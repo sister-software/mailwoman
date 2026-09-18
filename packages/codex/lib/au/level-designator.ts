@@ -13,7 +13,7 @@
  *       its approved abbreviation. The verbatim AMAS description: "LEVEL" is the full word; "L" is
  *       the approved abbreviation. The standard phrase format is `LEVEL <number>`, e.g. "LEVEL 3"
  *       or "L 3" (abbreviation always uppercase in AMAS output). Australia Post's own barcode
- *       addressing booklet (SAP 8838883) lists "LEVEL" and "L" as the level type; the Correct
+ *       addressing booklet (SAP 8838883) lists "LEVEL" and "L" as the level type. the Correct
  *       Addressing brochure (SAP 8833878, Nov 2022) gives the example `LEVEL 3 / 60 MARGARET ST /
  *       SYDNEY NSW 2000`. The AMAS Data Extract Format document (v4.2) confirms "LEVEL" → "L" as
  *       the sole level abbreviation pair.
@@ -28,7 +28,7 @@
  *       may carry in the LEVEL_TYPE_CODE column, which mirrors the AP AMAS level-type vocabulary.
  *   - "LVL" and "LG" appear as widely-recognized surface variants in real AU addresses (Open Addresses
  *       AU export, accessed via OpenAddresses) though AS 4590.1-2017 and AMAS canonicalize to "L"
- *       and "LG" respectively; the variants are included in {@link AU_LEVEL_DESIGNATOR_VARIANTS} so
+ *       and "LG" respectively. the variants are included in {@link AU_LEVEL_DESIGNATOR_VARIANTS} so
  *       the parser can RECOGNIZE them without synthesizing them.
  *
  * @see {@link https://auspost.com.au/sending/guidelines/addressing-guidelines Australia Post addressing guidelines}
@@ -41,7 +41,7 @@
  * One AMAS / AS 4590.1 level-type row.
  *
  * The `type` is the AS 4590.1 LEVEL_TYPE_CODE value (what GNAF and AMAS use internally); the `abbreviation` is the
- * approved surface form used in formatted mail; the `requiresNumber` flag distinguishes designators that take a floor
+ * approved surface form used in formatted mail. the `requiresNumber` flag distinguishes designators that take a floor
  * identifier from standalone ones.
  */
 export interface AuLevelDesignator {
@@ -65,7 +65,7 @@ export interface AuLevelDesignator {
 }
 
 /**
- * AMAS / AS 4590.1-2017 level-type table (Table 3). Verbatim codes; see the module header for provenance. Ordered with
+ * AMAS / AS 4590.1-2017 level-type table (Table 3). Verbatim codes. see the module header for provenance. Ordered with
  * the most-common forms first for match priority.
  */
 export const AU_LEVEL_DESIGNATORS = [

@@ -9,7 +9,7 @@
  *
  * `rasterizeToFrame` turns an `RGBAGrid` (drawn by ./raster.ts) into a `MapFrame`: one codepoint and one packed color
  * per cell. The braille dither/luminance work is asciify's — `FrameRasterizer` subclasses `AsciifyTerminal` with a
- * no-op sink purely to reach its protected `_computeBrailleCells`, `_cellChars`, `_cellColors`, so this module never
+ * no-op sink purely to reach its guarded `_computeBrailleCells`, `_cellChars`, `_cellColors`, so this module never
  * re-implements the dot math. `frameToANSILines` and `overlayText` then work on the plain `MapFrame` value, with no
  * further asciify dependency; `blitFrame` is the path back the other way, for callers driving a live terminal.
  */
@@ -30,16 +30,16 @@ export interface MapFrame {
 	 */
 	chars: Uint32Array
 	/**
-	 * 0xRRGGBB per cell; 0 = inkless.
+	 * 0xRRGGBB per cell. 0 = inkless.
 	 */
 	colors: Uint32Array
 	attribution: string
 }
 
 /**
- * Reaches asciify's protected braille conversion from the outside. Constructed fresh per {@link rasterizeToFrame} call
- * — cheap, since the state is just two typed arrays sized to the cell grid. The `write` sink is never invoked: this
- * class only ever calls `_computeBrailleCells` directly, never `rasterize`/`flush`.
+ * Reaches asciify's guarded braille conversion from the outside. Constructed fresh per {@link rasterizeToFrame} call —
+ * cheap, since the state is just two typed arrays sized to the cell grid. The `write` sink is never invoked: this class
+ * only ever calls `_computeBrailleCells` directly, never `rasterize`/`flush`.
  */
 class FrameRasterizer extends AsciifyTerminal {
 	constructor(columns: number, rows: number) {

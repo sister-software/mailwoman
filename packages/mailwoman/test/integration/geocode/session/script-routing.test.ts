@@ -5,7 +5,7 @@
  *
  *   A geocode session opened for `en-US` and handed a bare kanji line: the parse must run on the character-path
  *   family and the resolver must not be scoped to the locale's country. Before the routed classifier, the Latin model
- *   read the whole line as a locality; after it, the parse was right and the `--locale en-US` scope still starved the
+ *   read the whole line as a locality. after it, the parse was right and the `--locale en-US` scope still starved the
  *   lookup, so the row resolved nothing. Both defects are pinned by one row through the shipped session.
  *
  *   Runs only where the CJK family and the candidate table are materialized (the lab data root, a CI runner that
@@ -23,7 +23,7 @@ const CANDIDATE_DB = String(dataRootPath("wof", "candidate.db"))
 const haveArtifacts =
 	(await pathExists(CANDIDATE_DB)) && (await pathExists(dataRootPath("weights", "cjk", "model.onnx")))
 
-// Kamiichi, Toyama: the entrance point of `富山県中新川郡上市町大岩148-7` on the JP board; the municipality centroid the
+// Kamiichi, Toyama: the entrance point of `富山県中新川郡上市町大岩148-7` on the JP board. the municipality centroid the
 // served path answers sits 4.9 km from it.
 const KAMIICHI = { lat: 36.658101, lon: 137.384089 }
 

@@ -4,7 +4,7 @@
  * @author Teffen Ellis, et al.
  *
  *   `mailwoman gazetteer build postcode-database --country <cc>` — one country's WOF postcode database
- *   (`postalcode-<cc>.db`): repo ingest → centroid-fill ladder (US: Census ZCTA + GeoNames; all:
+ *   (`postalcode-<cc>.db`): repo ingest → centroid-fill ladder (US: Census ZCTA + GeoNames. all:
  *   GeoNames postal → admin parent-borrow → hierarchy-ancestor fallback) → FTS → SEAL. Replaces the
  *   reopen-and-mutate `fill-zcta-centroids` / `backfill-postcode-centroids` scripts — fills are build
  *   steps now. GeoNames-sourced rows are CC-BY 4.0 (attribute "GeoNames (CC-BY 4.0)").

@@ -8,7 +8,7 @@
  *   The gazetteer holds country names in English and little else, which is why a bare `格鲁吉亚` (Georgia the country,
  *   Chinese), `沙特阿拉伯` or `巴布亚新几内亚` resolves to nothing while `佐治亚州` (Georgia the US state) resolves
  *   correctly — the state is a real WOF record carrying multilingual names, and 140 of the 237 country rows are
- *   synthetic and carry only a canonical English name. Measured 2026-08-15; WOF has no Chinese country names at all,
+ *   synthetic and carry only a canonical English name. Measured 2026-08-15. WOF has no Chinese country names at all,
  *   and `geonames-aliases.ts` filters every alias through a Latin-script regex.
  *
  *   ICU already knows all of it. No download, no vendored corpus, no licence question, and no drift against a snapshot
@@ -140,7 +140,7 @@ export function* enumerateCountryDisplayNames(
 }
 
 /**
- * Every surface ICU knows for one country. Convenience over {@link enumerateCountryDisplayNames} for a single lookup;
+ * Every surface ICU knows for one country. Convenience over {@link enumerateCountryDisplayNames} for a single lookup.
  * the generator is the bulk path.
  */
 export function countryDisplayNames(iso2: string, locales?: readonly string[]): string[] {

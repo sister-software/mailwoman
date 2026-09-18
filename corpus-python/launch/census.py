@@ -18,7 +18,7 @@ from __future__ import annotations
 
 from .app import VOL_MOUNT, app, training_image, vol
 
-#: The recipes live beside the training package on the volume; a census reads the one that trained
+#: The recipes live beside the training package on the volume. a census reads the one that trained
 #: the model it is asking about, not a local copy.
 CONFIGS = f"{VOL_MOUNT}/corpus-python/src/mailwoman_train/configs"
 
@@ -192,7 +192,7 @@ def country_census_raw(
             print(f"        via {src}: {k:,}")
 
     # COMPLETENESS AUDIT — corpus countries vs the config's admitted set. The Norway bug was one
-    # silent drop; this asks what else. Two failure modes:
+    # silent drop. this asks what else. Two failure modes:
     #   (a) present-but-dropped: rows in the corpus, absent from country_weights -> silently trained on nothing.
     #   (b) admitted-but-absent: in country_weights, ~zero corpus rows -> the config promises a locale it can't deliver.
     import yaml as _yaml
@@ -412,7 +412,7 @@ def piece_prior(
 
     `digit_prior` counted P(tag | token) and found P(postcode | a 2- or 3-digit token) = 0.0000 in
     every country with data. That looked like the model contradicting its corpus. It is not. The
-    model never sees a token; it sees pieces, and emits one label per piece. Digits tokenize roughly
+    model never sees a token. it sees pieces, and emits one label per piece. Digits tokenize roughly
     one piece per character, so a 5-digit postcode `[9|0|2|1|0]` mints four `I-postcode` labels while
     a 2-digit house number `[1|4]` mints one `I-house_number`. Longer runs are postcodes and longer
     runs mint proportionally more continuation labels, so the continuation label distribution can
@@ -422,7 +422,7 @@ def piece_prior(
     That is the hypothesis. This measures it, at the unit, through `iter_encoded` — the same call
     the trainer makes, so the tokenizer and the BIO expansion are the real ones rather than
     arithmetic about them. (A hand-derivation predicted P(postcode | continuation) = 0.688 assuming
-    fertility == digit count; multi-digit pieces like `16` exist, so the real number can differ.)
+    fertility == digit count. multi-digit pieces like `16` exist, so the real number can differ.)
 
     Reports, for digit-containing pieces only:
       - P(tag | START piece of a digit run)        vs the model's measured B-house_number 0.604
@@ -449,7 +449,7 @@ def piece_prior(
     cfg_path = Path(CONFIGS) / config_name
     cfg = yaml.safe_load(cfg_path.read_text())
     data_cfg = DataConfig(**cfg["data"])
-    # `tokenizer_dir` names the directory; the SentencePiece model is the file inside it.
+    # `tokenizer_dir` names the directory. the SentencePiece model is the file inside it.
     tok = Tokenizer(Path(data_cfg.tokenizer_dir) / "tokenizer.model")
 
     print(f"config     : {cfg_path.name}")

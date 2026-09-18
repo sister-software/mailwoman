@@ -602,7 +602,7 @@ describe("augmented copies keep intra-span punctuation (#519)", () => {
 	const cases: ReadonlyArray<[id: string, row: CanonicalRow, expectedPoBox: string]> = [
 		["case-upper", poBoxRow(), "P.O. BOX 5"],
 		["case-lower", poBoxRow(), "p.o. box 5"],
-		// drop-commas deliberately deletes the commas BETWEEN spans; the dots inside the span stay.
+		// drop-commas deliberately deletes the commas BETWEEN spans. the dots inside the span stay.
 		["drop-commas", poBoxRow(), "P.O. Box 5"],
 		["double-space", poBoxRow(), "P.O.  Box  5"],
 		// typo-inject edits the locality ("Portland"); the po_box span (digits → never eligible) survives.

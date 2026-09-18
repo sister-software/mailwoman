@@ -5,7 +5,7 @@
  *
  *   The structural contracts the browser runtime composes over. Each `…Like` mirrors a package type by shape so a host
  *   bundle can name the classifier, the FST matcher and the parse trace without importing the packages that define
- *   them; the packages stay dynamic imports on the load path. `AssetLoadProgress` is what a loader reports through
+ *   them. the packages stay dynamic imports on the load path. `AssetLoadProgress` is what a loader reports through
  *   while it fetches one release's assets.
  */
 
@@ -103,11 +103,11 @@ export interface ParseTraceLike {
 
 /**
  * How a release loader reports progress to its host while assets arrive. `@mailwoman/react`'s `AssetsLoadContext`
- * satisfies it structurally; a host without a UI passes no-op setters.
+ * satisfies it structurally. a host without a UI passes no-op setters.
  */
 export interface AssetLoadProgress {
 	/**
-	 * Aborts when this load is superseded or the host goes away; the loader stops handing back a lookup once it fires.
+	 * Aborts when this load is superseded or the host goes away. the loader stops handing back a lookup once it fires.
 	 */
 	signal: AbortSignal
 	/**

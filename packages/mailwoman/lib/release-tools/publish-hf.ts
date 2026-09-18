@@ -12,7 +12,7 @@
  *   - Model.onnx — int8-quantized classifier
  *   - Tokenizer.model — SentencePiece tokenizer
  *   - Model-card.json — training provenance
- *   - Fst-<locale>.bin — per-locale FST gazetteer (OPTIONAL since #1318; en-nz ships none)
+ *   - Fst-<locale>.bin — per-locale FST gazetteer (OPTIONAL since #1318. en-nz ships none)
  *   - Wof-hot.db — slim WOF database for browser resolver (RETIRED 2026-06-20, accepted)
  *
  *   After upload, releases.json is updated in-place and re-uploaded.
@@ -77,7 +77,7 @@ const REQUIRED_FILES: RequiredFile[] = [
 
 /**
  * A character-path family (`@mailwoman/neural-weights-cjk`) ships a graph behind `char_ids` and a sealed character
- * vocabulary; there is no SentencePiece tokenizer to require. Staged under the family's own directory
+ * vocabulary. there is no SentencePiece tokenizer to require. Staged under the family's own directory
  * (`<family>/<version>/`), the shape `fetch-hf-weights` reads a family from, and never into the Latin base's, because
  * the graph shares a basename with the base's and is not the same bytes.
  */
@@ -88,7 +88,7 @@ const REQUIRED_CHAR_FILES: RequiredFile[] = [
 ]
 
 /**
- * `--char-vocab` selects the character-path shape; its presence is the whole of the switch.
+ * `--char-vocab` selects the character-path shape. its presence is the whole of the switch.
  */
 function requiredFilesFor(args: PublishHFOptions): RequiredFile[] {
 	return args.charVocab ? REQUIRED_CHAR_FILES : REQUIRED_FILES
@@ -124,7 +124,7 @@ export interface PublishHFOptions {
 	model?: string
 	tokenizer?: string
 	/**
-	 * The sealed character vocabulary of a character-path family; given, the release is staged as that family (no
+	 * The sealed character vocabulary of a character-path family. given, the release is staged as that family (no
 	 * tokenizer, no `releases.json` entry — the demo does not serve it).
 	 */
 	charVocab?: string
@@ -143,7 +143,7 @@ export interface PublishHFOptions {
 	fisher?: string
 	setDefault?: boolean
 	/**
-	 * Retired 2026-06-20 with the slim wof-hot.db; accepted so documented invocations don't hard-fail.
+	 * Retired 2026-06-20 with the slim wof-hot.db. accepted so documented invocations don't hard-fail.
 	 */
 	wofHot?: string
 }
@@ -299,7 +299,7 @@ export async function publishReleaseToHF(args: PublishHFOptions): Promise<void> 
 	await verifyRequiredFiles(args)
 
 	// Optional postcode binaries for the anchor channel (#240): comma-separated --postcodes paths
-	// (e.g. postcode-us.bin,postcode-de.bin). Uploaded under the version dir by basename; the demo
+	// (e.g. postcode-us.bin,postcode-de.bin). Uploaded under the version dir by basename. the demo
 	// fetches them when the release's `hasAnchor` flag is set.
 	const postcodeBins = await stageBinaryList(args.postcodes, "postcode binary")
 
@@ -334,7 +334,7 @@ export async function publishReleaseToHF(args: PublishHFOptions): Promise<void> 
 	const localitySurfaceLexicon = await stageOptionalBinary(args.localitySurfaceLexicon, "locality-surface lexicon")
 
 	// Optional crisp-polygon DB (`mailwoman gazetteer polygons`): a single --polygons path. Uploaded as
-	// wof-polygons.db; the demo draws the real admin boundary instead of the bbox when `hasPolygons`
+	// wof-polygons.db. the demo draws the real admin boundary instead of the bbox when `hasPolygons`
 	// is set. Keyed by WOF id (the candidate table returns the same spr ids), built from the admin DB
 	// via `mailwoman gazetteer polygons` --admin (the --points wof-hot.db source is retired).
 	const polygonsDB = await stageOptionalBinary(args.polygons, "polygon DB")
@@ -363,11 +363,11 @@ export async function publishReleaseToHF(args: PublishHFOptions): Promise<void> 
 	uploadFlatByBasename(pairIndexBins, remoteBase)
 
 	// Per-locale FST gazetteers for the NPM packages (#1318) — flat under the version dir by lowercase
-	// basename; publish.yml fetches these into each weights workspace so the tarball ships its FST.
+	// basename. publish.yml fetches these into each weights workspace so the tarball ships its FST.
 	uploadFlatByBasename(fstBins, remoteBase)
 
 	// Demo's BCP-47-cased FST gazetteer (#1318) — OPTIONAL (en-nz ships none). Distinct filename from
-	// the lowercase --fsts above; the demo fetcher expects `fst-en-US.bin`.
+	// the lowercase --fsts above. the demo fetcher expects `fst-en-US.bin`.
 	if (fstPath) {
 		const dst = `${BUCKET_PATH}/${remoteBase}/${fstRemoteName}`
 
@@ -482,7 +482,7 @@ export async function publishReleaseToHF(args: PublishHFOptions): Promise<void> 
 		hasWOFDB: true,
 		// These artifacts usually ride the R2 staging rather than this script's flags, so derive the
 		// truth by PROBING the demo's serving path (the four-release hasPolygons:false rectangle bug,
-		// 2026-06-11). CLI args still count; either source sets the flag.
+		// 2026-06-11). CLI args still count. either source sets the flag.
 		hasAnchor: postcodeBins.length > 0 || (await servedOnDemoPath("postcode-us.bin", args.locale, args.version)),
 		hasPolygons: !!polygonsDB || (await servedOnDemoPath("wof-polygons.db", args.locale, args.version)),
 	}

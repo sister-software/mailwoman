@@ -5,7 +5,7 @@
  *
  *   Kysely table types for the subset of the Who's On First SQLite schema we touch in Phase 4.2.
  *
- *   The full upstream distribution at data.geocode.earth/wof/dist/sqlite/ ships ~7 tables; this file
+ *   The full upstream distribution at data.geocode.earth/wof/dist/sqlite/ ships ~7 tables. this file
  *   models only the ones we read. Pretending to model the others would be misleading — we haven't
  *   verified their shapes and they're not part of the resolver's contract.
  *
@@ -64,12 +64,12 @@ export interface SprTable {
 
 /**
  * Alternate names per place, keyed by language tag subfields (BCP-47 components). Joins back to `spr.id` via `id` (not
- * `place_id` — the real WOF schema uses the same column name as the spr primary key; this is a normal join across two
+ * `place_id` — the real WOF schema uses the same column name as the spr primary key. this is a normal join across two
  * tables with the same FK column name).
  *
  * No `kind` column in real WOF — the FTS build just concatenates all names per id.
  *
- * `official` (#936 ingest bit, our unified builds only; absent in real WOF dumps) marks a PREFERRED-form name in an
+ * `official` (#936 ingest bit, our unified builds only. absent in real WOF dumps) marks a PREFERRED-form name in an
  * official language of the place's country — the aliases eligible to join the name-exact tier under the option-3 rule.
  * See `unified-schema.ts` for the full contract.
  */
@@ -91,7 +91,7 @@ export interface NamesTable {
 
 /**
  * Per-place GeoJSON blob. Centroid lat/lon are already exposed via `spr.{latitude,longitude}` so the resolver doesn't
- * need to parse this; we keep the table modeled in case Phase 4.3 wants the full geometry for bbox / polygon work.
+ * need to parse this. we keep the table modeled in case Phase 4.3 wants the full geometry for bbox / polygon work.
  */
 export interface GeojsonTable {
 	id: number
@@ -115,8 +115,8 @@ export interface AncestorsTable {
 
 /**
  * `place_population` — `id → wof:population`, split off `spr` so a population-rank join is a single indexed probe.
- * Written by the build/augment ingest + the GeoNames backfill; read by the candidate build's `neg_rank`. WOF carries
- * population for ~15% of localities; absent = unknown, not zero.
+ * Written by the build/augment ingest + the GeoNames backfill. read by the candidate build's `neg_rank`. WOF carries
+ * population for ~15% of localities. absent = unknown, not zero.
  */
 export interface PlacePopulationTable {
 	id: number
@@ -134,7 +134,7 @@ export interface PlaceAbbrTable {
 
 /**
  * `concordances` — external-id cross-references per place (`id → (other_source, other_id)`), e.g. a GeoNames or
- * Overture GERS id. Metadata only; not part of the resolve path.
+ * Overture GERS id. Metadata only. not part of the resolve path.
  */
 export interface ConcordancesTable {
 	id: number
@@ -159,7 +159,7 @@ export interface CoincidentRolesTable {
 
 /**
  * The full schema we hand to `Kysely<WOFDatabase>` / `new DatabaseClient<WOFDatabase>(...)`. Tables not listed here
- * will fail type-checked queries — by design. The reader ({@link WOFSQLitePlaceLookup}) already consumes this; the
+ * will fail type-checked queries — by design. The reader ({@link WOFSQLitePlaceLookup}) already consumes this. the
  * build/augment WRITERS adopt it so a column rename is a compile error on both sides (the drift that bit the corpus
  * TIGER adapter).
  */

@@ -26,11 +26,11 @@
  *
  *   One CanonicalRow per fabric record. Unlike `tiger` (multiple postcode variants per segment) or
  *   `wof-admin` (multiple hierarchy variants per place), BDC records already represent fully
- *   specified addresses; no fan-out is warranted. Adversarial composition (Phase 1.6 §2.1) is the
+ *   specified addresses. no fan-out is warranted. Adversarial composition (Phase 1.6 §2.1) is the
  *   mechanism for deriving multiple training rows per BDC record.
  *
  *   License: stamped `"Public Domain"` per the BDC fabric's US federal-government distribution terms.
- *   The CostQuest Fabric source data has its own license; consumers who substitute that path should
+ *   The CostQuest Fabric source data has its own license. consumers who substitute that path should
  *   re-stamp accordingly.
  */
 

@@ -59,7 +59,7 @@ export interface CodePointMetadata {
 	 */
 	product: string
 	/**
-	 * `2026.2.0` — the internal dataset version. Distinct from the Downloads API's `2026-05` release label; both are
+	 * `2026.2.0` — the internal dataset version. Distinct from the Downloads API's `2026-05` release label. both are
 	 * recorded in the database's provenance because they move independently.
 	 */
 	datasetVersion: string
@@ -148,7 +148,7 @@ export interface ExtractCodePointResult {
 	 * Decoded as **Latin-1**, and that is required rather than fussy. The archive declares no encoding, and the file's
 	 * only non-ASCII byte is `0xA9` — Latin-1 `©`, which is not valid UTF-8 on its own. Reading it as UTF-8 turns every
 	 * copyright symbol into U+FFFD, so the first build baked `Contains Ordnance Survey data � Crown copyright` into the
-	 * database's `meta`. Mojibake in a decorative string is cosmetic; mojibake in the attribution text a redistributor is
+	 * database's `meta`. Mojibake in a decorative string is cosmetic. mojibake in the attribution text a redistributor is
 	 * legally required to carry is not.
 	 */
 	licenseText: string

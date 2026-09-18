@@ -53,7 +53,7 @@ export interface DoctorCheck {
 	 * What the reader LOSES while this check is not ok, in product terms ("geocode can only place you in the city, not on
 	 * the street"), not implementation terms. Present whenever `status !== "ok"` (#1577).
 	 *
-	 * A red line and a fix command say what to type; they never say whether typing it matters to the thing the reader was
+	 * A red line and a fix command say what to type. they never say whether typing it matters to the thing the reader was
 	 * actually trying to do. Every optional layer here is genuinely optional for SOMEONE, so a bare ✗ next to "POI layer"
 	 * is unreadable without knowing that the POI layer is what makes "coffee near me" resolve at all.
 	 */
@@ -63,7 +63,7 @@ export interface DoctorCheck {
 	 */
 	fix?: string
 	/**
-	 * Whether this check checks the exit code. Core checks (weights + runtime) must be `ok` for a `0` exit; optional
+	 * Whether this check checks the exit code. Core checks (weights + runtime) must be `ok` for a `0` exit. optional
 	 * data-layer checks report their gap but never fail the process (parse runs without them).
 	 */
 	core: boolean
@@ -88,12 +88,12 @@ export interface LicensePosture {
 	 */
 	expression: string
 	/**
-	 * The branch of a dual license that applies here; equal to `expression` when there is one branch.
+	 * The branch of a dual license that applies here. equal to `expression` when there is one branch.
 	 */
 	applied: string
 	/**
 	 * The responsibility classes `applied` is known to carry. Empty with `recognized: true` means the license asks
-	 * nothing of the operator; empty with `recognized: false` means the doctor does not know this identifier.
+	 * nothing of the operator. empty with `recognized: false` means the doctor does not know this identifier.
 	 */
 	obligations: LicenseObligation[]
 	recognized: boolean
@@ -345,7 +345,7 @@ export interface GazetteerObservation {
 }
 
 /**
- * Check #4 — the admin gazetteer. Optional: parse runs without it; only geocode/resolve need it.
+ * Check #4 — the admin gazetteer. Optional: parse runs without it. only geocode/resolve need it.
  */
 export function gazetteerCheck(o: GazetteerObservation): DoctorCheck {
 	const base = { id: "gazetteer", label: "Admin gazetteer", core: false }
@@ -524,7 +524,7 @@ export interface RuntimeLicenseObservation {
 /**
  * The license that governs this installation of mailwoman, and what it asks of the operator. Without a valid key the
  * AGPL-3.0-only branch applies, and the summary says so in the responsibility vocabulary: attribution, share-alike on
- * modifications, and a source offer to network users (section 13). A valid key selects the commercial branch; an
+ * modifications, and a source offer to network users (section 13). A valid key selects the commercial branch. an
  * expired, unknown, invalid or retired key is reported with its reason and the open-source branch applies. The runtime
  * behaves the same either way — this check changes what is reported, never what runs. Informational, never core.
  */
@@ -573,7 +573,7 @@ export function runtimeLicenseCheck(o: RuntimeLicenseObservation): DoctorCheck {
 		const expiry = key.payload.expires ? `expires ${key.payload.expires}` : "no expiry"
 
 		// The worker's word about the license itself. Revoked or lapsed is a degraded posture the offline token cannot
-		// see; unknown and unreachable are reported as what they are and change nothing.
+		// see. unknown and unreachable are reported as what they are and change nothing.
 		if (o.lidStatus === "revoked" || o.lidStatus === "lapsed") {
 			return {
 				...base,

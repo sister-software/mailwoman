@@ -5,7 +5,7 @@
  *
  *   Generator for `data/venue-word-hints.json` — the MINED single-token venue-class hint table, the
  *   narrow subset of the f6 venue-word survey that earned committing. One derived input (the f6
- *   lexicon artifact under the data root), one committed output; the subset is a pure filter, so a
+ *   lexicon artifact under the data root), one committed output. the subset is a pure filter, so a
  *   regenerate against the same input is byte-identical.
  *
  *   ── Why a COMPOSED measure, not the venue ratio alone ────────────────────────────────────────────
@@ -28,7 +28,7 @@
  *   'catherine', 'savile', …) and none of the toponym family ('paris', 'mexico'). `comer` — the
  *   torture entry that motivated the survey — does not pass: its category mass splits across
  *   food/retail/other (top class share 0.46), which is exactly the composed-measure honesty the
- *   trained-channel design needs; it stays with that deferred change, not in this table.
+ *   trained-channel design needs. it stays with that deferred change, not in this table.
  *
  *   Run: `node poi-taxonomy/scripts/build-venue-word-hints.ts && npx oxfmt poi-taxonomy/data/venue-word-hints.json`
  *   (committed JSON is oxfmt-clean, the repo law). The source artifact is data-root local (built by

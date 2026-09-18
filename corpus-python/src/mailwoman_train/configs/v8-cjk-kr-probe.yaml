@@ -15,7 +15,7 @@
 #   * JP board (`v8-jp-kana-2026-09-06/jp-board.jsonl`, the same scorer): blended ≥ 0.9924 − 0.005 and municipality
 #     macro ≥ 0.9821 − 0.005 — the KR rows must not cost JP; `かすみがうら市` failed rows ≤ 5 and `中新川郡上市町` beside it.
 #   * CN board: `locality_unit` ≥ 11 of 14.
-#   * Score both arms (this run and v8-cjk-kana) on the same scorer in the same session; a scorer patch between two
+#   * Score both arms (this run and v8-cjk-kana) on the same scorer in the same session. a scorer patch between two
 #     reads is a comparison of scorers.
 #   * At 2,000 steps the bars above are read at the step's own level: KR street / house_number ≥ 0.95 says the
 #     surface is learnable from the mixture and warrants the 24k run (`v8-cjk-kr.yaml`); lower is the finding.
@@ -42,7 +42,7 @@ data:
   coarse_filter: false
   # JP val 20,000 + CN val 11 + KR val 20,000.
   val_rows: 40011
-  # The 49-label CJK head. Supported only on the char path; the SP path raises (#1349's lesson).
+  # The 49-label CJK head. Supported only on the char path. the SP path raises (#1349's lesson).
   label_set: stage3-cjk
   char_mode: char
   char_vocab_path: /data/corpus/versioned/v8-cjk-kr-2026-09-06/char-vocab-cjk.json

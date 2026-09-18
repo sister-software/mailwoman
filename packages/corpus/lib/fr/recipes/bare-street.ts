@@ -9,7 +9,7 @@
  *   the postcode and it leaks the street's proper-noun tokens into the following locality ("Rue René
  *   Cassin, Paris" → street="Rue Ren", locality="Cassin"). This recipe mints the MISSING distribution:
  *   the bare comma form, no postcode, real `(street, number, city)` tuples from BAN (Licence Ouverte —
- *   permissive; the model stays clean of ODbL, unlike the opt-in OSM rooftop sources).
+ *   permissive. the model stays clean of ODbL, unlike the opt-in OSM rooftop sources).
  *
  *   Each tuple → `<n> <Rue/Avenue/…> <proper-noun name>, <City>` with the FR prefix split
  *   ({@link decomposeFrStreet}: "Rue" → street_prefix, the rest → street). Tuples whose street carries
@@ -50,7 +50,7 @@ export const frBareStreetRecipe: CorpusRecipe = {
 		"FR bare street+city, NO postcode (#251): comma / comma-free / abbreviated-voie surfaces over one label set",
 	mode: "tuples",
 	async run(opts, write) {
-		// Seeded for parity with the other recipes; unused beyond reproducibility (the tuples drive the content).
+		// Seeded for parity with the other recipes. unused beyond reproducibility (the tuples drive the content).
 		makeMulberry32(opts.seed)
 		let read = 0
 		let emitted = 0
@@ -73,8 +73,8 @@ export const frBareStreetRecipe: CorpusRecipe = {
 			// A no-prefix nom_voie ("La Ville Mois") is not the prefix-led class the numbered forms
 			// exercise — but as a bare surface it is exactly the non-voie-led counterweight the v4.5.1
 			// probe showed missing ('Savile Row'-shaped spans still fell to the trailing-locality
-			// prior; the voie-led bare form protected only voie-led spans). Alternate rows emit the
-			// whole span as a bare street; the rest skip as before.
+			// prior. the voie-led bare form guarded only voie-led spans). Alternate rows emit the
+			// whole span as a bare street. the rest skip as before.
 			if (!prefix || !street) {
 				if (read % 2 === 0 && fullStreet.split(" ").length >= 2) {
 					const bare = {
@@ -108,15 +108,15 @@ export const frBareStreetRecipe: CorpusRecipe = {
 			}
 
 			// Four surfaces over the same tuple, cycled deterministically. The comma form was the
-			// original change; the comma-free form is the colloquial register users actually type
+			// original change. the comma-free form is the colloquial register users actually type
 			// ('12 rue de Rome Paris' — the street↔locality boundary with no delimiter, the fr-fr
 			// panel's named loss); the abbreviated form is the typeahead register the geocoder-tester
-			// FR sample attests at scale; and the bare-street-only form is the absence counterweight —
+			// FR sample attests at scale. and the bare-street-only form is the absence counterweight —
 			// without it, every delimiter-free surface in the mix ends in a locality, the model learns
 			// "trailing span = locality" as categorical, and bare street names across locales flip to
 			// locality wholesale (the v4.5.0 no-promote's measured erosion: 'Calle de Alcalá',
 			// 'Madison Square West', and COMER's fork all fell to that prior). Tags are identical
-			// where present; each component value is the span as written (BIO alignment binds value
+			// where present. each component value is the span as written (BIO alignment binds value
 			// to surface); the bare form carries no number and no locality because the surface has
 			// neither.
 			const form = read % 4

@@ -164,7 +164,7 @@ export interface UnfoldedEvalClassifierOptions {
 	 */
 	weightsCache: string
 	/**
-	 * Gazetteer-anchor lexicon path; empty feeds nothing.
+	 * Gazetteer-anchor lexicon path. empty feeds nothing.
 	 */
 	gazetteerLexicon: string
 	/**
@@ -245,7 +245,7 @@ export interface LocaleEvalSpec {
  * street-prefix eval set (`fr-street-prefix-real.jsonl`, the #719 reproduction), not the broad golden dev set, for the
  * essential tags: golden FR carries only ~7 `street_prefix` rows against ~1535 without it, so the unfolded
  * `street_prefix` F1 there is dominated by absent-gold rows (measured 5.3) — it would UNDER-certify the very capability
- * the delta check exists to protect. On the purpose-built eval set the model emits FR `street_prefix` at F1 80.0 (the
+ * the delta check exists to guard. On the purpose-built eval set the model emits FR `street_prefix` at F1 80.0 (the
  * figure the #719 fix cites), which is the honest capability number the loader must guard.
  */
 export const MASK_EVAL_LOCALES: LocaleEvalSpec[] = [
@@ -273,7 +273,7 @@ export interface MaskOffOnOptions {
 	 * The parse mode the rows are graded in. Both callers — the capability-manifest generator and the mask-regression
 	 * release check — pass `"formatted"`: the rows are formatted postal addresses, on which the production pipeline
 	 * derives `formatted` and runs the evidence-bundle channels off as a declared ablation. Omitting it grades the
-	 * bare-library default (`fragmented`), a path production does not take on these inputs; the option stays so a caller
+	 * bare-library default (`fragmented`), a path production does not take on these inputs. the option stays so a caller
 	 * can measure that path on purpose, never by accident (#2048).
 	 */
 	inputMode?: "formatted"

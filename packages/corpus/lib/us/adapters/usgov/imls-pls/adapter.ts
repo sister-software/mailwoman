@@ -93,7 +93,7 @@ export function createUSGovIMLSPLSAdapter(): CorpusAdapter {
 					postcode: zip,
 					// #552: no subregion — US postal addresses don't surface the county, so emitting
 					// subregion creates a phantom component with no raw-span to align to, quarantining
-					// ~21% of rows. The county is still available in the source CSV; it just isn't
+					// ~21% of rows. The county is still available in the source CSV. it just isn't
 					// a postal-surface component here.
 				}
 

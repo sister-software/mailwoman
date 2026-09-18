@@ -7,7 +7,7 @@
  *
  *   The demo repoint is deliberately a separate step from the npm publish (mailwoman-release
  *   Step 5), so demo-vs-npm drift is structural, not accidental — which is why this check must be
- *   structural too. #203 (demo silently two model versions behind npm) was fixed as an instance;
+ *   structural too. #203 (demo silently two model versions behind npm) was fixed as an instance.
  *   this operation fails the day the drift reappears, anywhere it can appear:
  *
  *   1. The demo's live manifest (`releases.json` `defaultVersion` on the public R2 bucket — the

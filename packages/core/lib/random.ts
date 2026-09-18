@@ -17,7 +17,7 @@
  *   Four generators live here, and that is deliberate: no two produce the same sequence, and each is
  *   baked into an artifact that shipped. mulberry32 decides which typos get injected into the
  *   training corpus and which rows the frozen eval panels draw; `makeLcg` decides the registry
- *   scorers' train/test splits; the two glibc-constant generators decide the coarse-placer's split
+ *   scorers' train/test splits. the two glibc-constant generators decide the coarse-placer's split
  *   and the conformal calibration split. Collapsing any onto another would silently rewrite
  *   synthesized corpus rows, a frozen panel, or a published number. New code should reach for
  *   `mulberry32` (better distribution) unless it must reproduce an existing stream.
@@ -57,7 +57,7 @@ export function mulberry32(seed: number): () => number {
  * The walk is "swap `i` with a uniform index in `[0, i]`, counting down". How that index is drawn is the sampler, and
  * the samplers here differ because each reproduces a stream baked into an artifact — the coarse-placer's train/test
  * split, the conformal calibration split, a frozen eval panel. Parameterizing the sampler rather than the generator is
- * what lets all of them share one walk; CPython's `random.shuffle` takes `randbelow` for the same reason.
+ * what lets all of them share one walk. CPython's `random.shuffle` takes `randbelow` for the same reason.
  *
  * Prefer {@link shuffleWith} unless the call site derives its index some way other than scaling a float.
  */
@@ -118,7 +118,7 @@ const GLIBC_LCG_INCREMENT = 12_345
  * and neither is substitutable for the other.
  *
  * Kept because the published conformal thresholds were selected under this one. Prefer {@link mulberry32} for anything
- * new; this exists to reproduce an artifact, not to generate numbers well.
+ * new. this exists to reproduce an artifact, not to generate numbers well.
  */
 export function makeGlibcLcgFloat64(seed: number): () => number {
 	let state = seed

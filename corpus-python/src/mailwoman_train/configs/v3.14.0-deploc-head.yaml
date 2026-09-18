@@ -10,7 +10,7 @@
 # like the affix head), does the break still appear?
 #   - break GONE + dep-loc resurrects  ⇒ lock-in is HEAD-STRUCTURAL. Option B is live (and is A's
 #     enabler): a separate head lets the encoder stay shared while the capability grows apart.
-#   - break PERSISTS                    ⇒ lock-in is ENCODER-DEEP. B alone is insufficient; the axis
+#   - break PERSISTS                    ⇒ lock-in is ENCODER-DEEP. B alone is insufficient. the axis
 #     is A (representation/evidence), consistent with the P-C verdict (street↔locality is an
 #     evidence gap, not a head-capacity gap).
 #
@@ -18,18 +18,18 @@
 # punct-drop 0.6, same init_from v385): `model.use_deploc_head: true` REPLACES `train.reinit_label_rows`.
 # The fresh head is the resurrection (init_from v385 is strict=False → the head loads fresh); it rides
 # the classifier carveout so it trains at the same hot classifier_learning_rate 1e-3 the reinit'd rows
-# used. Single 2k hot phase — the resurrection window only; no two-phase anneal (that was v3.13's own,
+# used. Single 2k hot phase — the resurrection window only. no two-phase anneal (that was v3.13's own,
 # now-falsified, hypothesis). Model+trainer changes: model.py deploc_head + merge-in-forward;
-# config.py use_deploc_head; train.py carveout adds "deploc_head." to the classifier LR group.
+# config.py use_deploc_head. train.py carveout adds "deploc_head." to the classifier LR group.
 #
 # PRE-REGISTERED (inherited v3.12/v3.13 bars — this is a probe, so the invariance suite is the read):
 #   BLOCKING AT EVERY CHECKPOINT (1k + 2k): metamorphic INVARIANCE SUITE (`mailwoman eval invariance
 #     --baseline v385`) — the Pennsylvania INV[comma-drop] class is the whole question. A new class vs
-#     v385 = break persists = B insufficient; no new class + dep-loc emits = break gone = B live.
+#     v385 = break persists = B insufficient. no new class + dep-loc emits = break gone = B live.
 #   READ (not hard bars — this is a falsifier): GB dep-loc board w/ prior δ=5.0 emit/tag-correct;
-#     NZ raw-BIO emission > 0; digit bare-street-hn ≥ 0.755; FR bare-locality ≥ 0.90; golden us/fr
+#     NZ raw-BIO emission > 0. digit bare-street-hn ≥ 0.755. FR bare-locality ≥ 0.90. golden us/fr
 #     within ±0.7pp of v385 (87.6/91.1); presets byte-identical.
-#   VERDICT: 2k reached, invariance graded → B live | B insufficient. One run; no knob iteration.
+#   VERDICT: 2k reached, invariance graded → B live | B insufficient. One run. no knob iteration.
 #
 # Launch: cd corpus-python && modal run -d -m launch.train_remote --config v3.14.0-deploc-head.yaml --resume none
 #   (--resume none is required: init_from + the fresh head live in the else branch; --resume auto no-ops it.)
@@ -64,7 +64,7 @@ data:
     AU: 1.0
     CA: 1.0 # New (Overture) — live locality, sidesteps NZ's dead dependent_locality
     MX: 1.0 # New (Overture) — BR dropped (0% OA-lineage + SN-garbage numbers)
-    NZ: 1.0 # v3.12 COMPANION BUG FIX (not the variable): the allowlist lacked NZ through the whole v3.11.x lineage — synth-nz drew zero rows (step-0 measured; the documented v3.8.2-era allowlist trap re-triggered). Restores the recipe's DECLARED 4-locale intent.
+    NZ: 1.0 # v3.12 COMPANION BUG FIX (not the variable): the allowlist lacked NZ through the whole v3.11.x lineage — synth-nz drew zero rows (step-0 measured. the documented v3.8.2-era allowlist trap re-triggered). Restores the recipe's DECLARED 4-locale intent.
   source_weights: # v3.1.0 weights + overture-latam (CA/MX/BR, dedicated source so it doesn't dilute the trained EU overture rows) + synth-no-fragment (the one new variable); synth-no-street-led ZEROED (its on-disk part predates --exclude-surfaces and is contaminated vs the board — see the overlay note).
     overture-latam: 6.0 # New — the CA/MX/BR Overture rows. 6.0/~142 ≈ 4.2%, within Fable's ≤5-8% new-mass band. Distinct from  (EU) so EU exposure is untouched.
     wof-admin: 2.0
@@ -105,9 +105,9 @@ data:
     # (matches fr-fragment). Bare streets + street+number with no postcode partner, + counters.
     synth-no-fragment: 12.0
     synth-gb: 10.0 # FEED: 6.1% stream × .328 dep-loc (probe-2 had this at 20.2% — the skew culprit)
-    synth-nz: 4.0 # FEED NEW: 2.4% stream × .792 (synth-nz-v2 800k; key also covers the old 2,990-row po-box recipe output — harmless, same country)
+    synth-nz: 4.0 # FEED NEW: 2.4% stream × .792 (synth-nz-v2 800k. key also covers the old 2,990-row po-box recipe output — harmless, same country)
     synth-es-pedania: 5.0 # FEED NEW: 3.0% stream × .303 (post-4b formatter fix)
-    synth-fr-lieudit: 3.0 # FEED NEW: 1.8% stream × 1.00 (BAN nom_ld, 4ce6821a; directly feeds the bare-locality regression class)
+    synth-fr-lieudit: 3.0 # FEED NEW: 1.8% stream × 1.00 (BAN nom_ld, 4ce6821a. directly feeds the bare-locality regression class)
   train_rows_per_epoch: 1000000
   val_rows: 4096
   coarse_filter: true
@@ -154,7 +154,7 @@ model: # Verbatim from v2.4.1.
   use_country_anchor: true
   country_feature_dim: 2
   # #1104 homograph-guard softener — the one variable vs v263. Scales the country_ambiguous dim by 0.5
-  # before the country_projection (bakes into the exported ONNX; no lexicon/inference change). v263's
+  # before the country_projection (bakes into the exported ONNX. no lexicon/inference change). v263's
   # hard guard (scale 1.0) over-suppressed homograph countries Georgia/Jordan (country-homograph F1
   # 89.8->82.6); softening should recover homograph recall without giving back the country F1 the
   # WOF-admin rows produced.
@@ -208,7 +208,7 @@ train: # Same-vocab init_from fine-tune off the shipped v385 (fresh optimizer; -
   weight_decay: 0.01
   warmup_steps: 500
   grad_clip_norm: 1.0
-  max_steps: 2000 # P-B PROBE — the resurrection window only (v3.12 PASSED comma-drop at 2k; the break appeared 5k-8k). Separate head, single hot phase.
+  max_steps: 2000 # P-B PROBE — the resurrection window only (v3.12 PASSED comma-drop at 2k. the break appeared 5k-8k). Separate head, single hot phase.
   eval_every_steps: 1000
   save_every_steps: 1000
   log_every_steps: 50
@@ -217,7 +217,7 @@ train: # Same-vocab init_from fine-tune off the shipped v385 (fresh optimizer; -
   csv_log_path: "{output_dir}/../train_log.csv"
   lr_schedule: constant
   gazetteer_curriculum: false
-  classifier_learning_rate: 1.0e-3 # P-B: hot resurrection LR; via the carveout edit this now covers deploc_head. (single phase, no anneal — 2k window only)
+  classifier_learning_rate: 1.0e-3 # P-B: hot resurrection LR. via the carveout edit this now covers deploc_head. (single phase, no anneal — 2k window only)
   trackio_project: mailwoman
   trackio_run_name: v3.14.0-deploc-head-v2-s42
 

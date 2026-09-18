@@ -37,7 +37,7 @@ MACHINE_PATH_ROOTS = ("/mnt/", "/media/", "/home/", "/Users/")
 #: structural rather than a suppression: a check cannot name what it refuses without writing it.
 SELF = Path(__file__).resolve()
 
-#: Files still carrying a machine path, each with what replaces it. The list only shrinks; a new
+#: Files still carrying a machine path, each with what replaces it. The list only shrinks. a new
 #: entry means one was added, which is what this refuses.
 MACHINE_PATH_BASELINE: frozenset[str] = frozenset()
 

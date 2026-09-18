@@ -3,7 +3,7 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Kysely over D1. One handle per isolate, built once with the other dependencies; D1 has no connection to pool or
+ *   Kysely over D1. One handle per isolate, built once with the other dependencies. D1 has no connection to pool or
  *   close.
  */
 

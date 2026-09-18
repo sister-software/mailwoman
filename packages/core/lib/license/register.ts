@@ -8,8 +8,8 @@
  *   moves through three states:
  *
  *   - `active`: may sign and verify.
- *   - `retired`: may no longer sign; tokens it signed still verify offline until they expire.
- *   - `revoked`: compromised; online status refuses its tokens at once, and the trust map this module derives leaves
+ *   - `retired`: may no longer sign. tokens it signed still verify offline until they expire.
+ *   - `revoked`: compromised. online status refuses its tokens at once, and the trust map this module derives leaves
  *     it out, so the next release stops trusting it offline.
  *
  *   `mailwoman license register --write` regenerates the well-known file from this module, and the `license-register`
@@ -17,7 +17,7 @@
  */
 
 /**
- * The three states a signing key moves through, in order; a key never moves back.
+ * The three states a signing key moves through, in order. a key never moves back.
  */
 export const LicenseKeyStatus = {
 	Active: "active",
@@ -41,7 +41,7 @@ export interface LicenseSigningKey {
 }
 
 /**
- * Every signing key ever registered, with its current status. `mailwoman license keygen` prints the entry to add; a key
+ * Every signing key ever registered, with its current status. `mailwoman license keygen` prints the entry to add. a key
  * leaves this list never, and changes status instead.
  */
 export const LICENSE_SIGNING_KEYS: readonly LicenseSigningKey[] = [

@@ -58,7 +58,7 @@ def test_every_row_the_record_does_not_exempt_compiles_under_python() -> None:
 
     That failure would otherwise arrive at import time inside a Modal container, after the corpus is
     staged and the GPU is running. A row that genuinely cannot be written in both dialects declares
-    `javascriptOnly` with its reason; anything else must compile here.
+    `javascriptOnly` with its reason. anything else must compile here.
     """
     for label, _kind, pattern in ALL_POSTCODE_SHAPES:
         if label in UNREADABLE_HERE:

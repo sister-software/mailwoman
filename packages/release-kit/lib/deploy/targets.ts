@@ -3,7 +3,7 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  * @file The Cloudflare Workers this repository deploys, and which of them a change reaches. The table is the one
- *   place a target's build, wrangler invocation and receipt URL are written; the deploy workflow reads it through
+ *   place a target's build, wrangler invocation and receipt URL are written. the deploy workflow reads it through
  *   `release.deploy-targets` as a job matrix, so a new Worker is one row here and no YAML.
  *
  *   A target is affected when a changed file lies in a workspace inside its dependency closure, or in a root file
@@ -32,7 +32,7 @@ export interface DeployTarget {
 	 */
 	build: string
 	/**
-	 * `PLANETARY_BODY` for the two planetary builds; empty for every other target.
+	 * `PLANETARY_BODY` for the two planetary builds. empty for every other target.
 	 */
 	body: string
 	/**
@@ -40,7 +40,7 @@ export interface DeployTarget {
 	 */
 	deployArgs: string
 	/**
-	 * Fetched after the deploy; a non-2xx answer fails the job.
+	 * Fetched after the deploy. a non-2xx answer fails the job.
 	 */
 	receipt: string
 }

@@ -18,7 +18,7 @@
  *   THE CLIP IS CONSERVATIVE AND THAT ASYMMETRY IS DELIBERATE. `interiorCoverageCellSet` keeps only cells
  *   lying WHOLLY inside the outline, so the England–Wales and England–Scotland border strips get no
  *   coverage row at all. A point there reads unknown, which is the honest answer for a location the EA's
- *   statement may or may not reach; a cell wrongly called interior would state that an authority
+ *   statement may or may not reach. a cell wrongly called interior would state that an authority
  *   determined a location it never looked at.
  */
 

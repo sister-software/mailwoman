@@ -20,7 +20,7 @@
  *       gendered (Bobbie → Robert _or_ Roberta), so equivalence belongs in the matcher as a fuzzy
  *       agreement level, not a destructive rewrite. We only _extract_ a parenthetical/quoted
  *       nickname.
- *   - A CRF parser (probablepeople) is the gold-standard reference but too heavy to port; this
+ *   - A CRF parser (probablepeople) is the gold-standard reference but too heavy to port. this
  *       positional parser covers the documented hard cases (inversion, particles, generational +
  *       professional suffixes) without a model.
  */
@@ -272,7 +272,7 @@ export function parsePersonName(input: string | null | undefined): PersonName | 
 
 	if (!tokens.length) return result
 
-	// 5. Locate the surname particle run; everything from it onward is the (particled) surname.
+	// 5. Locate the surname particle run. everything from it onward is the (particled) surname.
 	let particleStart = -1
 
 	for (let i = 0; i < tokens.length; i++) {

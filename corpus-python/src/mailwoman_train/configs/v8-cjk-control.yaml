@@ -6,7 +6,7 @@
 # its 823 rows). Everything else in the run is byte-identical to v8-cjk-full: same head width (49), same re-sealed
 # CJK char vocabulary, same seed, schedule and precision. This arm answers one question: does the 49-label head over
 # the JP source alone also drop the generic on that municipality? If yes, the 0.9653 is head-width or run-to-run
-# variance on a single held-out name and the CN rows are not the cause; if this arm reads like the JP record, the
+# variance on a single held-out name and the CN rows are not the cause. if this arm reads like the JP record, the
 # mixture is. Nothing here is a CN reading — the CN source is off.
 #
 # Launch:
@@ -31,7 +31,7 @@ data:
   coarse_filter: false
   # JP val 20,000 + CN val 11.
   val_rows: 20011
-  # The 49-label CJK head. Supported only on the char path; the SP path raises (#1349's lesson).
+  # The 49-label CJK head. Supported only on the char path. the SP path raises (#1349's lesson).
   label_set: stage3-cjk
   char_mode: char
   char_vocab_path: /data/corpus/versioned/v8-cjk-2026-09-05/char-vocab-cjk.json

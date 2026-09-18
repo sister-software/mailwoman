@@ -19,7 +19,7 @@
 #       a rebuild. Low-confounding (additive on the po_box tag) once built, but it isn't built yet.
 # Competing new recipes (typo-inject, non-Latin) are deliberately not bundled — same-axis capacity
 # competition is the v4.2.0 trap (affix 78→27). DeepSeek also flagged a per-locale CRF transition penalty
-# (street→cedex) as a clean future rider; it needs wiring (crf_loss_weight is 0.0) so it's a later run.
+# (street→cedex) as a clean future rider. it needs wiring (crf_loss_weight is 0.0) so it's a later run.
 #
 # WHY: the failure taxonomy named boundary instability the #1 parser change, and the within-token
 # decomposition (#702) showed it surfacing under many names. The "before" baseline
@@ -33,7 +33,7 @@
 # The recipe output puts the gold boundary on diverse realizations of exactly these 4 shapes (alignRow-clean,
 # 0% quarantine). It also reinforces fr.house_number (the number-after-street shape).
 #
-# PRE-REGISTERED CHECK (DeepSeek-signed targets; per-shape via scripts/eval/boundary-stress-baseline.ts):
+# PRE-REGISTERED CHECK (DeepSeek-signed targets. per-shape via scripts/eval/boundary-stress-baseline.ts):
 #   - street_suffix 40.7 → ≥55 ; comma-less(US) street 46 → ≥65 ; fr-prefix 47.7 → ≥70 ;
 #     house-number-after-street 50.7 → ≥65 ; and the shared STREET span ≥65 on all four shapes
 #     (anchored to the diverse base-locale baseline).
@@ -49,12 +49,12 @@
 #
 #   BUNDLE CHECK ROWS (each rider attributable on its own):
 #   - conventions loss-mask: ❌ removed (rider a disabled — it conflicts with the FR street_prefix the
-#     recipe output teaches; see the header). No check row needed.
+#     recipe output teaches. see the header). No check row needed.
 #   - po_box NZ + military [ONLY IF rider (b) is built first]: the postal arena po_box class 0/4 → >0 (and
 #     military 0/3 → >0), with NO US/FR/CA po_box regression (existing synth-po-box rows only extended).
 #   - FREE-RIDER MEASURES (the recipe output trains these — grade as wins, not just floors): fr.house_number holds
 #     ≥87 AND targets the plateau-break >87 (#564) ; FR street_prefix (the fr-prefix shape) up ;
-#     number-after-street house_number (the hn-after shape, #435/#444) up. A lift is a free win; a DROP
+#     number-after-street house_number (the hn-after shape, #435/#444) up. A lift is a free win. a DROP
 #     means the recipe output's FR/DE shapes are fighting the native-order sources — STOP and re-audit.
 #
 # CORPUS PREREQUISITE: the recipe output JSONL→parquet + the overlay manifest are BUILT (a v0.6.0-boundary-stress
@@ -65,9 +65,9 @@
 # base scan (label distribution per recipe-vocab locality) found the original US vocab was a real contradiction
 # (Madison 96% street, Portland 95%, Springfield-IL 84% — the "5th Avenue Theatre" class). FIXED: the US
 # vocab is now DERIVED + verified locality-dominant (Albuquerque 258584:8, Indianapolis 219700:29, …). The
-# FR flag was a SAMPLING artifact (the whole-corpus scan undersampled the FR ban block; the FR-block scan
+# FR flag was a SAMPLING artifact (the whole-corpus scan undersampled the FR ban block. the FR-block scan
 # shows Paris/Marseille/Lyon 95–99% locality in FR data) → familiar dept-diverse FR cities kept. DE dropped
-# (street-dominated too; synth-german covers its native order). Re-baselined: street_suffix 41.7, comma-less
+# (street-dominated too. synth-german covers its native order). Re-baselined: street_suffix 41.7, comma-less
 # 47, fr-prefix 55, hn-after 51.3. Affix-tag lint flags are train-time-relabel artifacts (lexicon-verified).
 # Operator steps: (1) upload the regenerated parquet + manifest with `mailwoman corpus upload
 # --corpus-version v0.6.0-boundary-stress` and stage them with `sync_assets --corpus-versions

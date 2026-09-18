@@ -8,7 +8,7 @@
  *   Three sources feed the admin gazetteer and each is selected differently: the WOF leg is
  *   PRESENCE-driven (`ingestWOF` globs `**\/data\/**\/*.geojson` over the repos root and reads no list),
  *   while Overture and GeoNames are LIST-driven from `defaults.ts`. So adding a country by cloning is half
- *   the job; the other half is removing it from whichever list serves it today, and nothing enforced the
+ *   the job. the other half is removing it from whichever list serves it today, and nothing enforced the
  *   pairing.
  *
  *   THE INVARIANT IS NOT "ONE COUNTRY, ONE SOURCE", and that matters because the runbook this came from
@@ -29,7 +29,7 @@
  *   Overture does not carry, so dropping the fold wholesale would lose coverage. Both facts are true, and
  *   a check that refused two sources would be refusing a deliberate trade.
  *
- *   Hence the rule this module encodes: the FOURTEEN are accepted and recorded; a FIFTEENTH is refused.
+ *   Hence the rule this module encodes: the FOURTEEN are accepted and recorded. a FIFTEENTH is refused.
  *   An existing trade someone measured is not the same thing as a country silently acquiring a second
  *   source because a clone landed and a list was never edited.
  */
@@ -99,7 +99,7 @@ export interface SourceConflict {
  *
  * `wofCountries` is passed in rather than read from `DEFAULT_WOF_PRIORITY_COUNTRIES` because that list is a DECLARATION
  * and the WOF leg is presence-driven: what actually gets ingested is whatever is cloned. A caller checking a build
- * should pass what is on disk; a caller checking the recipe should pass the list. Conflating them is how a clone that
+ * should pass what is on disk. a caller checking the recipe should pass the list. Conflating them is how a clone that
  * nobody declared, or a declaration nobody cloned, reads as fine.
  */
 export function countrySourceMap(lists: {

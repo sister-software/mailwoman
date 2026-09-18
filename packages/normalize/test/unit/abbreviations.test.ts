@@ -51,7 +51,7 @@ describe("expandAbbreviations — en-US", () => {
 		expect(r.map[0]).toBe(0) // A
 		expect(r.map[1]).toBe(1) // v
 		expect(r.map[2]).toBe(2) // e
-		expect(r.map[3]).toBe(2) // n (inserted; clamped to last source char)
+		expect(r.map[3]).toBe(2) // n (inserted. clamped to last source char)
 		expect(r.map[4]).toBe(2) // u (inserted)
 		expect(r.map[5]).toBe(2) // e (inserted)
 	})
@@ -91,7 +91,7 @@ describe("expandAbbreviations — es-ES / es-MX", () => {
 	})
 
 	it("leaves the English suffixes alone under a Spanish locale", () => {
-		// `Ave`/`St`/`Blvd` are en-US table entries; a Spanish address that happens to contain one is
+		// `Ave`/`St`/`Blvd` are en-US table entries. a Spanish address that happens to contain one is
 		// not an invitation to expand it into English.
 		expect(expandAbbreviations("Calle 5 Ave", "es-MX").text).toBe("Calle 5 Ave")
 	})

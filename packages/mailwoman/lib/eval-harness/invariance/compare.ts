@@ -17,13 +17,13 @@
  *
  *   A critical tag that's absent in the original parse but present in the transformed one — a hallucination
  *   — is also `LOST`, not `DEGRADED` and not ignored. A missing
- *   critical tag degrades gracefully to a coarser admin-tier fallback; a hallucinated one can resolve to a
+ *   critical tag degrades gracefully to a coarser admin-tier fallback. a hallucinated one can resolve to a
  *   SPECIFIC WRONG rooftop with high apparent confidence — worse than falling back, because nothing
  *   downstream knows to distrust it.
  */
 
 /**
- * Tags whose change under a transform counts as a real failure. A shifted venue, unit or locality is tolerable; a
+ * Tags whose change under a transform counts as a real failure. A shifted venue, unit or locality is tolerable. a
  * shifted house number, street or postcode is not.
  */
 export const CRITICAL_TAGS = ["house_number", "street", "postcode"] as const

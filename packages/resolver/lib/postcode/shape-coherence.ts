@@ -37,8 +37,8 @@
  *
  *   - The **country node**, via `matchCountry`, territory-mapped: PR/VI/GU/MP/AS are USPS
  *     abbreviations (`codex/us/state.ts`), so a "Puerto Rico" token speaks for `us` — the mapping
- *     that protects the true postcode in "Ponce, 00716, Puerto Rico".
- *   - The **region node**, via `matchSubdivision` (US states + CA provinces; the US-first tiebreak
+ *     that guards the true postcode in "Ponce, 00716, Puerto Rico".
+ *   - The **region node**, via `matchSubdivision` (US states + CA provinces. the US-first tiebreak
  *     that makes "CA" mean California is `matchSubdivision`'s own), plus the region's
  *     `country_hint` metadata stamp (`mailwoman/region-recognition.ts` writes it on 2-letter US
  *     state abbreviations).
@@ -63,7 +63,7 @@
  *
  *   M-1's six Gauntlet exclusion spans grade 4 exclusions (US "1600"/"3080"/"1200" via their region,
  *   PR "3499" via the territory-mapped country) + 2 documented abstentions (MX "2000" — no country
- *   token, "Tabasco" is not a `matchSubdivision` key; ES "15 07691" — no ES address system). Within-country,
+ *   token, "Tabasco" is not a `matchSubdivision` key. ES "15 07691" — no ES address system). Within-country,
  *   the exclusion problem is close to empty on the curated board, and a 5-digit house number in a
  *   DE/FR address is shape-native — the shape cannot exclude it (M-1 finding #1), so the mechanism
  *   CONFIRMS it instead.
@@ -71,7 +71,7 @@
  *   **D-rule: opt-in behind `ResolveOpts.postcodeShapeCoherence`, default-OFF.** Demotion is the
  *   failure mode with teeth, so a default-on promotion needs the full pre-registered eval (B1-1
  *   byte-stability, B1-2 exclusion ≥90% with the correct sibling tag surviving, B1-3 confound ≤2%
- *   false exclusions; kill on any B1-3 δ).
+ *   false exclusions. kill on any B1-3 δ).
  */
 
 import { candidateSystemsForPostcode, SYSTEM_CODES } from "@mailwoman/codex"
@@ -83,7 +83,7 @@ import { collectNodes, walkNodes, type AddressNode } from "@mailwoman/core/decod
  * The codex address systems a sibling signal can speak for — the universe `candidateSystemsForPostcode` can return, in
  * the upper-case ISO form this module's signals are emitted in (`SystemCode` itself is lower-case). Signals from
  * countries with no codex address system are filtered out before the intersection test, so such a country can never
- * manufacture an empty intersection (the false-exclusion trap; see the header). Derived from codex's own list so a
+ * manufacture an empty intersection (the false-exclusion trap. see the header). Derived from codex's own list so a
  * system added there is admitted here in the same change.
  */
 const SYSTEM_UNIVERSE: ReadonlySet<string> = new Set<string>(SYSTEM_CODES.map((system) => system.toUpperCase()))

@@ -5,11 +5,11 @@ experiment tracker. We mirror the metrics already written to ``train_log.csv`` i
 Trackio project so training curves and cross-version eval metrics show up on a
 self-hosted Hugging Face Space dashboard (free CPU-basic tier) instead of only living
 in a CSV. With ``space_id`` set, Trackio deploys/syncs the dashboard Space and persists
-every run to a backing HF Dataset; with no ``space_id`` it logs to a local dashboard
+every run to a backing HF Dataset. with no ``space_id`` it logs to a local dashboard
 (``~/.cache/huggingface/trackio``).
 
 Design rule — tracking must never crash training. An A100 run costs real money and the
-night-shift workflow runs unattended; a metrics upload that 401s, a missing package, or
+night-shift workflow runs unattended. a metrics upload that 401s, a missing package, or
 an API drift must degrade to CSV-only, not take the run down with it. So:
 
   * the whole thing no-ops when ``cfg.train.trackio_enabled`` is False (the default), or
@@ -19,7 +19,7 @@ an API drift must degrade to CSV-only, not take the run down with it. So:
   * every ``log``/``finish`` call swallows exceptions behind a one-line warning.
 
 Auth: Trackio uploads to the Space using the HF cached login or ``HF_TOKEN``. On Modal,
-``HF_TOKEN`` is injected via the ``hf_secret`` in launch/train_remote.py; locally
+``HF_TOKEN`` is injected via the ``hf_secret`` in launch/train_remote.py. locally
 it uses your ``hf auth login`` token. No token -> Space upload fails -> CSV-only.
 """
 

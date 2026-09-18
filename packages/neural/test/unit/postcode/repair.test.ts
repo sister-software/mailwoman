@@ -232,7 +232,7 @@ describe("repairPostcodeLabels", () => {
 
 	it("does NOT add a numeric postcode from scratch (a bare 5-digit could be a house number)", () => {
 		const text = "12345 Main St"
-		// 12345 is a house number the model labeled correctly; no postcode present.
+		// 12345 is a house number the model labeled correctly. no postcode present.
 		const tokens = [tok("12345", 0, 5, "B-house_number"), tok("Main", 6, 10, "B-street"), tok("St", 11, 13, "I-street")]
 		const { tokens: out, changed } = repairPostcodeLabels(text, tokens)
 		expect(changed).toBe(0)

@@ -10,7 +10,7 @@
  *   sentencepiece whose binding never exposed the offset-carrying proto API) forced this file to
  *   RECONSTRUCT char offsets by re-walking the input string alongside the emitted pieces — ~90
  *   lines of cursor arithmetic with two documented hazard classes (byte-fallback desync, fixed by
- *   hand; surrogate-pair accounting, deferred) and one undocumented one (normalizer-changed
+ *   hand. surrogate-pair accounting, deferred) and one undocumented one (normalizer-changed
  *   surfaces: a piece like `DŽ` for input `Ǆ` desyncs a literal-length cursor). SentencePiece
  *   itself has always known the answer: `Encode(text, &SentencePieceText)` yields per-piece
  *   `begin`/`end` BYTE offsets with the invariant `utf8(text).slice(begin, end) == surface` and
@@ -20,7 +20,7 @@
  *
  *   What this layer still owns:
  *
- *   - **Byte → UTF-16 conversion.** The native offsets are UTF-8 byte positions; the decoder wants
+ *   - **Byte → UTF-16 conversion.** The native offsets are UTF-8 byte positions. the decoder wants
  *       JS string (UTF-16 code-unit) ranges. The conversion walks code points once per encode and
  *       is exact for non-BMP input (the old shim's deferred hazard, now covered by tests).
  *   - **Leading-whitespace trim.** A `▁`-prefixed piece's native span INCLUDES the whitespace the
@@ -157,7 +157,7 @@ export class MailwomanTokenizer {
 	/**
 	 * Load from a path to a `tokenizer.model` file on disk. **Node-only** — the dynamic `node:fs` import keeps this
 	 * method out of the static dependency graph so the rest of the tokenizer bundles cleanly for the browser. Calling it
-	 * in a browser throws at runtime; use `loadFromBase64` (or the URL-fetching loaders in
+	 * in a browser throws at runtime. use `loadFromBase64` (or the URL-fetching loaders in
 	 * `@mailwoman/neural/web-loader`) instead.
 	 */
 	static async loadFromFile(modelPath: PathBuilderLike): Promise<MailwomanTokenizer> {
@@ -191,7 +191,7 @@ export class MailwomanTokenizer {
 			const end = byteToUTF16[raw.ends[i]!] ?? text.length
 
 			// A ▁ piece's native span includes the consumed whitespace — trim to the word start (the
-			// decoder's contract; see header). Bounded by `end`, so zero-width spans stay put.
+			// decoder's contract. see header). Bounded by `end`, so zero-width spans stay put.
 			while (start < end && WHITESPACE_RE.test(text[start]!)) {
 				start++
 			}

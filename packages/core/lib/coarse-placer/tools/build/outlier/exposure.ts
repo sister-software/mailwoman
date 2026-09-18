@@ -147,7 +147,7 @@ function addressVariant(name: string, h: number): string {
  * The one column this tool reads out of `wof.db`.
  *
  * Not `WOFDatabase` from `@mailwoman/resolver-wof-sqlite`: that package depends on this one, so importing its schema
- * here would invert the layering. A tool in `@mailwoman/core` reaching a resolver artifact at all is the odd part; this
+ * here would invert the layering. A tool in `@mailwoman/core` reaching a resolver artifact at all is the odd part. this
  * names the narrowest read it needs rather than pretending the dependency is fine.
  */
 interface WOFNameRead {

@@ -121,7 +121,7 @@ circumvented).
 - **#671 — context-aware legal designations (Tier 3E, #668).** A two-axis `canonicalizeOrganizationName`
   (a jurisdiction + a domain option): the strip-set is `(base ∪ jurisdiction-pack) − domain-protect-pack`.
   The collision-prone forms (`pt`/`sca`/`scs`) are blocked behind a known jurisdiction (ID/FR); a
-  `healthcare` domain protects them
+  `healthcare` domain guards them
   (PT = Physical Therapy, not Perseroan Terbatas). Byte-stable default, 8 new tests, full suite + typecheck
   green. Not yet wired into `resolveEntities` (a behavior change wanting its own eval).
 - **#672 — the cross-dataset linking map (bonus).** The marquee proof on a map: 219 entities resolved

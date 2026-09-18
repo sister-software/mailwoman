@@ -50,7 +50,7 @@ export interface ReleaseAssets {
 	fstProvenance: FSTProvenanceLike | null
 	/**
 	 * The street-morphology matcher — the #1315 street-context check's signal source, the node/browser parity fix (SCOPE
-	 * invariant 2: node runtimes wire this by default; the browser previously never could). Loaded with the FST gazetteer
+	 * invariant 2: node runtimes wire this by default. the browser previously never could). Loaded with the FST gazetteer
 	 * because the check needs both (core's `streetContextRequirementFor` only fires when the two stages are present).
 	 * `null` when the release ships no `fst-street-morphology.bin` (pre-artifact bundles) — the demo then parses without
 	 * the check, byte-identical to before.
@@ -140,7 +140,7 @@ export async function loadReleaseAssets(
 		diagnostics,
 		postcodeAnchorLookup,
 		selectPairIndexForText,
-		// `release` is the ReleaseInfo parameter in this scope; the classifier's disposer needs its own name.
+		// `release` is the ReleaseInfo parameter in this scope. the classifier's disposer needs its own name.
 		release: releaseClassifier,
 	} = (await loadNeuralClassifierFromURLs({
 		...neuralClassifierLoadURLs(DEFAULT_LOCALE, release.version, {
@@ -148,7 +148,7 @@ export async function loadReleaseAssets(
 			forceWASM: progress.forceWASM,
 		}),
 		fetchImpl: modelFetch,
-		// Every published pair index is loaded; the loader keeps each live and `selectPairIndexForText` picks per
+		// Every published pair index is loaded. the loader keeps each live and `selectPairIndexForText` picks per
 		// parse. Fetched tolerantly: a 404 is skipped, so a missing binary means no prior, never a failed load.
 		pairIndexURLs: pairIndexURLs(pairIndexBase),
 	})) as {
@@ -196,7 +196,7 @@ export async function loadReleaseAssets(
 		}
 
 		// The street-context check needs both matchers, so the morphology matcher is loaded only once the gazetteer FST
-		// is; a release that predates the artifact answers null and the parse runs with the check off.
+		// is. a release that predates the artifact answers null and the parse runs with the check off.
 		if (fstMatcher) {
 			try {
 				streetMorphologyMatcher = await loadStreetMorphologyFST(DEFAULT_LOCALE, release.version)

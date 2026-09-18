@@ -3,10 +3,10 @@
 # Direct branch from v0_4_0.yaml after the first attempt diverged through warmup:
 #
 #   step 500  val_loss=2.12  macro_f1=0.36   (best window)
-#   step 750  val_loss=3.39  macro_f1=0.14   (eval crash; LR @ 3.75e-4 of warmup ramp)
+#   step 750  val_loss=3.39  macro_f1=0.14   (eval crash. LR @ 3.75e-4 of warmup ramp)
 #
 # Issue #116 prescribes the bisection explicitly: "If divergence recurs by step 2000,
-# bisect down to 3e-4 first; v0.3.0's 1.5e-4 was only safe because crf_loss_weight=0.05
+# bisect down to 3e-4 first. v0.3.0's 1.5e-4 was only safe because crf_loss_weight=0.05
 # masked the dual-loss instability the per-token norm fixes." Divergence happened
 # earlier than 2K — implementation note: warmup ramp through ~3.75e-4 was already
 # enough to destabilize, so 3.0e-4 should land below that.
@@ -85,7 +85,7 @@ train:
   batch_size: 32
   eval_batch_size: 40
   grad_accum_steps: 4
-  # Bisected from 5.0e-4. v0.3.0's 1.5e-4 is the proven-safe floor; 3.0e-4 is the
+  # Bisected from 5.0e-4. v0.3.0's 1.5e-4 is the proven-safe floor. 3.0e-4 is the
   # midpoint that the issue specifically calls out as the next attempt.
   learning_rate: 3.0e-4
   weight_decay: 0.01

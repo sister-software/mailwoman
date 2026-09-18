@@ -6,7 +6,7 @@
  *   #375 boundary-stress EVAL — the promote/no-promote verdict for the v1.6.0 boundary-instability
  *   retrain. Same four stress shapes as the "before" baseline (boundary-stress-baseline.ts), graded
  *   against the recipe's PRE-REGISTERED targets + the shared street-span floor. Emits a per-shape
- *   table and a single PROMOTE / NO-PROMOTE line; exit 0 = all targets met, exit 1 = any miss.
+ *   table and a single PROMOTE / NO-PROMOTE line. exit 0 = all targets met, exit 1 = any miss.
  *
  *   Unlike the baseline (which hard-codes the dev weights), this accepts an explicit model so it can
  *   grade a freshly-trained checkpoint without touching the neural-weights symlink (which yarn test

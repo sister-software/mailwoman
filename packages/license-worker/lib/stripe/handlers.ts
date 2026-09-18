@@ -3,7 +3,7 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   One handler per accepted event type. Every handler re-reads state from Stripe by id or acts only on the ledger; none
+ *   One handler per accepted event type. Every handler re-reads state from Stripe by id or acts only on the ledger. none
  *   reads an entitlement from the event body, and none decides a state: each hands what it observed to `policy.ts` and
  *   writes the answer. Each is safe to run twice: the mint answers `already_minted`, the row creation finds the row,
  *   and the state writes are idempotent.
@@ -19,7 +19,7 @@ import { licenseStateAfterDispute, licenseStateAfterRefund, licenseStateAfterSub
 import { idOf, invoiceSubscriptionID } from "#stripe/shapes"
 
 /**
- * The invoice a charge paid. A charge no longer names its invoice; the link runs through the PaymentIntent, and the
+ * The invoice a charge paid. A charge no longer names its invoice. the link runs through the PaymentIntent, and the
  * invoice-payments list is the one query that answers it.
  */
 async function invoiceIDForCharge(stripe: Stripe, charge: Stripe.Charge): Promise<string | undefined> {

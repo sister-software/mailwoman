@@ -321,7 +321,7 @@ describe("StreetInterpolator — artifact-carried radius calibration (#374)", ()
  */
 describe("StreetInterpolator — parity-first ambiguity, near tie-break, key variants", () => {
 	it("answers without a postcode when PARITY selects a single ZIP (the boundary-road class)", () => {
-		// 151 is odd; only the 05601 odd side can hold it. The even 05602 namesake used to veto this
+		// 151 is odd. only the 05601 odd side can hold it. The even 05602 namesake used to veto this
 		// via the pre-parity postcode count.
 		const hit = interpolator.find({ street: "Main St", number: "151" })
 

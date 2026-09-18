@@ -22,7 +22,7 @@
  *   - `unstated` — the parse produced no such qualifier. The common case, and not a problem: most
  *     queries simply don't name a region or country.
  *   - `unverifiable` — the parse produced the qualifier but the winner carries no ancestry of that
- *     class to check against. Report it faithfully; folding it into either decided verdict would
+ *     class to check against. Report it faithfully. folding it into either decided verdict would
  *     hide exactly the gap #1717 wants measured.
  *
  *   STATED BOUNDS (v1 is fold-equality only — do not read more into a verdict than this):
@@ -191,7 +191,7 @@ function regionVerdict(parsedRegion: string | undefined, winner: AdminCoherenceW
 
 	// The winner is a region resolution — the qualifier is the thing that resolved, so containment
 	// degenerates to identity. The resolver's own binding (alias-aware, unlike the fold) is the
-	// match evidence here; re-checking it under fold-equality would misread every alias hit as a
+	// match evidence here. re-checking it under fold-equality would misread every alias hit as a
 	// contradiction.
 	if (winner.tag === "region") return "confirmed"
 
@@ -229,7 +229,7 @@ function countryVerdict(parsedCountry: string | undefined, winner: AdminCoherenc
 }
 
 /**
- * Assess the parsed admin qualifiers against the winning candidate. Pure — no I/O, no lookup, no side effects; call it
+ * Assess the parsed admin qualifiers against the winning candidate. Pure — no I/O, no lookup, no side effects. call it
  * once at result assembly, only when a winner exists (no winner → no report, absence meaning "nothing resolved to check
  * against").
  */
@@ -279,7 +279,7 @@ export function adminCoherenceField(
 			tag: picked.tag,
 			countryCode: (picked.metadata?.["resolver_country"] as string | undefined)?.trim() || undefined,
 			// The resolver's #404 stamp — present when the geocode path opted in and the backend's
-			// artifact carries an ancestors table; its absence is what the verdicts report as
+			// artifact carries an ancestors table. its absence is what the verdicts report as
 			// `unverifiable`.
 			ancestry: picked.metadata?.["ancestors"] as readonly AdminAncestor[] | undefined,
 		}

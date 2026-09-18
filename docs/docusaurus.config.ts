@@ -76,7 +76,7 @@ const config: Config = {
 		},
 		// The four faces that paint above the fold, preloaded. Without these the chain is
 		// HTML -> styles.css -> parse -> discover @font-face -> cross-origin fetch, which measured ~1.57 s to first
-		// font byte on a warm cache; with `font-display: swap` on every face that is a guaranteed flash of the
+		// font byte on a warm cache. with `font-display: swap` on every face that is a guaranteed flash of the
 		// fallback plus a full-page reflow. `preconnect` above only removes the handshake, not the discovery.
 		// Any face not listed here still loads lazily off the stylesheet, which is what we want for the other 44.
 		...(
@@ -115,7 +115,7 @@ const config: Config = {
 	future: {
 		v4: true,
 		// rspack bundles the site now that every @mailwoman/* subpath the client reaches carries a
-		// browser condition; the geocoder page passes its cold-load and resolve specs on rspack's
+		// browser condition. the geocoder page passes its cold-load and resolve specs on rspack's
 		// output. Both bundlers report maplibre-gl's dynamic `import()` of an expression twice as a
 		// "Critical dependency" warning, so that is not a bundler difference. The persistent cache
 		// stays off until a build has been measured with it.
@@ -242,7 +242,7 @@ const config: Config = {
 				sitemap: {
 					// Internal utility pages — keep them reachable but out of the sitemap
 					// (and thus out of crawler discovery). Patterns cover both slash forms.
-					// Redirect pages to earth.mailwoman.ai; reachable, but not for crawlers.
+					// Redirect pages to earth.mailwoman.ai. reachable, but not for crawlers.
 					ignorePatterns: ["/demo", "/demo/", "/debug", "/debug/", "/trace", "/trace/"],
 				},
 				theme: {
@@ -265,7 +265,7 @@ const config: Config = {
 	],
 
 	themeConfig: {
-		// Default og:image / twitter:card for every page; the same card is uploaded
+		// Default og:image / twitter:card for every page. the same card is uploaded
 		// as the GitHub repo social preview. Regenerate via docs/scripts/social-card.html.
 		image: "img/social-card.png",
 		colorMode: {
@@ -289,7 +289,7 @@ const config: Config = {
 			logo: {
 				alt: "Mailwoman 〒 hanko seal",
 				// Magenta seal on the navy navbar in both themes — the design system
-				// brief calls magenta the primary mark; navy/blue alts ship under
+				// brief calls magenta the primary mark. navy/blue alts ship under
 				// /img for use on lighter surfaces.
 				src: "img/mailwoman-seal-magenta.svg",
 			},

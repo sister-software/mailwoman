@@ -18,7 +18,7 @@
  *   This counts the corpus POOL. `census_region_code_token` in `mailwoman_train.audits` counts the EMITTED mixture,
  *   which is the pool after `source_weights` and after `augment_region_prob` writes region surfaces onto rows that
  *   carried none. The two answer different questions and the emitted one is the one an exposure decision is set
- *   against; this one needs no GPU, no Modal volume and no config.
+ *   against. this one needs no GPU, no Modal volume and no config.
  *
  *   Run:
  *
@@ -130,7 +130,7 @@ for (const row of reader.getRowObjects()) {
 }
 
 /**
- * The share of a token's occurrences held by its commonest tag. A token that teaches one reading is 1.0; one the decode
+ * The share of a token's occurrences held by its commonest tag. A token that teaches one reading is 1.0. one the decode
  * has to disambiguate is lower, and how much lower is the size of the contest.
  */
 function dominance(entry: TokenCensus): number {

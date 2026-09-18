@@ -7,7 +7,7 @@
  *   The search itself lives in `../symbol-index.ts`; this file is the CONTRACT.
  *
  *   The pull half of the duplicate-avoidance pair. `../hooks/symbol-precheck.ts` pushes the same answer at write time
- *   without being asked; this is for deciding before writing, when the question is "does this already exist" and the
+ *   without being asked. this is for deciding before writing, when the question is "does this already exist" and the
  *   answer changes what gets written.
  *
  *   TWO WAYS TO ASK, because a name search only helps someone who guessed the name. `query` matches an identifier

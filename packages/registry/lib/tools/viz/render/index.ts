@@ -7,7 +7,7 @@
  *   the `registry viz` figures (an internal helper, not a command).
  *
  *   Plotly 3D (`surface`/`scatter3d`) needs a real WebGL context, which the shared harness
- *   (`./browser.ts`) provides through SwiftShader; 2D traces (`contour`/`heatmap`) render on the 2D
+ *   (`./browser.ts`) provides through SwiftShader. 2D traces (`contour`/`heatmap`) render on the 2D
  *   canvas regardless. We wait for Plotly's `plotly_afterplot` to fire on every graph div rather
  *   than a fixed sleep, so the screenshot can't race the (async) WebGL paint.
  */

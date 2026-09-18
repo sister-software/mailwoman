@@ -5,13 +5,13 @@
  *
  *   Typed schema for `nsul.db` — the GB UPRN → unit-postcode register: the ONS **National Statistics
  *   UPRN Lookup** (NSUL) joined to the WGS84 point OS Open UPRN publishes for the same UPRN. One row per
- *   GB UPRN that carries a unit postcode and has a published coordinate; the postcode is Code-Point
+ *   GB UPRN that carries a unit postcode and has a published coordinate. the postcode is Code-Point
  *   Open's, so this table and `postcode-gb.bin` agree by construction on the universe of unit postcodes.
  *
  *   ## Why this table exists
  *
- *   Code-Point Open gives one coordinate per unit postcode; Open UPRN gives one coordinate per
- *   addressable object; neither says which object carries which postcode. NSUL does, as field `PCDS`,
+ *   Code-Point Open gives one coordinate per unit postcode. Open UPRN gives one coordinate per
+ *   addressable object. neither says which object carries which postcode. NSUL does, as field `PCDS`,
  *   under OGL-UK-3.0. The `PO`-area measurement that produced this design (recorded on #1975) showed a
  *   nearest-centroid reconstruction of the register is exact on 69.6% of 531,266 UPRNs and a building
  *   footprint adds nothing, so the register is stored rather than inferred.

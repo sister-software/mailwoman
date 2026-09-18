@@ -1,5 +1,5 @@
 # v3.0.1-span-head-lr — #727 STAGE 2, PHASE 1, PROBE 2. One variable vs v3.0.0:
-# train.span_head_learning_rate 1e-3 (the fresh span head gets its own param group; the pretrained
+# train.span_head_learning_rate 1e-3 (the fresh span head gets its own param group. the pretrained
 # encoder stays at learning_rate 1e-5). Everything else — corpus, tokenizer, lexicons, the span
 # scorer itself, span_loss_weight 0.5, init_from, steps — is v3.0.0 verbatim.
 #
@@ -14,13 +14,13 @@
 # THE CHECK (unchanged from v3.0.0, pre-registered):
 #   seg@1 > token@1 on the parity corpus, via scripts/eval_seg_at_1.py.
 #   v3.0.0 read seg@1 0.004 vs token@1 0.348 (CHANNEL-STARVED numbers — that script feeds no
-#   anchor/gazetteer/country channels, so its absolutes are not the JS harness's 0.573; the check is a
+#   anchor/gazetteer/country channels, so its absolutes are not the JS harness's 0.573. the check is a
 #   RELATIVE comparison and both heads read the same starved encoder).
 # Secondary read: the span NLL must actually converge. If loss again ends ~17 and still falling, the
 # LR is not the binding constraint and the fork reopens.
 #
 # Not a promote check. Standing floors (street 0.90 / hn 0.97 / pc 0.97) and the 2pp golden check are
-# untouched; this checkpoint ships nowhere. Phase 2 (export) starts only if seg@1 crosses.
+# untouched. this checkpoint ships nowhere. Phase 2 (export) starts only if seg@1 crosses.
 #
 # If seg@1 STILL loses with a converged span loss: that is the falsification. Do not tune further —
 # fork to the operator with the loss curve.
@@ -131,7 +131,7 @@ model: # Verbatim from v2.6.4 except the span-scorer block below (the one variab
   use_country_anchor: true
   country_feature_dim: 2
   # #1104 homograph-guard SOFTENER — the one variable vs v263. Scales the country_ambiguous dim by 0.5
-  # before the country_projection (bakes into the exported ONNX; no lexicon/inference change). v263's
+  # before the country_projection (bakes into the exported ONNX. no lexicon/inference change). v263's
   # hard guard (scale 1.0) over-suppressed homograph countries Georgia/Jordan (country-homograph F1
   # 89.8->82.6); softening should recover homograph recall without giving back the country F1 the
   # WOF-admin rows produced.
@@ -175,7 +175,7 @@ model: # Verbatim from v2.6.4 except the span-scorer block below (the one variab
 
 train: # Same-vocab init_from fine-tune off the shipped v264 (fresh optimizer; --resume none on a fresh
   # output_dir honors init_from, weights only). The span scorer + segment transitions start random and
-  # learn to score whole spans; the encoder keeps v264's country channel + span-boundary grammar.
+  # learn to score whole spans. the encoder keeps v264's country channel + span-boundary grammar.
   output_dir: /data/output-v301-span-head-lr-s42/checkpoints
   seed: 42
   init_from: /data/output-v264-country-softguard-s42/checkpoints/step-008000
@@ -188,7 +188,7 @@ train: # Same-vocab init_from fine-tune off the shipped v264 (fresh optimizer; -
   weight_decay: 0.01
   warmup_steps: 500
   grad_clip_norm: 1.0
-  max_steps: 2000  # PROBE. A 2k probe answers the check in minutes; 8k only if it crosses.
+  max_steps: 2000  # PROBE. A 2k probe answers the check in minutes. 8k only if it crosses.
   eval_every_steps: 1000
   save_every_steps: 2000
   log_every_steps: 50

@@ -139,7 +139,7 @@ describe("runAdapter", () => {
 		})
 
 		// Periodic at yielded=2,4 plus the final tick. Some implementations may also emit the
-		// final tick coincidentally at a multiple of progressEvery; check the floor instead.
+		// final tick coincidentally at a multiple of progressEvery. check the floor instead.
 		expect(ticks.length).toBeGreaterThanOrEqual(3)
 		const final = ticks.at(-1)!
 		expect(final.yielded).toBe(5)

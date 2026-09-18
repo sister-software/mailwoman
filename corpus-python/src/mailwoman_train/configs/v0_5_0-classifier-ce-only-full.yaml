@@ -2,7 +2,7 @@
 #
 # CE-only = CRF NLL term dropped from training. CRF stays at inference via frozen mask + Viterbi.
 # This fixes the 9-run dual-loss curvature-conflict divergence (CRF gradient dominated CE by 8-20×
-# in the conflict regime below loss ~0.41; model was being dragged off its CE-preferred basin).
+# in the conflict regime below loss ~0.41. model was being dragged off its CE-preferred basin).
 #
 # Identical to v0_5_0-classifier-ce-only-smoke.yaml except:
 #   - max_steps: 2000 → 50000

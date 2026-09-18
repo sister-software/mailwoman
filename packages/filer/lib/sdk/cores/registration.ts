@@ -131,7 +131,7 @@ export function recaseUniform(value: string): string {
  *
  * **The FRN cross-check is the required part.** Without it a page served for the wrong entity — a redirect, a cached
  * response for a different query, a truncated document — would be attributed to the FRN that was asked for, which is a
- * false identity link written silently. The page states its own FRN; requiring the two to agree is free.
+ * false identity link written silently. The page states its own FRN. requiring the two to agree is free.
  */
 export function parseCORESRegistration(frn: FRN, html: string): CORESRegistration | null {
 	const fields: Partial<Record<keyof CORESRegistration, string>> = {}
@@ -167,7 +167,7 @@ export function parseCORESRegistration(frn: FRN, html: string): CORESRegistratio
 	for (const [field, value] of Object.entries(fields)) {
 		if (field === "frn") continue
 
-		// Timestamps and free-text contact details keep their source casing; only the NAME surfaces get the
+		// Timestamps and free-text contact details keep their source casing. only the NAME surfaces get the
 		// uniform-case tidy, since they are what a human reads and what a display layer renders.
 		registration[field as Exclude<keyof CORESRegistration, "frn">] =
 			field === "entityName" || field === "contactOrganization" || field === "contactName"

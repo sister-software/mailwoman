@@ -65,7 +65,7 @@ export function repoURL(org: string, repo: string): string {
 export type ForkState = "absent" | "clean" | "diverged"
 
 /**
- * What our fork looks like. Injected so the resolver stays pure and testable; the CLI passes a `gh`-backed probe, tests
+ * What our fork looks like. Injected so the resolver stays pure and testable. the CLI passes a `gh`-backed probe, tests
  * pass a map.
  *
  * A boolean cannot express this: "a fork exists" and "the fork holds a correction" are different questions, and the
@@ -150,7 +150,7 @@ export const githubForkProbe: ForkProbe = async (org, repo) => {
 
 		return Number(stdout.trim()) > 0 ? "diverged" : "clean"
 	} catch {
-		// The fork is known to exist; only the comparison failed. Calling that "diverged" would prefer a
+		// The fork is known to exist. only the comparison failed. Calling that "diverged" would prefer a
 		// possibly-stale snapshot on no evidence.
 		return "clean"
 	}

@@ -20,7 +20,7 @@ export { Alpha3ToCountryRecord, CountryISO2, type CountryISO3 } from "#country/c
 /**
  * Common real-address surface forms per ISO 3166-1 alpha-2, **canonical English name first** then endonym +
  * abbreviations. Curated for the corpus locales + frequent countries (not a full 249-entry variant table — the ISO base
- * below catches the canonical name/code for everything else). Forms are matched case-insensitively; the first entry is
+ * below catches the canonical name/code for everything else). Forms are matched case-insensitively. the first entry is
  * the preferred render form.
  */
 export const COUNTRY_SURFACE_FORMS = {
@@ -135,7 +135,7 @@ export interface CountryMatch {
 /**
  * Resolve a token (surface form, canonical name, alpha-2, or alpha-3) to a country. Case-, accent-, and
  * punctuation-insensitive. Returns null if unrecognized. Multi-word names ("United States", "Great Britain") must be
- * passed as the whole phrase — the caller decides the span; this matches it.
+ * passed as the whole phrase — the caller decides the span. this matches it.
  */
 export function matchCountry(token: string | null | undefined): CountryMatch | null {
 	if (!token || typeof token !== "string") return null
@@ -171,7 +171,7 @@ export function countryCodeForTable(country: string | null | undefined): string 
 
 /**
  * Normalize and validate an ISO 3166-1 alpha-2 code. This is for a field or flag that explicitly asks for a country
- * code; address-text recognition belongs to {@link matchCountry} instead.
+ * code. address-text recognition belongs to {@link matchCountry} instead.
  */
 export function formatAsCountryISO2(value: string): CountryISO2 {
 	const code = value.trim().toUpperCase()

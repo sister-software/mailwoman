@@ -3,7 +3,7 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   `QueryInput` — the labelled text field for the POI explorer. Controlled; presentational only.
+ *   `QueryInput` — the labelled text field for the POI explorer. Controlled. presentational only.
  */
 
 import type { ReactNode } from "react"

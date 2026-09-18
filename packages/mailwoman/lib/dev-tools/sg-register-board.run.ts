@@ -76,7 +76,7 @@ interface RegisterRow {
 
 /**
  * Draw `n` register rows, seeded through DuckDB's own generator so a re-run with the same seed draws the same rows. The
- * building-led quarter is drawn from the rows whose `unit` is a building name; the rest from every row.
+ * building-led quarter is drawn from the rows whose `unit` is a building name. the rest from every row.
  */
 async function drawRows(): Promise<Map<SGRegister, RegisterRow[]>> {
 	// @duckdb/node-api is an optional peer dep (this is a maintainer-only board builder).

@@ -5,7 +5,7 @@
  *
  *   `mailwoman corpus golden-relabel` — move a golden answer-key version onto the corpus's US
  *   street-suffix convention (folded `street` → `street` + `street_suffix`). Writes a new version
- *   dir plus a review deck; the parent version is read-only. See
+ *   dir plus a review deck. the parent version is read-only. See
  *   `corpus/src/tools/golden-relabel-street.ts` for what it changes and, more importantly, what it
  *   refuses to.
  */

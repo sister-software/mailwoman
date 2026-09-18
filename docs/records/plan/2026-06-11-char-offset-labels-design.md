@@ -31,7 +31,7 @@ What this cost, concretely:
 - **The dotted-designator class** (v4.4.0 check, battery 1): `P.O. Box` decodes as
   period-truncated fragments — 98% miss on dotted po_box leaders while the model labeled every
   letter piece correctly at 0.93+. Ten times more data moved it +2.9pp. Now contained by the
-  span bridge (decode-side merge), which is containment, not cure: the bridge must GUESS which
+  span bridge (decode-side merge), which is containment, not fix: the bridge must GUESS which
   punctuation is intra-span (periods, hyphens) vs separator (commas) — a global heuristic where
   the data could have been the authority, per surface, per locale.
 - **The comma over-merge** (battery 2): the bridge's guess was wrong for commas; six FR golden

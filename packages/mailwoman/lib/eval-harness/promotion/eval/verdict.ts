@@ -79,7 +79,7 @@ export function arenaColumn(md: string, arena: string, column: string): number |
 /**
  * Pull the per-locale table's per-tag percentage for one locale, by HEADER — the same discipline as
  * {@linkcode arenaColumn}. `per-locale-f1` emits `| Tag | <locale> … | Δ |` with one column per answer-key file, so a
- * locale is found by its column name; a reordered or added locale column then cannot swap one locale's number for
+ * locale is found by its column name. a reordered or added locale column then cannot swap one locale's number for
  * another's. A missing table, tag or column reads `undefined`, and so does an empty (`—`) cell.
  */
 function perLocale(md: string, tag: string, locale: string): number | undefined {
@@ -113,7 +113,7 @@ function tableCell(md: string, headerPattern: RegExp, column: string, row: strin
 }
 
 /**
- * Sidecar-first reads (the scorers emit JSON beside the markdown since night-11; the regex fallback keeps old out-dirs
+ * Sidecar-first reads (the scorers emit JSON beside the markdown since night-11. the regex fallback keeps old out-dirs
  * replayable). A sidecar that exists but can't parse is a loud throw — never a silent fallback to presentation
  * parsing.
  */
@@ -273,7 +273,7 @@ export async function assemblePromotionVerdict(
 
 	// A leg-handled floor is ENFORCED by its leg but was absent from `results` entirely, so a reader
 	// counting floors here saw 17 where the spec declares 18 — and a floor that is missing from a report
-	// reads as a floor that did not run. Enforcement stays with the leg; this only completes the record,
+	// reads as a floor that did not run. Enforcement stays with the leg. this only completes the record,
 	// from the sidecar the leg already writes. Reaching this function at all means the leg passed, since
 	// it returns non-zero otherwise.
 	const legSidecars: Record<string, { file: string; rate: string }> = {

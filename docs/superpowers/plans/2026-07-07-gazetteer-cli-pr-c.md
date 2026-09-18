@@ -1,4 +1,4 @@
-# Gazetteer CLI PR C: the #1026 cure + mutator deletions + diagnostics triage
+# Gazetteer CLI PR C: the #1026 fix + mutator deletions + diagnostics triage
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
@@ -21,7 +21,7 @@ Same as PR A+B (branch `feat/gazetteer-cli-pr-c` off main; oxlint/oxfmt + `typec
 
 ---
 
-### Task 1: `foldGeonames` admin-fold wiring + the gap-set default (the #1026 cure)
+### Task 1: `foldGeonames` admin-fold wiring + the gap-set default (the #1026 fix)
 
 **Files:**
 

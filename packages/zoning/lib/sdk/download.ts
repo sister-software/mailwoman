@@ -9,8 +9,8 @@
  *   HTTP clients through `@mailwoman/core/api`'s `APIClient`, and the rule draws its line at what that class
  *   is for: pacing, bounded retry, response caching and error mapping over small bodies and repeated calls.
  *   None of it applies here. Caching a 247 MB body through a JSON-validating disk cache would write a second,
- *   unreadable copy of a file already on disk; there is nothing to pace, because this runs once per product
- *   vintage; and axios buffers any non-stream response type in memory. `packages/osm/lib/sdk/fetch.ts`,
+ *   unreadable copy of a file already on disk. there is nothing to pace, because this runs once per product
+ *   vintage. and axios buffers any non-stream response type in memory. `packages/osm/lib/sdk/fetch.ts`,
  *   `packages/tiger/lib/sdk/download.ts`, `packages/flood/lib/sdk/download.ts` and `packages/coastal/lib/sdk/download.ts`
  *   are the existing transfers that say the same thing in the same place. The job that produces this URL, and
  *   every other metadata read around it, do go through `APIClient` — see `client.ts`.

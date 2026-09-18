@@ -170,7 +170,7 @@ export function useGeocoderRuntime({ config, initialCenter }: GeocoderRuntimeOpt
 
 	const rt = useReleaseRuntime<ReleaseAssets, ReleaseInfo>({ loadManifest, loadAssets, disposeAssets })
 
-	// The service worker keeps one release's gazetteer chunks; tell it which.
+	// The service worker keeps one release's gazetteer chunks. tell it which.
 	useEffect(() => {
 		if (rt.selectedVersion) {
 			pruneDBRangeCache(rt.selectedVersion)
@@ -499,7 +499,7 @@ export function useGeocoderRuntime({ config, initialCenter }: GeocoderRuntimeOpt
 			}
 
 			// Crisp admin polygon (like `_app.tsx`): only for a real WOF place with no precise street tier. The pure
-			// `computeMapPlaceRenderSpec` cascade prefers `geometry` when present; the async fetch stays here (a runtime
+			// `computeMapPlaceRenderSpec` cascade prefers `geometry` when present. the async fetch stays here (a runtime
 			// concern), populating a cache + bumping a nonce so the enricher re-runs with the geometry in hand.
 			const release = rt.selectedRelease
 			const version = rt.selectedVersion
@@ -570,7 +570,7 @@ export function useGeocoderRuntime({ config, initialCenter }: GeocoderRuntimeOpt
 		[config.tileWorkerURL]
 	)
 
-	// ── Version + backend surface (mirror the loader state; the picker/backend controls drive these) ─────────
+	// ── Version + backend surface (mirror the loader state. the picker/backend controls drive these) ─────────
 	const availableVersions = useMemo(
 		() => (rt.manifest?.releases ?? []).map((r) => ({ version: r.version, label: r.label })),
 		[rt.manifest]

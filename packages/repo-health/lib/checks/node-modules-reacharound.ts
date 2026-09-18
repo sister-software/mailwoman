@@ -42,7 +42,7 @@ const PATH_BUILDERS = new Set(["join", "resolve", "resolvePath", "resolvePathBui
 
 /**
  * Every site allowed to spell a `node_modules` path by hand, with the reason it is not a reach-around. Keyed by
- * repo-relative path; add an entry only with a comment that survives review.
+ * repo-relative path. add an entry only with a comment that survives review.
  */
 const ALLOWED: Record<string, string> = {
 	// The ORACLE for that layout. A fixture built with the implementation's own helper cannot fail when the

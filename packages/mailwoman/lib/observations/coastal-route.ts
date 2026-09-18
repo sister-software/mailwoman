@@ -8,7 +8,7 @@
  *   NAMED SCENARIO, with the cumulative distance as published, the shoreline-management policy where the
  *   scenario carries one, and the coverage record stating what the product does and does not license.
  *
- *   THE ROUTE READS; IT NEVER ANSWERS. It takes a finished coordinate and returns a record. Nothing here is
+ *   THE ROUTE READS. IT NEVER ANSWERS. It takes a finished coordinate and returns a record. Nothing here is
  *   consulted while an answer is being chosen, no candidate is read, no result is added, removed or
  *   re-ordered, and no abstain is reached or avoided because of it. A geocode with the route configured is
  *   the same geocode plus one advisory, which is a statement about construction rather than about a
@@ -16,12 +16,12 @@
  *
  *   PRESENCE IS THE SWITCH, AND IT IS A LAYER PATH. There is no boolean: a boolean would make the caller's
  *   factory construct the reader itself and put a sealed layer open on the default construction path. A
- *   session resolves the layer path, opens it if the file is there, and hands the route in; a session that
+ *   session resolves the layer path, opens it if the file is there, and hands the route in. a session that
  *   finds no file hands in nothing and is byte-identical to one built before this route existed.
  *
  *   EVERY OBSERVATION NAMES ITS SCENARIO, AND THE ROUTE'S DEFAULT IS NEVER HIDDEN. NCERM publishes twelve
  *   erosion-zone layers because the answer depends on which management scenario, which horizon and which
- *   sea-level-rise allowance the reader means. The route answers under one of them and says which; a reading
+ *   sea-level-rise allowance the reader means. The route answers under one of them and says which. a reading
  *   that named no scenario would let a 2105 projection be taken for a present-day designation.
  *
  *   ONLY A DESIGNATION REACHES A CALLER, AND THE SILENCE IS THE INVERSION OF THE FLOOD ROUTE. That route
@@ -77,7 +77,7 @@ export interface CoastalErosionObservation {
 	 */
 	scenario: { key: string; management: string; horizon: number; climateAllowance: string; label: string }
 	/**
-	 * Every polygon of that scenario containing the point. Usually one; several where the authority's own frontages
+	 * Every polygon of that scenario containing the point. Usually one. several where the authority's own frontages
 	 * overlap.
 	 */
 	designations: CoastalDesignation[]

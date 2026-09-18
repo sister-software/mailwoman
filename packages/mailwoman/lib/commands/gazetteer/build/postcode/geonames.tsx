@@ -9,7 +9,7 @@
  *
  *   This is the reproducer for `postalcode-geonames-tail.db`, an artifact that spent a year with no
  *   way to rebuild it after #1027 deleted its `build-unified-wof` Phase-2d builder. It writes to a
- *   NEW DATED path and swaps nothing; promotion over the shipped database is a separate, deliberate
+ *   NEW DATED path and swaps nothing. promotion over the shipped database is a separate, deliberate
  *   step. GeoNames postal is CC-BY 4.0 and the GB rows carry an additional OGL v3 / Crown-copyright
  *   obligation from Ordnance Survey Code-Point Open — both ride in the artifact's `meta` table.
  */

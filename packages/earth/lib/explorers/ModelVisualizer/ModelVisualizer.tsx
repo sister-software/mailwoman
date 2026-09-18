@@ -9,13 +9,13 @@
  *   1. Token ribbon — the SentencePiece pieces with char offsets.
  *   2. Channel band — anchor/gazetteer confidence as fed ("not fed" when a channel is absent —
  *      an unfed channel is a diagnostic fact, the #566/#685 OOD class, not an empty one).
- *   3. Emissions heatmap — labels × pieces; toggle raw logits vs post-prior emissions (the delta
- *      is the priors' influence); conventions-masked cells hatched; viterbi path outlined. Label
+ *   3. Emissions heatmap — labels × pieces. toggle raw logits vs post-prior emissions (the delta
+ *      is the priors' influence). conventions-masked cells hatched. viterbi path outlined. Label
  *      rows are trimmed to the model's emission width (the Stage-prefix rule — a narrower model
  *      never emits the tail labels).
  *   4. Decode band — final tokens, confidence bars, repair-pass diffs as before→after chips.
  *
- *   Pure and fixture-drivable; the live wrapper (LiveModelVisualizer) feeds it from
+ *   Pure and fixture-drivable. the live wrapper (LiveModelVisualizer) feeds it from
  *   the runtime handle's trace hook. Spec: docs/superpowers/specs/2026-07-03-parse-trace-model-visualizer-design.md.
  */
 
@@ -35,8 +35,8 @@ const labelText = (label: string): string => tagOf(label) || label
 
 /**
  * Fallback locale-head axis for traces produced before `localeCountries` rode with the logits. Live traces are
- * self-describing — NEVER extend this list; the model's own axis wins. (Mirrors neural/address-system.ts
- * LOCALE_COUNTRIES as of 2026-07; the PLACETYPE_ORDER dual-maintenance class is exactly why the trace now carries the
+ * self-describing — NEVER extend this list. the model's own axis wins. (Mirrors neural/address-system.ts
+ * LOCALE_COUNTRIES as of 2026-07. the PLACETYPE_ORDER dual-maintenance class is exactly why the trace now carries the
  * axis itself.)
  */
 const LOCALE_ORDER_FALLBACK = ["US", "FR", "DE", "CA", "GB", "JP", "ES", "IT", "NL"] as const

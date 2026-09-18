@@ -10,7 +10,7 @@
  *   side sheet that opened over the control that opened it, a footer strip that covered the bottom sheet's last rows,
  *   a compass mounted nowhere, two panels sharing an edge.
  *
- *   IT ASSERTS GEOMETRY AND REACHABILITY, NOT APPEARANCE. Whether the glass is the right colour is a judgement; that
+ *   IT ASSERTS GEOMETRY AND REACHABILITY, NOT APPEARANCE. Whether the glass is the right colour is a judgement. that
  *   two controls do not occupy the same pixels, and that every panel can be closed by someone holding a phone, are
  *   facts a machine can hold.
  */
@@ -28,7 +28,7 @@ export interface Box {
 }
 
 /**
- * How far off north the compass check turns the map. Any direction past the control's own dead zone would do; this one
+ * How far off north the compass check turns the map. Any direction past the control's own dead zone would do. this one
  * is far enough that a needle drawn at the wrong angle is visible in a failure screenshot.
  */
 const BEARING_OFF_NORTH = 42
@@ -186,7 +186,7 @@ export async function expectEverySheetControlCloses(page: Page): Promise<string[
 		const opened = await page.locator(".mw-map-sheet--side").count()
 
 		if (opened === 0) {
-			// Nothing opened, so there is nothing to close; leave the control as it was found.
+			// Nothing opened, so there is nothing to close. leave the control as it was found.
 			await control.click()
 
 			continue

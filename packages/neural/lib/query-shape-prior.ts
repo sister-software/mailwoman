@@ -59,7 +59,7 @@ export interface KnownFormatHitLike {
 	format: string
 	span: { start: number; end: number }
 	/**
-	 * 0..1; ambiguous patterns (e.g. 5-digit US/FR/DE overlap) score lower.
+	 * 0..1. ambiguous patterns (e.g. 5-digit US/FR/DE overlap) score lower.
 	 */
 	confidence: number
 }
@@ -95,7 +95,7 @@ export interface BuildPriorsOpts {
 	 */
 	biasScale?: number
 	/**
-	 * Raw input text — enables the SCOPED locality bias (bare admin doubletons only; see `applyScopedLocalityBias`).
+	 * Raw input text — enables the SCOPED locality bias (bare admin doubletons only. see `applyScopedLocalityBias`).
 	 * Without it the digit guard cannot run, so the locality bias never fires.
 	 */
 	inputText?: string
@@ -163,7 +163,7 @@ export function buildEmissionPriors(
  * The retired version also carried a "name is the region" guard ("Washington, WA" stays region). It was DEAD in
  * production — the classifier passes tokenizer PIECES whose spans include the trailing comma, so the string comparison
  * never matched (and "New York, NY", the gauntlet regression case, needs the bias despite naming its own state).
- * Deliberately dropped; the bias is soft, so a confident region emission on a true state restatement still wins.
+ * Deliberately dropped. the bias is soft, so a confident region emission on a true state restatement still wins.
  */
 function applyScopedLocalityBias(
 	matrix: number[][],

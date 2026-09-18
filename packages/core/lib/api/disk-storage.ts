@@ -43,10 +43,10 @@ export interface DiskStorageOptions {
 	directory: PathBuilderLike
 	/**
 	 * An additional, domain-specific check run against every entry before it is written. Return `false` (or throw) to
-	 * drop the write; the entry is removed rather than persisted, so the next request re-fetches.
+	 * drop the write. the entry is removed rather than persisted, so the next request re-fetches.
 	 *
 	 * This is the hook for "a 200 whose body isn't what this API is supposed to return". Some upstreams (SEC EDGAR among
-	 * them) serve an HTML error page with a 200 status; persisting one under a permanent TTL poisons that URL forever.
+	 * them) serve an HTML error page with a 200 status. persisting one under a permanent TTL poisons that URL forever.
 	 * The structural checks below (serializable, finite `createdAt`/`ttl`) always run regardless.
 	 */
 	validate?: (value: NotEmptyStorageValue) => boolean

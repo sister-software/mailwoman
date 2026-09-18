@@ -6,7 +6,7 @@
  *   #2293 — a `names.common` entry is admitted on whether it is a name, never on which script writes it.
  *
  *   The predicate is exported rather than exercised through the fold because the fold streams the Overture divisions
- *   theme remotely; there is no local fixture to drive it with, unlike the GeoNames fold in `fold.test.ts`.
+ *   theme remotely. there is no local fixture to drive it with, unlike the GeoNames fold in `fold.test.ts`.
  */
 
 import { isDivisionName } from "mailwoman/gazetteer-pipeline/admin/fold/overture"

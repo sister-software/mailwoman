@@ -62,7 +62,7 @@ export interface GenerateMermaidMarkupOptions {
 	 * gives a visual cue for how deep an edge sits in the tree.
 	 *
 	 * Defaults to d3-scale-chromatic's `interpolateViridis` — perceptually uniform and colorblind-friendly. Node
-	 * fills/strokes are _not_ affected; they always use the hand-tuned {@linkcode PlacetypeRoleColor} palette, which
+	 * fills/strokes are _not_ affected. they always use the hand-tuned {@linkcode PlacetypeRoleColor} palette, which
 	 * carries more semantic weight than a sampled gradient for only three categorical role values.
 	 */
 	edgeInterpolator?: InterpolateColorCallback
@@ -114,7 +114,7 @@ function measureMaxDepth(root: Placetype, roles: Iterable<PlacetypeRole> | undef
  *
  * The walk is a recursive `findChildren` traversal — every emitted edge is a real direct-parent → direct-child
  * relationship. WOF placetypes form a DAG (e.g. `borough` has both `country` and `macroregion` as parents), so a child
- * can legitimately appear on multiple edges; the `visited` set prevents the subtree below it from being re-emitted.
+ * can legitimately appear on multiple edges. the `visited` set prevents the subtree below it from being re-emitted.
  *
  * Edges are colored by depth from the root via {@linkcode GenerateMermaidMarkupOptions.edgeInterpolator} (default:
  * viridis), so any lineage path traces a smooth gradient down the chart. Node fills always use the hand-tuned role

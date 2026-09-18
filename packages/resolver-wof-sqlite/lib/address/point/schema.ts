@@ -14,7 +14,7 @@
  *   statement for throughput — but its column list is derived from {@link ADDRESS_POINT_COLUMNS}
  *   here, and its table comes from {@link createAddressPointTable}, so the positional order can't
  *   silently drift from what the reader expects. (Same convention as the candidate build: typed
- *   schema guards the contract; positional inserts keep the speed.)
+ *   schema guards the contract. positional inserts keep the speed.)
  */
 
 import type { Kysely } from "kysely"
@@ -62,7 +62,7 @@ export interface AddressPointTable {
 	release: string
 	/**
 	 * The source register's stable administrative key for the point's commune or municipality — BAN's `code_insee`. A
-	 * display name (`locality_norm`) is not a key; the coverage basis is computed per this key.
+	 * display name (`locality_norm`) is not a key. the coverage basis is computed per this key.
 	 */
 	admin_code: string | null
 	/**
@@ -150,7 +150,7 @@ export async function createAddressPointIndexes(db: AddressPointSchemaHandle): P
 	await db.schema.createIndex("idx_ap_streetkey").on("address_point").columns(["postcode", "street_key"]).execute()
 	// Street-first index for the BBOX scope (#247): OSM points often carry no postcode/locality, so the
 	// reader scopes a `(street_norm, number)` probe by the resolved locality's bbox (lat/lon BETWEEN). The
-	// postcode/locality indexes lead with their scope column and can't serve this; US situs never probes by
+	// postcode/locality indexes lead with their scope column and can't serve this. US situs never probes by
 	// bbox so it simply carries one extra (cheap) index on a future rebuild.
 	await db.schema.createIndex("idx_ap_street").on("address_point").columns(["street_norm", "number"]).execute()
 }

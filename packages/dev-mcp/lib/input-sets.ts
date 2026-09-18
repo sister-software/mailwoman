@@ -75,7 +75,7 @@ const PANEL_VERSIONS = ["v1", "v2", "v2.1", "v3", "v3.1"] as const
 type PanelVersion = (typeof PANEL_VERSIONS)[number]
 
 /**
- * Golden splits. `dev` is the tuning half and the one an iterating change may look at; the top-level files are the
+ * Golden splits. `dev` is the tuning half and the one an iterating change may look at. the top-level files are the
  * held-back half, so reaching for them casually is how a held-out set stops being held out.
  */
 const GOLDEN_SPLITS = ["dev", "full"] as const
@@ -99,7 +99,7 @@ export interface LiteralInputWithTruth {
 
 export interface ResolvedInput {
 	/**
-	 * Case id for a board row; for a literal input, the input's own index. Carried so a result row can be traced back.
+	 * Case id for a board row. for a literal input, the input's own index. Carried so a result row can be traced back.
 	 */
 	id: string
 	input: string
@@ -119,7 +119,7 @@ export interface ResolvedInput {
 	addressKind?: string
 	status?: string
 	/**
-	 * The case's expectations, when it has any. Present so a caller can grade; absent for literal inputs, which have no
+	 * The case's expectations, when it has any. Present so a caller can grade. absent for literal inputs, which have no
 	 * truth attached and therefore cannot be graded — only observed.
 	 */
 	seed?: SeedCase
@@ -173,7 +173,7 @@ export interface ResolvedInputSet {
 	 * How many rows carry each kind of truth.
 	 *
 	 * The per-kind counts OVERLAP — a row can pin components and a coordinate and a tier — so they must never be summed.
-	 * `any` is the distinct row count and `none` its complement; those two are what add up to `n`. An earlier draft
+	 * `any` is the distinct row count and `none` its complement. those two are what add up to `n`. An earlier draft
 	 * summed the three and reported 839 rows carrying truth on a 558-row board, which is the shape of every
 	 * double-counted denominator.
 	 */
@@ -654,7 +654,7 @@ async function resolvePanel(ref: Extract<InputSetRef, { kind: "panel" }>): Promi
 }
 
 /**
- * A golden set. `dev` is the tuning split; the top-level files are the held-back half.
+ * A golden set. `dev` is the tuning split. the top-level files are the held-back half.
  */
 async function resolveGolden(ref: Extract<InputSetRef, { kind: "golden" }>): Promise<ResolvedInputSet> {
 	const version = ref.version ?? "v0.1.3"

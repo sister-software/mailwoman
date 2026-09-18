@@ -16,7 +16,7 @@
  *     mailwoman gazetteer postcode-binary --locale GB:postalcode-gb-codepoint.db
  *       → GB: 0 codes (0 placed) → postcode-gb.bin (0.00 MB)   [exit 0]
  *
- *   Both halves of the cure live here. {@linkcode gbOutwardFromKey} derives the outward by SHAPE — the
+ *   Both halves of the fix live here. {@linkcode gbOutwardFromKey} derives the outward by SHAPE — the
  *   inward code is always the trailing three characters of the space-stripped form, so the same rule
  *   reads both databases. {@linkcode keyFloorViolation} makes an empty or catastrophically-degraded build
  *   a REFUSAL: a magnitude never carries its own absence, so zero keys is a failure, not a product.
@@ -47,7 +47,7 @@ const GB_INWARD_LENGTH = 3
  * GB key granularity. `unit` is the TRAIN-FAITHFUL set the anchor-v2 lookup carries (1,746,976 units + 2,863 outward
  * districts = 1,749,839 keys, 20.0 MB) — the unit centroid is what painted the training spans, so a model trained
  * against `pilot-anchor-lookup-v2` needs it. `outward` is the districts alone (2,863 keys, 0.03 MB), which is the only
- * thing that fits a browser bundle; it was the command's original behaviour and stays available for that reason.
+ * thing that fits a browser bundle. it was the command's original behaviour and stays available for that reason.
  */
 export type GBGranularity = "unit" | "outward"
 
@@ -87,7 +87,7 @@ export const POSTCODE_BINARY_SOURCES: readonly PostcodeBinarySource[] = [
 	{ country: "DE", database: "postalcode-intl.db" },
 	{ country: "ES", database: "postalcode-intl.db" },
 	{ country: "IT", database: "postalcode-intl.db" },
-	// Code-Point Open (OGL v3.0): the unit set is train-faithful and 20 MB; only the districts fit a browser bundle.
+	// Code-Point Open (OGL v3.0): the unit set is train-faithful and 20 MB. only the districts fit a browser bundle.
 	{ country: "GB", database: "postalcode-gb-codepoint.db", browserGranularity: "outward" },
 ]
 
@@ -128,7 +128,7 @@ export interface BuildPostcodeBinaryResult {
 }
 
 /**
- * The key a database `name` enters the binary under. GB is space-stripped to the train painter's form; every other
+ * The key a database `name` enters the binary under. GB is space-stripped to the train painter's form. every other
  * system stores `name` already normalized (DE/FR `68161`, NL `1012LM`, US `94105`), so it serializes verbatim.
  */
 export function postcodeBinaryKey(country: string, name: string): string {
@@ -160,7 +160,7 @@ function isPlaced(lat: number, lon: number): boolean {
 
 /**
  * Derive one country's PCB1 entry set from its database rows. GB gets the unit/outward treatment described in the
- * module docstring; every other country serializes verbatim.
+ * module docstring. every other country serializes verbatim.
  */
 export function buildPostcodeBinaryEntries(
 	country: string,
@@ -238,7 +238,7 @@ export function buildPostcodeBinaryEntries(
  * Each floor is HALF the measured count, rounded down to a round number. Half, because these floors exist to catch a
  * collapse (a derivation that stopped matching the database's storage form, a country filter that stopped selecting) —
  * not to pin a count that legitimately moves with every upstream refresh. A build that comes back at 51% of what the
- * database holds is still wrong, but it is wrong in a way a human reads in the roll-up; a build at 0% is the one that
+ * database holds is still wrong, but it is wrong in a way a human reads in the roll-up. a build at 0% is the one that
  * ships silently.
  *
  * The `GB:outward` row is keyed by granularity because the two GB modes differ by three orders of magnitude — a `unit`

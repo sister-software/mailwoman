@@ -4,7 +4,7 @@
  * @author Teffen Ellis, et al.
  * @file Tests for the assembled EDGAR chain.
  *
- *   The Exhibit 21 documents are real vendored filings; the submissions payloads are minimal stubs carrying
+ *   The Exhibit 21 documents are real vendored filings. the submissions payloads are minimal stubs carrying
  *   only what this module reads. No test performs a live request — the client is an object literal
  *   satisfying {@link SECIngestClient}.
  */
@@ -157,7 +157,7 @@ describe("collectEdgarSubsidiaryRows — the check cannot be bypassed", () => {
 	})
 
 	it("corroborates every candidate, not only the top-scoring one", async () => {
-		// The top name match is uncorroborated; a lower-scoring candidate is the real carrier. Scoring
+		// The top name match is uncorroborated. a lower-scoring candidate is the real carrier. Scoring
 		// alone would stop at the first and report nothing.
 		const tickers: CompanyTickerEntry[] = [
 			{ cik: WIDEPOINT, ticker: "WYY", title: "Cable One Holdings" },

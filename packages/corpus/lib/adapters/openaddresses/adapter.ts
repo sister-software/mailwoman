@@ -21,7 +21,7 @@
  *   one. This matches how a `mailwoman corpus build` invocation pins each file to a country via the
  *   inputs JSON.
  *
- *   Properties consumed (per the canonical OpenAddresses schema; both UPPERCASE and lowercase
+ *   Properties consumed (per the canonical OpenAddresses schema. both UPPERCASE and lowercase
  *   variants are accepted because legacy dumps used UPPERCASE):
  *
  *   | Property | ComponentTag | | ------------- |
@@ -56,7 +56,7 @@ export const OPENADDRESSES_ADAPTER_ID = "openaddresses"
 export const OPENADDRESSES_DEFAULT_LICENSE = "CC-BY-4.0"
 
 /**
- * Subset of OpenAddresses Feature properties the adapter inspects. The runtime accepts UPPERCASE or lowercase keys;
+ * Subset of OpenAddresses Feature properties the adapter inspects. The runtime accepts UPPERCASE or lowercase keys.
  * this interface documents the canonical lowercase form after normalization.
  */
 interface OaProperties {
@@ -91,7 +91,7 @@ function normalizeProperties(raw: unknown): OaProperties {
 }
 
 /**
- * Parse a single ND-GeoJSON line; return null for blanks, comments, or non-Feature shapes.
+ * Parse a single ND-GeoJSON line. return null for blanks, comments, or non-Feature shapes.
  */
 function parseFeatureLine(line: string): OaProperties | null {
 	const trimmed = line.trim()
@@ -117,7 +117,7 @@ export interface OpenaddressesAdapterOptions {
 	/**
 	 * Per-adapter share-alike drop. Default **true** (include) as of 2026-06-19: exclusion is a deliberate build-level
 	 * act (`buildCorpus({ excludeLicenses })` / `--exclude-share-alike`), not a silent adapter default (#26 — "purposely
-	 * exclude, don't opt in to include"). Set false only for an explicit adapter-scoped drop; the build-level
+	 * exclude, don't opt in to include"). Set false only for an explicit adapter-scoped drop. the build-level
 	 * `--exclude-share-alike` is the normal path.
 	 */
 	allowShareAlike?: boolean

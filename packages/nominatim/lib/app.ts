@@ -4,7 +4,7 @@
  * @author Teffen Ellis, et al.
  *
  *   The Nominatim-compatible Hono app: CORS + error safety net + routes + the emitted OpenAPI
- *   document. Engine-agnostic — the CLI wires the real engine; tests inject fixtures.
+ *   document. Engine-agnostic — the CLI wires the real engine. tests inject fixtures.
  */
 
 import { OpenAPIHono } from "@hono/zod-openapi"
@@ -29,7 +29,7 @@ export interface NominatimAppOptions {
 	/**
 	 * The engine stamp to carry on every response: `engine` on each jsonv2 result and geojson collection, and the
 	 * `Server` + `Link: rel="license"` headers everywhere. Absent when an embedding application builds the app without
-	 * the `mailwoman` package; the `nominatim` bin always passes one.
+	 * the `mailwoman` package. the `nominatim` bin always passes one.
 	 */
 	engine?: EngineStamp
 }
