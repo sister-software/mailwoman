@@ -75,7 +75,7 @@ One thing: for each piece, put as much score as possible on the correct label. T
 cross-entropy, and it is the whole loss. There is no sequence-level term — no reward for a
 well-formed reading, no penalty for an impossible transition, because impossibility is enforced at
 decode time instead. See
-[Decoding and the best path](./decoding-and-viterbi.mdx#why-the-transition-scores-are-constraints-not-weights)
+[Decoding and the best path](./decoding-and-viterbi.mdx#why-the-transition-scores-are-constraints-rather-than-weights)
 for what was tried on that front and why it is not what ships.
 
 Two changes shape what that loss rewards in practice.
