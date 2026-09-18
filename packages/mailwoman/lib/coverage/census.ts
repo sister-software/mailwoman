@@ -163,6 +163,16 @@ interface CorpusCensus {
 	total: number
 	rows: Record<string, number>
 	streetRows: Record<string, number>
+	/**
+	 * Train files the manifest listed that this count could not read, and how many it did read.
+	 *
+	 * A census that skipped a file still answers a number, and that number is a floor rather than the corpus. Carrying
+	 * both counts is what lets a reader tell a country with no rows from a country whose rows were in a file nobody
+	 * opened.
+	 */
+	filesRead: number
+	filesListed: number
+	unreadableFiles: string[]
 }
 
 /**
@@ -240,7 +250,9 @@ export async function buildCorpusCensus(manifestPath: string): Promise<CorpusCen
 
 	const rows: Record<string, number> = {}
 	const streetRows: Record<string, number> = {}
+	const unreadableFiles: string[] = []
 	let total = 0
+	let filesRead = 0
 
 	for (const path of parquetFiles) {
 		try {
@@ -255,9 +267,23 @@ export async function buildCorpusCensus(manifestPath: string): Promise<CorpusCen
 					streetRows[country] = (streetRows[country] ?? 0) + 1
 				}
 			}
+
+			filesRead++
 		} catch {
-			continue
+			unreadableFiles.push(path)
 		}
+	}
+
+	// A manifest that lists train files and a count of zero cannot both be true, so the count is the instrument
+	// failing. Answering zero here writes "every country trains on nothing" over a cache that held the real numbers,
+	// and the reading it produces is the one this census exists to catch.
+	if (parquetFiles.length && total === 0) {
+		throw new Error(
+			`Corpus census read 0 rows from ${parquetFiles.length} train file(s) listed by ${manifestPath}, ` +
+				`${unreadableFiles.length} of them unreadable` +
+				(unreadableFiles[0] ? ` (first: ${unreadableFiles[0]})` : "") +
+				". Refusing to report an empty corpus — check MAILWOMAN_DATA_ROOT and the manifest's paths."
+		)
 	}
 
 	return {
@@ -267,7 +293,24 @@ export async function buildCorpusCensus(manifestPath: string): Promise<CorpusCen
 		total,
 		rows,
 		streetRows,
+		filesRead,
+		filesListed: parquetFiles.length,
+		unreadableFiles,
 	}
+}
+
+/**
+ * Whether two corpus-version strings name the same corpus.
+ *
+ * The two sides are written differently by construction: a manifest's `corpus_version` carries the `v` prefix the
+ * directory does (`v0.31.0-region-code-and-unit`), and {@linkcode readConfiguredCorpusVersion} strips it. Comparing
+ * the raw strings declares a mismatch on every correct pairing, and a warning that fires when nothing is wrong stops
+ * being read — which costs the reading it exists to give.
+ */
+export function sameCorpusVersion(a: string, b: string): boolean {
+	const bare = (version: string): string => version.trim().replace(/^v/, "")
+
+	return bare(a) === bare(b)
 }
 
 /**
@@ -560,7 +603,9 @@ export async function censusCoverage(options: CensusCoverageOptions): Promise<Co
 	// A cached census and a config are two artifacts that both look authoritative and were never made to agree. When
 	// they name different corpora every row count below is about the WRONG corpus, and reads as a real absence.
 	const corpusMismatch =
-		configuredCorpusVersion && census.corpusVersion !== "unknown" && configuredCorpusVersion !== census.corpusVersion
+		configuredCorpusVersion &&
+		census.corpusVersion !== "unknown" &&
+		!sameCorpusVersion(configuredCorpusVersion, census.corpusVersion)
 			? `The census counted corpus ${census.corpusVersion}; the config trains on ${configuredCorpusVersion}. ` +
 				"Every row count here is about the corpus that was COUNTED, not the one that trains — a country the " +
 				"newer corpus added reads as zero rows. Re-run with refresh, or point at the config whose corpus was " +

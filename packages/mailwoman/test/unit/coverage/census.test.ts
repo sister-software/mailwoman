@@ -19,6 +19,7 @@ import {
 	readAdmittedCountries,
 	readBoardCoverage,
 	readConfiguredCorpusVersion,
+	sameCorpusVersion,
 } from "mailwoman/coverage"
 import { join } from "path-ts"
 import { afterAll, beforeAll, describe, expect, it } from "vitest"
@@ -204,6 +205,56 @@ describe.skipIf(!(await pathExists(CORPUS)))("buildCorpusCensus against a real d
 		expect(census.total).toBeGreaterThan(0)
 		expect(census.streetRows["GB"] ?? 0).toBeGreaterThan(0)
 	}, 120_000)
+})
+
+describe("buildCorpusCensus refuses an empty count", () => {
+	it("throws rather than reporting zero rows for a manifest that lists train files", async () => {
+		// The #2322 shape, and the part of it that cost the most: a refresh writes its result, so a census that read
+		// nothing replaced a cache holding 681,901,687 rows with every country at zero. A manifest naming train files
+		// and a total of zero cannot both be true, so the zero is the instrument failing rather than a measurement.
+		await using directory = await temporaryDirectory("mw-census-empty-")
+		const scratch = directory.resolve("MANIFEST.json")
+
+		await writeLocalJSONFile(
+			{
+				corpus_version: "v0.0.0-absent",
+				slices: [{ split: "train", path: "/data/corpus/versioned/v0.0.0-absent/nothing-here-00000.parquet" }],
+			},
+			scratch
+		)
+
+		await expect(buildCorpusCensus(scratch)).rejects.toThrow(/Refusing to report an empty corpus/)
+	})
+
+	it("answers zero for a manifest that lists no train files at all", async () => {
+		// The counterpart reading, and it is a real one: a corpus whose manifest names no train file holds no train
+		// rows, so zero is the measurement rather than a failure to read.
+		await using directory = await temporaryDirectory("mw-census-none-")
+		const scratch = directory.resolve("MANIFEST.json")
+
+		await writeLocalJSONFile({ corpus_version: "v0.0.0-empty", slices: [] }, scratch)
+
+		const census = await buildCorpusCensus(scratch)
+
+		expect(census.total).toBe(0)
+		expect(census.filesListed).toBe(0)
+		expect(census.unreadableFiles).toEqual([])
+	})
+})
+
+describe("sameCorpusVersion", () => {
+	it("reads the prefixed and unprefixed spellings of one corpus as the same corpus", () => {
+		// A manifest writes `v0.31.0-region-code-and-unit` and `readConfiguredCorpusVersion` strips the prefix, so a raw
+		// comparison declared a mismatch on every correct pairing and the warning stopped carrying information.
+		expect(sameCorpusVersion("0.31.0-region-code-and-unit", "v0.31.0-region-code-and-unit")).toBe(true)
+		expect(sameCorpusVersion("v0.31.0-region-code-and-unit", "0.31.0-region-code-and-unit")).toBe(true)
+		expect(sameCorpusVersion("v8-cjk-2026-09-05", "v8-cjk-2026-09-05")).toBe(true)
+	})
+
+	it("still separates two different corpora", () => {
+		expect(sameCorpusVersion("0.31.0-region-code-and-unit", "v0.32.0-locality-shape")).toBe(false)
+		expect(sameCorpusVersion("v0.30.0-bare-postcode", "0.31.0-region-code-and-unit")).toBe(false)
+	})
 })
 
 describe("readConfiguredCorpusVersion", () => {
