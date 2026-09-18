@@ -1,18 +1,28 @@
 {
 	"$schema": "https://unpkg.com/knip@6/schema.json",
-	"entry": ["corpus-python/scripts/**/*.ts", "docker/server.ts", "*.config.ts", "oxlint.plugin.ts"],
+	"entry": [
+		"corpus-python/scripts/**/*.ts",
+		"docker/server.ts",
+		"*.config.ts",
+		"oxlint.plugin.ts",
+		"config/vale/lint-prose.ts",
+		"config/vale/check-rules.ts",
+		"config/vale/fixtures/clean.ts",
+		"config/vale/fixtures/dirty.ts"
+	],
 	"ignore": [
 		"corpus-python/scripts/**/*.ts",
 		"docker/server.ts",
 		"docs/**/*.mdx",
 		"docs/.agents/**",
 		"docs/build/**",
+		"config/vale/fixtures/**",
 		"packages/mailwoman/lib/commands/**/*.tsx",
 		"packages/sentencepiece-wasm/sentencepiece.mjs",
 		"packages/*/out/**"
 	],
 	"ignoreBinaries": ["ogr2ogr", "rg", "script", "uv", "uvx", "wrangler"],
-	"ignoreDependencies": ["@duckdb/node-api", "ts-morph", "onnxruntime-web"],
+	"ignoreDependencies": ["@duckdb/node-api", "ts-morph", "onnxruntime-web", "@vvago/vale"],
 	"workspaces": {
 		"packages/*": {
 			"entry": [
