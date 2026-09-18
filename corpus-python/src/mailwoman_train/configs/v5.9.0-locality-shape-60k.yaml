@@ -63,6 +63,13 @@
 # (`candidates/v570-cache`, `model.onnx` md5 e72b0cbb) with
 # `packages/mailwoman/lib/dev-tools/us/locality-region-postcode-arms.run.ts`.
 #
+# Both panels are build-local and neither is committed, so the bars name how each is rebuilt.
+# `$MAILWOMAN_DATA_ROOT/eval/coord/us-shape-stratified.jsonl` comes from
+# `packages/mailwoman/lib/dev-tools/locality/stratified-panel.run.ts --stratify shape --per-region
+# 400`, which rebuilds it byte for byte at sha256
+# af671e351d3be6faa9dabf0ec9122d0b3ecd12140d03aa1c6b2bef9248d53a60. A bar that names a panel nobody
+# can rebuild cannot be graded a second time.
+#
 #   1. TARGET BUCKET. `us-shape-stratified.jsonl` carries 1,200 rows, 400 per bucket, over 1,132
 #      distinct localities. Bare arm, suffix-word bucket: 123/379 (32.5%) under v5.7.0. It must
 #      rise. This is the bucket the corpus change adds 1,922 rows for.
