@@ -16,7 +16,7 @@
  *   4. **Splits** — `splitRows` partitions labeled `source_id`s into train/val/test by locality holdout.
  *        Manifest written to `splits/SPLIT_MANIFEST.json` + per-split `train.txt` / `val.txt` /
  *        `test.txt`.
- *   5. **Parquet files** — `writeParquetFiles` streams labeled rows into 1M-row `.parquet` files per split
+ *   5. **Parquet files** — `writeParquetSplits` streams labeled rows into 1M-row `.parquet` files per split
  *        under `corpus-v<version>/{train,val,test}/part-NNNN.parquet` (SNAPPY-compressed, 50k-row
  *        row groups), with per-file checksums + per-stage manifest in
  *        `corpus-v<version>/MANIFEST.json`.
@@ -56,12 +56,12 @@ import { JSONSpliterator } from "spliterator"
 
 import { defaultAdapterRegistry } from "#adapters/utils"
 import { $public } from "#env"
+import { type ParquetManifest, writeParquetSplits } from "#parquet/writers"
 import { once, runAdapter, type AdapterRunManifest } from "#runner"
 import { defaultAugmentationsForCountry, synthesizeRow } from "#synthesizers/utils"
 import type { AdapterOptions, CanonicalRow, CorpusAdapter, LabeledRow } from "#types"
 import { alignRow } from "#utils/align"
 import { licenseExcluded } from "#utils/license"
-import { writeParquetFiles, type ParquetManifest } from "#utils/parquet"
 import {
 	defaultHoldouts,
 	splitForRow,
@@ -107,7 +107,7 @@ export interface BuildCorpusOptions {
 	synthesize?: boolean
 
 	/**
-	 * Max rows per `.parquet` file, forwarded to `writeParquetFiles`. Default 1_000_000.
+	 * Max rows per `.parquet` file, forwarded to `writeParquetSplits`. Default 1_000_000.
 	 */
 	rowsPerFile?: number
 
@@ -325,7 +325,7 @@ export async function buildCorpus(opts: BuildCorpusOptions): Promise<BuildCorpus
 	// `splitFor(source_id)` callback (and the `Map<source_id, SplitName>` behind it) is gone.
 	opts.onProgress?.("parquet", "writing parquet files")
 
-	const parquetManifest = await writeParquetFiles(
+	const parquetManifest = await writeParquetSplits(
 		{
 			train: streamJSONL<LabeledRow>(labeledPaths.train),
 			val: streamJSONL<LabeledRow>(labeledPaths.val),

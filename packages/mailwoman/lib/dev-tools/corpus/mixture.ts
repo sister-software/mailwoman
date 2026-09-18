@@ -8,7 +8,8 @@
 
 import { mailwomanDataRoot } from "@mailwoman/core/data-root"
 import { pathExists, readLocalJSONFile } from "@mailwoman/core/fs/readers"
-import { connectDuckDB, escapeSQLString, type ParquetManifest } from "@mailwoman/corpus/utils/parquet"
+import { connectDuckDB, escapeSQLString } from "@mailwoman/corpus/parquet/duckdb"
+import type { ParquetManifest } from "@mailwoman/corpus/parquet/writers"
 import { join } from "path-ts"
 
 /**

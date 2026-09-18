@@ -212,10 +212,10 @@
 			"node": "./lib/tools/index.ts",
 			"default": "./out/tools/index.js"
 		},
-		"./utils/parquet": {
-			"types": "./out/utils/parquet.d.ts",
-			"node": "./lib/utils/parquet.ts",
-			"default": "./out/utils/parquet.js"
+		"./parquet/*": {
+			"types": "./out/parquet/*.d.ts",
+			"node": "./lib/parquet/*.ts",
+			"default": "./out/parquet/*.js"
 		},
 		"./tools/postcode-triples": {
 			"types": "./out/tools/postcode-triples.d.ts",

@@ -58,7 +58,7 @@ import { dirname } from "path-ts"
 import { createNewlineWriter } from "spliterator"
 
 import { $private } from "#env"
-import { streamParquetRows } from "#utils/parquet"
+import { openParquetRowStream } from "#parquet/streams"
 
 // ── Types ─────────────────────────────────────────────────────────────────
 
@@ -220,7 +220,7 @@ async function loadSeeds(
 	let skippedThinComponents = 0
 
 	for (const path of paths) {
-		for await (const row of streamParquetRows<CorpusRow>(path)) {
+		for await (const row of openParquetRowStream<CorpusRow>(path)) {
 			scanned++
 
 			// Source allow-list (--include-sources) — applied early to skip parsing rows we won't use

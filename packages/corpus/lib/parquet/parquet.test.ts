@@ -5,22 +5,22 @@
  */
 
 /* oxlint-disable unicorn/text-encoding-identifier-case -- these assertions mirror ParquetType enum
-   members (`"UTF8"`), not text-encoding identifiers. see the note in parquet.ts. */
+   members (`"UTF8"`), not text-encoding identifiers. see the note in parquet/schema.ts. */
 
 import { readLocalJSONFile } from "@mailwoman/core/fs/readers"
 import { temporaryDirectory, type TemporaryDirectory } from "@mailwoman/core/fs/temporary"
 import { removePathIfPresent } from "@mailwoman/core/fs/writers"
-import type { LabeledRow } from "@mailwoman/corpus/types"
 import {
 	LABELED_ROW_SCHEMA,
 	PARQUET_COLUMNS,
-	ROW_GROUP_SIZE,
 	PARQUET_COMPRESSION,
-	rowToParquet,
-	streamParquetRows,
-	writeParquetFiles,
 	type ParquetRow,
-} from "@mailwoman/corpus/utils/parquet"
+	ROW_GROUP_SIZE,
+	rowToParquet,
+} from "@mailwoman/corpus/parquet/schema"
+import { openParquetRowStream } from "@mailwoman/corpus/parquet/streams"
+import { writeParquetSplits } from "@mailwoman/corpus/parquet/writers"
+import type { LabeledRow } from "@mailwoman/corpus/types"
 import { afterEach, beforeEach, describe, expect, it } from "vitest"
 
 const labeled = (over: Partial<LabeledRow>): LabeledRow => ({
@@ -51,7 +51,7 @@ async function* asyncFrom<T>(items: readonly T[]): AsyncIterable<T> {
 async function readParquet(path: string): Promise<ParquetRow[]> {
 	const rows: ParquetRow[] = []
 
-	for await (const row of streamParquetRows<ParquetRow>(path)) {
+	for await (const row of openParquetRowStream<ParquetRow>(path)) {
 		rows.push(row)
 	}
 
@@ -158,17 +158,17 @@ describe("LABELED_ROW_SCHEMA", () => {
 	})
 })
 
-describe("writeParquetFiles", () => {
+describe("writeParquetSplits", () => {
 	it("refuses a projection that requests a column absent from the file schema", async () => {
-		const m = await writeParquetFiles(
+		const m = await writeParquetSplits(
 			{ train: asyncFrom([labeled({ source_id: "t-projection" })]) },
 			{ outputDir: scratch.path, corpusVersion: "0.1.0" }
 		)
 
 		const consume = async () => {
-			for await (const _row of streamParquetRows<ParquetRow & { missing_measurement_column: string }>(
+			for await (const _row of openParquetRowStream<ParquetRow & { missing_measurement_column: string }>(
 				m.slices[0]!.path,
-				["country", "missing_measurement_column"]
+				{ columns: ["country", "missing_measurement_column"] }
 			)) {
 			}
 		}
@@ -207,7 +207,7 @@ describe("writeParquetFiles", () => {
 		const valRows: LabeledRow[] = [labeled({ source_id: "t-1", raw: "Paris", locale: "fr-FR" })]
 		const testRows: LabeledRow[] = [labeled({ source_id: "t-2", raw: "Lyon" })]
 
-		const m = await writeParquetFiles(
+		const m = await writeParquetSplits(
 			{ train: asyncFrom(trainRows), val: asyncFrom(valRows), test: asyncFrom(testRows) },
 			{ outputDir: scratch.path, corpusVersion: "0.1.0", rowsPerFile: 10 }
 		)
@@ -284,7 +284,7 @@ describe("writeParquetFiles", () => {
 			}),
 		]
 
-		const m = await writeParquetFiles({ train: asyncFrom(rows) }, { outputDir: scratch.path, corpusVersion: "0.5.0" })
+		const m = await writeParquetSplits({ train: asyncFrom(rows) }, { outputDir: scratch.path, corpusVersion: "0.5.0" })
 		const back = await readParquet(m.slices[0]!.path)
 		expect(back).toHaveLength(3)
 
@@ -309,14 +309,14 @@ describe("writeParquetFiles", () => {
 		const rows = [labeled({ source_id: "t-1", span_starts: undefined, span_ends: undefined, span_tags: undefined })]
 
 		await expect(
-			writeParquetFiles({ train: asyncFrom(rows) }, { outputDir: scratch.path, corpusVersion: "0.5.0" })
+			writeParquetSplits({ train: asyncFrom(rows) }, { outputDir: scratch.path, corpusVersion: "0.5.0" })
 		).rejects.toThrow(/missing the char-offset span triple/)
 	})
 
 	it("rolls to a new parquet file at rowsPerFile rows", async () => {
 		const rows: LabeledRow[] = Array.from({ length: 25 }, (_, i) => labeled({ source_id: `t-${i}`, raw: `row ${i}` }))
 
-		const m = await writeParquetFiles(
+		const m = await writeParquetSplits(
 			{ train: asyncFrom(rows) },
 			{ outputDir: scratch.path, corpusVersion: "0.1.0", rowsPerFile: 10 }
 		)
@@ -337,9 +337,9 @@ describe("writeParquetFiles", () => {
 
 	it("two runs over the same rows produce a byte-identical parquet file (deterministic sha256)", async () => {
 		const rows = [labeled({ source_id: "t-1", raw: "A" }), labeled({ source_id: "t-2", raw: "B" })]
-		const a = await writeParquetFiles({ train: asyncFrom(rows) }, { outputDir: scratch.path, corpusVersion: "0.1.0" })
+		const a = await writeParquetSplits({ train: asyncFrom(rows) }, { outputDir: scratch.path, corpusVersion: "0.1.0" })
 		await removePathIfPresent(scratch.resolve("corpus-v0.1.0"))
-		const b = await writeParquetFiles({ train: asyncFrom(rows) }, { outputDir: scratch.path, corpusVersion: "0.1.0" })
+		const b = await writeParquetSplits({ train: asyncFrom(rows) }, { outputDir: scratch.path, corpusVersion: "0.1.0" })
 		expect(a.slices[0]!.sha256).toBe(b.slices[0]!.sha256)
 	})
 
@@ -350,7 +350,7 @@ describe("writeParquetFiles", () => {
 			labeled({ source_id: "t-without", raw: "no locale" }),
 		]
 
-		const m = await writeParquetFiles({ train: asyncFrom(rows) }, { outputDir: scratch.path, corpusVersion: "0.1.0" })
+		const m = await writeParquetSplits({ train: asyncFrom(rows) }, { outputDir: scratch.path, corpusVersion: "0.1.0" })
 		const back = await readParquet(m.slices[0]!.path)
 		expect(back).toHaveLength(2)
 		const withLocale = back.find((r) => r.source_id === "t-with")!
@@ -361,14 +361,13 @@ describe("writeParquetFiles", () => {
 
 	it("streams projected rows without materializing the file", async () => {
 		const rows = Array.from({ length: 5 }, (_, index) => labeled({ source_id: `t-${index}` }))
-		const m = await writeParquetFiles({ train: asyncFrom(rows) }, { outputDir: scratch.path, corpusVersion: "0.1.0" })
+		const m = await writeParquetSplits({ train: asyncFrom(rows) }, { outputDir: scratch.path, corpusVersion: "0.1.0" })
 
 		const streamed = []
 
-		for await (const row of streamParquetRows<{ country: string; labels: string[] }>(m.slices[0]!.path, [
-			"country",
-			"labels",
-		])) {
+		for await (const row of openParquetRowStream<{ country: string; labels: string[] }>(m.slices[0]!.path, {
+			columns: ["country", "labels"],
+		})) {
 			streamed.push(row)
 		}
 
@@ -378,7 +377,7 @@ describe("writeParquetFiles", () => {
 
 	it("skips splits not present in PerSplitRows (no empty parquet files written)", async () => {
 		// Only train provided. val + test omitted entirely.
-		const m = await writeParquetFiles(
+		const m = await writeParquetSplits(
 			{ train: asyncFrom([labeled({ source_id: "t-1" })]) },
 			{ outputDir: scratch.path, corpusVersion: "0.1.0" }
 		)

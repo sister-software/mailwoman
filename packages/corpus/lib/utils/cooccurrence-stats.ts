@@ -9,7 +9,7 @@
  *   a different separator never matches — which silently blanks the bigram-collision check.
  */
 
-import { streamParquetRows } from "#utils/parquet"
+import { openParquetRowStream } from "#parquet/streams"
 
 /**
  * Separator inside a bigram key (`tok1␟tok2`) and a label-bigram value (`lab1␟lab2`): U+001F UNIT SEPARATOR, a
@@ -87,7 +87,7 @@ export interface TokenLabelRow {
 export async function* streamTokenLabelRows(parquetPath: string, limit?: number): AsyncIterable<TokenLabelRow> {
 	let emitted = 0
 
-	for await (const row of streamParquetRows<TokenLabelRow>(parquetPath, ["tokens", "labels"], { limit })) {
+	for await (const row of openParquetRowStream<TokenLabelRow>(parquetPath, { columns: ["tokens", "labels"], limit })) {
 		yield row
 
 		emitted++

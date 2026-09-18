@@ -41,7 +41,7 @@ import { writeLocalJSONFile } from "@mailwoman/core/fs/writers"
 import { tryParsingJSON } from "@mailwoman/core/json"
 import { readReleaseConfig, weightsPackageByCountry } from "@mailwoman/core/release-config"
 import { dataRootPath } from "@mailwoman/core/data-root"
-import { streamParquetRows } from "@mailwoman/corpus/utils/parquet"
+import { openParquetRowStream } from "@mailwoman/corpus/parquet/streams"
 import { allRows } from "@mailwoman/core/utils"
 import type { CandidateDatabase } from "@mailwoman/resolver-wof-sqlite/candidate-schema"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
@@ -190,7 +190,7 @@ async function* streamCorpusCensusRows(path: string): AsyncGenerator<Record<stri
 	let sawFirst = false
 	let projectedLabels = true
 
-	for await (const record of streamParquetRows<Record<string, unknown>>(path, ["country", "labels"])) {
+	for await (const record of openParquetRowStream<Record<string, unknown>>(path, { columns: ["country", "labels"] })) {
 		if (!sawFirst) {
 			sawFirst = true
 
@@ -205,7 +205,7 @@ async function* streamCorpusCensusRows(path: string): AsyncGenerator<Record<stri
 	}
 
 	if (!projectedLabels) {
-		for await (const record of streamParquetRows<Record<string, unknown>>(path)) { yield record }
+		for await (const record of openParquetRowStream<Record<string, unknown>>(path)) { yield record }
 	}
 }
 

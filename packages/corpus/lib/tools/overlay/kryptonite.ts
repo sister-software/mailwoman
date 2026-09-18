@@ -21,9 +21,10 @@ import { writeLocalJSONFile, writeLocalTextFile, makeDirectories } from "@mailwo
 import { join } from "path-ts"
 import { JSONSpliterator } from "spliterator"
 
+import { PARQUET_COLUMNS, PARQUET_COMPRESSION, ROW_GROUP_SIZE } from "#parquet/schema"
+import { type ParquetManifest, writeParquetSplits } from "#parquet/writers"
 import type { CanonicalRow, LabeledRow } from "#types"
-import { alignRow, PARQUET_COLUMNS, ROW_GROUP_SIZE, PARQUET_COMPRESSION, writeParquetFiles } from "#utils"
-import type { ParquetManifest } from "#utils"
+import { alignRow } from "#utils"
 
 export interface KryptoniteOverlayOptions {
 	jsonl: string
@@ -85,7 +86,7 @@ export async function buildKryptoniteOverlay(
 
 	const quarantine: string[] = []
 
-	const newManifest = await writeParquetFiles(
+	const newManifest = await writeParquetSplits(
 		{ train: labeledRows(options.jsonl, corpusVersion, quarantine) },
 		{ outputDir: options.outDir, corpusVersion }
 	)

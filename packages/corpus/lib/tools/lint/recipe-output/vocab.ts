@@ -42,7 +42,7 @@ import { pyRound } from "@mailwoman/core/numeric"
 import { join } from "path-ts"
 import { Globerator } from "spliterator/node/fs"
 
-import { connectDuckDB, type DuckDBConnection } from "#utils/parquet"
+import { connectDuckDB, type DuckDBConnection } from "#parquet/duckdb"
 
 /**
  * A column-projected base or recipe-output row: parallel token + label lists plus the row's country.

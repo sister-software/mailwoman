@@ -36,7 +36,7 @@ import { parseJSONStrict, stringifyJSON } from "@mailwoman/core/json"
 import { join } from "path-ts"
 import { TextSpliterator } from "spliterator"
 
-import { connectDuckDB, escapeSQLString } from "#utils/parquet"
+import { connectDuckDB, escapeSQLString } from "#parquet/duckdb"
 
 const REQUIRED_COLUMNS = [
 	"raw",

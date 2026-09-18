@@ -47,11 +47,11 @@ import type { PathBuilderLike } from "path-ts"
 import { JSONSpliterator } from "spliterator"
 
 import { stableSourceID } from "#adapters/utils"
+import { connectDuckDB } from "#parquet/duckdb"
 import { readZippedCSVRecords, type CorpusRecipe } from "#recipes/scaffold"
 import { weightedPick } from "#synthesizers/utils"
 import type { CanonicalRow, LabeledRow } from "#types"
 import { alignRow } from "#utils"
-import { connectDuckDB } from "#utils/parquet"
 
 interface County {
 	fips: string

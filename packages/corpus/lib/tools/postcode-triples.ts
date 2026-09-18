@@ -53,8 +53,8 @@ import { join } from "path-ts"
 import { TSVSpliterator } from "spliterator"
 
 import { GEONAMES_POSTAL_COLUMNS } from "#adapters/geonames/postal/adapter"
+import { escapeSQLString } from "#parquet/duckdb"
 import type { PostcodePlacement } from "#recipes/scaffold"
-import { escapeSQLString } from "#utils/parquet"
 
 /**
  * One extracted tuple, in the shape `readTuples` yields and the recipe consumes.

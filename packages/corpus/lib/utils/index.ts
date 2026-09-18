@@ -7,7 +7,6 @@
 export * from "#utils/align"
 export * from "#build"
 export * from "#utils/golden"
-export * from "#utils/parquet"
 export * from "#utils/license"
 export * from "#utils/split"
 export * from "#utils/tokenize"

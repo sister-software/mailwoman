@@ -35,9 +35,11 @@ import { sha256File } from "@mailwoman/core/hash"
 import { join } from "path-ts"
 import { JSONSpliterator } from "spliterator"
 
+import { PARQUET_COLUMNS, PARQUET_COMPRESSION, ROW_GROUP_SIZE, rowToParquet } from "#parquet/schema"
+import type { ParquetFileDescriptor, ParquetManifest } from "#parquet/writers"
+import { writeParquetFile } from "#parquet/writers"
 import type { CanonicalRow, LabeledRow } from "#types"
-import { alignRow, PARQUET_COLUMNS, ROW_GROUP_SIZE, rowToParquet, PARQUET_COMPRESSION, writeParquetRows } from "#utils"
-import type { ParquetFileDescriptor, ParquetManifest } from "#utils"
+import { alignRow } from "#utils"
 
 export interface TranslitOverlayOptions {
 	jsonl: string
@@ -94,7 +96,7 @@ async function writeOneFile(
 		lastSourceID = row.source_id
 	}
 
-	await writeParquetRows(rows.map(rowToParquet), outPath)
+	await writeParquetFile(rows.map(rowToParquet), outPath)
 
 	const fileStat = await tryStat(outPath)
 	const sha256 = await sha256File(outPath)

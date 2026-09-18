@@ -30,7 +30,7 @@ import { sha256Hex } from "@mailwoman/core/hash"
 import { stringifyJSON } from "@mailwoman/core/json"
 import { basename, dirname, join } from "path-ts"
 
-import { connectDuckDB, escapeSQLString } from "#utils/parquet"
+import { connectDuckDB, escapeSQLString } from "#parquet/duckdb"
 
 interface ParquetFileDescriptor {
 	split: string

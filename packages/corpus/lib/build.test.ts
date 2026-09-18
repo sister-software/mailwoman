@@ -18,7 +18,8 @@ import { temporaryDirectory, type TemporaryDirectory } from "@mailwoman/core/fs/
 import { workspacePath } from "@mailwoman/core/paths"
 import { wofAdminAdapter } from "@mailwoman/corpus/adapters/wof/admin/json/adapter"
 import { buildCorpus, type BuildStage } from "@mailwoman/corpus/build"
-import { streamParquetRows, type ParquetRow } from "@mailwoman/corpus/utils/parquet"
+import type { ParquetRow } from "@mailwoman/corpus/parquet/schema"
+import { openParquetRowStream } from "@mailwoman/corpus/parquet/streams"
 import { join } from "path-ts"
 import { JSONSpliterator, TextSpliterator } from "spliterator"
 import { afterEach, beforeEach, describe, expect, it } from "vitest"
@@ -84,7 +85,7 @@ describe("buildCorpus end-to-end against wof-admin JSON-bundle fixture", () => {
 		expect(trainFile).toBeDefined()
 		expect(trainFile.format).toBe("parquet")
 		expect(trainFile.path).toMatch(/\.parquet$/)
-		const firstRow = (await streamParquetRows<ParquetRow>(trainFile.path).next()).value ?? null
+		const firstRow = (await openParquetRowStream<ParquetRow>(trainFile.path).next()).value ?? null
 
 		expect(firstRow).not.toBeNull()
 		expect(firstRow!.corpus_version).toBe("0.1.0")
