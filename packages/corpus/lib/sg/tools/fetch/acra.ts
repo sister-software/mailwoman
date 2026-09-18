@@ -4,7 +4,7 @@
  * @author Teffen Ellis, et al.
  *
  *   Fetch Singapore's ACRA corporate-entity register from data.gov.sg: 27 monthly CSVs (one per first
- *   letter of the entity name plus "others"), 53 columns, the registered address FIELDED — `Block`,
+ *   letter of the entity name plus "others"), 53 columns, the registered address fielded — `Block`,
  *   `Street Name`, `Level No`, `Unit No`, `Building Name`, `Postal Code` — which is the NPPES shape,
  *   so the corpus adapter renders the string and the spans fall out by construction. A Singapore
  *   postcode names one building, so the postcode column is also the join to the OneMap/Overture rows.

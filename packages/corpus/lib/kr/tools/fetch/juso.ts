@@ -4,7 +4,8 @@
  * @author Teffen Ellis, et al.
  *
  *   Fetch the Korean road-name address register (도로명주소 주소DB) from the ministry's address-industry
- *   portal, business.juso.go.kr. This is the LABEL source for Korean addresses: about 6,000,000
+ *   portal, business.juso.go.kr. The ministry assigns the road names and building numbers it publishes, so
+ *   this source asserts `address` on `premise` rows: about 6,000,000
  *   road-name addresses and 8,000,000 lot-number (지번) records, split by the publisher into four
  *   pipe-delimited CP949 text files per region (도로명코드 / 주소 / 지번 / 부가정보), with the postcode in
  *   the supplementary file. No coordinates. The public-data portal labels it "이용허락범위 제한 없음"

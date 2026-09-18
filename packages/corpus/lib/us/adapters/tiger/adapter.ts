@@ -38,7 +38,7 @@ import { formatAddressRow } from "@mailwoman/codex/address-format"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
 import type { TIGERDatabase } from "@mailwoman/tiger/sdk/schema"
 
-import type { AdapterOptions, CanonicalRow, CorpusAdapter } from "#types"
+import { AddressRole, type AdapterOptions, type CanonicalRow, type CorpusAdapter } from "#types"
 import { decomposeStreet } from "#us/adapters/tiger/street-decompose"
 import { lookupFipsState } from "#us/fips-state"
 
@@ -171,6 +171,7 @@ export function createTigerAdapter(): CorpusAdapter {
 	return {
 		id: TIGER_ADAPTER_ID,
 		defaultLicense: TIGER_DEFAULT_LICENSE,
+		addressRole: AddressRole.Premise,
 		description:
 			"US Census TIGER/Line streets + places consumer (public-domain); SQLite DB built via `mailwoman tiger fetch`.",
 

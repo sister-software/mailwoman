@@ -19,6 +19,75 @@
 import type { BIOLabel, ComponentTag } from "@mailwoman/codex/component"
 
 /**
+ * What an address is the address OF — the role it plays for the thing the source is describing.
+ *
+ * Two strings with the same components can be different addresses. A company's registered office is the address it
+ * files with a registrar, its premise is where the building stands, and its mailing address may be a box at a post
+ * office it never visits. Each carries its own grammar, and a corpus that mixes them teaches the premise parser the
+ * grammar of the others: a register whose addresses are half post-office boxes shifts the prior on a leading designator
+ * for every row the model later reads.
+ *
+ * The constants are the wire values.
+ */
+export const AddressRole = {
+	/**
+	 * Where the addressable object is. A national address register, an address point, a street-level extract.
+	 */
+	Premise: "premise",
+	/**
+	 * The address an entity files with a registrar as its seat. A company register's 公司地址, 国内所在地, siège social.
+	 */
+	RegisteredOffice: "registered-office",
+	/**
+	 * Where post is delivered, which need not be where anything stands. Post-office boxes concentrate here.
+	 */
+	Mailing: "mailing",
+	/**
+	 * Where a licensed person or organization practices. A provider's practice location, a notary's place of business.
+	 */
+	Practice: "practice",
+	/**
+	 * A site an entity operates — a clinic, a school, a library outlet, a plant.
+	 */
+	Facility: "facility",
+	/**
+	 * The address of a property's owner, recorded against the property rather than about it.
+	 */
+	Owner: "owner",
+	/**
+	 * Where a service is delivered or an obligation is discharged, which a project record names without the place being
+	 * anybody's seat.
+	 */
+	Service: "service",
+	/**
+	 * The address for service of legal process.
+	 */
+	LegalNotice: "legal-notice",
+	/**
+	 * A role the source names and this vocabulary does not cover. Add a constant rather than letting a second role
+	 * accumulate here.
+	 */
+	Other: "other",
+} as const
+
+export type AddressRole = (typeof AddressRole)[keyof typeof AddressRole]
+
+/**
+ * The role a row carries when it does not say. Frozen corpora written before the field existed read as premise, which
+ * is what the sources that produced them emit. An adapter written after it declares its own role and never relies on
+ * this.
+ */
+export const DEFAULT_ADDRESS_ROLE: AddressRole = AddressRole.Premise
+
+/**
+ * The role a row asserts, reading an absent field as {@link DEFAULT_ADDRESS_ROLE}. Use this rather than spelling the
+ * default at each call site, so the one place that decides what an absent field means stays one place.
+ */
+export function addressRoleOf(row: Pick<CanonicalRow, "addressRole">): AddressRole {
+	return row.addressRole ?? DEFAULT_ADDRESS_ROLE
+}
+
+/**
  * Provenance + augmentation metadata that travels with every corpus row.
  *
  * `synth` is `undefined` for natural (un-augmented) rows. present only when a row was produced by the synthesis
@@ -99,6 +168,15 @@ export interface CanonicalRow extends SourceProvenance {
 	 * Optional BCP-47 locale. Defaulted by country if absent.
 	 */
 	locale?: string
+
+	/**
+	 * What this address is the address of. The runner stamps the adapter's `addressRole` on every row that omits it, so
+	 * an adapter sets this per row only when one source carries more than one role — Taiwan's company register holds the
+	 * registered address and the tax office's business address in separate columns of the same row.
+	 *
+	 * Absent means {@link DEFAULT_ADDRESS_ROLE}; read it with {@link addressRoleOf} rather than by hand.
+	 */
+	addressRole?: AddressRole
 
 	/**
 	 * Present only on synthetic rows.
@@ -221,6 +299,17 @@ export interface CorpusAdapter {
 	 * Default SPDX-ish license label for rows from this adapter. Per-row overrides allowed.
 	 */
 	readonly defaultLicense: string
+
+	/**
+	 * What the addresses from this source are addresses of. Required, and with no default, because the answer is a
+	 * property of the source that only the adapter's author has read: a health-provider registry carries practice
+	 * locations, a tax-exempt-organization file carries mailing addresses, and a national address register carries
+	 * premises. A field that defaulted would record premise for all three.
+	 *
+	 * The runner stamps this onto every row the adapter leaves unset. An adapter over a source with more than one address
+	 * column sets the row field per row and declares the dominant role here.
+	 */
+	readonly addressRole: AddressRole
 
 	/**
 	 * One-sentence description shown by `npx mailwoman corpus list`.

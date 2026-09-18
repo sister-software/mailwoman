@@ -5,7 +5,16 @@
  */
 
 import { BIO_LABELS, COMPONENT_TAGS } from "@mailwoman/codex/component"
-import type { AdapterOptions, CanonicalRow, CorpusAdapter, LabeledRow, QuarantinedRow } from "@mailwoman/corpus/types"
+import {
+	AddressRole,
+	addressRoleOf,
+	DEFAULT_ADDRESS_ROLE,
+	type AdapterOptions,
+	type CanonicalRow,
+	type CorpusAdapter,
+	type LabeledRow,
+	type QuarantinedRow,
+} from "@mailwoman/corpus/types"
 import { describe, expect, it } from "vitest"
 
 describe("corpus types", () => {
@@ -55,6 +64,23 @@ describe("corpus types", () => {
 		expect(synth.synth?.base_source_id).toBe("wof-101751119")
 	})
 
+	it("addressRoleOf reads an absent role as the default and an explicit one verbatim", () => {
+		const base: CanonicalRow = {
+			raw: "PO Box 120, Austin, TX 78701",
+			components: { po_box: "PO Box 120", locality: "Austin", region: "TX", postcode: "78701" },
+			country: "US",
+			source: "state-tx-notaries",
+			source_id: "tx-1",
+			corpus_version: "0.1.0",
+			license: "US-PD",
+		}
+
+		expect(DEFAULT_ADDRESS_ROLE).toBe(AddressRole.Premise)
+		expect(base.addressRole).toBeUndefined()
+		expect(addressRoleOf(base)).toBe(AddressRole.Premise)
+		expect(addressRoleOf({ ...base, addressRole: AddressRole.Mailing })).toBe("mailing")
+	})
+
 	it("LabeledRow extends CanonicalRow with parallel token/label arrays of equal length", () => {
 		const labels = BIO_LABELS.slice(0, 3)
 
@@ -101,6 +127,7 @@ describe("corpus types", () => {
 		const adapter: CorpusAdapter = {
 			id: "noop",
 			defaultLicense: "CC0-1.0",
+			addressRole: AddressRole.Premise,
 			description: "Smoke-test adapter that yields a single hand-crafted row.",
 			async *rows(_opts) {
 				yield {

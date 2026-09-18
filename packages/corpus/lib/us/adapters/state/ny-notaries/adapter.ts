@@ -19,7 +19,7 @@ import { isPresent } from "@mailwoman/core/objects"
 import { CSVSpliterator } from "spliterator"
 
 import { splitStreetLine, stableSourceID } from "#adapters/utils"
-import type { AdapterOptions, CanonicalRow, CorpusAdapter } from "#types"
+import { AddressRole, type AdapterOptions, type CanonicalRow, type CorpusAdapter } from "#types"
 import { lookupStateAbbreviation } from "#us/fips-state"
 
 /**
@@ -37,6 +37,7 @@ export function createStateNyNotariesAdapter(): CorpusAdapter {
 	return {
 		id: STATE_NY_NOTARIES_ADAPTER_ID,
 		defaultLicense: STATE_NY_NOTARIES_DEFAULT_LICENSE,
+		addressRole: AddressRole.Practice,
 		description: "New York Commissioned Notaries — name + optional business address (public-domain).",
 
 		async *rows(opts: AdapterOptions): AsyncIterable<CanonicalRow> {

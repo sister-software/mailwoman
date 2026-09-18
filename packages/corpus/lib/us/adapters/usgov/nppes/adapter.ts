@@ -27,7 +27,7 @@ import { formatPersonName } from "@mailwoman/record/name"
 import { CSVSpliterator } from "spliterator"
 
 import { splitStreetLine, stableSourceID } from "#adapters/utils"
-import type { AdapterOptions, CanonicalRow, CorpusAdapter } from "#types"
+import { AddressRole, type AdapterOptions, type CanonicalRow, type CorpusAdapter } from "#types"
 import { lookupStateAbbreviation } from "#us/fips-state"
 
 /**
@@ -58,6 +58,7 @@ export function createUsgovNPPESAdapter(): CorpusAdapter {
 	return {
 		id: USGOV_NPPES_ADAPTER_ID,
 		defaultLicense: USGOV_NPPES_DEFAULT_LICENSE,
+		addressRole: AddressRole.Practice,
 		description:
 			"CMS National Plan and Provider Enumeration System — 7M provider practice locations (public-domain). Venue+address co-occurrence at scale.",
 

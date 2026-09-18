@@ -3,7 +3,7 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Align one permit-registry address string to the LABEL register's key, or answer null (#2204 §5).
+ *   Align one permit-registry address string to the address register's key, or answer null (#2204 §5).
  *
  *   Every permit row carries the same premises in both address systems, typed by a clerk:
  *
@@ -11,13 +11,13 @@
  *       지번주소    서울특별시 종로구 종로5가 43-1
  *
  *   The road-name form is `<시도> <시군구> <도로명> <건물번호>`, then an optional `, <상세주소>` (floor, unit, building)
- *   and an optional parenthetical `(<법정동>[, <건물명>])`; the lot-number form is
+ *   and an optional parenthetical `(<법정동>[, <건물명>])`. The lot-number form is
  *   `<시도> <시군구> <법정동> [<리>] [산]<본번>[-<부번>]` followed by whatever the clerk added.
  *
  *   ALIGNMENT IS EXACT against {@link KeyIndex}, never fuzzy. A string that satisfies the whole key becomes a training
- *   row whose spans are the matched pieces. one that does not is a BOARD row — an address the model will be read on and
- *   never trained on. The rate per file is measured and reported before any row enters a corpus, which is the rule a
- *   noisy source is admitted under.
+ *   row whose spans are the matched pieces. One that does not is a BOARD row — an address the model will be read on and
+ *   never trained on. The rate per file is measured and reported before any row enters a corpus, which is the rule an
+ *   `observation` source is admitted under.
  */
 
 import { type KeyIndex, sigunguSpan, unitKey } from "#kr/adapters/localdata/key-index"
@@ -66,7 +66,7 @@ interface Span {
  * Record a span, unless it is empty or blank.
  *
  * A blank span is what a clerk's double space produces, and a zero-width one what a token found at its own end
- * produces. neither is a component and both would train the model on nothing.
+ * produces. Neither is a component, and both would train the model on nothing.
  */
 function put(spans: Span[], text: string, start: number, end: number, tag: string): void {
 	if (end > start && text.slice(start, end).trim()) {
@@ -136,7 +136,7 @@ export function alignRoadAddress(text: string, index: KeyIndex): Aligned | null 
 	const region = tokens[0]!
 	const width = sigunguSpan(index, region, tokens, 1)
 
-	// A region with no 시군구 level (세종특별자치시) lists the empty string. its strings go region → road.
+	// A region with no 시군구 level (세종특별자치시) lists the empty string, so its strings go region → road.
 	if (!width && !index.sigunguByRegion.get(region)?.has("")) return null
 
 	const sigungu = tokens.slice(1, 1 + width).join(" ")
@@ -154,7 +154,7 @@ export function alignRoadAddress(text: string, index: KeyIndex): Aligned | null 
 		roadAt += 1
 	}
 
-	// A road name is one token. a numbered branch (`대학로8길`) is part of that token in the register.
+	// A road name is one token, and a numbered branch (`대학로8길`) is part of that token in the register.
 	if (roadAt + 1 >= tokens.length || !roads.has(tokens[roadAt]!)) return null
 
 	let numberAtToken = roadAt + 1

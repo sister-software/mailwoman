@@ -33,7 +33,7 @@ import { formatAddressRow } from "@mailwoman/codex/address-format"
 import { CSVSpliterator } from "spliterator"
 
 import { splitStreetLine, stableSourceID } from "#adapters/utils"
-import type { AdapterOptions, CanonicalRow, CorpusAdapter } from "#types"
+import { AddressRole, type AdapterOptions, type CanonicalRow, type CorpusAdapter } from "#types"
 import { lookupStateAbbreviation } from "#us/fips-state"
 
 /**
@@ -78,6 +78,7 @@ export function createUSGovHRSAFQHCAdapter(): CorpusAdapter {
 	return {
 		id: USGOV_HRSA_FQHC_ADAPTER_ID,
 		defaultLicense: USGOV_HRSA_FQHC_DEFAULT_LICENSE,
+		addressRole: AddressRole.Facility,
 		description:
 			"HRSA Federally Qualified Health Center site locations (public-domain). Adversarial source: venue + address co-occurrence, hand-entered.",
 

@@ -3,8 +3,8 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   The Korean permit registry (지방행정인허가데이터) as a NOISY corpus source: reading the delivered CSVs, and turning
- *   an aligned string into a corpus row (#2204 §5).
+ *   The Korean permit registry (지방행정인허가데이터) as an `observation` source: reading the delivered CSVs, and
+ *   turning an aligned string into a corpus row (#2204 §5).
  *
  *   The publisher delivers CP949, one file per business category, with both address systems typed by a clerk plus a
  *   planar coordinate in EPSG:5174 and both postcodes. Reading is separated from ALIGNING so the alignment rate per
