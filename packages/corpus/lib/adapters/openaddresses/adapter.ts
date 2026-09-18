@@ -41,7 +41,7 @@ import { tryParsingJSON } from "@mailwoman/core/json"
 import { TextSpliterator } from "spliterator"
 
 import { stableSourceID } from "#adapters/utils"
-import type { AdapterOptions, CanonicalRow, CorpusAdapter } from "#types"
+import { AddressRole, type AdapterOptions, type CanonicalRow, type CorpusAdapter } from "#types"
 import { SHARE_ALIKE_PATTERN } from "#utils"
 
 /**
@@ -134,6 +134,7 @@ export function createOpenaddressesAdapter(opts: OpenaddressesAdapterOptions = {
 	return {
 		id: OPENADDRESSES_ADAPTER_ID,
 		defaultLicense,
+		addressRole: AddressRole.Premise,
 		description: "OpenAddresses (global): line-delimited GeoJSON dumps with per-row licenses.",
 
 		async *rows(adapterOpts: AdapterOptions): AsyncIterable<CanonicalRow> {

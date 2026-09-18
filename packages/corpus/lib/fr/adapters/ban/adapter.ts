@@ -36,7 +36,7 @@ import { CSVSpliterator } from "spliterator"
 
 import { stableSourceID } from "#adapters/utils"
 import { decomposeFrStreet } from "#fr/adapters/ban/street-decompose"
-import type { AdapterOptions, CanonicalRow, CorpusAdapter } from "#types"
+import { AddressRole, type AdapterOptions, type CanonicalRow, type CorpusAdapter } from "#types"
 
 /**
  * Registry id for this adapter. Stamped into every row it emits, so a corpus record can be traced back to the dataset
@@ -74,6 +74,7 @@ export function createBanAdapter(): CorpusAdapter {
 	return {
 		id: BAN_ADAPTER_ID,
 		defaultLicense: "Licence Ouverte 2.0",
+		addressRole: AddressRole.Premise,
 		description: "Base Adresse Nationale (FR): house-number-level street addresses (~25M rows).",
 
 		async *rows(opts: AdapterOptions): AsyncIterable<CanonicalRow> {

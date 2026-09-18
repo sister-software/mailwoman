@@ -34,7 +34,7 @@ import { pathExists } from "@mailwoman/core/fs/readers"
 import { dirname, join } from "path-ts"
 
 import { stableSourceID } from "#adapters/utils"
-import type { AdapterOptions, CanonicalRow, CorpusAdapter } from "#types"
+import { AddressRole, type AdapterOptions, type CanonicalRow, type CorpusAdapter } from "#types"
 
 /**
  * Registry id for this adapter. Stamped into every row it emits, so a corpus record can be traced back to the dataset
@@ -121,6 +121,7 @@ export function createGeonamesAdapter(): CorpusAdapter {
 	return {
 		id: GEONAMES_ADAPTER_ID,
 		defaultLicense: GEONAMES_DEFAULT_LICENSE,
+		addressRole: AddressRole.Premise,
 		description:
 			"GeoNames populated places (CC-BY-4.0) — global locality coverage incl. small towns, with region/country names from the sibling admin1/countryInfo files.",
 

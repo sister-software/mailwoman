@@ -8,7 +8,13 @@
  *   full registers as CSV files split by region (the six special municipalities each on their own,
  *   the rest of the island in four bands) and by industry letter, 148 files in all, each row carrying
  *   the registered address (公司地址) and, for companies, the tax office's business address
- *   (營業地址) as free text. This is the NOISY source for Taiwanese addresses: a person typed these.
+ *   (營業地址) as free text.
+ *
+ *   The ministry issues the company number, so the identifier is an `identity` assertion. Both address
+ *   columns are `observation`s — a person typed them — and they carry different roles on the same row:
+ *   公司地址 is the entity's `registered-office`, 營業地址 the `facility` it operates from. An adapter that
+ *   reads the file must set `addressRole` per column, or it teaches the premise parser registered-office
+ *   grammar.
  *
  *   License: 政府資料開放授權條款－第1版 (Open Government Data License, Taiwan, v1.0). The platform's
  *   own dialog states the condition that binds: attribution in the form it prescribes, or the grant is

@@ -17,6 +17,8 @@
  *   The runner is responsible for everything an adapter is **not** responsible for:
  *
  *   - Stamping `corpus_version` on every row (adapters must not set it).
+ *   - Stamping the adapter's `addressRole` on every row that omits one, so a single-role source declares its role once
+ *       and a multi-role source overrides per row.
  *   - Applying `canonicalDedupKey` and skipping duplicates.
  *   - Streaming sha256 over JSONL bytes so the manifest checksum doesn't require a re-read.
  *   - Honoring backpressure on the output write stream.
@@ -170,7 +172,12 @@ export async function runAdapter(opts: RunAdapterOptions): Promise<AdapterRunMan
 			yielded++
 			assertEmittedRow(adapter, row)
 
-			const stamped: CanonicalRow = { ...row, corpus_version: corpusVersion }
+			const stamped: CanonicalRow = {
+				...row,
+				corpus_version: corpusVersion,
+				addressRole: row.addressRole ?? adapter.addressRole,
+			}
+
 			const key = canonicalDedupKey(stamped)
 
 			if (!dedupExhausted) {

@@ -32,7 +32,7 @@ import {
 	synthesizePoBoxRow,
 	type PoBoxBaseTuple,
 } from "#synthesizers/po-box"
-import type { AdapterOptions, CanonicalRow, CorpusAdapter } from "#types"
+import { AddressRole, type AdapterOptions, type CanonicalRow, type CorpusAdapter } from "#types"
 
 /**
  * Registry id for this adapter. Stamped into every row it emits, so a corpus record can be traced back to the dataset
@@ -83,6 +83,7 @@ export function createSynthPoBoxAdapter(opts: SynthPoBoxAdapterOptions = {}): Co
 	return {
 		id: SYNTH_PO_BOX_ADAPTER_ID,
 		defaultLicense: SYNTH_PO_BOX_LICENSE,
+		addressRole: AddressRole.Mailing,
 		description:
 			"Synthetic PO box / PMB / Apartado / Boîte Postale rows. Consumes JSONL of (locality, region, postcode, country) tuples and emits locale-appropriate PO box variants.",
 

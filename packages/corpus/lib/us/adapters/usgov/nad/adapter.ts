@@ -37,7 +37,7 @@ import { join } from "path-ts"
 import { TextSpliterator } from "spliterator"
 import { Globerator } from "spliterator/node/fs"
 
-import type { AdapterOptions, CanonicalRow, CorpusAdapter } from "#types"
+import { AddressRole, type AdapterOptions, type CanonicalRow, type CorpusAdapter } from "#types"
 
 /**
  * Registry id for this adapter. Stamped into every row it emits, so a corpus record can be traced back to the dataset
@@ -226,6 +226,7 @@ export function createUsgovNADAdapter(): CorpusAdapter {
 	return {
 		id: USGOV_NAD_ADAPTER_ID,
 		defaultLicense: USGOV_NAD_DEFAULT_LICENSE,
+		addressRole: AddressRole.Premise,
 		description:
 			"US DOT National Address Database — ~97M structured US address points (911-grade). Single largest US source.",
 

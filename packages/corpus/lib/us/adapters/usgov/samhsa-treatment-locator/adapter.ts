@@ -32,7 +32,7 @@ import { formatAddressRow } from "@mailwoman/codex/address-format"
 import { CSVSpliterator } from "spliterator"
 
 import { splitStreetLine, stableSourceID } from "#adapters/utils"
-import type { AdapterOptions, CanonicalRow, CorpusAdapter } from "#types"
+import { AddressRole, type AdapterOptions, type CanonicalRow, type CorpusAdapter } from "#types"
 import { lookupStateAbbreviation } from "#us/fips-state"
 
 /**
@@ -108,6 +108,7 @@ export function createUsgovSamhsaTreatmentLocatorAdapter(): CorpusAdapter {
 	return {
 		id: USGOV_SAMHSA_ADAPTER_ID,
 		defaultLicense: USGOV_SAMHSA_DEFAULT_LICENSE,
+		addressRole: AddressRole.Facility,
 		description:
 			"SAMHSA Behavioral Health Treatment Services Locator (public-domain). Adversarial source: venue + two-line address co-occurrence, hand-entered.",
 

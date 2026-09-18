@@ -86,31 +86,38 @@ mailwoman corpus fetch geonames-postal
 
 `SourceProvenance` (`lib/types.ts`) stamps four fields on every row: `source`, `source_id`,
 `corpus_version`, `license`. The acceptance rules in the global address corpus specification
-require thirteen before a source enters the training set. Three of the absences change what a
-row teaches, so read them before writing an adapter
-([#2323](https://github.com/sister-software/mailwoman/issues/2323)).
+require thirteen before a source enters the training set. Read what follows before writing an
+adapter ([#2323](https://github.com/sister-software/mailwoman/issues/2323)).
 
-**No address role.** A registered-office string and a premise string land in the same
-`CanonicalRow.components` with nothing separating them. Taiwan's company register carries both
-on one row in separate columns — the registered company address (公司地址) and the business
-address the economic ministry records for companies (營業地址) — so an adapter that reads the
-file without a role field teaches the premise parser registered-office grammar. Most
-functional-authority sources (company, health, education, telecom, procurement registers) emit a
-non-premise role.
+**Address role.** `CanonicalRow.addressRole` says what an address is the address of, from the
+`AddressRole` vocabulary in `lib/types.ts`. Every adapter declares one and `runner.ts` stamps it on
+each row the adapter leaves unset; an adapter over a source with more than one address column sets
+the field per row instead. Taiwan's company register is that case — the registered company address
+(公司地址) and the business address the economic ministry records for companies (營業地址) sit in
+separate columns of one row, and reading the file without the role field teaches the premise parser
+registered-office grammar.
 
-**No assertion per field.** A company register can be authoritative for entity identity while the
-registered-office string it holds is an operational observation somebody filed. One verdict for
-the whole source cannot say both.
+The field is required on `CorpusAdapter` and carries no default, because the answer is a property of
+the source that only the adapter's author has read. Ten of the 23 adapters here emit a non-premise
+role: four facility (`state-hi-schools`, `usgov-hrsa-fqhc`, `usgov-imls-pls`,
+`usgov-samhsa-treatment-locator`), three mailing (`synth-po-box`, `state-tx-notaries`,
+`usgov-irs-bmf`), two practice (`usgov-nppes`, `state-ny-notaries`) and one registered-office
+(`state-ia-contractors`). A defaulted field would record premise for all ten.
+
+**Assertion per field.** `AssertedProposition` in
+[`@mailwoman/evidence`](../evidence/lib/status.ts) records what a publisher asserts, per field, in
+six values: `identity`, `address`, `geometry`, `observation`, `grammar`, `routing`. A company
+register is an authority on the identifier it issues while the registered-office string on the same
+row is an `observation` somebody filed. One verdict for the whole source cannot say both, which is
+why `lib/tools/fetch/index.ts` names the assertion and the role per entry rather than grading each
+source once. The Korean permit registry (지방행정인허가데이터) is the worked example: it grants
+permit identity, and its address string is what a clerk typed in two address systems with no
+validation.
 
 **No license decision, only a label.** `license` holds a string, and `utils/license.ts` filters on
 its prefix. A dual-licensed source needs a record of which terms the build elects and why — BAN is
 `Licence Ouverte` or ODbL, and this project elects the former, which is why that reasoning sits in
-a docstring rather than in the data.
-
-`lib/tools/fetch/index.ts` grades each acquisition source `LABEL` or `NOISY`. That is one verdict
-per source, and it is being replaced by per-field assertion plus address role. The Korean permit
-registry (지방행정인허가데이터) shows why: it assigns permit identity with authority, and its
-address string is what a clerk typed in two address systems with no validation.
+a docstring rather than in the data. Still open.
 
 Where the ledger overlaps an existing contract, reuse that shape rather than writing a second
 provenance vocabulary. A layer database already embeds `layer_manifest` (`source`,
