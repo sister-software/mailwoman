@@ -14,8 +14,10 @@
 # loader that took a parquet file's first row as the whole file's source, so a source whose rows sat in
 # another source's file was unreachable. Reading every source in a file reaches them: across the 718
 # train files, 8 carry more than one source, and the rows those files hold for a source other than their
-# first row's number 4,084,591 — 0.60% of the split's 681,408,112 counted train rows, of which 154,989
-# belong to the two sources declined below. Every share is unchanged — the reps-targeted sources' row
+# first row's number 4,084,591 — 0.60% of the 681,901,687 train rows a full read of the split counts, of
+# which 154,989 belong to the two sources declined below. The manifest's own `counts.train` says
+# 681,408,112 and is the figure to distrust: it disagrees with the sum of the per-file `rows` it carries,
+# and the read agrees with that sum. Every share is unchanged — the reps-targeted sources' row
 # counts do not move, the fixed weights come from this file, and the two newly visible sources are
 # declined — so what differs is which distinct rows back a source's draws, not how many it gets.
 #
