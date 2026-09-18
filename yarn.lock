@@ -5936,7 +5936,6 @@ __metadata:
     "@types/react-map-gl": "npm:^6.1.10"
     "@typescript/native": "npm:typescript@^7.0.2"
     "@vitejs/plugin-react": "npm:^6.1.1"
-    "@vvago/vale": "npm:^3.20.0"
     clsx: "npm:^2.1.1"
     docusaurus-plugin-glossary: "npm:^3.3.4"
     js-yaml: "npm:^5.4.1"
@@ -5955,7 +5954,6 @@ __metadata:
     unist-util-visit: "npm:^5.1.0"
     vite: "npm:^8.2.2"
     webpack: "npm:^5.110.3"
-    zx: "npm:^8.8.5"
   languageName: unknown
   linkType: soft
 
