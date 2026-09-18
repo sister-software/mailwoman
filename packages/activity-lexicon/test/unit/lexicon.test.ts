@@ -143,7 +143,7 @@ describe("the audit", () => {
 			])
 		)
 
-		expect(problems.join("\n")).toMatch(/does not contain it as a subject/)
+		expect(problems.join("\n")).toMatch(/omits it as a subject/)
 	})
 
 	it("refuses a concept-description citation of a concept the entry does not name", () => {

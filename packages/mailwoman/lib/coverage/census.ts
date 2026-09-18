@@ -35,6 +35,7 @@ import {
 	pathExists,
 	readLocalJSONFile,
 	readLocalTextFile,
+	statPath,
 } from "@mailwoman/core/fs/readers"
 import { writeLocalJSONFile } from "@mailwoman/core/fs/writers"
 import { tryParsingJSON } from "@mailwoman/core/json"
@@ -426,6 +427,54 @@ export async function readGazetteerCoverage(dbPath: string): Promise<Map<string,
  * repo.
  */
 export const ROOFTOP_PUBLISHED = new Set(["US", "FR"])
+
+/**
+ * The training config whose `country_weights` decides admission, chosen by MODIFICATION TIME.
+ *
+ * Not by filename. The version scheme does not sort lexically and does not sort numerically either — `v8-leg2-sp.yaml`
+ * wins both against `v4.8.0-trailing-region-placement-8k.yaml`, because `v8` was a corpus-line experiment and `v4.x` is
+ * the current model line. Measured: the filename sort picked `v8-leg2-sp` and reported every country as dropped, which
+ * reads as a catastrophic finding rather than as the wrong file.
+ *
+ * Mtime is a proxy and can be wrong after a checkout, so every caller names the config it used. Pass one explicitly
+ * when the answer matters.
+ */
+export async function newestConfig(repoRoot: string): Promise<string> {
+	const dir = `${repoRoot}/corpus-python/src/mailwoman_train/configs`
+
+	if (!(await pathExists(dir))) return ""
+
+	const named = (
+		await Globerator.files("yaml", { cwd: dir, absolute: false, recursive: false })
+			.filter((name) => !name.includes("smoke"))
+			.parallelMap(async (name) => ({ name, at: (await statPath(`${dir}/${name}`)).mtimeMs }))
+			.toArray()
+	).toSorted((a, b) => b.at - a.at)
+
+	return named.length ? `${dir}/${named[0]!.name}` : ""
+}
+
+/**
+ * The newest corpus manifest, by MODIFICATION TIME.
+ *
+ * Not by directory name. Corpus versions are `v0.9.9-si-bare-village`, `v0.26.0-trailing-region-leftcontext`,
+ * `v8-jp-full-…` — a set that sorts neither lexically (`v0.9.9` beats `v0.26.0`, because `9` > `2`) nor numerically
+ * (`v8` beats both). Measured: the name sort picked `v0.9.9` and reported the coverage of a corpus nine versions old,
+ * with nothing in the output to say it had. Every caller names the manifest it used.
+ */
+export async function newestManifest(): Promise<string> {
+	const root = String(dataRootPath("corpus", "versioned"))
+
+	if (!(await pathExists(root))) return ""
+
+	const found: Array<{ path: string; at: number }> = []
+
+	for await (const candidate of Globerator.from("*/*/MANIFEST.json", { cwd: root, absolute: true })) {
+		found.push({ path: candidate, at: (await statPath(candidate)).mtimeMs })
+	}
+
+	return found.toSorted((a, b) => b.at - a.at)[0]?.path ?? ""
+}
 
 
 export interface CensusCoverageOptions {

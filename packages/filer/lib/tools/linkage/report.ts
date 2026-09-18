@@ -36,7 +36,7 @@ const FORM_499_FIELD_NOTES: Record<keyof Form499Row, string> = {
 	doingBusinessAs: "",
 	principalCommType: "",
 	holdingCompany: "the field under test",
-	managementCompany: "control, not ownership — kept in the input, excluded from the prediction",
+	managementCompany: "control rather than ownership — kept in the input, excluded from the prediction",
 	hqAddress: "staged as an attribute; no code on the family or entity-resolution path reads it",
 	customerInquiriesTelephone: "staged as an attribute; no code on the family or entity-resolution path reads it",
 	customerInquiriesAddress: "staged as an attribute; no code on the family or entity-resolution path reads it",
@@ -190,7 +190,7 @@ function renderCensusTable(withheld: LinkageEvalRun, control: LinkageEvalRun): s
 				(run) => run.census.scoredFamilyRows
 			),
 			row(
-				"`filer_family` rows the prediction ignores (recognized, not ownership)",
+				"`filer_family` rows the prediction ignores (recognized rather than ownership)",
 				(run) => run.census.nonOwnershipFamilyRows
 			),
 			row(
@@ -263,7 +263,7 @@ function renderWhySection(withheld: LinkageEvalRun): string {
 		`pass (which ran here, over ${withheld.inferred.recordsConsidered} records) answers a different question: it ` +
 		"decides whether two identifiers denote the same legal entity, and it will not merge two records that share no " +
 		'identifier code, no matter how similar their names are. Even if it did merge them, a merge asserts "same ' +
-		'company", not "same parent", so it could not populate a family. The corpus exercises that refusal on purpose: ' +
+		'company" rather than "same parent", so it could not populate a family. The corpus exercises that refusal on purpose: ' +
 		"two of its filers canonicalize to the byte-identical legal name `american fiber partners` and are not the same " +
 		"company. The canonical name is the blocking key, so that pair is proposed as a candidate and scored — and the " +
 		"veto refuses it, which is what a veto is for."
@@ -286,7 +286,7 @@ function renderWhatWouldMoveItSection(): string {
 		"`customerInquiriesTelephone` and `customerInquiriesAddress` identically across all three members of one family " +
 		"in the withheld corpus, then rebuild, re-cluster and re-score: byte-identical result, 0 pairs recovered. Those " +
 		"columns are stored as attributes and nothing on the family path — or on the entity-resolution path, which reads " +
-		"only legal names and identifier codes — ever looks at them. That is a property of the pipeline, not a gap in " +
+		"only legal names and identifier codes — ever looks at them. That is a property of the pipeline rather than a gap in " +
 		"the corpus.\n\n" +
 		"**Adding an ownership EDGE changes nothing either.** Write inferred `subsidiary` `filer_edge` rows joining those " +
 		"same filers to a parent — the shape a corporate-filing importer is specified to emit — and recall stays 0.000. " +
@@ -340,18 +340,18 @@ export function renderLinkageEvalReport(input: RenderLinkageEvalReportInput): st
 			"nodes (its FRN registrations and its provider id), so the eval takes the union across them. The reader is " +
 			"shipped; the union is this eval's own step, and it is why a parent disclosed on one of a registrant's two " +
 			"filings still counts.\n\nMembership rows that exist only because two filers named the same MANAGEMENT " +
-			"company are excluded from both the prediction and the truth: management is operational control, not " +
+			"company are excluded from both the prediction and the truth: management is operational control rather than " +
 			"ownership; that field is not withheld here; and letting it answer would mean a field this eval hands over " +
 			"deciding a question about the field it holds back. The corpus includes two filers reporting the same manager " +
 			"so that exclusion has something to do.",
 		"",
 		"### What counts as a registrant",
 		"",
-		"The unit scored is the registrant, not the FRN. One operator can hold several FRN registrations — the corpus " +
+		"The unit scored is the registrant rather than the FRN. One operator can hold several FRN registrations — the corpus " +
 			"has one that holds two, joined by a shared provider id — and a parent disclosed on one registration is a " +
-			"fact about the company, not about that registration. Scoring FRNs individually would have let the truth " +
+			"fact about the company rather than about that registration. Scoring FRNs individually would have let the truth " +
 			"partition put a single legal entity in two different families at once.\n\nTreating a shared provider id as " +
-			"proof of one registrant is a modelling choice, not a law: real provider-list rows sharing a provider id have " +
+			"proof of one registrant is a modelling choice rather than a law: real provider-list rows sharing a provider id have " +
 			"been observed reporting different parents, which would mean the fold is joining companies that ought to stay " +
 			"apart. That failure is not silent here. Folding two registrants that belong to different families puts a " +
 			"truth-negative pair inside one truth group, the control run cannot recover it, control recall drops below " +
@@ -402,14 +402,14 @@ export function renderLinkageEvalReport(input: RenderLinkageEvalReportInput): st
 		"",
 		"## What is in each artifact",
 		"",
-		"Counted from the two builds, not asserted about them. The withheld build contains no ownership node, no " +
+		"Counted from the two builds rather than asserted about them. The withheld build contains no ownership node, no " +
 			"ownership edge, no family row the prediction would score and no family row carrying a relationship this " +
 			"eval cannot classify — that is the withholding, verified, and a runtime check refuses to report a withheld " +
 			`score if any of those four counts is non-zero. It does contain ${withheld.census.nonOwnershipFamilyRows} ` +
 			"corporate-family rows, from the management-company disclosures the eval does not withhold; they are " +
 			"namespaced separately from ownership families and the prediction skips them. An earlier version of this " +
 			"page claimed no family row could exist here at all, which was wrong on its own artifact.\n\nThe family " +
-			"counts are split by what the prediction does with a row, not by relationship name, into three buckets that " +
+			"counts are split by what the prediction does with a row rather than by relationship name, into three buckets that " +
 			'partition the total. "Scored" is every membership whose relationship asserts OWNERSHIP, so a `subsidiary` ' +
 			"or `parent_company` row a future writer emits lands there rather than going uncounted. The second bucket " +
 			"is the relationships this eval recognizes and deliberately does not score — `management_company` and " +
@@ -430,7 +430,7 @@ export function renderLinkageEvalReport(input: RenderLinkageEvalReportInput): st
 		"",
 		"## Metric choice",
 		"",
-		"Precision, recall and F1 are PAIRWISE — over unordered registrant pairs, not over an alignment between " +
+		"Precision, recall and F1 are PAIRWISE — over unordered registrant pairs rather than over an alignment between " +
 			"predicted and true clusters. A predicted family's id is derived from the canonicalized parent name, so " +
 			"there is no correspondence problem to solve and no alignment step to get wrong; the only well-defined " +
 			"question is whether two registrants are correctly judged together or apart, which pairs answer directly. " +
@@ -449,7 +449,7 @@ export function renderLinkageEvalReport(input: RenderLinkageEvalReportInput): st
 		"",
 		"## Caveats",
 		"",
-		`This is a synthetic ${truthForm499Rows.length}-filer corpus, not a run against real FCC Form 499 data — no ` +
+		`This is a synthetic ${truthForm499Rows.length}-filer corpus rather than a run against real FCC Form 499 data — no ` +
 			"such corpus ships in this repo with a stable hash to pin to, so the eval provides exactness and reproducibility " +
 			"at the cost of scale. What the withheld number does not say is that ownership is hard to recover in " +
 			"general; it says that this build has exactly one way to learn a parent and that way was taken away. Scale " +
