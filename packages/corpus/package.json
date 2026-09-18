@@ -172,6 +172,11 @@
 			"node": "./lib/runner.ts",
 			"default": "./out/runner.js"
 		},
+		"./source-register": {
+			"types": "./out/source-register/index.d.ts",
+			"node": "./lib/source-register/index.ts",
+			"default": "./out/source-register/index.js"
+		},
 		"./build": {
 			"types": "./out/build.d.ts",
 			"node": "./lib/build.ts",
@@ -306,6 +311,7 @@
 		"@mailwoman/bdc": "workspace:*",
 		"@mailwoman/codex": "workspace:*",
 		"@mailwoman/core": "workspace:*",
+		"@mailwoman/evidence": "workspace:*",
 		"@mailwoman/normalize": "workspace:*",
 		"@mailwoman/query-shape": "workspace:*",
 		"@mailwoman/record": "workspace:*",

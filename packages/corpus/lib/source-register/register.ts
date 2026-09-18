@@ -1,0 +1,339 @@
+/**
+ * @copyright Sister Software
+ * @license AGPL-3.0
+ * @author Teffen Ellis, et al.
+ *
+ *   Reader and audit for the address-source register.
+ *
+ *   {@linkcode readAddressSourceRegister} refuses a register that fails {@linkcode auditAddressSourceRegister}, the
+ *   same contract `@mailwoman/activity-lexicon` uses: a table nobody can check is a claim, and a consumer that
+ *   silently accepted a broken one would report a missing source as an absent source.
+ *
+ *   Nothing here ranks, scores or orders. The register reports what is known about a source and what remains
+ *   unresolved. Which source to reach for is a decision the caller makes with the eligibility reasons in front of it.
+ */
+
+import { readLocalJSONFile } from "@mailwoman/core/fs/readers"
+import { stringifyJSON } from "@mailwoman/core/json"
+import { resolveModulePath } from "@mailwoman/core/module/resolvers"
+import { AssertedProposition } from "@mailwoman/evidence/status"
+
+import {
+	BackboneState,
+	JurisdictionResearchState,
+	LicenseReviewState,
+	REGISTER_SECTORS,
+	SourceGeometry,
+	SourceStatus,
+	UNRESOLVED_FIELDS,
+	type AddressSourceRecord,
+	type AddressSourceRegister,
+	type ElectedLicense,
+	type LicenseDecision,
+} from "#source-register/types"
+
+/**
+ * The committed register, resolved through the package manifest's own `./data/*` export.
+ *
+ * A function rather than a module-level constant: resolving at import time makes the register's absence an error in
+ * every consumer of this package, including the build that writes it in the first place.
+ */
+export function addressSourceRegisterPath(): string {
+	return resolveModulePath("@mailwoman/corpus/data/address-source-register.json")
+}
+
+const PROPOSITIONS = new Set<string>(Object.values(AssertedProposition))
+const SECTORS = new Set<string>(REGISTER_SECTORS)
+const BACKBONE_STATES = new Set<string>(Object.values(BackboneState))
+const RESEARCH_STATES = new Set<string>(Object.values(JurisdictionResearchState))
+const SOURCE_STATUSES = new Set<string>(Object.values(SourceStatus))
+const GEOMETRIES = new Set<string>(Object.values(SourceGeometry))
+
+/**
+ * The label the mechanical exclude filter in `@mailwoman/corpus/utils/license` reads for a decision, or `undefined`
+ * when no terms have been elected.
+ *
+ * The filter keeps working on a string prefix, as it always has. What changed is which string it reads: the elected
+ * terms, so a source labelled `Free` reaches the filter only once somebody has opened the publisher's terms and
+ * recorded what they grant.
+ */
+export function electedLicenseLabel(decision: LicenseDecision): string | undefined {
+	if (decision.state !== LicenseReviewState.Elected) return undefined
+
+	return decision.spdx ?? decision.electedTerms
+}
+
+/**
+ * Every reason a source may not enter a training corpus, or an empty array when it may.
+ *
+ * It answers with the reasons rather than a boolean because "not eligible" is four different situations and a caller
+ * told only `false` would have to guess which one it met.
+ */
+export function ingestEligibilityProblems(
+	source: AddressSourceRecord,
+	register: AddressSourceRegister
+): readonly string[] {
+	const problems: string[] = []
+	const decision = register.licenses.find((entry) => entry.licenseID === source.license)
+
+	if (!decision) {
+		problems.push(`license ${stringifyJSON(source.license)} is not declared in the register`)
+	} else if (decision.state !== LicenseReviewState.Elected) {
+		problems.push(
+			`license ${stringifyJSON(source.license)} is ${decision.state}, and only elected terms admit a source`
+		)
+	}
+
+	if (source.status === SourceStatus.RetainedOriginal) {
+		problems.push("the source was carried from the earlier memo and has not been re-resolved")
+	}
+
+	if (source.status === SourceStatus.VerifiedCorpusStale) {
+		problems.push("the bulk copy that was examined has stopped being updated")
+	}
+
+	if (source.status === SourceStatus.VerifiedAuthority) {
+		problems.push("the register was confirmed but its address fields and bulk access were not inspected")
+	}
+
+	if (!source.addressRole) {
+		problems.push("no address role is resolved, so the grammar the rows carry is unknown")
+	}
+
+	if (!source.coverage) {
+		problems.push("no coverage has been measured")
+	}
+
+	return problems
+}
+
+/**
+ * Everything wrong with a register that can be established without leaving this package, one message per problem.
+ */
+export function auditAddressSourceRegister(register: AddressSourceRegister): string[] {
+	const problems: string[] = []
+
+	if (!register.version) {
+		problems.push("the register carries no version")
+	}
+
+	if (!register.jurisdictions.length) {
+		problems.push("the jurisdiction table is empty")
+	}
+
+	problems.push(...auditLicenses(register))
+	problems.push(...auditJurisdictions(register))
+	problems.push(...auditSources(register))
+	problems.push(...auditUnresolvedClaim(register))
+
+	return problems
+}
+
+function auditLicenses(register: AddressSourceRegister): string[] {
+	const problems: string[] = []
+	const seen = new Set<string>()
+	const referenced = new Set(register.sources.map((source) => source.license))
+
+	for (const decision of register.licenses) {
+		const named = stringifyJSON(decision.licenseID)
+
+		if (seen.has(decision.licenseID)) {
+			problems.push(`license ${named} is declared twice`)
+		}
+
+		seen.add(decision.licenseID)
+
+		if (!referenced.has(decision.licenseID)) {
+			problems.push(`license ${named} is declared and no source points at it`)
+		}
+
+		switch (decision.state) {
+			case LicenseReviewState.Unchecked: {
+				if (!decision.publisherStatement) {
+					problems.push(`license ${named} is unchecked and records no publisher statement`)
+				}
+
+				break
+			}
+
+			case LicenseReviewState.Elected: {
+				problems.push(...auditElected(decision, named))
+
+				break
+			}
+
+			case LicenseReviewState.Refused: {
+				if (!decision.refusedBecause) {
+					problems.push(`license ${named} is refused and gives no reason`)
+				}
+
+				break
+			}
+
+			default: {
+				problems.push(`license ${named} carries an unknown review state`)
+			}
+		}
+	}
+
+	return problems
+}
+
+function auditElected(decision: ElectedLicense, named: string): string[] {
+	const problems: string[] = []
+
+	if (!decision.electedTerms) {
+		problems.push(`license ${named} is elected and names no terms`)
+	}
+
+	if (!decision.retrievedCopy) {
+		problems.push(`license ${named} is elected and names no retrieved copy`)
+	}
+
+	if (!decision.electedBecause) {
+		problems.push(`license ${named} is elected and gives no reason`)
+	}
+
+	return problems
+}
+
+function auditJurisdictions(register: AddressSourceRegister): string[] {
+	const problems: string[] = []
+	const seen = new Set<string>()
+	const sourceCounts = new Map<string, number>()
+
+	for (const source of register.sources) {
+		sourceCounts.set(source.iso2, (sourceCounts.get(source.iso2) ?? 0) + 1)
+	}
+
+	for (const jurisdiction of register.jurisdictions) {
+		const named = stringifyJSON(jurisdiction.iso2)
+
+		if (seen.has(jurisdiction.iso2)) {
+			problems.push(`jurisdiction ${named} appears twice`)
+		}
+
+		seen.add(jurisdiction.iso2)
+
+		if (!BACKBONE_STATES.has(jurisdiction.backboneState)) {
+			problems.push(`jurisdiction ${named} carries an unknown backbone state`)
+		}
+
+		if (!RESEARCH_STATES.has(jurisdiction.researchState)) {
+			problems.push(`jurisdiction ${named} carries an unknown research state`)
+		}
+
+		const count = sourceCounts.get(jurisdiction.iso2) ?? 0
+		const seeded = jurisdiction.researchState === JurisdictionResearchState.Seeded
+
+		if (seeded && count === 0) {
+			problems.push(`jurisdiction ${named} is seeded and has no sources`)
+		}
+
+		if (!seeded && count > 0) {
+			problems.push(`jurisdiction ${named} is ${jurisdiction.researchState} and has ${count} sources`)
+		}
+
+		if (!seeded && !jurisdiction.stateReason) {
+			problems.push(`jurisdiction ${named} has no sources and does not say why`)
+		}
+	}
+
+	return problems
+}
+
+function auditSources(register: AddressSourceRegister): string[] {
+	const problems: string[] = []
+	const known = new Set(register.jurisdictions.map((jurisdiction) => jurisdiction.iso2))
+	const declared = new Set(register.licenses.map((decision) => decision.licenseID))
+	const seen = new Set<string>()
+
+	for (const source of register.sources) {
+		const named = stringifyJSON(source.sourceID)
+
+		if (seen.has(source.sourceID)) {
+			problems.push(`source ${named} appears twice`)
+		}
+
+		seen.add(source.sourceID)
+
+		if (!known.has(source.iso2)) {
+			problems.push(
+				`source ${named} names jurisdiction ${stringifyJSON(source.iso2)}, which the jurisdiction table does not carry`
+			)
+		}
+
+		if (!SECTORS.has(source.sector)) {
+			problems.push(`source ${named} names an unlisted sector`)
+		}
+
+		if (!SOURCE_STATUSES.has(source.status)) {
+			problems.push(`source ${named} carries an unknown status`)
+		}
+
+		if (!GEOMETRIES.has(source.geometry)) {
+			problems.push(`source ${named} carries an unknown geometry state`)
+		}
+
+		if (!declared.has(source.license)) {
+			problems.push(`source ${named} points at an undeclared license decision`)
+		}
+
+		if (!source.asserts.length) {
+			problems.push(`source ${named} asserts nothing`)
+		}
+
+		for (const proposition of source.asserts) {
+			if (!PROPOSITIONS.has(proposition)) {
+				problems.push(`source ${named} asserts ${stringifyJSON(proposition)}, which is not a proposition`)
+			}
+		}
+	}
+
+	return problems
+}
+
+function auditUnresolvedClaim(register: AddressSourceRegister): string[] {
+	const problems: string[] = []
+	const listed = new Set<string>(register.unresolved)
+
+	for (const field of register.unresolved) {
+		if (!UNRESOLVED_FIELDS.includes(field)) {
+			problems.push(`${stringifyJSON(field)} is named unresolved and is not a field of a source`)
+		}
+	}
+
+	for (const field of UNRESOLVED_FIELDS) {
+		const resolved = register.sources.filter((source) => source[field] !== undefined)
+
+		if (listed.has(field) && resolved.length) {
+			problems.push(
+				`${stringifyJSON(field)} is declared unresolved and ${resolved.length} sources carry it — ` +
+					`drop it from \`unresolved\``
+			)
+		}
+
+		if (!listed.has(field) && !resolved.length) {
+			problems.push(`${stringifyJSON(field)} is not declared unresolved and no source carries it`)
+		}
+	}
+
+	return problems
+}
+
+/**
+ * Read the committed register, refusing one that fails the audit.
+ *
+ * @throws When the file does not parse, or when the audit reports anything, with every problem in the message.
+ */
+export async function readAddressSourceRegister(path?: string): Promise<AddressSourceRegister> {
+	const resolved = path ?? addressSourceRegisterPath()
+	const register = await readLocalJSONFile<AddressSourceRegister>(resolved)
+	const problems = auditAddressSourceRegister(register)
+
+	if (problems.length) {
+		throw new Error(`${path} failed the register audit:\n  ${problems.join("\n  ")}`)
+	}
+
+	return register
+}
