@@ -81,7 +81,7 @@ corpus-python/
 - Consumes: nothing.
 - Produces: `mailwoman_train.types.PieceSpan`, a frozen-field dataclass with `piece: str`, `piece_id: int`, `char_begin: int`, `char_end: int`. Every later task imports `PieceSpan` from `mailwoman_train.types`, never from `mailwoman_train.tokenizer`.
 
-The five deferred imports carry a comment claiming they keep `tokenizer.py` import-light. Verify that claim before removing them: `gazetteer_anchor.py` imports `json`, `re`, `collections.abc.Sequence`, `dataclasses.dataclass` and `.tokenizer`; `country_lexicon.py` imports `collections.abc.Sequence`, `.gazetteer_anchor` and `.tokenizer`. Neither reaches torch or any heavy dependency, so lifting them to module level costs nothing. Step 1 measures this rather than trusting the comment.
+The five deferred imports carry a comment claiming they keep `tokenizer.py` import-light. Check that behavior before removing them: `gazetteer_anchor.py` imports `json`, `re`, `collections.abc.Sequence`, `dataclasses.dataclass` and `.tokenizer`; `country_lexicon.py` imports `collections.abc.Sequence`, `.gazetteer_anchor` and `.tokenizer`. Neither reaches torch or any heavy dependency, so lifting them to module level costs nothing. Step 1 measures this rather than trusting the comment.
 
 - [ ] **Step 1: Measure the import weight claim**
 

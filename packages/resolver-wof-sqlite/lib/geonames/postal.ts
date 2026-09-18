@@ -125,7 +125,7 @@ function collapseDuplicatePoints(points: readonly PostcodePoint[]): PostcodePoin
  * fail SK/SI/HR at 1.10–1.94 km CI: the mean displaced coordinates that were already correct. The medoid stays on a
  * real observation, so a single-member group is exactly its own point and a multi-member group is one of its members.
  *
- * That guarantee holds only while the members are distinct, so duplicate points are collapsed first: N rows at one
+ * That bound applies only while the members are distinct, so duplicate points are collapsed first: N rows at one
  * coordinate carry one value, and counting them separately weights it by how many settlements inherited it. Collapsing
  * changes no answer where the points differ — the mean of distinct points is the mean the law intends — and
  * {@link MedoidSupport.distinctPoints} reports how many points the answer rested on.

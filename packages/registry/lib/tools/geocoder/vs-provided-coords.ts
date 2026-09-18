@@ -88,7 +88,7 @@ function parseLatLon(raw: string | undefined): { latitude: number; longitude: nu
 }
 
 // The core nearest-rank `percentile` (q in [0,100]) replaces the retired local `quantile(sorted, q)`
-// — byte-identical semantics (floor index, clamped); `?? NaN` preserves the empty-sample behavior.
+// — byte-identical semantics (floor index, clamped); `?? NaN` keeps empty-sample behavior.
 const quantile = (xs: number[], q: number): number => percentile(xs, q * 100) ?? Number.NaN
 
 /**

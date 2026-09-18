@@ -77,7 +77,7 @@ export const EdgarSkipReason = {
 	 */
 	NoTenK: "no-10-k",
 	/**
-	 * The most recent 10-K carries no Exhibit 21 — a filer's choice rather than a contract break.
+	 * The most recent 10-K carries no Exhibit 21 — a filer's choice rather than an interface failure.
 	 */
 	NoExhibit21: "no-exhibit-21",
 	/**

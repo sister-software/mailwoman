@@ -8,7 +8,7 @@
  *   grades against the DB REFUSES when the stamp disagrees with the corpus on disk right now.
  *
  *   MEASURED FAILURE, 2026-08-06: `eval gauntlet-build regression-db` was run from a compiled tree whose
- *   `out/` loader still held the deleted pre-JSONL case array. It read that array, wrote a DB, and printed
+ *   `out/` loader still contained the deleted pre-JSONL case array. It read that array, wrote a DB, and printed
  *   "[gauntlet] built … cases". The artifact was wrong, the exit code was 0, and the check that ran next
  *   reported a verdict about a corpus that no longer existed. Nothing in the pipeline could have said
  *   otherwise: a derived artifact carried no evidence of what it derived from. This module is that evidence,

@@ -181,7 +181,7 @@ reads the repos the way the build does.
 also carries `macrohood` (24) and `borough` (78) rows — the `macrohood` ones drop at ingest even for
 a cloned country, since `ADMIN_PLACETYPES` omits that placetype.
 
-**No global rule survives this.** Ireland's WOF repo is in fact thin — 152 neighborhoods against
+**No global rule applies here.** Ireland's WOF repo is in fact thin — 152 neighborhoods against
 Overture's 51,778 — which vindicates the original "Overture is the fix for IE" framing rather than the
 recipe-gap correction. New Zealand inverts it: WOF holds 1,894 neighborhoods, nearly double
 Overture's 992, and mailwoman ships **zero** because the repo was never cloned. Brazil looks like
@@ -466,7 +466,7 @@ ships with the source-gap leg reporting "unknown" rather than blocking.
 2. Whether the venue sub-structure rungs collapse into one `venue` row for v1. `poi.db` answers venue
    density but does not carry WOF's building/campus/wing distinctions, so the sub-structure rungs may
    have no measurable source yet — in which case they are **absent** rows rather than zero rows. Getting
-   this wrong violates the meaning-of-zero rule in the artifact itself.
+   this wrong violates the meaning-of-zero requirement in the artifact itself.
 3. Whether the 5% parent-coverage floor is right. GB sits at 33.2%, so the floor is far below the one
    country we have a validated reading for. It wants a second calibration point before it hardens.
    **PR B supplied four:** DE 72.6%, GB 34.7%, plus NL and US above the floor, against JP at 0.6% —

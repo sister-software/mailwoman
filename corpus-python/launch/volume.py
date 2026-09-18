@@ -21,7 +21,7 @@ from .app import VOL_MOUNT, app, training_image, vol
 def run_tests(pattern: str = "") -> None:
     """Run the corpus-python pytest suite inside the training image, against the volume's code.
 
-    Verify a loss-path change here before spending GPU on a probe.
+    Measure the loss-path change here before spending GPU on a probe.
     """
     import subprocess
     import sys

@@ -17,7 +17,7 @@ tags:
 
 The FST (finite-state transducer) gazetteer prior is the structure that lets the neural classifier benefit from everything Who's On First already knows. The neural the system grammar; the gazetteer knows places. The FST is the bridge — pre-computed at build time so the classifier can consult it at inference time without paying gazetteer-lookup costs per token.
 
-This article explains the idea behind it, the build-time vs query-time split that makes it cheap, and how it slots into the rest of the pipeline. It's also the reference for what's wired into production: `mailwoman parse` builds this admin FST from a WOF SQLite database and threads it through `createRuntimePipeline`. The mechanism generalizes past admin data — the same shallow-fusion pattern speech recognition uses to blend a learned model with world knowledge at decode time; see [FST priors as shallow fusion](./fst-priors-as-shallow-fusion.mdx) for that framing and for the street-morphology FST, which exists but isn't wired into the runtime pipeline yet.
+This article explains the idea behind it, the build-time vs query-time split that makes it cheap, and how it slots into the rest of the pipeline. It's also the reference for what's wired into production: `mailwoman parse` builds this admin FST from a WOF SQLite database and threads it through `createRuntimePipeline`. The method applies past admin data — the same shallow-fusion pattern speech recognition uses to blend a learned model with world knowledge at decode time; see [FST priors as shallow fusion](./fst-priors-as-shallow-fusion.mdx) for that framing and for the street-morphology FST, which exists but isn't wired into the runtime pipeline yet.
 
 ## "If you knew this, you'd know that..."
 

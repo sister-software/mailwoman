@@ -89,7 +89,7 @@ no counterpart in this family.
   feature id). Autocomplete = `getMatching` with prefix mode; RocksDB layout precomputes merged grid
   lists for all prefixes of length 3 and 6 (`=1`/`=2` bins) to make short-prefix autocomplete cheap
   [S]. Older carmen generated "degens" (degenerate prefixes) at index time — the changelog entry
-  "do not generate degens for feature synonyms" confirms the mechanism and its name [S]; later
+  "do not generate degens for feature synonyms" confirms the implementation and its name [S]; later
   replaced by the fuzzy-phrase Rust crate [M].
 - Ancestry: **computed at query time, spatially.** `coalesce` stacks phrase matches across separate
   per-placetype indexes (country, region, place, …) by testing whether their tile covers overlap —

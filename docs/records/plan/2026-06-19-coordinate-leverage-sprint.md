@@ -208,7 +208,7 @@ scars):
 - **Leave-one-state-out / leave-one-region-out** splits (random splits leak geographic structure).
 - Full held-out set rather than smokes (the 250-record smoke misled us 3×).
 - **Feature-ablation as a lie detector:** pop-only (baseline) / name-only / hierarchy-only / full. A
-  generalizable signal transfers across held-out states; an over-fit one only helps in training states.
+  generalizable signal also improves scores on held-out states; an over-fit one only helps in training states.
 - **Pre-register per error class** rather than aggregate p50 (which conflates the three gaps): right-name-
   wrong-instance "Springfield" (target ≥ 50% recovery), population-tiebreak (≥ 30%), hierarchy-conflict
   (≥ 70%, the easiest — the correct feature is directly observable), feature-type (< 5%, likely a

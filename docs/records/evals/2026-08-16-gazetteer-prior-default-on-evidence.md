@@ -49,7 +49,7 @@ title verbatim ("FST decoder bias is invisible to every live eval").
 
 The three spurious streets it stops emitting are `Perth`, `Dallas` and `California`.
 
-**Every floor tally is byte-identical in all four runs.** The prior's entire effect lands in the
+**Every floor tally is byte-identical in all four runs.** The prior's entire effect appears in the
 PRECISION half that `parity-corpus.ts` documents the floors structurally cannot see — _"a tag emitted
 where the gold has NONE costs nothing, forever."_ A floors-only reading reports "no change" and misses
 both the result and the loss, which is why this promotion rests on the full-agreement and spurious

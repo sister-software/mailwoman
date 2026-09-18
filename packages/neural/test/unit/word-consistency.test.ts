@@ -105,7 +105,7 @@ describe("enforceWordConsistency confidence checks (#727 conditional variant)", 
 	})
 
 	it("skipByteFallbackWords leaves a word with a raw byte piece untouched", () => {
-		// RO `ț` byte-falls-back: `<0xC8> <0x9B>` pieces inside the word. The vote premise breaks → skip.
+		// RO `ț` byte-falls-back: `<0xC8> <0x9B>` pieces inside the word. The vote assumption fails → skip.
 		const pieces = [{ piece: "▁Gala" }, { piece: "<0xC8>" }, { piece: "<0x9B>" }, { piece: "i" }]
 		const emissions = [peak(1, 8), peak(3, 8), peak(3, 8), peak(1, 8)]
 		const r = enforceWordConsistency(pieces, emissions, LABELS, [1, 3, 3, 1], { skipByteFallbackWords: true })

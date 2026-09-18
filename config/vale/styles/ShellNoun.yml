@@ -52,12 +52,10 @@
 ##   REJECTED: "take THIS to 8k"
 ##      -> "train this config to 8,000 steps"
 ##
-## Do not reject ordinary precise technical uses merely because they contain
-## these verbs. "The invariant holds for every returned candidate" is useful
-## when the invariant is locally named or written out. A source-code guard is
-## also an ordinary noun when it names an actual check. The defect is that the
-## reader must expand an abstract noun into an unstated proposition to learn
-## what was observed.
+## Apply this rule even when the noun names a real implementation detail.
+## Replace the noun with the check, input, output, condition, or measured value
+## that the sentence means. A reader must be able to identify the operation and
+## its scope without expanding a label into an unstated proposition.
 ##
 ## `win` as a verb ("the higher score wins") is also ordinary English. The
 ## definite `win` patterns below may still catch subjects such as "the
@@ -67,18 +65,37 @@ message: "'%s' hides the observed proposition behind an abstract noun or stronge
 level: error
 ignorecase: true
 tokens:
+  # THE SHELL NOUNS. One list, repeated in each token below, because Vale's
+  # existence extension takes plain regex with no way to share an alternation.
+  # Widen it HERE and in every token, or the rule catches the noun in one
+  # grammatical position and admits it in the others — which is how
+  # `carries the cost` came to be refused while `carries the contract` passed.
+  #
+  #   guard gate contract invariant rule constraint guarantee property
+  #   win gain lift improvement regression loss cost delta
+  #   result finding signal case story effect mechanism behaviour
+  #   takeaway lesson insight conclusion claim premise picture
+  #
   # Confirmation or proof applied to an accommodated/encapsulated object.
-  - '\b(?:confirm(?:s|ed|ing)?|validat(?:e|es|ed|ing)|prov(?:e|es|ed|ing)|establish(?:es|ed|ing)?) (?:the |this |that |a |its |their )?(?:[\w-]+ ){0,2}(?:guard|gate|contract|win|gain|lift|result|finding|signal|case)\b'
-  # Truth/stability predicates over an abstract result noun.
-  - '\b(?:the |this |that |its |their )?(?:[\w-]+ ){0,2}(?:guard|gate|contract|win|gain|lift|result|finding|signal|case|story) (?:holds?|held|stands?|stood|survives?|survived|sticks?|stuck|carries|carried|lands?|landed|remains? intact|remained intact)\b'
+  - '\b(?:confirm(?:s|ed|ing)?|validat(?:e|es|ed|ing)|prov(?:e|es|ed|ing)|establish(?:es|ed|ing)?|demonstrat(?:e|es|ed|ing)|verif(?:y|ies|ied|ying)|settl(?:e|es|ed|ing)|vindicat(?:e|es|ed|ing)|bear(?:s|ing)? out|bore out) (?:the |this |that |a |its |their )?(?:[\w-]+ ){0,2}(?:guard|gate|contract|invariant|rule|constraint|guarantee|property|win|gain|lift|improvement|regression|loss|cost|delta|result|finding|signal|case|story|effect|mechanism|behaviou?r|takeaway|lesson|insight|conclusion|claim|premise|picture)\b'
+  # Truth/stability predicates, with the shell noun as the SUBJECT.
+  - '\b(?:the |this |that |its |their )?(?:[\w-]+ ){0,2}(?:guard|gate|contract|invariant|rule|constraint|guarantee|property|win|gain|lift|improvement|regression|loss|cost|delta|result|finding|signal|case|story|effect|mechanism|behaviou?r|takeaway|lesson|insight|conclusion|claim|premise|picture) (?:holds?|held|stands?|stood|survives?|survived|sticks?|stuck|carries|carried|lands?|landed|persists?|persisted|transfers?|transferred|generali[sz]es?|generali[sz]ed|remains?(?: intact)?|remained(?: intact)?|(?:is|was) intact|breaks?|broke|gives? way|gave way)\b'
+  # The same nouns as the OBJECT of a structural verb. `carries the contract`
+  # reads as a maxim rather than as a claim: a reader cannot tell which contract
+  # or what it requires, and the sentence states no scope, metric or value.
+  - '\b(?:carr(?:y|ies|ied)|hold(?:s|ing)?|held|uphold(?:s|ing)?|upheld|preserv(?:e|es|ed|ing)|maintain(?:s|ed|ing)?|captur(?:e|es|ed|ing)|encod(?:e|es|ed|ing)|express(?:es|ed|ing)?|embod(?:y|ies|ied|ying)|restor(?:e|es|ed|ing)|break(?:s|ing)?|broke|violat(?:e|es|ed|ing)) the (?:[\w-]+ ){0,2}(?:guard|gate|contract|invariant|rule|constraint|guarantee|property|win|gain|lift|improvement|regression|loss|cost|delta|result|finding|signal|case|story|effect|mechanism|behaviou?r|takeaway|lesson|insight|conclusion|claim|premise|picture)\b'
+  # The passive, which names the predicate and drops the agent as well.
+  - '\b(?:guard|gate|contract|invariant|rule|constraint|guarantee|property|win|gain|lift|improvement|regression|loss|cost|delta|result|finding|signal|case|story|effect|mechanism|behaviou?r|takeaway|lesson|insight|conclusion|claim|premise|picture) (?:is|was|are|were|gets?|got) (?:carried|held|upheld|preserved|maintained|captured|encoded|expressed|embodied|restored|broken|violated|established|confirmed|borne out)\b'
   # Definite result nouns that usually hide the actual metric/result.
   - '\b(?:the|its|their|half the|half of the) (?:[\w-]+ ){0,2}(?:win|gain|lift)\b'
   - '\b(?:the|a|this|that) reduce\b'
   - '\bwin absent\b'
   # "Cost"/regression language that replaces a measured delta with a metaphor.
+  # The first of these is also reachable through the passive token above. Both
+  # stay: a token kept is free, and coverage that rests on one pattern happening
+  # to subsume another breaks silently the next time either is edited.
   - '\b(?:cost|loss|regression) (?:was|is|were|are) carried\b'
   - '\bcarried entirely by\b'
-  - '\bcarr(?:y|ies|ied) the (?:[\w-]+ )?(?:cost|win|loss|regression|contract|invariant|rule)\b'
   # Training shorthand that omits the actual operation.
   - '\btake (?:this|it|that|the [\w-]+) to \d+k\b'
   # Protection language hides the concrete behavior or invariant being maintained.

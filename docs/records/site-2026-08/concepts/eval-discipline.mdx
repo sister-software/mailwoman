@@ -75,7 +75,7 @@ The golden eval set (`v0.1.2`, 4,535 entries) is the single most important artif
 
 - **Adversarial entries belong in their own set.** Report F1 with and without them. The adversarial set is a stress test rather than a release check.
 - **Golden-set versions are pinned.** Every eval report references a specific golden-set version. If the golden set is expanded, the old reports are not retroactively recomputed — that would falsify the historical record.
-- **Annotation noise is real.** At typical 1% annotator error rates in human-labeled NER data, a 0.5–1.5pt macro_F1 shift can be noise. When a regression lands in this band, manually inspect the disagreement entries before deciding.
+- **Annotation noise is real.** At typical 1% annotator error rates in human-labeled NER data, a 0.5–1.5pt macro_F1 shift can be noise. When a regression appears in this band, manually inspect the disagreement entries before deciding.
 - **Small eval sets amplify noise.** 4,535 entries means a 1pt macro_F1 regression is ~45 flipped entries. At 1% annotator error, the false-positive rate on "regression detected" is ~10%.
 
 ## Resolver eval: the name is gameable, the coordinate is not

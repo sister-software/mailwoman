@@ -74,7 +74,7 @@ describe("mapUnitProfile", () => {
 		const profile = mapUnitProfile({ no_mapping: 0 }, [component(0, "Series", "2"), component(0, "Series", "3")])
 
 		// Nothing can be apportioned from an unweighted mixture. Answering with an empty distribution would drop the
-		// delineation's area out of every share and break the sum-to-one invariant silently.
+		// delineation's area out of every share and violate the sum-to-one relationship silently.
 		expect(profile.noData).toBe(1)
 		expect(profile.classShares.size).toBe(0)
 	})

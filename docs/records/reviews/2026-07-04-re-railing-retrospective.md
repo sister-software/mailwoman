@@ -109,7 +109,7 @@ the coordinated bump (the freeze lifted exactly when designed), no new workstrea
    replaced a training run: the tokenizer probe replaced the #825 retrain class entirely, and
    the v220 re-check replaced a same-shape rerun. Both were pre-registered _before_ measurement,
    with explicit falsified-by-copy branches. "No GPU while an archived artifact dominates the
-   target class" is now a demonstrated rule rather than a slogan.
+   target class" is now a measured behavior rather than a slogan.
 
 3. **The checks catch real things at both ends of the lifecycle.** Pre-ship: the v2.2.0 wall
    held under the old calculus and the SI bar failed as-registered under the new one (then went

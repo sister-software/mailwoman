@@ -485,7 +485,7 @@ export interface ComparedRow {
 }
 
 /**
- * Which column a result is broken out by.
+ * Which column a output is invalid out by.
  *
  * `truth_tolerance_m` is meaningful only where rows are graded against a coordinate: it separates rows whose truth is a
  * rooftop from rows whose truth is a 25 km area centroid, which is the difference between a sub-kilometre column that

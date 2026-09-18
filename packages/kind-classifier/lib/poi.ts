@@ -56,12 +56,12 @@ export interface POIPhraseMatch {
 	 */
 	searchAsSet?: boolean
 	/**
-	 * ISO 3166-1 alpha-2 countries the authority behind this hit scopes its claim to. Absent = the claim holds
+	 * ISO 3166-1 alpha-2 countries the authority behind this hit scopes its claim to. Absent = the condition is true
 	 * everywhere.
 	 *
 	 * A scope is a statement about ESTABLISHMENTS, so it is judged against the country of the place being searched rather
 	 * than the caller's locale: the locale is the lens the phrase is read through, and it says nothing about where the
-	 * claim holds. `matchPOISubject` carries the value untouched. the POI intent stage binds it once the anchor has
+	 * condition is true. `matchPOISubject` carries the value untouched. the POI intent stage binds it once the anchor has
 	 * resolved.
 	 */
 	countryScope?: readonly string[]

@@ -48,7 +48,7 @@ libpostal-compat consumers.
 
 ### 4. DE native order (int8) — PASS
 
-Native-order locality 90.9% (bar ≥83.8); US/FR no-regression held (96.7 / 84.5).
+Native-order locality 90.9% (bar ≥83.8); US/FR scores stayed at 96.7 / 84.5.
 
 ## Arena refresh (scorecard lens 1 — NOT a check; reported with caveats)
 

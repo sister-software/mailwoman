@@ -220,9 +220,9 @@ export interface ResolutionState {
 	postcodePrefixPrior: boolean
 	/**
 	 * #1589 — the countries the parsed postcode's FORMAT implies (the #928 singles plus the shared `NNN NN` family). When
-	 * set and no country constraint survives, the `postalcode` lookup probes exactly these countries and abstains if all
-	 * miss — never falling through to an unconstrained probe, whose space-stripped fold collides across systems (`100 00`
-	 * folded to `10000` answers Troyes FR while Prague sits in the artifact under both keyings).
+	 * set and no explicit country selection applies, the `postalcode` lookup probes exactly these countries and abstains
+	 * if all miss — never falling through to an unconstrained probe, whose space-stripped fold collides across systems
+	 * (`100 00` folded to `10000` answers Troyes FR while Prague sits in the artifact under both keyings).
 	 */
 	postcodeFormatCountries?: readonly string[]
 	/**
@@ -417,7 +417,7 @@ export async function applySpanRescore(
 	// The winner is unchanged (see findRescoreCandidate); this is additive.
 	decorateNode(node, hit.place, hit.alternatives)
 	// `rescore_postcode_verified` carries the check's precision signal as an EXPLICIT handle — NOT folded into the
-	// calibrated `confidence`, which would break the isotonic guarantee (a true calibrated 0.83 must not
+	// calibrated `confidence`, which would violate the isotonic bound (a true calibrated 0.83 must not
 	// be confused with a rescore plug-in estimate. DeepSeek 2026-06-23). true = postcode check fired
 	// (high-precision); false = unrestricted (no postcode→point coverage for this country, ~83%-precision).
 	node.metadata = { ...node.metadata, span_rescore: true, rescore_postcode_verified: hit.postcodeVerified }

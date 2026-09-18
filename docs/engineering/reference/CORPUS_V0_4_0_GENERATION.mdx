@@ -230,7 +230,7 @@ rate are pinned in the Changelog below.
 - Transliterate place names + street-type words using _natural conventions for the
   target script_; do not translate semantically.
 - Mirror the input component tags exactly (every input tag appears in output).
-- Surface-form invariant holds: every component value substring-matches the
+- Surface-form all values satisfy the required relationship: every component value substring-matches the
   transliterated `raw`.
 
 Each batch is built per-script (not per-seed): one chat completion handles 50 seeds in

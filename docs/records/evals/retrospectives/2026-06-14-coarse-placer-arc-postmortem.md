@@ -35,7 +35,7 @@ the default-on flip were authorized rather than self-granted._
   assembled pipeline rather than the component): in-map right-country 64.7 → 85.3 %, 7 wins, 0 regressions.**
 - **M2 — the open-set rule (#608).** The headline finding of the shift, and it wasn't what anyone predicted:
   the ~88/88 off-map ceiling a linear char-ngram model hits was **a decision rule rather than the model.** The
-  OA-broadened `OTHER` head already carried the open-set signal; the old rule (softmax max-prob) just
+  OA-broadened `OTHER` head already included the open-set signal; the old rule (softmax max-prob) just
   conflated "which country?" with "is it in-map at all?". Reading total in-map **mass** `1 − P(OTHER)` and
   routing on the in-map argmax **clears 90/90 post-hoc, no retrain** (direct dev→test 91.3, vs the 89.1
   ceiling; the _pre-registered_ Mahalanobis and reject-head came in last and unnecessary). On the assembled

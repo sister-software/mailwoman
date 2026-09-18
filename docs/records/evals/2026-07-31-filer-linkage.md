@@ -131,7 +131,7 @@ Nothing else in the build produces an ownership fact. Two mechanisms account for
 
 ## What would move this number
 
-It's tempting to call the withheld number a floor that any better evidence would lift. That is not what this code does, and an earlier version of this page said it anyway. Two probes establish the behavior.
+It's tempting to call the withheld number a floor that any better evidence would lift. That is not what this code does, and an earlier version of this page said it anyway. Two probes show the actual pipeline output.
 
 **Populating the address and contact columns changes nothing.** Fill `hqAddress`, `customerInquiriesTelephone` and `customerInquiriesAddress` identically across all three members of one family in the withheld corpus, then rebuild, re-cluster and re-score: byte-identical result, 0 pairs recovered. Those columns are stored as attributes and nothing on the family path — or on the entity-resolution path, which reads only legal names and identifier codes — ever looks at them. That is a property of the pipeline rather than a gap in the corpus.
 

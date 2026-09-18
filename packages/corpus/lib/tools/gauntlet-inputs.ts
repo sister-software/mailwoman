@@ -44,8 +44,8 @@ export function normalizeGauntletSurface(surface: string): string {
 /**
  * Every board row's `input`, normalized.
  *
- * Reads the whole corpus once. callers hold the result. A row that does not parse is SKIPPED rather than thrown on: the
- * gauntlet loader is what validates the corpus, and a recipe that refused to build over a malformed board row would
+ * Reads the whole corpus once. callers retain the output. A row that does not parse is SKIPPED rather than thrown on:
+ * the gauntlet loader is what validates the corpus, and a recipe that refused to build over a malformed board row would
  * turn one bad line into a stopped build for a check that is advisory to it.
  */
 export async function readGauntletInputs(dir: PathBuilderLike = GAUNTLET_CASES_DIR): Promise<ReadonlySet<string>> {

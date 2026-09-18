@@ -198,7 +198,7 @@ countries without inventing a special cross-border database.
 
 The build assigns an entity to one canonical home extract and records cross-extract references by stable
 ID. Geometry that crosses extract boundaries needs an explicit fragmentation or indirection rule; the
-prototype must prove that rule before publication.
+prototype must test that rule before publication.
 
 SQLite's attachment limit rules out attaching a planet of tiny files. The runtime needs a extract
 broker that:

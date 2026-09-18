@@ -163,7 +163,7 @@ export const accentStrip: Augmentation = (row) => {
 // existing `(row) => CanonicalRow | null` signature unchanged.
 
 /**
- * QWERTY adjacency for realistic single-key substitutions (lowercase. case is restored on apply).
+ * QWERTY adjacency for realistic single-key substitutions (lowercase. the original capitalization returns on apply).
  */
 const QWERTY_ADJACENCY: Record<string, string> = {
 	a: "qwsz",

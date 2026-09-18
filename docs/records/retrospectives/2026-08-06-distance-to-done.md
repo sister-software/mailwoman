@@ -181,7 +181,7 @@ absolute terms, as predicted. Class 3 (country-distinctive addressing structures
 137 = 22%, the safest.
 
 **27 rows resolve to nothing.** The batch note's own wording: _"the direct failure, and the one that
-does not violate the meaning-of-zero rule."_
+does not violate the meaning-of-zero requirement."_
 
 **29 of the 114 share one root cause, and it is a data defect rather than a model one.** `candidate.db` and
 `admin-global-priority.db` disagree on what a synthetic place id means: **743,853 of 1,670,055 joined

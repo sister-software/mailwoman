@@ -68,7 +68,7 @@ Behavior: stream the tuples CSV (CSVSpliterator idiom from `extract-recipes/loca
 
 **Files:** Create `neural/placetype-pair-prior.ts` + test. Modify `neural/trace.ts` (append `"placetypePair"` to `TRACE_PRIOR_KINDS` — ORDER = application order, after `spanProposer`, before `conventionsMask`? No: composition order in `#decode` decides; add it after `spanProposer` and before `conventionsMask` in both the constant and the push-site placement so the mask still applies last). Modify `neural/classifier.ts`: `ParseOpts` field `placetypePair?: { index: PairIndexLike; biasScale?: number }` (heavy JSDoc: default behavior, evidence line, no-country semantics), compose block after spanProposer (`buildPlacetypePairPriors(opts.placetypePair, pieces, this.labels, ...)` + `matrixHasBias` push), empty-input mirror stays derived from `TRACE_PRIOR_KINDS` (verify test `test/trace-parse.test.ts` fails RED on the constant change until the push site lands — that's the designed trip-wire, use it as the TDD RED).
 
-**Prior semantics (the validated rung-3 rule, generalized to windows):**
+**Prior semantics (the rung-3 behavior checked in tests, generalized to windows):**
 
 - Build word groups via `groupPiecesIntoWords(pieces)`; candidate windows = contiguous non-empty groups, 1..N words (N from Task 3's p99, expected ≤3), folded by joining group tokens.
 - Two-sided rule: window X gets bias iff ∃ window Y (disjoint, anywhere in input) with `probe(x, y) = tag`. Order-free (matches rung-3 evidence); note order/distance as a future tunable with the frozen-scale header style.

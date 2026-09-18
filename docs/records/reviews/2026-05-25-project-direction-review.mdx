@@ -53,7 +53,7 @@ The docs describe a nearly complete v0.5.0 pipeline, but the runtime's default p
 - The classifier does not emit real top-K candidates in the TypeScript runtime
 - The Locale check exists as a workspace but is not wired as the factory default
 
-The architectural thesis — "candidate generation + joint coherence beats per-stage argmax" — has not been proven end-to-end with real model output. This is the largest product risk. Until the reconcile path runs against real classifier output and demonstrates a measurable improvement on the kryptonite catalogue, the project is shipping architectural scaffolding without validating its core hypothesis.
+The architectural thesis — "candidate generation + joint coherence beats per-stage argmax" — has not been proven end-to-end with real model output. This is the largest product risk. Until the reconcile path runs against real classifier output and shows a measured improvement on the kryptonite catalogue, the project is shipping architectural scaffolding without validating its core hypothesis.
 
 ### Training instability is the central blocker and is not yet resolved
 

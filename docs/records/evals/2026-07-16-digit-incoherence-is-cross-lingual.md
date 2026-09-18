@@ -111,7 +111,7 @@ the operator's call. But it attacks the root the extract only dents.
 
 ## What this does not change
 
-- **The fix is still a extract or the vocab — not a validator.** The house rule holds: this is
+- **The fix is still a extract or the vocab — not a validator.** The house condition is true: this is
   positive evidence and representation, never a hard postcode veto. The model's first-piece
   `B-house_number` is typically _right_; the fix is to stop the continuations from overriding it rather than
   to forbid postcodes.

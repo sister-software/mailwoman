@@ -377,7 +377,7 @@ def test_v0_5_0_smoke_config_loads_and_matches_thread_c_scope():
     assert cfg.model.phrase_feature_dim == PHRASE_FEATURE_DIM
     assert cfg.model.hidden_size == 256  # Thread C-s scope: no hidden-size bump
     assert cfg.model.use_crf is True
-    assert cfg.model.crf_normalization == "per_token"  # v0.4.0 dual-loss lesson carries over
+    assert cfg.model.crf_normalization == "per_token"  # v0.4.0 dual-loss setting is retained
     # The config is a historical STAGE2-era artifact: its class_weights cover exactly the
     # 21-label STAGE2 vocabulary, which rides intact inside the current (STAGE3) ACTIVE set.
     weights = set(cfg.model.class_weights or {})

@@ -177,8 +177,8 @@ function openRings(blob: Uint8Array): {
  *
  * Even-odd within each polygon's own ring list, inside-any-polygon across them — the orientation-free rule
  * {@linkcode pointInPolygon} states, applied without allocating the ring arrays. Reading a hole as an exterior ring is
- * what this rule survives: a point inside a hole crosses two rings and comes out even, whichever way either ring
- * winds.
+ * what this rule leaves unchanged: a point inside a hole crosses two rings and comes out even, whichever way either
+ * ring winds.
  */
 export function pointInEncodedRings(blob: Uint8Array, lon: number, lat: number): boolean {
 	const { ringCount, pointCounts, polygonIndices, coordinates } = openRings(blob)

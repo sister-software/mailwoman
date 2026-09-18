@@ -87,7 +87,7 @@ The reconciler works by re-ranking — it takes the classifier's top-K, then con
 
 4,535 entries. A 1pt macro_F1 regression is ~45 entries flipping. At typical 1% annotator error rate in human-labeled NER data, that's another ~45 entries of noise. The "regression" signal has a ~10% false-positive rate from annotation noise alone — you could ship joint decode that's better and still "fail" the golden check.
 
-**Mitigation:** if golden regression lands in the 0.5–1.5pt band, manually inspect all disagreement entries before deciding. If >half are debatable or the result shows wrong in golden, expand the check tolerance. If they are actual (concordance damage), the matrix stands.
+**Mitigation:** if golden regression appears in the 0.5–1.5pt band, manually inspect all disagreement entries before deciding. If >half are debatable or the result shows wrong in golden, expand the check tolerance. If they are actual (concordance damage), the matrix stands.
 
 ## Updated validation sprint plan
 
@@ -130,10 +130,10 @@ The gradient-norm ratio probe ran a few hours after this synthesis was written. 
 
 Two v0.5.0-diverged checkpoints sampled, five batches each, eff_batch=128, same loader the production training uses:
 
-| Checkpoint             | Training phase                           | `‖∇_CE‖` | `‖∇_CRF‖` | **ratio**       |
-| ---------------------- | ---------------------------------------- | -------- | --------- | --------------- |
-| `v3-ablation/step-500` | settled at loss 0.63, right before climb | 7.2–17.0 | 149–275   | **median 16.2** |
-| `phrase-off/step-1500` | deep in climb at loss 1.92               | 3.9–5.3  | 30–46     | **median 8.0**  |
+| Checkpoint             | Training phase                        | `‖∇_CE‖` | `‖∇_CRF‖` | **ratio**       |
+| ---------------------- | ------------------------------------- | -------- | --------- | --------------- |
+| `v3-ablation/step-500` | reached loss 0.63, right before climb | 7.2–17.0 | 149–275   | **median 16.2** |
+| `phrase-off/step-1500` | deep in climb at loss 1.92            | 3.9–5.3  | 30–46     | **median 8.0**  |
 
 DeepSeek's predicted signature: ratio drops below ~0.01 → CRF gradient has collapsed → CE-only training is the repair.
 

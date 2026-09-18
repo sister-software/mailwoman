@@ -94,7 +94,7 @@ const DATABASE_RECIPES = {
 		scope: "us",
 		level: "3",
 		polygonFile: "wof-polygons-us-full.db",
-		// One prefix per behaviour the arm can produce, so a probe line that goes quiet says which rule broke. `605` and
+		// One prefix per behaviour the arm can produce, so a probe line that goes quiet identifies the failed rule. `605` and
 		// `946` assert a state; `205` is the DC/MD/VA straddle that asserts the country alone; `995` is Alaska, whose
 		// honest radiusP95Km runs to hundreds of km and is the reason a coordinate may never ship without one.
 		probePrefixes: ["605", "946", "205", "995"],

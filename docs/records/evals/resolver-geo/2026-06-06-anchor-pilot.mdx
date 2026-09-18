@@ -1,7 +1,7 @@
 # We fed the parser its postcode. German came halfway back.
 
 **Date:** 2026-06-06
-**Scope:** the de-risk pilot for the postcode-anchor conditioning channel (#239/#240) — does feeding the parser a structured postcode signal break the German end-of-string collapse that self-conditioning alone couldn't?
+**Scope:** the de-risk pilot for the postcode-anchor conditioning channel (#239/#240) — does feeding the parser a structured postcode signal stop the German end-of-string collapse that self-conditioning alone couldn't?
 
 > **Update (same day):** most of the collapse this pilot fights turned out to be an eval artifact. Our German de-sample renders addresses in US word order; the model trained on German order. Re-rendered in native German order, this same anchor-on checkpoint scores **83.8% locality and beats v0/Pelias (78.7%)**. The Correction section at the end revises the "blocked by postcode ambiguity" reading below it — keep reading; this paragraph records what we believed at the time.
 
@@ -34,7 +34,7 @@ We then built the inference-side channel — ONNX export with the anchor inputs,
 | **anchor-on @20k, anchor fed**     |    **45.8%** |
 | v0 (Pelias) / target               | 83.4% / ~77% |
 
-The clean, unconfounded number is the **same checkpoint with the anchor off vs on**: `35.9% → 45.8%`, **+9.9pp purely from feeding the anchor**, nothing else changed. The model leans on the signal — the architecture's premise holds, end to end.
+The clean, unconfounded number is the **same checkpoint with the anchor off vs on**: `35.9% → 45.8%`, **+9.9pp purely from feeding the anchor**, nothing else changed. The model leans on the signal — the architecture's assumption is supported, end to end.
 
 It is a **partial** fix. 45.8% is well short of ~77%, so the anchor helps real and measurably but doesn't fully reverse the collapse at this pilot scale.
 

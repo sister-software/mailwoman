@@ -2,7 +2,7 @@
 
 Scope: `mailwoman.ai` (Docusaurus docs site) and `earth.mailwoman.ai` (geocoder demo), walked live in
 Chrome plus a source sweep of `docs/` and `packages/earth` + `packages/react`. Ordered by severity.
-Every claim carries the file:line or the live observation it came from.
+Every claim states the file:line or the live observation it came from.
 
 ---
 
@@ -134,7 +134,7 @@ that had by then arrived.
 
 **The withdrawn claim** was that MapLibre never requested a tile at all, evidenced by
 `performance.getEntriesByType("resource")` reporting three requests to `tiles.mailwoman.ai` for the
-whole page life. That measurement cannot carry the claim:
+whole page life. That measurement cannot state the claim:
 
 - Resource Timing holds **250 entries by default** and drops the rest silently. This page fetches the
   model, the tokenizer, six lexicons, the postcode binaries, eight pair indexes, the sqlite range reads

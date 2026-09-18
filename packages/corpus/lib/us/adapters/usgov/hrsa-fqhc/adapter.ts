@@ -70,8 +70,8 @@ interface HRSASiteRow {
  *
  * Suite / Apt / Unit designators stay on `street` — Mailwoman's `unit` component exists but the address-formatter does
  * not have a clean slot for it, and HRSA addresses do not separate the suite into its own column. Leaving the surface
- * form intact in `street` preserves the adversarial training signal (the model learns that a trailing "Suite 4" is part
- * of the road line in this distribution).
+ * form intact in `street` keeps the adversarial training signal (the model learns that a trailing "Suite 4" is part of
+ * the road line in this distribution).
  */
 
 export function createUSGovHRSAFQHCAdapter(): CorpusAdapter {

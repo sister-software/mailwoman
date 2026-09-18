@@ -298,7 +298,7 @@ function pickTemplate(random: () => number): NoStreetTemplate {
 
 /**
  * Convenience: assert at type-level that a synthesized row carries no street-side components. Used by tests +
- * downstream consumers who want to verify the contract at runtime.
+ * downstream consumers who want to check the interface behavior at runtime.
  */
 export const STREET_SIDE_TAGS = [
 	"street",

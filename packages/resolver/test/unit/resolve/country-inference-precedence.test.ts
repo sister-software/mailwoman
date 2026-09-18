@@ -15,7 +15,7 @@
  *   the same string reads `street: Maracaibo` + `house_number: 4001`, which never reaches the vulnerable
  *   path. So these cases freeze the malformed parse and a controlled two-country contest, and the guard
  *   is exercised whatever the parser does next. They were committed inverted (`test.fails`) while the
- *   invariant was violated, and un-inverted with the fix in `postcode/country-coherence.ts`.
+ *   required postcode/country relationship was violated, and un-inverted with the fix in `postcode/country-coherence.ts`.
  *
  *   Scope. This file owns the COUNTRY-PRECEDENCE half only. `Zulia` reaching the walk tagged `locality` is
  *   a parse defect owned by #1748, and the `«locality» «postcode»` to `«street» «house_number»` class is

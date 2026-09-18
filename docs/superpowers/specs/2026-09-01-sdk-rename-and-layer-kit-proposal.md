@@ -35,7 +35,7 @@ intuitive answer**, which is why they are written down rather than acted on.
 ## 1. What is there
 
 Eleven packages had `lib/sdk/`; `spatial` no longer does. The ten that remain are all dataset packages, and
-no runtime package has one — so the concept is real, and the audit's premise held.
+no runtime package has one — so the concept is real, and the audit's assumption was supported.
 
 ```bash
 for d in packages/*/lib/sdk; do [ -d "$d" ] && echo "$d: $(ls "$d" | tr '\n' ' ')"; done

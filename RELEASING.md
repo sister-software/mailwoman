@@ -180,7 +180,7 @@ rebuild → verify → swap.
 
 The coverage RECIPE lives in code: `mailwoman/gazetteer-pipeline/defaults.ts` (86 Overture + 161 GeoNames +
 11 WOF-priority countries + the pinned Overture release), reviewed like code. `data/gazetteer/wof-build-manifest.json`
-is the auto-appended build LOG (what ran, when, verify result, md5) — the command writes it, so it can't lag
+is the auto-appended build LOG (what ran, when, check the output, md5) — the command writes it, so it can't lag
 the artifact (the #1015 reconstruct-from-artifact ordeal).
 
 ### Step 1 — build + verify + seal (one command)
@@ -579,8 +579,8 @@ against the real shipped weights rather than a staging candidate:
    `anchor-lexicon-v1.json` + `country-surface-lexicon-v1.json` (copy from this repo's own
    `data/gazetteer/`) and any `postcode-<cc>.bin` in the weights package dir, or the capture runs
    silently degraded through the legacy rule-only fallback (no error — a stderr banner names each
-   missing channel; if you don't see one, you didn't check hard enough). Re-verify the md5 guard
-   passes with no `#397 guard` error before trusting a capture.
+   missing channel; if you don't see one, you didn't check hard enough). Re-verify the md5 check
+   passes with no `#397` error before trusting a capture.
    **If the demo is deliberately held back on an older model** (its runtime doesn't yet feed a new
    required input channel — see the 6.2.0 precedent below), the demo's own captured screenshots/text
    stay on the old version; only the library/CLI/server captures move to the new one. Say so

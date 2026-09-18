@@ -11,7 +11,7 @@
  *   Per-class scales matter because class weight magnitudes differ (OTHER's outlier-exposure rows
  *   push bigger weights than the in-map countries).
  *
- *   Verify the accuracy cost with `mailwoman placer eval quant-compare` (target: within ~1pp).
+ *   Measure the accuracy cost with `mailwoman placer eval quant-compare` (target: within ~1pp).
  *
  *   Run: `mailwoman placer quantize [--in <fp32 dir>] [--out <int8 dir>]`
  */

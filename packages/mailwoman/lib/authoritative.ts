@@ -129,7 +129,7 @@ function projectMatch(match: AuthoritativeMatch): AuthoritativeAssertionMatch {
 
 /**
  * Consult the provider and project its answer to the wire block. Never throws: a thrown lookup comes back as the
- * `transport_error` block so the geocode result remains available after a provider outage.
+ * `transport_error` block so the last geocode answer remains available after a provider outage.
  */
 export async function consultAuthoritativeProvider(
 	provider: AuthoritativeProvider,

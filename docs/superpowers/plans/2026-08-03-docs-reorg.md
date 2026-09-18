@@ -187,7 +187,7 @@ BlockIgnores = (?s)(```.*?```), (?s)(<details>.*?</details>)
 - Produces: each of the three serves starts cold from exactly the command sequence the docs will print, or exits with a doctor-grade message naming the `data pull` fix. The verified sequences (recorded in the test) are the contract Tasks 10–11 document.
 
 - [ ] **Step 1:** In a temp `MAILWOMAN_DATA_ROOT`, run each compiled serve cold; record every failure verbatim (prior cold-start testing found a crash + a phantom `--data` flag in the photon README).
-- [ ] **Step 2:** Failing test encoding the desired behavior: with no data → exit non-zero, stderr contains `mailwoman data pull`; after `data pull candidate` (+ whatever the engine floor needs) → HTTP 200 on the health route within 30 s.
+- [ ] **Step 2:** Failing test encoding the desired operation: with no data → exit non-zero, stderr contains `mailwoman data pull`; after `data pull candidate` (+ whatever the engine floor needs) → HTTP 200 on the health route within 30 s.
 - [ ] **Step 3:** Fix the CLIs (guard missing artifacts with the doctor-style hint; align or implement the README flags), READMEs match reality.
 - [ ] **Step 4:** Tests green (`yarn compile` first). **Commit** `fix(dropins): cold-start paths match the documented commands`.
 
@@ -283,7 +283,7 @@ Per-page briefs (each: colleague voice, starts-and-destinations opener, every co
 
 **Files:** Create `developers/knowledge-base/address-intelligence/{how-a-model-reads-an-address,tokens-and-labels,the-gazetteer-prior,decoding-and-viterbi,calibration-and-confidence,training-and-the-corpus,what-the-model-cannot-do}.mdx`.
 
-- Analog-first rule binds hardest here: every mechanism enters through its rule-world analog (gazetteer lookup → FST prior; hand-written pattern → learned emission; tie-break heuristics → Viterbi). Mine `records/site-2026-08/concepts/` parsing-internals set. Verify every architectural claim against `neural/` at head (CRF is CE-only — no learned transitions; fr-fr ships en-us base weights; check current truth before writing, both have memory receipts).
+- Analog-first rule binds hardest here: every mechanism enters through its rule-world analog (gazetteer lookup → FST prior; hand-written pattern → learned emission; tie-break heuristics → Viterbi). Mine `records/site-2026-08/concepts/` parsing-internals set. Check every architectural statement against `neural/` at head (CRF is CE-only — no learned transitions; fr-fr ships en-us base weights; check current truth before writing, both have memory receipts).
 - [ ] Same pipeline. **Commit** `docs(knowledge-base): address intelligence shelf`.
 
 ### Task 19: Product door

@@ -66,7 +66,7 @@ geometry corroborate each other.
 
 **Convention row:** TW (wof 85632403) added to `data/conventions/conventions.json` and compiled to
 `conventions.db` — postcode-route coordinate-first, byte-identical to `WORLD_DEFAULT`, recorded
-explicitly per the #289/#290 pattern. End-to-end verified through the rule engine with the
+explicitly per the #289/#290 pattern. End-to-end checked through the rule engine with the
 convention asset attached.
 
 ## JP — Overture eval gold, divergence investigated

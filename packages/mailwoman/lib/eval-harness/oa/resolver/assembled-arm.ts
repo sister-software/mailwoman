@@ -40,7 +40,7 @@ export async function buildAssembledArm(
 	// bundled placer (on, open-set @ 0.9). `--place-country` flips this eval to the production-
 	// representative config — load the same bundled placer and feed it to the pipeline — which is the
 	// #743 EU country-constraint integrity fix: without it the assembled EU coords are not what a real
-	// caller sees (ambiguous EU names without a country constraint land off-continent).
+	// caller sees (ambiguous EU names without a country constraint place off-continent).
 	const runAssembled = options.assembled ?? false
 	// `--place-country-hard` (#194/#743) promotes a confident placer guess to a hard country filter
 	// (empty→unresolved) — the change for the low-pop EU tail the soft prior can't move. Production-

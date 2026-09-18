@@ -1,7 +1,7 @@
 # === v1.9.9-bare-street-si (#901 run 2 — fr-bare-street + the SI no-street counter source) ===
 # NIGHT-31. v1.9.8 was falsified at its full check: US/CZ/PL/SK ni pass but SI ni fails at 6k and 10k
 # (resolve -3.4pp. 37 rows lost, all the Slovenian no-street "Village N, Postcode Village" form —
-# "Apače 108" split into street "Apače 10" + house "8"). The bare-street boundary lesson generalizes
+# "Apače 108" split into street "Apače 10" + house "8"). The bare-street boundary finding applies across settings
 # onto a form where the leading name must keep its number whole and the trailing mention must stay
 # locality-bound. Per the falsified-change rule nothing from v1.9.8 ships. this run pairs the source
 # with its counter-distribution: synth-si-bare-village (6,285 real OA SI village tuples, 3 orders,

@@ -1,6 +1,6 @@
 ---
 title: AGENTS.md receipts
-description: The incidents that produced AGENTS.md's rules, moved out of the living document on 2026-08-31 so each rule stands without its story.
+description: The incidents that produced AGENTS.md's rules, moved out of the living document on 2026-08-31 so each rule can be read without its history.
 ---
 
 AGENTS.md carries durable rules only. Each section below is the passage that used to sit beside a rule there — the incident, the census, the worked example — kept verbatim as a dated record. The rule itself stays in AGENTS.md and links here.
@@ -110,7 +110,7 @@ the count as a regression, and do not let it block the merge — the ruleset req
 ## Shared constants are not a shared function — #861
 
 **When two copies must agree, share the FUNCTION — sharing the constants proves nothing.** The
-#861 server↔demo parity contract was held by four matching literals and a "keep them in lockstep"
+#861 server↔demo parity matched four literals and a "keep them in lockstep"
 comment in both files. The literals stayed matched for the contract's whole life. The code diverged
 anyway, at the two points a constant cannot express: which field the population term reads
 (`prominence ?? score` on the server, raw `score` in the browser, so the demo let a demoted
@@ -171,7 +171,7 @@ name matches what `sanitizeFTSQuery` makes of a query token, turning `28119 9576
 user typing a Makani number gets the right building, at the right coordinate, through the right key. The only false
 thing is the placetype — and `placetype = 'postalcode'` is a contract that the tier above it reads. A country census
 would have ranked the UAE the third best-covered postcode locale in the artifact, and every coverage figure drawn from
-that tier would have carried the claim.
+that tier would have included the measured value.
 
 So there are three distinct failure modes rather than two. **Under-claiming** is abstention. **Over-claiming confidence** is
 the result presented as clean, which `declared_ambiguity` exists to report. **Claiming the wrong KIND** is this one,

@@ -136,7 +136,7 @@ function render(random: () => number, c: CommuneRow): AdminSplitVariant {
 	// fr.country preservation (the v1.8.0 #728 finding): the v1.8.0 recipe output's bare rows carried no country
 	// token, so the model under-emitted country on FR (fr.country −3.5pp). ~20% of rows now append an
 	// explicit "France" + a `country` component — the model relearns to emit country when the token is
-	// present without over-firing it on the (still-majority) country-less rows. Substring invariant holds.
+	// present without over-firing it on the (still-majority) country-less rows. Substring all values satisfy the required relationship.
 	if (random() < APPEND_COUNTRY_SHARE) {
 		out = {
 			raw: `${out.raw}, France`,

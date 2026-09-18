@@ -1683,7 +1683,7 @@ Expected: PASS, 2 tests.
 node packages/tiger/out/scripts/... # use the CLI: mailwoman tiger redistricting --state 06 --county 037
 ```
 
-Then confirm the invariant across every loaded block:
+Then check the required relationship across every loaded block:
 
 ```bash
 node -e "const {DatabaseSync}=require('node:sqlite');const db=new DatabaseSync(process.env.MAILWOMAN_DATA_ROOT+'/tiger/tiger.db',{readOnly:true});console.log(db.prepare('select count(*) bad from pl_block where occupied + vacant != housing_units').get())"

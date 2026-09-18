@@ -11,7 +11,7 @@
  *   the command. everything decided here is decided from data already in memory, so the arithmetic behind a
  *   completeness claim is testable over synthetic points.
  *
- *   Three rules hold the claim to its evidence:
+ *   Three rules connect each conclusion to its evidence:
  *
  *   1. **Every interior cell gets a row, including the empty ones.** A cell with `observedRows: 0` under a
  *      surveyed basis is the storable form of "surveyed, and there is none here" — the whole reason

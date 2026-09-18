@@ -254,7 +254,7 @@ export const GZT_CURRENT_PLAN_VALUES: ReadonlyMap<number, string> = new Map([
 ])
 
 /**
- * The provenance grade a zoning claim carries. Exactly one per row, and the two never merge.
+ * The provenance grade stored on a zoning row. Exactly one per row, and the two never merge.
  *
  * `authoritative` is a planning or legislative authority for the land, or a government body republishing that
  * authority's own adopted records — the Department republishing 30 local authorities' plans is one. `inferred` is an

@@ -89,7 +89,7 @@ export interface ParsedCommand {
 type OneObject<Shape> = { [Key in keyof Shape]: Shape[Key] }
 
 /**
- * The value a flag's property carries, before {@linkcode OptionSpec.multiple} is applied. A `choices` list narrows the
+ * The value stored in a flag's property, before {@linkcode OptionSpec.multiple} is applied. A `choices` list narrows the
  * property to that union rather than leaving it `string`, which is what a hand-written `Options` already did.
  */
 type OptionScalar<Option> = Option extends { type: "boolean" }

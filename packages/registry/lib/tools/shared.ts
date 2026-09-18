@@ -54,7 +54,7 @@ export const norm = (s: string | undefined): string => (s ?? "").trim()
 
 /**
  * Corporate-form suffixes and function words that carry no identity — dropped from an organization name before its
- * tokens are compared, so the domain words carry the distinguishing signal.
+ * tokens are compared, so the domain words include the distinguishing signal.
  */
 const ORGANIZATION_STOP_WORDS = new Set([
 	"llc",

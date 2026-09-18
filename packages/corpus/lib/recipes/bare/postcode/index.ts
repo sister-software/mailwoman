@@ -323,7 +323,7 @@ export const barePostcodeRecipe: CorpusRecipe = {
 			}
 		}
 
-		// A surface this table renders and the detector refuses is a contract break rather than a data quirk: every
+		// A surface this table renders and the detector refuses is a interface failure rather than a data quirk: every
 		// form here is one `known-formats.ts` declares a pattern for, so the count is expected to be zero and
 		// a non-zero one names which side moved.
 		if (unrecognized > 0) {

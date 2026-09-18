@@ -13,7 +13,7 @@
 # use_phrase_priors / use_crf stay true so their params exist in the checkpoint (untrained
 # here. the fine-tune trains them). forward_mlm skips the phrase-projection + CRF heads.
 #
-# This is a VALIDATION run: 20k steps to confirm the loss descends sanely + the Trackio
+# This is a VALIDATION run: 20k steps to check the loss value descends sanely + the Trackio
 # dashboard works end to end, then a fine-tune from the resulting checkpoint decides whether
 # pretraining helps (pre-registered revert: fine-tune harness <22% AND resolver Acc@1 gain
 # <1.5pp vs the from-scratch baseline -> drop pretraining).

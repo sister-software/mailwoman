@@ -12,7 +12,7 @@
  *      input. This was wrong before the swap, by one code unit per preceding non-BMP char.
  *   2. **Whitespace-trim of ▁ spans** — SentencePiece's native span for a `▁`-prefixed piece
  *      includes the whitespace the sentinel consumed. the TS layer trims to the word start,
- *      preserving the decoder contract the shipped model was decoded with. The bare-`▁` piece
+ *      keeping decoder behavior compatible the shipped model was decoded with. The bare-`▁` piece
  *      collapses to the zero-width-after-space range the word grouper expects.
  *   3. **Normalizer-granular alignment is the TRAINING convention rather than a bug** — on inputs where
  *      the model's normalizer aligns coarsely (the ALL-CAPS class: `CALLE` → `▁C`[0,0) +

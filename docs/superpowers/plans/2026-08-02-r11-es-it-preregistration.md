@@ -1,4 +1,4 @@
-# R11 — Spain and Italy, and the alias rule generalized
+# R11 — Spain and Italy, and the alias rule applied across locales
 
 Campaign R11, 2026-08-02. Both were "mechanical" after R9/R10 — and both turned out to need the
 alias mechanism India motivated, in their own languages rather than English.

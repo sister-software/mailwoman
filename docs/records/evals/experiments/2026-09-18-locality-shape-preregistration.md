@@ -100,7 +100,7 @@ six names:
 
 `Sparta` reads as a street before `TN` and as a locality before `VT`, so the name alone does not
 decide it inside the frame. A swap ranks the values a component takes and cannot show that the
-component's presence is what carries the effect, which is why the removal arm is the one that
+component's presence is what accounts for the effect, which is why the removal arm is the one that
 settles the attribution and this table is not. The per-region rate on this panel carries a
 96.6-point spread, from MO 1/29 (3.4%) to MA 21/21 and KS 24/24 (100.0%) over the 23 states holding
 20 or more rows — a reading of the frame rather than a property of the regions.

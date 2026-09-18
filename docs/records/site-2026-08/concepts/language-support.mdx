@@ -39,7 +39,7 @@ street names ("Allée" split at the "é" and dropped the word), which cost
 resolution on exactly the addresses a French user types first. Fixing it took a
 vocabulary splice plus a fine-tune so the merged pieces got gradient steps — the
 training-free shortcut measurably made things worse before the retrain fixed it.
-The lesson generalizes: diacritics are a tokenizer problem before they are a model
+The finding applies across settings: diacritics are a tokenizer problem before they are a model
 problem, and we now check fertility on every new locale.
 
 ## Coordinate-paneled: most of western and central Europe, plus Australia

@@ -51,7 +51,7 @@
  *   THE PLACE. A phrase's locale scope says who uses that wording, so it is read here against the caller's
  *   locale. A `RelationAssertion`'s country list says where the establishments it describes exist, so it is
  *   judged against the country of the resolved ANCHOR rather than the caller's locale — the locale is the lens the
- *   phrase is read through rather than a definition of where the claim holds. This route therefore returns every
+ *   phrase is read through rather than a definition of where the condition is true. This route therefore returns every
  *   kind the activity reaches and stamps each match with the assertion's `countryScope`;
  *   `createPOIIntentStage` drops the members whose scope excludes the anchor's country once the anchor
  *   has resolved, and records what it dropped on the intent's `countryBinding`. An anchor that did not

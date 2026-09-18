@@ -30,7 +30,7 @@ node mailwoman/out/cli.js parse "…" --resolve --resolve-db $WOF               
 MAILWOMAN_CANDIDATE_DB=… node mailwoman/out/cli.js parse "…" --resolve …      # candidate, dc=none
 ```
 
-— changes two variables at once. Cross them and the effect lands on the filter rather than the backend:
+— changes two variables at once. Cross them and the effect appears on the filter rather than the backend:
 
 | arm                             | `12 Rue de Rivoli, 75001 Paris`       | verdict |
 | ------------------------------- | ------------------------------------- | ------- |

@@ -104,7 +104,7 @@ The POI **intent record** (§3.2) doubles as the `poi_search` tool schema. Human
 
 **Scope guard.** Mailwoman ships the spine, layers, primitives, and tool surface. Verticals
 (BDC plausibility, build-out feasibility) are agent workflows — skills/docs/examples — not new
-packages, until one proves product pull. (The BAN discipline: prove the mechanism on one
+packages, until one proves product pull. (The BAN discipline: test the implementation on one
 vertical before expanding.)
 
 ## 3. Phase 1 — the POI arc (implementable now)

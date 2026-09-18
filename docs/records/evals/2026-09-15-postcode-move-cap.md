@@ -112,7 +112,7 @@ The two bounds that do carry a value are unchanged from #2301:
 
 `postcodeConsistencyMaxMoveKm` defaults to **300 km** as of this record;
 `DEFAULT_POSTCODE_MAX_MOVE_KM` in `packages/resolver/lib/resolve/passes.ts` is the declaration, and
-`Infinity` restores the previous unbounded behaviour.
+`Infinity` removes the movement limit.
 
 300 km sits above the 99th percentile of agreeing (postcode, settlement) pairs, so it admits every
 relocation a CORRECT postcode could require, and refuses the class the option was opened for — a

@@ -437,7 +437,7 @@ In `corpus/src/extract-recipes/locale.ts`, after the NZ entry:
 
 - [ ] **Step 4: Add the country-append fraction**
 
-First VERIFY current behavior: read `synthesizeLocaleRow` in `corpus/src/synthesize-german.ts` and check whether `intlFraction` rows already append a country surface form. If they do, this step is config only (set the fraction when building the GB extract) — record the finding and skip the code change. If not, add the fr-admin-split pattern (fr-admin-split.ts L122-128) to the locale recipe's emit loop, blocked on a new `LocalePart`-level or recipe-level option so existing locales are byte-identical:
+First inspect current behavior: read `synthesizeLocaleRow` in `corpus/src/synthesize-german.ts` and check whether `intlFraction` rows already append a country surface form. If they do, this step is config only (set the fraction when building the GB extract) — record the finding and skip the code change. If not, add the fr-admin-split pattern (fr-admin-split.ts L122-128) to the locale recipe's emit loop, blocked on a new `LocalePart`-level or recipe-level option so existing locales are byte-identical:
 
 ```ts
 // In the run loop, after `const synth = synthesizeLocaleRow(...)`:

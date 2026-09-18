@@ -30,7 +30,7 @@
 # This run holds combined dep-loc density (~6.3% of stream vs probe-2's ~6.6%) while splitting mass
 # across four locales (GB 6.1% + NZ 2.4% + ES 3.0% + FR-lieudit 1.8% stream. densities .328/.792/.303/1.00)
 # — combined dep-loc 6.66% ≈ probe-2's 6.6% EXACTLY (one variable = diversity), max single-locale share 20.2% → 6.1%. Same resurrection changes as the probes (reinit rows 7/8 +
-# classifier group 1e-3, init_from v385) — this is the properly-fed retrain of the confirmed mechanism.
+# classifier group 1e-3, init_from v385) — this is the properly-fed retrain of the confirmed operation.
 # Roster final 2026-07-22 ~05:5x UTC: all four recipe outputs landed + check-checked (synth-fr-lieudit @ 100% dep-loc).
 #
 # PRE-REGISTERED READ (written before the numbers exist. operator-approved task list 2026-07-22):

@@ -84,7 +84,7 @@ export interface GeocodeSessionOptions {
 	 * under en-US weights: every floor byte-identical, spurious `street` 13/54 → 10/54 (it stops `Perth`, `Dallas` and
 	 * `California` being tagged as streets), full agreement US 54/99 → 57/99 and AU 9/20 → 10/20.
 	 *
-	 * The effect lands entirely in the PRECISION half that `parity-corpus.ts` documents the floors cannot see, so a
+	 * The effect appears entirely in the PRECISION half that `parity-corpus.ts` documents the floors cannot see, so a
 	 * floors-only reading reports "no change" — which is why the promotion rests on the full-agreement and spurious
 	 * columns rather than the floor table.
 	 *

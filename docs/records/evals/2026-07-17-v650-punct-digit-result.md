@@ -9,7 +9,7 @@ full Gauntlet clean: shipped 6.4.0 fails it.
 ## What the Gauntlet caught
 
 On the way to shipping the digit-ownership model, the pre-ship Gauntlet's metamorphic layer flagged a
-`comma-drop` invariant break that per-tag F1 and the parity boards never surface — it grades the
+`comma-drop` invariant failure that per-tag F1 and the parity boards never surface — it grades the
 assembled coordinate rather than labels:
 
 ```

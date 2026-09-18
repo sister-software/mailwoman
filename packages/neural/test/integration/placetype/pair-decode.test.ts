@@ -97,7 +97,7 @@ describe("placetype-pair prior — decode-order integration", () => {
 		})
 
 		// Baseline sanity — WITHOUT the placetypePair prior, this exact weak/fragmented logit set really
-		// does trigger a wordConsistency heal. Proves the fragmentation premise isn't a strawman.
+		// does trigger a wordConsistency heal. This shows that fragmentation changes the decode.
 		const baseline = await classifier.traceParse(text, { spanProposer: false })
 		expect(baseline.repairs.find((r) => r.pass === "wordConsistency")).toBeDefined()
 

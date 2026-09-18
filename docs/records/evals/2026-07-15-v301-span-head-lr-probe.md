@@ -1,5 +1,5 @@
 ---
-title: v3.0.1 span-head re-probe — CHECK PASS, the arc's premise holds
+title: v3.0.1 span-head re-probe — CHECK PASS, the arc's assumption is supported
 ---
 
 # v3.0.1-span-head-lr — the trained span scorer beats the token decode

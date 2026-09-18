@@ -27,7 +27,7 @@ A test like that can only tell you whether the model used your exact words. It h
 
 The direct question isn't "did it use my labels." It's "did the address land in the right place on Earth." OpenAddresses ships a truth coordinate with every row, so we can ask it directly: parse the address, resolve it to a point, measure the great-circle distance to where it really is. We built held-out sets of 150 real addresses each across the locales where we have that coordinate truth, and graded the production model on the metric we ship.
 
-One subtlety carries the whole result, so it gets its own column. We separate **how frequently** the model produces a resolvable answer from **how good** that answer is when it does. Lump them together and a locale that fails half the time but nails the other half reads as mediocre everywhere, which is exactly wrong. Pull them apart and the model tells you something useful.
+One subtlety changes the interpretation, so it gets its own column. We separate **how frequently** the model produces a resolvable answer from **how good** that answer is when it does. Lump them together and a locale that fails half the time but nails the other half reads as mediocre everywhere, which is exactly wrong. Pull them apart and the model tells you something useful.
 
 | locale        | resolves | median error, when it resolves |
 | ------------- | -------: | -----------------------------: |

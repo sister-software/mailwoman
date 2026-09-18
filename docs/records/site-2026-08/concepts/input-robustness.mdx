@@ -66,7 +66,7 @@ The detection is strict on purpose: only a fully-shouting or fully-whispering in
 qualifies, so ordinary mixed-case text is never touched and its byte path stays
 identical. It's also offset-stable, and it has to be. It targets pure-ASCII input,
 because title-casing accented or non-Latin text can change length (`ß`→`SS`, the
-Turkish dotted and dotless I) and break the very offset invariant Layer 1 worked
+Turkish dotted and dotless I) and violate the required offset relationship Layer 1 worked
 to preserve. The measured payoff was concrete: TX HHSC locality recall went from
 90.1% to 99.7%.
 

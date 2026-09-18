@@ -4,7 +4,7 @@
  * @author Teffen Ellis, et al.
  *
  *   `mailwoman placer quantize` — int8-quantize the coarse placer (#244) weights (per-class
- *   symmetric scales, 4× smaller). Verify the accuracy cost with `placer eval quant-compare`.
+ *   symmetric scales, 4× smaller). Measure the accuracy cost with `placer eval quant-compare`.
  */
 
 import { ByteFormatter } from "@mailwoman/core/fs/formatters"

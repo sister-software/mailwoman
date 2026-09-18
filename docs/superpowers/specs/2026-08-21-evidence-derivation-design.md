@@ -268,7 +268,7 @@ a `coverage_confidence` that already degrades directly. `coverage_confidence` an
 stay the stable public surface of that module.
 
 **Acceptance is that its existing test suite passes unchanged.** This arm ships no new capability;
-it exists to prove the vocabulary is claim-type-agnostic rather than geocode-shaped.
+it exists to show that the vocabulary accepts any record type rather than geocode-shaped.
 
 ### 4.4 FR lexical negative mode — probe-conditional
 

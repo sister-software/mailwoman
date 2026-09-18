@@ -83,7 +83,7 @@ The same file had a parallel bug worth knowing about. The first impl applied `kS
 
 The right semantic is **per-start-position**: top-k overlapping proposals at each anchor rather than a global cap across the whole input. Phrase proposals at offset 0 and offset 18 are not competing for the same slot; pruning them together throws away independent information.
 
-This is the same shape of bug — a natural-reading parameter (`kSpan = 3`) that silently breaks the contract — and the same fix (anchor by structure rather than by ranking).
+This is the same shape of bug — a natural-reading parameter (`kSpan = 3`) that silently violates the interface requirement — and the same fix (anchor by structure rather than by ranking).
 
 ## Forward-looking — anywhere this pattern recurs
 

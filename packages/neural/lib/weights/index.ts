@@ -465,7 +465,7 @@ export async function resolveWeights(opts: ResolveWeightsOpts): Promise<Resolved
 		// half-linked checkout must never silently load the wrong model. The reasoning held. the
 		// conclusion did not, because it is also the ordinary state of a fresh worktree — the binaries
 		// are not in git, so the workspace package always resolves and is always empty, and no later
-		// rung was reachable. Falling through preserves the guarantee: nothing is loaded silently, and
+		// rung was reachable. Falling through keeps the bound valid: nothing is loaded silently, and
 		// the error below still names this directory first.
 		if (error instanceof Error && error.message.includes("missing model files")) {
 			emptyPackageDir = resolvePackageDirectory(packageName)

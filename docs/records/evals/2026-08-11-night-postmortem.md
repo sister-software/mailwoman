@@ -203,7 +203,7 @@ The migrated suite was driven to a fully-dispositioned state against the live de
 
 1. **The Nominatim multi-country fork**: (a) fresh merged import (~6–10 h, replaces the live NZ
    arm, disk tight: 150–250G projected vs 229G free — measure first), (b) per-country projects,
-   or (c) accept the nz-only arm and let Pelias + planet-Photon carry the multi-country picture.
+   or (c) accept the nz-only arm and let Pelias + planet-Photon cover the listed countries.
 2. **The demo's stale candidate gazetteer** (the Zabiče red): the browser republish (2.1 GB
    candidate.db + importance reader + `ADMIN_GAZETTEER_VERSION` bump) is the standing board row —
    schedule it?

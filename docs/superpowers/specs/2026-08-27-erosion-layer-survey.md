@@ -206,7 +206,7 @@ someone is doing with the land — the very thing the NRI samples and does not r
 
 **The interpretations are conditional, and the agricultural ones are state-authored.** A DISTINCT query
 over `distinterpmd` for rule names containing "rosion" returns **15 rules**. Every agricultural water or
-wind erosion rule carries a state suffix — `AGR - Water Erosion Potential (NE)`, `(TX)`,
+wind erosion rule includes a state suffix — `AGR - Water Erosion Potential (NE)`, `(TX)`,
 `AGR-Water Erosion Potential (ND)`, `AGR - Wind Erosion Potential (NE)`, `(TX)`, `AGR-Wind Erosion (ND)`
 — and so do five of the seven forestry rules (`(MI)`, `(OH)`, `(ID)`, `(PIA)`, `(AK)`). **Exactly two
 rules carry no state suffix**: `FOR - Potential Erosion Hazard (Off-Road/Off-Trail)` and

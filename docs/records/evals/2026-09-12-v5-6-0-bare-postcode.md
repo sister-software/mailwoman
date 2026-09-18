@@ -105,7 +105,7 @@ losing NL" meant holding 19/24. It reached 24/24.
 
 `v9.0.0-base`, both artifacts, `verdict: PASS`.
 
-`fr.bare_street_intact: 100 (floor 75)` — unchanged from v5.5.0, so the D-rule holds on the tier-1
+`fr.bare_street_intact: 100 (floor 75)` — unchanged from v5.5.0, so the D-condition is true on the tier-1
 locale this arm most risked. `mask-regression` is SKIPPED because the spec declares no
 `requires_conventions`; that is a spec property rather than a result.
 

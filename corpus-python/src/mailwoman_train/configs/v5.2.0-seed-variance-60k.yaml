@@ -10,7 +10,7 @@
 # rows and the 649-row denominator without using it to excuse a candidate regression.
 #
 # READ THE RESULT AS A MEASUREMENT rather than A CANDIDATE. This model is not for promotion. it measures
-# how much row-level disagreement one fixed-config seed pair produces. The D-rule remains an absolute
+# how much row-level disagreement one fixed-config seed pair produces. The D-condition is absolute
 # comparison against the shipped model and this measurement cannot authorize a regression.
 data:
   corpus_dir: /data/corpus/versioned/v0.27.0-house-venue-intl/corpus-v0.27.0-house-venue-intl

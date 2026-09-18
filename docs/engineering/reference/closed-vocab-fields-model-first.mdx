@@ -84,7 +84,7 @@ representation (same implementation as the postcode anchor), and the model decid
   is the single highest-value bit: it tells the model "context is non-negotiable here,
   don't fall back on a shortcut." Produced statically by intersecting the country and
   region gazetteers. Expected to _improve_ `region` precision rather than dent it.
-- **Optional entity-type embedding** — a small learned vector encoding the signal type
+- **Optional entity-type embedding** — a small learned vector including the signal type
   (is-country / country+region-homograph / cedex / po_box). Near-zero cost; lets the model
   learn distinct behaviors per signal.
 

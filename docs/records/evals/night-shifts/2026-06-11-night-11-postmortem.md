@@ -48,7 +48,7 @@
   after solo probes; the loss-mask probe was deferred because the consult showed the read would
   be uninterpretable — the $15 cap ended the night untouched.
 - **The Modal `run_tests` entrypoint** closed a real gap (torch-dependent tests silently skipping
-  locally) and immediately verified the loss-mask's gradient isolation.
+  locally) and immediately checked the loss-mask's gradient isolation.
 
 ## What could've gone better
 
@@ -62,7 +62,7 @@
   normalization.
 - DeepSeek consults again mixed one keeper insight per session with fabricated specifics
   (the "glue rows tie rue→street_prefix" mechanism never existed). The verify-before-steering
-  rule held; no damage.
+  condition was true; no damage.
 
 ## Decisions made autonomously
 

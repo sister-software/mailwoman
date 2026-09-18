@@ -52,7 +52,7 @@ messy input) points at structured span prediction.
 ## STAGE 2 PHASE 1 — DONE, CHECK PASS (2026-07-15). Read this before touching the arc.
 
 `seg@1 0.5693 > token@1 0.4906` on the parity corpus (+7.9pp); **+33pp on the Paris bare-fragment
-fixture** (`token@1 0.429 → seg@1 0.762`). The arc's premise holds. PR #1141; reports
+fixture** (`token@1 0.429 → seg@1 0.762`). The arc's assumption is supported. PR #1141; reports
 `docs/articles/evals/2026-07-15-v30{0,1}-span-head*.md`. Phase 2 (ONNX export) is unblocked.
 
 ### The four things that cost time — don't re-pay them

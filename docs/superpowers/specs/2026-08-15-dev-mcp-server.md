@@ -289,7 +289,7 @@ This repo has scar tissue for three of these. The design adds a fourth of its ow
 **(a) A stale compiled `out/`.** The pattern is documented twice. `corpus-stamp.ts:10-16` records
 2026-08-06: `eval gauntlet-build regression-db` ran from a compiled tree whose `out/` loader still held
 a deleted case array, wrote a DB, printed "built", exited 0, and every check afterwards graded a corpus
-nobody had. `promotion-eval.ts:250-278` carries the recompile-before-eval lore guard that walks
+nobody had. `promotion-eval.ts:250-278` implements the recompile-before-eval check that walks
 `packages/core` two levels deep for a `.ts` newer than `packages/core/out`.
 
 _Answer:_ the daemon imports **source**. `packages/mailwoman/package.json`'s exports map puts a `node`

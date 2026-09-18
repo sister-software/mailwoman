@@ -23,7 +23,7 @@
  *   - `removed` / `added` — a span with no counterpart at all.
  *   - `confidence` — same tag, same span, the model simply became more or less sure.
  *
- *   That last one is why the confidence delta is carried per span rather than as a headline: a row that did not change
+ *   That last one is why the confidence delta is stored per span rather than as a headline: a row that did not change
  *   its answer but lost 0.3 of confidence on the deciding span is a row about to flip, and an aggregate cannot say so.
  */
 

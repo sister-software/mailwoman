@@ -68,7 +68,7 @@ retrain targeted country recovery). So — exactly as v261 shipped only because 
 with the documented exception" — the promote-to-default call for v263 is the operator's, with this trade
 on the table.
 
-**Recommendation: promote.** v263 recovers the #1104 country target with the real fix (the atlas channel rather than a cosmetic exception), holds the real-postal guard, and is coordinate-flat on both locales. The region
+**Recommendation: promote.** v263 recovers the #1104 country target with the real fix (the atlas channel rather than a cosmetic exception), passes the real-postal guard, and is coordinate-flat on both locales. The region
 cost is coordinate-invisible and on a low-prevalence format. If instead the region per-tag delta is judged
 unacceptable, the channel is validated and the next iteration is a targeted region-preservation tune (a
 lower country-channel confidence near a region-abbrev, or a region class-weight bump) rather than a rebuild —

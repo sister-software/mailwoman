@@ -7,7 +7,7 @@
  *
  *   The four named fixtures are the real groups the 2026-08-05 survey pulled out of
  *   `admin-global-priority.db`, coordinates and populations included — one per branch of the rule, so
- *   a change to the rule that breaks a real case breaks a test rather than a rebuild.
+ *   a change to the rule that fails a real input fails a test rather than a rebuild.
  */
 
 import { FANOUT_SPREAD_EPSILON_KM, resolveConcordanceFanout } from "mailwoman/gazetteer-pipeline/importance-fanout"

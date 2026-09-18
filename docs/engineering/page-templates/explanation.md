@@ -23,7 +23,7 @@ role: explanation
 3. **The analog.** The rule-world concept, before any statistical term.
 4. **The mechanism.** What the system does, in the order it does it.
 5. **What it costs.** Where the design gives something up, and to whom.
-6. **Related.** Links to the reference pages that hold the contract.
+6. **Related.** Links to the reference pages that keep the interface valid.
 
 ## Opening move
 

@@ -72,7 +72,7 @@ What I will not do is _relax_ the bar I wrote in order to launch the 8k myself.
 
 ## The likely reason it barely moved — a named hypothesis rather than a knob spun
 
-B0 established the mechanism: the failing Norwegian rows have the **street mistagged as a locality**,
+B0 showed that the implementation worked: the failing Norwegian rows have the **street mistagged as a locality**,
 and the digit follows it (`Hallingrudveien 32` → locality + postcode). The fix is therefore the same
 as the French bare-street polarity fix: teach that a **bare street is not a bare locality** — which
 requires the street to appear _without a number at all_, so the model cannot lean on the number.

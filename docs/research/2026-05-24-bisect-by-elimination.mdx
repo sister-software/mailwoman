@@ -73,7 +73,7 @@ The two remaining variables are linked:
 
 These two are bundled. A1's vocabulary was constructed _from_ v0.4.0's content. So the model is simultaneously seeing new tokens (vocab change) and new data (corpus change) for the first time, and we can't fully separate them without retraining one or the other.
 
-But we have one cheap experiment that gets us most of the way there. Hold the tokenizer constant (keep A1), andswap the corpus back to v0.3.0 (the old data, no transliteration mass). That tests whether the transliteration data is the destabiliser, while preserving the result.
+But we have one cheap experiment that gets us most of the way there. Hold the tokenizer constant (keep A1), and swap the corpus back to v0.3.0 (the old data, no transliteration mass). That tests whether the transliteration data is the destabiliser, while retaining the output.
 
 This is the next bisect. If it trains directly, we'll know the synthetic data — specifically, B2's transliteration mass — is what's breaking training. That'd be a useful answer because we have a couple of obvious follow-ups:
 

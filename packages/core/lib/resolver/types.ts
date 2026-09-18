@@ -789,10 +789,10 @@ export interface ResolveOpts {
 	postcodePrefixPrior?: boolean
 	/**
 	 * #1589 — countries the parsed postcode's FORMAT implies (the #928 unforgeable singles plus the shared `NNN NN`
-	 * CZ/SK/SE/GR family). Applied by the `postalcode` lookup only when no country constraint survives (an explicit
-	 * `defaultCountry` outranks format evidence, which outranks a locale hint): the lookup probes exactly the implied
-	 * countries, keeps the most populous hit, and abstains when all miss rather than falling through to a fold-colliding
-	 * unconstrained probe.
+	 * CZ/SK/SE/GR family). Applied by the `postalcode` lookup only when no explicit country selection applies (an
+	 * explicit `defaultCountry` outranks format evidence, which outranks a locale hint): the lookup probes exactly the
+	 * implied countries, keeps the most populous hit, and abstains when all miss rather than falling through to a
+	 * fold-colliding unconstrained probe.
 	 */
 	postcodeFormatCountries?: readonly string[]
 	/**

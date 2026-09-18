@@ -471,7 +471,7 @@ describe("speed bucket boundaries", () => {
 			expect(result.unknown_block_count).toBe(0)
 
 			// Hand-grouped via the JS mirror itself: {0,24} -> under-25 (2), {25,99} -> 25-100 (2),
-			// {100,999} -> 100-1000 (2), {1000} -> gigabit (1) — verifying the SQL CASE's exclusive `<` comparisons
+			// {100,999} -> 100-1000 (2), {1000} -> gigabit (1) — checking the SQL CASE's exclusive `<` comparisons
 			// land exactly where speedBucketForDownloadSpeed says they should, for every boundary value at once.
 			const expectedGroups = new Map<string, number>()
 

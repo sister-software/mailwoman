@@ -123,7 +123,7 @@ Two things that cost four wrong diagnoses, worth carrying forward:
 Each step ends green, and each is separately revertable.
 
 1. **Conditions on `./onnx-runner`**, with a browser counterpart that throws a message naming the
-   browser runtime. No files move. The check verifies resolution behavior against the docs build.
+   browser runtime. No files move. The check checks resolution behavior against the docs build.
 2. **Move `web-onnx-runner.ts` and `loader.ts`** into `neural/`, exposed as `./web-onnx-runner`.
    `neural-web` re-exports them; nothing else changes yet.
 3. **Optional peers.** Both runtimes become optional peer deps of `neural`; the monorepo keeps them as

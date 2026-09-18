@@ -76,7 +76,7 @@ a proper arc — the runbook exists, the packaging/release engineering doesn't.
 
 Track C (non-Latin JP/KR/CJK — #1176/#1266, rides minors), most of Track D (evidence-layer second
 index family — #1288/#1296/#1267, each checks itself), Track E base models (check on #1102 whenever
-they arrive). Surface them, don't let them hold the result.
+they arrive). Surface them, don't let them retain the output.
 
 ## the result itself (once A + B land)
 

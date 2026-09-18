@@ -327,7 +327,7 @@ from adjacent literatures:
    abstention signal in one head. Tempting, but its epistemic-uncertainty claims have known
    theoretical soft spots [M — critique line c. 2022–2024, moderate confidence], and it needs the
    classifier retrained under a special loss; conformal wraps _any_ scorer, ledger-sized data is
-   its native regime, and its guarantee survives the classifier being a heuristic. Recommendation:
+   its native regime, and the interval calculation remains valid when the classifier is a heuristic. Recommendation:
    conformal + Dirichlet/temperature calibration; skip EDL.
 
 **Weimar verdict.** Parse-level calibration would rightly _not_ have flagged it (the parse was

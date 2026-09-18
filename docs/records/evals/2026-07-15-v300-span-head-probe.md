@@ -58,7 +58,7 @@ fresh head at a fine-tuning LR for 2k steps cannot train, and the one-variable d
 stopped me from also changing the LR, so the probe tested "does a barely-initialized head beat a
 fully-trained one" — a question with a known answer.
 
-## The BIO head is untouched — the byte-identity property held in a real run
+## The BIO head is untouched — the bytes remained identical in a real run
 
 The step-2000 eval, which is the useful result here:
 

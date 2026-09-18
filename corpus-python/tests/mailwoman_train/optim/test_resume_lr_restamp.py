@@ -38,7 +38,7 @@ def _scheduler_cfg(*, warmup_steps=10, max_steps=100, lr_schedule="constant"):
 
 
 def test_raw_load_state_dict_clobbers_a_changed_classifier_lr(tmp_path):
-    """Trap characterization — not testing our fix. Proves the underlying torch behavior the
+    """Trap characterization — not testing our fix. Shows how torch behaves the
     fix exists to correct: a bare `build_optimizer` + `optim.load_state_dict()` round trip
     silently discards a changed `classifier_learning_rate`, with no exception and no signal."""
     # Phase-1 "checkpoint": classifier group at the old hot LR.

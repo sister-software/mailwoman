@@ -67,7 +67,7 @@ granted this shift (merge once CI attempted; flag shipped-behavior/judgment PRs)
   at scale → trust the larger eval; (2) a coarse 6-point threshold sweep understated the learned scorers by
   ~9pp — a fine 33-point sweep corrected it. _Always sweep finely + size the eval to the phenomenon before
   declaring a clustering verdict._
-- **#603 cross-STATE generalization (folds into #641) — the result TRANSFERS, strongly.** Built
+- **#603 cross-STATE generalization (folds into #641) — the score also holds on unseen states.** Built
   `learned-scorer-crossstate-eval.ts` (train on TX, evaluate dedup clustering F1 on held-out **CA** — a state
   the model never saw). **Result (2000 TX-train / 2000 CA-eval, ~5.6K records each): FS baseline F1 15.0% (P 10%,
   239 over-merged!), LR 13.9% (−1.0pp, collapses to over-merging), GBT 35.5% (+20.5pp, P 59%, over-merged
@@ -278,7 +278,7 @@ negatives on NPPES — not in this table rather than promoted (full detail in #6
   / +6.6pp pairwise F1). Then the **definitive clustering A/B** (#641, 2000 NPIs, 4 seeds): **GBT clustering
   F1 60.5% vs FS 55.3%, +5.2pp, 4/4 seeds**, by reducing the over-merge (94→69 clusters). **The GBM is a real
   dedup change — greenlit.** Cross-**STATE** generalization is now also done (in #641): trained on TX, the GBT
-  beats the FS baseline on held-out **CA** by **+20.5pp** (the over-merge signal transfers; the LR doesn't
+  beats the FS baseline on held-out **CA** by **+20.5pp** (the over-merge rate also appears there; the LR doesn't
   generalize). Remaining for the operator: (1) review/merge **#641** (it adds the shipped `scorer?` hook +
   the full eval methodology — within-state 4-seed + cross-state); (2) the production build — a tuned offline
   XGBoost/LightGBM → tree-JSON + the `scorer` hook for pure-Node inference; (3) decide whether to flip a

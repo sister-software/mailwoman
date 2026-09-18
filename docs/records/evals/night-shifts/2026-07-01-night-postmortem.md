@@ -228,7 +228,7 @@ already name the cold bottleneck: **the 29 MB model download** rather than compu
 ## Backlog triage — the contained CPU work is delivered; verify-before-verdict kept paying
 
 After the plan's changes landed, I worked down the rest of the backlog and kept hitting **already-shipped**
-(checked before re-implementing, the cleanup's lesson held all night): #480 deliverable 2 (strict extract
+(checked before re-implementing, the cleanup rule prevented duplicate work all night): #480 deliverable 2 (strict extract
 resolution + `test_extract_paths.py`), #480's REPRODUCIBILITY.md, #718's "fix boundary-stress-check.ts first"
 (already routes through the canonical `createScorer` in strict mode), #435 quirk 2 (the v4.16.0 model fixed
 the street-prefix drop), and the NPPES dedup yardstick (already measured anchor-on, the

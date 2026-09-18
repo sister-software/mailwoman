@@ -279,7 +279,7 @@ export interface FilerLookupPrimaryFRN {
 	frn: FRN
 	/**
 	 * The rule that produced this pick — always {@link PRIMARY_FRN_DERIVATION} today, but a literal (rather than a
-	 * boolean "isDerived" flag) so a future second derivation rule remains distinguishable from this one.
+	 * boolean "isDerived" flag) so a future second derivation condition remains true distinguishable from this one.
 	 */
 	derived_from: string
 	/**

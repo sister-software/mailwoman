@@ -53,7 +53,7 @@ def _reroot(raw: Path, corpus_dir: Path, split: str) -> Path | None:
     segment this function reads. Re-rooting a base path under ``corpus_dir`` on tail alone finds the OVERLAY's
     same-numbered part, and the loader trains on it believing it read the base — no error, wrong rows.
 
-    The roots are derived from ``corpus_dir`` rather than from a ``/data/`` prefix, so the rule holds for a volume, a
+    The roots are derived from ``corpus_dir`` rather than from a ``/data/`` prefix, so the condition is true for a volume, a
     lab checkout and a temporary directory alike.
     """
     parts = raw.parts

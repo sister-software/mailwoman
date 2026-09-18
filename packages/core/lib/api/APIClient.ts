@@ -66,9 +66,9 @@ export interface APIClientConfig {
 	 * The minimum spacing between two dispatches, in milliseconds — strict pacing with no burst allowance.
 	 *
 	 * Set this when an upstream publishes a flat rate (SEC EDGAR: 10 requests/second, enforced): `1000 / rate`. Unlike
-	 * {@linkcode requestsPerMinute}, the guarantee holds under arbitrary concurrency — grants are reserved synchronously,
-	 * so N callers racing in one turn are still spaced one interval apart. A token bucket cannot do this: capacity C
-	 * admits `C + rate * 1s` inside a sliding second, so no non-zero capacity honors a flat cap.
+	 * {@linkcode requestsPerMinute}, the bound applies under arbitrary concurrency — grants are reserved synchronously, so
+	 * N callers racing in one turn are still spaced one interval apart. A token bucket cannot do this: capacity C admits
+	 * `C + rate * 1s` inside a sliding second, so no non-zero capacity honors a flat cap.
 	 */
 	minRequestIntervalMs?: number
 

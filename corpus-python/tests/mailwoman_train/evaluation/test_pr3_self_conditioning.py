@@ -129,7 +129,7 @@ def test_aux_locale_loss_is_finite():
 
 def test_all_ignored_locale_batch_does_not_nan():
     """A batch whose every row has an unmapped country (all IGNORE_INDEX) must not poison the loss
-    with a 0/0 → NaN from the aux CE — the aux term is skipped, the BIO loss stands alone."""
+    with a 0/0 → NaN from the aux CE — the aux term is skipped, so only BIO loss is computed."""
     enc = _build_encoder(use_locale_conditioning=True, locale_loss_weight=0.3)
     b = _stub_batch(2, 8)
     labels = torch.zeros(2, 8, dtype=torch.long)

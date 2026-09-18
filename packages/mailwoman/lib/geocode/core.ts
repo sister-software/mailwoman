@@ -564,7 +564,7 @@ function applyCountryEvidence(opts: ResolveOpts, tree: AddressTree, deps: Geocod
 	}
 
 	// #1589: the format-implied countries also reach the resolver's scoped `postalcode` probe. The
-	// resolver applies them only when no country constraint survives — which keeps an explicit
+	// resolver applies them only when no explicit country selection applies — which keeps an explicit
 	// defaultCountry supreme over format evidence, which in turn outranks a locale hint.
 	if (formatCountries.length) {
 		opts.postcodeFormatCountries = formatCountries

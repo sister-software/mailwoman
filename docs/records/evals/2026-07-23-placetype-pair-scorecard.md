@@ -217,7 +217,7 @@ recall.
 > saturate at **δ=10 — 69/69 emit, 69/69 tag-correct, golden-FP 0/51** — exceeding every trained
 > candidate in the arc, at a venue-confound floor of 3.338% (vs 0.738% for the feed candidate at
 > δ=5). v385's dead-classifier deficit is large but _uniform_ (~7.0 logits mean), so a δ that
-> clears it clears the whole board at once. The ablation's necessity claim survives only in this
+> clears it clears the whole board at once. The ablation's necessity conclusion applies only in this
 > form: at δ≤6, weights-resurrection is necessary; at δ=10, the prior alone suffices for this
 > board, and the trade moves entirely into the venue-confound FP floor. Full sweep:
 > `.superpowers/sdd/task-8-report.md` § "Option A: v385 δ-sweep".

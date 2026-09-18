@@ -11,7 +11,7 @@
 ## Global Constraints
 
 - **Decision 6 binds everywhere: abstain, never guess.** A row/line that cannot be confidently reduced to a subsidiary name is COUNTED in `unparseable` and dropped. Every new rule below is an abstention rule or an alignment rule; none of them invents a value.
-- **The substring invariant holds.** Every emitted `name`/`jurisdiction` must appear in the document as a contiguous string once tags are stripped, entities decoded and whitespace collapsed. It is necessary but not sufficient — `exhibit21-real.test.ts`'s fabrication assertions exist because the 2026-08-03 run emitted `"EX-21.1"`, `"3"`, `"q42025exh211listofsubsidia.htm"` and `"•"` as subsidiary names, all of which satisfy the substring invariant.
+- **The substring all values satisfy the required relationship.** Every emitted `name`/`jurisdiction` must appear in the document as a contiguous string once tags are stripped, entities decoded and whitespace collapsed. It is necessary but not sufficient — `exhibit21-real.test.ts`'s fabrication assertions exist because the 2026-08-03 run emitted `"EX-21.1"`, `"3"`, `"q42025exh211listofsubsidia.htm"` and `"•"` as subsidiary names, all of which satisfy the substring invariant.
 - **`filer/test-fixtures/edgar/expected.json` is the contract, and it was not derived from `parseExhibit21`.** It came from an independent DOM-based reference implementation, hand-checked against the source documents. Do not edit it to match implementation output. If you believe an expectation is wrong, say so in your report and stop — changing it silently converts the regression suite into a record of whatever the code does.
 - No `enum` (`erasableSyntaxOnly`). Acronyms are whole components in identifiers (`CIK`, `SEC`, `HTML`, `SGML`, `URL`).
 - Tabs for indentation, double quotes, no semicolons — match the surrounding file exactly.
@@ -340,7 +340,7 @@ it("skips a block missing a FILENAME rather than emitting a URL ending in a slas
 })
 ```
 
-Note the last three. A filing with no Exhibit 21 is ordinary rather than exceptional — in the 2026-08-03 run, Consolidated Communications and United States Cellular both filed a 10-K whose latest accession carries none. This differs from `parseCompanyTickers`/`parseTenKFilings`, which throw on a malformed payload because those are SEC's own documented API shapes; an absent exhibit is the filer's choice rather than an upstream contract break. Say so in the docstring.
+Note the last three. A filing with no Exhibit 21 is ordinary rather than exceptional — in the 2026-08-03 run, Consolidated Communications and United States Cellular both filed a 10-K whose latest accession carries none. This differs from `parseCompanyTickers`/`parseTenKFilings`, which throw on a malformed payload because those are SEC's own documented API shapes; an absent exhibit is the filer's choice rather than an upstream interface failure. Say so in the docstring.
 
 - [ ] **Step 2: Run them to verify they fail**
 

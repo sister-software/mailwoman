@@ -207,7 +207,7 @@ Three reasons worth stating, because they generalise:
 1. **The fan-out is invisible per query.** Nothing asks how several keys one place has, so 19 rows for `to`
    looks like a busy key rather than a data problem.
 2. **The bad rows are shaped exactly like the good ones.** Both are alt-names in a named language with
-   `privateuse=preferred`. Toledo proves the mechanism is required — abbreviation aliases are how
+   `privateuse=preferred`. Toledo shows why the implementation is required — abbreviation aliases are how
    `TO` → Toledo works — so `is_primary=0` cannot only be dropped.
 3. **It is not the stopword problem**, which is what I expected going in. That belongs to the FTS route
    (976 hits). The candidate route returns 19, and its bad rows arrive through legitimate-looking alias

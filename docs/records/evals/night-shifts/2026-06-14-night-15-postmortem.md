@@ -141,7 +141,7 @@ CLI #547 merged + demo typeahead #585/#588; address-level follow-up tracked in #
 
 - **Fixed CI on a branch + flagged for fast-merge** rather than pushing to `main` (merge wall). The
   alternative — pushing the lockfile fix straight to `main` — would've unblocked everyone's CI faster but
-  violated the no-self-merge rule. Chose discipline + a prominent flag.
+  used the forbidden self-merge path. Chose discipline + a prominent flag.
 - **Kept reconcile retired** (A) — reversing #427's positive claim — on the strength of the assembled-
   pipeline numbers, DeepSeek-concurred.
 - **Did not promote coarse-placer M3** (B) despite it being a strict Pareto improvement — it doesn't meet

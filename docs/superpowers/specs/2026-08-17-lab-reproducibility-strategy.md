@@ -163,7 +163,7 @@ Everything phase 2 produces emits a manifest, so the phase 1 number improves by 
 
 "One country, one source" is currently held by comments in `defaults.ts`; `verifyAdmin` tests floors, so
 duplication moves every check number in the passing direction and the build ships. The command that moves a
-country between sources is exactly the thing that can violate the invariant, so the check lands with the
+country between sources is exactly the thing that can violate the required relationship, so the check lands with the
 command rather than after it.
 
 A second, newly measured instance of the same class: three repositories are currently checked out **twice**,

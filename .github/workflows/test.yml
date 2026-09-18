@@ -495,7 +495,7 @@ jobs:
   # WHAT STILL RUNS EVERY PR when this holds them back: the `*-suite.test.ts` files in unit-fast,
   # which assert the same laws against the committed fixture rows without loading a model. Each
   # integration file's own header states the difference, and it is real: the fast leg proves the
-  # Stage 1 claim about normalization, this leg proves the claim about the whole pipeline, because
+  # Stage 1 claim about normalization, this leg shows the measured result about the whole pipeline, because
   # the tokenizer, the lexicons, the pair indices and the resolver all read text downstream of
   # Stage 1 and any of them could hold one form and not the other.
   #

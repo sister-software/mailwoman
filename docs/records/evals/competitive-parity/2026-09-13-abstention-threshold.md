@@ -258,7 +258,7 @@ panel was built, and a user asking for a village of 800 people meets the same fl
 The magnitude therefore says nothing about what a floor should be, and this panel cannot be used to
 choose one. What survives the confound is the mechanism: a refusal in one pass is answered by
 another, and no choice of floor can show through while that holds. That part is read from the code
-and confirmed by the mechanism counts, neither of which depends on the panel.
+and confirmed by the implementation counts, neither of which depends on the panel.
 
 ## What this supports, and what comes next
 
@@ -266,7 +266,7 @@ Supported: the ranking already carries a signal that separates supportable selec
 unsupportable ones well enough to beat the deterministic baseline on selection accuracy and false
 selection simultaneously, and the resolver does not consult it. Supported: `spanRescore` answers a
 refusal `minWinningScore` made, because the state the refusal leaves is the state the recovery pass
-triggers on — read from the code and confirmed by the mechanism counts, so it does not depend on this
+triggers on — read from the code and confirmed by the implementation counts, so it does not depend on this
 panel. Refused: any claim that a particular threshold or floor is the right one; the floor that
 produces 8% here is calibrated by accident to a panel whose gold all has population above 15,000.
 

@@ -19,7 +19,7 @@
  *   naming_node_id, source, valid_from)` — the edge key's four columns plus `naming_node_id`, so two raw
  *   spellings that canonicalize to one `family_id` stay two rows instead of colliding. see
  *   `createFilerFamilyTable`'s PK docstring in `schema.ts` for why that placement is required) already
- *   carry the uniqueness constraint a staging table would otherwise exist to provide — so all three are
+ *   enforce uniqueness a staging table would otherwise exist to provide — so all three are
  *   written directly via raw prepared `INSERT OR IGNORE` against the PRODUCTION table. The composite PK rather than
  *   a separate staging pass, is the dedup mechanism, and the family-membership writes reuse it rather than
  *   growing a second staging table the PK already makes unnecessary.

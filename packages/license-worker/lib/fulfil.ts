@@ -251,7 +251,7 @@ export type SendOutcome = { state: "sent" } | { state: "failed"; reason: string 
 
 /**
  * Send a token to its licensee under the invoice id and record the outcome. The refresh secret rides along while the
- * plaintext is still pending, so a re-send before the first claim carries what the first would have.
+ * plaintext is still pending, so a re-send before the first claim includes what the first would have.
  */
 export async function sendTokenEmail(
 	deps: Pick<FulfilDependencies, "ledger" | "email">,

@@ -120,15 +120,15 @@ for it: `scratchpad/v267-cache` (package-shaped, vocab 75,207), int8 39.9 MB (v2
 
 Ship-config parity, full per-fixture diff vs v264 (`scratchpad/diff-v264-v267.mjs`, untruncated):
 
-|                                               | v264          | v267                                      |
-| --------------------------------------------- | ------------- | ----------------------------------------- |
-| parity street                                 | 0.5730        | **0.5768** (+1 fixture)                   |
-| parity house_number                           | 0.8082        | 0.8082 (flat)                             |
-| parity postcode                               | 0.9861        | 0.9861 (flat)                             |
-| PT street-tag                                 | 5/8           | **6/8**                                   |
-| RO street-tag                                 | 4/5           | **5/5**                                   |
-| CZ / PL / SK street-tag                       | 2/3, 5/6, 1/1 | unchanged                                 |
-| **ASCII-only fixtures with any output drift** | —             | **0** (the byte-identity guarantee holds) |
+|                                               | v264          | v267                                        |
+| --------------------------------------------- | ------------- | ------------------------------------------- |
+| parity street                                 | 0.5730        | **0.5768** (+1 fixture)                     |
+| parity house_number                           | 0.8082        | 0.8082 (flat)                               |
+| parity postcode                               | 0.9861        | 0.9861 (flat)                               |
+| PT street-tag                                 | 5/8           | **6/8**                                     |
+| RO street-tag                                 | 4/5           | **5/5**                                     |
+| CZ / PL / SK street-tag                       | 2/3, 5/6, 1/1 | unchanged                                   |
+| **ASCII-only fixtures with any output drift** | —             | **0** (the byte identity remains unchanged) |
 
 Net street +1 = **fixed 2, broke 1**. The two fixes are the exact target rows
 (`Tv. dos Fiéis de Deus…`, `Splaiul Independenței 313`). The break matters naming:

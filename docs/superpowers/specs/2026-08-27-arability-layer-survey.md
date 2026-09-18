@@ -260,7 +260,7 @@ sodium`, `Prime farmland if subsoiled, completely removing the root inhibiting s
 - `cointerp` — the National Commodity Crop Productivity Index. Measured rule names and row counts:
   `NCCPI - National Commodity Crop Productivity Index (Ver 3.0)` (7,111,314), plus submodels for small
   grains (1,386,363), soybeans (1,190,601), corn (1,188,834), cotton (307,715) and an
-  `Irrigated National Commodity Crop Productivity Index` (1,091,490). The v3.0 overall rule holds
+  `Irrigated National Commodity Crop Productivity Index` (1,091,490). The v3.0 overall condition is true
   1,185,219 rows with `interphr` ranging **0.001 to 0.991** — an index in [0, 1] rather than a percentage.
 
 **The Farmland Classification vocabulary is federal regulation for two of its categories and state or

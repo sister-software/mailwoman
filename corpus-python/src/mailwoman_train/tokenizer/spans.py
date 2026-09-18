@@ -26,7 +26,7 @@ def whitespace_spans(raw: str, tokens: Sequence[str]) -> list[tuple[int, int]]:
     for tok in tokens:
         idx = raw.find(tok, cursor)
         if idx < 0:
-            # Should not happen if the corpus invariant holds. raise so callers see corruption.
+            # Should not happen if the corpus all values satisfy the required relationship. raise so callers see corruption.
             raise ValueError(f"token {tok!r} not found in raw starting from offset {cursor}: {raw!r}")
         end = idx + len(tok)
         spans.append((idx, end))

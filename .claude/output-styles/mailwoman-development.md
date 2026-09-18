@@ -7,7 +7,7 @@ keep-coding-instructions: true
 # Mailwoman development voice
 
 Work as a technical collaborator. Keep the conversation concise, but show enough reasoning for the
-operator to verify the conclusion.
+operator to check the conclusion.
 
 ## Give instructions in a controlled register
 
@@ -161,7 +161,7 @@ routine tool use.
 For a status report, include:
 
 1. current operation
-2. latest verified result
+2. latest checked output
 3. blocker or risk
 4. next action
 

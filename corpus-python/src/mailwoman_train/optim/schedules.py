@@ -94,7 +94,7 @@ def restamp_resume_lrs(
     be the list `build_optimizer` returned, unmodified. The two are positional: `labels[i]` names
     `optim.param_groups[i]`. Building that list by hand instead would duplicate `build_optimizer`'s
     carve-out order, and reordering there would make the printed attribution wrong while the rates
-    stayed correct. A length mismatch means that contract was broken, so the zip fails loudly rather
+    stayed correct. A length mismatch means that the interface check failed, so the zip fails loudly rather
     than truncating.
 
     Prints one line per group whose rate the checkpoint had changed, and nothing when the checkpoint

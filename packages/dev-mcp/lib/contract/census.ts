@@ -11,7 +11,7 @@
  *   at board scale — which classes fire, on what, and which never fire at all.
  *
  *   `mwdev_census` is the model for the discipline and this is its sibling one layer over: the census asks whether a
- *   parse-path MECHANISM signals on any row, this asks whether a decoder CONTRACT is broken on any row. Both refuse to
+ *   parse-path operations signal on any row, this asks whether a decoder interface check fails on any row. Both refuse to
  *   let a zero stand unexplained.
  *
  *   **A zero means opposite things for the two checks, and blending them is the trap.** `illegal-edge` is enforced by

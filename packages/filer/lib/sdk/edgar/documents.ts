@@ -113,7 +113,7 @@ export function parseFilingDocuments(cik: CIK, accessionNumber: string, headerHT
  * Narrows one accession's full document manifest to its Exhibit 21 entries (see {@linkcode EXHIBIT_21_TYPE_PATTERN} for
  * the accepted spellings). Returns `[]` — NEVER throws — when the manifest has no Exhibit 21 at all, which is ordinary
  * rather than exceptional: an absent exhibit is the FILER's choice (Consolidated Communications' and United States
- * Cellular's latest 10-Ks both carry none) rather than an upstream contract break. This is the opposite posture from
+ * Cellular's latest 10-Ks both carry none) rather than an upstream interface failure. This is the opposite posture from
  * {@linkcode parseCompanyTickers}/{@linkcode parseTenKFilings} above, which throw on a malformed payload — those parse
  * SEC's own documented API shapes, so a mismatch there means the upstream contract changed. A manifest with no Exhibit
  * 21 hasn't broken any contract. it's just a filer that didn't file one this cycle.

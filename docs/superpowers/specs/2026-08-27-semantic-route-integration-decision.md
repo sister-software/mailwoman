@@ -209,7 +209,7 @@ obligation #1960 carries.
 **`mailwoman` → `@mailwoman/geographic-model`. One direction, no cycle, and no new fan-out.**
 
 - The POI branch already lives in `mailwoman`: `poi-intent.ts`, `poi-executor.ts`, and the pipeline
-  factory itself. `@mailwoman/core` holds the contract types (`POIIntent`, `POIResult`,
+  factory itself. `@mailwoman/core` keeps the interface valid types (`POIIntent`, `POIResult`,
   `POIIntentOutcome`) and nothing that would need world semantics.
 - `@mailwoman/kind-classifier` calls the lexicon, but takes it **injected** — `createKindClassifier({
 poiLexicon })`. It needs no dependency either.
@@ -320,7 +320,7 @@ implementation bound both to the caller. Recognition is the caller's: a phrase's
 uses that wording, so it is read against the caller's locale. Semantics are the place's: an
 assertion's `countries` says where the establishments it describes exist, so it is judged against the
 country the ANCHOR resolved to — the caller's locale is a lens through which the phrase is read rather than a
-definition of where the claim holds. Under the caller binding an `en-US` caller asking about
+definition of where the condition is true. Under the caller binding an `en-US` caller asking about
 Garancières admitted the US-scoped `drugstore` claim into a French search (#1996's receipts, #1998's
 three refusals). The route now returns every reached kind with the assertion's scope on the match
 (`POIPhraseMatch.countryScope`); `createPOIIntentStage` binds it after the anchor parse and records

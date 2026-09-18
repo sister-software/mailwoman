@@ -58,7 +58,7 @@ function registryAt(point: { lat: number | null; lon: number | null }): EngineRe
 					// Required on `GeocodeResult`, and the mailwoman arm reads its answer through the gauntlet projection —
 					// which walks it. A double missing it throws inside the arm, and every row then scores as a query
 					// failure, which reads as an arm that lost.
-					// A stated identity, so the tri-state pin below verifies the ONE-SIDED case: the mailwoman
+					// A stated identity, so the tri-state pin below checks the ONE-SIDED comparison: the mailwoman
 					// arm carries place_ids and the external arm cannot — incomparable, never "same".
 					hierarchy: [{ tag: "locality", value: "stub", name: "stub", placeID: "wof:101" }],
 				},

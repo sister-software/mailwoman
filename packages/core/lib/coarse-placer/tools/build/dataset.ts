@@ -64,7 +64,7 @@ const TEST_FRAC = 0.1
 // The raw fields are formatted into native address strings with FORMAT VARIETY (4 templates picked
 // deterministically per row) so the model can't shortcut on a single template shape — it must use
 // the actual street-type words + locality n-grams (Finnish "katu/tie", Polish "ul.", Norwegian
-// "veien") that carry the country signal. Same 80/10/10 dedup split as the corpus path.
+// "veien") that include the country signal. Same 80/10/10 dedup split as the corpus path.
 /**
  * Format a (street, number, postcode, locality) quad into a native address string.
  */

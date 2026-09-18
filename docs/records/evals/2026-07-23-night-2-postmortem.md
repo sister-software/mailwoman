@@ -142,7 +142,7 @@ any re-dispatch safe.
   (local helper → the blessed `md5File` in core/utils). **v3.13 option-B recipe pre-drafted**
   (operator-conditional proposal on #1253 — the morning green-light is one word).
 - **Release-skill ruleset failure mode — PR #1255** (preflight `gh api …/rulesets` before any real
-  dispatch; do-not-loosen rule; verified rollback behavior).
+  dispatch; do-not-loosen rule; rollback behavior checked).
 
 ## Numbers
 

@@ -117,7 +117,8 @@ export interface EngineLike {
  *
  * So the unasserted tags are counted as their own cohort rather than folded in or thrown away: a reader asking the
  * hallucination question can see how much confidence rides on unverified components without that mass setting the
- * curve. {@link UnassertedPolicy.Wrong} restores the strict rule for a corpus that genuinely asserts every component.
+ * curve. {@link UnassertedPolicy.Wrong} restores strict validation for a corpus that genuinely asserts every
+ * component.
  */
 export async function decodeReliabilitySample(
 	engine: EngineLike,

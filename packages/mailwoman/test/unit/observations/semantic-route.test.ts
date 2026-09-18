@@ -204,7 +204,7 @@ describe("the committed lexicon against the committed artifact", () => {
 
 describe("the phrase rule", () => {
 	// No locale, and the US-scoped drugstore assertion is returned anyway, carrying its scope: the route reads the
-	// phrase, and where the claim holds is the intent stage's question once the anchor has resolved. `searchAsSet` says
+	// phrase, and where the condition is true is the intent stage's question once the anchor has resolved. `searchAsSet` says
 	// what the array means rather than how long it happens to be.
 	it("claims a candidate that ends in a declared phrase", () => {
 		expect(committedRoute.lookup("where can i pick up a prescription")).toEqual([
@@ -593,7 +593,7 @@ describe("the assertion's country scope", () => {
 	})
 
 	// Only the LOCALE scope is read inside the phrase search. The longer phrase wins recognition under every caller and
-	// carries its assertion's scope. whether that claim holds where the anchor is, is the intent stage's question, and
+	// states its assertion's scope. whether the condition is true where the anchor is, is the intent stage's question, and
 	// a set it empties abstains rather than falling back to a phrase the user did not use.
 	it("takes the longer phrase under every caller and carries the scope for the stage to bind", async () => {
 		const route = await scratchRoute((model, lexicon) => {

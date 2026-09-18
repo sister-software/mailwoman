@@ -11,7 +11,7 @@
  *   defeating a real check, which is how a branded key column came to be written with an unfolded value (#1757).
  *
  *   It lives in `core` rather than beside the resolver's readers because `@mailwoman/resolver-wof-sqlite` is an
- *   OPTIONAL peer of `mailwoman` — a static import of it from there would break the contract that lets a consumer
+ *   OPTIONAL peer of `mailwoman` — a static import of it from there would violate the interface requirement that lets a consumer
  *   install the CLI without the gazetteer backend. `core` is the one package every reader already depends on, and
  *   `core/kysley/driver.ts` already makes the identical assertion for the Kysely path.
  *

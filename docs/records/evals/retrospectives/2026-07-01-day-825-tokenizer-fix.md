@@ -33,7 +33,7 @@ the **wrong city entirely** (80–280km off), because the diacritic parse was br
 verify-before-verdict firing on our own summary statistic: the aggregate wasn't the verdict, the evidence
 was. CZ/PL was **parse-bound** rather than coverage-bound, and coverage can't touch a wrong-city row.
 
-**The research said we weren't alone.** A tokenizer probe confirmed the mechanism: the 48k SentencePiece vocab
+**The research said we weren't alone.** A tokenizer probe showed the cause: the 48k SentencePiece vocab
 has the diacritic _characters_ but no multi-char _subwords_ containing them, so every diacritic isolates its
 own piece — CZ localities at 3.3× English fertility. This is the documented "tokenizer fertility tax." Four
 parallel SOTA agents + a DeepSeek consult mapped the fix space: vocabulary expansion (byte-identical English
@@ -66,7 +66,7 @@ Same golden sets, same grader; the B columns are graded with the spliced tokeniz
 | PL wrong-city         | 30%              | 30%                | 11%              | **11%**                           |
 
 Tokenization, before → after splice: `Vysoká` 4→1 piece, `Grudziądz` 6→1, `Świętokrzyska` 9→1, `Čistá` 5→2.
-The eyeball confirmed the mechanism end-to-end — `Fr. Černého`, `Střížovice`, `Březová nad Svitavou` now parse
+The eyeball confirmed the cause end-to-end — `Fr. Černého`, `Střížovice`, `Březová nad Svitavou` now parse
 as whole names where the baseline truncated them to `Fr`, `St`, `B`.
 
 **The ablation is the punchline: the fine-tune was unnecessary.** We ran the splice + mean-init model _without
@@ -86,7 +86,7 @@ wrong-city 44→28), PL improvement (p50 −0.85, wrong-city 30→11), functiona
   was real and would have shipped a coordinate regression. The wrong-city decomposition (tight / coarse /
   wrong-city buckets) is the direct metric for these locales and should be a standard part of the non-US check.
 - **Diagnostic before fix.** The $0 splice-and-verify (English byte-identical, fertility drop, `Vysoká`
-  atomic) proved the mechanism before a single GPU dollar. The expensive retrain came first only because it
+  atomic) showed that the implementation worked before a single GPU dollar. The expensive retrain came first only because it
   was the pre-registered plan; the cheap tokenizer probe should have been the opening move.
 - **Verify-before-verdict, twice.** The eyeball corrected our own aggregate p50 (parse-bound rather than
   coverage-bound), and we re-graded the CZ regression in fp32 to rule out int8 quantization before blaming

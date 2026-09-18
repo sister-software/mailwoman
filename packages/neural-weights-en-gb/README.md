@@ -79,7 +79,7 @@ declared channel isn't fed. Do not hand-wire the raw ONNX session with an
 input zero-filled.
 
 The postcode anchor is the one channel where GB deviates, and it is worth
-being precise about why the general rule doesn't apply. That rule holds when
+being precise about why the general rule doesn't apply. That condition is true when
 the channel was trained: zeroing a trained input is out-of-distribution. The
 GB anchor slot was never trained, so there is no distribution to leave —
 zeroing it is what the encoder saw for every GB example it has ever been shown,

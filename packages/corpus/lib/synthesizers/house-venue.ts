@@ -198,9 +198,9 @@ const GB_RANGE_NUMBER_RATE = 0.15
 
 /**
  * Fraction of rows (every template order) rendered with a trailing country surface, tagged `country`. The 2026-08-01
- * operator probe set proved the mechanism: the FR control row ("…, 75004 Paris, France") fails on a model trained only
- * on country-less venue rows while its country-less twin passes — a trailing country makes the whole template OOD
- * (Addendum 3 of the #1366 pre-registration). 0.3 keeps the country-less register dominant.
+ * operator probe set showed that the implementation worked: the FR control row ("…, 75004 Paris, France") fails on a
+ * model trained only on country-less venue rows while its country-less twin passes — a trailing country makes the whole
+ * template OOD (Addendum 3 of the #1366 pre-registration). 0.3 keeps the country-less register dominant.
  */
 const COUNTRY_APPEND_RATE = 0.3
 

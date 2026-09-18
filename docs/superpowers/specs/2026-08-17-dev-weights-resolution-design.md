@@ -130,7 +130,7 @@ Unit, against a temporary data root and a fake package directory:
 
 - package with binaries → resolves from the package; overlay never probed
 - package empty, overlay populated → resolves from the overlay, `source` says so
-- package empty, overlay empty, user cache populated → falls through to the cache (existing behaviour holds)
+- package empty, overlay empty, user cache populated → falls through to the cache (the lookup still uses the cache)
 - package empty, nothing anywhere → throws, naming the package dir, the overlay and the cache
 - overlay model present, tokenizer absent → throws rather than half-resolving
 - sibling report distinguishes a sibling resolved from `package` versus `overlay` versus absent

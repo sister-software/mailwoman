@@ -42,8 +42,9 @@ export interface BoroughPair {
 	 * from, projected through {@link PLACETYPE_PROJECTION}. Per-ROW rather than per-source: `PAIR_PLACETYPES_BY_COUNTRY`
 	 * admits `locality`, `localadmin` and `borough` as parents on several countries, and those do not project to the same
 	 * tag (`locality`/`localadmin` → `locality`; `borough` → `dependent_locality`). Deriving it from the CHILD's tag
-	 * instead — the pre-PIX2 containment approach — cannot express the borough-parent case at all: `WESTERN_PARENT_OF`
-	 * gives `dependent_locality` exactly one allowed parent, `locality`, and "Park Slope under Brooklyn" is not that.
+	 * instead — the pre-PIX2 containment approach — cannot represent the borough-parent relationship at all:
+	 * `WESTERN_PARENT_OF` gives `dependent_locality` exactly one allowed parent, `locality`, and "Park Slope under
+	 * Brooklyn" is not that.
 	 */
 	parentTag: ComponentTag
 }

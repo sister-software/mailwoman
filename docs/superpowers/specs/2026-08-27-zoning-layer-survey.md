@@ -1166,7 +1166,7 @@ stored value. `LA_CODE` carries `Fl` for Fingal against `CL`, `CO`, `DU` for the
 
 ### 5.1 The rule
 
-**A cell's zoning claim carries exactly one provenance grade, and the two grades never merge.**
+**A cell's zoning claim has exactly one provenance grade, and the two grades never merge.**
 
 - `authoritative` — the publishing body is the planning or legislative authority for the land, or a
   government body republishing that authority's own records. Ireland's Department of Housing, Local

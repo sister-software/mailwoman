@@ -79,7 +79,7 @@ export function placetypesForRung(rung: ComponentTag): string[] {
 /**
  * One rung's measurement for one country. A rung the builder LOOKED AT and found empty is a present row of zeroes. a
  * rung with no measurable source is absent from {@link CountryGranularity.rungs} entirely. Collapsing those two would
- * break the meaning-of-zero rule inside the artifact.
+ * violate the meaning-of-zero requirement inside the artifact.
  */
 export interface RungMeasurement {
 	/**
