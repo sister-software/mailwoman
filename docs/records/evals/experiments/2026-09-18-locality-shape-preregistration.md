@@ -73,12 +73,21 @@ Word count does not separate the groups: `Sparta` and `Oxford` are single words 
 decode is choosing `B-street` confidently rather than failing to choose. The next section separates
 the two candidate causes it cannot.
 
-### The region code carries it, and the name does not
+### What the frame does, and what the name and the region do inside it
 
-The table above was read from twelve addresses whose names and regions are confounded: every
-failure is a name in a low-scoring state and every pass is a name in a high-scoring one. Holding the
-name and the postcode fixed and swapping only the region code separates them, and the label flips on
-every name:
+[#2311](https://github.com/sister-software/mailwoman/issues/2311)'s removal arm measured this, and
+this record defers to it: dropping the postcode takes all 51 regions to 100.0%, spread 0.0 points,
+with the region code unchanged. Missouri goes 0.0% → 100.0% and Arkansas 5.0% → 100.0%. The postcode flips the kind
+verdict from `locality_only` to `structured_address`, and under `structured_address` the decode
+expects a street. There is no region effect independent of that frame.
+
+Everything below is a reading of the coded-plus-postcode frame — `«locality», «CODE» «postcode»`,
+which is the surface this arm's corpus teaches and the one a user types.
+
+The twelve-address table above cannot separate name from region: every failure in it is a name in a
+low-scoring state and every pass is a name in a high-scoring one. Holding the name and the postcode
+fixed and swapping only the region code shows the code modulating the label inside the frame, on all
+six names:
 
 | name          | TN          | AR          | MO          | VT            | ME            | MA            | TX            |
 | ------------- | ----------- | ----------- | ----------- | ------------- | ------------- | ------------- | ------------- |
@@ -89,16 +98,22 @@ every name:
 | `Saint Louis` | street 0.91 | street 0.90 | street 0.92 | locality 0.56 | locality 0.52 | locality 0.49 | street 0.90   |
 | `Little Rock` | street 0.93 | street 0.92 | street 0.93 | locality 0.67 | locality 0.48 | locality 0.43 | street 0.89   |
 
-`Sparta` reads as a street before `TN` and as a locality before `VT`, so the name is not what decides
-it. This reproduces the donor-code swap already recorded on
-[#2311](https://github.com/sister-software/mailwoman/issues/2311), which measured the raw emission
-3.79 logits behind in Arkansas against 0.000 in Vermont with `B-street` as the competing label. The
-per-region rate on this panel carries a 96.6-point spread, from MO 1/29 (3.4%) to MA 21/21 and KS
-24/24 (100.0%), over the 23 states holding 20 or more rows.
+`Sparta` reads as a street before `TN` and as a locality before `VT`, so the name alone does not
+decide it inside the frame. A swap ranks the values a component takes and cannot show that the
+component's presence is what carries the effect, which is why the removal arm is the one that
+settles the attribution and this table is not. The per-region rate on this panel carries a
+96.6-point spread, from MO 1/29 (3.4%) to MA 21/21 and KS 24/24 (100.0%) over the 23 states holding
+20 or more rows — a reading of the frame rather than a property of the regions.
+
+Name shape also moves inside the frame, measured on #2311's 240-place arms with the region held at
+`IL`: single word 46.3% at −1.686 logits, multi-word 75.0% at −0.935, suffix tail 40.0% at −2.357.
+Remove the postcode and all three read 100.0% at margins near zero. The suffix-tail bucket being the
+worst of the three inside the frame is what this arm's added exposure targets.
 
 The reading that is ruled out is corpus coverage: `synth-trailing-region-us` gives TN 347 rows,
 MO 347 and AR 347 of 16,000, the same allocation Illinois gets, because `applyCountryBudget` already
-round-robins over `(cc, region)`.
+round-robins over `(cc, region)`. Eleven per-region corpus statistics on #2311 predict none of the
+spread either, the strongest at r = +0.304.
 
 The locality-surface lexicon does not separate the groups either, and its direction is inverted, so
 extending it is not the action this reading calls for:
@@ -158,13 +173,14 @@ measured the extra rows rather than their shape and the stratification carries n
 Bar 4 names the two readings v5.8.0 failed at: US postcode F1 95.6% → 95.2%, and 10 regressions
 across FR, GB and DE.
 
-Bar 5 was added after the run launched and before any result was read, once the donor-code swap
-above showed the region code decides the label. [#2311](https://github.com/sister-software/mailwoman/issues/2311)
-requires a corpus arm on this surface to state the per-region effect before the run and to grade per
-region rather than on a pooled rate; bars 1 through 4 are all per-shape or pooled, so without bar 5
-this arm could pass every one of them while the three states that read under 21% stayed there. The
-four named states span the panel's 96.6-point interior spread. A pooled rise with MO, AR and TX flat
-is the outcome bar 5 exists to make visible.
+Bar 5 was added after the run launched and before any result was read.
+[#2311](https://github.com/sister-software/mailwoman/issues/2311) requires a corpus arm on this
+surface to state the per-region effect before the run and to grade per region rather than on a
+pooled rate; bars 1 through 4 are all per-shape or pooled, so without bar 5 this arm could pass every
+one of them while the three states reading under 21% stayed there. These are per-region readings of
+the coded-plus-postcode frame rather than region properties — that frame is what a user types, so a
+state stuck at 3.4% inside it is a user-visible outcome whatever its cause. A pooled rise with MO, AR
+and TX flat is what bar 5 exists to make visible.
 
 The shape panel carries no streets, so its `street_only` arm reads 0/0 and the reverse risk is read
 on the 603-city panel alone.
