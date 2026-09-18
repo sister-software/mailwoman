@@ -254,7 +254,7 @@ export const GZT_CURRENT_PLAN_VALUES: ReadonlyMap<number, string> = new Map([
 ])
 
 /**
- * The provenance grade stored on a zoning row. Exactly one per row, and the two never merge.
+ * A zoning row has exactly one provenance grade: `authoritative` or `inferred`. The two grades never merge.
  *
  * `authoritative` is a planning or legislative authority for the land, or a government body republishing that
  * authority's own adopted records — the Department republishing 30 local authorities' plans is one. `inferred` is an
@@ -266,10 +266,10 @@ export const GZT_CURRENT_PLAN_VALUES: ReadonlyMap<number, string> = new Map([
  * OpenStreetMap `landuse=residential` polygons in South Dublin, only 558 — 33.8% — sit on land the authority zones
  * residential, and the two largest wrong answers are agriculture (23.4%) and conservation (19.6%).
  *
- * ONE ARTIFACT HOLDS ONE GRADE. An observed land-use layer is a different database with a different
- * `layer_manifest.name`, because `layer_coverage.observed_rows` means "rows this layer actually holds in the cell" and
- * coverage measured over community-mapped polygons cannot describe an authority's zones. The licences make the
- * separation compulsory anyway: OpenStreetMap and Overture `base` are ODbL, and merging an ODbL row into this table
+ * Each artifact contains rows of one provenance grade only. An observed land-use layer is a different database with a
+ * different `layer_manifest.name`, because `layer_coverage.observed_rows` means "rows this layer actually holds in the
+ * cell" and coverage measured over community-mapped polygons cannot describe an authority's zones. The licences make
+ * the separation compulsory anyway: OpenStreetMap and Overture `base` are ODbL, and merging an ODbL row into this table
  * would relicense it.
  */
 export const ProvenanceGrade = {

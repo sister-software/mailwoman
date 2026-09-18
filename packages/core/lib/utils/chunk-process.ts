@@ -11,7 +11,7 @@
  *   build gives each range a heap that starts empty by giving it an interpreter that starts empty. What
  *   lives here is only the plumbing that every such build repeats.
  *
- *   STDOUT IS THE RESULT CHANNEL AND CARRIES NOTHING ELSE. Progress is INHERITED — stderr passes straight
+ *   Stdout contains only the result. Progress is inherited — stderr passes straight
  *   through to the parent's — so a long chunk reports as it goes while stdout stays parseable without a
  *   framing convention. Only the last stdout line is read, so a child that prints diagnostics on stdout
  *   before its result still parses.
@@ -50,7 +50,7 @@ export interface RunChunkProcessOptions {
  * The argv every layer ingest-chunk process shares: the temp artifact the parent created, the caller's own flags, then
  * the two resolutions.
  *
- * THE PARENT HOLDS NO HANDLE WHILE THE CHUNKS RUN — its caller closed one before the batched ingest and opens another
+ * The parent holds no handle while the chunks run — its caller closed one before the batched ingest and opens another
  * after. Each child opens the same file and appends. chunks run one at a time, so there is exactly one writer at every
  * instant and no locking to reason about. A chunk that exits non-zero, or prints no result line, throws in
  * {@link runChunkProcess}: a chunk that died mid-range has written a partial set of rows, and continuing would seal an

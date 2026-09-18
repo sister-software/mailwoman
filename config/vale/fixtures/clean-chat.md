@@ -42,3 +42,7 @@ overlay ships locale data and no model graph. The from-scratch run carries no
 
 The unit test passed. The trace records that the retry ran once. The following
 JSON object is the emitted artifact:
+
+The provenance grade of a zoning row is either `authoritative` or `inferred`.
+Each row has exactly one provenance grade. The grades never merge.
+Each artifact contains rows of one provenance grade only.

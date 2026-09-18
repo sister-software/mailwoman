@@ -11,7 +11,7 @@
  *   unchanged. the layer contract's polygon-builder section states them as requirements. A second copy of
  *   an allocator guard is a second place for it to stop guarding.
  *
- *   THE INDEX IS CELL-TOUCHES-POLYGON rather than CENTRE-IN-POLYGON, AND A ZERO-CELL FEATURE FAILS THE BUILD.
+ *   The index records cells that touch each polygon rather than only cells containing its centre. A zero-cell feature fails the build.
  *   A polyfill keyed on cell centres drops every polygon smaller than a cell, and each dropped feature
  *   reads downstream as an absence. Measured: on Ireland's zoning layer `polygonToCells` returns zero cells
  *   for 86.8% of polygons at resolution 9, and the EA flood product's first row is a 128 m² square that

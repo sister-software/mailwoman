@@ -163,6 +163,10 @@ carried entirely by the postcode rows, 3-digit is the reduce, and we take this t
 The parser is RESTRICTED to one locale, the row is ABSENT. NOT a ship. The prior is ON
 by default, and the run was a PURE WIN.
 
+The provenance grade stored on a zoning row.
+Exactly one per row, and the two never merge.
+ONE ARTIFACT HOLDS ONE GRADE.
+
 We launched a full training run at seed 42, and the overlay is v0.29.0 plus one
 file. An overlay run would have reused the checkpoint instead. (OverlaySense:
 three tokens — the duration-sounding name for the from-scratch case, a bare

@@ -89,7 +89,7 @@ export const FST_MAGIC_BYTES: readonly number[] = [0x46, 0x53, 0x54, 0x00]
 
 /**
  * Placetypes in hierarchy order, largest first. The index into this array is what gets written into a place entry, so
- * REORDERING IT BREAKS EVERY EXISTING FILE — append instead, and bump the version.
+ * Reordering it invalidates every existing file. Append instead, and bump the version.
  */
 export const PLACETYPE_ORDER: readonly PlacetypeID[] = [
 	"country",

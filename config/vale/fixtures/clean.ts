@@ -20,3 +20,7 @@
  * Anchors the fixture as a module. The assertion is that the comments above produce no alerts.
  */
 export const clean = 1
+
+// The provenance grade of a zoning row is either `authoritative` or `inferred`.
+// Each row has exactly one provenance grade. The grades never merge.
+// Each artifact contains rows of one provenance grade only.

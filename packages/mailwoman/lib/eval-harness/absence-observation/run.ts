@@ -17,7 +17,7 @@
  *   activity-phrased rows cannot reach a category without it — a row that never formed a POI intent would
  *   record a silence the absence route never caused.
  *
- *   THE RECEIPT CARRIES BOTH IDENTITIES. A silence over an unnamed coverage layer is not reproducible, and
+ *   The receipt records both identities. A silence over an unnamed coverage layer is not reproducible, and
  *   neither is a firing. So the receipt records the coverage layer's own manifest, the recovered coverage
  *   resolution, the exclusion-grade empty cell count, the compiled model version, the poi.db the executor
  *   queried, the resolver backend that answered and the weights version — and when one of those cannot be

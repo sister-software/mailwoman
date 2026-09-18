@@ -12,7 +12,7 @@
  *   database the parent created with the build pragmas, run the chunk, and report its counts on stdout as
  *   one JSON line.
  *
- *   STDOUT IS THE RESULT CHANNEL AND CARRIES NOTHING ELSE. Progress goes to stderr, so the parent can parse
+ *   Stdout contains only the result. Progress goes to stderr, so the parent can parse
  *   the last stdout line without a framing convention.
  */
 

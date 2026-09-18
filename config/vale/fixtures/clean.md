@@ -32,3 +32,6 @@ FR date-name rises from 0.351 to 0.369.
 MessageBus delivered the message, and the test suite now passes.
 The 4-5 digit pieces account for the whole postcode drop (-9.7pp).
 Train this config to 8,000 steps.
+The provenance grade of a zoning row is either `authoritative` or `inferred`.
+Each row has exactly one provenance grade. The grades never merge.
+Each artifact contains rows of one provenance grade only.

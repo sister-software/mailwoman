@@ -1,0 +1,10 @@
+## Reject all-caps technical assertions that compress a relation into a slogan.
+##
+## Acronyms, SQL keywords, country codes, and ordinary title-like labels do not
+## match because this rule requires an all-caps predicate between word groups.
+extends: existence
+message: "'%s' is an all-caps assertion — write the behavior or measured result in a sentence."
+level: error
+nonword: true
+tokens:
+  - '(?:[A-Z][A-Z0-9_-]*\s+){1,}(?:HOLDS?|CARRIES|PROVES?|SHOWS?|CONFIRMS?|BREAKS?|REMAINS?|STANDS?|SURVIVES?|TRANSFERS?|GENERALIZES?|GENERALISES?|APPLIES?|FAILS?|PASSES?|WINS?|LOSES?)\s+(?:[A-Z][A-Z0-9_-]*\s+){1,}'

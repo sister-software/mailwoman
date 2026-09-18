@@ -4,7 +4,7 @@
 # version, three `source_reps`/`source_weights` lines, one supersession, and three receipts. FROM
 # SCRATCH: no `init_from`, launched with `--resume none`.
 #
-# WHY ONE ARM CARRIES THREE ADDED SOURCES. v5.6.0 added exactly one and said so, because a single
+# This run has three added sources. v5.6.0 added exactly one and said so, because a single
 # added source makes every difference between the arms attributable to it. Three stays attributable
 # here for a different reason: each has its own pre-registered probe over a capability the other two
 # cannot touch, and none of the three shares an instrument with another.

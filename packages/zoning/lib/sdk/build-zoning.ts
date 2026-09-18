@@ -614,9 +614,9 @@ function assertAreaAgreement(
 /**
  * Run the ingest as a sequence of bounded child processes, over ranges of the authority's own feature ids.
  *
- * THE PARENT HOLDS NO HANDLE WHILE THEY RUN — its caller closed one before this and opens another after. Each child
- * opens the same file and appends. chunks run one at a time, so there is exactly one writer at every instant and no
- * locking to reason about.
+ * The parent holds no handle while the chunks run — its caller closed one before this and opens another after. Each
+ * child opens the same file and appends. chunks run one at a time, so there is exactly one writer at every instant and
+ * no locking to reason about.
  *
  * @throws {Error} When a chunk exits non-zero, or prints no result line — a chunk that died mid-range has written a
  *   partial set of rows, and continuing would seal an artifact missing features nobody could name.

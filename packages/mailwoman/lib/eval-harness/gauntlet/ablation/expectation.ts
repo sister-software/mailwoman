@@ -658,7 +658,7 @@ export function achievedRung(lat: number, lon: number, ladder: AblationLadder): 
 /**
  * Grade one variant against its expected rung.
  *
- * SUBSTITUTION IS A HARD FAIL AT EVERY RUNG, checked first and independent of geometry: a slot refilled by a different
+ * Substitution fails at every rung. The check runs first and independent of geometry: a slot refilled by a different
  * token (S-2's finding 3 — a house number emitted as the postcode) makes a completion nudge unsafe no matter how good
  * the coordinate is, and letting a coarsening pass would hide exactly the rows the map exists to surface. The achieved
  * depth is still recorded, so a substitution's geometry stays readable.

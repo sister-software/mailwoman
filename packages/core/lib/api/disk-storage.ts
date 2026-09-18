@@ -204,8 +204,7 @@ export function buildDiskStorage(options: DiskStorageOptions): AxiosStorage {
 				await writeLocalFile(serialized, buildingPath)
 				await movePath(buildingPath, finalPath)
 			} catch (error) {
-				// A CACHE WRITE IS A SIDE EFFECT OF A SUCCESSFUL REQUEST, AND A FAILED SIDE EFFECT MUST NOT
-				// FAIL THE REQUEST.
+				// A cache write follows a successful request. If the write fails, the request still succeeds.
 				//
 				// `axios-cache-interceptor` awaits `set()` inside its response `onFulfilled`, so throwing
 				// from here rejects a request whose HTTP response ALREADY SUCCEEDED — the body is discarded.

@@ -16,7 +16,7 @@
  *   `eval conformance` command narrates. A second orchestration free to load a different suite set or a
  *   different backend would report numbers that look like these and answer a different question.
  *
- *   THE RECEIPT CARRIES ARTIFACT IDENTITY AND SAYS WHERE IT DEVIATES. A run on a rebuilt `poi.db` or a bumped
+ *   The receipt records the artifact identity and the deviation. A run on a rebuilt `poi.db` or a bumped
  *   weights package is still a run. it is simply not comparable to the merged-PR receipts the ruler names as
  *   baselines. So the observed identity is recorded beside the pins, every difference is named, and the
  *   verdict carries `comparability` — reported, never a decision input.

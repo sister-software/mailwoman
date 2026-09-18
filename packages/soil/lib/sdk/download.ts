@@ -5,7 +5,7 @@
  *
  *   Acquire one survey area's published archive — 13 to 41 MB streamed to disk and unzipped.
  *
- *   THE TRANSFER ITSELF LIVES IN `@mailwoman/core/utils`, and `streamToDisk` carries why a file transfer of
+ *   The transfer itself lives in `@mailwoman/core/utils`, and `streamToDisk` explains why a file transfer of
  *   this size keeps raw `fetch` instead of going through `APIClient`, plus the `.part`-rename rule. What is
  *   soil's, and stays here, is the URL shape, the cache key, and the two facts below that the shared
  *   transfer is told rather than assumes: the progress stride and what a 400 means. The METADATA reads

@@ -21,6 +21,10 @@
 // we take this to 8k.
 // The probe validated the guard, the result stands, the gain held, and the regression was carried by postcode tokens.
 
+// The provenance grade stored on a zoning row.
+// Exactly one per row, and the two never merge.
+// ONE ARTIFACT HOLDS ONE GRADE.
+
 // `EmphasisCapitals.yml` refuses an ordinary word set in capitals between lowercase neighbours,
 // and each shape below must trip it: the parser is RESTRICTED to one locale, the row is ABSENT.
 // NOT a ship. The prior is ON by default, and the run was a PURE WIN. A capital before a dash is the

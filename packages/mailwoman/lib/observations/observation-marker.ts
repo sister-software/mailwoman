@@ -326,9 +326,10 @@ export function soilCapabilityMarker(
  * projection under a 95th-percentile sea-level-rise allowance be read as a present-day designation. So the scenario key
  * and its plain-language label are in the sentence itself.
  *
- * AND THE MESSAGE CARRIES THE COVERAGE LIMIT, because this layer's silence is not a reassurance. The Environment Agency
- * publishes no coverage statement for NCERM, so an absent designation says nothing — and the marker only ever fires on
- * a present one, which is why the limit rides on the evidence rather than being implied by the marker's absence.
+ * The message also records the coverage limit, because this layer's silence is not a reassurance. The Environment
+ * Agency publishes no coverage statement for NCERM, so an absent designation says nothing — and the marker only ever
+ * fires on a present one, which is why the limit rides on the evidence rather than being implied by the marker's
+ * absence.
  *
  * The message reports WHAT THE AUTHORITY'S MAPPING ASSIGNS at a location, never whether a property will erode. The
  * authority itself declines the second statement — its data "cannot provide details for individual properties" — and a

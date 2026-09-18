@@ -96,6 +96,10 @@ backticked, so the markdown parser hands neither to the rule.
 
 The dosage is not a measured quantity. Name the rows and the unit.
 
+The provenance grade stored on a zoning row.
+Exactly one per row, and the two never merge.
+ONE ARTIFACT HOLDS ONE GRADE.
+
 This is a test rather than a production system.
 
 This is a test, not a production system.
