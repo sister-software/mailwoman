@@ -85,3 +85,8 @@ artifacts. Two checks, one command each, before asserting that a code change inv
 Skipping both once produced a claim that `synth-es-pedania-v1.jsonl` needed re-pinning. Its reader
 had migrated on 2026-07-08 and the recipe output was built 2026-07-22 — the work was already done, and acting
 on the claim would have cost an 800,000-row rebuild to find that out.
+
+## Shared implementations
+
+`lib/adapter.ts` owns `HOUSE_NUMBER_PREFIX` and `splitStreetLine(line)`, the house-number and street
+split every US CSV adapter uses. Call it rather than splitting the line again in a new adapter.

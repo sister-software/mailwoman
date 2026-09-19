@@ -5,6 +5,9 @@ Read the repository-root `AGENTS.md` first.
 CLI helpers live in `lib/cli/kit/`. Parser test helpers live in `lib/test-kit/`. Neither belongs under
 `sdk/`, which the repository reserves for data acquisition.
 
+`lib/cli/kit/metadata.ts` owns `readMailwomanManifest()`, the single read of this package's own
+`package.json` for its version, engines floor, and license.
+
 ## Terminal output tests
 
 Strip ANSI control sequences with `stripAnsi` from `mailwoman/cli-kit` before matching rendered output.

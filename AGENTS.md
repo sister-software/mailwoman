@@ -174,5 +174,6 @@ There is no root `scripts/` directory. Executables enter through a package regis
 command, or `packages/mailwoman/lib/dev-tools/*.run.ts`. The `no-root-scripts` repository check enforces
 this structure.
 
-Preserve unrelated working-tree changes. Use `apply_patch` for hand edits. Do not use destructive Git
-commands to discard operator work.
+Preserve unrelated working-tree changes. Edit files through your agent's file-editing tool or a patch
+it applies, so the symbol precheck runs on every edit. A `PreToolUse` hook enforces this by refusing
+shell writes inside the repository. Do not use destructive Git commands to discard operator work.
