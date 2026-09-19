@@ -13,6 +13,7 @@ import { dataRootPath } from "@mailwoman/core/data-root"
 import { pathExists, readLocalBuffer, readLocalTextFile } from "@mailwoman/core/fs/readers"
 import { md5Hex } from "@mailwoman/core/hash"
 import { tryParsingJSON } from "@mailwoman/core/json"
+import type { QueryKind } from "@mailwoman/core/pipeline"
 import type { ResolveNodeTrace, WeakResolutionReading } from "@mailwoman/core/resolver"
 import { mailwomanDataRoot, wofExtractPaths } from "@mailwoman/core/utils"
 import { createKindClassifier } from "@mailwoman/kind-classifier"
@@ -102,6 +103,16 @@ export interface GauntletDepsOptions {
 	 * configuration.
 	 */
 	suppressGazetteerNearPostcode?: boolean
+	/**
+	 * Replace the kind classifier's top verdict on every input this deps object geocodes.
+	 *
+	 * A declared ablation, and never a shipping configuration. The verdict is what the coordinator routes on, so forcing
+	 * it holds the input and every other stage fixed while changing only the route. It exists because three arms on the
+	 * `«locality», «REGION» «postcode»` surface each moved something upstream of the verdict and read the effect
+	 * downstream of it. None of them established that the verdict is what limits the decode. This one does, or refuses
+	 * to.
+	 */
+	forceQueryKind?: QueryKind
 	/**
 	 * Resolver-side pin pins applied to every geocode this deps object performs.
 	 */
@@ -504,8 +515,22 @@ export async function buildGauntletDeps(opts: GauntletDepsOptions = {}): Promise
 	const kindClassifierWithLexicon = createKindClassifier({ poiLexicon: poiTaxonomyLookup })
 
 	// en-US is the CLI's default locale — the harness grades the production-default arm.
-	const poiKindClassifier: NonNullable<GeocodeDeps["classifyKind"]> = (input, shape) =>
-		kindClassifierWithLexicon(input, shape, { locale: "en-US", confidence: 1, alternatives: [], source: "caller" })
+	const poiKindClassifier: NonNullable<GeocodeDeps["classifyKind"]> = async (input, shape) => {
+		const verdict = await kindClassifierWithLexicon(input, shape, {
+			locale: "en-US",
+			confidence: 1,
+			alternatives: [],
+			source: "caller",
+		})
+
+		if (!opts.forceQueryKind) return verdict
+
+		// Only `kind` moves. The classifier's confidence, its ranked alternatives and any intent markers are the
+		// evidence it read, and rewriting them would make the arm differ in more than the verdict under test. What the
+		// coordinator routes on is the top kind alone — `deriveInputMode`, `canShortCircuit` and the POI branch all read
+		// `kind` — so replacing that field is the whole intervention.
+		return { ...verdict, kind: opts.forceQueryKind }
+	}
 
 	// The database set is the paths that exist. Presence is materialized up front so the keep-test below stays a plain,
 	// synchronous filter over facts already read.

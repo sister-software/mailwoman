@@ -14,7 +14,7 @@
  */
 
 import { readLocalJSONFile } from "@mailwoman/core/fs/readers"
-import { sha256Hex } from "@mailwoman/core/hash"
+import { md5File, sha256Hex } from "@mailwoman/core/hash"
 import { stringifyJSON } from "@mailwoman/core/json"
 import { resolvePackagePath } from "@mailwoman/core/module/resolvers"
 import { compareByCodePoint } from "@mailwoman/core/strings/compare"
@@ -209,6 +209,12 @@ interface ModelCard {
  */
 export interface WeightsIdentity {
 	weightsLocale: string
+	/**
+	 * Md5 of the resolved `model.onnx`, which is what distinguishes two arms. A staged candidate's `model-card.json` can
+	 * be a symlink into the shared data root, so two caches holding different graphs read the same `weightsVersion`; the
+	 * bytes never do.
+	 */
+	weightsModelMD5: string
 	weightsModelPath: string
 	weightsVersion: string
 }
@@ -222,14 +228,20 @@ export async function readWeightsIdentity(options: WeightsIdentityOptions): Prom
 	const locale = options.locale ?? "en-US"
 	const resolved = await resolveWeights({ locale, cacheRoot: options.weightsCacheRoot })
 	const cardPath = resolved.modelCardPath ?? resolved.baseModelCardPath
+	const weightsModelMD5 = await md5File(resolved.modelPath)
 
 	if (!cardPath) {
-		return { weightsLocale: locale, weightsModelPath: resolved.modelPath, weightsVersion: "no model-card resolved" }
+		return {
+			weightsLocale: locale,
+			weightsModelMD5,
+			weightsModelPath: resolved.modelPath,
+			weightsVersion: "no model-card resolved",
+		}
 	}
 
 	const card = await readLocalJSONFile<ModelCard>(cardPath)
 
-	return { weightsLocale: locale, weightsModelPath: resolved.modelPath, weightsVersion: card.version }
+	return { weightsLocale: locale, weightsModelMD5, weightsModelPath: resolved.modelPath, weightsVersion: card.version }
 }
 
 /**

@@ -32,17 +32,27 @@
 import { NAME_PRONE_US_SUFFIXES, US_STREET_SUFFIX_LOOKUP } from "@mailwoman/codex/us/street-suffix"
 import { dataRootPath } from "@mailwoman/core/data-root"
 import { writeLocalJSONFile } from "@mailwoman/core/fs/writers"
+import { dirtyTrackedFiles, gitHead } from "@mailwoman/core/git"
+import { sha256File } from "@mailwoman/core/hash"
 import { stringifyJSON } from "@mailwoman/core/json"
-import { parseArguments } from "@mailwoman/core/scripting/arguments"
+import { repoRootPath } from "@mailwoman/core/paths"
+import type { QueryKind } from "@mailwoman/core/pipeline"
+import { cliArguments, parseArguments, scriptEntryPath } from "@mailwoman/core/scripting/arguments"
 import { formatPercent } from "@mailwoman/core/stats"
+import { isoSeconds } from "@mailwoman/core/utils"
 
 import { type PanelLocality, readCoordPanel, renderAdmin, suffixTail } from "#dev-tools/coord-panel"
-import { buildGauntletDeps } from "#eval-harness/gauntlet/harness"
+import { buildGauntletDeps, type GauntletDepsOptions } from "#eval-harness/gauntlet/harness"
+import { readWeightsIdentity } from "#eval-harness/preregistration"
 
 const { values } = parseArguments({
 	options: {
 		"out-json": { type: "string" },
 		"weights-cache": { type: "string" },
+		// A declared ablation: replace the kind classifier's top verdict on every row. `locality_only` is the verdict
+		// the postcode-removal arm was observed to produce, so forcing it here separates "the verdict limits the decode"
+		// from "removing the postcode changes the model's evidence" — the two the removal arm could not tell apart.
+		"force-kind": { type: "string" },
 		eval: { type: "string", default: String(dataRootPath("eval", "coord", "us.jsonl")) },
 		// Which codex layout the three well-formed arms are written through. The default matches the default panel. a
 		// different panel needs its own country, because a layout is what makes the surface idiomatic rather than a
@@ -154,7 +164,12 @@ interface RowOutcome {
 
 // A probe written to price a corpus change has to be able to point at the model that change produced. without this it
 // can only ever grade the installed one, which is the arm the change is measured against.
-const deps = await buildGauntletDeps(values["weights-cache"] ? { weightsCacheRoot: values["weights-cache"] } : {})
+const depsOptions: GauntletDepsOptions = {
+	...(values["weights-cache"] ? { weightsCacheRoot: values["weights-cache"] } : {}),
+	...(values["force-kind"] ? { forceQueryKind: values["force-kind"] as QueryKind } : {}),
+}
+
+const deps = await buildGauntletDeps(depsOptions)
 const report: Record<string, { matched: number; noLocality: number; total: number; examples: string[] }> = {}
 const outcomes: RowOutcome[] = []
 
@@ -278,7 +293,30 @@ for (const arm of ARMS) {
 }
 
 if (values["out-json"]) {
-	await writeLocalJSONFile({ panel: panel.length, arms: report, rows: outcomes }, values["out-json"])
+	// A rate is only reproducible beside the four things that decide it: which panel bytes, which model bytes, which
+	// checkout, and whether the checkout was clean when the run read it. Two arms of this probe differ by the model
+	// alone, and a staged candidate's model-card can be a symlink into the shared data root — so the card version
+	// cannot tell the arms apart and the md5 is what the receipt is for.
+	const repoRoot = repoRootPath()
 
-	console.log(`\nwrote ${values["out-json"]}`)
+	const provenance = {
+		ranAt: isoSeconds(),
+		gitCommit: await gitHead(repoRoot),
+		gitDirtyTrackedFiles: (await dirtyTrackedFiles(repoRoot)).length,
+		script: scriptEntryPath(),
+		argv: cliArguments(),
+		panelPath: values.eval,
+		panelSHA256: await sha256File(values.eval),
+		weightsCacheRoot: values["weights-cache"] ?? null,
+		forcedQueryKind: values["force-kind"] ?? null,
+		weights: await readWeightsIdentity(values["weights-cache"] ? { weightsCacheRoot: values["weights-cache"] } : {}),
+	}
+
+	await writeLocalJSONFile({ provenance, panel: panel.length, arms: report, rows: outcomes }, values["out-json"])
+
+	console.log(
+		`\nwrote ${values["out-json"]}\n  commit ${provenance.gitCommit}` +
+			` · panel sha256 ${provenance.panelSHA256}\n  model ${provenance.weights.weightsModelMD5}` +
+			` (card ${provenance.weights.weightsVersion})`
+	)
 }
