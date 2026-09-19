@@ -99,6 +99,6 @@
 		"@sqlite.org/sqlite-wasm": "^3.53.0-build1",
 		"h3-js": "^4.5.0",
 		"sql.js-httpvfs": "^0.8.12",
-		"zod": "^4.5.4"
+		"zod": "^4.6.5"
 	}
 }
