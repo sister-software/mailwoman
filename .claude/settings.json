@@ -1,5 +1,11 @@
 {
 	"outputStyle": "Mailwoman Development",
+	"worktree": {
+		"symlinkDirectories": ["node_modules"]
+	},
+	"permissions": {
+		"deny": ["Read(./data/coarse-placer/**/*.jsonl)", "Read(./data/eval/**/*.jsonl)"]
+	},
 	"hooks": {
 		"PreToolUse": [
 			{

@@ -1,3 +1,9 @@
+# Codex reads at most `project_doc_max_bytes` of AGENTS.md, and the default of 32 KiB stops partway
+# through the workspace table. The root file is 117,237 bytes; 128 KiB covers it and starts
+# truncating once the file grows past that, which is the signal to move a section into the package
+# it belongs to rather than to raise this number again.
+project_doc_max_bytes = 131072
+
 [mcp_servers]
 [mcp_servers.mailwoman-dev]
 command = "node"
