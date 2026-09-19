@@ -3,7 +3,7 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Engine contract + the `ComponentTag` → libpostal-label mapping. libpostal-specific knowledge
+ *   Engine interface + the `ComponentTag` → libpostal-label mapping. libpostal-specific knowledge
  *   lives here. the engine yields raw Mailwoman matches (a `ComponentTag` classification + covered
  *   text) and {@link toLibpostalComponents} serializes them to libpostal's ordered `[{label,
  *   value}]` shape.

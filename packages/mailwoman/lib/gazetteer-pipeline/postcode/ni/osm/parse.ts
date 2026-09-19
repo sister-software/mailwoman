@@ -5,7 +5,7 @@
  *
  *   Reduce the saved Overpass response to one point per `BT` unit postcode.
  *
- *   The response is a flat list of OSM elements that each CLAIM a postcode on an address. the database needs one
+ *   The response is a flat list of OSM elements that each claim a postcode on an address. the database needs one
  *   coordinate per postcode. So this module does three things and counts everything it drops:
  *
  *   1. **Validate** against the BT unit shape. OSM tag values are free text typed by humans, and this
@@ -14,12 +14,12 @@
  *      mode of accepting it is a searchable place named after a typo.
  *   2. **Normalize** under the #920 name law — uppercase, single-space display form, and the
  *      space-stripped form as the lookup name. See `normalizePostcodeName`.
- *   3. **Collapse** the members of each postcode to the MEDOID point (`medoidPoint`), never the mean.
+ *   3. **Collapse** the members of each postcode to the medoid point (`medoidPoint`), never the mean.
  *
  *   ## Measured against the 2026-08-05 acquisition
  *
  *   12,327 elements (2,752 nodes · 9,458 ways · 117 relations), every one of them carrying both an
- *   `addr:postcode` and a coordinate — so `skippedNoCoordinate` is a MEASURED zero here rather than an untested
+ *   `addr:postcode` and a coordinate — so `skippedNoCoordinate` is a measured zero here rather than an untested
  *   path. 1 malformed value. 4,757 distinct valid unit postcodes across 80 districts and 250 sectors.
  */
 
@@ -62,7 +62,7 @@ export interface NIOSMParseStats {
 	 */
 	skippedMalformed: number
 	/**
-	 * The distinct malformed VALUES, with their element counts. Kept verbatim (capped) because a drop counter tells you
+	 * The distinct malformed values, with their element counts. Kept verbatim (capped) because a drop counter tells you
 	 * something broke and this tells you what — `"BT36 4RU,"` is a typo, a sudden thousand `"BT"`s would be a filter
 	 * bug.
 	 */
@@ -154,7 +154,7 @@ function elementPoint(element: OverpassElement): PostcodePoint | null {
  * Group the response's elements into one {@link NIPostcodeRecord} per distinct unit postcode, mutating `stats`.
  *
  * Records come back sorted by lookup `name`. Insertion order would also be deterministic given a fixed response file,
- * but it is deterministic THROUGH the file's element order — sorting makes the database's synthetic ids a function of
+ * but it is deterministic through the file's element order — sorting makes the database's synthetic ids a function of
  * the postcode set alone, so a rebuild of OSM that adds one building does not renumber every place after it.
  */
 export function parseNIPostcodes(response: OverpassResponse, stats: NIOSMParseStats): NIPostcodeRecord[] {

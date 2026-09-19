@@ -8,7 +8,7 @@
  *
  *   ## What it does
  *
- *   1. Reads a candidates JSONL from `data/eval/golden/candidates/`
+ *   1. Reads a candidates jsonl from `data/eval/golden/candidates/`
  *   2. Reads the previous-version golden dir for forward-copy + dedup base
  *   3. Applies filters that drop candidates unlikely to be human-typed:
  *
@@ -18,8 +18,8 @@
  *        - Suspicious-token signals (unmatched brackets, control chars, etc.)
  *   4. Dedupes by normalized raw (case-insensitive, whitespace-collapsed)
  *   5. Splits by country (US/FR/other) and writes `data/eval/golden/v<X.Y.Z>/{us,fr,other}.jsonl`
- *   6. Forward-copies the prior version's adversarial.jsonl + README as-is
- *   7. Writes MANIFEST.json with sha256 of each output file
+ *   6. Forward-copies the prior version's adversarial.jsonl + readme as-is
+ *   7. Writes manifest.json with sha256 of each output file
  *
  *   ## Usage
  *
@@ -68,7 +68,7 @@ export interface PromoteStats {
 
 export interface PromoteGoldenOptions {
 	/**
-	 * Candidates JSONL (required).
+	 * Candidates jsonl (required).
 	 */
 	input: string
 	/**
@@ -253,7 +253,7 @@ export async function promoteGolden(
 	const buckets = new Map<string, GoldenEntry[]>()
 
 	for (const { country, entries } of priorEntries) {
-		// Existing files keyed by filename uppercase (us.jsonl → US, adversarial.jsonl → ADVERSARIAL)
+		// Existing files keyed by filename uppercase (us.jsonl → US, adversarial.jsonl → adversarial)
 		buckets.set(country, [...entries])
 	}
 
@@ -325,7 +325,7 @@ export async function promoteGolden(
 		manifest.files[filename] = { entries: entries.length, sha256: await sha256File(path) }
 	}
 
-	// Forward-copy non-.jsonl files (README.md, etc.) from prior
+	// Forward-copy non-.jsonl files (readme.md, etc.) from prior
 	if (await pathExists(priorDir)) {
 		for await (const f of Globerator.from("*", { cwd: priorDir, absolute: false })) {
 			if (f.endsWith(".jsonl")) continue

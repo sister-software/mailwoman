@@ -12,7 +12,7 @@ import { type CommandSpec, harnessCommand } from "#cli-kit"
 export const description = "Fragment-dev read-out — probe-1 separator metrics (span-exact vs tag accuracy)"
 
 /**
- * Native command-line contract consumed by the filesystem command router.
+ * Native command-line interface consumed by the filesystem command router.
  */
 export const spec = {
 	name: "fragment-dev",

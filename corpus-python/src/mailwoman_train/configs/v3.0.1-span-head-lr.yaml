@@ -1,28 +1,28 @@
-# v3.0.1-span-head-lr — #727 STAGE 2, PHASE 1, PROBE 2. One variable vs v3.0.0:
+# v3.0.1-span-head-lr — #727 stage 2, phase 1, probe 2. One variable vs v3.0.0:
 # train.span_head_learning_rate 1e-3 (the fresh span head gets its own param group. the pretrained
 # encoder stays at learning_rate 1e-5). Everything else — corpus, tokenizer, lexicons, the span
 # scorer itself, span_loss_weight 0.5, init_from, steps — is v3.0.0 verbatim.
 #
-# WHY: v3.0.0 was MIS-SPECIFIED rather than falsified (docs/articles/evals/2026-07-15-v300-span-head-probe.md).
-# It inherited lr 1e-5 from v2.6.4, a recipe that FINE-TUNES EXISTING weights, but the span head is
-# RANDOMLY INITIALIZED. At 2k it had barely moved: loss 26.4 -> 17.77 and STILL FALLING, raw span NLL
+# why: v3.0.0 was MIS-specified rather than falsified (docs/articles/evals/2026-07-15-v300-span-head-probe.md).
+# It inherited lr 1e-5 from v2.6.4, a recipe that fine-tunes existing weights, but the span head is
+# randomly initialized. At 2k it had barely moved: loss 26.4 -> 17.77 and still falling, raw span NLL
 # ~35 where a converged semi-CRF sits at O(1), and the decode emitted a random type per token. The
 # probe asked "does a barely-initialized head beat a fully-trained one" — a question with a known
 # answer. This is repairing the probe rather than tuning toward a result: the treadmill is opposite-direction
 # knob oscillation, and no knob has been pushed in two directions here.
 #
-# THE CHECK (unchanged from v3.0.0, pre-registered):
+# the check (unchanged from v3.0.0, pre-registered):
 #   seg@1 > token@1 on the parity corpus, via scripts/eval_seg_at_1.py.
-#   v3.0.0 read seg@1 0.004 vs token@1 0.348 (CHANNEL-STARVED numbers — that script feeds no
+#   v3.0.0 read seg@1 0.004 vs token@1 0.348 (channel-starved numbers — that script feeds no
 #   anchor/gazetteer/country channels, so its absolutes are not the JS harness's 0.573. the check is a
-#   RELATIVE comparison and both heads read the same starved encoder).
+#   relative comparison and both heads read the same starved encoder).
 # Secondary read: the span NLL must actually converge. If loss again ends ~17 and still falling, the
 # LR is not the binding constraint and the fork reopens.
 #
 # Not a promote check. Standing floors (street 0.90 / hn 0.97 / pc 0.97) and the 2pp golden check are
 # untouched. this checkpoint ships nowhere. Phase 2 (export) starts only if seg@1 crosses.
 #
-# If seg@1 STILL loses with a converged span loss: that is the falsification. Do not tune further —
+# If seg@1 still loses with a converged span loss: that is the falsification. Do not tune further —
 # fork to the operator with the loss curve.
 #
 # fp32 partition math enforced inside span_scorer.py regardless of autocast (v0.5.0 bf16 CRF scar).
@@ -63,7 +63,7 @@ data:
     usgov-hrsa-fqhc: 2.0
     usgov-imls-pls: 2.0
     usgov-nad: 1.0
-    state-ia-contractors: 2.0
+    state-ia-builders: 2.0
     state-tx-notaries: 1.5
     state-ny-notaries: 2.0
     deepseek-kryptonite: 3.0
@@ -83,7 +83,7 @@ data:
     synth-no-street-led: 12.0
     synth-cz-pcfirst-preposition: 12.0
     synth-nl-postcode: 6.0
-    # PROBE 1: the fragment/autocomplete source (assay weight — moderate precedent).
+    # probe 1: the fragment/autocomplete source (assay weight — moderate precedent).
     synth-fragment: 6.0
   train_rows_per_epoch: 1000000
   val_rows: 4096
@@ -125,12 +125,12 @@ model: # Verbatim from v2.6.4 except the span-scorer block below (the one variab
   use_postcode_anchor: true
   use_gazetteer_anchor: true
   gazetteer_feature_dim: 5
-  # #1104 country channel ON — dedicated 2-dim [country_surface, country_ambiguous] soft feed with its
+  # #1104 country channel on — dedicated 2-dim [country_surface, country_ambiguous] soft feed with its
   # own projection + confidence (must equal the lexicon's feature_dim). Default-False elsewhere, so a
   # resume from a pre-country checkpoint stays byte-identical until this flips.
   use_country_anchor: true
   country_feature_dim: 2
-  # #1104 homograph-guard SOFTENER — the one variable vs v263. Scales the country_ambiguous dim by 0.5
+  # #1104 homograph-guard softener — the one variable vs v263. Scales the country_ambiguous dim by 0.5
   # before the country_projection (bakes into the exported ONNX. no lexicon/inference change). v263's
   # hard guard (scale 1.0) over-suppressed homograph countries Georgia/Jordan (country-homograph F1
   # 89.8->82.6); softening should recover homograph recall without giving back the country F1 the

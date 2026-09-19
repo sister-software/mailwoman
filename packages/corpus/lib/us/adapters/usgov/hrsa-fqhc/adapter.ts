@@ -17,7 +17,7 @@
  *   rebuild without an intermediate SQLite step. Column names below match the HRSA Data Warehouse's
  *   "Health Center Service Delivery Site" public dataset. Operators substituting the
  *   closely-related "Site Address" or "Health Center" public extracts may need to remap columns.
- *   the README documents the expected set.
+ *   the readme documents the expected set.
  *
  *   Output: one row per CSV record, with `venue` component carrying the site name and the address
  *   quad on `(house_number, street, locality, region, postcode)`. Component order is critical:
@@ -50,7 +50,7 @@ export const USGOV_HRSA_FQHC_DEFAULT_LICENSE = "Public Domain"
 /**
  * Subset of HRSA "Health Center Service Delivery Site Locations" CSV columns consulted by the adapter. Column names
  * match the canonical HRSA Data Warehouse export header. Operators substituting a closely-related extract should rename
- * columns to match. the README has the mapping cheatsheet.
+ * columns to match. the readme has the mapping cheatsheet.
  */
 interface HRSASiteRow {
 	"Site Name": string

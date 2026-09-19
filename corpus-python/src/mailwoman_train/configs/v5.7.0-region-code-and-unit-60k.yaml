@@ -1,8 +1,8 @@
 # v5.7.0 — three admin-tail surfaces the corpus has never carried, each with its own probe
 #
 # Control: v5.6.0-bare-postcode-60k.yaml at seed 42. This config differs from it in the corpus
-# version, three `source_reps`/`source_weights` lines, one supersession, and three receipts. FROM
-# SCRATCH: no `init_from`, launched with `--resume none`.
+# version, three `source_reps`/`source_weights` lines, one supersession, and three receipts. from
+# scratch: no `init_from`, launched with `--resume none`.
 #
 # This run has three added sources. v5.6.0 added exactly one and said so, because a single
 # added source makes every difference between the arms attributable to it. Three stays attributable
@@ -15,14 +15,14 @@
 #
 # Run separately these are three 60,000-step runs answering three questions that share no metric.
 #
-# WHAT IS BEING FIXED, and the count behind each.
+# what is being fixed, and the count behind each.
 #
 # 1. `Washington, DC 20003` answers a locality 53.2% of the time (309/581 distinct US cities through
 #    the production path) against 99.7% for `123 Main St, Washington, DC 20003` (579/581). Every US
-#    recipe that pairs a city with a state code and a ZIP puts a STREET in front of the city, and
+#    recipe that pairs a city with a state code and a ZIP puts a street in front of the city, and
 #    `POSTCODE_CONVENTIONS` had no US entry at all, so the bare surface was never written. Adding it
 #    needed three things besides the table row: `lookupUSState`, because GeoNames publishes
-#    `California` and never `CA`; a per-country GeoNames locality COLUMN, because column 3 is the city
+#    `California` and never `CA`; a per-country GeoNames locality column, because column 3 is the city
 #    for the US while admin2 is the county — the inverse of PT/MX/IN. and a round-robin over the
 #    region in `applyCountryBudget`, because source order is postcode order and the US was taking its
 #    16,000 rows from 23 of 56 states.
@@ -32,7 +32,7 @@
 #    two-letter uppercase token by the tag it opens over one epoch of the v5.6.0 mixture: `NL` appears
 #    45 times per million emitted rows and every one is `country`; `PE` never opens a span at all;
 #    only `DE` and `CA` carry both readings. So the region reading of a Canadian province code is at
-#    ZERO, which is the same shape as v5.6.0's bare postcode and not a margin to beat.
+#    zero, which is the same shape as v5.6.0's bare postcode and not a margin to beat.
 #
 # 3. `301 College Ave, 101, Athens, GA 30601` drops the `101` entirely. `census_comma_segment_number`
 #    counted a digit group standing alone in its own comma segment: 2,923 per million in the leading
@@ -40,7 +40,7 @@
 #    but `Athens, GA, 30601` puts a postcode in exactly that position and is right today only by
 #    generalization, so the rebuilt recipe writes both readings rather than the unit alone.
 #
-# EXPOSURE, and where each number comes from. 60,000 steps x batch 128 = 7,680,000 samples.
+# exposure, and where each number comes from. 60,000 steps x batch 128 = 7,680,000 samples.
 #
 #   synth-trailing-region-us       1.0 x 16,000 =  16,000 draws, 0.21% of the run
 #   synth-trailing-region-ca-bare  4.0 x 13,740 =  54,960 draws, 0.72% of the run
@@ -58,11 +58,11 @@
 # right side of 2:1. Eight would reach 4.4:1 and spend 1.43% of the run on one country's admin tail,
 # which is more than the margin needs.
 #
-# `synth-unit-v30` SUPERSEDES `synth-unit` and inherits its weight unchanged, because it is the same
+# `synth-unit-v30` supersedes `synth-unit` and inherits its weight unchanged, because it is the same
 # recipe over the same sources with two surfaces added — not a new exposure decision. Its predecessor
 # goes to 0.0, the `-v22`/`-v21` pattern.
 #
-# PRE-REGISTERED WATCH. Grade these in order, before any target metric:
+# PRE-registered watch. Grade these in order, before any target metric:
 #
 #   1. The D-rule floors. `fr.bare_street_intact` in the promotion battery (v5.5.0 raised it 95 -> 100)
 #      and the target-family boards v5.4.0 won: `sg/register.jsonl` 118/240, `us/family-po-box.jsonl`
@@ -70,7 +70,7 @@
 #
 #   2. #2303's four arms, `us-city-state-postcode-arms.run.ts`, same 581-city panel. Baseline under
 #      v5.6.0: bare 53.2% (309/581), with-country 61.4% (357/581), with-street 99.7% (579/581). The
-#      bare arm must approach the street arm. THE REVERSE IS THE SAME MEASUREMENT: `street_only`
+#      bare arm must approach the street arm. the reverse is the same measurement: `street_only`
 #      renders each city's own street where the city would sit, and 579 of 581 correctly answer no
 #      locality today. That number may not fall — teaching `«city», «ST» «ZIP»` must not turn a street
 #      before a state code into a locality.
@@ -186,8 +186,8 @@ data:
     NG: 1.0
     NI: 1.0
     NL: 1.0
-    # Quoted, because YAML 1.1 reads a bare `NO` as the boolean false — the key then never matches a
-    # row's `country`, and `synth-no-fragment` (33,203 rows, all NO) becomes unselectable.
+    # Quoted, because YAML 1.1 reads a bare `no` as the boolean false — the key then never matches a
+    # row's `country`, and `synth-no-fragment` (33,203 rows, all no) becomes unselectable.
     "NO": 1.0
     NZ: 1.0
     OM: 1.0
@@ -292,7 +292,7 @@ data:
     # it": the generations dropped before v5.5.0 were named nowhere and cost nothing to omit, which is
     # why nothing failed for five model versions.
     #
-    # Each floor is COUNTED. A reps target of 1.0 is exactly rows/samples of the run (`derive_source_weights`),
+    # Each floor is counted. A reps target of 1.0 is exactly rows/samples of the run (`derive_source_weights`),
     # so 16,000 US rows draw about 2,083 per 1,000,000-row epoch and 500 is a floor a real draw clears
     # four times over. The Canadian source at 4.0 draws about 7,156, and 1,000 clears seven times over.
     # `synth-unit-v30` inherits its predecessor's weight, which the v5.6.0 audit measured at 9,013

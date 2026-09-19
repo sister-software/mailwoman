@@ -12,25 +12,25 @@
  *   own, from its addressing guidance):
  *
  *   - The complete Postal Delivery Type table comes verbatim from Australia Post's barcode addressing
- *       booklet ("Hints and tips to get a higher address match rate", SAP 8838883): CARE OF POST
- *       OFFICE→CARE PO, COMMUNITY MAIL AGENT→CMA, COMMUNITY MAIL BAG→CMB, GENERAL POST OFFICE
- *       BOX→GPO BOX, LOCKED MAIL BAG SERVICE→LOCKED BAG, MAIL SERVICE→MS, POST OFFICE BOX→PO BOX,
- *       POSTE RESTANTE→CARE PO, PRIVATE MAIL BAG SERVICE→PRIVATE BAG, ROADSIDE DELIVERY→RSD,
- *       ROADSIDE MAIL BAG→RMB, ROADSIDE MAIL BOX→RMB, ROADSIDE MAIL SERVICE→RMS, COMMUNITY POSTAL
- *       AGENT→CPA. The same booklet states: "With the exception of Care of Post Office, Community
+ *       booklet ("Hints and tips to get a higher address match rate", SAP 8838883): care OF post
+ *       office→care PO, community mail agent→CMA, community mail BAG→CMB, general post office
+ *       BOX→GPO BOX, locked mail BAG service→locked BAG, mail service→MS, post office BOX→PO BOX,
+ *       poste restante→care PO, private mail BAG service→private BAG, roadside delivery→RSD,
+ *       roadside mail BAG→RMB, roadside mail BOX→RMB, roadside mail service→RMS, community postal
+ *       agent→CPA. The same booklet states: "With the exception of Care of Post Office, Community
  *       Mail Agent, Community Postal Agent, and Community Mail Bag, all Postal Delivery Types must
- *       have an associated number for a match to occur. e.g. PO Box 112", and "'PRIVATE BOX' is not
- *       a valid type" (so PRIVATE BOX is deliberately not in this table).
- *   - Which designators are CURRENT retail products (vs. AMAS-recognized legacy forms) comes from the
+ *       have an associated number for a match to occur. e.g. PO Box 112", and "'private BOX' is not
+ *       a valid type" (so private BOX is deliberately not in this table).
+ *   - Which designators are current retail products (vs. amas-recognized legacy forms) comes from the
  *       live auspost.com.au pages: the addressing guidelines ("Line 2 should contain the street
  *       number and name, or PO Box or Locked Bag number"), the Correct Addressing brochure (SAP
- *       8833878, Nov 2022 — `GPO Box 123 / SYDNEY NSW 2000` example), the personal "PO Boxes and
+ *       8833878, Nov 2022 — `GPO Box 123 / sydney NSW 2000` example), the personal "PO Boxes and
  *       Private Bags" page (Private Bag: "If you live in a rural or remote area of Australia, you
  *       can manage your mail securely with a Private Bag"), and the business "PO Boxes and Locked
  *       Bags" page (GPO Box: "Lease a single GPO Box, or the same box number in each capital city
  *       with our Common Box service"; Common Box numbers run 9800–9999). PO Box, GPO Box, Locked
  *       Bag, and Private Bag appear on those current pages. the rural/community types (RSD, RMB,
- *       RMS, MS, CMB, CMA, CPA, Care PO) appear only in the AMAS table and are flagged `legacy` —
+ *       RMS, MS, CMB, CMA, CPA, Care PO) appear only in the amas table and are flagged `legacy` —
  *       the parser must still recognize them on older addresses.
  *
  * @see {@link https://auspost.com.au/content/dam/auspost_corp/media/documents/Barcode_hints_tips.pdf Australia Post barcode addressing booklet (Postal Delivery Type table)}
@@ -41,7 +41,7 @@
  */
 
 /**
- * One Postal Delivery Type row from the Australia Post AMAS abbreviation table.
+ * One Postal Delivery Type row from the Australia Post amas abbreviation table.
  */
 export interface AuDeliveryServiceDesignator {
 	/**
@@ -49,18 +49,18 @@ export interface AuDeliveryServiceDesignator {
 	 */
 	name: string
 	/**
-	 * The standard abbreviation — the surface form written on mail ("GPO BOX", "LOCKED BAG").
+	 * The standard abbreviation — the surface form written on mail ("GPO BOX", "locked BAG").
 	 */
 	abbreviation: string
 	/**
-	 * Whether the designator "must have an associated number for a match to occur" (AMAS rule. exceptions are Care of
+	 * Whether the designator "must have an associated number for a match to occur" (amas rule. exceptions are Care of
 	 * Post Office, Community Mail Agent, Community Postal Agent, and Community Mail Bag).
 	 */
 	requiresNumber: boolean
 	/**
-	 * True when the designator is recognized by the AMAS Postal Delivery Type table but absent from every current
+	 * True when the designator is recognized by the amas Postal Delivery Type table but absent from every current
 	 * auspost.com.au addressing/product page (accessed 2026-06-11) — the rural and community forms superseded by rural
-	 * street addressing under AS/NZS 4819. The parser must still RECOGNIZE these on old addresses. synthesis should
+	 * street addressing under AS/NZS 4819. The parser must still recognize these on old addresses. synthesis should
 	 * weight them low.
 	 */
 	legacy: boolean
@@ -68,7 +68,7 @@ export interface AuDeliveryServiceDesignator {
 
 /**
  * The verbatim Postal Delivery Type table (see the module header for the per-row provenance). Multiple names can share
- * an abbreviation (ROADSIDE MAIL BAG and ROADSIDE MAIL BOX are both RMB. POSTE RESTANTE is addressed as CARE PO).
+ * an abbreviation (roadside mail BAG and roadside mail BOX are both RMB. poste restante is addressed as care PO).
  */
 export const AU_DELIVERY_SERVICE_DESIGNATORS = [
 	{ name: "GENERAL POST OFFICE BOX", abbreviation: "GPO BOX", requiresNumber: true, legacy: false },
@@ -94,7 +94,7 @@ export type AuDeliveryServiceAbbreviation = (typeof AU_DELIVERY_SERVICE_DESIGNAT
 
 /**
  * Per-designator surface patterns (designator phrase only, no anchor, no id). Ordered longest / most-specific first so
- * the matcher prefers "GPO Box" over "PO Box" and "RMS" over "MS". Each pattern tolerates the punctuation AMAS tells
+ * the matcher prefers "GPO Box" over "PO Box" and "RMS" over "MS". Each pattern tolerates the punctuation amas tells
  * mailers to strip ("the full stops and commas in R.M.B and P.O.") — recognition must accept what deliverable mail
  * actually carries.
  *
@@ -143,7 +143,7 @@ export interface AuDeliveryServiceMatch {
 	 */
 	matched: string
 	/**
-	 * The canonical Postal Delivery Type abbreviation ("GPO BOX", "LOCKED BAG").
+	 * The canonical Postal Delivery Type abbreviation ("GPO BOX", "locked BAG").
 	 */
 	designator: AuDeliveryServiceAbbreviation
 	/**
@@ -151,7 +151,7 @@ export interface AuDeliveryServiceMatch {
 	 */
 	id?: string
 	/**
-	 * True when the designator is an AMAS-only legacy form (see the table).
+	 * True when the designator is an amas-only legacy form (see the table).
 	 */
 	legacy: boolean
 }
@@ -189,7 +189,7 @@ export function isAuDeliveryService(input: unknown): boolean {
 }
 
 /**
- * Normalize a recognized delivery-service phrase to the canonical AMAS form (`"g.p.o. box 123"` → `"GPO BOX 123"`).
+ * Normalize a recognized delivery-service phrase to the canonical amas form (`"g.p.o. box 123"` → `"GPO BOX 123"`).
  * Returns the input unchanged if it isn't one.
  */
 export function normalizeAuDeliveryService(input: string): string {

@@ -4,16 +4,16 @@
  * @author Teffen Ellis, et al.
  *
  *   The committed refinement suite, checked against the corpus it was drawn from. No model, no gazetteer —
- *   two JSONL files and the pure law module, so this runs wherever the repo does.
+ *   two jsonl files and the pure law module, so this runs wherever the repo does.
  *
- *   THE CHECK THAT ONLY THIS FILE CAN MAKE. The law module walks a chain and reports its TIP. it cannot know
+ *   the check that only this file can make. The law module walks a chain and reports its TIP. it cannot know
  *   whether that tip is a query anybody geocodes, because it never loads the corpus. Here it is checked: every
  *   chain's tip must be the verbatim `input` of the committed board row its `rowRef` names, and every base
  *   below it must be exactly the named coarsening of the link above. Without both halves a chain is
  *   self-consistent and unattested — a sequence of invented strings that agree with each other, which is
  *   precisely the thing the fixture discipline exists to refuse.
  *
- *   THE COVERAGE IS ASSERTED AS A RATIO rather than A NUMBER. The eligible count moves whenever a comma-carrying row
+ *   the coverage is asserted AS A ratio rather than A number. The eligible count moves whenever a comma-carrying row
  *   is committed, so pinning it would fail on other people's work. what must hold is that the suite states
  *   strictly less than the population it draws from and says so, and that every chain it does state is
  *   counted once however many links it carries.

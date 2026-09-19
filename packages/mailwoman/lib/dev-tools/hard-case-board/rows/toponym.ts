@@ -3,7 +3,7 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   The hard-case board's TOPONYM-REGISTER rows — inputs whose difficulty is the NAME rather than the shape.
+ *   The hard-case board's toponym-register rows — inputs whose difficulty is the name rather than the shape.
  *
  *   The four classes here are the ways one surface can mean several places, ordered by what decides:
  *
@@ -386,7 +386,7 @@ export const TOPONYM_ROWS: Curated[] = [
 	// A toponym in street-head position. The bias must not pull it to locality.
 	// #1142's measured failure mode: real gazetteer importance dragged the leading token of a comma-free
 	// street into `locality` ("Sweeney Ranch Road" → loc "Sweeney"), costing US golden 22 points. These rows
-	// are where a bigger bias is DANGEROUS, so they are the arm comparison's cost side.
+	// are where a bigger bias is dangerous, so they are the arm comparison's cost side.
 	{
 		id: "us-shc-sweeney-ranch-road",
 		input: "1000 Sweeney Ranch Road Half Moon Bay CA",

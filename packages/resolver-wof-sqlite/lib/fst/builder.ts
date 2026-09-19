@@ -97,7 +97,7 @@ export async function buildFSTFromWOF(opts: BuildFSTOpts): Promise<{
 
 	// Fallback for a sentinel parent_id (-1, -4, …): the ancestors table. Read in chunked `IN (…)`
 	// batches once — the point-query version fired per orphan row, and on a global build the orphans
-	// run to six figures. Ordering is county → region → country, preserved by the same CASE the
+	// run to six figures. Ordering is county → region → country, preserved by the same case the
 	// per-row query used, with `id` leading so one pass groups the rows.
 	const ancestorsByID = new Map<number, number[]>()
 
@@ -243,7 +243,7 @@ export async function buildFSTFromWOF(opts: BuildFSTOpts): Promise<{
 		return false
 	}
 
-	// Surface-ambiguity classes (survey #4): a per-SURFACE fact, so the entry is cloned per insertion
+	// Surface-ambiguity classes (survey #4): a per-surface fact, so the entry is cloned per insertion
 	// with its accepting surface's count attached (the same place under "nyc" and "new york city"
 	// records each surface's own ambiguity). Absent map → entries carry no count (back-compat bytes).
 	const surfaceCountryCounts = opts.surfaceCountryCounts
@@ -337,7 +337,7 @@ export async function buildFSTFromWOF(opts: BuildFSTOpts): Promise<{
 	const matcher = FSTMatcher.fromNodes(nodes)
 
 	// The build stamp (2026-08-05). `sourceDB` alone was never enough to tell a reader whether this
-	// artifact matches the database at that path — the admin DB is sealed and REPLACED by a rebuild, so
+	// artifact matches the database at that path — the admin DB is sealed and replaced by a rebuild, so
 	// the path is constant across every generation of it. Hashing costs 7.3 s for the 5.27 GB admin DB
 	// and is free whenever the `.md5` sidecar is current, which the admin build already writes.
 	// `sourceIdentity` lets a caller that already knows the digest (or is building from something that

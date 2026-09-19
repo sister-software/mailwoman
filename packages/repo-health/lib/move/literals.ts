@@ -2,11 +2,11 @@
  * @copyright Sister Software
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
- * @file The third thing a move invalidates: a repo-relative path written as TEXT.
+ * @file The third thing a move invalidates: a repo-relative path written as text.
  *
  *   A specifier is checked by the compiler and a manifest target by `manifest-targets`. A path inside a hook command,
  *   a Vale glob, a workflow step or a docstring's `Usage:` line is checked by nothing — it is read at runtime by
- *   something that treats absence as a NEGATIVE ANSWER rather than an error, which is why `AGENTS.md` prescribes a
+ *   something that treats absence as a negative answer rather than an error, which is why `agents.md` prescribes a
  *   sweep for quoted workspace paths after every move. This module is that sweep, done by the operation that caused
  *   the problem.
  *
@@ -68,7 +68,7 @@ const SOURCE_ROOT = /\/(lib|src)\//u
 const SOURCE_EXTENSION = /\.tsx?$/u
 
 /**
- * The EMITTED paths a set of source moves implies, as a move of its own.
+ * The emitted paths a set of source moves implies, as a move of its own.
  *
  * A test spawns `packages/mailwoman/out/cli/index.js`, a workflow runs one, a docstring names one. None of those is the
  * source path, so a sweep over source paths alone leaves them naming an output `tsc` no longer produces — and `tsc -b`

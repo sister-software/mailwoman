@@ -1,5 +1,5 @@
 {
-	"contract": { "max_units": 96, "max_unit_width": 7, "ctx_chars": 3, "pad_id": 0, "unk_id": 1 },
+	"interface": { "max_units": 96, "max_unit_width": 7, "ctx_chars": 3, "pad_id": 0, "unk_id": 1 },
 	"vocab": {
 		"<pad>": 0,
 		"<unk>": 1,

@@ -9,12 +9,12 @@
  *   the storage adapter ({@link FSTMatcher} → `AncestrieReaderLike`) and the mapping back to
  *   mailwoman's suggestion shape (name, placetype, referential/encyclopedic, WOF ids).
  *
- *   THE BYTES DO NOT MIGRATE. The shipped artifacts are `FST\0` v1–v5 (`fst-serialize.ts`), not
- *   ancestrie's `ANCT`: ancestrie entries are id-keyed with one record per id, while an FST place row
- *   is per-(surface, place) — `crossCountryBranches` is a property of the SURFACE, so the same wofID
+ *   the bytes do not migrate. The shipped artifacts are `FST\0` v1–v5 (`fst-serialize.ts`), not
+ *   ancestrie's `anct`: ancestrie entries are id-keyed with one record per id, while an FST place row
+ *   is per-(surface, place) — `crossCountryBranches` is a property of the surface, so the same wofID
  *   legitimately carries different values under different aliases and cannot be represented id-keyed.
  *   The matcher, both deserializers, and the serializer therefore stay here. what migrated is the
- *   ALGORITHM, which is the half that drifts (the #861 share-the-function rule).
+ *   algorithm, which is the half that drifts (the #861 share-the-function rule).
  */
 
 import type {
@@ -41,7 +41,7 @@ export interface AutocompleteSuggestion {
 	name: string
 	placetype: string
 	/**
-	 * The REFERENTIAL likelihood the suggestion is ranked by (ROAD_TO_V9 §2). Autocomplete answers "which place does the
+	 * The referential likelihood the suggestion is ranked by (ROAD_TO_V9 §2). Autocomplete answers "which place does the
 	 * user mean", so it ranks referentially like everything else. encyclopedic importance rides along on
 	 * {@link AutocompleteSuggestion.encyclopedic} for display and never enters the order.
 	 */
@@ -74,8 +74,8 @@ export interface AutocompleteOpts {
 const PER_BRANCH = 4
 
 /**
- * The top-`k` entries by REFERENTIAL likelihood (descending). Avoids sorting/allocating when `entries` is small — and
- * that shortcut is part of the observable contract: at or under `k` the INSERTION order is served, which decides
+ * The top-`k` entries by referential likelihood (descending). Avoids sorting/allocating when `entries` is small — and
+ * that shortcut is part of the observable interface: at or under `k` the insertion order is served, which decides
  * suggestion order among referential ties.
  */
 function topByReferential(entries: readonly PlaceEntry[], k: number): PlaceEntry[] {
@@ -149,7 +149,7 @@ export function autocomplete(fst: FSTMatcher, query: string, opts: AutocompleteO
 		...(opts.maxSuggestions === undefined ? {} : { maxSuggestions: opts.maxSuggestions }),
 		...(opts.maxExpansionDepth === undefined ? {} : { maxExpansionDepth: opts.maxExpansionDepth }),
 		perBranchLimit: PER_BRANCH,
-		// The dedupe key is the DISPLAY name rather than the token path: two surfaces of one name must still collapse. (#587)
+		// The dedupe key is the display name rather than the token path: two surfaces of one name must still collapse. (#587)
 		...(opts.dedupeByName ? { dedupe: (s: AncestrieSuggestion<PlaceEntry>) => s.payload!.name.toLowerCase() } : {}),
 	})
 

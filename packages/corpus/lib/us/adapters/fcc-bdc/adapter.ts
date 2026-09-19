@@ -8,7 +8,7 @@
  *   The first member of Phase 1.6's "adversarial sources" class. BDC ships the public-domain US
  *   broadband-serviceable-location (BSL) fabric: ~120M addresses keyed by stable `location_id`,
  *   carrying `address_primary` + `city` + `state` + `zip` + `zip_suffix`. Compared to the clean
- *   gazetteer rows from WOF / TIGER / BAN, BDC carries the chaos of address data that has passed
+ *   gazetteer rows from WOF / tiger / BAN, BDC carries the chaos of address data that has passed
  *   through several layers of human entry + automated geocoding + revision: abbreviation drift,
  *   inconsistent unit designators, "RR" / "HC" / "PSC" rural-route shapes, embedded apartment /
  *   suite numbers that did not survive the address parser cleanly. This is the highest-signal,
@@ -19,7 +19,7 @@
  *   host-side pipeline. The mailwoman side does not download or parse the raw CSV/ZIP distribution
  *   directly — that keeps the adapter narrow and the BDC ingest pluggable.
  *
- *   The SQLite schema is documented in README.md and modeled after `NTIARecord`
+ *   The SQLite schema is documented in readme.md and modeled after `NTIARecord`
  *   (`isp-nexus/fcc/bdc/data-collection.ts`): one row per `location_id`. The adapter splits
  *   `address_primary` into `house_number` (leading numeric prefix, if any) + `street` (everything
  *   after), and combines `zip` + `zip_suffix` into the canonical USPS `postcode` slot.

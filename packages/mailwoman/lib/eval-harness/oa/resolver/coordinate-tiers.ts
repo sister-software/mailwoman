@@ -13,7 +13,7 @@ import type { OAResolverEvalOptions } from "#eval-harness/oa/resolver/options"
 import type { RegionDatabaseProvider } from "#geocode/regions"
 
 /**
- * The postcode database reader the anchor extractor probes — the WOF postcode lookup's structural contract, named here
+ * The postcode database reader the anchor extractor probes — the WOF postcode lookup's structural interface, named here
  * so the eval never has to import the SQLite class it only ever holds by reference.
  */
 export interface PostcodeCentroidLookup extends Disposable {
@@ -28,20 +28,20 @@ export type ExtractPostcodeAnchors = typeof import("@mailwoman/neural/postcode")
 /**
  * Wire up the coordinate tiers this run grades, from the flags that select them.
  *
- * Each tier answers WHERE, never WHICH PLACE: every `neural+<tier>` arm keeps neural's admin match and replaces only
+ * Each tier answers where, never which place: every `neural+<tier>` arm keeps neural's admin match and replaces only
  * the coordinate, so the delta between arms isolates exactly what the tier sharpens. `--cascade` supersedes the
  * single-state `--address-points`/`--interpolation` flags with per-row, per-state database selection through a
  * RegionDatabaseProvider.
  */
 export async function buildCoordinateTiers(options: OAResolverEvalOptions) {
 	// Postcode-anchor fusion (opt-in via `--postcode-anchor`). The resolver supplies the admin/place
-	// identity, but its coordinate is the place CENTROID — legitimately tens of km from edge addresses.
+	// identity, but its coordinate is the place centroid — legitimately tens of km from edge addresses.
 	// The postcode anchor supplies the postcode's own centroid, the finer tier between admin-centroid and
-	// street. The `neural+anchor` row keeps neural's admin match but takes the COORDINATE from the anchor
+	// street. The `neural+anchor` row keeps neural's admin match but takes the coordinate from the anchor
 	// when it has a placed candidate for the eval's country, else falls back to the resolver coord. So the
 	// row isolates exactly what the anchor sharpens: where rather than which place.
 	// `--address-points <db>` (#476): the street-level exact-point tier. Adds `addressPoints` to
-	// resolveOpts. the `neural+addrpt` row keeps neural's admin flags but takes the COORDINATE from
+	// resolveOpts. the `neural+addrpt` row keeps neural's admin flags but takes the coordinate from
 	// the address-point hit when present (the tier's whole contribution is "where", street-level).
 	const addressPointsDB = options.addressPoints || ""
 	let addressPoints: AddressPointLookup | null = null
@@ -52,7 +52,7 @@ export async function buildCoordinateTiers(options: OAResolverEvalOptions) {
 	}
 
 	// `--interpolation <segments-db>` (#483): the house-number interpolation tier (StreetInterpolator,
-	// tiger-range). Adds `interpolation` to resolveOpts. the `neural+interp` row takes the COORDINATE
+	// tiger-range). Adds `interpolation` to resolveOpts. the `neural+interp` row takes the coordinate
 	// from the exact point when present, else the interpolated estimate, else the admin centroid — the
 	// full street-level coordinate cascade. The delta vs `neural+addrpt` is interpolation's lift on the
 	// long tail of valid-but-unlisted numbers the exact tier misses.
@@ -64,7 +64,7 @@ export async function buildCoordinateTiers(options: OAResolverEvalOptions) {
 		interpolation = new StreetInterpolator({ dbPath: interpolationDB })
 	}
 
-	// `--cascade` (#718 situs-eval): grade the PRODUCTION coordinate path (mailwoman/geocode-core.ts) —
+	// `--cascade` (#718 situs-eval): grade the production coordinate path (mailwoman/geocode-core.ts) —
 	// per-row, per-state situs + interpolation databases via RegionDatabaseProvider — so the eval reports the shipped
 	// coordinate (address_point > interpolated > admin) across all states rather than the admin centroid the
 	// neural headline alone reports. The diagnostic that motivated this: the headline read 3.3 km p50 /
@@ -146,7 +146,7 @@ export function anchorCoordinateFor(input: string, sources: AnchorSources): { la
 
 	if (!postcodeLookup || !extractAnchors) return null
 	const prefer = (preferCountry && preferCountry.toLowerCase() !== "none" ? preferCountry : "").toUpperCase()
-	// Pick the placed span with the HIGHEST position-aware confidence, above the trust floor. The
+	// Pick the placed span with the highest position-aware confidence, above the trust floor. The
 	// anchor down-weights a digit-only code that shares its segment with a street word (`12345 Main
 	// St` reads as a house number rather than a postcode), so a real trailing postcode (`… City, ST 90210`)
 	// out-ranks an earlier house number on its own merit — no "take the last span" crutch needed.

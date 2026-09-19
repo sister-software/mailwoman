@@ -116,7 +116,7 @@ body:
         2. Why did that stage choose the wrong value?
         3. Why did its input or rule permit that choice?
         4. Why did the test or pipeline fail to catch the condition?
-        5. Why does the system contract allow the condition?
+        5. Why does the system interface allow the condition?
   - type: checkboxes
     id: checks
     attributes:

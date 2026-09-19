@@ -11,7 +11,7 @@
  * child would render nothing and exit on EOF. `script` supplies one — `-e` returns the child's exit code, and `stty`
  * inside the command sets a window size, since a pty created without a controlling terminal reports 0x0.
  *
- * The bin is run from SOURCE rather than `out/cli.js` so the suite carries no dependency on a prior `yarn compile`;
+ * The bin is run from source rather than `out/cli.js` so the suite carries no dependency on a prior `yarn compile`;
  * Node runs the `.ts` entry directly, which is the same thing the repo's other source-first tooling relies on.
  */
 
@@ -32,7 +32,7 @@ const BRAILLE_PATTERN = /[⠀-⣿]/u
 
 /**
  * The status bar's coordinate/zoom field, which doubles as the ready signal — its first appearance means a frame has
- * been rendered and raw mode is on, so keystrokes will land.
+ * been rendered and raw mode is on. Therefore, keystrokes will land.
  */
 const STATUS_PATTERN = /-?\d+\.\d{4},-?\d+\.\d{4} z\d+/g
 
@@ -194,7 +194,7 @@ describe.skipIf(!HAS_LINUX_SCRIPT)("map-tui bin (pty)", () => {
 	it(
 		"restores the terminal and exits 130 on Ctrl+C",
 		async () => {
-			// Raw mode means no SIGINT is raised: the app sees the byte and owns the exit code itself.
+			// Raw mode means no sigint is raised: the app sees the byte and owns the exit code itself.
 			const { output, code } = await driveMap(["\u0003"])
 
 			expect(code).toBe(130)

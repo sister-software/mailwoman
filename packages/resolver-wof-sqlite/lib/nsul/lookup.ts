@@ -3,25 +3,25 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Node reader for `nsul.db` — the GB UPRN → unit-postcode register (`nsul/schema.ts`). Two probes,
+ *   Node reader for `nsul.db` — the GB uprn → unit-postcode register (`nsul/schema.ts`). Two probes,
  *   both synchronous `.prepare()` hits in the `uprn/lookup.ts` style:
  *
- *   - **`postcodeForUPRN(uprn)`**: primary-key hit on the `WITHOUT ROWID` table.
- *   - **`uprnsForPostcode(postcode)`**: the `pcds_compact` index, answering every UPRN the register
+ *   - **`postcodeForUPRN(uprn)`**: primary-key hit on the `without rowid` table.
+ *   - **`uprnsForPostcode(postcode)`**: the `pcds_compact` index, answering every uprn the register
  *     assigns to one unit postcode with the point OS publishes for each — the "assigned points and
  *     their bound" the physical-constraint design record names as the prior's soft structure.
  *
  *   ## `null` and `[]` are claims, scoped by coverage
  *
- *   The register designates GB complete (every UPRN in AddressBase with a Code-Point Open postcode),
+ *   The register designates GB complete (every uprn in AddressBase with a Code-Point Open postcode),
  *   and the builder writes `layer_coverage` with basis `designated` for every cell the register
- *   touches. Inside a covered cell an empty answer is evidence of absence: no GB UPRN by that number
- *   carries a Code-Point postcode, or no UPRN carries that postcode. Two absences the reader cannot
- *   tell from those are recorded in `nsul_meta` as counts rather than as rows — a UPRN whose `PCDS` is
- *   null (its postcode is not in Code-Point Open) and one Open UPRN publishes no coordinate for — so a
+ *   touches. Inside a covered cell an empty answer is evidence of absence: no GB uprn by that number
+ *   carries a Code-Point postcode, or no uprn carries that postcode. Two absences the reader cannot
+ *   tell from those are recorded in `nsul_meta` as counts rather than as rows — a uprn whose `pcds` is
+ *   null (its postcode is not in Code-Point Open) and one Open uprn publishes no coordinate for — so a
  *   caller building negative evidence reads the coverage table and those counts rather than this reader
  *   alone. Outside coverage (Northern Ireland, the Isle of Man, the Channel Islands) the answer is
- *   UNKNOWN, per the meaning-of-zero rule.
+ *   unknown, per the meaning-of-zero rule.
  */
 
 import { DatabaseClient } from "@mailwoman/sqlite/client"
@@ -30,11 +30,11 @@ import { compactPostcode, type NSULDatabase } from "#nsul/schema"
 import { prepareAll, prepareGet } from "#sqlite-utils"
 
 /**
- * The unit postcode the register assigns to a UPRN, in both stored forms.
+ * The unit postcode the register assigns to a uprn, in both stored forms.
  */
 export interface NSULPostcode {
 	/**
-	 * As NSUL writes it — `RG40 4HR`.
+	 * As nsul writes it — `RG40 4HR`.
 	 */
 	pcds: string
 	/**
@@ -44,7 +44,7 @@ export interface NSULPostcode {
 }
 
 /**
- * One UPRN assigned to a unit postcode, with the point `uprn.db` holds for it.
+ * One uprn assigned to a unit postcode, with the point `uprn.db` holds for it.
  */
 export interface NSULAssignedPoint {
 	uprn: number
@@ -125,7 +125,7 @@ export class NSULLookup implements Disposable {
 	}
 
 	/**
-	 * Every UPRN the register assigns to one unit postcode, with its published point, in ascending UPRN order. The key is
+	 * Every uprn the register assigns to one unit postcode, with its published point, in ascending uprn order. The key is
 	 * compacted through {@link compactPostcode} first, so `PO21 1HR` and `PO211HR` answer identically. An empty array is
 	 * the register's answer, scoped as the module docstring says.
 	 */

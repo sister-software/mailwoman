@@ -3,8 +3,8 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Country homograph scorer — the TRUE baseline for the model-first country change. Measures
- *   country/region/locality P/R/F1 (unfolded `decodeAsJSON`) on the hard homograph eval, PLUS the
+ *   Country homograph scorer — the true baseline for the model-first country change. Measures
+ *   country/region/locality P/R/F1 (unfolded `decodeAsJSON`) on the hard homograph eval, plus the
  *   over-fire confusion: how often a gold region/locality span is mistagged as `country` (the
  *   "trailing token = country" failure), and how often gold country is missed.
  *
@@ -39,7 +39,7 @@ export interface ScoreCountryHomographOptions {
 	 */
 	model?: string
 	/**
-	 * Eval JSONL. Default `data/eval/external/country-homograph-real.jsonl`.
+	 * Eval jsonl. Default `data/eval/external/country-homograph-real.jsonl`.
 	 */
 	file?: string
 	/**
@@ -49,7 +49,7 @@ export interface ScoreCountryHomographOptions {
 	 */
 	gazetteerLexicon?: string
 	/**
-	 * Write the machine-readable sidecar here — the contract the check verdict reads.
+	 * Write the machine-readable sidecar here — the interface the check verdict reads.
 	 */
 	json?: string
 	/**
@@ -66,7 +66,7 @@ export interface ScoreCountryHomographOptions {
 	 */
 	suppressGazNearPostcode?: boolean
 	/**
-	 * PACKAGE-SHAPED (#718-safe): `<root>` loads model + tokenizer + card + ALL soft channels (anchor + gazetteer +
+	 * Package-shaped (#718-safe): `<root>` loads model + tokenizer + card + all soft channels (anchor + gazetteer +
 	 * country) from the package via `loadFromWeights` — the only in-distribution grade for a country-channel model
 	 * (v6.2.0+), which is exactly what this country probe must feed. Precedence over
 	 * {@linkcode ScoreCountryHomographOptions.model}.

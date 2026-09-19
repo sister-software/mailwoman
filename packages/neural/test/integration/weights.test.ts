@@ -29,14 +29,14 @@
  *   - The placetype-pair-prior block is the arc's end-to-end smoke: en-gb resolves
  *       `pairIndexPath`, `loadFromWeights` constructs a country-restricted `PairIndexResolver` default, and a
  *       real GB dependent_locality address parses with the tag applied. A companion case proves the
- *       prior is INERT on en-us (no sibling shipped) against the identical GB-shaped input.
- *   - MARGIN DISCIPLINE in that same "placetype-pair prior" describe block: a single argmax flip on
+ *       prior is inert on en-us (no sibling shipped) against the identical GB-shaped input.
+ *   - margin discipline in that same "placetype-pair prior" describe block: a single argmax flip on
  *       `GB_DEPENDENT_LOCALITY_ADDRESS` is not a safe thing to assert, because its measured margin at the
  *       shipped δ=6.0 is only ~0.211 logits — any future recalibration of that delta flips the assertion
  *       for reasons having nothing to do with wiring correctness. So the block runs in three tiers: (a)
- *       WIRING assertions (pairIndexPath resolves; `applied` true/false) stay on the knife-edge address and
+ *       wiring assertions (pairIndexPath resolves; `applied` true/false) stay on the knife-edge address and
  *       are margin-independent by construction — `applied` reports whether the prior fired rather than whether it
- *       won; (b) a bias-DELTA assertion compares the biased trace against a same-input trace with the
+ *       won; (b) a bias-delta assertion compares the biased trace against a same-input trace with the
  *       prior forced off (a no-match `PairIndexLike` stub passed via `opts.placetypePair`), so the measured
  *       delta at the child token isolates the prior's own contribution — margin-independent, and provable
  *       without ever touching the model's own unbiased preference; (c) exactly one flip assertion, on
@@ -120,7 +120,7 @@ const PPD_SOURCE_CSV_PATH = dataRootPath("ppd", "2026-07-22", "gb-tuples.csv")
 const havePPDSource = await pathExists(String(PPD_SOURCE_CSV_PATH))
 
 // The en-nz auto-resolve test's link-dev-weights run shells out to `gazetteer pair-index` to build
-// pair-index-nz.bin from the LINZ-derived OpenAddresses NZ countrywide CSV (see that script's
+// pair-index-nz.bin from the linz-derived OpenAddresses NZ countrywide CSV (see that script's
 // header) — same on-disk precondition shape as the GB PPD source above.
 const NZ_SOURCE_CSV_PATH = dataRootPath("openaddresses", "extracted", "nz", "countrywide.csv")
 const haveNZSource = await pathExists(String(NZ_SOURCE_CSV_PATH))
@@ -128,27 +128,27 @@ const haveNZSource = await pathExists(String(NZ_SOURCE_CSV_PATH))
 // Every test that shells out to a link-dev-weights.ts needs this, for two different cold-start
 // costs. en-gb builds pair-index-gb.bin from the ~25.6M-row PPD tuples CSV — several minutes. en-us
 // verifies its pair-index against the 5.2 GB admin-global-priority.db, and with no `.md5` sidecar
-// yet that is a full hash of the file. Both are FIRST-run costs (each script has a skip-if-current
+// yet that is a full hash of the file. Both are first-run costs (each script has a skip-if-current
 // fast path), and both are far past vitest's 15s global default. Generous rather than a perf target.
 const LINK_SCRIPT_TIMEOUT_MS = 600_000
 
 /**
- * A real GB address whose middle place ("Fishburn") is a verified PROBE OK (child, parent) pair in the shipped
+ * A real GB address whose middle place ("Fishburn") is a verified probe OK (child, parent) pair in the shipped
  * `pair-index-gb.bin` ("Fishburn" / "Stockton-on-Tees" → dependent_locality). Deliberately house-number-less: with a
  * leading house number ("14 Beulah Hill, …") the base model's own B-locality logit for "Fishburn" is confident enough
  * (raw gap ~6.9) that the +6.0 pair-index delta narrows but does not flip it — this phrasing's unbiased margin is
  * narrow enough for the prior to decide it, which is exactly what an end-to-end smoke should demonstrate.
  *
- * KNIFE-EDGE, KEPT ON PURPOSE: measured post-bias margin at δ=6.0 is only ~0.211 logits (biased B-dependent_locality
+ * Knife-edge, kept on purpose: measured post-bias margin at δ=6.0 is only ~0.211 logits (biased B-dependent_locality
  * 4.592 vs runner-up B-locality 4.380 at the "Fish" piece) — too thin to condition an argmax-flip assertion on (see
- * `GB_WIDE_MARGIN_ADDRESS` for that). Still used for the WIRING assertions below (`pairIndexPath` resolves, `applied`
- * true/false) and the bias-DELTA assertion, both margin-independent.
+ * `GB_WIDE_MARGIN_ADDRESS` for that). Still used for the wiring assertions below (`pairIndexPath` resolves, `applied`
+ * true/false) and the bias-delta assertion, both margin-independent.
  */
 const GB_DEPENDENT_LOCALITY_ADDRESS = "Beulah Hill, Fishburn, Stockton-on-Tees, TS21 3AB"
 
 /**
- * A real GB (child, parent) pair — "Holland Fen" / "Lincoln", HM Land Registry PPD `CITY`/`DISTRICT` — chosen for the
- * WIDEST post-bias margin found by probing the rung-3 census (`scratchpad/gb-probe-grade/census-gb-pairs.jsonl`, 19,431
+ * A real GB (child, parent) pair — "Holland Fen" / "Lincoln", HM Land Registry PPD `city`/`district` — chosen for the
+ * widest post-bias margin found by probing the rung-3 census (`scratchpad/gb-probe-grade/census-gb-pairs.jsonl`, 19,431
  * real pairs) against the shipped `pair-index-gb.bin` (δ=6.0). Method: every pair rendered as `"{Child}, {Parent}"`,
  * `traceParse`d, and scored by (biased B-dependent_locality emission at the child's first piece) − (runner-up label's
  * emission at that same piece) — i.e. the post-bias argmax margin. Top results (comma form unless noted):
@@ -165,7 +165,7 @@ const GB_DEPENDENT_LOCALITY_ADDRESS = "Beulah Hill, Fishburn, Stockton-on-Tees, 
  * | —    | Sedgefield / Stockton-on-Tees     | −1.128 | B-locality (no flip) |
  *
  * "Holland" alone is a country-name confound ("Holland" = Netherlands) — the runner-up label at rank 1/2/6 above is
- * `B-country`/`I-country` rather than `B-locality`; the comma-LESS form scored higher than the comma form for both
+ * `B-country`/`I-country` rather than `B-locality`; the comma-less form scored higher than the comma form for both
  * Holland pairs, so this const drops the comma deliberately. A margin of ~3.5 survives a δ recalibration down to ~3
  * before the flip could invert (post-bias margin at a lower δ' is `margin_at_6.0 − (6.0 − δ')`).
  */
@@ -173,7 +173,7 @@ const GB_WIDE_MARGIN_ADDRESS = "Holland Fen Lincoln"
 
 /**
  * Locate the first tokenizer piece belonging to `word` (case-insensitive prefix match on the piece with its `▁`
- * word-start marker stripped) — used to index into `trace.emissions`/`trace.logits` for the bias-DELTA assertion.
+ * word-start marker stripped) — used to index into `trace.emissions`/`trace.logits` for the bias-delta assertion.
  */
 function findChildPieceIndex(pieces: ReadonlyArray<{ piece: string }>, word: string): number {
 	const needle = word.slice(0, 4).toLowerCase()
@@ -215,7 +215,7 @@ describe("NeuralAddressClassifier.loadFromWeights — explicit-path mode", () =>
 })
 
 describe("resolveWeights — package auto-resolve", () => {
-	// FST-distribution arc (2026-07-25): the per-locale FST gazetteer resolves as a PATH sibling
+	// FST-distribution arc (2026-07-25): the per-locale FST gazetteer resolves as a path sibling
 	// (`fst-<locale>.bin`) — neural exposes it verbatim (`classifier.fstPath`); the mailwoman runtime
 	// pipeline deserializes + auto-wires it from there. A package without the sibling (en-nz) leaves
 	// fstPath undefined — byte-stable.
@@ -236,7 +236,7 @@ describe("resolveWeights — package auto-resolve", () => {
 			ensureDevWeightsLinked("en-us")
 
 			const r = await resolveWeights({ locale: "en-us" })
-			// WHICH RUNG answered is an environment fact rather than the contract. The dev linkers materialize into
+			// which rung answered is an environment fact rather than the interface. The dev linkers materialize into
 			// $MAILWOMAN_DATA_ROOT/weights/<locale>/, so a checkout resolves `overlay:`; a consumer with the npm
 			// package installed resolves `package:`; a `--download-weights` install resolves `cache:`. Pinning one
 			// of them asserts how this machine happens to be set up.
@@ -253,7 +253,7 @@ describe("resolveWeights — package auto-resolve", () => {
 	// #1177 base-overlay dedup, en-gb form: model/tokenizer resolve from the en-us base
 	// (mailwoman.baseWeights) while the overlay's own card + pair index resolve locally.
 	//
-	// The anchor assertion is INVERTED as of 2026-08-05 (#1467) and that inversion is the point of the
+	// The anchor assertion is inverted as of 2026-08-05 (#1467) and that inversion is the point of the
 	// test. This case used to assert `anchorLookupPath` pointed at a local `postcode-gb.bin`. It now
 	// asserts the opposite, because the encoder's GB anchor slot (slot 4 of LOCALE_ORDER) never received
 	// training gradient — every recipe fed the same US/DE/FR-only pilot lookup — so shipping GB anchors
@@ -262,9 +262,9 @@ describe("resolveWeights — package auto-resolve", () => {
 	//
 	// So this assertion is a regression check rather than a description: the failure it exists to catch is someone
 	// re-adding postcode-gb.bin — to `files`, to release.config.json's postcodeDBByCountry, to the
-	// publish workflow's fetch list, or by hand into the package dir — WITHOUT the retrain that feeds
+	// publish workflow's fetch list, or by hand into the package dir — without the retrain that feeds
 	// slot 4. That change produces no error and no warning on its own. it just quietly makes GB worse.
-	// 9.0.0 (ROAD_TO_V9 A4): the GB anchor slot is TRAINED (v4.2.0 base, Fisher receipts in the
+	// 9.0.0 (ROAD_TO_V9 A4): the GB anchor slot is trained (v4.2.0 base, Fisher receipts in the
 	// en-gb card) and postcode-gb.bin is back — the card declares span_mode "shaped" and the dev
 	// linker builds the bin off that card check. The #1467 "has no anchor lookup" posture this test
 	// pinned from 2026-08-05 lives on in the card's gb_artifacts history.
@@ -274,7 +274,7 @@ describe("resolveWeights — package auto-resolve", () => {
 			ensureDevWeightsLinked("en-us", "en-gb")
 
 			const r = await resolveWeights({ locale: "en-gb" })
-			// `+base` is exercised hermetically below. here the point is that en-gb RESOLVES.
+			// `+base` is exercised hermetically below. here the point is that en-gb resolves.
 			expect(r.source).toMatch(/^(package|overlay):/)
 			expect(r.modelPath).toMatch(/\/model\.onnx$/)
 			expect(r.tokenizerPath).toMatch(/\/tokenizer\.model$/)
@@ -282,7 +282,7 @@ describe("resolveWeights — package auto-resolve", () => {
 			expect(r.anchorLookupPath?.path).toMatch(/\/postcode-gb\.bin$/)
 			// Overlay-local card (6.7.0): en-gb ships its own model-card.json (a verbatim copy of the
 			// base's labels/requires apart from the deliberate conventions + anchor deviations — see that
-			// file's header comment), so `resolveFromPackageDir` resolves it LOCALLY instead of falling
+			// file's header comment), so `resolveFromPackageDir` resolves it locally instead of falling
 			// through to the en-us base card. The label vocab is byte-identical either way (STAGE3+, 33
 			// labels), so `assertEmissionWidth` never trips.
 			expect(r.modelCardPath).toMatch(/\/model-card\.json$/)
@@ -294,18 +294,18 @@ describe("resolveWeights — package auto-resolve", () => {
 		LINK_SCRIPT_TIMEOUT_MS
 	)
 
-	// The packaging half of the same regression check. The assertion above reads the RESOLVER's answer, which is
-	// derived from the package DIRECTORY. this one reads the package MANIFEST. They can disagree — a
+	// The packaging half of the same regression check. The assertion above reads the resolver's answer, which is
+	// derived from the package directory. this one reads the package manifest. They can disagree — a
 	// tarball ships what `files` names, a dev worktree resolves what is on disk — and each failure mode
 	// has its own repair, so neither assertion substitutes for the other.
-	// Restated 2026-08-06 (ROAD_TO_V9 §1 A4) as a COUPLING rather than a bare absence. #1467's rule was
+	// Restated 2026-08-06 (ROAD_TO_V9 §1 A4) as a coupling rather than a bare absence. #1467's rule was
 	// "en-gb ships no postcode binary", which was right for a model whose GB anchor slot took no
 	// gradient — but it is a rule with an expiry date, and a flat `not.toContain` gives the promotion
 	// no way to satisfy it except by deletion. The durable invariant underneath is the pairing: the
-	// binary's unit keys are only REACHABLE when the card declares `span_mode: "shaped"`, so the two
+	// binary's unit keys are only reachable when the card declares `span_mode: "shaped"`, so the two
 	// must move together. Ship the bin under a non-shaped card and every GB parse feeds an untrained
 	// input direction (the measured 24-postcode regression); declare shaped without the bin and the
-	// channel is simply off. Each half is checkable, and neither alone is the contract.
+	// channel is simply off. Each half is checkable, and neither alone is the interface.
 	test("neural-weights-en-gb names a postcode binary in `files` IFF its card declares span_mode shaped", async () => {
 		const manifest = await readPackageJSON(workspacePath("neural-weights-en-gb", "package.json"))
 
@@ -342,7 +342,7 @@ describe("resolveWeights — package auto-resolve", () => {
 			expect(r.tokenizerPath).toMatch(/\/tokenizer\.model$/)
 			// The documented gap, pinned: no postcode-nz.bin ships, so the anchor sibling must not
 			// resolve (loadFromWeights then warns once and runs with the anchor channel off — the
-			// tolerant-loader contract rather than a crash).
+			// tolerant-loader interface rather than a crash).
 			expect(r.anchorLookupPath).toBeUndefined()
 			expect(r.modelCardPath).toMatch(/\/model-card\.json$/)
 			expect(r.pairIndexPath).toMatch(/\/pair-index-nz\.bin$/)
@@ -370,9 +370,9 @@ describe("resolveWeights — package auto-resolve", () => {
 // produces no bias when the package ships no sibling index — the prior degrades to byte-stable rather than to
 // a crash or a silent wrong-country apply.
 //
-// Margin discipline (see the module docstring's MARGIN DISCIPLINE bullet): the wiring assertions
+// Margin discipline (see the module docstring's margin discipline bullet): the wiring assertions
 // below never depend on the model's own margin — `applied` reports whether the prior fired, and the
-// bias-DELTA assertion measures the prior's own contribution against a same-input, prior-forced-off trace.
+// bias-delta assertion measures the prior's own contribution against a same-input, prior-forced-off trace.
 // Only the last test in this block asserts an argmax flip, and it uses `GB_WIDE_MARGIN_ADDRESS` (margin
 // ~3.5) rather than the knife-edge `GB_DEPENDENT_LOCALITY_ADDRESS` (margin ~0.211).
 describe("NeuralAddressClassifier.loadFromWeights — placetype-pair prior (smoke)", () => {
@@ -385,7 +385,7 @@ describe("NeuralAddressClassifier.loadFromWeights — placetype-pair prior (smok
 			expect(r.pairIndexPath).toMatch(/\/pair-index-gb\.bin$/)
 
 			// Probe the built artifact directly first (per the brief) — establishes that
-			// ("fishburn", "stocktonontees") is genuinely a `PROBE OK` pair in this build before trusting
+			// ("fishburn", "stocktonontees") is genuinely a `probe OK` pair in this build before trusting
 			// the end-to-end parse below to prove anything about the wiring.
 			const resolver = new PairIndexResolver(new Uint8Array(await readLocalBuffer(r.pairIndexPath!)))
 			expect(resolver.header.country).toBe("gb")
@@ -394,7 +394,7 @@ describe("NeuralAddressClassifier.loadFromWeights — placetype-pair prior (smok
 			const cls = await NeuralAddressClassifier.loadFromWeights({ locale: "en-gb" })
 			const trace = await cls.traceParse(GB_DEPENDENT_LOCALITY_ADDRESS)
 			const placetypePairRecord = trace.priors.find((p) => p.kind === "placetypePair")
-			// `applied` reports EFFECT (a nonzero bias was composed) rather than argmax victory — true regardless
+			// `applied` reports effect (a nonzero bias was composed) rather than argmax victory — true regardless
 			// of whether the base model's own preference was thin enough for the bias to flip the decode.
 			expect(placetypePairRecord?.applied).toBe(true)
 		},
@@ -435,10 +435,10 @@ describe("NeuralAddressClassifier.loadFromWeights — placetype-pair prior (smok
 		LINK_SCRIPT_TIMEOUT_MS
 	)
 
-	// The typed disable (`ParseOpts.placetypePair: false`) — the real "turn an AUTO-WIRED config
+	// The typed disable (`ParseOpts.placetypePair: false`) — the real "turn an auto-wired config
 	// default off for one call" mechanism, and distinct from the `NO_MATCH_PAIR_INDEX` stub above in
 	// that it is a disable signal type-checkable as one. See
-	// `placetype-pair-prior.ts`'s module docstring ("Disable semantics") for the three-case contract this
+	// `placetype-pair-prior.ts`'s module docstring ("Disable semantics") for the three-case interface this
 	// pins the middle case of: a config default is auto-wired here (en-gb), so `false` is doing real work rather than just matching an already-inert default.
 	test.skipIf(!haveModel || !haveCLI || !havePPDSource)(
 		"en-gb: explicit `placetypePair: false` disables the auto-wired config default for one call (trace applied:false)",
@@ -476,14 +476,14 @@ describe("NeuralAddressClassifier.loadFromWeights — placetype-pair prior (smok
 
 			const r = await resolveWeights({ locale: "en-gb" })
 			const resolver = new PairIndexResolver(new Uint8Array(await readLocalBuffer(r.pairIndexPath!)))
-			// Setup precondition: confirm the pair is genuinely PROBE OK in this build before
+			// Setup precondition: confirm the pair is genuinely probe OK in this build before
 			// trusting the parse below to prove anything about the flip. "Holland Fen" is folded to a
-			// SPACE-preserved token ("holland fen") rather than concatenated — see pair-index-resolver.ts's header
+			// space-preserved token ("holland fen") rather than concatenated — see pair-index-resolver.ts's header
 			// doc on how normalizeFSTToken folds interior whitespace.
 			expect(resolver.probe("holland fen", "lincoln")?.tag).toBe("dependent_locality")
 
-			// GB_WIDE_MARGIN_ADDRESS is deliberately comma-LESS (see its docstring — the comma form scored
-			// LOWER for this exact pair). The prior defaults to `probeMode: "segment"`, under which a
+			// GB_WIDE_MARGIN_ADDRESS is deliberately comma-less (see its docstring — the comma form scored
+			// lower for this exact pair). The prior defaults to `probeMode: "segment"`, under which a
 			// comma-free three-word input is one inert segment — no bias, no flip. This is the window-mode
 			// sub-window behavior on purpose, so `probeMode: "window"` (the opt-in mode) is passed
 			// explicitly, reusing the same real resolver already probed above as the per-parse override.
@@ -498,20 +498,20 @@ describe("NeuralAddressClassifier.loadFromWeights — placetype-pair prior (smok
 		LINK_SCRIPT_TIMEOUT_MS
 	)
 
-	// TRANSITION-BETA characterization (operator-approved build 2026-07-24): a real comma-free GB register
+	// transition-beta characterization (operator-approved build 2026-07-24): a real comma-free GB register
 	// row from the probe's 17-row fused-path population. Measured against the model 7.0.0 from-scratch base
 	// (both legs per row against scratchpad/en-nz-ship-verify/transition-probe-rows.json), 15 of the 17
-	// rows self-recover BETA-LESS — including Hedon and Ashby Parva, which never recovered at any β on the
+	// rows self-recover beta-less — including Hedon and Ashby Parva, which never recovered at any β on the
 	// fine-tune lineage. Glenfield (margin 3.10) was the pinned discriminator on that base.
 	//
-	// STALENESS TRAP, and it has bitten this test before: the pin is graded against a LOCALLY BUILT index,
+	// staleness trap, and it has bitten this test before: the pin is graded against a locally built index,
 	// so a stale artifact keeps the test green while the row it names has quietly started self-recovering
 	// beta-less ("Upton"/"Bude" did exactly that). `link-dev-weights.ts`'s freshness guard therefore
 	// compares every entry of `sourceMD5s` rather than just `[0]` — checking the CSV alone leaves it blind to a
 	// new source joining the index (a borough DB, a checked-in London pair set) — and the CI cache key has
 	// to track the same set. A pass here is only as trustworthy as the artifact's freshness.
 	//
-	// THE CONTRAST RETIRED AT THE 9.1.0 RELEASE (2026-08-11): under the v4.4.0 suffix-boundary base, the
+	// the contrast retired AT the 9.1.0 release (2026-08-11): under the v4.4.0 suffix-boundary base, the
 	// discriminator population is empty as far as a fresh 191-pair PPD sweep can see — 190/191 rows
 	// recover the dependent locality in both legs (Glenfield included), 0 rows need β, 0 rows regress
 	// with β on, 1 row misses in both. There is no row to move the pin to, so the beta-less leg now
@@ -520,14 +520,14 @@ describe("NeuralAddressClassifier.loadFromWeights — placetype-pair prior (smok
 	// beta-less assertion below — re-run the sweep (both legs over PPD five-field rows whose pair
 	// probes to dependent_locality) and re-pin a discriminator the way Glenfield once was.
 	test.skipIf(!haveModel || !haveCLI || !havePPDSource)(
-		"en-gb: the transitionBeta=5 artifact carries its header contract; the comma-free fused-path row recovers in both legs (TRANSITION-BETA)",
+		"en-gb: the transitionBeta=5 artifact carries its header interface; the comma-free fused-path row recovers in both legs (TRANSITION-BETA)",
 		async () => {
 			ensureDevWeightsLinked("en-us", "en-gb")
 
 			const r = await resolveWeights({ locale: "en-gb" })
 			const resolver = new PairIndexResolver(new Uint8Array(await readLocalBuffer(r.pairIndexPath!)))
 
-			// The rebuild artifact's header contract: delta stays 10, transitionBeta 5 (the link script's
+			// The rebuild artifact's header interface: delta stays 10, transitionBeta 5 (the link script's
 			// PAIR_INDEX_TRANSITION_BETA lockstep guard rebuilds a stale binary before this line can see it).
 			expect(resolver.header.delta).toBe(10)
 			expect(resolver.header.transitionBeta).toBe(5)
@@ -559,7 +559,7 @@ describe("NeuralAddressClassifier.loadFromWeights — placetype-pair prior (smok
 		"en-us: ships its OWN us-conditional pair index — a GB-shaped input still applies NO placetype-pair bias",
 		async () => {
 			// en-us ships `pair-index-us.bin` (49,033 WOF-sourced pairs), so the property worth protecting is not the
-			// packaging fact that no sibling exists — it does exist — but that the index is still INERT on GB input.
+			// packaging fact that no sibling exists — it does exist — but that the index is still inert on GB input.
 			// Two independent things keep it inert — the header's hard country restriction, and the plain fact that US pairs
 			// don't contain GB place names (measured: the US index misses all five GB canonical pairs).
 			ensureDevWeightsLinked("en-us")
@@ -575,8 +575,8 @@ describe("NeuralAddressClassifier.loadFromWeights — placetype-pair prior (smok
 	)
 })
 
-// The hard country restriction's WARN branch (classifier.ts loadFromWeights): a pair-index sibling whose
-// PIX1 header country disagrees with the resolved locale's country is a PACKAGING error — the eval
+// The hard country restriction's warn branch (classifier.ts loadFromWeights): a pair-index sibling whose
+// PIX1 header country disagrees with the resolved locale's country is a packaging error — the eval
 // must warn + skip the prior default, and the load must still succeed (skip-not-throw). Unreachable
 // through a correctly-built package (resolvePairIndexSibling matches on the locale's own country
 // code), so the test manufactures the mispackaging: a cacheRoot package layout whose
@@ -589,7 +589,7 @@ describe("loadFromWeights — pair-index country check (warn branch)", () => {
 			// into a temp cacheRoot layout via symlinks (cacheDir = <cacheRoot>/node_modules/<pkg>).
 			ensureDevWeightsLinked("en-us")
 
-			// ASK THE RESOLVER where the artifacts are. This used to name the workspace directory, which held
+			// ASK the resolver where the artifacts are. This used to name the workspace directory, which held
 			// them only while the dev linkers materialized into the tracked package. they now land in the
 			// data-root overlay, and a fixture mirroring an empty directory produces a cache with no binaries —
 			// so the resolve under test silently answers from somewhere else and the eval never fires.
@@ -601,11 +601,11 @@ describe("loadFromWeights — pair-index country check (warn branch)", () => {
 			for await (const entry of Globerator.from("*", { cwd: packageDir, absolute: false })) {
 				const source = join(packageDir, entry)
 
-				// Never symlink the artifact this test is about to overwrite. `writeFileSync` FOLLOWS a symlink, so
+				// Never symlink the artifact this test is about to overwrite. `writeFileSync` follows a symlink, so
 				// once en-us started shipping a real `pair-index-us.bin` (campaign R5), symlinking it here would have
 				// clobbered the 49,033-pair production binary with the 1-entry stub below — silently, since the test
 				// still passes and every later test in the run would grade against the corrupted file. Same
-				// write-through-the-symlink hazard AGENTS.md documents for `fs.copyFile` in the publish path.
+				// write-through-the-symlink hazard agents.md documents for `fs.copyFile` in the publish path.
 				if ((await isFile(source)) && entry !== "pair-index-us.bin") {
 					await createSymbolicLink(source, join(fakePackageDir, entry))
 				}
@@ -629,7 +629,7 @@ describe("loadFromWeights — pair-index country check (warn branch)", () => {
 			const warnSpy = vi.spyOn(console, "warn").mockImplementation(() => {})
 
 			try {
-				// The sibling RESOLVES (filename matches the locale's country) — the eval is downstream.
+				// The sibling resolves (filename matches the locale's country) — the eval is downstream.
 				const r = await resolveWeights({ locale: "en-us", cacheRoot })
 				expect(r.pairIndexPath).toMatch(/pair-index-us\.bin$/)
 

@@ -3,13 +3,13 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   An input that tokenizes past the model's fixed sequence length must PARSE rather than throw.
+ *   An input that tokenizes past the model's fixed sequence length must parse rather than throw.
  *
  *   `ONNXRunner.infer` truncates to `fixedSeqLen` and trims `logits` to what it ran; `pieces` must
  *   follow, or every lockstep consumer (`logits[i]` in the token build, `emissions[pi]` in
  *   `enforceWordConsistency`) indexes past the end.
  *
- *   The limit is reachable by ORDINARY input — 128 pieces is roughly 330 characters — so the fixtures
+ *   The limit is reachable by ordinary input — 128 pieces is roughly 330 characters — so the fixtures
  *   grow a real address by repetition rather than using a synthetic blob, and both sides of the
  *   boundary are asserted. A throw here reaches the drop-in servers as a 500 on a well-formed query,
  *   which is why the raw and healed paths are both covered: they failed with different messages, and

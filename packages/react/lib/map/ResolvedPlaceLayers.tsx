@@ -10,7 +10,7 @@
  *
  *   `spec = null` (no result / no candidate) renders nothing, which also unmounts the previous marker +
  *   outline — the teardown the old effect did by hand (`markerRef.remove()`, `clearBbox`) is now just
- *   React unmounting. NODE-IMPORT SAFETY: pulls the map components — `@mailwoman/react/map` only.
+ *   React unmounting. node-import safety: pulls the map components — `@mailwoman/react/map` only.
  */
 
 import type { ReactNode } from "react"

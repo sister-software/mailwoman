@@ -93,7 +93,7 @@ export function loadClassifierPair(args: TwoModelArgs): Promise<[NeuralAddressCl
 }
 
 /**
- * The first `n` rows of a golden JSONL.
+ * The first `n` rows of a golden jsonl.
  */
 export async function loadGoldenRows(path: string, n: number): Promise<GoldenRow[]> {
 	return JSONSpliterator.fromAsync<GoldenRow>(path).take(n).toArray()

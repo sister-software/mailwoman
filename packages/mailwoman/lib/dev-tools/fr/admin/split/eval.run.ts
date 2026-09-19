@@ -3,15 +3,15 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Fr-admin-split-eval.ts — the LIVE eval for the v1.8.0 international admin-split candidate (night
+ *   Fr-admin-split-eval.ts — the live eval for the v1.8.0 international admin-split candidate (night
  *   2026-06-19). Runs the production ship-config parse (createScorer: anchor + gazetteer +
- *   conventions=auto) → resolve (createWOFResolver, defaultCountry FR) → coordinate on the HELD-OUT
+ *   conventions=auto) → resolve (createWOFResolver, defaultCountry FR) → coordinate on the held-OUT
  *   FR golden set (disjoint communes, with truth coords), and reports the metrics that decide the
  *   promote: assembled centroid error, resolve-rate, région-emit-rate, and the #727 diacritic
  *   break.
  *
- *   Grade the ASSEMBLED anchor-ON coordinate, never label-F1. Run for v1.5.0 (baseline) and the
- *   v1.8.0 candidate. promote iff the candidate's mean centroid error ≤ 0.95× v1.5.0 AND the US
+ *   Grade the assembled anchor-on coordinate, never label-F1. Run for v1.5.0 (baseline) and the
+ *   v1.8.0 candidate. promote iff the candidate's mean centroid error ≤ 0.95× v1.5.0 and the US
  *   guardrail (separate oa-resolver-eval run) holds.
  *
  *   Run: node packages/mailwoman/lib/dev-tools/fr/admin/split/eval.run.ts\
@@ -74,8 +74,8 @@ const stringArgs = rawStringArgs as {
 }
 
 /**
- * CONVENTION EPOCH 2026-07-04 (#945, operator-promoted): the DEFAULT scoring coordinate is the one production's
- * result-assembly ladder picks — LOCALITY over postcode (geocode-core `adminPriority`). The harness historically scored
+ * Convention epoch 2026-07-04 (#945, operator-promoted): the default scoring coordinate is the one production's
+ * result-assembly ladder picks — locality over postcode (geocode-core `adminPriority`). The harness historically scored
  * the postcode point (rank 6 > 5), which measured a non-production preference and hid a 1.5 km-class FR gap for weeks.
  * All dumps before this epoch are postcode-convention: never compare across conventions (the tokenizer-F1 rule,
  * coordinate edition). `--prefer-postcode-coord` reproduces the old convention for continuity runs only.
@@ -83,7 +83,7 @@ const stringArgs = rawStringArgs as {
  * Do not "align" this table to `PLACETYPE_SPECIFICITY`. That scale ranks `postalcode` above `locality`, which is the
  * preference this convention exists to reject, and swapping it in reinstates the measurement that hid the FR gap.
  *
- * The deeper mismatch is that production has no single ranking to copy: `geocode-core`'s `adminPriority` SWITCHES per
+ * The deeper mismatch is that production has no single ranking to copy: `geocode-core`'s `adminPriority` switches per
  * row, leading with `postcode` only when `isUnitGradePostcodeHit` says the code is street-block-class (a GB unit
  * postcode, an NL PC6) and with `locality` otherwise. This table is the second arm, flattened — right for the FR rows
  * it grades and wrong for a GB unit-postcode row, which it will never see.
@@ -110,7 +110,7 @@ const PLACETYPE_RANK: Record<string, number> = {
 const POSTCODE_CONVENTION_RANK: Record<string, number> = { ...PLACETYPE_RANK, postalcode: 6, locality: 5 }
 
 /**
- * Deliberately LOCAL rather than tree-hits' `mostSpecific`, which delegates to the production conditional ladder
+ * Deliberately local rather than tree-hits' `mostSpecific`, which delegates to the production conditional ladder
  * (`mostSpecificResolved`): this eval grades on the flat #945 convention tables above — see the `PLACETYPE_RANK`
  * docstring for why migrating needs a panel count first.
  */
@@ -185,7 +185,7 @@ async function main() {
 			// (e.g. `--hard-country-safelist HU`). Measures a proposed safelist expansion without touching
 			// the production const — the p90 of a cross-border-tail country should collapse if it's added.
 			"hard-country-safelist": { type: "string" },
-			// Convention epoch 2026-07-04: locality-first is the DEFAULT (production's ladder). This flag
+			// Convention epoch 2026-07-04: locality-first is the default (production's ladder). This flag
 			// reproduces the pre-epoch postcode-point convention for continuity against old dumps only.
 			"prefer-postcode-coord": { type: "boolean" },
 			// Pre-epoch spelling — accepted so in-flight scripts don't silently change convention. it is
@@ -208,7 +208,7 @@ async function main() {
 	const normalizeCasePin = tri("normalize-case", "raw-case")
 	const postcodeConsistencyPin = pins["postcode-consistency"] === true ? true : undefined
 	const postalCompoundPin = tri("postal-compound-recovery", "no-postal-compound-recovery")
-	// `--default-country none` = truly UNSCOPED resolution (no country prior at all) — the #936
+	// `--default-country none` = truly unscoped resolution (no country prior at all) — the #936
 	// namesake legs need it. an empty string would still be a (falsy, ambiguous) country value.
 	const defaultCountryArg = stringArgs["default-country"] || "FR"
 
@@ -342,7 +342,7 @@ async function main() {
 		coord_mean_km: +(mean(errs) ?? Number.NaN).toFixed(2),
 		coord_p50_km: +(percentile(errs, 50) ?? Number.NaN).toFixed(2),
 		coord_p90_km: +(percentile(errs, 90) ?? Number.NaN).toFixed(2),
-		// RESOLVED-ONLY coordinate: the quality WHERE the address resolves, separated from the
+		// resolved-only coordinate: the quality where the address resolves, separated from the
 		// unresolved penalty (which pins to FR_CENTROID and is meaningless for non-FR locales).
 		coord_p50_resolved_km: resolvedErrs.length ? +(percentile(resolvedErrs, 50) ?? Number.NaN).toFixed(2) : null,
 		coord_p90_resolved_km: resolvedErrs.length ? +(percentile(resolvedErrs, 90) ?? Number.NaN).toFixed(2) : null,

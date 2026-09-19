@@ -5,16 +5,16 @@
  *
  *   The design tokens every consumer of `@mailwoman/react` reads. This file is the source of record; `tokens.css` is
  *   its compiled output and is generated, never hand-edited. `styleframe dtcg export` publishes the same values as
- *   W3C DTCG JSON for Figma and any other tool — DTCG is the interchange format here rather than the input, because
+ *   W3C dtcg JSON for Figma and any other tool — dtcg is the interchange format here rather than the input, because
  *   `styleframe dtcg import` is a one-shot code generator rather than a build step.
  *
- *   THREE LAYERS, and a component rule may read only the middle one. Primitives are raw values with no opinion about
+ *   three layers, and a component rule may read only the middle one. Primitives are raw values with no opinion about
  *   use. semantics say what a value is FOR. the few component tokens exist where a component needs a name of its own.
  *   `styles.css` reading raw primitives is the defect this file replaces: it read 22 Infima names it did not own, and
- *   eight of them were undefined in production, so those rules silently took Infima's LIGHT fallbacks inside a dark
+ *   eight of them were undefined in production, so those rules silently took Infima's light fallbacks inside a dark
  *   app.
  *
- *   THEMES. Light is the docs site. dark is the three map apps, which set `data-theme="dark"` on `<html>` themselves.
+ *   themes. Light is the docs site. dark is the three map apps, which set `data-theme="dark"` on `<html>` themselves.
  *   Every semantic token is defined in both, so a value can never resolve to nothing.
  */
 
@@ -47,7 +47,7 @@ const brandAmber = variable("brand-amber", "hsl(39deg 100% 50%)")
 const brandTeal = variable("brand-teal", "hsl(97.78deg 100% 50%)")
 
 /**
- * Neutrals in OKLCH so the lightness steps are perceptually even rather than even in sRGB, where a mid-grey reads
+ * Neutrals in oklch so the lightness steps are perceptually even rather than even in sRGB, where a mid-grey reads
  * darker than its number. One hue for the whole ramp keeps chrome from drifting warm at one end and cool at the other.
  */
 const neutral0 = variable("neutral-0", "oklch(100% 0 264)")
@@ -124,7 +124,7 @@ const fontWeightSemibold = variable("font-weight-semibold", "600")
 //#region Shape and motion
 
 /**
- * SPACING IS A SCALE rather than a guess.
+ * Spacing is A scale rather than a guess.
  *
  * The stylesheet had 19 distinct padding/margin/gap values across 171 declarations — 0.05rem, 0.35rem, 0.65rem, 1.1rem
  * — each picked by eye at the moment it was written and none of them relatable to any other. A tail of near-misses like

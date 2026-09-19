@@ -28,7 +28,7 @@ const localePattern = /^[a-z]{2}(-[A-Z]{2})?$/u
 const debugSizePattern = /^\d+x\d+$/u
 
 /**
- * Native geocode CLI contract. detailed help and parsing are both derived from this value.
+ * Native geocode CLI interface. detailed help and parsing are both derived from this value.
  */
 export const spec = {
 	name: "geocode",

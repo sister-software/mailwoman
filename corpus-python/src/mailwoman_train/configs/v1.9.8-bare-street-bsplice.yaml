@@ -1,20 +1,20 @@
 # === v1.9.8-bare-street-bsplice (#901 run 1 — the fr-bare-street source on the shipped spliced base) ===
-# NIGHT-31 (2026-07-02, $30 cap). Restores the v4.16.0-demo-only fr-bare-street capability that the v5.1.0
+# night-31 (2026-07-02, $30 cap). Restores the v4.16.0-demo-only fr-bare-street capability that the v5.1.0
 # repoint traded away — now trained on the spliced vocab so it ships in the main line. One variable vs the
-# shipped v5.1.0 model: the synth-fr-bare-street source (the corpus + weights below are v1.9.4 VERBATIM,
+# shipped v5.1.0 model: the synth-fr-bare-street source (the corpus + weights below are v1.9.4 verbatim,
 # which is v1.9.3a3 + that one source).
 #
-# CASE-AUG DELIBERATELY EXCLUDED (schedule adjustment vs the night plan): v1.9.6-surface-aug-full was
-# SHELVED 2026-06-30 (#261) — the metamorphic layer introduced 2 casing/whitespace regressions, and the
-# deterministic fix (#834 normalize + #895 normalizeCase default-ON, landed 2026-07-02) covers the gap.
+# case-AUG deliberately excluded (schedule adjustment vs the night plan): v1.9.6-surface-aug-full was
+# shelved 2026-06-30 (#261) — the metamorphic layer introduced 2 casing/whitespace regressions, and the
+# deterministic fix (#834 normalize + #895 normalizeCase default-on, landed 2026-07-02) covers the gap.
 # Revisit only with a recipe that clears the metamorphic check. not tonight rather than as a second variable.
 #
-# INIT: init_from /data/models/bsplice-expanded (the v5.1.0 surgery export: v1.9.3a3 weights + 10,582
-# mean-init rows). resume is IMPOSSIBLE here — the export carries no optimizer state and the old moments
+# init: init_from /data/models/bsplice-expanded (the v5.1.0 surgery export: v1.9.3a3 weights + 10,582
+# mean-init rows). resume is impossible here — the export carries no optimizer state and the old moments
 # would not match the expanded embedding shape. the skill's resume-rule presumes a resumable ckpt. The
 # v1.9.7 fine-tune block is the precedented idiom (fresh optimizer, lr 5e-5, warmup 200, constant).
 #
-# SEQUENCE: PROBE = 2k steps (this file as-is). Probe check (pre-registered, check-v193/RESULTS.md):
+# sequence: probe = 2k steps (this file as-is). Probe check (pre-registered, check-v193/results.md):
 # fr-parse-recall.ts bare-FR street-intact rate rises from the shipped-pair baseline and US quick
 # samples hold. Early-kill @1k on non-decreasing loss. On a pass, resume this run's step-002000 ckpt with
 # max_steps bumped to 12000 (the +10k full-run precedent from v1.9.4). Full check = the night plan table.
@@ -22,32 +22,32 @@
 #
 # --- v1.9.4 header (the source's rationale) kept below for the record ---
 # === v1.9.4-fr-bare-street (#251/#148 — teach the FR street→locality boundary without a postcode anchor) ===
-# FULL RUN (probe GREEN: 2k-step step-082000 gave bare-FR street-intact 89→92%, demo "Rue du Chevaleret,
+# full RUN (probe green: 2k-step step-082000 gave bare-FR street-intact 89→92%, demo "Rue du Chevaleret,
 # Paris" fixed, US 4/4 tag-identical → imbalance confirmed rather than modeling deficit). Continue from the probe's
 # step-082000 (--resume auto) to step-092000 (+10k); eval every 2k → check each checkpoint (US per-tag floors)
 # and ship the FR-up/US-held sweet spot. Same single variable (the fr-bare-street source) — clean attribution.
-# v1.9.3a3 (shipped v4.16.x) is verbatim below EXCEPT: corpus_dir → the v0.9.4 overlay, and one new
+# v1.9.3a3 (shipped v4.16.x) is verbatim below except: corpus_dir → the v0.9.4 overlay, and one new
 # source_weight (synth-fr-bare-street). Everything else — model, anchor knobs, class_weights, country_weights,
-# the other source_weights, LR/schedule — is identical to v193a3, so the SINGLE variable is the new source
+# the other source_weights, LR/schedule — is identical to v193a3, so the single variable is the new source
 # (clean attribution).
 #
-# ROOT MECHANISM (DeepSeek Pro 019f1097 + libpostal's own documented practice, both independent): every
-# comprehensive FR source (BAN, OSM) is postcode-COMPLETE, so the decoder learned the FR street→locality
+# root mechanism (DeepSeek Pro 019f1097 + libpostal's own documented practice, both independent): every
+# comprehensive FR source (BAN, OSM) is postcode-complete, so the decoder learned the FR street→locality
 # boundary as "the token after the 5-digit postcode," never as "comma + city." Strip the postcode and proper-
 # noun street tokens leak into the following locality ("Rue René Cassin, Paris" → street="Rue Ren",
 # locality="Cassin"). Measured: 90% FR streets intact, a ~10% bare-no-postcode tail that owns the demo
-# address. Not data absence (BAN is in the corpus) — postcode-anchoring DISTRIBUTION imbalance.
+# address. Not data absence (BAN is in the corpus) — postcode-anchoring distribution imbalance.
 #
-# THE CHANGE (one variable): the synth-fr-bare-street recipe output — 10.8k real BAN (street, number, city) tuples
-# rendered as the MISSING distribution: bare comma form "<n> Rue <proper-noun name>, <City>", no postcode.
+# the change (one variable): the synth-fr-bare-street recipe output — 10.8k real BAN (street, number, city) tuples
+# rendered as the missing distribution: bare comma form "<n> Rue <proper-noun name>, <City>", no postcode.
 # BAN-sourced (Licence Ouverte / permissive) on purpose — the model must stay clean of the ODbL OSM data
 # (that is quarantined to the opt-in rooftop sources). Weight 6.0 = the targeted-fix precedent
 # (synth-german / synth-fr-admin-split / gnaf all 6.0).
 #
-# CHECK (the probe — falsifies coverage-imbalance vs modeling-deficit, per DeepSeek): re-run
-# scripts/diagnostic/fr-parse-recall.ts (bare FR street-intact rate, target the 90%→tail) AND US/intl
-# no-regression (the per-tag floors). MOVES → imbalance confirmed → scale to a full run within the $20 cap.
-# FLAT → modeling deficit (comma-boundary feature / decoder), a different fix. conventions-loss-mask is OFF
+# check (the probe — falsifies coverage-imbalance vs modeling-deficit, per DeepSeek): re-run
+# scripts/diagnostic/fr-parse-recall.ts (bare FR street-intact rate, target the 90%→tail) and US/intl
+# no-regression (the per-tag floors). moves → imbalance confirmed → scale to a full run within the $20 cap.
+# flat → modeling deficit (comma-boundary feature / decoder), a different fix. conventions-loss-mask is off
 # in this lineage already (v193a3), and FR street_prefix is taught by synth-fr-admin-split today, so the
 # v1.6.0 ~7M-loss mask blow-up does not apply here. Not promoted without operator GO + the check.
 # Launch: cd corpus-python && modal run -d -m launch.train_remote --config v1.9.4-fr-bare-street.yaml --resume auto
@@ -89,7 +89,7 @@ data:
     usgov-hrsa-fqhc: 2.0
     usgov-imls-pls: 2.0
     usgov-nad: 1.0
-    state-ia-contractors: 2.0
+    state-ia-builders: 2.0
     state-tx-notaries: 1.5
     state-ny-notaries: 2.0
     deepseek-kryptonite: 3.0
@@ -104,7 +104,7 @@ data:
     overture: 3.0
     gnaf: 6.0
     synth-anchor-absorption: 6.0
-    # #251 NEW: the bare-no-postcode FR street source. 6.0 = targeted-fix precedent.
+    # #251 new: the bare-no-postcode FR street source. 6.0 = targeted-fix precedent.
     synth-fr-bare-street: 6.0
   train_rows_per_epoch: 1000000
   val_rows: 4096
@@ -185,7 +185,7 @@ train: # v1.9.7 init_from idiom (fresh optimizer over the surgery export); data 
   weight_decay: 0.01
   warmup_steps: 200
   grad_clip_norm: 1.0
-  # FULL RUN: --resume auto picks the probe's step-082000 (latest in output_dir); max_steps 92000 → +10k.
+  # full RUN: --resume auto picks the probe's step-082000 (latest in output_dir); max_steps 92000 → +10k.
   # Constant LR 1.5e-4. anchor-dropout curriculum at full strength. Eval every 2k → check 84/86/88/90/92k and
   # ship the best (FR street-intact up, US floors held).
   max_steps: 12000

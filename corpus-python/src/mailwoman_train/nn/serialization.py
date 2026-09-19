@@ -1,6 +1,6 @@
 """Writing an encoder checkpoint and reading one back.
 
-The config dict is the compatibility contract. Every channel and head added since v0.2.0 is a
+The config dict is the compatibility interface. Every channel and head added since v0.2.0 is a
 flag here, written on save and read with a default on load, so an older checkpoint rebuilds with
 the behaviour it was trained under rather than with today's defaults. A flag that is written and
 not read — or read and not written — silently changes what a resumed run computes, which is why
@@ -76,7 +76,7 @@ def to_config_dict(model: MailwomanCoarseEncoder) -> dict[str, Any]:
         "street_type_feature_dim": int(getattr(model, "street_type_feature_dim", 0)),
         "use_locality_surface_anchor": bool(getattr(model, "use_locality_surface_anchor", False)),
         "locality_surface_feature_dim": int(getattr(model, "locality_surface_feature_dim", 0)),
-        # #1104 homograph-guard scale — MUST serialize so export/reload rebuild with the same scale
+        # #1104 homograph-guard scale — must serialize so export/reload rebuild with the same scale
         # the checkpoint was trained at (else export defaults to 1.0 and the softening is silently lost).
         "country_ambiguous_scale": float(model.country_ambiguous_scale),
         "use_affix_head": bool(model.use_affix_head),
@@ -199,7 +199,7 @@ def from_pretrained(encoder_class: type[MailwomanCoarseEncoder], model_dir: Path
     model = encoder_class(**_constructor_kwargs(cfg))
     # map_location="cpu": checkpoints are written on an A100, and torch pickles the storage's
     # device. Without this, loading a GPU-trained checkpoint on a CPU-only box raises
-    # "Attempting to deserialize object on a CUDA device" — which is every local grading run
+    # "Attempting to deserialize object on a cuda device" — which is every local grading run
     # (the #727 phase-1 check hit exactly this). CPU is the safe landing spot. callers .to(device).
     # Use weights_only=True if available (torch 2.4+) to avoid pickle-arbitrary-code warning.
     try:

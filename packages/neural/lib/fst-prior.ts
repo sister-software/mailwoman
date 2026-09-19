@@ -11,7 +11,7 @@
  *   semantics.
  *
  *   SentencePiece ↔ FST bridge: SentencePiece pieces are grouped into whitespace words (by the ▁
- *   sentinel), normalized through the same pipeline as FST edges (NFKC, lowercase, strip
+ *   sentinel), normalized through the same pipeline as FST edges (nfkc, lowercase, strip
  *   non-alnum), and walked through the FST as contiguous subpaths.
  *
  *   Uses structural typing for the FST input so this module has zero dependencies on
@@ -41,7 +41,7 @@ const SPACE_SENTINEL = "▁"
 /**
  * A SentencePiece byte-fallback piece (`<0xHH>`) — the vocab's override for a character with no direct token (curly
  * quotes “”‘’, guillemets «», braces {} all hit this even on an otherwise-Latin-script vocab. see `tokenizer.ts`'s doc
- * comment). The placeholder TEXT itself ("<0x7B>") contains hex digits and letters that `/[\p{L}\p{N}]/u` would misread
+ * comment). The placeholder text itself ("<0x7B>") contains hex digits and letters that `/[\p{L}\p{N}]/u` would misread
  * as real alnum content — without this guard, a byte-fallback piece's placeholder text leaks into `fstToken` as garbage
  * ("0x7bblock" instead of "block"), silently corrupting the FST/pair-index probe key for any place name written with
  * one of these characters (paired-punctuation audit, `.superpowers/sdd/task-9-audit-report.md`). Matched against the
@@ -72,7 +72,7 @@ export interface FSTPlaceEntryLike {
 	wofID: number
 	placetype: string
 	/**
-	 * REFERENTIAL likelihood in [0, 1] — population-anchored. The only score the decoder bias reads (ROAD_TO_V9 §2,
+	 * Referential likelihood in [0, 1] — population-anchored. The only score the decoder bias reads (ROAD_TO_V9 §2,
 	 * ratified 2026-08-06: "the importance of a knowledge-base article is not the probability that this is the place the
 	 * user means").
 	 *
@@ -103,7 +103,7 @@ export interface FSTMatcherLike {
  * guess.
  *
  * `localadmin` and `neighbourhood` map to `locality` (the C4 census's one attested covering-surface class, #1747):
- * `Biggin Hill, United Kingdom` is accepted by the GB FST as a NEIGHBOURHOOD entry, and dropping it left the covering
+ * `Biggin Hill, United Kingdom` is accepted by the GB FST as a neighbourhood entry, and dropping it left the covering
  * surface with zero bias while the sub-span reading fragmented the parse (`locality: Biggin` + a stranded
  * `street_suffix: Hill`). `localadmin` is WOF's administrative twin of a locality — the resolver's placetype filter
  * groups already treat the pair as one contest class. The bias stays soft (referential-scaled), so a dependent-locality
@@ -150,7 +150,7 @@ export function isStreetShapedSurface(tokens: readonly string[]): boolean {
 		last -= 1
 	}
 
-	// The generic must not be the whole surface: a bare "square" or "street" token is not a street NAME.
+	// The generic must not be the whole surface: a bare "square" or "street" token is not a street name.
 	return last > 0 && STREET_SHAPE_GENERICS.has(tokens[last]!)
 }
 
@@ -310,8 +310,8 @@ export type ImportanceLengthScaleMode = "off" | "suppression" | "both"
  *
  * Washington/Madison/Jackson are simultaneously the highest-importance US place names and the commonest US street
  * names, so a positive locality/region bias must be withheld when the matched span sits in a syntactically
- * street-headed position — conditioned on SYNTAX (street-type adjacency, house-number-left), never on the importance
- * value (`importance²` magnitude sharpening was measured and REJECTED: it re-imports exactly this collision).
+ * street-headed position — conditioned on syntax (street-type adjacency, house-number-left), never on the importance
+ * value (`importance²` magnitude sharpening was measured and rejected: it re-imports exactly this collision).
  * Positive-evidence-only: the check can only scale the positive bias down when street context is present. its absence
  * never penalizes, and a parse with no street context is byte-identical to the unrestricted path.
  *
@@ -453,7 +453,7 @@ export function buildFSTEmissionPriors(
  * concatenating pieces (minus leading ▁), then normalized through the same pipeline the FST builder uses.
  *
  * **The word boundary is `▁` (the SentencePiece space sentinel) — and only `▁`.** The loop carries one piece of state,
- * `current: WordGroup | null` — the word presently being assembled, or `null` when a word is PENDING (nothing is open,
+ * `current: WordGroup | null` — the word presently being assembled, or `null` when a word is pending (nothing is open,
  * and the next real content should start one fresh, whatever piece it arrives on). Three kinds of piece, crossed with
  * that state, is the whole state machine:
  *
@@ -463,11 +463,11 @@ export function buildFSTEmissionPriors(
  * 2. **`▁`-prefixed, no alnum content** (a bare `"▁"` — a lone space tokenized as its own piece with nothing attached — or
  *    a punctuation piece the tokenizer fused with its own leading space): closes whatever `current` holds, same as case
  *    1, but does not open a new word — it also gets its own empty placeholder group (`{ fstToken: "", pieceIndices: [i]
- *    }`, preserving index alignment) and leaves the state PENDING (`current = null`) for whatever piece comes next.
+ *    }`, preserving index alignment) and leaves the state pending (`current = null`) for whatever piece comes next.
  * 3. **Not `▁`-prefixed** (interior to whatever's already true — nothing here is itself a boundary):
  *
  *    - **Alnum** (a SentencePiece subword split, e.g. `"ton"` after `"▁Stock"`): if a word is open (`current` is non-null),
- *      this is an ordinary continuation — appended onto it. If a word is PENDING (`current` is `null` — because the last
+ *      this is an ordinary continuation — appended onto it. If a word is pending (`current` is `null` — because the last
  *      piece was case 2's bare `▁`, or a run of case-3-punctuation with nothing to attach to, or this is the very first
  *      piece), this piece is the actual start of the pending word: nothing else marks the boundary, so it opens `current`
  *      fresh here instead of being dropped. **Opening on a non-`▁` piece is required rather than a nicety**: restrict
@@ -478,8 +478,8 @@ export function buildFSTEmissionPriors(
  *    - **Punctuation-only** (`"-"`, `"'"`, a bare `","`): if a word is open, it's interior punctuation — absorbed into
  *      `current.pieceIndices` (contributing nothing to `fstToken`; `normalizeFSTToken` strips punctuation anyway) but
  *      never resetting it, so the pieces that follow still have a `current` to land on ("Stockton-on-Tees", "Bishop's
- *      Stortford"). If a word is PENDING, this punctuation piece has nothing to attach to either — same empty-placeholder
- *      treatment as case 2 — and the state stays PENDING. the punctuation doesn't consume or clear the pending word, it
+ *      Stortford"). If a word is pending, this punctuation piece has nothing to attach to either — same empty-placeholder
+ *      treatment as case 2 — and the state stays pending. the punctuation doesn't consume or clear the pending word, it
  *      just has nothing of its own to open.
  *
  * The pending state is what keeps `"Stockton , Lancashire"` from fusing "Stockton" and "Lancashire" into one group:
@@ -508,7 +508,7 @@ export function groupPiecesIntoWords(pieces: ReadonlyArray<{ piece: string }>): 
 
 			if (!hasAlnum) {
 				// Case 2: a bare ▁ (or a ▁-fused punctuation piece) — close current, emit its own placeholder, and
-				// leave `current === null` as the PENDING signal for whatever piece follows.
+				// leave `current === null` as the pending signal for whatever piece follows.
 				groups.push({ fstToken: "", pieceIndices: [i] })
 				current = null
 
@@ -530,7 +530,7 @@ export function groupPiecesIntoWords(pieces: ReadonlyArray<{ piece: string }>): 
 			current.pieceIndices.push(i)
 			current.fstToken += p.piece
 		} else {
-			// Case 3, alnum, PENDING (current === null): this piece is the pending word's actual start — it has no
+			// Case 3, alnum, pending (current === null): this piece is the pending word's actual start — it has no
 			// leading ▁ of its own, but nothing else could possibly claim it, so it opens `current` fresh rather than
 			// being dropped. See the docstring's numbered case 3 for the production-tokenizer motivation.
 			current = { fstToken: p.piece, pieceIndices: [i] }
@@ -551,16 +551,16 @@ export function groupPiecesIntoWords(pieces: ReadonlyArray<{ piece: string }>): 
 }
 
 /**
- * Normalize a whitespace word to FST-index form: NFKC → lowercase → strip punctuation and symbols.
+ * Normalize a whitespace word to FST-index form: nfkc → lowercase → strip punctuation and symbols.
  *
- * NFKC (compatibility decomposition + canonical composition) unifies ligatures, superscripts, and other decomposable
+ * Nfkc (compatibility decomposition + canonical composition) unifies ligatures, superscripts, and other decomposable
  * forms. it does not strip diacritics ("Álava" stays "álava", not "alava"). Both the FST builder and this runtime fold
  * use the same pipeline, so any index built from either is consistent — that consistency is the guarantee rather than
  * the specific form (indexed and query surfaces agree on diacritics).
  *
  * The regex `\p{P}\p{S}` strips all Unicode punctuation and symbols (categories P and S), leaving spaces intact — space
  * (U+0020) is Unicode category Zs (separator), not matched by `\p{P}` or `\p{S}`. So this function preserves spaces
- * within the token string ("Stockton on Tees" → "stockton on tees"). The hyphen/space EQUIVALENCE that produces
+ * within the token string ("Stockton on Tees" → "stockton on tees"). The hyphen/space equivalence that produces
  * "stocktonontees" is a property of the caller's split-then-join pipeline in `groupPiecesIntoWords` — each word is
  * normalized separately, then words are joined with no separator.
  */

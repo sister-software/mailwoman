@@ -47,7 +47,7 @@ export interface JobSummary {
  * Cap on captured output per stream.
  *
  * A gauntlet log is tens of kilobytes. this is generous enough that no real run is truncated, and bounded so a runaway
- * child cannot exhaust the server's heap. Truncation is REPORTED in the tail marker rather than silently applied — a
+ * child cannot exhaust the server's heap. Truncation is reported in the tail marker rather than silently applied — a
  * log that quietly lost its end would hide the verdict, which prints last.
  */
 const MAX_CAPTURED_BYTES = 8 * 1024 * 1024
@@ -96,7 +96,7 @@ export class JobRegistry {
 			job.exitCode = code
 			job.child = null
 			// A signalled exit is not a failure verdict — it is a cancellation, and conflating them would let a killed
-			// run read as a graded `FAIL`.
+			// run read as a graded `fail`.
 			job.state = job.state === "cancelled" || signal ? "cancelled" : code === 0 ? "succeeded" : "failed"
 		})
 

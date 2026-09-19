@@ -17,7 +17,7 @@ import type { FeatureCollection, MultiLineString } from "geojson"
 const DEFAULT_STEP_DEGREES = 15
 
 /**
- * Degrees between vertices ALONG each line. A meridian drawn as two points is a straight chord through the sphere under
+ * Degrees between vertices along each line. A meridian drawn as two points is a straight chord through the sphere under
  * a globe projection. it has to be densified to curve. 2° keeps the longest line under 100 vertices.
  */
 /**

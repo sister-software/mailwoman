@@ -6,11 +6,11 @@
  *
  *   Two things the isp-nexus original did not do, both of which matter for a gauntlet-case oracle:
  *
- *     1. **It recorded no accuracy at all.** Every Census match is an interpolation along a TIGER
- *        address range — never a rooftop — so the tier is a CONSTANT here, and stating it is the whole
+ *     1. **It recorded no accuracy at all.** Every Census match is an interpolation along a tiger
+ *        address range — never a rooftop — so the tier is a constant here, and stating it is the whole
  *        point. See {@linkcode CENSUS_RESOLUTION_TIER}.
  *     2. **It never extracted the house number.** `addressComponents` carries the street name split
- *        seven ways but no house number. only the RANGE endpoints (`fromAddress`/`toAddress`) are
+ *        seven ways but no house number. only the range endpoints (`fromAddress`/`toAddress`) are
  *        there. The matched number lives in `matchedAddress` alone, so a Census-sourced address record
  *        came out with a street and no number on it. See {@linkcode HOUSE_NUMBER_PREFIX}.
  */
@@ -25,7 +25,7 @@ import type { CensusAddressComponents, CensusAddressMatch } from "#sdk/census/ty
 /**
  * The tier every Census match carries, without exception.
  *
- * The Census geocoder locates an address by finding the TIGER/Line segment whose address range contains the house
+ * The Census geocoder locates an address by finding the tiger/Line segment whose address range contains the house
  * number and interpolating a position along it — which is what `tigerLine.tigerLineId`, `tigerLine.side` and
  * `addressComponents.fromAddress`/`toAddress` are all evidence of. There is no parcel or structure layer behind it, so
  * it cannot produce a rooftop coordinate even for an address it matches perfectly. `interpolated` is not a hedge here.
@@ -42,7 +42,7 @@ export const CENSUS_RESOLUTION_TIER: ResolutionTier = "interpolated"
  * `@mailwoman/corpus`'s `HOUSE_NUMBER_PREFIX` (`corpus/src/adapter.ts`) is this repo's declared home for the
  * house-number/street split, and it is deliberately not used here. Reaching it means taking a dependency on
  * `@mailwoman/corpus`, which brings `parquet-wasm`, `apache-arrow`, `@mailwoman/ban`, `spliterator` and the rest of the
- * training-corpus pipeline behind it — for one regular expression, into a package whose entire job is to make two HTTP
+ * training-corpus pipeline behind it — for one regular expression, into a package whose entire job is to make two http
  * calls. The dependency is what is wrong rather than the sharing.
  *
  * The shapes also differ. The corpus regex is tuned for US CSV extract rows with hand-entry drift, so it admits a
@@ -70,12 +70,12 @@ function joinParts(...parts: Array<string | undefined>): string | undefined {
  * The mapping, and why each choice:
  *
  * - `street_prefix` ← `preDirection`. The tag means the directional in front of the name, which is exactly this slot.
- *   `preType` deliberately does not land here: `AVENUE` in `Avenue of the Americas` is part of how the street is
+ *   `preType` deliberately does not land here: `avenue` in `Avenue of the Americas` is part of how the street is
  *   written rather than a prefix modifier, and a parser reading that input emits it inside `street`.
  * - `street` ← `preQualifier` + `preType` + `streetName` + `suffixQualifier`. The words that make up the name as written,
  *   in written order.
  * - `street_suffix` ← `suffixType` + `suffixDirection`. mailwoman has no separate suffix-directional tag, and the two are
- *   adjacent and in this order on the envelope (`123 N MAIN ST E` → suffix `ST E`).
+ *   adjacent and in this order on the envelope (`123 N main ST E` → suffix `ST E`).
  * - `street_prefix_particle` is left unset. It exists for grammatical particles (`de la`, `van der`), which US street
  *   names do not carry and the Census geocoder has no slot for.
  */
@@ -144,7 +144,7 @@ export function buildCensusComponents(match: CensusAddressMatch): ComponentDict 
  * Turn one Census `addressMatches` entry into the package's normalized {@linkcode OracleGeocodeResult}.
  *
  * `uncertaintyMeters` is left `null`: the Census geocoder publishes no uncertainty figure, and the honest one for a
- * TIGER interpolation depends on the segment's length and address density, neither of which is in the response.
+ * tiger interpolation depends on the segment's length and address density, neither of which is in the response.
  */
 export function parseCensusAddressMatch<Match extends CensusAddressMatch>(match: Match): OracleGeocodeResult<Match> {
 	const components = buildCensusComponents(match)
@@ -173,7 +173,7 @@ export function parseCensusAddressMatch<Match extends CensusAddressMatch>(match:
 		// `addressMatches` entirely — which is why a caller wanting to know how good one is reads
 		// `raw.tigerLine` and the address range rather than a flag.
 		partialMatch: false,
-		// `tigerLine.tigerLineId` identifies a street SEGMENT rather than a place, so it is not a place ID.
+		// `tigerLine.tigerLineId` identifies a street segment rather than a place, so it is not a place ID.
 		// It stays on `raw`.
 		placeID: null,
 		plusCode: null,

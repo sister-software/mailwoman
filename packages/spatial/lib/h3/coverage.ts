@@ -4,10 +4,10 @@
  * @author Teffen Ellis, et al.
  *
  *   The coverage probe every polygon layer's reader repeats: an index cell's parent at the coverage
- *   resolution, read through the layer contract's shared row mapping.
+ *   resolution, read through the layer interface's shared row mapping.
  *
  *   Not exported from this package's main barrel on purpose — it reaches `@mailwoman/core/layers`, and the
- *   barrel serves browser bundles that must not include the layer contract's Kysely graph. Import it from the
+ *   barrel serves browser bundles that must not include the layer interface's Kysely graph. Import it from the
  *   `@mailwoman/spatial/h3/coverage` subpath.
  */
 
@@ -25,7 +25,7 @@ export interface CoverageRowProbe {
 
 /**
  * The coverage row for `indexCell`'s parent at the coverage resolution, or `undefined` when the cell was never surveyed
- * — which a caller must read as UNKNOWN, never as `{completeness: 0}`.
+ * — which a caller must read as unknown, never as `{completeness: 0}`.
  *
  * The NULL-basis rule lives in the shared mapping: a NULL column is an artifact built before `basis` existed, and it
  * was recording source presence — never a stronger basis than the builder actually had.

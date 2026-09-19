@@ -169,7 +169,7 @@ describe("outsideExpectedCountry — artifact-declared bboxes (survey candidate 
 
 describe("COUNTRY_BBOX covers every shipping locale", () => {
 	test("a locale that ships weights has a box", async () => {
-		// An absent key fails OPEN, so a locale without a box is indistinguishable from one the guard cleared. Read
+		// An absent key fails open, so a locale without a box is indistinguishable from one the guard cleared. Read
 		// from `release.config.json` rather than a list here, so the next locale to ship is covered by this test
 		// instead of passing against a copy of the old set.
 		const config = await readReleaseConfig()

@@ -3,29 +3,29 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   The FROZEN ruler for the first geographic-model semantic-utility probe (#1928), and the arithmetic
+ *   The frozen ruler for the first geographic-model semantic-utility probe (#1928), and the arithmetic
  *   that reads it. Pure — no model, no database, no pipeline — so every refusal and every threshold is
  *   testable without loading an engine.
  *
- *   WHAT A FROZEN RULER IS. `probe-definition.json` states the target rows, the control rows, the
+ *   what A frozen ruler is. `probe-definition.json` states the target rows, the control rows, the
  *   comparator, the metric arithmetic, the measured baseline, and the three decision thresholds. #1929
  *   supplies one semantic observation and re-runs; #1930 reads the two runs against these numbers. None
  *   of them may choose a row or define "better" after a result is visible, so the definition is content-
- *   hashed into `probe-freeze.json` and {@linkcode loadProbeDefinition} REFUSES a definition whose hash
+ *   hashed into `probe-freeze.json` and {@linkcode loadProbeDefinition} refuses a definition whose hash
  *   has moved. The refusal is at load rather than only in CI: a ruler that can be edited between the two arms
  *   measures nothing, and a test that runs an hour later cannot un-measure it.
  *
- *   THE COMPARATOR IS THE BOARD'S OWN. `poi_board_assembled_answer` is {@linkcode gradeCase} from
+ *   the comparator is the board'S own. `poi_board_assembled_answer` is {@linkcode gradeCase} from
  *   `poi-board.ts` — the top result's category id and the nearest returned coordinate, and nothing else.
  *   That is the anti-Pelias commitment applied to this probe: it grades what comes out, never how it was
  *   produced, so a semantic arm cannot pass by reporting that it consulted an affordance.
  *
- *   THE OUTCOME SHAPES ARE POI SHAPES. {@linkcode POI_OUTCOME_SHAPES} is derived from `PipelineResult`'s
+ *   the outcome shapes are POI shapes. {@linkcode POI_OUTCOME_SHAPES} is derived from `PipelineResult`'s
  *   own `path` and `POIIntentOutcome`'s own `type`. It is deliberately not a `DIAGNOSE_SHAPES` value:
  *   that vocabulary describes address-path mechanism states and carries no state for the POI branch, so
  *   borrowing one would name a state this probe never observes.
  *
- *   CONTROLS COME IN TWO GROUPS, AND BOTH DECIDE. `same_category` rows are the venue-noun form of the
+ *   controls come IN two groups, and both decide. `same_category` rows are the venue-noun form of the
  *   same intent, which passes today. they catch a semantic arm that breaks what already works.
  *   `adjacent` rows are a different category at the same anchor and a bare-category abstain. they catch
  *   the opposite failure — an arm that answers `pharmacy` for everything would leave the first group
@@ -92,7 +92,7 @@ export type ProbeComparatorName = (typeof PROBE_COMPARATORS)[number]
 
 /**
  * Grade one row with a registered comparator. Refuses an unregistered name with the name in the message — a comparator
- * silently defaulted to another instrument would report a number nobody could trace to a contract.
+ * silently defaulted to another instrument would report a number nobody could trace to a interface.
  */
 export function gradeWithComparator(
 	comparator: ProbeComparatorName,
@@ -119,7 +119,7 @@ export type ProbeDecision = (typeof PROBE_DECISIONS)[number]
  */
 export interface ProbeTargetRow extends POIBoardFixture {
 	/**
-	 * Where the query FORM is attested. Route (a) commits these rows before the semantic arm exists, so the record has to
+	 * Where the query form is attested. Route (a) commits these rows before the semantic arm exists, so the record has to
 	 * say what the form is not: invented to pass.
 	 */
 	attestedIn: string
@@ -197,11 +197,11 @@ export interface ProbeThresholds {
 	 */
 	minimumPrimaryDelta: number
 	/**
-	 * DIAGNOSTIC-ONLY — the routing numerator must reach this absolute count out of the diagnostic denominator.
+	 * Diagnostic-only — the routing numerator must reach this absolute count out of the diagnostic denominator.
 	 */
 	minimumDiagnosticNumerator: number
 	/**
-	 * DIAGNOSTIC-ONLY — and gain at least this many rows over the frozen baseline.
+	 * Diagnostic-only — and gain at least this many rows over the frozen baseline.
 	 */
 	minimumDiagnosticDelta: number
 	/**
@@ -506,7 +506,7 @@ export interface ProbeCounts {
  * Count one run.
  *
  * A target row that produced no outcome at all still counts against the denominator — the denominators are the
- * REGISTERED row counts, never the rows that happened to answer, so a probe that stops being able to read a row reports
+ * registered row counts, never the rows that happened to answer, so a probe that stops being able to read a row reports
  * a lower rate rather than a smaller board.
  */
 export function computeProbeCounts(
@@ -543,7 +543,7 @@ export interface ProbeVerdict {
  *
  * Order is required. A control regression is checked first and stops under both decisions: a target delta bought by
  * breaking the venue-noun form of the same query is not a result the program can act on. GO is checked before
- * DIAGNOSTIC-ONLY because a row that passes the comparator necessarily reached the POI branch, so the diagnostic
+ * diagnostic-only because a row that passes the comparator necessarily reached the POI branch, so the diagnostic
  * condition holds whenever the primary one does.
  */
 export function decideProbe(definition: SemanticProbeDefinition, counts: ProbeCounts): ProbeVerdict {

@@ -1,6 +1,6 @@
 # cliArguments → node:util parseArgs Normalization Plan
 
-> **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
+> **For agentic workers:** required sub-skill: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
 **Goal:** Eliminate every migratable `cliArguments()` call site in favor of native `node:util` `parseArgs`, leaving exactly one documented edge case (verbatim child-process passthrough), and fix the code smells surfaced during triage.
 
@@ -16,7 +16,7 @@
 - Scripts run directly under `node` (type stripping) — never `npx tsx` in shebangs or usage text (feedback-no-npx-tsx).
 - Tri-state boolean flags use `--x` / `--no-x` (feedback-native-parseargs-for-flags).
 - `parseArgs` facts verified on this Node: string options DO NOT consume a following `-`-prefixed value (`--lon -74` throws; `--lon=-74` works); bare `-74.0` positional throws in strict mode; everything after `--` lands in `positionals`; `multiple: true` collects repeated flags including empty strings.
-- Preserved external contracts: `resolver-wof-sqlite` bin grammars (spawned by `docs/plugins/demo-assets/resolve.ts` incl. `--in ""`), `publish-release-to-hf.ts` flag set incl. retired `--wof-hot` (documented in RELEASING.md), `build-fts-cli.test.ts` `main(argv)` exit-code contract.
+- Preserved external interfaces: `resolver-wof-sqlite` bin grammars (spawned by `docs/plugins/demo-assets/resolve.ts` incl. `--in ""`), `publish-release-to-hf.ts` flag set incl. retired `--wof-hot` (documented in RELEASING.md), `build-fts-cli.test.ts` `main(argv)` exit-code interface.
 - Deliberate KEEP: `corpus-python/scripts/train_with_resume.ts` `EXTRA_ARGS = cliArguments()` — verbatim passthrough to the python trainer; parseArgs cannot collect undeclared flags.
 
 ## Triage ledger (smells found, fixed by task number)

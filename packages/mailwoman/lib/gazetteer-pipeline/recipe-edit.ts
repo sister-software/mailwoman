@@ -5,13 +5,13 @@
  *
  *   Add or remove a country in one of `defaults.ts`'s coverage lists, as a text transformation.
  *
- *   WHY TEXT AND NOT AN AST REWRITE. The lists are `as const` string arrays whose VALUE a codemod could
- *   reproduce exactly and whose COMMENTS it would not. The `IN` entry is five lines recording 189,026
+ *   why text and not an AST rewrite. The lists are `as const` string arrays whose value a codemod could
+ *   reproduce exactly and whose comments it would not. The `IN` entry is five lines recording 189,026
  *   sub-locality nodes at 98.6% conversion, six times the shipped GB pair index, and the instruction to
  *   remove IN from the Overture list in the same change. That prose is the reason the entry is defensible,
  *   and #1015 is what happens when the recipe stops being reviewed like code.
  *
- *   WHY IT REFUSES RATHER THAN GUESSES. Adding is mechanical: a new entry has no prose yet, and sorted
+ *   why IT refuses rather than guesses. Adding is mechanical: a new entry has no prose yet, and sorted
  *   insertion is unambiguous. Removing is not — an entry with a comment block above it cannot be deleted
  *   without deciding what becomes of the measurement, and no rule this module could carry would decide
  *   that correctly. So a commented removal is refused with the lines quoted, and a person moves them.
@@ -82,7 +82,7 @@ const entryPattern = (country: string): RegExp => new RegExp(`^\\s*"${country}",
  * Add a country to a list, in sorted position.
  *
  * Sorted rather than appended because every list is sorted today, and an appended entry reads as an afterthought in a
- * file whose whole purpose is to be reviewed. Adding a country that is already present is a NO-OP reported as such
+ * file whose whole purpose is to be reviewed. Adding a country that is already present is a no-OP reported as such
  * rather than an error: a caller running the same plan twice should get the same tree.
  */
 export function addCountry(source: string, listName: string, country: string): RecipeEditResult {

@@ -3,20 +3,20 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   {@linkcode lazyComponent}'s REJECTION contract. The happy path is covered wherever the deferred component itself
+ *   {@linkcode lazyComponent}'s rejection interface. The happy path is covered wherever the deferred component itself
  *   is (`geocode --debug`); this file exists for the branch that only shows up when an import fails, which is the
  *   branch nothing else would notice was missing.
  *
  *   It runs the wrapper in a subprocess against real Ink, the same posture as `test/benchmark-flag.test.ts`, for one
- *   reason: the contract INCLUDES `process.exit(1)`, and a helper that exits cannot be asserted in-process without
+ *   reason: the interface includes `process.exit(1)`, and a helper that exits cannot be asserted in-process without
  *   stubbing the very thing under test. `node --input-type=module -e` resolves bare specifiers against the cwd, so the
  *   harness reaches the workspace's own `mailwoman/cli-kit` and `ink`.
  *
- *   STDOUT-vs-STDERR is the discriminator that makes these assertions worth anything. An unhandled rejection also
- *   exits 1 and also prints the message — but node's default handler writes it to STDERR. A message on stdout with an
+ *   stdout-vs-stderr is the discriminator that makes these assertions worth anything. An unhandled rejection also
+ *   exits 1 and also prints the message — but node's default handler writes it to stderr. A message on stdout with an
  *   empty stderr is proof it went through Ink's `<Text color="red">` frame instead.
  *
- *   BOTH STREAMS ARE STRIPPED OF ANSI. `childEnv()` passes the parent's environment through, so the child's chalk
+ *   both streams are stripped OF ansi. `childEnv()` passes the parent's environment through, so the child's chalk
  *   level follows whatever `FORCE_COLOR` the terminal set. `expect(stdout).not.toMatch(/\s+at\s/)` is the assertion
  *   that makes this matter: on a coloured frame an escape sequence can sit between the whitespace and the `at`, and a
  *   negative assertion then passes because the pattern missed rather than because the stack is absent.

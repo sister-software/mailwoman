@@ -8,7 +8,7 @@
  *   ends up carrying.
  *
  *   The key count is not bookkeeping: it is the gloss detector's only volume signal, so what counts
- *   as "distinct" (folded, primary included, de-duplicated within the bag) is the contract, and it is
+ *   as "distinct" (folded, primary included, de-duplicated within the bag) is the interface, and it is
  *   asserted here directly rather than through a whole build.
  */
 
@@ -124,7 +124,7 @@ describe("explodeAliasBags", () => {
 		expect(nAlias).toBe(0)
 		expect(staged).toEqual([])
 		// No key count for either: an unknown place has no place to hang one on, and a place whose bag is
-		// absent is UNMEASURED, which the detector must not read as a low key count.
+		// absent is unmeasured, which the detector must not read as a low key count.
 		expect(keyCounts.size).toBe(0)
 	})
 })

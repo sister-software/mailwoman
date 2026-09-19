@@ -42,7 +42,7 @@ export interface POIExplorerProps {
 	 */
 	runLiveSearch?: POILiveSearch
 	/**
-	 * Whether {@link runLiveSearch} can serve BRAND subjects (fetch by QID). Default false: a brand subject shows the
+	 * Whether {@link runLiveSearch} can serve brand subjects (fetch by QID). Default false: a brand subject shows the
 	 * intent + QID chip but no live block. The docs' httpvfs probe leaves this off (brand-wide byte-range hydration is
 	 * pathological — measured); a server-side backend can enable it.
 	 */

@@ -41,7 +41,7 @@ import type {
 } from "#schema"
 
 /**
- * The artifact FORMAT version — incremented by hand when the compiled shape changes, so a reader meeting an artifact it
+ * The artifact format version — incremented by hand when the compiled shape changes, so a reader meeting an artifact it
  * was not written for says so instead of quietly reading fields that moved.
  *
  * It is not data about the world, which is why a number is allowed here and nowhere in `./schema.ts`.
@@ -121,8 +121,8 @@ function canonicalize(value: unknown): unknown {
  *
  * Tab indentation and the trailing newline match the repository's other committed JSON tables (`taxonomy.json`,
  * `brands.json`). A committed copy of these bytes is the generator's output run through `oxfmt`, which inlines short
- * arrays — so a freshness check compares the PARSED artifact against a fresh compile, and a byte comparison compares
- * two compiles.
+ * arrays . Therefore, a freshness check compares the parsed artifact against a fresh compile, and a byte comparison
+ * compares two compiles.
  */
 export function serializeCompiledModel(model: CompiledGeographicModel): string {
 	return prettyJSON(canonicalize(model))
@@ -155,7 +155,7 @@ const ARTIFACT_TABLES = [
 /**
  * Why `value` is not a compiled artifact, or nothing when it is one.
  *
- * Kept separate from {@link parseCompiledGeographicModel} so the reader casts the value it was HANDED, still typed
+ * Kept separate from {@link parseCompiledGeographicModel} so the reader casts the value it was handed, still typed
  * `unknown`, rather than a narrowed shape it would have to launder through a second cast to widen again.
  */
 function artifactProblem(value: unknown): string | undefined {

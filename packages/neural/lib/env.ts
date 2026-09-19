@@ -23,8 +23,8 @@ export const PublicNeuralEnvSchema = z.object({
 		description: "Maximum ONNX Runtime intra-op worker threads for each Mailwoman process.",
 	}),
 	/**
-	 * PIX1 whole-edge parent bias (#46) — the δ applied to the PARENT window of a placetype-pair hit, over the child
-	 * tag's allowed parents in `containmentFor(system)`. UNSET (the default) = child-only, byte-identical to every
+	 * PIX1 whole-edge parent bias (#46) — the δ applied to the parent window of a placetype-pair hit, over the child
+	 * tag's allowed parents in `containmentFor(system)`. unset (the default) = child-only, byte-identical to every
 	 * pre-#46 build.
 	 *
 	 * A bar-conditional toggle rather than a shipped knob: the mechanism stays off until the four bars in

@@ -3,17 +3,17 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   `mailwoman eval gauntlet` — THE Gauntlet eval: all three layers, one combined verdict (the
+ *   `mailwoman eval gauntlet` — the Gauntlet eval: all three layers, one combined verdict (the
  *   full-pipeline integration net a model ship checks on; #566 lesson). No flags = self-check on the
  *   shipped default (regression + metamorphic); `--candidate` adds the held-out candidate-vs-prod
  *   z-test; `--layer` runs a single layer with the old standalone semantics (its own verdict + exit
- *   code). A non-zero exit blocks the ship (RELEASING.md).
+ *   code). A non-zero exit blocks the ship (releasing.md).
  *
- *   `--layer ablation` is the exception: it is a MEASUREMENT rather than a check. It deletes each asserted
+ *   `--layer ablation` is the exception: it is a measurement rather than a check. It deletes each asserted
  *   component from each corpus row and reports what the deletion cost per (component, locale) — the
  *   required map. It never joins the combined verdict and cannot block a ship.
  *
- *   Since 2026-08-05 that measurement is NORMATIVE: each variant is graded against a per-row
+ *   Since 2026-08-05 that measurement is normative: each variant is graded against a per-row
  *   graceful-degradation ladder rather than against the undeleted anchor, so coarsening to a rung the
  *   surviving components still justify passes, abstaining under untenable ambiguity passes, and a
  *   substitution fails at every rung. See `eval-harness/gauntlet/ablation-expectation.ts`.
@@ -26,7 +26,7 @@ import { type CommandSpec, harnessCommand } from "#cli-kit"
 export const description = "The Gauntlet check — regression + metamorphic + held-out, one verdict"
 
 /**
- * Native command-line contract consumed by the filesystem command router.
+ * Native command-line interface consumed by the filesystem command router.
  */
 export const spec = {
 	name: "gauntlet",
@@ -99,7 +99,7 @@ const EvalGauntlet = harnessCommand(
 				// never becomes an empty filter — which would silently measure nothing and print a map of one
 				// header row.
 				...(components ? { components: extractDelimited(components) } : {}),
-				// An UNSET flag must stay unset rather than become an explicit pin either way. The schema supplies its
+				// An unset flag must stay unset rather than become an explicit pin either way. The schema supplies its
 				// `false` default for both halves, and forwarding one verbatim would pin the change forever — which is
 				// exactly how the 2026-08-05 default-on flip could have gone unnoticed by the standard eval. Neither
 				// flag set keeps "no flag" meaning "grade whatever production does".

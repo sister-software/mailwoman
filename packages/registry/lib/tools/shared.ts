@@ -106,8 +106,8 @@ export const std = (xs: readonly number[]): number => {
 	return Math.sqrt(xs.map((x) => (x - m) ** 2).reduce((a, b) => a + b, 0) / Math.max(1, xs.length))
 }
 
-// NOTE(phase4): pct keeps the fraction-in/no-%-suffix shape — not core formatPercent's
-// numerator/denominator contract (call sites append their own "%").
+// note(phase4): pct keeps the fraction-in/no-%-suffix shape — not core formatPercent's
+// numerator/denominator interface (call sites append their own "%").
 export const pct = (x: number): string => (100 * x).toFixed(1)
 
 /**
@@ -141,7 +141,7 @@ export const inTXBBOX = (lat: number, lon: number): boolean =>
  * NPPES registry column headers, by the short name the probes read them under.
  *
  * The NPI registry export is a ~330-column TSV with headers this long, so every probe that touches it needs this map,
- * and five of them had grown their own copy. The copies were a NESTED SUPERSET chain rather than a disagreement -- each
+ * and five of them had grown their own copy. The copies were a nested superset chain rather than a disagreement -- each
  * new probe took the previous one's map and appended what it additionally read -- so this is the widest of the five,
  * and no consumer loses a column. Reading extra keys costs nothing: they are inert strings, and nothing enumerates this
  * object (checked: no `Object.keys`/`values`/`entries`/spread over it anywhere in `tools/`), so adding a column can
@@ -436,7 +436,7 @@ export interface ColocatedPair {
 }
 
 /**
- * Every unordered pair of DISTINCT NPIs sharing a practice-address key — the over-merge population. Providers are
+ * Every unordered pair of distinct NPIs sharing a practice-address key — the over-merge population. Providers are
  * de-duplicated per address by NPI (first record wins); single-NPI addresses yield nothing.
  */
 export function* colocatedDistinctPairs(
@@ -616,7 +616,7 @@ export async function trainCrossSourceModel(
 	report?.("[C] geocoding…")
 	const geocoder = await options.createGeocoder()
 
-	// `ColumnMapping.source` is a LITERAL provenance label — ingest each source separately so every
+	// `ColumnMapping.source` is a literal provenance label — ingest each source separately so every
 	// record carries its registry of origin (the cross-source filter + the sweep harness key on it).
 	const mappingFor = (source: string): ColumnMapping => ({
 		id: "npi",
@@ -706,7 +706,7 @@ export async function trainCrossSourceModel(
 		const recall = totalPos > 0 ? tp / totalPos : 0
 		const f1 = precision + recall > 0 ? (2 * precision * recall) / (precision + recall) : 0
 
-		// The #655 rule: the LOWEST threshold whose precision clears the bar (maximizes recall under it).
+		// The #655 rule: the lowest threshold whose precision clears the bar (maximizes recall under it).
 		if (precision >= precisionBar && recall > barRecall) {
 			barRecall = recall
 			recommendedThreshold = t

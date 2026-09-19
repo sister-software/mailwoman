@@ -7,17 +7,17 @@
  *
  *   The sibling of {@link ./unit-designator.ts}: where the unit table covers the full secondary-unit
  *   vocabulary (APT, STE, RM, …), this module extracts the floor-class subset — designators that
- *   name a FLOOR or LEVEL of the building rather than a specific addressable unit on that floor.
+ *   name a floor or level of the building rather than a specific addressable unit on that floor.
  *   USPS Pub 28 Appendix C2 identifies these designators as requiring a secondary number: "FL" (the
- *   approved abbreviation for FLOOR). The publication gives `FLOOR` as the canonical designator
- *   with approved abbreviation `FL` and variant `FLR`; `BASEMENT` (`BSMT`), `PENTHOUSE` (`PH`), and
- *   `LOBBY` (`LBBY`) are the standalone-or-numbered floor-adjacent types also listed in Appendix
+ *   approved abbreviation for floor). The publication gives `floor` as the canonical designator
+ *   with approved abbreviation `FL` and variant `FLR`; `basement` (`bsmt`), `penthouse` (`PH`), and
+ *   `lobby` (`lbby`) are the standalone-or-numbered floor-adjacent types also listed in Appendix
  *   C2.
  *
- *   Appendix C2 explicitly marks FLOOR, BASEMENT as requiring a secondary number (alongside APT,
- *   BLDG, etc.) while PENTHOUSE and LOBBY may stand alone. PH and LBBY are kept here (not just in
+ *   Appendix C2 explicitly marks floor, basement as requiring a secondary number (alongside APT,
+ *   bldg, etc.) while penthouse and lobby may stand alone. PH and lbby are kept here (not just in
  *   {@link ./unit-designator.ts}) because the span proposer treats them as level-class hints —
- *   "LOBBY" and "PH" name a specific floor-analog rather than a numbered unit, and the prior map routes
+ *   "lobby" and "PH" name a specific floor-analog rather than a numbered unit, and the prior map routes
  *   `LEVEL_PHRASE` → `unit` (the schema carries no separate `level` tag).
  *
  *   This table drives the `levelDesignators` set in the span-proposer lexicon. The full
@@ -30,8 +30,8 @@
 /**
  * One USPS Pub 28 C2 floor-class designator row.
  *
- * `requiresNumber` mirrors the Appendix C2 classification: FLOOR and BASEMENT must be followed by a secondary number.
- * PENTHOUSE and LOBBY may stand alone.
+ * `requiresNumber` mirrors the Appendix C2 classification: floor and basement must be followed by a secondary number.
+ * penthouse and lobby may stand alone.
  */
 export interface USFloorDesignator {
 	/**
@@ -47,8 +47,8 @@ export interface USFloorDesignator {
 	 */
 	variants: readonly string[]
 	/**
-	 * True when Appendix C2 marks this designator as "Requires a Secondary Number" (FLOOR, BASEMENT). False for
-	 * standalone types (PENTHOUSE, LOBBY) that name a specific floor-analog without an identifier.
+	 * True when Appendix C2 marks this designator as "Requires a Secondary Number" (floor, basement). False for
+	 * standalone types (penthouse, lobby) that name a specific floor-analog without an identifier.
 	 */
 	requiresNumber: boolean
 }
@@ -71,8 +71,8 @@ export type USFloorDesignatorName = (typeof US_FLOOR_DESIGNATORS)[number]["name"
 
 /**
  * Inverse lookup: every surface form (canonical name, approved abbreviation, or Appendix C2 variant) → its canonical
- * designator name. Lowercase-keyed for case-insensitive matching: `"fl"` → `"FLOOR"`, `"bsmt"` → `"BASEMENT"`, `"ph"` →
- * `"PENTHOUSE"`.
+ * designator name. Lowercase-keyed for case-insensitive matching: `"fl"` → `"floor"`, `"bsmt"` → `"basement"`, `"ph"` →
+ * `"penthouse"`.
  */
 export const US_FLOOR_DESIGNATOR_LOOKUP: ReadonlyMap<string, USFloorDesignatorName> = (() => {
 	const out = new Map<string, USFloorDesignatorName>()

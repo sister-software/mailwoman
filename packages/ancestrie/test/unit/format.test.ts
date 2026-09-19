@@ -3,7 +3,7 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Serialization contract: round-trip fidelity, canonical byte-stability across add orders, header
+ *   Serialization interface: round-trip fidelity, canonical byte-stability across add orders, header
  *   validation, payload/metadata encoding, and the empty/single-entry edges.
  */
 

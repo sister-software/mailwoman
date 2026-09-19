@@ -7,7 +7,7 @@
  *   inline doc-embeds via `RuntimeEmbed`, and the geocoder). It owns the version-selection state
  *   machine, the per-version load sequencing, cancellation, and the ready / loading / error state — but
  *   nothing model- or map-specific. The actual asset fetchers (the ONNX classifier factory, the httpvfs
- *   WOF opener, the FST fetch, the releases.json fetch) are INJECTED by the host as async functions, so
+ *   WOF opener, the FST fetch, the releases.json fetch) are injected by the host as async functions, so
  *   this module imports only React: no `onnxruntime-web`, no `sql.js-httpvfs`, no `maplibre-gl`, no
  *   `fetch`-specific plumbing. That keeps it node-import-safe and root-exportable from
  *   `@mailwoman/react` — the exact interface `PipelineRuntime` established, generalized to the loader itself.
@@ -20,7 +20,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react"
 
 /**
- * The minimal contract a release-manifest entry must satisfy. Hosts extend this with their own fields.
+ * The minimal interface a release-manifest entry must satisfy. Hosts extend this with their own fields.
  */
 export interface ReleaseBase {
 	/**
@@ -49,7 +49,7 @@ export interface ReleaseManifest<TRelease extends ReleaseBase = ReleaseBase> {
 
 /**
  * The progress channel handed to the host's `loadAssets`. The host reports load progress + the resolved backend + the
- * staged step labels/index THROUGH these setters (all no-op once the load is superseded/aborted), while the hook owns
+ * staged step labels/index through these setters (all no-op once the load is superseded/aborted), while the hook owns
  * the terminal state (revealing the assets + clearing progress on success, surfacing the error on failure).
  */
 export interface AssetsLoadContext {
@@ -58,7 +58,7 @@ export interface AssetsLoadContext {
 	 */
 	signal: AbortSignal
 	/**
-	 * Whether the host should force the CPU/WASM backend (opt out of WebGPU) for this load.
+	 * Whether the host should force the CPU/wasm backend (opt out of WebGPU) for this load.
 	 */
 	forceWASM: boolean
 	/**
@@ -104,7 +104,7 @@ export interface ReleaseRuntimeConfig<TAssets, TRelease extends ReleaseBase = Re
 	loadAssets: (release: TRelease, ctx: AssetsLoadContext) => Promise<TAssets>
 	/**
 	 * Give a superseded bundle's resources back, when the bundle holds any the garbage collector does not own — an ONNX
-	 * session's WASM heap, a SQLite worker, a GPU buffer.
+	 * session's wasm heap, a SQLite worker, a GPU buffer.
 	 *
 	 * Called for the bundle being replaced when the version or the backend force changes, for a bundle whose load was
 	 * aborted after it had already resolved, and on unmount. Without it each reload left a whole model resident: dropping
@@ -121,7 +121,7 @@ export interface ReleaseRuntimeConfig<TAssets, TRelease extends ReleaseBase = Re
 /**
  * The state `useReleaseRuntime` produces — the load-orchestration state a surface renders + re-projects.
  *
- * This is the LOADER STATE, deliberately distinct from {@link GeocoderRuntime} (the injected runtime contract
+ * This is the loader state, deliberately distinct from {@link GeocoderRuntime} (the injected runtime interface
  * `<Geocoder>` consumes). A host builds a {@link GeocoderRuntime} by pairing this loader state (assets + backend +
  * version) with the map surface (style, overlays, bias, parse) — see the map subpath's `GeocoderRuntime`.
  */
@@ -172,7 +172,7 @@ export interface ReleaseLoaderState<TAssets, TRelease extends ReleaseBase = Rele
 	 */
 	activeBackend: string
 	/**
-	 * Whether the CPU/WASM backend is currently forced.
+	 * Whether the CPU/wasm backend is currently forced.
 	 */
 	forceWASM: boolean
 	/**
@@ -180,7 +180,7 @@ export interface ReleaseLoaderState<TAssets, TRelease extends ReleaseBase = Rele
 	 */
 	selectVersion: (version: string) => void
 	/**
-	 * Force (or unforce) the CPU/WASM backend — reloads the asset bundle.
+	 * Force (or unforce) the CPU/wasm backend — reloads the asset bundle.
 	 */
 	setForceWASM: (forceWASM: boolean) => void
 }
@@ -189,7 +189,7 @@ export interface ReleaseLoaderState<TAssets, TRelease extends ReleaseBase = Rele
  * Drive the shared version → asset-bundle load state machine over a host-injected loader.
  *
  * Sequence: on mount `loadManifest` runs and its `defaultVersion` becomes the selection. each version (or `forceWASM`)
- * change reloads the bundle via `loadAssets`, the previous load aborted first. The assets are revealed ATOMICALLY when
+ * change reloads the bundle via `loadAssets`, the previous load aborted first. The assets are revealed atomically when
  * `loadAssets` resolves (so `ready` flips exactly once per load), and consumers wait on `ready`.
  */
 export function useReleaseRuntime<TAssets, TRelease extends ReleaseBase = ReleaseBase>(

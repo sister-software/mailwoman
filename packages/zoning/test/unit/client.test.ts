@@ -5,13 +5,13 @@
  *
  *   The metadata reads, pinned against the published fields they parse.
  *
- *   THE LICENCE CHECK IS THE ONE THAT MATTERS. The item's `licenseInfo` carries two statements that
+ *   the licence check is the one that matters. The item's `licenseInfo` carries two statements that
  *   contradict each other — an aspiration to publish under CC-BY, and an all-rights-reserved clause naming
  *   Tailte Éireann as an upstream licensor — and the second is the reason this layer is built locally rather
  *   than shipped. A build that absorbed its disappearance would ship the artifact under terms nobody checked,
  *   so the guard reads it separately from the credit line and refuses on either.
  *
- *   THE FIXTURE TEXT IS THE REAL FIELD, markup and all, because the parse is a markup strip and a fixture in
+ *   the fixture text is the real field, markup and all, because the parse is a markup strip and a fixture in
  *   plain text would test nothing.
  */
 
@@ -97,14 +97,14 @@ describe("the shipped constants", () => {
 	})
 
 	it("asserts NO licence, because three published statements disagree about the grant", () => {
-		// `NOASSERTION` is SPDX's own token for a determination nobody has made. Writing `CC-BY-4.0` here while an
+		// `noassertion` is spdx's own token for a determination nobody has made. Writing `CC-BY-4.0` here while an
 		// all-rights-reserved clause names a licensor would be this program asserting a grant.
 		expect(GZT_LICENSE).toBe("NOASSERTION")
 		expect(GZT_LICENSE).not.toContain("CC-BY")
 	})
 
 	it("declares the publisher's own 54 generic types, and no more", () => {
-		// The service's coded-value domain holds 54. The DATA uses 55 — `N/A` on four rows — and that one is recorded as
+		// The service's coded-value domain holds 54. The data uses 55 — `N/A` on four rows — and that one is recorded as
 		// observed rather than added here, because a declaration this package wrote would be indistinguishable from one the
 		// Department made.
 		expect(GZT_DECLARED_CODES).toHaveLength(54)

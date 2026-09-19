@@ -5,7 +5,7 @@
  *
  *   Tests for the one carrier both observation routes use to reach a caller.
  *
- *   Two properties are asserted rather than described, because both are what the marker contract promises
+ *   Two properties are asserted rather than described, because both are what the marker interface promises
  *   and neither is visible from a marker in isolation: the observation's whole authority survives the
  *   conversion, and a verdict carrying no POI kind produces no marker instead of one naming a kind the
  *   result does not hold.

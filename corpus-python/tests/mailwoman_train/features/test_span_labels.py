@@ -200,7 +200,7 @@ def test_check_b_gazetteer_painting_fires_on_fixtures():
 
 # "P.O. Box 19" — one po_box span over chars [0, 11) (the whole surface). Pieces give each
 # period its own piece: the token path's per-char array has O on the periods (the corpus
-# tokenizer dropped them), so the stream FRAGMENTS. the span path covers them.
+# tokenizer dropped them), so the stream fragments. the span path covers them.
 PO_RAW = "P.O. Box 19"
 PO_TOKENS = ["P", "O", "Box", "19"]
 PO_LABELS = ["B-po_box", "I-po_box", "I-po_box", "I-po_box"]

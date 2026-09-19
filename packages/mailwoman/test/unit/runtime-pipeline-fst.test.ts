@@ -4,7 +4,7 @@
  * @author Teffen Ellis, et al.
  *
  *   FST-distribution arc (2026-07-25): the runtime pipeline's weights-FST auto-load. The classifier
- *   exposes the sibling PATH (`fstPath`); `createRuntimePipeline` deserializes + wires it as the
+ *   exposes the sibling path (`fstPath`); `createRuntimePipeline` deserializes + wires it as the
  *   default gazetteer on the first call (lazy), with `fst: false` as the byte-stable opt-out.
  */
 
@@ -19,7 +19,7 @@ import { join, type PathBuilderLike } from "path-ts"
 import { describe, expect, it } from "vitest"
 
 /**
- * Build a minimal but REAL FST binary (one locality entry, "testville") via the actual builder + serializer — no
+ * Build a minimal but real FST binary (one locality entry, "testville") via the actual builder + serializer — no
  * hand-rolled bytes. Returns the written file path.
  */
 async function writeTinyFST(dir: PathBuilderLike): Promise<string> {
@@ -76,7 +76,7 @@ describe("createRuntimePipeline — weights-FST auto-load (FST-distribution arc)
 		await pipeline("1 Testville Road")
 		expect(calls.length).toBeGreaterThan(0)
 		expect(calls[0]!.fst).toBeDefined()
-		// The check's morphology matcher is wired with the emission prior ZEROED (the measured-sweet
+		// The check's morphology matcher is wired with the emission prior zeroed (the measured-sweet
 		// F config — the emission prior stays off on production paths).
 		expect(calls[0]!.fstStreetMorphology).toBeDefined()
 		expect(calls[0]!.fstStreetMorphologyOpts).toEqual({ biasScale: 0, dependentLocalityPenalty: 0 })

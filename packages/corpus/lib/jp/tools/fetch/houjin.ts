@@ -16,7 +16,7 @@
  *   The agency states the three published fields may be used freely by anyone ("どなたでも自由にご利用
  *   いただくことができます"), with no attribution condition on the download page.
  *
- *   The file sits behind a form: the page hands out a per-session token, and a POST with that token,
+ *   The file sits behind a form: the page hands out a per-session token, and a post with that token,
  *   `event=download` and the file number of the nationwide Unicode CSV answers the zip. The file
  *   number is read off the page rather than pinned, because the agency re-issues the files monthly.
  *

@@ -6,7 +6,7 @@
  *   #1989: the authority-designation route on the geocode path, exercised through `geocodeAddress` with
  *   mock classifier/resolver deps and a fixture-built flood layer.
  *
- *   THE FIRST TEST IS THE ONE THAT MATTERS. With the layer absent — which is every default construction —
+ *   the first test is the one that matters. With the layer absent — which is every default construction —
  *   the geocode result must be identical to a run against a build without the field existing. That is a
  *   statement about construction rather than about a measurement, and it is what makes the option safe to
  *   configure: rollback is removing the argument.
@@ -64,7 +64,7 @@ function testDeps(latitude: number, longitude: number): GeocodeDeps {
 		}),
 	}
 
-	// An explicit verdict, so the assertion below compares the marker's `kind` against a kind this test CHOSE rather
+	// An explicit verdict, so the assertion below compares the marker's `kind` against a kind this test chose rather
 	// than against whatever the built-in classifier happened to reach.
 	return {
 		classifier,
@@ -167,7 +167,7 @@ describe("#1989: the authority-designation route on the geocode path", () => {
 
 			expect(marker.code).toBe("authority_designation")
 			expect(marker.mechanism).toBe("layer:flood_zone")
-			// The settled answer to the survey's open question: the marker names the VERDICT's own top kind, because a
+			// The settled answer to the survey's open question: the marker names the verdict's own top kind, because a
 			// designation is not raised by intent and has no kind of its own to name.
 			expect(marker.kind).toBe(TEST_VERDICT_KIND)
 			const evidence = marker.evidence!

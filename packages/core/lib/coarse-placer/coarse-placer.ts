@@ -5,7 +5,7 @@
  *
  *   The #244 coarse-placer: a tiny always-resident linear classifier over hashed char-n-gram + script
  *   features ({@link featurize}). Maps an address string → a coarse country/region with a
- *   TEMPERATURE-CALIBRATED confidence, and ABSTAINS below a threshold ("probably off my loaded
+ *   temperature-calibrated confidence, and abstains below a threshold ("probably off my loaded
  *   map") rather than emit a confident mis-placement. Pure + dependency-free — runs in node and the
  *   browser.
  */
@@ -115,7 +115,7 @@ export interface CoarsePrediction {
 }
 
 /**
- * With the explicit `OTHER` class, an off-map input is handled when the model routes it to `OTHER` or abstains — either
+ * With the explicit `other` class, an off-map input is handled when the model routes it to `other` or abstains — either
  * way it is not a confident mis-placement onto a wrong (trained) country. The shared predicate of the off-map evals.
  */
 export function isOffMapHandled(prediction: CoarsePrediction): boolean {
@@ -128,14 +128,14 @@ export interface CoarsePlacerOpts {
 	 */
 	abstainBelow?: number
 	/**
-	 * Open-set reject rule (#244 M2). When `true`, the ABSTAIN decision uses the total IN-MAP probability mass `1 -
-	 * P(OTHER)` instead of the single top-class prob, and a KEEP routes to the argmax IN-MAP class (never `OTHER`). This
+	 * Open-set reject rule (#244 M2). When `true`, the abstain decision uses the total IN-MAP probability mass `1 -
+	 * P(other)` instead of the single top-class prob, and a keep routes to the argmax IN-MAP class (never `other`). This
 	 * decouples "is it in-map at all?" (the reject question) from "which country?" (the routing question) — so a
-	 * clearly-in-map-but-country-ambiguous address (mass split across several in-map countries) is KEPT rather than
+	 * clearly-in-map-but-country-ambiguous address (mass split across several in-map countries) is kept rather than
 	 * wrongly rejected. It clears the 90/90 the default max-prob rule cannot (post-hoc, no retrain: heldout-family
 	 * generalization 89→91 — see docs/articles/evals/resolver-geo/2026-06-14-coarse-placer-m2-openset.md). The returned
 	 * `confidence` becomes the routed in-map country's marginal probability (the soft-prior posterior weight). Default
-	 * `false` = the M1 max-prob rule (byte-stable. can still return `OTHER`).
+	 * `false` = the M1 max-prob rule (byte-stable. can still return `other`).
 	 */
 	openSet?: boolean
 }
@@ -222,9 +222,9 @@ export class CoarsePlacer {
 			logits[c] = s / this.#temp
 		}
 
-		// Numerically-stable softmax, kept INLINE rather than routed through `softmaxInto`: the fp32 `probs`
+		// Numerically-stable softmax, kept inline rather than routed through `softmaxInto`: the fp32 `probs`
 		// buffer rounds each exponent before the lazy divide below, so `p` is `f32(exp)/f64(sum)` — a float
-		// path a normalizing helper cannot reproduce, and this is the inference path whose bytes are contract.
+		// path a normalizing helper cannot reproduce, and this is the inference path whose bytes are interface.
 		let maxLogit = -Infinity
 
 		for (let c = 0; c < C; c++)
@@ -244,7 +244,7 @@ export class CoarsePlacer {
 		let topIdx = 0
 		let topProb = -1
 		let otherProb = 0
-		// argmax + prob over the in-map classes only (excludes `OTHER`) — used by the open-set rule.
+		// argmax + prob over the in-map classes only (excludes `other`) — used by the open-set rule.
 		let inMapIdx = -1
 		let inMapProb = -1
 		const distribution: Record<string, number> = {}
@@ -266,7 +266,7 @@ export class CoarsePlacer {
 			}
 		}
 
-		// Open-set rule (#244 M2): reject on total in-map MASS, route on the in-map argmax. Decouples
+		// Open-set rule (#244 M2): reject on total in-map mass, route on the in-map argmax. Decouples
 		// "is it in-map?" from "which country?". The posterior weight is the routed country's marginal.
 		if (this.#openSet) {
 			const inMapMass = 1 - otherProb
@@ -292,25 +292,25 @@ export class CoarsePlacer {
 }
 
 /**
- * The coarse placer's country POSTERIOR, shaped for the resolver: a per-country probability map like `{GB: 0.8, FR:
+ * The coarse placer's country posterior, shaped for the resolver: a per-country probability map like `{GB: 0.8, FR:
  * 0.06}` — "given this address text, how likely is each country?" ("posterior" in the Bayesian sense: the model's
- * belief after seeing the input. see the glossary). Every in-map class except `OTHER` is included. returns `null` when
+ * belief after seeing the input. see the glossary). Every in-map class except `other` is included. returns `null` when
  * the model abstained or routed off-map. The resolver consumes it as `anchorPosterior`: each candidate's rank gains
  * `anchorWeight × posterior[candidate.country]`, so every plausible country is boosted proportionally, and
- * country-ambiguous inputs (mass split DK↔NO) let the resolver's own place evidence break the tie — strictly more
+ * country-ambiguous inputs (mass split DK↔no) let the resolver's own place evidence break the tie — strictly more
  * informative than committing to the single argmax. Values are raw marginals in [0, 1] (un-renormalized. they sum to
- * the in-map mass `1 − P(OTHER)`), matching the one-hot `confidence` scale so `anchorWeight` needs no retuning.
+ * the in-map mass `1 − P(other)`), matching the one-hot `confidence` scale so `anchorWeight` needs no retuning.
  */
 export function inMapPosterior(
 	prediction: CoarsePrediction,
 	opts?: {
 		/**
 		 * Epsilon floor (see the glossary): drop countries whose probability falls below this cutoff before the resolver
-		 * sees the posterior, so implausible tails cannot influence ranking. Domain [0, 1]: `0` (the DEFAULT) passes the
+		 * sees the posterior, so implausible tails cannot influence ranking. Domain [0, 1]: `0` (the default) passes the
 		 * full distribution through unchanged. raising it keeps only stronger beliefs — at the extreme only the argmax
 		 * survives (a one-hot). The default is 0 deliberately: the #928 investigation swept 0.05–0.30 against the misroute
 		 * battery and every value was byte-identical (the drift's real cause was the anchor re-rank's score key, fixed
-		 * separately) — no nonzero default has a measured basis, and the shipped distribution contract stays
+		 * separately) — no nonzero default has a measured basis, and the shipped distribution interface stays
 		 * byte-identical. The knob exists for distribution-mode experiments (`--posterior-floor` on the misroute eval).
 		 */
 		epsilonFloor?: number

@@ -194,7 +194,7 @@ two diverge in both directions:
   under a `dependent_locality`. Containment gives `dependent_locality` exactly one allowed parent,
   `locality`. The derived mechanism biased the wrong label on every such row.
 - Where its set has several members it biased them all equally, which is what B-1 called "inert" — a
-  `locality` child moved `subregion`/`region`/`country` alike and therefore moved nothing.
+  `locality` child moved `subregion`/`region`/`country` alike and. Therefore, moved nothing.
 
 **The format now records both ends.** PIX1 schema 3 adds one byte per pair, `parentTagIdx`, indexing
 the same header `tagTable`. Schemas 1 AND 2 are refused with rebuild guidance — a v2 record stops after

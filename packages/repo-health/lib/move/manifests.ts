@@ -2,9 +2,9 @@
  * @copyright Sister Software
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
- * @file The half of a move that is not a module specifier: the `exports`/`imports` TARGETS naming the file.
+ * @file The half of a move that is not a module specifier: the `exports`/`imports` targets naming the file.
  *
- *   A subpath key is a contract and stays exactly as written — `@mailwoman/geocode-oracle/sdk/census-client` keeps
+ *   A subpath key is a interface and stays exactly as written — `@mailwoman/geocode-oracle/sdk/census-client` keeps
  *   its name whatever the file underneath is called. The target does not: it is a path, and a path that has moved
  *   names nothing. Rewriting the target and leaving the key is what lets a file move without a consumer noticing.
  *
@@ -54,7 +54,7 @@ export interface ManifestMove {
 /**
  * Rewrites for one package's manifest, given every move landing inside that package.
  *
- * The manifest is edited as TEXT rather than reserialized: a `package.json` carries key order and formatting the
+ * The manifest is edited as text rather than reserialized: a `package.json` carries key order and formatting the
  * repository's own tooling compares, and a round-trip through `JSON.parse` rewrites the whole file to change one
  * string.
  */

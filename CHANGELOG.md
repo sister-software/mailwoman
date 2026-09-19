@@ -76,7 +76,7 @@ be the only affected one — the five state and federal adapters that key human-
 ### Changed — a command's name is what it declares rather than where its file sits
 
 `listCommandNames` in the native CLI router read a command's name off its filename, so the layout was a user-facing
-contract: moving `gazetteer/build/postcode-codepoint.tsx` into `build/postcode/` renamed the command, silently, and
+interface: moving `gazetteer/build/postcode-codepoint.tsx` into `build/postcode/` renamed the command, silently, and
 `mailwoman gazetteer build postcode-codepoint` — a name written into built databases as their `builder` provenance —
 stopped existing. The router now resolves a typed name against the literal path first and then against its
 prefix-directory readings, and the docs generator's tree takes each command's declared `spec.name`. A PREFIX
@@ -87,7 +87,7 @@ names tell them apart. Reading the compiled file's text rather than importing it
 
 `recipe-prefix-directories` is now `prefix-directories`: three or more siblings sharing a hyphen-delimited prefix, in
 any directory, counting a subdirectory as a sibling beside a `.ts` file. Measured over the tracked tree: 163 groups
-at a threshold of two, 43 at three. Two kinds of name are excluded because they are contracts rather than layout, and
+at a threshold of two, 43 at three. Two kinds of name are excluded because they are interfaces rather than layout, and
 both are derived rather than listed — a workspace directory is an npm package name, and a directory holding no
 tracked TypeScript belongs to whoever it mirrors (`hf-publish/mailwoman-cjk/` is a Hugging Face repository,
 `fixtures/…/whosonfirst-data-admin-fr/` an upstream one). Applying it renamed 186 files: 43 groups in the first
@@ -187,7 +187,7 @@ printing the derivation. The 277-row source that took 165 passes per row at weig
 countries: Overture's addresses theme has none (the three parquets are 532-byte headers), and the only open source is
 OpenStreetMap, which is ODbL. The `osm` corpus adapter (#733) now reads a per-country JSONL that `@mailwoman/osm`'s
 `emit-corpus-jsonl` script writes from a Geofabrik extract, and stamps every row `ODbL-1.0`, which the share-alike
-pattern matches, so a proprietary-weights build passing `--exclude-share-alike` drops them at ingest and the open
+pattern matches. Therefore, a proprietary-weights build passing `--exclude-share-alike` drops them at ingest and the open
 weights alone learn from them. Over the three extracts: Pakistan 100,790 register rows → 77,636 corpus rows, Vietnam
 70,069 → 62,899, Bangladesh 21,847 → 5,753. Two register recipes render the forms the country templates do not,
 `pk-register` (`House 4, Street 25, F-7/2, Islamabad`, the sector drawn from the capital's grid; 80,081 rows) and
@@ -502,7 +502,7 @@ are also re-exported from the package root, so `@mailwoman/filer` itself keeps r
 
 They are identity and corporate-family readers rather than acquisition — and they were exactly the symbols a request path
 needed: `@mailwoman/mcp`'s CLI imported `familyRollup`, `filerLookup`, `toFRN` and `FRN` from the `./sdk` barrel,
-which `export *`s seventeen modules, so an MCP request path carried the SEC and CORES HTTP clients and the EDGAR
+which `export *`s seventeen modules. Therefore, an MCP request path carried the SEC and CORES HTTP clients and the EDGAR
 ingest along to reach three functions. That import now names the three modules, and `dependency-cruiser`'s
 `no-serve-package-to-build-tooling` counts `mcp` as a serve package so the edge cannot come back.
 

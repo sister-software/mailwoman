@@ -3,12 +3,12 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Raw-angle-bracket MDX lint. Docusaurus compiles BOTH .md and .mdx through micromark's MDX-JSX
- *   extension, so a bare `<55` or `{word` in prose is a BUILD-BREAKING parse error ("Unexpected
+ *   Raw-angle-bracket MDX lint. Docusaurus compiles both .md and .mdx through micromark's MDX-JSX
+ *   extension, so a bare `<55` or `{word` in prose is a build-breaking parse error ("Unexpected
  *   character before name"). This class broke three builds on 2026-06-10 alone (the consolidation
  *   session doc, the deep-dive review, the fill-rate record) — hence this check.
  *
- *   Checks STAGED docs markdown by default (pre-commit), or explicit paths when given. Skips fenced
+ *   Checks staged docs markdown by default (pre-commit), or explicit paths when given. Skips fenced
  *   code blocks and inline code. flags raw `<` before a digit or `{` before a letter.
  *
  *   Stays quiet and fast — it runs on every `main` commit via the husky pre-commit hook. Run:
@@ -21,8 +21,8 @@ import { TextSpliterator } from "spliterator"
 
 /**
  * The build-breaking class is `<55`-style numeric prose and `{word`-style MDX JSX expressions. Uppercase `<Component>`
- * is legitimate MDX JSX and lowercase `<word>` is usually real HTML — flagging them false-positives on valid docs (bit
- * the pipeline-contract page, night-11). Braces joined 2026-06-11: bare `{word` in prose is an MDX JSX EXPRESSION —
+ * is legitimate MDX JSX and lowercase `<word>` is usually real html — flagging them false-positives on valid docs (bit
+ * the pipeline-interface page, night-11). Braces joined 2026-06-11: bare `{word` in prose is an MDX JSX expression —
  * `{raw, components}` broke main's SSG with `ReferenceError: raw is not defined`. Same fix menu: backtick it.
  */
 const RAW_ANGLE = /<[0-9]|\{[a-zA-Z]/

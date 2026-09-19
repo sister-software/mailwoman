@@ -9,14 +9,14 @@
  *   matters (France's `geom:` point is in Spain). But the label point carries its own upstream
  *   defects: WOF's `lbl:` for `Washington` (wof:85931779) sits at 38.82652, −77.01712 — the
  *   district's southern tip, 7.8 km from the city — and the shipped preference imported it
- *   faithfully, which is what put four metamorphic BAND rows 8.1 km out.
+ *   faithfully, which is what put four metamorphic band rows 8.1 km out.
  *
- *   Neither point can arbitrate itself, so where the two DISAGREE the record's own GeoNames
+ *   Neither point can arbitrate itself, so where the two disagree the record's own GeoNames
  *   concordance is the independent anchor. Census over the 2026-08-25 artifact's repo-backed
  *   localities above 100,000 population (1,612 records carrying both points): 144 disagree by more
  *   than {@link LABEL_GEOM_DISAGREEMENT_KM}; adjudicated against their `gn:id` anchor, 48 have the
  *   label point closer (the Chinese prefecture-city shape — the label marks the urban seat, the
- *   centroid the vast polygon), 40 have the GEOMETRIC point at least
+ *   centroid the vast polygon), 40 have the geometric point at least
  *   {@link ANCHOR_DECISIVE_RATIO}× closer (Washington, Frankfurt am Main at 10.8 km, Stuttgart at
  *   9.5 km, Oklahoma City at 11.3 km, Chennai at 12.5 km, Yokohama at 14.5 km), 52 separate by less
  *   than the ratio and 4 carry no anchor.
@@ -59,7 +59,7 @@ export interface AdjudicatedPoint extends PointPair {
 }
 
 /**
- * Resolve a `gn:id` concordance to its GeoNames coordinate, scoped by country. `undefined` is ABSENCE — no anchor for
+ * Resolve a `gn:id` concordance to its GeoNames coordinate, scoped by country. `undefined` is absence — no anchor for
  * this record — and the caller must fall back to the label preference rather than treating it as a zero-distance
  * anchor.
  */
@@ -121,7 +121,7 @@ export async function createGeoNamesAnchorLookup(geonamesDir: PathBuilderLike): 
 			const points = new Map<string, PointPair>()
 			const path = join(geonamesDir, `${country.toUpperCase()}.txt`)
 
-			// Missing country extract → empty map, cached: absence of anchors, never an error. `from` parses CONTENT
+			// Missing country extract → empty map, cached: absence of anchors, never an error. `from` parses content
 			// (a path argument would be parsed as one row of itself), so the file is read once and streamed through the
 			// TSV parser.
 			if (await pathExists(path)) {

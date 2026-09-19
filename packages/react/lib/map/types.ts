@@ -5,13 +5,13 @@
  *
  *   Types for the geocoder map surface. Mirrors the pipeline boundary: the package owns the UI state
  *   machine + the declarative map, while the host injects a {@link GeocoderRuntime} that owns ONNX / httpvfs
- *   / R2 and the composed map style. {@link GeocoderRuntime} EXTENDS {@link PipelineRuntime} so the shared
- *   `runParse` / `parseStageLabels` / `loading` contract is reused, and adds the map-specific surface
+ *   / R2 and the composed map style. {@link GeocoderRuntime} extends {@link PipelineRuntime} so the shared
+ *   `runParse` / `parseStageLabels` / `loading` interface is reused, and adds the map-specific surface
  *   (style, overlays, initial center, viewport bias, backend/version selection). Phase 4 adds the
  *   `resolveMapPlace` enricher, the {@link GeocoderPanels} injection bag, and the {@link CompareContext}.
  *
  *   The map-spec types are imported type-only from `react-map-gl/maplibre`; nothing here loads maplibre at
- *   runtime, so this module stays node-safe (its concrete-value CONSUMERS — `MapCanvas`, `Geocoder` —
+ *   runtime, so this module stays node-safe (its concrete-value consumers — `MapCanvas`, `Geocoder` —
  *   are the ones behind the `@mailwoman/react/map` subpath).
  */
 
@@ -138,7 +138,7 @@ export interface GeocoderRuntime extends PipelineRuntime {
 	// ── Parse extras layered over PipelineRuntime.runParse ──────────────────
 	/**
 	 * A bias-aware parse. The geocoder feeds the current viewport center as a soft prior. when absent the host falls back
-	 * to the base {@link PipelineRuntime.runParse}. Kept separate so the shared `runParse` contract is unchanged.
+	 * to the base {@link PipelineRuntime.runParse}. Kept separate so the shared `runParse` interface is unchanged.
 	 */
 	runParseWithBias?: (
 		input: string,
@@ -180,11 +180,11 @@ export interface GeocoderRuntime extends PipelineRuntime {
 	 */
 	activeBackend?: string
 	/**
-	 * Whether the CPU/WASM backend is currently forced (the controlled value for the backend toggle).
+	 * Whether the CPU/wasm backend is currently forced (the controlled value for the backend toggle).
 	 */
 	forceWASM?: boolean
 	/**
-	 * Force the WASM backend (opt out of WebGPU), for the backend toggle.
+	 * Force the wasm backend (opt out of WebGPU), for the backend toggle.
 	 */
 	setForceWASM?: (forceWASM: boolean) => void
 }
@@ -291,7 +291,7 @@ export interface GeocoderPanels {
 	compare?: (context: CompareContext) => ReactNode
 	/**
 	 * The model-visualizer / debug drawer, mounted beside the map (host's ModelVisualizer). A render-prop so the host can
-	 * trace the CURRENT result (its input) — the package passes the live parse result. the host decides on its own
+	 * trace the current result (its input) — the package passes the live parse result. the host decides on its own
 	 * dev-mode state and returns `null` when the drawer is closed.
 	 */
 	debugDrawer?: (context: { result: ParseResult | null }) => ReactNode

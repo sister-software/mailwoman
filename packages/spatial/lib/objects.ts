@@ -50,7 +50,7 @@ export interface GeoObjectLiteral {
 	type: GeometryType
 
 	/**
-	 * A unique identifier for the feature, such as a UUID, a serial number, or a name.
+	 * A unique identifier for the feature, such as a uuid, a serial number, or a name.
 	 */
 	id?: string | number | undefined | null
 
@@ -77,7 +77,7 @@ export interface GeoObjectLiteral {
 			/**
 			 * The name of the coordinate reference system.
 			 *
-			 * @default "EPSG:4326"
+			 * @default "epsg:4326"
 			 */
 			name: string
 		}

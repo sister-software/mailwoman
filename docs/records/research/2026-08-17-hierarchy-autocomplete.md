@@ -126,7 +126,7 @@ no counterpart in this family.
 
 ### Google Places Autocomplete
 
-- The public contract returns `terms[]` (the description split into components with offsets — for a
+- The public interface returns `terms[]` (the description split into components with offsets — for a
   place prediction this reads as name-then-ancestry), `types[]`, `structured_formatting`
   (main_text/secondary_text) [S]. **Nothing public documents how it is indexed or whether the
   ancestry is stored or joined**; no engineering paper found. Verdict: its `terms` array is a
@@ -418,7 +418,7 @@ Search-verified [S]:
 7. Pelias: full `parent.*` fixed-slot fields (name/_a/_id/_source per placetype) in the ES mapping; populated via wof-admin-lookup PIP at import — pelias/schema mappings/document.js (primary).
 8. Photon: PhotonDoc carries addressParts map + ContextMap, filled from Nominatim at import; OpenSearch; ~95 GB planet (2026) — komoot/photon source + README (primary).
 9. Nominatim: place_addressline = per-place materialized ancestor rows with fromarea/isaddress; built in rank order — Nominatim dev docs. nominatim-suggest exports prebuilt addresses to ES — its README.
-10. Google Places Autocomplete: terms[]/types[]/structured_formatting public contract; internals not public — Google docs.
+10. Google Places Autocomplete: terms[]/types[]/structured_formatting public interface; internals not public — Google docs.
 11. Algolia Places: OSM-based, administrative field in records, retired May 2022, quality-cited — Algolia sunset post, docs.
 12. Twofishes: per-feature `parentIDs: list<i64>`, PARENTS/PARENT_ALL_NAMES response options, "construct a string like 'New York, NY'", one-pass build "feature with … a list of parents" — geocoder.thrift + README (primary).
 13. Roy & Chakrabarti SIGMOD 2011: index named "materialized trie", spatial info in trie nodes for pruning — ACM DL/MSR page + TASK (VLDB 2023) related-work characterization.

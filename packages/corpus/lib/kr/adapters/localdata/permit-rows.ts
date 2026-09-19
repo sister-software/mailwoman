@@ -7,7 +7,7 @@
  *   turning an aligned string into a corpus row (#2204 §5).
  *
  *   The publisher delivers CP949, one file per business category, with both address systems typed by a clerk plus a
- *   planar coordinate in EPSG:5174 and both postcodes. Reading is separated from ALIGNING so the alignment rate per
+ *   planar coordinate in epsg:5174 and both postcodes. Reading is separated from aligning so the alignment rate per
  *   file can be measured before any row enters a corpus.
  */
 

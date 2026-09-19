@@ -26,7 +26,7 @@ export interface UnitSource {
 }
 
 /**
- * OA REGION is empty for US per-state extracts — the region is implied by the file. Every NON-Vermont state cached.
+ * OA region is empty for US per-state extracts — the region is implied by the file. Every NON-Vermont state cached.
  */
 export const TRAIN_SOURCES: readonly UnitSource[] = [
 	{ zip: dataRootPath("oa-cache", "us__ca__berkeley.zip"), csv: "us/ca/berkeley.csv", region: "CA" },

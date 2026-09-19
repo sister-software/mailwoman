@@ -12,9 +12,9 @@
  *        country/placetype codes, so a resolve is one statement (no join to spr).
  *   2. **Shared-normalizer parity** — the `name_key` is {@link normalizeLocalityForKey}, the same
  *        function the query side uses. a diacritic name keys to its folded form by construction.
- *   3. **page_size = 8192** — set right before VACUUM (node:sqlite creates the file at 4096).
+ *   3. **page_size = 8192** — set right before vacuum (node:sqlite creates the file at 4096).
  *   4. **The passes** — primaries, alias bags, region abbreviations, postcode extracts (with the
- *        `latitude!=0 AND longitude!=0` placeholder-coord filter), and each extract's `names`-table
+ *        `latitude!=0 and longitude!=0` placeholder-coord filter), and each extract's `names`-table
  *        delivery-city aliases (#1495).
  */
 
@@ -270,7 +270,7 @@ describe("buildCandidateTable", () => {
 
 		expect(country?.population).toBe(3_704_500)
 
-		// The fallback is COUNTRY-scoped: a locality with no population keeps its honest zero.
+		// The fallback is country-scoped: a locality with no population keeps its honest zero.
 		const [springfield] = probe(db, normalizeLocalityForKey("Springfield"))
 		expect(springfield?.population).toBe(114_000)
 	})
@@ -335,7 +335,7 @@ describe("buildCandidateTable", () => {
 			expect(role(normalizeLocalityForKey("Windy City"))[0]).toMatchObject({ role: null })
 			expect(role(normalizeLocalityForKey("St Etienne"))[0]).toMatchObject({ role: null })
 
-			// The abbreviation KIND stamps by kind alone — no official-language test.
+			// The abbreviation kind stamps by kind alone — no official-language test.
 			expect(role("spr")[0]).toMatchObject({ role: "abbr", primary: 0 })
 		} finally {
 			await db.destroy()
@@ -493,7 +493,7 @@ describe("buildCandidateTable", () => {
 		const [brooklyn] = probe(db, normalizeLocalityForKey("Brooklyn"))
 		expect(brooklyn).toBeDefined()
 		expect(brooklyn!.placetype).toBe("postalcode")
-		// The alias row is denormalized onto the POSTCODE — display name, coords and bbox are 11201's.
+		// The alias row is denormalized onto the postcode — display name, coords and bbox are 11201's.
 		expect(brooklyn!.name).toBe("11201")
 		expect(brooklyn!.country).toBe("US")
 		expect(brooklyn!.latitude).toBeCloseTo(40.694, 3)
@@ -542,7 +542,7 @@ describe("buildCandidateTable", () => {
 
 		const { page_size } = db.prepare("PRAGMA page_size").get() as { page_size: number }
 		expect(page_size).toBe(8192)
-		// And the clustered table is WITHOUT ROWID (the rows are the B-tree).
+		// And the clustered table is without rowid (the rows are the B-tree).
 		const sql = (db.prepare("SELECT sql FROM sqlite_master WHERE name='candidate'").get() as { sql: string }).sql
 		expect(sql).toMatch(/WITHOUT ROWID/i)
 	})
@@ -598,7 +598,7 @@ describe("buildCandidateTable", () => {
 			using db = new DatabaseClient<WOFDatabase>(output, { readOnly: true })
 
 			expect(importanceOf(db, normalizeLocalityForKey("Chicago"))).toEqual([0.8125])
-			// The score is a property of the PLACE, so the alias rows carry it. This is what lets a bare
+			// The score is a property of the place, so the alias rows carry it. This is what lets a bare
 			// "Moscow" reach Москва's score through the alias row that holds the Latin key.
 			expect(importanceOf(db, normalizeLocalityForKey("Chi-Town"))).toEqual([0.8125])
 			expect(importanceOf(db, normalizeLocalityForKey("Windy City"))).toEqual([0.8125])
@@ -619,7 +619,7 @@ describe("buildCandidateTable", () => {
 			using db = new DatabaseClient<WOFDatabase>(output, { readOnly: true })
 
 			// Springfield's only same-key scored place is 1,500 km away — a different town. The check
-			// refuses it, and the refusal is recorded as ABSENCE rather than as a zero a consumer could rank on.
+			// refuses it, and the refusal is recorded as absence rather than as a zero a consumer could rank on.
 			expect(importanceOf(db, normalizeLocalityForKey("Springfield"))).toEqual([null])
 			// Illinois (region) and the US (country) were never scored at all.
 			expect(importanceOf(db, normalizeLocalityForKey("Illinois"))).toEqual([null])
@@ -864,7 +864,7 @@ describe("resurrectCurrencyHoles (#1737 — the currency backfill)", () => {
 		for (const key of ["oldblob", "nearlive", "tinyham", "ghosttown"]) {
 			const rows = db.prepare(`SELECT spr_id FROM candidate WHERE name_key = ?`).all(key) as { spr_id: number }[]
 
-			// `nearlive` keeps its LIVE localadmin row (304); the dead 303 must not join it. The others
+			// `nearlive` keeps its live localadmin row (304); the dead 303 must not join it. The others
 			// stage nothing at all.
 			expect(rows.map((r) => r.spr_id)).toEqual(key === "nearlive" ? [304] : [])
 		}

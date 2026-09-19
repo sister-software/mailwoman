@@ -32,7 +32,7 @@ from mailwoman_train.labels import resolve_label_set
 
 JP = resolve_label_set("stage3-jp")
 # A tiny stand-in centroid table. The real one is keyed on raw kanji `pref|muni`; the key is opaque
-# to the scorer (norm_key just strips whitespace), so ASCII keeps the fixtures readable.
+# to the scorer (norm_key just strips whitespace), so ascii keeps the fixtures readable.
 CENTROIDS = {"TOKYO|CHIYODA": [139.75, 35.68, 1], "OSAKA|KITA": [135.50, 34.70, 1]}
 
 
@@ -196,7 +196,7 @@ def test_resolve_tag_defaults_track_the_label_set():
 
 
 def test_every_same_tag_gold_span_is_scored_against_every_predicted_run():
-    # `TOKYO CHIYODA KANDA`: the KR ladder's shape, where 읍/면 and the 리 below it share `dependent_locality`.
+    # `tokyo chiyoda kanda`: the KR ladder's shape, where 읍/면 and the 리 below it share `dependent_locality`.
     # The row carries two `municipality` spans. a model that labels both must read 2/2, and the first span
     # is still what forms the centroid key.
     raw = "TOKYO CHIYODA KANDA"
@@ -264,7 +264,7 @@ def test_a_multi_token_gold_span_hits_when_only_whitespace_splits_the_predicted_
 
 
 def test_municipality_macro_weights_each_held_out_municipality_once():
-    # CHIYODA carries 4 of 6 rows, KITA 2. Wiping KITA out moves the blended number by a third and the macro by a half:
+    # chiyoda carries 4 of 6 rows, kita 2. Wiping kita out moves the blended number by a third and the macro by a half:
     # the macro is what says "one of two municipalities failed", whatever the row split.
     chiyoda = {r["raw"] for r in ALL_ROWS if "CHIYODA" in r["raw"]}
     result = _score(chiyoda)

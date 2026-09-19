@@ -16,7 +16,7 @@ export interface InvarianceCommandOptions extends ModelSelectOptions {
 	 */
 	suite?: string
 	/**
-	 * Fail the check if the NEW-violation DEGRADED count exceeds this. Default 0.
+	 * Fail the check if the new-violation degraded count exceeds this. Default 0.
 	 */
 	maxDegraded?: number
 	/**
@@ -34,7 +34,7 @@ export interface InvarianceCommandOptions extends ModelSelectOptions {
 }
 
 /**
- * Run the invariance mini-suite from CLI-shaped options. Returns the process exit code (0 = PASS).
+ * Run the invariance mini-suite from CLI-shaped options. Returns the process exit code (0 = pass).
  */
 export async function runInvarianceCommand(options: InvarianceCommandOptions): Promise<number> {
 	const rows = await loadSuite(options.suite)

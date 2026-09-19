@@ -4,7 +4,7 @@
  * @author Teffen Ellis, et al.
  * @file Admin-match predicates — does a resolved place count as the row's expected locality or region?
  *
- *   OpenAddresses carries no WOF id, so the match is by NAME, and each side writes the name its own way: a USPS abbrev
+ *   OpenAddresses carries no WOF id, so the match is by name, and each side writes the name its own way: a USPS abbrev
  *   against a canonical state name, a district-qualified gold locality against WOF's bare one. Every allowance here is
  *   provenance-first (the place's own recorded names and ancestry) so it can only ADD credit to an already-correct
  *   place — never launder a wrong one.
@@ -34,7 +34,7 @@ const MIN_QUALIFIER_LENGTH = 3
  * Aggressive name normalization for gazetteer-alias locality matching. Lowercases, strips diacritics + punctuation,
  * expands the universal US place abbreviations (St→Saint, Mt→Mount, Ft→Fort, Ste→Sainte), and de-spaces "Mc X" → "McX".
  * Deliberately does not strip civic suffixes (City/Town/Township/Village): in New England "Barre City" and "Barre Town"
- * are DISTINCT municipalities, so collapsing them would over-credit genuine wrong-place misses. Pair with the WOF
+ * are distinct municipalities, so collapsing them would over-credit genuine wrong-place misses. Pair with the WOF
  * altname set (a place's own recorded variants) rather than loosening here.
  */
 const ABBR: Record<string, string> = { st: "saint", ste: "sainte", mt: "mount", ft: "fort" }
@@ -62,7 +62,7 @@ const normName = (s: string | undefined): string => {
 }
 
 /**
- * Resolved region names are the gazetteer's CANONICAL full names ("California", "District of Columbia"); OA's
+ * Resolved region names are the gazetteer's canonical full names ("California", "District of Columbia"); OA's
  * expected.region is the USPS abbreviation ("CA", "DC"). Map full name → abbrev so region-match compares
  * like-for-like.
  *
@@ -80,9 +80,9 @@ const STATE_NAME_TO_ABBR: Record<string, string> = Object.fromEntries(
  * uses. Three paths, tried in order:
  *
  * 1. Verbatim — both already the same string (US `Berlin`==`Berlin`, or two identical abbrevs).
- * 2. US — the resolver returns a state's CANONICAL full name (`California`) while OA's expected is the USPS abbrev (`CA`);
+ * 2. US — the resolver returns a state's canonical full name (`California`) while OA's expected is the USPS abbrev (`CA`);
  *    map full name → abbrev so they compare.
- * 3. DE — the resolver returns WOF's ENGLISH exonym (`Saxony`) while OA's expected is the German name (`Sachsen`);
+ * 3. DE — the resolver returns WOF's english exonym (`Saxony`) while OA's expected is the German name (`Sachsen`);
  *    `lookupGermanState` folds code / German name / English name → one ISO 3166-2:DE code on both sides. Strict:
  *    distinct states (Bavaria vs Saxony) still miss, so this corrects the cross-language mismatch without loosening a
  *    genuine wrong-region.
@@ -198,7 +198,7 @@ export function buildLocalityMatcher(adminDatabasePath: string): LocalityMatcher
 
 		if (normName(locNode.name) === e || altNamesFor(locNode.id).has(e)) return true
 		// Gold carries the source's own parenthetical delivery marker (`Manilla (Rural)`), which normalizes to a bare
-		// trailing word and so reaches the ancestry near-miss below, where no county is ever named `Rural`. Compared
+		// trailing word and. Therefore, reaches the ancestry near-miss below, where no county is ever named `Rural`. Compared
 		// after the raw surfaces because a gazetteer name can carry a parenthetical too — see `../locality-qualifier.ts`.
 		const withoutQualifier = normName(stripParentheticalQualifier(expected))
 

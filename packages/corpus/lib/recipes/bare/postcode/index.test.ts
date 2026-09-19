@@ -2,7 +2,7 @@
  * @copyright Sister Software
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
- * @file `bare-postcode` — the postcode standing alone. The contract worth pinning is that every surface the recipe
+ * @file `bare-postcode` — the postcode standing alone. The interface worth pinning is that every surface the recipe
  *   renders is one `known-formats.ts` reads as a postcode over its whole span, because a surface the detector refuses
  *   would train the model on a string the query-shape prior cannot then support. `run` reads a 500 MB archive. this
  *   reaches the rendering and the agreement without it.
@@ -36,16 +36,16 @@ describe("renderBarePostcode", () => {
 	})
 
 	it("renders nothing for a country whose bare postcode was never in doubt", () => {
-		// GB opens with letters, which no model read as a house number, so it is deliberately absent from
+		// GB opens with letters. It no model read as a house number. Therefore, it is deliberately absent from
 		// the written-form table.
 		expect(renderBarePostcode("GB", "SW1A 1AA")).toEqual([])
 	})
 
 	it("keeps Greece's written form even though no source carries Greek postcodes", () => {
-		// Two separate facts, and collapsing them would lose one. The SHAPE is known — `gr_postcode` is
-		// `NNN NN`, same as its three neighbours — so the rendering answers. The DATA is absent: the
+		// Two separate facts, and collapsing them would lose one. The shape is known — `gr_postcode` is
+		// `NNN NN`, same as its three neighbours — so the rendering answers. The data is absent: the
 		// archive's only Greek member declares a postcode column holding nothing across 10,877 rows, so
-		// `SOURCES` names no Greek file and the recipe emits no row claiming to be Greek.
+		// `sources` names no Greek file and the recipe emits no row claiming to be Greek.
 		expect(renderBarePostcode("GR", "55131")).toEqual(["551 31", "55131"])
 	})
 

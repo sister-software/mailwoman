@@ -3,21 +3,21 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Every board row must decode to a STRUCTURALLY COHERENT tree, or be on the list below with a reason.
+ *   Every board row must decode to a structurally coherent tree, or be on the list below with a reason.
  *
  *   `validateTree` (v0.7 task #37) was written because a parse can match a component and still be incoherent — a
  *   `street_suffix` floating with no `street`, an `intersection_a`/`_b` pair claiming a junction that has no road. For
  *   years nothing consumed it: `validateTree` was called only by its own test, so the check existed and the answer was
  *   never asked for. #1747 repaired one instance after finding the diagnosis had sat unread.
  *
- *   THE PROPERTY THAT MAKES THIS WORTH RESTRICTING is that the verdict needs no truth. Every other board assertion compares
- *   against an expected component or coordinate. this one reads the tree against its own contract, so it can fail a row
+ *   the property that makes this worth restricting is that the verdict needs no truth. Every other board assertion compares
+ *   against an expected component or coordinate. this one reads the tree against its own interface, so it can fail a row
  *   nobody has labelled and it cannot be satisfied by pinning a new expectation. Measured over 854 rows it flags four,
  *   and all four are rows the board independently tracks as failing — no false positives.
  *
- *   It earned the check by first being WRONG in a way worth recording. The initial sweep flagged eight, and five were
+ *   It earned the check by first being wrong in a way worth recording. The initial sweep flagged eight, and five were
  *   the sub-venue shape (`Terminal 5` of `Heathrow Airport`) on a row that passes the check: `PARENT_OF[unit]` had no
- *   `venue` edge, so the contract was narrower than the capability the board already tested. Fixed in 8c54b4b48. A
+ *   `venue` edge, so the interface was narrower than the capability the board already tested. Fixed in 8c54b4b48. A
  *   structural check is only as good as the structure it is given, which is the argument for the allowlist below being
  *   short and reasoned rather than long and tolerated.
  */
@@ -41,7 +41,7 @@ async function weightsPresent(): Promise<boolean> {
 }
 
 /**
- * Rows whose tree is structurally invalid TODAY, each with the issue that owns it.
+ * Rows whose tree is structurally invalid today, each with the issue that owns it.
  *
  * An entry is a debt with a name. Removing one because it started passing is the good outcome. adding one needs the
  * defect written down first, because a row added here silently is a defect converted into a permanent exemption.
@@ -124,7 +124,7 @@ describe.skipIf(!(await weightsPresent()))("board structural validity", () => {
 		const invalid: string[] = []
 
 		for (const row of rows) {
-			// The tree AS THE RESOLVER SEES IT — after the postcode and stranded-affix repairs.
+			// The tree AS the resolver sees IT — after the postcode and stranded-affix repairs.
 			const tree = await parseForGeocode(row.input, { classifier })
 
 			if (!validateTree(tree).valid) {
@@ -141,7 +141,7 @@ describe.skipIf(!(await weightsPresent()))("board structural validity", () => {
 		expect(
 			unexpected,
 			`Board row(s) now decoding to a structurally invalid tree: ${unexpected.join(", ")}. Either the parse ` +
-				"regressed, or the containment contract is narrower than a capability we ship (which is what the " +
+				"regressed, or the containment interface is narrower than a capability we ship (which is what the " +
 				"sub-venue edge in 8c54b4b48 turned out to be — check that before adding an allowlist entry)."
 		).toEqual([])
 

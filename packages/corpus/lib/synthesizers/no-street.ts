@@ -204,7 +204,7 @@ export function synthesizeNoStreetRow(
 	 * Write `extra` on top of the base tuple's admin components through the country's own layout.
 	 *
 	 * The layout decides the order, the separators and which components it has a slot for, and reports the subset it
-	 * PRINTED. France absorbs the region into its postcode line, so a row that emitted `region` regardless would carry a
+	 * printed. France absorbs the region into its postcode line, so a row that emitted `region` regardless would carry a
 	 * label whose text is not in `raw`, and the aligner would have nothing to attach it to.
 	 */
 	const render = (
@@ -239,7 +239,7 @@ export function synthesizeNoStreetRow(
 		case "venue-adversarial": {
 			// The venue-adversarial template name is descriptive — when selected, this branch
 			// always draws from the adversarial pool. The `adversarialVenueRatio` opt is what
-			// the OUTER template picker uses to bias toward this template versus the plain one.
+			// the outer template picker uses to bias toward this template versus the plain one.
 			// once we're inside this branch the choice is already made.
 			return render({ venue: sample(ADVERSARIAL_VENUES, random) }, { locality: true, region: true, postcode: true })
 		}

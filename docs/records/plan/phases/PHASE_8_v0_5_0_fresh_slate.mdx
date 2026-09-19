@@ -53,7 +53,7 @@ Six work areas, each with its own thread. Cross-thread dependencies noted.
 - **What:** retrain the BIO classifier with two structural changes:
   - **Top-k by design**: instead of always returning argmax, the inference path returns top-k tag sequences with calibrated scores. Stage 5 consumes these.
   - **Phrase-prior conditioning**: classifier input layer takes the phrase grouper's proposed spans as additional features (one-hot or learned-embedding for "this token is the start of a proposed phrase," "this token is mid-phrase," etc.). Trained jointly with the BIO objective.
-- **Why:** unblocks Stage 5 concordance work. The model becomes a candidate generator instead of a single-answer predictor — matches the architecture's contract.
+- **Why:** unblocks Stage 5 concordance work. The model becomes a candidate generator instead of a single-answer predictor — matches the architecture's interface.
 - **Specifics:**
   - Likely a hidden_size bump (256 → 384 or 512) — paid for by rented GPU. Validate before committing.
   - Label vocabulary unchanged from v0.3.0 (21 BIO classes) unless POI taxonomy expansion is bundled in (operator decision).
@@ -164,6 +164,6 @@ Different from v0.4.0's "≥2 of 4 axes" frame, because v0.5.0 is changing the a
 ## See also
 
 - [The knowledge ladder](../../site-2026-08/understanding/our-approach/the-knowledge-ladder.mdx) — conceptual framing for what the missing rungs do
-- [The pipeline contract](../../site-2026-08/concepts/staged-pipeline-contract.mdx) — runtime mechanics
+- [The pipeline interface](../../site-2026-08/concepts/staged-pipeline-interface.mdx) — runtime mechanics
 - [v0.4.0 ablation campaign retrospective](../../retrospectives/v0-4-0-ablation-campaign.mdx) — what made the fresh-slate decision necessary
 - [Issue #116](https://github.com/sister-software/mailwoman/issues/116) — v0.4.0's original work plan

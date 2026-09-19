@@ -46,7 +46,7 @@ const PPD_SOURCE_CSV = String(dataRootPath("ppd", "2026-07-22", "gb-tuples.csv")
 const BOROUGH_DB = String(dataRootPath("wof", "admin-global-priority.db"))
 const LONDON_PAIRS_JSONL = String(repoRootPath("data", "gazetteer", "london-pairs-v2.jsonl"))
 /**
- * Northern Ireland neighbourhood pairs (campaign R7). A SEPARATE file rather than merged into the London one, so each
+ * Northern Ireland neighbourhood pairs (campaign R7). A separate file rather than merged into the London one, so each
  * source keeps its own provenance md5 in the header and the freshness guard can tell which of them moved.
  */
 const NI_PAIRS_JSONL = String(repoRootPath("data", "gazetteer", "ni-pairs-v1.jsonl"))
@@ -56,7 +56,7 @@ const NI_PAIRS_JSONL = String(repoRootPath("data", "gazetteer", "ni-pairs-v1.jso
  */
 const GB_REGIONS_JSONL = String(repoRootPath("data", "gazetteer", "gb-regions-v1.jsonl"))
 
-// Hierarchy campaign R2+R3: the WOF borough pairs + the checked-in ONSPD London ward pairs join the
+// Hierarchy campaign R2+R3: the WOF borough pairs + the checked-in onspd London ward pairs join the
 // build — without these flags a dev rebuild would silently drop them. The `sources` list is what the
 // shared freshness guard md5s, in the order the build records them (CSV, borough DB, pairs JSONLs).
 const softFeed = await committedSoftFeedLinks()
@@ -88,25 +88,25 @@ const overlay = await materializeDevOverlay({
 
 // Build postcode-gb.bin only when the model card declares a compatible anchor channel.
 //
-// The GB anchor binary is the one artifact whose correctness depends on WHICH MODEL is loaded, so it
+// The GB anchor binary is the one artifact whose correctness depends on which model is loaded, so it
 // is built only when the card says the model can use it.
 //
 // The history in one paragraph. This script used to build the bin unconditionally. #1467 removed it,
 // because the encoder's GB anchor slot (slot 4 of `LOCALE_ORDER`, `neural/anchor-inference.ts`) had
 // taken no gradient — every recipe's `anchor_lookup_path` was `pilot-anchor-lookup.json`, 67,708 keys,
 // zero letter-containing, US/DE/FR only. Feeding slot 4 on a model that never trained it cost 24 exact
-// postcodes on the 120-row gb-golden board (294/318 anchor-ON vs 318/318 anchor-OFF). Then a bare
+// postcodes on the 120-row gb-golden board (294/318 anchor-on vs 318/318 anchor-off). Then a bare
 // `existsSync` skip turned out to be worse than never building: a bin left by an older checkout is
 // found package-dir-relative and silently re-enables the regression with no warning, because a present
 // artifact is exactly what the loader expects.
 //
-// The check that resolves both states is the CARD's `requires.anchor.span_mode`. `shaped` is declared
+// The check that resolves both states is the card's `requires.anchor.span_mode`. `shaped` is declared
 // only by a model trained against a lookup with letter-containing keys (`pilot-anchor-lookup-v2` and
 // after), and that is precisely the model for which the bin helps. So: declared `shaped` → build it.
 // anything else → remove any stale copy, loudly. No flag, no lockstep constant to forget — the same
 // card the loader reads decides.
 //
-// Receipts either way: `docs/records/evals/2026-08-05-en-gb-anchor-off.md` (the anchor-OFF mitigation)
+// Receipts either way: `docs/records/evals/2026-08-05-en-gb-anchor-off.md` (the anchor-off mitigation)
 // and `docs/records/evals/2026-08-05-v420-base-anchor-v2-run-b.md` (the retrain that warrants it back).
 
 /**

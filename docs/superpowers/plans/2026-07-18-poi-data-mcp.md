@@ -1,8 +1,8 @@
 # POI Data + MCP (Plan 3 of 3) Implementation Plan
 
-> **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
+> **For agentic workers:** required sub-skill: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
-**Goal:** poi.db (layer #1: Overture Places US/CA/MX/FR, res-9 H3-clustered, layer-contract-conforming), its builder command, the reader, the executor that turns a `POIIntent` into ranked results (with the abstain paths), the `@mailwoman/mcp` agent surface, the `mailwoman poi` CLI, and the docs inline tester.
+**Goal:** poi.db (layer #1: Overture Places US/CA/MX/FR, res-9 H3-clustered, layer-interface-conforming), its builder command, the reader, the executor that turns a `POIIntent` into ranked results (with the abstain paths), the `@mailwoman/mcp` agent surface, the `mailwoman poi` CLI, and the docs inline tester.
 
 **Architecture:** Spec §2–§3.5 + the Plan-2 final-review rides (this plan must land: abstain via `requiresBuildLocalLayer`, an `emitOverpassQL` surface, a CLI path that reaches `poiIntent`). Schema/reader live in `resolver-wof-sqlite` (the probe-pattern home); the builder is a Pastel command (`gazetteer build poi` — auto-registers, no registry); the executor lives in `mailwoman/` and extends the `poiQueryKind` flag; `@mailwoman/mcp` is a greenfield workspace on `@modelcontextprotocol/sdk` (stdio transport). Ancestry deviation from the spec, pre-declared: WOF ancestry is decorated at READ time (reverse-geocode the ≤k returned results) rather than at build time — same observable, avoids ~20M build-time PIPs; the manifest's spine key is `h3` (res 9).
 
@@ -36,8 +36,8 @@
 
 **Interfaces:**
 
-- Consumes: `kysely`; `LayerContractDatabase`, `createLayerManifestTable`, `createLayerCoverageTable` from `@mailwoman/core/layers` (verify the import specifier resolves from this workspace — resolver-wof-sqlite already depends on core).
-- Produces (Tasks 2–3 rely on exact names): `POITable`, `POIStageTable`, `POICategoryCodeTable`, `POIDatabase` (intersecting `LayerContractDatabase`), `POI_COLUMNS`, `createPOIStagingTables(db)`, `createPOITable(db)`, `POI_FTS_TABLE = "poi_search"`, `createPOISearchFTS(db: DatabaseSync)` (raw DDL).
+- Consumes: `kysely`; `layerschemadatabase`, `createLayerManifestTable`, `createLayerCoverageTable` from `@mailwoman/core/layers` (verify the import specifier resolves from this workspace — resolver-wof-sqlite already depends on core).
+- Produces (Tasks 2–3 rely on exact names): `POITable`, `POIStageTable`, `POICategoryCodeTable`, `POIDatabase` (intersecting `layerschemadatabase`), `POI_COLUMNS`, `createPOIStagingTables(db)`, `createPOITable(db)`, `POI_FTS_TABLE = "poi_search"`, `createPOISearchFTS(db: DatabaseSync)` (raw DDL).
 
 - [ ] **Step 1: Failing test** — `resolver-wof-sqlite/poi-schema.test.ts`:
 
@@ -83,7 +83,7 @@ describe("poi schema", () => {
 		expect(ddl.indexOf("h3_cell")).toBeLessThan(ddl.indexOf("category_id"))
 	})
 
-	it("stages + contract tables coexist and accept typed rows", async () => {
+	it("stages + interface tables coexist and accept typed rows", async () => {
 		const { kdb } = openMemory()
 		await createPOIStagingTables(kdb)
 		await createLayerManifestTable(kdb)
@@ -131,14 +131,14 @@ describe("poi schema", () => {
  *   contiguous key range (the byte-range/httpvfs access pattern, same discipline as the candidate
  *   gazetteer). Rows carry denormalized name/brand/coords; category ids are small ints via the
  *   `poi_category_codes` dictionary (poi-taxonomy category ids are the string side). The DB also
- *   embeds the layer-contract tables from `@mailwoman/core/layers` — the builder writes the
+ *   embeds the layer-interface tables from `@mailwoman/core/layers` — the builder writes the
  *   manifest (tier `shipped`, spine `h3` res 9) and per-res-6-cell coverage.
  */
 
 import { sql, type Kysely } from "kysely"
 import type { DatabaseSync } from "node:sqlite"
 
-import type { LayerContractDatabase } from "@mailwoman/core/layers"
+import type { layerschemadatabase } from "@mailwoman/core/layers"
 
 /** One POI row. Clustered PK: h3_cell → category_id → neg_rank → rowid_key. */
 export interface POITable {
@@ -173,7 +173,7 @@ export interface POICategoryCodeTable {
 	category: string
 }
 
-export interface POIDatabase extends LayerContractDatabase {
+export interface POIDatabase extends layerschemadatabase {
 	poi: POITable
 	poi_stage: POIStageTable
 	poi_category_codes: POICategoryCodeTable
@@ -414,7 +414,7 @@ export function buildToolTable(deps: MCPToolDeps): MCPToolDef[]
 
 Five tools: `mailwoman_parse`, `mailwoman_geocode`, `mailwoman_poi_search`, `mailwoman_overpass_export`, `mailwoman_layer_manifest` (opens the db read-only, returns `readLayerManifest` + coverage summary). Descriptions written for an agent consumer (state units, when to use which).
 
-`server.ts`: `createMCPServer(deps)` — `new McpServer({ name: "mailwoman", version })` from `@modelcontextprotocol/sdk/server/mcp.js`, register each tool, return server. `cli.ts`: connect `StdioServerTransport` (`@modelcontextprotocol/sdk/server/stdio.js`), deps built from the real library (pipeline factory with weights auto-resolve; poi flag on; lazy — construct the pipeline on first tool call). CAUTION: the SDK's registration API surface moves between minors — after install, READ `node_modules/@modelcontextprotocol/sdk`'s `.d.ts` for the current `registerTool`/`tool()` signature and adapt mechanically; the tool TABLE (tools.ts) is the stable contract, the SDK glue is thin.
+`server.ts`: `createMCPServer(deps)` — `new McpServer({ name: "mailwoman", version })` from `@modelcontextprotocol/sdk/server/mcp.js`, register each tool, return server. `cli.ts`: connect `StdioServerTransport` (`@modelcontextprotocol/sdk/server/stdio.js`), deps built from the real library (pipeline factory with weights auto-resolve; poi flag on; lazy — construct the pipeline on first tool call). CAUTION: the SDK's registration API surface moves between minors — after install, READ `node_modules/@modelcontextprotocol/sdk`'s `.d.ts` for the current `registerTool`/`tool()` signature and adapt mechanically; the tool TABLE (tools.ts) is the stable interface, the SDK glue is thin.
 
 Tests (`tools.test.ts`): buildToolTable with stub deps — five tools present, names/schemas valid (each `inputSchema.safeParse` accepts a canonical example + rejects a bad one), handlers route to the right dep, overpass tool returns the stub string. no transport/server test (SDK glue is exercised by the smoke run below).
 

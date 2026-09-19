@@ -135,7 +135,7 @@ def train(
 
         pretrain(cfg, resume_from=resume_from)
         return
-    # Mandatory on gfx1103 — flash/mem-efficient SDPA paths crash bf16 on this GPU.
+    # Mandatory on gfx1103 — flash/mem-efficient sdpa paths crash bf16 on this GPU.
     force_math_sdpa()
     # #1677: a reps-targeted source's weight is derived here, from the corpus's row counts and this run's
     # samples, so the mixture the loader samples is the one the config named in reps per row.

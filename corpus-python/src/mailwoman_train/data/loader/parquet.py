@@ -20,9 +20,9 @@ from ..augment import SPAN_KEYS
 
 _REQUIRED_COLUMNS: tuple[str, ...] = ("raw", "tokens", "labels", "country", "source")
 
-# v0.5.0 char-offset label columns (#519). Presence is decided PER FILE by schema: a v0.5.0
+# v0.5.0 char-offset label columns (#519). Presence is decided PER file by schema: a v0.5.0
 # parquet file carries all three (and every row must be non-null in all three); a frozen pre-v0.5.0
-# file carries none (rows ride the legacy token path). A file with SOME of the three is
+# file carries none (rows ride the legacy token path). A file with some of the three is
 # corrupt — loud failure, never a silent fallback.
 _SPAN_COLUMNS: tuple[str, ...] = SPAN_KEYS
 

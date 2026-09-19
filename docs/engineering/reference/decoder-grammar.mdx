@@ -1,5 +1,5 @@
 ---
-title: Decoder grammar contract — the objective we decode, the one we mean, and the measurement between them
+title: Decoder grammar interface — the objective we decode, the one we mean, and the measurement between them
 role: reference
 audience: maintainer
 owner: model
@@ -9,15 +9,15 @@ tags:
   - decoder
 ---
 
-# Decoder grammar contract
+# Decoder grammar interface
 
-**Status.** Design record and standing contract, from the 2026-08-24 design session. It fixes four
+**Status.** Design record and standing interface, from the 2026-08-24 design session. It fixes four
 things in one place: the objective the shipped decoder maximizes, the objective the failing
 board rows imply we mean, a constraint taxonomy stated as **measurable predicates** rather than
 intuitions, and the toponymy vocabulary the rest of the docs should use. Companions:
 [`SCHEMA.mdx`](./SCHEMA.mdx) (the `ComponentTag` union and `PARENT_OF`),
 [`2026-08-16-autodecoder-coherence.md`](../../records/research/2026-08-16-autodecoder-coherence.md)
-(the resolver-side coherence ladder this contract mirrors on the parser side), and #727 (the span
+(the resolver-side coherence ladder this interface mirrors on the parser side), and #727 (the span
 head).
 
 ## Position: where the rules live
@@ -28,7 +28,7 @@ base grows monotonically with observed formats, and each addition risks the prev
 sequence labeler takes the opposite position: the rules are implicit in the weights, which removes
 the case analysis and with it the ability to read, test, or falsify any single rule.
 
-This contract takes a third position. **Structure is declared in the objective — the factorization
+This interface takes a third position. **Structure is declared in the objective — the factorization
 of the score and two small typed grammars carried as data. Content is learned.** A rule here is a
 term in a score with a measurable firing census, never a case in code and never only a tendency in
 the weights.
@@ -90,7 +90,7 @@ attachment across its boundary.
 venue or street as root, `address`-typed edges to locality, postcode, region — is the `AddressTree`
 under `PARENT_OF`, with `REL=address` equal to the resolver's containment set and
 `number → street` an existing `PARENT_OF` edge. One production is currently missing from the
-containment contract: a POI under a POI (`Cafe at St Mary's` located at
+containment interface: a POI under a POI (`Cafe at St Mary's` located at
 `Church of St Mary the Virgin`). `containment.ts:61` gives `venue` the parents
 `["street", "locality"]` only; the Heathrow sub-venue case was handled by widening `unit`'s
 parents rather than by a venue→venue edge. Adding that production is schema work and is tracked here

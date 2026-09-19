@@ -171,7 +171,7 @@ describe("buildFSTEmissionPriors", () => {
 	})
 
 	it("folds trailing punctuation into the preceding word's bias, not into a separate placeholder", () => {
-		// The word boundary is ▁ ONLY: a punctuation-only piece with no leading ▁ is unconditionally interior
+		// The word boundary is ▁ only: a punctuation-only piece with no leading ▁ is unconditionally interior
 		// to whatever word is still active. There is deliberately no look-ahead distinguishing "mid-word
 		// hyphen" from "trailing comma before a new ▁ word" — the grouper cannot see the next piece, and the
 		// splits that matter ("Stockton-on-Tees" etc.) don't need it. So the comma below joins the
@@ -197,7 +197,7 @@ describe("buildFSTEmissionPriors", () => {
 	it("length-scales street suppression for a single-token match (default `suppression` mode), positive bias intact (#1142)", () => {
 		// A lone place-name token ("Sweeney") is weak street-head evidence. The default `suppression` mode
 		// scales the street/house-number suppression by match length (1-token ×0.25) so the model's own
-		// "Ranch Road → street" reading can win, while the POSITIVE locality bias is left at full strength.
+		// "Ranch Road → street" reading can win, while the positive locality bias is left at full strength.
 		const fst = mockFST(new Map([["sweeney", [{ wofID: 9, placetype: "locality", referential: 0.5 }]]]))
 		const pieces = makePieces("Sweeney")
 		const supp = buildFSTEmissionPriors(fst, pieces, STAGE2_BIO_LABELS) // default: suppression
@@ -362,7 +362,7 @@ describe("normalizeFSTToken", () => {
 	})
 
 	it("applies NFKC normalization (ligatures and compatibility forms)", () => {
-		// NFKC unifies compatibility forms. for example, the NFKC form resolves superscript
+		// nfkc unifies compatibility forms. for example, the nfkc form resolves superscript
 		// and subscript characters to their base forms.
 		const result = normalizeFSTToken("ﬁnance") // 'ﬁ' is U+FB01 (fi ligature)
 		expect(result).toBe("finance")
@@ -438,8 +438,8 @@ describe("groupPiecesIntoWords — interior punctuation (real fixture tokenizer)
 	it('recovers "on" in "Stockton on the Forest" via pending-word-start', async () => {
 		// A bare "▁" piece is a word boundary carrying no content of its own (real split here:
 		// ["▁Stock","ton","▁","on","▁the","▁Forest"]). It closes "Stockton" and leaves `current === null`
-		// PENDING, so the next piece ("on", with no leading ▁ of its own) opens a fresh word instead of being
-		// dropped. This is not a fixture-vocab curiosity: the pattern is live and widespread in the PRODUCTION
+		// pending, so the next piece ("on", with no leading ▁ of its own) opens a fresh word instead of being
+		// dropped. This is not a fixture-vocab curiosity: the pattern is live and widespread in the production
 		// tokenizer (v0.9.0-multisplice) — "Newcastle upon Tyne", "Weston super Mare", "Kingston upon Hull" and
 		// a trailing "IL" all split this way. see the skipIf-conditional production-tokenizer block below.
 		const tokenizer = await MailwomanTokenizer.loadFromFile(TOKENIZER_MODEL_PATH)
@@ -465,8 +465,8 @@ describe("groupPiecesIntoWords — interior punctuation (real fixture tokenizer)
 
 describe("groupPiecesIntoWords — byte-fallback placeholder never leaks into fstToken (paired-punctuation audit)", () => {
 	// The small fixture tokenizer's deliberately tiny vocab hits SentencePiece byte-fallback (`<0xHH>` pieces) on
-	// curly quotes, guillemets, and even ASCII braces/brackets — not just non-Latin scripts. `hasAlnum` must
-	// never read the PLACEHOLDER TEXT ("<0x7B>" — hex digits and letters) as real alnum content: it would
+	// curly quotes, guillemets, and even ascii braces/brackets — not just non-Latin scripts. `hasAlnum` must
+	// never read the placeholder text ("<0x7B>" — hex digits and letters) as real alnum content: it would
 	// inject garbage into fstToken ("0x7bblock" instead of "block"), corrupting every FST/pair-index probe key
 	// for a place name written with one of these characters. See `.superpowers/sdd/task-9-audit-report.md`.
 
@@ -530,7 +530,7 @@ describe("street-shaped surface check on the C4 mapped tiers (#1903)", () => {
 		[["biggin", "hill"], false],
 		[["soho"], false],
 		[["camden", "town"], false],
-		// A generic alone is not a street NAME, with or without a directional.
+		// A generic alone is not a street name, with or without a directional.
 		[["square"], false],
 		[["street"], false],
 		[["square", "west"], false],

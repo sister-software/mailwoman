@@ -4,9 +4,9 @@
  * @author Teffen Ellis, et al.
  *
  *   The sealed polygon-artifact build sequence: one temp file beside the destination, two handles, every
- *   cleanup path, then `VACUUM` → seal → atomic swap.
+ *   cleanup path, then `vacuum` → seal → atomic swap.
  *
- *   THE INGEST AND THE FINISH PHASES USE SEPARATE HANDLES, ALWAYS — including the in-process path. The batched
+ *   the ingest and the finish phases USE separate handles, always — including the in-process path. The batched
  *   path requires this separation: its children open the same file, so the parent's handle
  *   has to be closed across them, and a single shared handle silently becomes a closed one by the time the
  *   finish phase runs. Doing it one way in both paths is what puts the fixture suites on the same sequence a
@@ -24,7 +24,7 @@ export interface BuildSealedArtifactOptions<DB, Streamed, Result> {
 	 */
 	out: string
 	/**
-	 * Create every table the build writes — the layer's own, the contract's, and any build-only scratch table (which the
+	 * Create every table the build writes — the layer's own, the interface's, and any build-only scratch table (which the
 	 * finish phase drops before the artifact is sealed).
 	 */
 	createTables: (database: DatabaseClient<DB>) => Promise<void>
@@ -40,7 +40,7 @@ export interface BuildSealedArtifactOptions<DB, Streamed, Result> {
 	batched?: (tmpPath: string) => Promise<Streamed>
 	/**
 	 * Post-ingest work under the second handle: assertions over what was streamed, index/coverage/manifest writes,
-	 * dropping any scratch table. `VACUUM`, the seal and the swap follow. the artifact's on-disk size is measurable only
+	 * dropping any scratch table. `vacuum`, the seal and the swap follow. the artifact's on-disk size is measurable only
 	 * after this returns and the swap lands.
 	 */
 	finish: (database: DatabaseClient<DB>, streamed: Streamed) => Promise<Result>

@@ -2,10 +2,10 @@
  * @copyright Sister Software
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
- * @file The pinned Overture release for the ADDRESSES theme.
+ * @file The pinned Overture release for the addresses theme.
  *
  *   Overture publishes one release tag across its themes and prunes old releases from the bucket on roughly a monthly
- *   window, so every reader carries a pin. The pins are per THEME rather than per tool: the divisions theme (the admin
+ *   window, so every reader carries a pin. The pins are per theme rather than per tool: the divisions theme (the admin
  *   gazetteer) and the places theme (poi.db) are pinned together in `mailwoman`'s gazetteer pipeline (`defaults.ts`,
  *   `poi/defaults.ts`), and bumping them is a new-vintage decision for those artifacts. This is the third pin, for the
  *   addresses theme every address-point, postcode-centroid, district and coarse-placer build reads, and it lives in

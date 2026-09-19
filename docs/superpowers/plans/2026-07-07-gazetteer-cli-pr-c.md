@@ -1,6 +1,6 @@
 # Gazetteer CLI PR C: the #1026 fix + mutator deletions + diagnostics triage
 
-> **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
+> **For agentic workers:** required sub-skill: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
 **Goal:** Make the canonical recipe produce the country/region nodes it has been silently missing (#1026 — the GeoNames admin fold), delete the four superseded admin-mutation scripts, and corral the loose diagnostics — the PR C increment of the cleanup spec.
 

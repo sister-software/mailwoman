@@ -4,7 +4,7 @@
  * @author Teffen Ellis, et al.
  *
  *   Tests for the no-street synthesizer. Verifies that every emitted row has no street-side tags —
- *   this is the contract that makes the rows useful as counter-distribution training data.
+ *   this is the interface that makes the rows useful as counter-distribution training data.
  */
 
 import { makeLcg } from "@mailwoman/core/random"

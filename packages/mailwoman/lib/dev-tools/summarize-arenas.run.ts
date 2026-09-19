@@ -6,7 +6,7 @@
  *   Summarize-arenas.ts — per-arena pass-rate table from external-arenas.ts output.
  *
  *   Reads the per-arena `*.results.json` sidecars written by harness-neural. For the
- *   postal-standards arena it also joins back to the source JSONL (on `input`) to break the rates
+ *   postal-standards arena it also joins back to the source jsonl (on `input`) to break the rates
  *   down by edge_class — the dimension the harness sidecar drops.
  *
  *   Ported faithfully from the retired Python implementation (pure JSON, no numpy); the v0 buckets

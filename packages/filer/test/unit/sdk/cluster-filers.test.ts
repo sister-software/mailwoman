@@ -140,7 +140,7 @@ async function readClusterMap(db: DatabaseClient<FilerDatabase>, assertion: stri
 }
 
 /**
- * Insert a pair of `form499_id` nodes that SHARE an authoritative FRN (a re-filing under one registrant) — the only
+ * Insert a pair of `form499_id` nodes that share an authoritative FRN (a re-filing under one registrant) — the only
  * shape that lets an inferred link form at all under the identifier veto (see the module docstring).
  */
 async function seedSharedFRNPair(
@@ -338,7 +338,7 @@ describe("clusterInferredLinks — the identifier veto", () => {
 
 		expect(inferredEdges).toHaveLength(0)
 
-		// The inferred CLUSTER keeps them apart too — each in its own singleton.
+		// The inferred cluster keeps them apart too — each in its own singleton.
 		const inferredMap = await readClusterMap(db, FilerEdgeAssertion.Inferred)
 		expect(inferredMap.get(FORM499_A)).toBeDefined()
 		expect(inferredMap.get(FORM499_A)).not.toBe(inferredMap.get(FORM499_B))
@@ -346,7 +346,7 @@ describe("clusterInferredLinks — the identifier veto", () => {
 		// The nameless node never gets an inferred assignment at all.
 		expect(inferredMap.has(FORM499_D)).toBe(false)
 
-		// CRITERION 2: the authoritative assignments are byte-identical to before the inferred pass ran (true both
+		// criterion 2: the authoritative assignments are byte-identical to before the inferred pass ran (true both
 		// because nothing bridged and because the passes write disjoint assertion values by construction).
 		const authoritativeAfter = await readClusterMap(db, FilerEdgeAssertion.Authoritative)
 		expect(authoritativeAfter).toEqual(authoritativeBefore)
@@ -437,7 +437,7 @@ describe("clusterInferredLinks — the identifier veto", () => {
 		expect(bridge?.source).toBe(CLUSTER_FILERS_SOURCE)
 		expect(bridge?.match_score).not.toBeNull()
 
-		// CRITERION 2, still: even a real, sanctioned inferred link never alters the authoritative assignment.
+		// criterion 2, still: even a real, sanctioned inferred link never alters the authoritative assignment.
 		const authoritativeAfter = await readClusterMap(db, FilerEdgeAssertion.Authoritative)
 		expect(authoritativeAfter).toEqual(authoritativeBefore)
 		expect(authoritativeResult.clusters).toBe(1)
@@ -500,7 +500,7 @@ describe("clusterInferredLinks — the identifier veto", () => {
 		using db = openMemory()
 		await createAllTables(db)
 
-		// "LLC" alone is entirely a stripped legal designation — canonicalizeOrganizationName returns a TRUTHY
+		// "LLC" alone is entirely a stripped legal designation — canonicalizeOrganizationName returns a truthy
 		// object ({ raw: "LLC", canonical: "", designations: ["llc"] }), which a bare `!organization` check
 		// would have missed.
 		const designationOnlyFRN = `${FilerIdentifierType.FRN}:1230000000`
@@ -531,7 +531,7 @@ describe("clusterInferredLinks — the identifier veto", () => {
 			})
 			.execute()
 
-		// A normal node, present purely so `recordsConsidered` has something to be COMPARED against (proving
+		// A normal node, present purely so `recordsConsidered` has something to be compared against (proving
 		// the designation-only node was excluded rather than that nothing was scored at all).
 		const normalFRN = `${FilerIdentifierType.FRN}:1230000001`
 		const normalNode = `${FilerIdentifierType.Form499ID}:999998`
@@ -657,7 +657,7 @@ describe("clusterInferredLinks — the identifier veto", () => {
 			])
 			.execute()
 
-		// If the EARLIEST name ("Legacy Systems Co") were picked instead of the latest, the canonical keys
+		// If the earliest name ("Legacy Systems Co") were picked instead of the latest, the canonical keys
 		// ("legacy systems co" vs "new name") would never co-block and no link would form.
 		const result = await clusterInferredLinks(db, { sourceVintage: "2026-cluster-v1", validFrom: "2026-07-01" })
 		expect(result.recordsConsidered).toBe(2)
@@ -755,7 +755,7 @@ describe("clusterInferredLinks — cross-vintage supersession", () => {
 
 		expect(secondRun).toHaveLength(1)
 		expect(secondRun[0]?.valid_to).toBeNull()
-		// valid_from is the SEPARATE, always-ISO `validFrom` option — never the (non-ISO) sourceVintage label.
+		// valid_from is the separate, always-ISO `validFrom` option — never the (non-ISO) sourceVintage label.
 		expect(secondRun[0]?.valid_from).toBe("2026-07-01")
 	})
 

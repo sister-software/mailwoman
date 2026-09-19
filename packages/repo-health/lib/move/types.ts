@@ -80,7 +80,7 @@ export interface ModuleMovePlan {
 	moves: ModuleMove[]
 	rewrites: SpecifierRewrite[]
 	/**
-	 * `exports`/`imports` targets the moves invalidate. A subpath KEY never changes: it is the package's contract, and a
+	 * `exports`/`imports` targets the moves invalidate. A subpath KEY never changes: it is the package's interface, and a
 	 * file moving underneath it is not a consumer's business.
 	 */
 	manifestRewrites: ManifestRewrite[]

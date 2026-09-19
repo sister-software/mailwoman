@@ -2,7 +2,7 @@
  * @copyright Sister Software
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
- * @file The capitals-reference build (#1880) — the exact-code admission rule (`PPLA` in, `PPLA2`/`PPLCH` out), the
+ * @file The capitals-reference build (#1880) — the exact-code admission rule (`ppla` in, `PPLA2`/`pplch` out), the
  *   coverage grading against the catalog's own capital names, and the wrong-format classification that keeps a postal
  *   export squatting on `<CC>.txt` from reading as "scanned, no capital".
  */
@@ -78,7 +78,7 @@ describe("buildCapitalsReference", () => {
 			join(dir, "countryInfo.txt")
 		)
 
-		// AA: a real dump whose PPLC name disagrees with the catalog. BB: a postal export on the dump filename.
+		// AA: a real dump whose pplc name disagrees with the catalog. BB: a postal export on the dump filename.
 		// CC: no file at all.
 		await writeLocalFile(dumpRow(1, "Other Name", "P", "PPLC", "AA"), join(dir, "AA.txt"))
 

@@ -4,8 +4,8 @@
  * @author Teffen Ellis, et al.
  *
  *   `mailwoman corpus slice kryptonite` — build a parquet file from the DeepSeek-generated
- *   kryptonite JSONL and emit the combined corpus MANIFEST (the base parquet files + the new one). See
- *   docs/engineering/reference/CORPUS_V0_4_0_GENERATION.md for the reproducibility contract.
+ *   kryptonite jsonl and emit the combined corpus manifest (the base parquet files + the new one). See
+ *   docs/engineering/reference/CORPUS_V0_4_0_GENERATION.md for the reproducibility interface.
  */
 
 import { Text } from "ink"
@@ -13,7 +13,7 @@ import { Text } from "ink"
 import { type CommandSpec, CommandTaskResult, type CommandComponent, useCommandTask } from "#cli-kit"
 
 /**
- * Native command-line contract consumed by the filesystem command router.
+ * Native command-line interface consumed by the filesystem command router.
  */
 export const spec = {
 	name: "kryptonite",

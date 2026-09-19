@@ -13,8 +13,8 @@
  *   {@link PhotonEngine}; the CLI wires the real engine. Implementation is staged on the epic (#801
  *   / the Photon child); routes whose engine method is absent answer `501`.
  *
- *   The Hono app (CORS + error envelope + the emitted OpenAPI document) lives in `app.ts`; route
- *   definitions + handlers in `routes.ts`; wire types + the engine contract in `engine.ts`; the
+ *   The Hono app (cors + error envelope + the emitted OpenAPI document) lives in `app.ts`; route
+ *   definitions + handlers in `routes.ts`; wire types + the engine interface in `engine.ts`; the
  *   resolved-place → Photon-schema projection in `projection.ts`; the zod wire schemas in
  *   `schema.ts`.
  */

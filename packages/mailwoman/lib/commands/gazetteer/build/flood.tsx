@@ -8,11 +8,11 @@
  *   live in `@mailwoman/flood/sdk`, so each stays unit-testable without Ink or the network in the loop.
  *   Mirrors `bdc.tsx`'s progress (stderr) / summary (stdout) split.
  *
- *   `--measure-resolutions` DOES NOT BUILD. The index resolution is a measurement this layer takes rather
+ *   `--measure-resolutions` does not build. The index resolution is a measurement this layer takes rather
  *   than a number argued to, and running the measurement is a mode of its own because it costs a full pass
  *   over 813,627 polygons per candidate and produces a table rather than an artifact.
  *
- *   `--limit` IS THE SMOKE RUNG. It stops the ingest after N features, which builds a real artifact over a
+ *   `--limit` is the smoke rung. It stops the ingest after N features, which builds a real artifact over a
  *   real prefix of the source — enough to exercise the field names, the value domain, the projection and
  *   the seal, which is what fixtures structurally cannot. The coverage rows still cover all of England,
  *   because the footprint comes from the authority's statement rather than from the polygons.
@@ -39,13 +39,13 @@ import { buildSHA as resolveBuildSHA } from "#gazetteer-pipeline/stamp-manifest"
 const DEFAULT_COVERAGE_RESOLUTION = "6"
 
 /**
- * Index resolution, chosen from the `partial`-share measurement — see the workspace README for the table and the
+ * Index resolution, chosen from the `partial`-share measurement — see the workspace readme for the table and the
  * reasoning. `--measure-resolutions` re-derives it.
  */
 const DEFAULT_INDEX_RESOLUTION = "9"
 
 /**
- * Native command-line contract consumed by the filesystem command router.
+ * Native command-line interface consumed by the filesystem command router.
  */
 export const spec = {
 	name: "flood",
@@ -179,7 +179,7 @@ const GazetteerBuildFlood: CommandComponent<typeof spec> = ({ options }) => {
 		const buildSHA = resolveBuildSHA(repoRootPath().toString())
 
 		const result = await buildFloodDatabase({
-			// A `--limit` run is the smoke rung and reads a PREFIX in one process. a full build is BATCHED, one child
+			// A `--limit` run is the smoke rung and reads a prefix in one process. a full build is batched, one child
 			// process per range of the authority's own feature ids. The reason is reproducibility rather than speed — see
 			// `@mailwoman/flood/sdk/ingest-chunk`.
 			...(options.limit

@@ -5,7 +5,7 @@
  *
  *   `wof-admin-jp`: Japanese admin-hierarchy adapter.
  *
- *   PROTOTYPE — not yet wired into the Stage 3 training corpus. Demonstrates the JP address shape and
+ *   prototype — not yet wired into the Stage 3 training corpus. Demonstrates the JP address shape and
  *   synthesizes BIO-labeled training rows from the global WOF SQLite.
  *
  *   JP addresses differ from US/EU in three ways:
@@ -14,7 +14,7 @@
  *        "1-2-3 Minamicho, Setagaya, Tokyo"
  *   2. **No street names** — most JP addresses use a block/sub-block grid system. The "neighbourhood"
  *        placetype (丁目) is the closest analog to a street but is actually a grid cell.
- *   3. **Postcode-first convention** — addresses are often prefixed with `〒NNN-NNNN`.
+ *   3. **Postcode-first convention** — addresses are often prefixed with `〒NNN-nnnn`.
  *
  *   Schema mapping to ComponentTags (subset of Stage 3 + JP-specific Phase 6 tags):
  *
@@ -26,7 +26,7 @@
  *
  *   This adapter currently emits only the admin chain (region → locality → block). House numbers and
  *   sub-blocks require a different data source (JP postcode database or real-world address dumps
- *   from MLIT/JapanPost).
+ *   from mlit/JapanPost).
  */
 
 import { isPresent } from "@mailwoman/core/objects"
@@ -94,7 +94,7 @@ function pickName(row: PlaceRow, jpnNames: Map<number, string>): string {
  *
  * Format: `〒<postcode>? <region><locality><neighbourhood>?`
  *
- * No house numbers yet — needs MLIT data.
+ * No house numbers yet — needs mlit data.
  */
 export function synthesizeJpAddress(
 	chain: PlaceRow[],

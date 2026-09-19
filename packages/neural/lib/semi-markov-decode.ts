@@ -7,17 +7,17 @@
  *
  *   The counterpart to `corpus-python`'s `SemiMarkovCRF.decode`: the model scores every span up to
  *   `maxSpan` tokens per segment type (the `span_scores` ONNX output), a segment-level transition
- *   table carries the address grammar, and this decodes whole SEGMENTATIONS — scoring "these k tokens
+ *   table carries the address grammar, and this decodes whole segmentations — scoring "these k tokens
  *   are one street" as a single decision rather than letting it emerge from independent token votes.
  *
  *   Deliberately outside the ONNX graph (the Phase-2 design): span enumeration + this DP need dynamic
  *   shapes, which the graph can't express cheaply and the browser shouldn't pay for. Fetching the
  *   scores costs ~0.75ms (CPU, S=128); this decode runs over the pruned candidate set.
  *
- *   K-BEST rather than 1-best, from day one: the whole point of the arc is a LIST of hypotheses with
+ *   K-best rather than 1-best, from day one: the whole point of the arc is a list of hypotheses with
  *   comparable scores for the resolver to rerank (a rank-2 parse that resolves to a real place beats
  *   a rank-1 that resolves to a country centroid). Scores within one input share the partition
- *   function, so they are directly comparable. ACROSS inputs they are not (that needs the Phase-4
+ *   function, so they are directly comparable. across inputs they are not (that needs the Phase-4
  *   isotonic pass).
  *
  *   The segment-type axis is never hardcoded here — it arrives from the weights bundle's

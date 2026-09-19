@@ -3,14 +3,14 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   FTS5-TRIGRAM fuzzy index over the candidate gazetteer's `name_key` — the typo-tolerant fallback
+ *   FTS5-trigram fuzzy index over the candidate gazetteer's `name_key` — the typo-tolerant fallback
  *   the exact `name_key` B-tree probe structurally can't do (a misspelling breaks the normalized
- *   key, so the contiguous-probe lookup returns nothing). It indexes the NORMALIZED key (not the
+ *   key, so the contiguous-probe lookup returns nothing). It indexes the normalized key (not the
  *   raw `name`), so a diacritic-stripped query (`munchen`) trigram-matches the stored `munchen`
- *   rather than missing a raw `München`. The trigram tokenizer makes `MATCH` a substring/fuzzy
- *   operation. the reader ({@link WOFCandidateTableLookup}) OR's the query's trigrams to fetch a
- *   loose set, then re-ranks it with a WORD-level similarity. The trigram index is the candidate
- *   GENERATOR rather than the scorer — trigram Jaccard scores a true transposition correction below a wrong
+ *   rather than missing a raw `München`. The trigram tokenizer makes `match` a substring/fuzzy
+ *   operation. the reader ({@link WOFCandidateTableLookup}) or's the query's trigrams to fetch a
+ *   loose set, then re-ranks it with a word-level similarity. The trigram index is the candidate
+ *   generator rather than the scorer — trigram Jaccard scores a true transposition correction below a wrong
  *   answer, because shared generic suffixes count as evidence and transpositions count against it.
  *   The receipts are on `candidate-lookup.ts`'s `FUZZY_FETCH` and `WORD_FUZZY_MIN`.
  *
@@ -19,8 +19,8 @@
  *   exact+strip miss — so its scattered postings cost is rare/amortized, and one DB serves both the
  *   browser and the server.
  *
- *   Raw SQL on purpose: Kysely can't express `CREATE VIRTUAL TABLE … USING fts5` (the repo's
- *   FTS5-stays-raw rule). Indexing DISTINCT `name_key` keeps the index to unique normalized forms
+ *   Raw SQL on purpose: Kysely can't express `create virtual table … using fts5` (the repo's
+ *   FTS5-stays-raw rule). Indexing distinct `name_key` keeps the index to unique normalized forms
  *   (a name_key fans out to many candidate rows — placetypes, regions, aliases — but the fuzzy
  *   fallback only needs to recover the name_key, then re-probes the B-tree for its rows).
  */

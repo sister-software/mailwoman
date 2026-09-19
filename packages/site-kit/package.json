@@ -30,10 +30,10 @@
 			"node": "./lib/vite/build-info.ts",
 			"default": "./out/vite/build-info.js"
 		},
-		"./playwright/chrome-contract": {
-			"types": "./out/playwright/chrome-contract.d.ts",
-			"node": "./lib/playwright/chrome-contract.ts",
-			"default": "./out/playwright/chrome-contract.js"
+		"./playwright/chrome-interface": {
+			"types": "./out/playwright/chrome-interface.d.ts",
+			"node": "./lib/playwright/chrome-interface.ts",
+			"default": "./out/playwright/chrome-interface.js"
 		},
 		"./vite/pwa": {
 			"types": "./out/vite/pwa.d.ts",

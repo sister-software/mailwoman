@@ -47,10 +47,10 @@ import type { RegionDatabaseResolver } from "#geocode/regions"
  */
 export const isDefault = true
 
-//#region CLI contract — args + options
+//#region CLI interface — args + options
 
 /**
- * Native command-line contract consumed by the filesystem command router.
+ * Native command-line interface consumed by the filesystem command router.
  */
 export const spec = {
 	name: "run",
@@ -221,7 +221,7 @@ export interface EvalGeocoderFlags {
 	 */
 	locale?: string
 	/**
-	 * Model-swap overrides (`nppes-benchmark` multi-version curves). `modelCardPath` is MANDATORY with `modelPath`.
+	 * Model-swap overrides (`nppes-benchmark` multi-version curves). `modelCardPath` is mandatory with `modelPath`.
 	 */
 	modelPath?: string
 	tokenizerPath?: string
@@ -327,7 +327,7 @@ export async function loadSources(option: string): Promise<MultiSourceSpec[]> {
 }
 
 /**
- * Write the artifacts requested via `--out` (GeoJSON) and/or `--map-out` (standalone HTML map), returning the lines to
+ * Write the artifacts requested via `--out` (GeoJSON) and/or `--map-out` (standalone html map), returning the lines to
  * append to the run summary. Returns `null` when neither is set — the signal to dump GeoJSON to stdout (the original
  * default). Shared by both pipeline paths.
  */
@@ -407,7 +407,7 @@ async function runMultiSource(specs: MultiSourceSpec[], options: Options): Promi
 		perSource.push(`${label} ${recs.length}`)
 	}
 
-	// learnedScorer:false — multi-source is CROSS-dataset link discovery (recall-oriented): the same
+	// learnedScorer:false — multi-source is cross-dataset link discovery (recall-oriented): the same
 	// facility under different operational names across sources is the signal we want. The default GBT is
 	// dedup-calibrated and rejects exactly that (it learned "same place + name drift = distinct"), so the
 	// cross-dataset path uses the FS spine. (Single-CSV dedup below keeps the GBT default.)
@@ -421,7 +421,7 @@ async function runMultiSource(specs: MultiSourceSpec[], options: Options): Promi
 	const geocoded = records.filter((r) => r.address?.geocode).length
 
 	// Reconciliation mode (#621): classify entities by eligibility/funding role membership, via the
-	// SAME @mailwoman/registry library as `registry scorer-eval coverage-reconciliation`.
+	// same @mailwoman/registry library as `registry scorer-eval coverage-reconciliation`.
 	if (options.reconcile) {
 		const labelOf = (s: MultiSourceSpec) => s.source ?? s.path
 		const eligibilitySources = specs.filter((s) => s.role === "eligibility").map(labelOf)

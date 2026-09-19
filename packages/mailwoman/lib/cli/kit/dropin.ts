@@ -8,20 +8,20 @@
  *   `serve` / `openapi` off the first positional, boot the neural classifier with a friendly
  *   failure, (for the two geocoding drop-ins) locate a gazetteer with a friendly failure, then print
  *   a banner. Those pieces were copied between the three files, and the copies were being kept in
- *   sync BY HAND — nominatim/cli.ts said so in a comment ("same message shape as
+ *   sync BY hand — nominatim/cli.ts said so in a comment ("same message shape as
  *   @mailwoman/photon's pre-flight (kept in lockstep)"). This module is the lockstep.
  *
- *   WHY IT LIVES HERE and not in `@mailwoman/api-kit`, which already owns `printOpenAPIDocument` and
+ *   why IT lives here and not in `@mailwoman/api-kit`, which already owns `printOpenAPIDocument` and
  *   `serveNode` and would otherwise be the obvious home: the preflights need `@mailwoman/neural` and
  *   this package's `resolver-backend`, and api-kit is engine-agnostic by charter. Splitting the
  *   skeleton across two packages to preserve that charter costs more than the duplication did. All
  *   three drop-ins already declare `mailwoman` as a dependency, so landing the whole thing here adds
  *   no dependency to anyone.
  *
- *   WHY IT IS NOT IN `cli-kit/index.ts`: that barrel is the Ink toolkit for
+ *   why IT is not IN `cli-kit/index.ts`: that barrel is the Ink toolkit for
  *   `mailwoman/commands/*` and imports `ink` + `react`. The drop-ins are plain `parseArgs` scripts
  *   that render no UI, and `npx @mailwoman/libpostal serve` should not pay for a TUI runtime to
- *   start an HTTP server. Hence a standalone module with its own `mailwoman/cli-kit/dropin`
+ *   start an http server. Hence a standalone module with its own `mailwoman/cli-kit/dropin`
  *   subpath, deliberately not re-exported through the barrel.
  */
 
@@ -76,7 +76,7 @@ export function parseOpenAPIFlags(binaryName: string): { flavor?: string; out?: 
 /**
  * A drop-in's `openapi` subcommand: print (or `--out`-write) the OpenAPI document for its surface.
  *
- * `createApp` receives a STUB engine, so the command is pure route-table introspection that never boots a classifier or
+ * `createApp` receives a stub engine, so the command is pure route-table introspection that never boots a classifier or
  * opens a gazetteer and stays fast whatever the data-root holds. `--flavor 3.0` prints the 3.0.3 diet instead of the
  * default 3.1.0.
  */
@@ -92,7 +92,7 @@ export function openAPICommand<Engine>(
 }
 
 /**
- * Load the en-US neural classifier, failing FRIENDLY (#1009).
+ * Load the en-US neural classifier, failing friendly (#1009).
  *
  * `resolveWeights` (`neural/weights.ts`) already names the exact fix command. this guard only keeps that message from
  * being buried under an unhandled-rejection stack trace. Eager, so a missing-weights boot fails at startup rather than
@@ -127,9 +127,9 @@ export interface GazetteerPaths {
 /**
  * Locate the gazetteer for a geocoding drop-in, with both of the #1009 friendly failures:
  *
- * - An EXPLICIT `--candidate-db` that does not exist errors loudly. It must never silently fall back to whatever ambient
+ * - An explicit `--candidate-db` that does not exist errors loudly. It must never silently fall back to whatever ambient
  *   data-root file happens to be present — a typo'd path would otherwise serve the wrong gazetteer without a word.
- * - No candidate DB AND no databases prints the named-artifact message with the one command that fixes it, instead of
+ * - No candidate DB and no databases prints the named-artifact message with the one command that fixes it, instead of
  *   letting the resolver throw its internal "resolveExtracts: at least one database is required".
  */
 export async function resolveGazetteerOrExit(candidateDBFlag: string | undefined): Promise<GazetteerPaths> {
@@ -172,13 +172,13 @@ export function gazetteerBannerLines({ adminDBPath, candidateDB }: GazetteerPath
 }
 
 /**
- * The provenance of the gazetteer artifacts a drop-in actually OPENED, for its `/status` surface (#997).
+ * The provenance of the gazetteer artifacts a drop-in actually opened, for its `/status` surface (#997).
  *
  * The set is derived from the same {@link GazetteerPaths} the banner prints, and it follows the backend selection rather
- * than the search order: `createResolverBackend` opens the candidate gazetteer ALONE when one is resolved, so listing
+ * than the search order: `createResolverBackend` opens the candidate gazetteer alone when one is resolved, so listing
  * the admin databases beside it would name databases this process never read. The reverse geocoder is the exception —
- * it opens the first admin database whatever the forward path chose, which can be a different build, so it is reported
- * separately unless it is already in the list.
+ * it opens the first admin database whatever the forward path chose. It can be a different build. Therefore, it is
+ * reported separately unless it is already in the list.
  *
  * Call once at boot: a server holds its handles for its whole life, so the artifact it serves from is the one it opened
  * at start, whatever a later symlink swap points at.

@@ -8,7 +8,7 @@
  *   controlled) view state, and a `children` slot for the overlays/markers that land in later phases.
  *   No overlay/marker/camera logic lives here yet.
  *
- *   NODE-IMPORT SAFETY: this module imports `react-map-gl/maplibre` (which pulls `maplibre-gl` — WebGL
+ *   node-import safety: this module imports `react-map-gl/maplibre` (which pulls `maplibre-gl` — WebGL
  *   + DOM at import) at module scope, so it is reachable only through the `@mailwoman/react/map`
  *   subpath, never from the package root (`index.ts`). The bare `import("@mailwoman/react")` a node
  *   consumer (or the CI smoke IMPORT_CHECK) runs must never transitively load this file. Keep it out of

@@ -4,7 +4,7 @@
  * @author Teffen Ellis, et al.
  *
  *   `detectLocale` — Stage 2 entry point. Composes the per-rule scorers over the query shape and emits a `LocaleHint`.
- *   Synchronous and pure. the runtime pipeline wraps it into the coordinator's async `LocaleDetector` contract.
+ *   Synchronous and pure. the runtime pipeline wraps it into the coordinator's async `LocaleDetector` interface.
  *
  *   Caller-hint precedence: when `opts.hint` is provided, it wins at confidence 1.0 with
  *   `source="caller"`. The detector still runs the rules to populate `alternatives` so downstream
@@ -29,7 +29,7 @@ export function detectLocale(shape: QueryShapeFormatsView, opts: DetectLocaleOpt
 		scored.push(script)
 	}
 
-	// The writing system is a property of the INPUT, so it is the same whichever rung of the precedence ladder decides
+	// The writing system is a property of the input, so it is the same whichever rung of the precedence ladder decides
 	// `locale`. A caller passing `--locale en-GB` for a Han-containing address gets their tag and the fact that the
 	// address carries Han. those are different claims and the hint now makes both.
 	const scripts: LocaleHint["script"] = (shape.scripts ?? []).map((entry) => ({

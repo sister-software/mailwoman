@@ -5,7 +5,7 @@
  *
  *   SQLite implementation of core's `AddressPointLookup` (#476): exact `(street, number)` within a
  *   postcode (preferred), locality, or — for extracts whose points carry no scope tag (OSM, #247) —
- *   the resolved locality's BBOX. Query-side normalization is the shared normalizer
+ *   the resolved locality's bbox. Query-side normalization is the shared normalizer
  *   (`street-normalize.ts`), selected per the extract's `streetLocale` so build-side and probe-side
  *   stay identical by construction (US delegates to the USPS pipeline. FR/DE/NL use the locale rules).
  *
@@ -33,7 +33,7 @@ import {
 } from "#street/normalize"
 
 /**
- * The columns this lookup projects — a typed projection of the SHARED {@link AddressPointTable}, so a column rename in
+ * The columns this lookup projects — a typed projection of the shared {@link AddressPointTable}, so a column rename in
  * `mailwoman situs address-points` (the writer) is a compile error here (the reader).
  */
 type AddressPointRow = Pick<AddressPointTable, "lat" | "lon" | "source" | "release" | "locality_norm" | "postcode">
@@ -56,8 +56,8 @@ export class AddressPointSqliteLookup<DB extends AddressPointDatabase = AddressP
 		| undefined
 	readonly #byLocality: PreparedGet<[locality: NameKey, street: StreetKey, number: string], AddressPointRow> | undefined
 	/**
-	 * The scope key matched by its TAIL — a `zh` query that names the 鄉鎮市區 without its 縣市. Narrowed by the (street,
-	 * number) index first, so the LIKE walks the handful of rows that share the pair.
+	 * The scope key matched by its tail — a `zh` query that names the 鄉鎮市區 without its 縣市. Narrowed by the (street,
+	 * number) index first, so the like walks the handful of rows that share the pair.
 	 */
 	readonly #byLocalityTail:
 		| PreparedGet<[street: StreetKey, number: string, tailPattern: string], AddressPointRow>
@@ -71,7 +71,7 @@ export class AddressPointSqliteLookup<DB extends AddressPointDatabase = AddressP
 
 	/**
 	 * @param dbPath Extract path.
-	 * @param opts.streetLocale The street-normalization locale this extract was BUILT with — must match, or every key
+	 * @param opts.streetLocale The street-normalization locale this extract was built with — must match, or every key
 	 *   misses. Defaults to `"us"` (the situs tier), so existing callers are unchanged.
 	 * @param opts.localityKeys Whether the extract's `locality_norm` is a full place name a query can be held to. The BAN
 	 *   and OSM extracts write the commune or `addr:city` in full. the US situs extract writes the NAD city field, which

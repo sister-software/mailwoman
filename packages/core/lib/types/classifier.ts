@@ -3,7 +3,7 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Classifier-side contracts for the neural integration (per #6).
+ *   Classifier-side interfaces for the neural integration (per #6).
  *
  *   These interfaces are deliberately distinct from the existing `Classifier` shape in
  *   `../classification/BaseClassifier.ts`. The legacy shape is mutation-based —
@@ -13,7 +13,7 @@
  *
  *   The neural classifier implements this interface natively. The rule classifiers that once
  *   also implemented it (via a `wrapLegacyClassifier` adapter) were removed in v7.0.0 with the
- *   `@mailwoman/classifiers` workspace. this contract now describes the neural path only.
+ *   `@mailwoman/classifiers` workspace. this interface now describes the neural path only.
  */
 
 import type { ComponentTag } from "@mailwoman/codex/component"
@@ -104,7 +104,7 @@ export interface ClassifierContext {
 }
 
 /**
- * Plug-in contract every classifier implements.
+ * Plug-in interface every classifier implements.
  *
  * Construction must be cheap. per-classification work runs in {@link classify}. Pre-flight work (loading dictionaries,
  * warming up an ONNX session) belongs in the optional `ready()` step.
@@ -134,7 +134,7 @@ export interface ProposalClassifier {
 	ready?(): Promise<void>
 
 	/**
-	 * Classify a section. Implementations MUST NOT throw — return an empty array on failure and log via the project
+	 * Classify a section. Implementations must not throw — return an empty array on failure and log via the project
 	 * logger.
 	 */
 	classify(section: Section, context: ClassifierContext): Promise<ClassificationProposal[]>

@@ -4,15 +4,15 @@ import { APIClient, pluckResponseData } from "@mailwoman/core/api"
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Fetch the full TIGER 2024 ADDRFEAT dataset — all US counties.
+ *   Fetch the full tiger 2024 addrfeat dataset — all US counties.
  *
- *   TIGER ADDRFEAT 2024 source:
+ *   tiger addrfeat 2024 source:
  *
- *   - https://www2.census.gov/geo/tiger/TIGER2024/ADDRFEAT/
+ *   - https://www2.census.gov/geo/tiger/TIGER2024/addrfeat/
  *   - Files: `tl_2024_<statefips><countyfips>_addrfeat.zip`
  *
  *   Each state's ZIPs land in `<outRoot>/tiger/addrfeat/state-<statefips>/` with a per-state
- *   `MANIFEST.json` recording filename, sha256, and bytes for every county ZIP so re-runs can skip
+ *   `manifest.json` recording filename, sha256, and bytes for every county ZIP so re-runs can skip
  *   already-verified files. (Extraction + ogr2ogr ingestion happen later, in the `tiger` adapter.
  *   this module is download + provenance only.)
  *
@@ -75,7 +75,7 @@ interface CountyEntry {
 }
 
 /**
- * Read a per-state MANIFEST.json into a filename → entry map.
+ * Read a per-state manifest.json into a filename → entry map.
  */
 async function readCountyManifest(manifestPath: string): Promise<Map<string, CountyEntry>> {
 	const map = new Map<string, CountyEntry>()
@@ -145,7 +145,7 @@ export async function fetchTigerFull(
 
 	report?.(`=== Fetching TIGER 2024 ADDRFEAT directory listing...`)
 
-	// `responseType: "text"` — an Apache directory index, scraped below. The per-county ARCHIVE downloads
+	// `responseType: "text"` — an Apache directory index, scraped below. The per-county archive downloads
 	// stay on raw `fetch` (they stream to disk. see `downloadOne`).
 	const listingRes = await new APIClient({
 		displayName: "tiger-listing",
@@ -213,7 +213,7 @@ export async function fetchTigerFull(
 			const url = `${TIGER_BASE_URL}/${fname}`
 			const known = manifest.get(fname)
 
-			// Skip if already verified via MANIFEST.
+			// Skip if already verified via manifest.
 			if (known && (await fileMatchesSha(dest, known.sha256, known.bytes))) {
 				report?.(`  skip (verified) ${fname}`)
 
@@ -274,7 +274,7 @@ export async function fetchTigerFull(
 			}
 		}
 
-		// Rewrite per-state MANIFEST.json with all known-good counties (sorted for determinism).
+		// Rewrite per-state manifest.json with all known-good counties (sorted for determinism).
 		const counties = [...manifest.values()].toSorted((a, b) => a.filename.localeCompare(b.filename))
 
 		const manifestDoc = {

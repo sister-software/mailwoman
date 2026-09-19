@@ -9,7 +9,7 @@
  *   CLI's surface is larger than this server's and will stay that way, so a passthrough is worth having — but a
  *   passthrough with no allowlist would hand back every build, publish and ledger write the boundary excludes.
  *
- *   ALLOW-list rather than deny-list, on purpose. A deny-list is wrong by default: the day someone adds
+ *   allow-list rather than deny-list, on purpose. A deny-list is wrong by default: the day someone adds
  *   `mw gazetteer nuke`, a deny-list permits it and an allow-list does not. The cost is that a new read-only verb has
  *   to be added here before it can be used, which is the correct direction for the mistake to point.
  */

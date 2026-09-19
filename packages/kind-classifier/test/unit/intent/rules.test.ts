@@ -121,7 +121,7 @@ describe("route_pair — two toponyms, no grammar between them", () => {
 	}
 
 	const NEGATIVE = [
-		// Toponymic HEAD particles: one place, two tokens. The class this guard exists for.
+		// Toponymic head particles: one place, two tokens. The class this guard exists for.
 		"New York",
 		"San Francisco",
 		"Santa Monica",
@@ -186,7 +186,7 @@ describe("near_me — a relation to the asker, with the asker missing", () => {
 	}
 
 	const NEGATIVE = [
-		// An ANCHOR is present — this is answerable without a focus point, so it is not `near_me`.
+		// An anchor is present — this is answerable without a focus point, so it is not `near_me`.
 		"gas station near Austin",
 		"restaurants near Times Square",
 		"coffee in Paris",

@@ -8,22 +8,22 @@
  *   plain in-memory rows — the command itself only owns CSV streaming + CLI plumbing + the file
  *   write.
  *
- *   {@link PairIndexBuilder} consumes one (rawCity, rawDistrict) row at a time — child = CITY,
- *   child tag always `dependent_locality` (the PPD-tuples shape this arc's GB database reads: CITY is
- *   the dependent_locality candidate, DISTRICT the enclosing post town — see
- *   `corpus/src/database-recipes/locale.ts`'s `districtAsLocality` check). A row with an empty CITY (the
+ *   {@link PairIndexBuilder} consumes one (rawCity, rawDistrict) row at a time — child = city,
+ *   child tag always `dependent_locality` (the PPD-tuples shape this arc's GB database reads: city is
+ *   the dependent_locality candidate, district the enclosing post town — see
+ *   `corpus/src/database-recipes/locale.ts`'s `districtAsLocality` check). A row with an empty city (the
  *   PPD majority — the dependent_locality is legitimately absent on most rows) is skipped: it carries
  *   no dependent_locality to pair. Both fields are folded through `normalizeFSTToken` (the arc's one
  *   exported fold), matching `PairIndexHeader.foldVersion` — the same fold the PIX1
  *   reader's caller (`fst-prior.ts`'s `groupPiecesIntoWords`) applies at query time.
  *
- *   PARENT TAG (PIX2 / schema 3): the caller supplies it per row, because only the caller knows what
- *   its source's parent COLUMN is. `addRow` will not default one — every source that feeds this
+ *   parent TAG (PIX2 / schema 3): the caller supplies it per row, because only the caller knows what
+ *   its source's parent column is. `addRow` will not default one — every source that feeds this
  *   builder has to name the slot it read (post town → `locality`, WOF `borough` parent row →
  *   `dependent_locality`, and so on), and the serializer refuses an entry that arrives without one.
  *
- *   Also tracks the pre-fold CITY word-length distribution (whitespace-split word count per raw,
- *   non-empty CITY) — this sizes the word-span window the decode-side prior walks (a
+ *   Also tracks the pre-fold city word-length distribution (whitespace-split word count per raw,
+ *   non-empty city) — this sizes the word-span window the decode-side prior walks (a
  *   dependent_locality candidate rarely spans more than a handful of words. the p99 here is the
  *   evidence for that window rather than a guess).
  */
@@ -34,14 +34,14 @@ import { normalizeFSTToken } from "@mailwoman/neural/fst-prior"
 import type { PairIndexEntry } from "@mailwoman/neural/pair"
 
 /**
- * The one CHILD tag this arc's extractions ever emit — the CITY-slot candidate is always a dependent_locality. The
- * PARENT tag is per-row and per-source, so it is a parameter rather than a constant (see
+ * The one child tag this arc's extractions ever emit — the city-slot candidate is always a dependent_locality. The
+ * parent tag is per-row and per-source, so it is a parameter rather than a constant (see
  * {@link PairIndexBuilder.addRow}).
  */
 const PAIR_TAG = "dependent_locality" as const
 
 /**
- * One row-length bucket: `words` whitespace-split tokens, seen on `rows` raw CITY values.
+ * One row-length bucket: `words` whitespace-split tokens, seen on `rows` raw city values.
  */
 export interface WordLengthBucket {
 	words: number
@@ -49,11 +49,11 @@ export interface WordLengthBucket {
 }
 
 /**
- * Percentile summary of the raw (pre-fold) CITY word-length distribution, plus the full per-length histogram.
+ * Percentile summary of the raw (pre-fold) city word-length distribution, plus the full per-length histogram.
  */
 export interface CityWordLengthDistribution {
 	/**
-	 * Non-empty CITY rows the distribution was computed over.
+	 * Non-empty city rows the distribution was computed over.
 	 */
 	totalRows: number
 	p50: number
@@ -72,18 +72,18 @@ export interface PairIndexBuildResult {
 	 */
 	entries: PairIndexEntry[]
 	/**
-	 * Rows that contributed a pair (non-empty CITY after trim).
+	 * Rows that contributed a pair (non-empty city after trim).
 	 */
 	rowsKept: number
 	/**
-	 * Rows dropped for an empty CITY.
+	 * Rows dropped for an empty city.
 	 */
 	rowsSkipped: number
 	distribution: CityWordLengthDistribution
 }
 
 /**
- * Nearest-rank percentile over an ASCENDING-sorted array (matches the convention `docs/articles/evals` percentile
+ * Nearest-rank percentile over an ascending-sorted array (matches the convention `docs/articles/evals` percentile
  * tables use). `p` in `[0, 100]`. Throws on an empty array — there's no percentile of nothing, and a silent `0` would
  * hide the empty-input bug from the caller.
  */
@@ -99,7 +99,7 @@ export function nearestRankPercentile(sortedAscending: readonly number[], p: num
 
 /**
  * Incrementally folds (rawCity, rawDistrict) rows into deduplicated PIX1 entries, tracking the skip count and the raw
- * CITY word-length distribution. One instance per build. call {@link addRow} per source row, then {@link finish} once.
+ * city word-length distribution. One instance per build. call {@link addRow} per source row, then {@link finish} once.
  */
 export class PairIndexBuilder {
 	readonly #seen = new Map<string, PairIndexEntry>()
@@ -108,9 +108,9 @@ export class PairIndexBuilder {
 	#rowsSkipped = 0
 
 	/**
-	 * Fold one source row. `rawCity`/`rawDistrict` are the UNFOLDED CSV cell values (already `.trim()`-ed by the caller's
-	 * CSV read is fine either way — this trims again defensively). A row with an empty CITY is skipped: PPD's DISTRICT
-	 * (post town) is populated on virtually every row, but CITY (dependent_locality) legitimately isn't, and an empty
+	 * Fold one source row. `rawCity`/`rawDistrict` are the unfolded CSV cell values (already `.trim()`-ed by the caller's
+	 * CSV read is fine either way — this trims again defensively). A row with an empty city is skipped: PPD's district
+	 * (post town) is populated on virtually every row, but city (dependent_locality) legitimately isn't, and an empty
 	 * child has nothing to pair.
 	 *
 	 * `parentTag` is required and caller-supplied: the builder cannot know whether `rawDistrict` came from a post-town
@@ -132,7 +132,7 @@ export class PairIndexBuilder {
 		const parent = normalizeFSTToken(rawDistrict.trim())
 
 		if (!child) {
-			// Folds to nothing (e.g. a CITY that was pure punctuation) — nothing left to index.
+			// Folds to nothing (e.g. a city that was pure punctuation) — nothing left to index.
 			return
 		}
 
@@ -140,8 +140,8 @@ export class PairIndexBuilder {
 		// delimiter could collide two distinct (child, parent) splits onto the same joined string.
 		const key = `${child.length}:${child}:${parent}`
 
-		// FIRST WRITE WINS on (child, parent), parent tag included. The sources are merged in a fixed order (register
-		// CSV → WOF → curated JSONL), so a pair both a register and WOF assert keeps the register's reading of the
+		// first write wins on (child, parent), parent tag included. The sources are merged in a fixed order (register
+		// CSV → WOF → curated jsonl), so a pair both a register and WOF assert keeps the register's reading of the
 		// parent slot — the same precedence the pre-PIX2 dedupe already gave the whole entry.
 		if (!this.#seen.has(key)) {
 			this.#seen.set(key, { child, parent, tag: PAIR_TAG, parentTag })
@@ -193,7 +193,7 @@ export class PairIndexBuilder {
 
 export interface PairIndexHoldoutResult {
 	/**
-	 * Entries to actually serialize into the index — the full set MINUS the held-out fraction.
+	 * Entries to actually serialize into the index — the full set minus the held-out fraction.
 	 */
 	kept: PairIndexEntry[]
 	/**

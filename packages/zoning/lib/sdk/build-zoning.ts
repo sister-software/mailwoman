@@ -5,15 +5,15 @@
  *
  *   Build `zoning-ireland.db` — the sealed two-tier polygon layer, from the Department's bulk export.
  *
- *   THE COVERAGE IS `source_present` AND THE TIER IS `build-local`, AND THE TWO ARE INDEPENDENT REFUSALS.
+ *   the coverage is `source_present` and the tier is `build-local`, and the two are independent refusals.
  *   The coverage basis is about what the source can support: the Department publishes its coverage detail only
  *   inside a map viewer, so an absent zoning polygon is one of at least four different things and
  *   {@linkcode assertNoNegativeClaim} refuses anything stronger before a row is written. The tier is about
- *   what the LICENCE supports: three published statements disagree about the grant, so
+ *   what the licence supports: three published statements disagree about the grant, so
  *   {@linkcode assertTierMatchesLicense} refuses a `shipped` build. Resolving either one does not resolve the
  *   other.
  *
- *   THE AREA CHECK IS THE HOLE CHECK AND THE ONE THING HERE THAT IS EXACT. The service encodes hole
+ *   the area check is the hole check and the one thing here that is exact. The service encodes hole
  *   roles by ring orientation, and reading them wrong is silent — a hole read as an exterior produces a
  *   well-formed polygon that answers "inside" for every location the plan carved out. Measured over the whole
  *   national export: the rings read with their holes total 5,444.5 km² and the Department's own `Shape__Area`
@@ -21,17 +21,17 @@
  *   to come from the live service, because the bulk export drops the column — which is what makes this a
  *   two-path check rather than the archive agreeing with itself.
  *
- *   THERE IS NO BUILD-TIME TOUCH TABLE. A zoning cell row names ONE POLYGON, so it is final the moment that
+ *   there is no build-time touch table. A zoning cell row names one polygon, so it is final the moment that
  *   polygon is classified. The rows go straight in, and memory stays flat in row count with nothing to resolve
  *   afterwards.
  *
- *   THE INGEST IS BOUNDED ANYWAY. h3's WASM heap cannot be reset from JavaScript and does not survive an
+ *   the ingest is bounded anyway. h3's wasm heap cannot be reset from JavaScript and does not survive an
  *   unbounded number of polyfill calls. a sibling product died twice on that, after roughly 510,000 and
  *   798,000 features. This product holds 85,330, so the whole country fits inside the 100,000-id default with
  *   room to spare — and the bound still ships, because a build that stays inside a ceiling by luck is not the
  *   same fact as one that cannot cross it.
  *
- *   THE JURISDICTION, PLAN AND VOCABULARY ROWS ARE WRITTEN BY THE PARENT, once, from the merged chunk
+ *   the jurisdiction, plan and vocabulary rows are written BY the parent, once, from the merged chunk
  *   reports. They are the only tables whose rows are partials across chunks — an authority and a plan appear
  *   in every chunk that touches them — and merging them in the parent is what keeps the chunk append-only.
  */
@@ -90,11 +90,11 @@ export const PLAN_LEVEL_SCHEME = "IE-PLAN-LEVEL"
  * Feature ids per chunk process.
  *
  * Sized against the measured ceiling on a sibling product rather than guessed: single-process runs over that layer died
- * after roughly 510,000 and 798,000 features as h3's WASM heap fragmented. This product holds 85,330 features, so this
+ * after roughly 510,000 and 798,000 features as h3's wasm heap fragmented. This product holds 85,330 features, so this
  * default puts the whole country in one process — and it is the ceiling that makes the build reproducible rather than
  * the fact that this product happens to sit below it.
  *
- * A SMALLER CHUNK COSTS A FULL PASS EACH. The source is one 247 MB GeoJSON document rather than an indexed store, so
+ * A smaller chunk costs A full pass each. The source is one 247 MB GeoJSON document rather than an indexed store, so
  * ogr2ogr scans all of it per range: measured at 13.2 s per pass on this lab.
  */
 export const DEFAULT_CHUNK_SIZE = 100_000
@@ -105,7 +105,7 @@ export const DEFAULT_CHUNK_SIZE = 100_000
 export type BuildZoningInput =
 	| {
 			/**
-			 * A feature source consumed IN THIS PROCESS. Correct for a fixture and for anything small. it is what the batched
+			 * A feature source consumed IN this process. Correct for a fixture and for anything small. it is what the batched
 			 * form falls back to per chunk, so the two share one implementation.
 			 */
 			source: ZoningFeatureSource
@@ -139,7 +139,7 @@ export type BuildZoningOptions = BuildZoningInput & {
 	buildCmd: string
 	buildSHA: string
 	/**
-	 * ISO-8601, supplied by the caller. Never generated here: the contract says so, and a library-generated timestamp
+	 * ISO-8601, supplied by the caller. Never generated here: the interface says so, and a library-generated timestamp
 	 * makes two builds of the same inputs differ.
 	 */
 	createdAt: string
@@ -178,7 +178,7 @@ export interface BuildZoningResult {
 	wholeCellRows: number
 	partialCellRows: number
 	/**
-	 * `partialCellRows / (wholeCellRows + partialCellRows)` over the STORED rows — the whole side is compacted per
+	 * `partialCellRows / (wholeCellRows + partialCellRows)` over the stored rows — the whole side is compacted per
 	 * feature, so this is not the same number the resolution was chosen on and is reported separately.
 	 */
 	storedPartialShare: number
@@ -226,7 +226,7 @@ export interface BuildZoningResult {
 	 */
 	vocabulary: Array<{ scheme: string; codes: number; undeclared: number; undeclaredCodes: string[] }>
 	/**
-	 * (authority, local code) pairs, and how many of them take MORE THAN ONE generic type — the measurement that keeps
+	 * (authority, local code) pairs, and how many of them take more than one generic type — the measurement that keeps
 	 * `zoning_crosswalk_edge` empty.
 	 */
 	crosswalk: {
@@ -243,7 +243,7 @@ export interface BuildZoningResult {
 /**
  * The relative gap between the two area readings that fails the build.
  *
- * The comparison is a SPHERICAL ring area against the publisher's PLANAR figure in Irish Transverse Mercator, so the
+ * The comparison is a spherical ring area against the publisher's planar figure in Irish Transverse Mercator, so the
  * two never agree exactly: ITM's scale factor runs 0.99982 at its central meridian and above 1 towards the edges of the
  * island, which contributes a few tenths of a percent to an area, and the spherical approximation contributes a similar
  * amount against the ellipsoid. Measured on the largest feature in the country: 2,223.1 km² spherical against the
@@ -336,7 +336,7 @@ async function buildZoningResult(
 
 	const area = assertAreaAgreement(ingested, options.expectedSourceAreaM2)
 
-	// THE CROSSWALK IS NOT A TABLE, AND THE BUILD CHECKS IT RATHER THAN ASSUMING IT. Writing no edges while the mapping
+	// the crosswalk is not A table, and the build checks IT rather than assuming IT. Writing no edges while the mapping
 	// happens not to be a function would be an accident. refusing to write them while it is not is a statement.
 	const nonFunctional = nonFunctionalPairs(ingested.crosswalkPairs)
 
@@ -377,9 +377,9 @@ async function buildZoningResult(
 		}>
 	).map((row) => row.resolution)
 
-	// NO SECONDARY INDEXES, AND THAT IS A DECISION RATHER THAN AN OMISSION. Both probes this artifact serves are already
-	// primary-key probes: the cell table's `(h3_cell, area_id)` key answers `WHERE h3_cell = ?` as a range scan of a
-	// handful of rows, and the geometry table is probed by `area_id`, its own key. An index over a `WITHOUT ROWID` table
+	// no secondary indexes, and that is A decision rather than an omission. Both probes this artifact serves are already
+	// primary-key probes: the cell table's `(h3_cell, area_id)` key answers `where h3_cell = ?` as a range scan of a
+	// handful of rows, and the geometry table is probed by `area_id`, its own key. An index over a `without rowid` table
 	// carries the primary key in every entry, so it would roughly double the cell tier to serve a scan that is already
 	// short.
 	const totalCellRows = ingested.wholeCellRows + ingested.partialCellRows
@@ -508,7 +508,7 @@ export function aggregateChunks(chunks: ReadonlyArray<ZoningChunkResult>): Strea
 			vocabulary.set(key, existing ? [scheme, code, existing[2], existing[3] + rows] : [scheme, code, label, rows])
 		}
 
-		// THE PAIRS MERGE AS A UNION, and that is the whole point of doing it here. A mapping that is not a function can look
+		// the pairs merge AS A union, and that is the whole point of doing it here. A mapping that is not a function can look
 		// like one inside any single chunk: Cork's `Special Policy Area` takes 14 generic types across the county, and a
 		// chunk holding a prefix of its feature ids may well have seen only one of them.
 		for (const [authorityCode, localCode, codes] of chunk.crosswalkPairs) {
@@ -554,7 +554,7 @@ export function nonFunctionalPairs(pairs: ReadonlyArray<CrosswalkPair>): Crosswa
 }
 
 /**
- * Refuse a crosswalk EDGE TABLE while the publisher's mapping is not a function of the (authority, code) pair.
+ * Refuse a crosswalk edge table while the publisher's mapping is not a function of the (authority, code) pair.
  *
  * An edge table asserts that a code determines a type. Measured nationally, 52 of 795 pairs take more than one — Cork
  * County Council's `Special Policy Area` takes 14 — so an edge table built from this data would have to pick one type
@@ -592,7 +592,7 @@ function assertAreaAgreement(
 ): BuildZoningResult["area"] {
 	const signedKM2 = streamed.area.signedM2 / M2_PER_KM2
 
-	// THE PUBLISHER'S FIGURE IS ABSENT RATHER THAN DEFAULTED — the reading's own type says so. Filling it with this
+	// the publisher'S figure is absent rather than defaulted — the reading's own type says so. Filling it with this
 	// build's own reading would make the receipt print "0.000% apart" for a check that never ran, which is the one shape
 	// a reader cannot tell from a pass.
 	const reading = areaAgreementFrom(
@@ -663,7 +663,7 @@ async function runBatchedIngest(
 /**
  * Refuse a coverage row that would license a negative claim.
  *
- * THIS IS THE CHECK THE MEANING-OF-ZERO RULE TURNS ON, and it is a condition rather than a convention. The Department
+ * This is the check the meaning-OF-zero rule turns on, and it is a condition rather than a convention. The Department
  * publishes its coverage detail only inside a map viewer, so no row of this layer may support an exclusion — a
  * `designated` or `surveyed` basis here would let an absent zoning polygon be read as a statement that no restriction
  * applies, over most of the map. The reader checks the same thing at open time, so an artifact built by some other path
@@ -707,7 +707,7 @@ function writePlanRows(database: DatabaseClient<ZoningDatabase>, plans: ZoningCh
 }
 
 /**
- * Insert the vocabulary: every code the publisher DECLARES, plus every code the DATA uses, with the difference recorded
+ * Insert the vocabulary: every code the publisher declares, plus every code the data uses, with the difference recorded
  * rather than folded away.
  *
  * A declared code the data never uses is kept at `observed_rows = 0`, because the domain is the publisher's statement
@@ -755,7 +755,7 @@ function writeVocabularyRows(
 			scheme,
 			code,
 			label,
-			// DECLARED IS A PROPERTY OF THE PUBLISHER'S DOMAIN rather than OF THE SCHEME. A local authority's own codes are observed
+			// declared is A property OF the publisher'S domain rather than OF the scheme. A local authority's own codes are observed
 			// rather than declared — the Department publishes no domain for them — and an undeclared generic type is the event
 			// this column exists to make visible.
 			declared: scheme === GZT_CROSSWALK_SCHEME && GZT_DECLARED_CODE_SET.has(code) ? 1 : 0,
@@ -769,7 +769,7 @@ function writeVocabularyRows(
 		left.scheme === right.scheme ? (left.code < right.code ? -1 : 1) : left.scheme < right.scheme ? -1 : 1
 	)) {
 		// NULL rather than a plausible URL. Every one of the 85,330 rows links its generic type's definition to `viewer.myplan.ie`,
-		// which has no DNS record, and three candidate replacements on the live host answer HTTP 404 — so the definitions
+		// which has no DNS record, and three candidate replacements on the live host answer http 404 — so the definitions
 		// behind the code-to-label pairs were not retrievable and this column says so by being empty.
 		insert.run(row.scheme, row.code, row.label, null, null, row.declared, row.observedRows)
 
@@ -777,7 +777,7 @@ function writeVocabularyRows(
 
 		census.codes++
 
-		// A LOCAL SCHEME IS UNDECLARED BY CONSTRUCTION and reporting it as such would bury the one that matters. The census
+		// A local scheme is undeclared BY construction and reporting it as such would bury the one that matters. The census
 		// counts an undeclared code only where the publisher does publish a domain to be outside of.
 		if (!row.declared && row.scheme === GZT_CROSSWALK_SCHEME) {
 			census.undeclared++

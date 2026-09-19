@@ -3,20 +3,20 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   An arm that runs a DIFFERENT VERSION OF THE SOURCE, in its own process.
+ *   An arm that runs a different version OF the source, in its own process.
  *
  *   This is the half the staleness guard was missing. `tree-fingerprint.ts` correctly refuses to serve an
  *   engine whose modules predate the working tree, because Node's ESM cache has no invalidation — but a
  *   refusal with no alternative just moves the work outside the tool, and the thing a maintainer most often
  *   wants to measure is a source change. Hand-rolling it means re-deriving the engine's own
  *   {@linkcode resolveConfig} defaults in a throwaway script, which is the shared-constants failure mode: the
- *   two arms drift and nothing says so.
+ *   two arms drift and nothing reports the difference. Therefore, shared constants are required.
  *
  *   So the arm is a git worktree plus a subprocess. One process cannot hold two versions of a module. two
  *   processes can, and the child imports the worktree's source because that is the only source on its
  *   resolution path.
  *
- *   THE NODE_MODULES TRAP, which is the whole reason this file is longer than a `spawn` call. A git worktree
+ *   the NODE_MODULES trap, which is the whole reason this file is longer than a `spawn` call. A git worktree
  *   has no `node_modules`, and symlinking the main checkout's directory across does not work: yarn links a
  *   workspace as `node_modules/@mailwoman/core -> ../../packages/core`, resolved against the symlink's real
  *   path, so every `@mailwoman/*` import would silently land back in the main checkout and the child would
@@ -48,7 +48,7 @@ import { FINGERPRINTED_WORKSPACES } from "#tree-fingerprint"
  * The `ref` that means "the working tree as it stands", uncommitted edits included.
  *
  * Spelled as a reserved word rather than accepted implicitly, because git resolves almost anything: without this, a
- * caller wanting their edits measured would pass `HEAD`, get a clean checkout of the last commit, and read a verdict
+ * caller wanting their edits measured would pass `head`, get a clean checkout of the last commit, and read a verdict
  * about code they had already changed.
  */
 export const WORKING_TREE_REF = "WORKTREE"
@@ -70,7 +70,7 @@ interface WorkspaceLink {
 /**
  * Read the root `workspaces` globs and resolve each to a `name -> directory` pair.
  *
- * Reads the WORKTREE's own manifests rather than the main checkout's, because a ref that predates a workspace must not
+ * Reads the worktree's own manifests rather than the main checkout's, because a ref that predates a workspace must not
  * have that workspace linked into it — an import that should fail at the older ref has to actually fail.
  */
 async function workspaceLinks(root: string): Promise<WorkspaceLink[]> {
@@ -201,7 +201,7 @@ export interface WorktreeArmResult {
  * arm without being copied into it.
  *
  * The worktree is removed in `finally`, including on a child crash. `git worktree add --detach` never moves the
- * caller's HEAD and never touches the working tree, so a comparison cannot disturb uncommitted work — which is the
+ * caller's head and never touches the working tree, so a comparison cannot disturb uncommitted work — which is the
  * property that makes this safe to run mid-edit, and the reason it is a worktree rather than a stash.
  */
 export async function runWorktreeArm(args: {
@@ -214,7 +214,7 @@ export async function runWorktreeArm(args: {
 	const { repoRoot, ref, inputs, options } = args
 	const setupStartedAt = Date.now()
 
-	// The UNCOMMITTED working tree, which no git ref can name and which is the arm a maintainer reaches for most:
+	// The uncommitted working tree, which no git ref can name and which is the arm a maintainer reaches for most:
 	// "what I have edited" against "what is committed". It needs no worktree and no farm — the main checkout
 	// already has both — only its own process, which is the entire point. Spawning it through the same runner as a
 	// ref arm is what keeps the comparison honest: one script, one config path, so a difference between the arms
@@ -257,7 +257,7 @@ export async function runWorktreeArm(args: {
 		? runFileSync("git", ["status", "--porcelain"], { cwd: repoRoot, encoding: "utf8" }).trim().length > 0
 		: false
 
-	// A dirty working tree is not its HEAD, and reporting the sha alone would let a comparison claim it ran
+	// A dirty working tree is not its head, and reporting the sha alone would let a comparison claim it ran
 	// that commit when it ran that commit plus uncommitted edits.
 	const commit = dirty ? `${head}+dirty` : head
 

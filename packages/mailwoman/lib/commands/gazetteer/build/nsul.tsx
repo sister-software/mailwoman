@@ -3,9 +3,9 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   `mailwoman gazetteer build nsul` — the GB UPRN → unit-postcode register (`nsul.db`): the ONS
- *   National Statistics UPRN Lookup joined to OS Open UPRN's coordinates, under the layer contract.
- *   Reads a hand-acquired archive from a vintage-dated `<data-root>/nsul/<YYYY-MM>/` directory
+ *   `mailwoman gazetteer build nsul` — the GB uprn → unit-postcode register (`nsul.db`): the ONS
+ *   National Statistics uprn Lookup joined to OS Open uprn's coordinates, under the layer interface.
+ *   Reads a hand-acquired archive from a vintage-dated `<data-root>/nsul/<yyyy-MM>/` directory
  *   (there is no download step — the portal item is fetched by hand beside its `.md5` sidecar and
  *   `item.json`), verifies it against the sidecar, and writes a sealed, atomically-swapped artifact.
  *   Nothing on the parse/resolve path reads it yet. the runtime surface is a separate proposal
@@ -25,7 +25,7 @@ import { Box, Text } from "ink"
 import { type CommandSpec, CommandTaskResult, type CommandComponent, phaseReporter, useCommandTask } from "#cli-kit"
 
 /**
- * Native command-line contract consumed by the filesystem command router.
+ * Native command-line interface consumed by the filesystem command router.
  */
 export const spec = {
 	name: "nsul",

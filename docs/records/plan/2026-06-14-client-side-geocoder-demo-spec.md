@@ -46,7 +46,7 @@ extracts, to measure (not assume):
 
 A first reading of `geocode-core.ts` suggests a hard constraint: `geocodeAddress()` resolves via
 `resolver.resolveTree(tree, { addressPoints, interpolation })`, and the resolver calls the lookups'
-**synchronous** `find()` (`AddressPointLookup.find(): AddressPointHit | null` — sync by contract). That
+**synchronous** `find()` (`AddressPointLookup.find(): AddressPointHit | null` — sync by interface). That
 would force "run the whole cascade inside a worker against synchronous sql.js handles," because
 sql.js-httpvfs's fetches are sync XHR only _inside_ the worker.
 
@@ -54,7 +54,7 @@ sql.js-httpvfs's fetches are sync XHR only _inside_ the worker.
 `runCascade()` in `docs/src/shared/demo-helpers.ts` — that already `await`s `lookup.findPlace(...)` over
 the Comlink-proxied httpvfs worker on the main thread. So the street tiers slot in as **async** lookups
 (mirroring the existing `WofHTTPVFSPlaceLookup`), with no sync-interface problem and no
-worker-internal-sync requirement. The sync `AddressPointLookup` contract is a _node_ concern (the CLI /
+worker-internal-sync requirement. The sync `AddressPointLookup` interface is a _node_ concern (the CLI /
 server path); the browser has always resolved async.
 
 ```
@@ -78,7 +78,7 @@ thread long enough to jank the typeahead and the map. So **moving the whole casc
 is still the right call** for UI responsiveness — but it is now an _optimization_ layered on a correct
 async main-thread implementation rather than the thing that makes correctness possible. Build the async street
 tier first (it works on the main thread, like today's WOF resolve), then lift it into a worker. If/when
-lifted, the page↔worker contract is:
+lifted, the page↔worker interface is:
 
 ```ts
 // page → worker
@@ -171,7 +171,7 @@ Steps 1–2 are pure code mirroring an existing, tested pattern — written + qu
 extract with `node:sqlite` (the httpvfs version runs the identical SQL). Steps 3+ change browser code
 whose correctness is only observable in a browser (Range requests fired, WASM loaded, map render) and
 need extracts served with byte-range. The two architectural risks — does byte-range survive the 3.3 GB
-stress extract, and does the sync `find()` contract force a worker — are **both retired here** (it does;
+stress extract, and does the sync `find()` interface force a worker — are **both retired here** (it does;
 it doesn't, because the demo's cascade is already async). So the remaining work is execution against a
 de-risked spec rather than open questions.
 
@@ -181,5 +181,5 @@ de-risked spec rather than open questions.
 - `docs/src/shared/httpvfs-resolver.ts` — the proven WOF byte-range pattern this extends
 - `docs/articles/evals/2026-06-06-demo-service-worker-design.mdx` — the SW design to build on
 - `mailwoman/geocode-core.ts` — `geocodeAddress`, `regionSlugFromTree`, `GeocodeResult`
-- `core/resolver/types.ts` — the sync `AddressPointLookup` / `InterpolationLookup` contracts
+- `core/resolver/types.ts` — the sync `AddressPointLookup` / `InterpolationLookup` interfaces
 - DeepSeek project review, 2026-06-14 (latency budget, SW cap, autocomplete depth)

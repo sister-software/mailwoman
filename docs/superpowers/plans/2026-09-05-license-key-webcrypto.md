@@ -1,6 +1,6 @@
 # License Key on WebCrypto Implementation Plan
 
-> **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:executing-plans to implement this plan task-by-task, inline in one session. Steps use checkbox (`- [ ]`) syntax for tracking.
+> **For agentic workers:** required sub-skill: Use superpowers:executing-plans to implement this plan task-by-task, inline in one session. Steps use checkbox (`- [ ]`) syntax for tracking.
 
 **Goal:** The license key format in `@mailwoman/core` signs and verifies on WebCrypto, gains the `lid` and `agreement` fields, reads its trusted keys from one typed register that also produces the well-known JSON, and is importable by a Cloudflare Worker through `@mailwoman/core/license/key` and `@mailwoman/core/license/register` with no `node:` specifier in the bundle.
 

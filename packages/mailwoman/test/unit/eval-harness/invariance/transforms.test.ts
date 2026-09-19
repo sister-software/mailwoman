@@ -135,7 +135,7 @@ describe("whitespace-jitter", () => {
 
 	it("returns null when whitespace is present but none of it is a literal space (guard must match the mutation)", () => {
 		// The mutation only doubles literal " " characters. A guard that accepts any `\s` (tabs, etc.) but
-		// finds no space to double is a silent no-op INVARIANT — the transform claims it ran but nothing
+		// finds no space to double is a silent no-op invariant — the transform claims it ran but nothing
 		// actually changed.
 		expect(getTransform("whitespace-jitter").apply("A\tB")).toBeNull()
 	})

@@ -9,7 +9,7 @@ import type { WOFDatabase } from "@mailwoman/resolver-wof-sqlite/schema"
  *   headline fix (docs/articles/evals/night-shifts/2026-06-08-night-9-postmortem.md, #440/#441). On a
  *   leakage-free Vermont held-out set the resolver scored 93.7% locality name-match while 326km wrong: a
  *   region given as a USPS abbreviation ("VT") didn't resolve (WOF stores "Vermont"; the FTS had no
- *   abbreviations), so the locality lookup ran UNCONSTRAINED across the whole country and a
+ *   abbreviations), so the locality lookup ran unconstrained across the whole country and a
  *   higher-population same-named town in another state won. The fix is two data-build steps
  *   (`add-region-abbrevs.ts` puts the abbreviation into `names` → `place_search`;
  *   `backfill-ancestors-from-hierarchy.ts` gives multi-parent places their region ancestor so the

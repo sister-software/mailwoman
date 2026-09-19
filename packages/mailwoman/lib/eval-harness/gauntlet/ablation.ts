@@ -3,22 +3,22 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Gauntlet ABLATION layer — the required map. For every corpus row that ASSERTS a component, delete
+ *   Gauntlet ablation layer — the required map. For every corpus row that asserts a component, delete
  *   that component from the input and re-run the full pipeline: the displacement from the row's own
  *   undeleted anchor says what the component was worth. Aggregated per (component, locale) it answers the
  *   operator's question directly — "where does the pipeline falter when a part of the address is missing?"
  *   — and hands the suggestion layer its per-(component, locale) prior on nudge value
  *   (`docs/superpowers/plans/2026-08-05-suggestion-layer.md` §C.5, which specifies `AblationCell`).
  *
- *   This is a MEASUREMENT layer rather than a check. It never joins the combined verdict (`run.ts` lists only
+ *   This is a measurement layer rather than a check. It never joins the combined verdict (`run.ts` lists only
  *   regression + metamorphic), it has no stored expected values, and its verdict says only whether the
- *   INSTRUMENT ran — a map of all-zero cells is "not measured", never "nothing broke" (meaning-of-zero).
+ *   instrument ran — a map of all-zero cells is "not measured", never "nothing broke" (meaning-of-zero).
  *
  *   Three ancestors, generalized rather than duplicated:
  *
  *   - `metamorphic.ts`'s DIR class deletes a `\b\d{5}\b` postcode from 3 hand-listed bases and asserts ≤5 km.
- *       That is one component, one tolerance, seven rows, and a REGEX — which on the 4-digit systems deletes
- *       house numbers. Here the deletion is LITERAL (the asserted span, boundary-checked), every component
+ *       That is one component, one tolerance, seven rows, and a regex — which on the 4-digit systems deletes
+ *       house numbers. Here the deletion is literal (the asserted span, boundary-checked), every component
  *       the row asserts is deleted in turn, and the tolerance is the row's own.
  *   - `check-case.ts`'s `componentOf` maps an `expect_components` key to the assembled-result field. Reused
  *       verbatim (exported for this), so the slot a deletion is scored against is the same slot the check grades.
@@ -27,7 +27,7 @@
  *       deletions did not yield "no postcode", they yielded a different token in the postcode slot (house
  *       numbers, a venue's year, a plus code) and 0 of 139 recovered the deleted code.
  *
- *   LINK EVERY OVERLAY BEFORE YOU BELIEVE A NUMBER HERE. The first full run (2026-08-05, 177 cases → 667 variants)
+ *   link every overlay before YOU believe A number here. The first full run (2026-08-05, 177 cases → 667 variants)
  *   reproduced S-2's postcode column exactly in FR, US, IE, MX and ES — and differed on 13 of 47 GB rows, because the
  *   worktree S-2 ran in carried no `neural-weights-en-gb` artifacts and graded GB base-only. With the overlay linked,
  *   GB postcode-free goes 48.9% → 55.3% within 5 km, 42.6% → 36.2% beyond 100 km, p50 5.70 → 1.97 km. Five locales
@@ -35,13 +35,13 @@
  *   `node neural-weights-<locale>/scripts/link-dev-weights.ts` for every overlay first, or the map measures the
  *   instrument.
  *
- *   ## The grading is NORMATIVE since 2026-08-05 — see `ablation-expectation.ts`
+ *   ## The grading is normative since 2026-08-05 — see `ablation-expectation.ts`
  *
- *   The first version graded every deletion variant against the UNDELETED case's single anchor and single tolerance,
+ *   The first version graded every deletion variant against the undeleted case's single anchor and single tolerance,
  *   which reports "confidently wrong" and "correctly degraded to the next-best answer" as the same red cell. It now
- *   grades against a GRACEFUL-DEGRADATION LADDER synthesized per row from the gazetteer — the row's own asserted
- *   coordinate, then the admin chain CONTAINING it, each rung with a centroid and a radius — and the expected rung is
- *   computed from the components the deletion LEFT BEHIND, never from the variant's own output, which would be
+ *   grades against a graceful-degradation ladder synthesized per row from the gazetteer — the row's own asserted
+ *   coordinate, then the admin chain containing it, each rung with a centroid and a radius — and the expected rung is
+ *   computed from the components the deletion left behind, never from the variant's own output, which would be
  *   circular.
  *
  *   Three outcomes are passes: the answer held at the base rung, it coarsened to a rung the surviving evidence still
@@ -171,7 +171,7 @@ export function boundedOccurrences(input: string, value: string): number[] {
 }
 
 /**
- * Delete `[at, at + length)` and tidy the separator debris the deletion leaves behind. Deliberately LITERAL — the whole
+ * Delete `[at, at + length)` and tidy the separator debris the deletion leaves behind. Deliberately literal — the whole
  * reason this runner does not reuse metamorphic's `\b\d{5}\b` stripper is that a pattern deletes house numbers on the
  * 4-digit postal systems (the postcode arc's M-1 finding, in reverse).
  */
@@ -195,7 +195,7 @@ export function deleteSpan(input: string, at: number, length: number): string {
  *
  * 1. `empty` — the asserted value is the empty string. `us-dc-pennsylvania` asserts `postcode: ""` to pin that the slot
  *    stays empty. there is nothing to delete, and treating it as a deletion would manufacture support.
- * 2. `not-verbatim` — the asserted value is not in the input (an assertion about the RESOLVED value, e.g. `country:
+ * 2. `not-verbatim` — the asserted value is not in the input (an assertion about the resolved value, e.g. `country:
  *    "United States"` against an input saying `USA`). Deleting it would require guessing which span it came from.
  * 3. `ambiguous` — more than one boundary-safe occurrence, or the same value asserted for a second component. Either way
  *    the deletion is not attributable to one component, which is the only thing this map measures.
@@ -278,7 +278,7 @@ export function ablationVariants(
  */
 export interface AblationLayerOptions extends GauntletLayerOptions {
 	/**
-	 * Where the artifacts land. Defaults to `/tmp/ablation-<YYYYMMDD-HHmm>` — the `promotion-eval.ts` convention, and
+	 * Where the artifacts land. Defaults to `/tmp/ablation-<yyyymmdd-HHmm>` — the `promotion-eval.ts` convention, and
 	 * deliberately not under `$MAILWOMAN_DATA_ROOT`, which this layer only ever reads.
 	 */
 	outDir?: string
@@ -287,7 +287,7 @@ export interface AblationLayerOptions extends GauntletLayerOptions {
 	 */
 	components?: readonly string[]
 	/**
-	 * Cap the number of CASES (not variants). For a smoke run.
+	 * Cap the number of cases (not variants). For a smoke run.
 	 */
 	limit?: number
 }
@@ -310,7 +310,7 @@ interface CaseRow {
 /**
  * The per-case `ablation_expect` pins, keyed by case id.
  *
- * Read from the built DB when the column is there, and from the COMMITTED SEED otherwise. The dual path is not
+ * Read from the built DB when the column is there, and from the committed seed otherwise. The dual path is not
  * belt-and-braces: `ablation_expect` landed with the expectation model (2026-08-05) and the shared
  * `$MAILWOMAN_DATA_ROOT/gauntlet/regression.db` predates it, so a layer that only read the column would silently ignore
  * every pin until someone rebuilt a database this layer has no business rebuilding. The seed is the authoring surface
@@ -372,7 +372,7 @@ function timestampDir(now: Date): string {
 }
 
 /**
- * Run the ablation layer over the curated corpus. Returns `pass` — which reports only whether the INSTRUMENT ran (at
+ * Run the ablation layer over the curated corpus. Returns `pass` — which reports only whether the instrument ran (at
  * least one measured cell). A map is not a check. nothing here can fail a ship.
  */
 export async function runAblationLayer(
@@ -426,7 +426,7 @@ export async function runAblationLayer(
 	const deps = await buildGauntletDeps(layerDepsOptions(options))
 	const gazetteer = await AblationGazetteer.create()
 
-	// LOUD, because a ladder-less run and a run where nothing degraded produce the same all-`held` shape until you
+	// loud, because a ladder-less run and a run where nothing degraded produce the same all-`held` shape until you
 	// read `ladderGradedCount`. The map still measures the anchor-graded columns without it.
 	console.error(
 		gazetteer.available
@@ -453,7 +453,7 @@ export async function runAblationLayer(
 
 			if (!variants.length) continue
 
-			// caseCountry selects the per-locale weights OVERLAY, exactly as the regression layer does. Without it
+			// caseCountry selects the per-locale weights overlay, exactly as the regression layer does. Without it
 			// the GB/DE/IN rows grade base-only and their dependent_locality never fires — the R1 instrument trap.
 			const geoOpts = {
 				...(c.default_country ? { defaultCountry: c.default_country } : {}),
@@ -477,7 +477,7 @@ export async function runAblationLayer(
 
 			const built = disagreement ? { ladder: null, reason: disagreement } : drawn
 
-			// Where the UNDELETED case already stands on its own ladder — the floor every variant is judged from
+			// Where the undeleted case already stands on its own ladder — the floor every variant is judged from
 			// (`gradeAgainstLadder`). `null` (anchor off its own ladder, or unresolved) makes the whole case ungradable,
 			// which is reported rather than counted as anything.
 			const anchorRungDepth =
@@ -557,8 +557,8 @@ export async function runAblationLayer(
 					ladderGaps: built.ladder ? built.ladder.gaps.map((g) => `${g.placetype} ${g.name}: ${g.reason}`) : [],
 				})
 
-				// Two different nulls, and the progress line must not conflate them: `no-anchor` is the ROW failing to
-				// resolve as written (nothing to measure against), `unresolved` is the DELETION costing the answer.
+				// Two different nulls, and the progress line must not conflate them: `no-anchor` is the row failing to
+				// resolve as written (nothing to measure against), `unresolved` is the deletion costing the answer.
 				const moved =
 					scored.displacementKm != null
 						? `${scored.displacementKm.toFixed(2)}km`
@@ -619,7 +619,7 @@ export async function runAblationLayer(
 
 	printSummary(cells, rows, { boardID, measuredAt, anchorsRun, outDir, pinLine, skips })
 
-	// The instrument rather than a check: a map of zero cells means the run measured nothing, and a "PASS" printed
+	// The instrument rather than a check: a map of zero cells means the run measured nothing, and a "pass" printed
 	// over an empty map is precisely the reading the meaning-of-zero rule exists to forbid.
 	return { pass: cells.length > 0, outDir, cells }
 }

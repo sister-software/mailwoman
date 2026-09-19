@@ -10,12 +10,12 @@
  *   exist as a name" for the k-best rerank. Sync-by-interface, `readOnly`, prepared statements,
  *   graceful-degrade on a tableless extract — the same reader discipline as `AddressPointSqliteLookup`.
  *
- *   The fold contract: the surface is folded with {@link foldStreetSurface} (the shared function),
+ *   The fold interface: the surface is folded with {@link foldStreetSurface} (the shared function),
  *   and the DB's `street_norm` column must have been built with that same fold or every hyphenated /
- *   apostrophe'd street silently misses. The current `street-centroids-fr.db` predates the contract
+ *   apostrophe'd street silently misses. The current `street-centroids-fr.db` predates the interface
  *   fold (it folded without hyphen/apostrophe normalization); it must be rebuilt with
  *   `foldStreetSurface` + a `street_norm` index before this backend is wired in production. Until
- *   then this class is correct-by-construction against a fixture built with the contract fold, and
+ *   then this class is correct-by-construction against a fixture built with the interface fold, and
  *   the production rebuild is a tracked BAN-sdk follow-up.
  */
 
@@ -56,7 +56,7 @@ export class SQLiteStreetNameLookup implements StreetLocalityEvidence, Disposabl
 		if (hasTable(this.#db, table)) {
 			// Prefer the #727 phase-4c `name_key` column (foldStreetSurface, indexed by `idx_sc_name` for a direct seek);
 			// fall back to `street_norm` on a pre-rebuild extract (a skip-scan, but correct). The fold used to build
-			// `name_key` must match `foldStreetSurface` here (the fold-parity contract).
+			// `name_key` must match `foldStreetSurface` here (the fold-parity interface).
 			const keyCol = hasColumn(this.#db, table, "name_key") ? "name_key" : "street_norm"
 			this.#byName = this.#db.prepare(`SELECT 1 FROM ${table} WHERE ${keyCol} = ? LIMIT 1`)
 
@@ -74,7 +74,7 @@ export class SQLiteStreetNameLookup implements StreetLocalityEvidence, Disposabl
 
 		if (!norm) return false
 
-		// Scoped lookups tighten precision when the hypothesis carries a locality/postcode. a scoped MISS falls back to the
+		// Scoped lookups tighten precision when the hypothesis carries a locality/postcode. a scoped miss falls back to the
 		// unscoped probe (index incompleteness in the scope column is not evidence of absence — positive-evidence rule).
 		if (
 			scope?.locality &&

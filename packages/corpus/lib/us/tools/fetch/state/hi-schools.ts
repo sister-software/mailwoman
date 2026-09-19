@@ -3,17 +3,17 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Re-fetch the Hawaii State DOE school directory as its original XLSX workbook. The
+ *   Re-fetch the Hawaii State DOE school directory as its original xlsx workbook. The
  *   `state-hi-schools` adapter reads both worksheets directly.
  *
- *   Upstream is a single XLSX (~64 KB) with two sheets — `HIDOE` (~258 district schools) and `PCS`
+ *   Upstream is a single xlsx (~64 KB) with two sheets — `hidoe` (~258 district schools) and `PCS`
  *   (~38 public charter schools). Both sheets are validated against the adapter's required columns
  *   before the workbook is recorded as fetched.
  *
  *   License: Hawaii state government open data (Tier A — state PD-equivalent).
  *
  *   Invoke via `mailwoman corpus fetch state-hi-schools --out-root <path>`. Idempotent: if the dest
- *   workbook exists and its sha matches MANIFEST, skips download.
+ *   workbook exists and its sha matches manifest, skips download.
  */
 
 import { BYTES_PER_KIB, ByteFormatter } from "@mailwoman/core/fs/formatters"
@@ -61,7 +61,7 @@ async function validateWorkbook(path: string): Promise<void> {
 			throw new Error(`sheet ${sheet} must contain a header and at least one school row`)
 		}
 
-		// Exact casing is part of the adapter contract: object mode preserves the workbook's header names, so accepting
+		// Exact casing is part of the adapter interface: object mode preserves the workbook's header names, so accepting
 		// `Code` here while the reader asks for `record.code` would validate a workbook whose every row is later skipped.
 		const columns = new Set(header.map((cell) => String(cell ?? "").trim()))
 
@@ -101,7 +101,7 @@ export async function fetchStateHISchools(
 		}
 	}
 
-	// Download XLSX.
+	// Download xlsx.
 	report?.(`  Downloading ${sourceURL} ...`)
 
 	try {
@@ -139,7 +139,7 @@ export async function fetchStateHISchools(
 
 	const xlsxSha = await sha256File(xlsxDest)
 
-	// Write MANIFEST.
+	// Write manifest.
 	const manifest: Manifest = {
 		source_url: sourceURL,
 		downloaded_at: new Date().toISOString(),

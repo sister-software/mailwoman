@@ -15,7 +15,7 @@ describe("parseForm499Notes — the eight templates", () => {
 	it("reads a cessation date into an ISO `valid_to` candidate", () => {
 		const lifecycle = parseForm499Notes(["No longer active as of 9/8/2013"])
 
-		// M/D/YYYY sorts wrong as a string and fails assertISODate — the whole reason this converts.
+		// M/D/yyyy sorts wrong as a string and fails assertISODate — the whole reason this converts.
 		expect(lifecycle.ceasedAt).toBe("2013-09-08")
 		expect(lifecycle.reasons).toEqual([Form499CessationReason.NoLongerActive])
 	})

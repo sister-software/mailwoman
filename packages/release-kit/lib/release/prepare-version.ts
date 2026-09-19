@@ -14,7 +14,7 @@
  *   loop derives (#756: one source of truth, so this operation can't drift from what actually
  *   publishes). Semver parsing/increment is the `semver` package.
  *
- *   Output contract: the operation answers `resolvedVersion`, and the CLI adapter prints
+ *   Output interface: the operation answers `resolvedVersion`, and the CLI adapter prints
  *   `RESOLVED_VERSION=<x.y.z>` — the workflow greps this line (no $GITHUB_OUTPUT / env access here).
  *
  *   Inputs:
@@ -117,11 +117,11 @@ export async function prepareReleaseVersion(
 		}
 	}
 
-	// `release.config.json#version` carries the same unified release number (RELEASING.md, its own $comment) and
+	// `release.config.json#version` carries the same unified release number (releasing.md, its own $comment) and
 	// lagged two releases running (#1024, then v9.2.0 shipping while it read 9.1.0) because nothing bumped it. It is
 	// validated with the sync set but written by a one-line textual replacement — the file is oxfmt-formatted, and
 	// the stringify write path used for the manifests would reformat it wholesale, moving the `weights` block a
-	// code-only release must never touch (release-config-bump.test.ts pins the exact-one-line contract).
+	// code-only release must never touch (release-config-bump.test.ts pins the exact-one-line interface).
 	const releaseConfigPath = resolvePath(repoRoot, "release.config.json")
 	const releaseConfigText = await readLocalTextFile(releaseConfigPath)
 	const releaseConfig = parseJSONStrict<{ version?: string }>(releaseConfigText)

@@ -595,10 +595,10 @@ describe("runPipeline — timing budget shape", () => {
 })
 
 describe("runPipeline — non-graceful stage failures", () => {
-	// Contract: classifier + resolver are wrapped in safe* helpers (graceful). The pre-classifier
+	// Interface: classifier + resolver are wrapped in safe* helpers (graceful). The pre-classifier
 	// stages — detectLocale, classifyKind — are not wrapped because their failure modes indicate a
-	// genuine contract violation (locale detector returning null, kind classifier crashing on its
-	// own rules), not external-data noise. These tests pin the asymmetry as a contract.
+	// genuine interface violation (locale detector returning null, kind classifier crashing on its
+	// own rules), not external-data noise. These tests pin the asymmetry as a interface.
 
 	it("detectLocale throwing propagates (not swallowed)", async () => {
 		const detectLocale = vi.fn(async () => {
@@ -801,7 +801,7 @@ describe("runPipeline — coarse-placer soft prior (#244)", () => {
  * tree, which the grouper-audit then repopulated from rule-based phrase proposals. The caller got a normal-looking
  * parse with no indication the model never ran: measured on the mailfail probes, 10 of 110 inputs crashed the
  * classifier while the pipeline reported success (`size-10kb` produced a tidy five-field parse off a 3,031-node tree).
- * The contract now is that the wrapper still degrades — it does not abort the pipeline — but it RECORDS what it caught
+ * The interface now is that the wrapper still degrades — it does not abort the pipeline — but it records what it caught
  * on `PipelineResult.faults`, so "the model faulted" is distinguishable from "the model found nothing".
  */
 describe("stage faults — a swallowed stage crash is recorded, never silent (#40)", () => {

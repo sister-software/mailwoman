@@ -1,31 +1,31 @@
-# 500-STEP FEED SMOKE for v4.7.0 — does the v0.24.0 overlay READ and does loss descend. Not a capability
+# 500-step feed smoke for v4.7.0 — does the v0.24.0 overlay read and does loss descend. Not a capability
 # probe: 500 steps at 5.9 reps/row for the target source is 0.4 reps, far too few to teach a shape. Its
 # only job is to catch a missing corpus file, a tokenizer mismatch or a NaN before 8,000 steps of A100.
-# v4.7.0 — trailing-region STRUCTURED (#1748)
+# v4.7.0 — trailing-region structured (#1748)
 #
-# WHY: the recipe output written to fix `es-op3-southeast-portopetro` never contained the row's shape. Measured
+# why: the recipe output written to fix `es-op3-southeast-portopetro` never contained the row's shape. Measured
 # over both built v23 recipe outputs: 88,904 rows, two surfaces, zero postcodes. The model learned the bare
 # admin tail correctly and had never seen `«postcode» «locality», «region»`, which is why no decode
 # change moved it. Corpus absence rather than a decode defect.
 #
-# THE COLLAPSE IS TWO-STAGED, and neither trigger is a street:
+# the collapse is two-staged, and neither trigger is a street:
 #     Portopetro, Illes Balears, Spain             locality ok   region ok
-#     07691 Portopetro, Illes Balears, Spain       locality ok   region DISCARDED
-#     15, 07691 Portopetro, Illes Balears, Spain   locality DISPLACED by the region
+#     07691 Portopetro, Illes Balears, Spain       locality ok   region discarded
+#     15, 07691 Portopetro, Illes Balears, Spain   locality displaced by the region
 #
-# WHAT IS ADDED: synth-trailing-region-structured v24 — 17,908 REAL (postcode, locality, region)
+# what is added: synth-trailing-region-structured v24 — 17,908 real (postcode, locality, region)
 # triples (FR 10,208, DE 3,538, ES 3,289, IT 873), joined from postalcode-intl.db parents through admin
 # localities to their region ancestors, hub-filtered at the p99. Eight catch-all localities
 # (Schwedt/Oder claims 9,222 postcodes against a p50 of 1) held 47% of the raw join. House numbers are
 # synthetic because a house number asserts no fact about a place. postcodes are not, because they do.
 # PT joins nothing, so pt-cs-lagos-trailing-region is expected to stay red.
 #
-# TRAINING SEMANTICS: verbatim v4.5.2 B11 fine-tune — init_from the v4.4.0 base with a fresh optimizer
+# training semantics: verbatim v4.5.2 B11 fine-tune — init_from the v4.4.0 base with a fresh optimizer
 # and the EWC brake at 1e4 against v440's Fisher. v4.4.0 and not v4.6.0 because v4.6.0 was never
 # promoted: it is the run that collapsed 21 bare-toponym cases (#1674, post-mortem #1677). The EWC brake
 # is also the guard against the #513 adjacent-class risk this run carries.
 #
-# PRE-REGISTERED WATCH (#513, and the discipline #1677 says was missing):
+# PRE-registered watch (#513, and the discipline #1677 says was missing):
 #   expected to move   — es/it/de/fr *-trailing-region cohort rows, es-op3-southeast-portopetro
 #   expected not to    — pt-cs-lagos-trailing-region (no PT triples in the corpus)
 #   must not regress   — bz-cs-belize-city, kh-cs-phnom-penh, tt-cs-port-of-spain,
@@ -62,7 +62,7 @@ data:
     CA: 1.0
     MX: 1.0
   source_weights:
-    # REPS-FIRST (#1677): weight = target_reps x rows x total / (samples - target_reps x rows).
+    # reps-first (#1677): weight = target_reps x rows x total / (samples - target_reps x rows).
     # 6 reps/row x 17,908 rows against 155.0 total over 8,000 x 128 = 1,024,000 samples -> 18.17,
     # a 10.5% share. Parity with the bare trailing-region sources, measured at 7.7 and 5.2 reps/row.
     # For contrast, the weight that collapsed v4.6.0 was 1.0 and bought 165 reps/row.

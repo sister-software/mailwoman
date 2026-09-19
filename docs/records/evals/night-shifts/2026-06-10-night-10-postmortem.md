@@ -13,10 +13,10 @@ substantially eaten.
   `9eb4a99f…`), DE native 90.9. Merge sequence #468 → #469 → #491 (epic #466 closed), zero
   conflicts (the operator's squash choreography worked exactly as designed), zero
   merge-wall blocks. Bookkeeping #494 (cards w/ direct `init_from` lineage, ledger row,
-  scorecard re-emit, status/releases contract pages). HF staged + default; **the R2 leg**
+  scorecard re-emit, status/releases interface pages). HF staged + default; **the R2 leg**
   (10 objects, served-model md5 = the conditional artifact); `publish.yml` → npm 4.2.0
   (registry-direct verified), tag + release object.
-- **promotion-check.sh (#479, closed via #495):** check-specs-as-contracts; validated by
+- **promotion-check.sh (#479, closed via #495):** check-specs-as-interfaces; validated by
   reproducing the manual ship verdict bit-for-bit (12/12 floors, max int8 delta 0.1pp).
 - **US source-independent holdout (#472, closed via #496):** 6,453 NAD-only rows, 44
   states. **No memorization cliff** — v4.2.0 within noise of v4.1.0 on never-seen-lineage

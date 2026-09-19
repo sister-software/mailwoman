@@ -33,10 +33,10 @@
 			"node": "./plugins/runtime-assets/workspace/aliases.ts",
 			"default": "./plugins/runtime-assets/workspace/aliases.ts"
 		},
-		"./scripts/docs-frontmatter-contract": {
-			"types": "./scripts/docs/frontmatter/contract.ts",
-			"node": "./scripts/docs/frontmatter/contract.ts",
-			"default": "./scripts/docs/frontmatter/contract.ts"
+		"./scripts/docs-frontmatter-metadata": {
+			"types": "./scripts/docs/frontmatter/metadata.ts",
+			"node": "./scripts/docs/frontmatter/metadata.ts",
+			"default": "./scripts/docs/frontmatter/metadata.ts"
 		},
 		"./scripts/docs-path-citations": {
 			"types": "./scripts/docs/path-citations.ts",

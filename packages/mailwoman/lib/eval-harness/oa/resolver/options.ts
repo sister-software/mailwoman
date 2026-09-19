@@ -2,7 +2,7 @@
  * @copyright Sister Software
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
- * @file The flag contract for the OpenAddresses real-point resolver eval.
+ * @file The flag interface for the OpenAddresses real-point resolver eval.
  */
 
 import type { WeakResolutionReading } from "@mailwoman/core/resolver"
@@ -21,7 +21,7 @@ export interface OAResolverEvalOptions {
 	 */
 	addressPoints?: string
 	/**
-	 * #895 tri-state pin: force adminCoherence ON.
+	 * #895 tri-state pin: force adminCoherence on.
 	 */
 	adminCoherence?: boolean
 	/**
@@ -37,13 +37,13 @@ export interface OAResolverEvalOptions {
 	 */
 	anchorRerank?: boolean
 	/**
-	 * Per-locale FST gazetteer (`fst-<locale>.bin`) for the ASSEMBLED arms (#1497).
+	 * Per-locale FST gazetteer (`fst-<locale>.bin`) for the assembled arms (#1497).
 	 *
 	 * Only the assembled arms can use it — the FST is a decode-time prior applied by `createRuntimePipeline`, and the
 	 * bare `neural` arm calls `classifier.parse` directly. Omit for the byte-stable no-FST default.
 	 *
 	 * This is the tree's only FST-sensitive eval. `eval gauntlet` grades through `parseForGeocode`, which takes no FST at
-	 * all, so an FST change is invisible to it — see the note on `assembledPipeline` below.
+	 * all. Therefore, an FST change is invisible to it — see the note on `assembledPipeline` below.
 	 */
 	adminFST?: string
 	/**
@@ -71,7 +71,7 @@ export interface OAResolverEvalOptions {
 	 */
 	errorsJSON?: string
 	/**
-	 * Eval JSONL. Default `data/eval/external/openaddresses-us-sample.jsonl`.
+	 * Eval jsonl. Default `data/eval/external/openaddresses-us-sample.jsonl`.
 	 */
 	eval?: string
 	/**
@@ -103,13 +103,13 @@ export interface OAResolverEvalOptions {
 	 */
 	noAdminCoherence?: boolean
 	/**
-	 * #42 tri-state pin: force postcodeCountryCoherence OFF — the pre-2026-08-05 configuration. This is the leg that
+	 * #42 tri-state pin: force postcodeCountryCoherence off — the pre-2026-08-05 configuration. This is the leg that
 	 * measures whether letting a coherent (postcode, locality) pair override `defaultCountry` is byte-flat on a US panel,
 	 * which is the one number the default-on promotion needed and could not get from a confound board.
 	 */
 	noPostcodeCountryCoherence?: boolean
 	/**
-	 * #370 tri-state pin: force postcodeConsistency OFF — the configuration before the pass was promoted.
+	 * #370 tri-state pin: force postcodeConsistency off — the configuration before the pass was promoted.
 	 *
 	 * Paired with {@link postcodeConsistencyMaxMoveKm} this prices #2301's cap without a sweep: the rows whose answer
 	 * differs between this arm and the shipped one are exactly the rows the pass touched, and the distance between the
@@ -123,7 +123,7 @@ export interface OAResolverEvalOptions {
 	 */
 	postcodeConsistencyMaxMoveKm?: number
 	/**
-	 * #2266 pin: a span-rescore sub-span may drop CONTEXT but never a word of the name. Default-off in the library until
+	 * #2266 pin: a span-rescore sub-span may drop context but never a word of the name. Default-off in the library until
 	 * a measurement carries it, so an unset pin leaves this eval byte-identical.
 	 */
 	spanRescoreRequireContextRemainder?: boolean
@@ -133,7 +133,7 @@ export interface OAResolverEvalOptions {
 	 */
 	spanRescoreWeakResolution?: WeakResolutionReading
 	/**
-	 * #690/#895 tri-state pin: force normalizeCase ON.
+	 * #690/#895 tri-state pin: force normalizeCase on.
 	 */
 	normalizeCase?: boolean
 	/**
@@ -194,7 +194,7 @@ export interface OAResolverEvalOptions {
 	/**
 	 * Write a wall-time attribution JSON here: rig setup, and the per-row `neural.parse` / `resolver.resolveTree` split.
 	 *
-	 * PROFILING ONLY. The promotion comparator reads every file under the output directory byte-for-byte, so this path
+	 * Profiling only. The promotion comparator reads every file under the output directory byte-for-byte, so this path
 	 * must name somewhere outside it. Omitted (the default) the harness writes nothing and costs two `performance.now()`
 	 * calls per row.
 	 */

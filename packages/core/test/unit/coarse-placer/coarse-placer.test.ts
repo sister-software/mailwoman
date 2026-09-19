@@ -206,7 +206,7 @@ describe("open-set reject rule (#244 M2)", () => {
 		)
 
 	test("keeps an in-map-but-country-ambiguous address the max-prob rule rejects", () => {
-		// US .4 / FR .4 / OTHER .2 — max-prob 0.4 < 0.5 (reject), but in-map MASS 0.8 ≥ 0.5 (keep).
+		// US .4 / FR .4 / other .2 — max-prob 0.4 < 0.5 (reject), but in-map mass 0.8 ≥ 0.5 (keep).
 		const bias = [Math.log(0.4), Math.log(0.4), Math.log(0.2)]
 		const def = make(bias, { abstainBelow: 0.5 })
 		const open = make(bias, { abstainBelow: 0.5, openSet: true })
@@ -222,13 +222,13 @@ describe("open-set reject rule (#244 M2)", () => {
 	})
 
 	test("rejects to null (never 'OTHER' as a country) when off-map mass dominates", () => {
-		const bias = [Math.log(0.1), Math.log(0.1), Math.log(0.8)] // OTHER .8
+		const bias = [Math.log(0.1), Math.log(0.1), Math.log(0.8)] // other .8
 		const def = make(bias, { abstainBelow: 0.5 })
 		const open = make(bias, { abstainBelow: 0.5, openSet: true })
 
-		// Default rule: `OTHER` wins outright (0.8 ≥ 0.5) → a confident `OTHER`, not an abstain.
+		// Default rule: `other` wins outright (0.8 ≥ 0.5) → a confident `other`, not an abstain.
 		expect(def.predict("x").country).toBe("OTHER")
-		// Open-set: in-map mass 0.2 < 0.5 → abstain. a reject is null, never the `OTHER` class.
+		// Open-set: in-map mass 0.2 < 0.5 → abstain. a reject is null, never the `other` class.
 		const o = open.predict("x")
 		expect(o.abstained).toBe(true)
 		expect(o.country).toBeNull()
@@ -276,7 +276,7 @@ describe("inMapPosterior — #928 epsilon floor", () => {
 		probs: { GB: 0.8, US: 0.04, FR: 0.06, OTHER: 0.1 },
 	}
 
-	test("DEFAULT floor is 0 — the full distribution passes through (the shipped contract)", () => {
+	test("DEFAULT floor is 0 — the full distribution passes through (the shipped interface)", () => {
 		expect(inMapPosterior(pred)).toEqual({ GB: 0.8, US: 0.04, FR: 0.06 })
 	})
 

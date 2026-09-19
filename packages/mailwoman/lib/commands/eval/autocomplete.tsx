@@ -15,7 +15,7 @@ import { type CommandSpec, harnessCommand } from "#cli-kit"
 export const description = "Autocomplete ladder (#2154) — first-hit rung, stability, latency and abstention per prefix"
 
 /**
- * Native command-line contract consumed by the filesystem command router.
+ * Native command-line interface consumed by the filesystem command router.
  */
 export const spec = {
 	name: "autocomplete",

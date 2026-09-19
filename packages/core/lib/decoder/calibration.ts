@@ -13,7 +13,7 @@
  *   (`data/eval/calibration/isotonic-<locale>-<version>.json`).
  *
  *   This module turns that table into a pure `(rawConfidence) => calibratedConfidence` function. It
- *   is deliberately decoupled from the table source: pass the PARSED JSON object so this stays
+ *   is deliberately decoupled from the table source: pass the parsed JSON object so this stays
  *   browser-safe (no `node:fs`) — the demo imports the JSON directly, Node scripts `JSON.parse`
  *   it.
  *

@@ -15,11 +15,11 @@ interface CommandModule {
 }
 
 /**
- * The COMPILED command tree, whichever tree this module runs from. The commands are TSX, which Node cannot load from
- * source, so the router reads `out/commands/` even when the package's `#` imports have handed it the source router —
- * the same reach `geocode-stream.ts` makes for its worker.
+ * The compiled command tree, whichever tree this module runs from. The commands are TSX, which Node cannot load from
+ * source. Therefore, the router reads `out/commands/` even when the package's `#` imports have handed it the source
+ * router — the same reach `geocode-stream.ts` makes for its worker.
  *
- * Anchored at the PACKAGE rather than counted in `..` from this file. The count is a statement about this module's
+ * Anchored at the package rather than counted in `..` from this file. The count is a statement about this module's
  * depth, which is not something this module gets to know: moving it one directory deeper turned `../../out/commands/`
  * into `lib/cli/out/commands/`, and every command became `Unknown command` at once.
  */
@@ -154,7 +154,7 @@ export async function dispatchCommand(argv: readonly string[]): Promise<number> 
 	if (!argv.length || argv[0] === "--help" || argv[0] === "-h") return rootHelp()
 	const commandParts: string[] = []
 
-	// The path each accepted segment resolved to, which is the command's LOCATION. It parts company with
+	// The path each accepted segment resolved to, which is the command's location. It parts company with
 	// `commandParts` — the name the user typed — the moment a prefix directory stands between them.
 	const filesystemParts: string[] = []
 

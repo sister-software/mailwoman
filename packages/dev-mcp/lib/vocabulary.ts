@@ -3,7 +3,7 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Can the tokenizer REPRESENT this input at all?
+ *   Can the tokenizer represent this input at all?
  *
  *   A parse defect on a non-Latin locale has two very different causes that look identical from the outside: the corpus
  *   never taught the format, or the vocabulary cannot express the string and the model is learning a byte sequence
@@ -18,10 +18,10 @@
  *   against the en-us tokenizer, 40.6% of pieces were byte fallbacks and 0.94 pieces fell per character, against 3.7%
  *   and 0.41 for the same addresses transliterated.
  *
- *   BOTH FIGURES MOVE WITH THE SAMPLE, which is the reason `control` exists rather than a remembered threshold — a
+ *   both figures move with the sample, which is the reason `control` exists rather than a remembered threshold — a
  *   two-line probe of the same language measures 34.4%, and neither number means anything except beside its arm.
  *
- *   A RATE ALONE IS NOT A FINDING either, which is why the per-character report is not optional. Vietnamese is not
+ *   A rate alone is not A finding either, which is why the per-character report is not optional. Vietnamese is not
  *   missing from the vocabulary — `Đ`, `ạ`, `ô`, `ă`, `ê` are all present. What is missing, across that five-address
  *   sample, is twelve characters, every one a vowel carrying two marks (`ư ầ ậ ế ễ ệ ố ồ ộ ờ ợ ừ`); a smaller sample
  *   names a subset of the same set. "Add Vietnamese" and "add these codepoints" are different decisions, and only the
@@ -48,7 +48,7 @@ interface VocabularyLine {
 	 */
 	piecesPerCharacter: number
 	/**
-	 * The piece sequence, joined by `|`. Present only when asked for — it is the part that shows WHERE a word shatters,
+	 * The piece sequence, joined by `|`. Present only when asked for — it is the part that shows where a word shatters,
 	 * and the part that makes a reply long.
 	 */
 	sequence?: string
@@ -115,7 +115,7 @@ function total(lines: readonly VocabularyLine[]): VocabularyReport["totals"] {
  * Which letters in `texts` the vocabulary can express on their own.
  *
  * Judged one character at a time on purpose. A character that falls back inside a word might merely be an unlucky
- * segmentation. a character that falls back ALONE is absent from the vocabulary, which is the fact a vocabulary
+ * segmentation. a character that falls back alone is absent from the vocabulary, which is the fact a vocabulary
  * decision needs.
  */
 function characterCoverage(

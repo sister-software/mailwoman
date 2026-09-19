@@ -13,7 +13,7 @@
  *   adding `log2(u_level / frequency(v))` to the weight: a big positive bump for rare values, a
  *   penalty for common ones.
  *
- *   Crucially for a label-free matcher: the frequencies are computed ON-THE-FLY from the input column
+ *   Crucially for a label-free matcher: the frequencies are computed on-the-FLY from the input column
  *   (the Splink approach) — no external Census table required. Build a {@link TermFrequencyTable}
  *   from the values you're matching, then attach it to a comparison with {@link withTermFrequency}.
  */

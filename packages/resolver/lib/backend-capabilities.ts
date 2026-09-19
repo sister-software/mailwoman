@@ -35,7 +35,7 @@ const CONSEQUENTIAL_CAPABILITIES: ReadonlyArray<Omit<BackendCapabilityGap, "back
 ]
 
 /**
- * Enumerate the consequential capabilities this backend does not implement. Empty means every default-ON option the
+ * Enumerate the consequential capabilities this backend does not implement. Empty means every default-on option the
  * resolver offers has the backend support it needs.
  */
 export function describeCapabilityGaps(backend: ResolverBackend): readonly BackendCapabilityGap[] {

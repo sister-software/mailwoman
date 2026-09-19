@@ -4,8 +4,8 @@
  * @author Teffen Ellis, et al.
  *
  *   The WOF postcode-database build (`postalcode-<cc>.db`) — ingest the country's
- *   `whosonfirst-data-postalcode-<cc>` repo, fill the `(0,0)` placeholder centroids (US: Census ZCTA +
- *   GeoNames. all: GeoNames postal → admin parent-borrow → hierarchy-ancestor fallback), FTS, SEAL.
+ *   `whosonfirst-data-postalcode-<cc>` repo, fill the `(0,0)` placeholder centroids (US: Census zcta +
+ *   GeoNames. all: GeoNames postal → admin parent-borrow → hierarchy-ancestor fallback), FTS, seal.
  *   Replaces the reopen-and-mutate pair (`fill-zcta-centroids.ts` / `backfill-postcode-centroids.ts`)
  *   that patched shipped databases after the fact — the fills are build steps now, and the artifact is
  *   read-only from the moment it exists.
@@ -40,11 +40,11 @@ export interface BuildPostcodeDatabaseOptions {
 	 */
 	reposDir?: string
 	/**
-	 * Output artifact. Default `<data-root>/wof/postalcode-<cc>.REBUILD.db` (staging — swap deliberately).
+	 * Output artifact. Default `<data-root>/wof/postalcode-<cc>.rebuild.db` (staging — swap deliberately).
 	 */
 	out?: string
 	/**
-	 * Census ZCTA Gazetteer file (US pass 1). Default `<data-root>/census/2024_Gaz_zcta_national.txt`.
+	 * Census zcta Gazetteer file (US pass 1). Default `<data-root>/census/2024_Gaz_zcta_national.txt`.
 	 */
 	zctaPath?: PathBuilderLike
 	/**
@@ -86,7 +86,7 @@ export async function buildPostcodeDatabase(opts: BuildPostcodeDatabaseOptions):
 		)
 	}
 
-	// resolver-wof-sqlite is an OPTIONAL peer — lazy import (the gazetteer-pipeline convention).
+	// resolver-wof-sqlite is an optional peer — lazy import (the gazetteer-pipeline convention).
 	const { createUnifiedSchema } = await import("@mailwoman/resolver-wof-sqlite/unified-schema")
 
 	const ingestPath = out + ".ingest"
@@ -132,7 +132,7 @@ export async function buildPostcodeDatabase(opts: BuildPostcodeDatabaseOptions):
 
 		phase("ingest", `${ingest.placesIngested.toLocaleString()} postcodes`)
 
-		// US pass 1: Census ZCTA + GeoNames US (provenance-stamped in centroid_source. see zcta-centroids.ts).
+		// US pass 1: Census zcta + GeoNames US (provenance-stamped in centroid_source. see zcta-centroids.ts).
 
 		if (cc === "us") {
 			const zctaPath = opts.zctaPath ?? dataRootPath("census", "2024_Gaz_zcta_national.txt")

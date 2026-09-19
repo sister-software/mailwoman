@@ -3,7 +3,7 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   TIGER Census data utilities.
+ *   tiger Census data utilities.
  */
 
 import type { AdminLevel1Code } from "#state"
@@ -11,7 +11,7 @@ import type { AdminLevel1Code } from "#state"
 //#region Constants
 
 /**
- * Census TIGER levels for geographic data.
+ * Census tiger levels for geographic data.
  *
  * @category Census
  */
@@ -27,7 +27,7 @@ export const TIGERLevel = {
 export type TIGERLevel = (typeof TIGERLevel)[keyof typeof TIGERLevel]
 
 /**
- * File extension for TIGER data files.
+ * File extension for tiger data files.
  *
  * @category Census
  */
@@ -49,7 +49,7 @@ export const TIGERFileExtension = {
 	 */
 	Projection: ".prj",
 	/**
-	 * Federal Geographic Data Committee (FGDC) metadata.
+	 * Federal Geographic Data Committee (fgdc) metadata.
 	 */
 	FGDCMetadata: ".shp.xml",
 	/**
@@ -72,7 +72,7 @@ export const TIGERFileExtension = {
 export type TIGERFileExtension = (typeof TIGERFileExtension)[keyof typeof TIGERFileExtension]
 
 /**
- * Order of TIGER levels for processing, from largest to smallest.
+ * Order of tiger levels for processing, from largest to smallest.
  */
 export const TIGERLevelOrder = [
 	TIGERLevel.State,
@@ -83,7 +83,7 @@ export const TIGERLevelOrder = [
 ] as const satisfies TIGERLevel[]
 
 /**
- * The current TIGER vintage.
+ * The current tiger vintage.
  *
  * @category Census
  * @internal
@@ -97,7 +97,7 @@ export type TIGERCurrentVintage = typeof TIGERCurrentVintage
 //#region File Name Generation
 
 /**
- * Type-helper for TIGER feature geometry file names.
+ * Type-helper for tiger feature geometry file names.
  *
  * @category Census
  */
@@ -109,7 +109,7 @@ export type TIGERStateLevelFileName<
 > = `tl_${Vintage}_${SFC}_${Level}${FileExtension}`
 
 /**
- * Template function to generate a TIGER file name.
+ * Template function to generate a tiger file name.
  */
 export function TIGERStateLevelFileName<
 	SFC extends AdminLevel1Code,
@@ -134,7 +134,7 @@ export type TIGERStateLevelZIPPath<
 > = `/geo/tiger/TIGER${Vintage}/${Uppercase<Level>}/${TIGERStateLevelFileName<SFC, Level, typeof TIGERFileExtension.Zip, Vintage>}`
 
 /**
- * Template function to generate a TIGER ZIP file path.
+ * Template function to generate a tiger ZIP file path.
  */
 export function TIGERStateLevelZIPPath<
 	SFC extends AdminLevel1Code,
@@ -154,7 +154,7 @@ export function TIGERStateLevelZIPPath<
 }
 
 /**
- * Template function to generate a TIGER ZIP file path.
+ * Template function to generate a tiger ZIP file path.
  */
 export function TIGERNationZIPPath<Vintage extends number = TIGERCurrentVintage>(
 	vintage: Vintage = TIGERCurrentVintage as Vintage
@@ -163,7 +163,7 @@ export function TIGERNationZIPPath<Vintage extends number = TIGERCurrentVintage>
 
 	const path = `/geo/tiger/TIGER${vintage}/STATE/${fileName}` as const
 
-	// https://www2.census.gov/geo/tiger/TIGER2023/STATE/tl_2023_us_state.zip
+	// https://www2.census.gov/geo/tiger/TIGER2023/state/tl_2023_us_state.zip
 
 	return path
 }
@@ -173,7 +173,7 @@ export function TIGERNationZIPPath<Vintage extends number = TIGERCurrentVintage>
 //#region Manifests
 
 /**
- * A TIGER manifest for a specific state at a specific level of detail.
+ * A tiger manifest for a specific state at a specific level of detail.
  *
  * @category Census
  */
@@ -231,7 +231,7 @@ export function TIGERLevelManifest<
 }
 
 /**
- * A full TIGER manifest for a specific state.
+ * A full tiger manifest for a specific state.
  */
 export interface TIGERStateManifest<SFC extends AdminLevel1Code, Vintage extends number = TIGERCurrentVintage> {
 	Tract: TIGERLevelManifest<SFC, typeof TIGERLevel.Tract, Vintage>

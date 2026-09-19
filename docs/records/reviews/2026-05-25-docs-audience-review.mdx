@@ -41,7 +41,7 @@ The "taming WOF" post fills an actual gap: there is no other developer-facing gu
 
 The ~60MB cold-load budget is used as an architectural guardrail throughout the docs. It prevents scope creep into server-only research territory and keeps the model size modest. The live demo at `mailwoman.ai/demo` is the project's best proof-of-work, and the docs reference it consistently.
 
-### 6. The schema-as-contract discipline
+### 6. The schema-as-interface discipline
 
 `SCHEMA.md` as the single authoritative record for `ComponentTag`, with the "written rationale in commit" rule, is excellent infrastructure hygiene. The forward-compatibility listing of JP tags forces the type system to handle future expansion without a rewrite. The BIO labeling explanation is clear and complete.
 
@@ -159,7 +159,7 @@ A reader trying to understand "what went wrong with v0.4.0/v0.5.0 training" has 
 There are several pages a new reader would expect that don't exist:
 
 - **Getting started / Installation.** There's no page that says "here's how to install Mailwoman and parse your first address." The npm package is referenced (`@mailwoman/neural-weights-en-us`) but the actual install command and a 5-line code example are nowhere in the docs.
-- **API reference.** The staged pipeline contract and schema are documented, but there's no page that says "here's the `parse()` function signature, here's the return type, here's what `AddressNode` contains."
+- **API reference.** The staged pipeline interface and schema are documented, but there's no page that says "here's the `parse()` function signature, here's the return type, here's what `AddressNode` contains."
 - **What you can use today.** A reader evaluating the project needs to know: can I install this and parse US addresses right now? What accuracy should I expect? What doesn't work? The answer is "yes, with caveats" — but that answer isn't the result shows stated anywhere.
 - **Demo explanation.** The demo page (`/demo`) runs in the browser with no explanation of what it's doing, what model it's using, or what the confidence numbers mean. A short "About this demo" section would bridge the gap.
 

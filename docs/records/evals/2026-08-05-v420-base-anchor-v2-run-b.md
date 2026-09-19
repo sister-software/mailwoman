@@ -274,8 +274,8 @@ locale_head.weight       sum 1.324248e-03   max 1.260073e-05
 
 Sidecar: `count_batches 2000`, `captured_at_step 60000`, `window_last_n_steps 2000`, seed 42, corpus
 `v0.17.0-batch`, `output_dir /data/output-v420-base-anchor-v2-s42/checkpoints` — provenance complete.
-The three all-zero tensors are the CRF transitions, which is expected and not a defect: the recipe sets
-`crf_loss_weight: 0.0`, so they take no gradient by construction (CE-only; the CRF is inference-time
+The three all-zero tensors are the CRF transitions. The recipe sets `crf_loss_weight: 0.0`, so they take
+no gradient by construction (CE-only; the CRF is inference-time
 structure). Every head carries nonzero mass.
 
 ## Assembly gaps found

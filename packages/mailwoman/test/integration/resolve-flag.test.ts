@@ -106,7 +106,7 @@ describeIfWOF(`npx mailwoman parse --neural --resolve against ${wofPath}`, () =>
 
 	test("--candidates surfaces runner-up resolutions in XML", async () => {
 		// "Springfield, Illinois" — the region qualifier helps the model produce a resolvable tag.
-		// WOF returns multiple Springfields (OR, PA, MA, etc.). With --candidates 5 we expect at
+		// WOF returns multiple Springfields (or, PA, MA, etc.). With --candidates 5 we expect at
 		// least one <alternative> element on the resolved node.
 		const result = await runFile(
 			"node",
@@ -164,7 +164,7 @@ describeIfWOF(`npx mailwoman parse --neural --resolve against ${wofPath}`, () =>
 })
 
 /**
- * Strip ANSI escape sequences + ink spinner frames so the JSON parser can consume CLI stdout.
+ * Strip ansi escape sequences + ink spinner frames so the JSON parser can consume CLI stdout.
  */
 function stripAnsiSpinner(stdout: string): string {
 	const ansi = /\[[0-9;]*[a-zA-Z]/gu

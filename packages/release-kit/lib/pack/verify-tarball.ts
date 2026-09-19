@@ -3,7 +3,7 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   The pre-publish tarball audit: prove a packed workspace actually CONTAINS what its manifest
+ *   The pre-publish tarball audit: prove a packed workspace actually contains what its manifest
  *   promises, before the bytes leave this machine. Two independent guards, one entry point, shared
  *   by every publish path (`publish-workspace.ts` for releases, `bless-package.ts` for the
  *   first-publish bootstrap).
@@ -17,9 +17,9 @@
  *   A literal (non-glob) `files` entry is the author stating a file exists. Treat its absence as a
  *   defect rather than an empty match.
  *
- *   WHAT IS CHECKED:
+ *   what is checked:
  *
- *   1. Every LITERAL `files` entry resolves inside the tarball. Globs are skipped — they are
+ *   1. Every literal `files` entry resolves inside the tarball. Globs are skipped — they are
  *        legitimately allowed to match nothing (`**\/*.ts` in a data-only package) — as are the
  *        `!`-negations. A directory entry is satisfied by any member beneath it.
  *   2. Every concrete `exports` target resolves inside the tarball (the pre-existing guard, moved
@@ -82,7 +82,7 @@ function isShipped(entry: string, shipped: Set<string>): boolean {
 }
 
 /**
- * A manifest's LITERAL `files` entries — the ones whose author is stating a file exists, with the globs and the
+ * A manifest's literal `files` entries — the ones whose author is stating a file exists, with the globs and the
  * `!`-negations dropped.
  *
  * Shared with `fetch-hf-weights.ts`, which materializes exactly the entries this audit later refuses a publish over.
@@ -134,8 +134,8 @@ function collectBinTargets(bin: unknown): string[] {
  * Which `bin` targets the tarball does not contain. Exported for tests.
  *
  * The same promise an `exports` target makes, and the same silent failure when it is broken: `files` globs decide what
- * is packed, `bin` decides what npm symlinks onto the user's PATH, and nothing reconciles the two. A workspace whose
- * `out/` was never built packs fine, publishes fine, and then `npx <pkg>` dies with ENOENT on a path the manifest
+ * is packed, `bin` decides what npm symlinks onto the user's path, and nothing reconciles the two. A workspace whose
+ * `out/` was never built packs fine, publishes fine, and then `npx <pkg>` dies with enoent on a path the manifest
  * itself named.
  */
 export function collectMissingBinTargets(bin: unknown, shipped: Set<string>): string[] {

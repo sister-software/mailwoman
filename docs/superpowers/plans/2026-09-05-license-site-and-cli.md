@@ -1,6 +1,6 @@
 # License Site and CLI Implementation Plan
 
-> **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
+> **For agentic workers:** required sub-skill: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
 **Goal:** Give a customer the two ends of the worker that merged in #2160: the docs site's Purchase section and `/license/issued` claim page, and the CLI's `license adopt` and `license refresh` over a config-root key file, with the per-license status beside the key-id publication in `verify --online` and the doctor.
 
@@ -17,7 +17,7 @@
   refusal by its word and that nothing was written.
 - **The claim reducer's clock is the events'**: `initialClaimState()` takes no time, and the deadline counts from the
   first event, because a render must be pure.
-- **Docs tests import site sources through `#license/*`** (added to `docs/package.json` `imports`), as `test-contract`
+- **Docs tests import site sources through `#license/*`** (added to `docs/package.json` `imports`), as `test-interface`
   requires.
 
 **Architecture:** Core gains two small modules beside the ones the worker already made: `license/key-file.ts` (the config-root key and refresh-credential files, read by `verifyConfiguredLicenseKey` after the environment variable) and `license/status.ts` (the HTTP client for the worker's refresh and status routes, on `APIClient`, outside the barrel like `publication.ts`). The CLI's `license` command grows two actions over them; the doctor's runtime license check reports the lid status as a fifth word beside the publication. The docs site gets a constants module for the shop's URLs, a Purchase section on `/license`, and a `/license/issued` page whose polling is a pure reducer with a unit test, rendered through `BrowserOnly`.
@@ -38,7 +38,7 @@
 - The Payment Link, portal and terms URLs are operator-owned (spec issue A). They live in one constants module and start `undefined`; the Purchase section renders only when both Payment Links are set, so the live page never shows a dead button.
 - `docs/src/pages/license/terms/<version>.mdx` is issue A's deliverable (legal text). This plan creates no terms page.
 - Prose follows `config/vale/.vale-vocab.ini` (README, plan) and the site's `config/vale/.vale.ini` (pages); acronyms cap as whole components; snake_case wire keys stay.
-- Tests sit under `test/unit/` or `test/integration/` and import helpers by the package contract, never relatively (`test-contract` health check); every exported name is imported somewhere (`exports` check); no `as never`, no `as unknown as` (`debt` counters).
+- Tests sit under `test/unit/` or `test/integration/` and import helpers by the package interface, never relatively (`test-interface` health check); every exported name is imported somewhere (`exports` check); no `as never`, no `as unknown as` (`debt` counters).
 - Every commit ends with `Claude-Session: https://claude.ai/code/session_011sdRccUsbdDyqumVDfHnvg`.
 
 ---
@@ -146,7 +146,7 @@ Run: `yarn vitest run packages/core/test/unit/license/key-file.test.ts`. Expecte
  * @author Teffen Ellis, et al.
  *
  *   The two files under `$MAILWOMAN_CONFIG_ROOT/license/` a self-service license leaves on a machine: the key, which
- *   `verifyConfiguredLicenseKey` reads after `MAILWOMAN_LICENSE_KEY`, so a refreshed token applies without an
+ *   `verifyConfiguredLicenseKey` reads after `MAILWOMAN_LICENSE_KEY`. Therefore, a refreshed token applies without an
  *   environment change; and the refresh credentials, the lid and per-license secret `mailwoman license refresh`
  *   presents, created 0600 because the secret is what fetches the current token. The key is a signed assertion rather than a
  *   secret, and is written with the ordinary writer.
@@ -1065,7 +1065,7 @@ import { describe, expect, it } from "vitest"
 import { CLAIM_DEADLINE_MS, initialClaimState, nextClaimState } from "@site/src/license/claim"
 
 // If `@site` does not resolve under the root vitest config, import by relative path from docs/test/unit — the docs
-// workspace is the one place the test-contract check admits `browser`/`build`/`e2e` beside unit; check how
+// workspace is the one place the test-interface check admits `browser`/`build`/`e2e` beside unit; check how
 // docs/test/unit/*.test.ts already import src.
 
 describe("the claim page's state", () => {

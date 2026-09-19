@@ -54,7 +54,7 @@ The runtime could neither export, resolve nor run a char-path model before this 
 
 12.5 ms per row after warm-up. One repair had to be switched off for the char path: the SentencePiece
 word-consistency repair, which folds the pieces of one whitespace word onto one tag, folded a Japanese address —
-no whitespace, so one "word" — into a single municipality span on the first served parse.
+no whitespace. Therefore, one "word" — into a single municipality span on the first served parse.
 
 ## 3b. The served path through the RESOLVER: 0 of 300 before, 1,823 of 2,000 after
 
@@ -77,7 +77,7 @@ with no coordinate, and `〒885-0061 宮崎県都城市下長飯町1867-2` answe
    `大阪市` a `locality`, `北区` a `borough` (in the locality filter group), `知名町` a `locality`. The three entries are now
    in the default map; only the character-path model emits the tags, so no Latin parse reaches them.
 2. **The admin ladder.** `extractGeocodeResult` reads the coordinate off `adminLadderFor`'s rungs, which named no JP
-   tag, so a resolved municipality was never read. The JP rungs sit beside their Latin counterparts, `municipality`
+   tag. Therefore, a resolved municipality was never read. The JP rungs sit beside their Latin counterparts, `municipality`
    ABOVE `district`: a district resolves without its municipality as a parent more frequently than not, and the unscoped
    namesake it then picks can be another prefecture's (`千葉県市原市大作` → 921 km). District-first 202, municipality-first 271.
 3. **The postal mark.** The normalizer strips `〒` for the SentencePiece tokenizer, where it is byte-fallback OOV. The

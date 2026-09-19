@@ -5,7 +5,7 @@
  *
  *   `mailwoman corpus audit` — per-source parquet-file count vs source_weight diagnostic.
  *
- *   Reads a corpus dir's MANIFEST.json (or scans the parquet files directly), counts files per
+ *   Reads a corpus dir's manifest.json (or scans the parquet files directly), counts files per
  *   source, optionally loads a training config to pair the counts with the configured
  *   source_weights, and reports the estimated sampled-row distribution at training time.
  *
@@ -130,7 +130,7 @@ async function scanParquetFiles(corpusDir: PathBuilderLike, sampleCount: number)
 		// We can't read parquet without a dep, so we infer source from filenames where possible.
 		// The corpus build typically writes deterministically by source — fall back to "<unknown>"
 		// when filename gives no hint. For accurate per-source counts on real corpora, the
-		// MANIFEST.json route below is preferred.
+		// manifest.json route below is preferred.
 		for (const f of sampled) {
 			const inferred = inferSourceFromFilename(f)
 			splitMap[inferred] = (splitMap[inferred] ?? 0) + 1
@@ -177,7 +177,7 @@ const KNOWN_SOURCE_PREFIXES: ReadonlyArray<string> = [
 	"usgov-nppes",
 	"usgov-hrsa-fqhc",
 	"usgov-imls-pls",
-	"state-ia-contractors",
+	"state-ia-builders",
 	"state-tx-notaries",
 	"state-ny-notaries",
 	"openaddresses",
@@ -205,10 +205,10 @@ function sourceFromID(sourceID: string, knownPrefixes: readonly string[]): strin
 }
 
 /**
- * Prefer reading MANIFEST.json when present — uses each file's `first_source_id` + prefix matching to recover the
- * source name. Falls back to scanParquetFiles when MANIFEST is absent.
+ * Prefer reading manifest.json when present — uses each file's `first_source_id` + prefix matching to recover the
+ * source name. Falls back to scanParquetFiles when manifest is absent.
  *
- * NOTE: corpus-v0.3.0 files can mix sources (see `last_source_id` differing from `first_source_id`). The first-row
+ * Note: corpus-v0.3.0 files can mix sources (see `last_source_id` differing from `first_source_id`). The first-row
  * source is an approximation. reading the parquet's full source column would be authoritative but requires a parquet
  * dep. For audit purposes the first-row approximation is accurate within ~5% for the corpus-v0.3.0 shape (most files
  * are >95% one source).

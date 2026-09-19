@@ -1,7 +1,7 @@
 # Build + push the ghcr.io/sister-software/mailwoman container image.
 #
 # What this ships: the "docker run → geocoding endpoint" image for non-JS stacks. It does not build
-# the monorepo — the Dockerfile's install stage pulls the PUBLISHED @mailwoman/* packages from npm
+# the monorepo — the Dockerfile's install stage pulls the published @mailwoman/* packages from npm
 # (see docker/package.json + the root Dockerfile), so a build here doubles as an integration test of
 # the published artifacts. Model weights are baked in. the gazetteer is volume-mounted at /data.
 #
@@ -27,7 +27,7 @@ on:
   release:
     types: [published]
 
-# Least privilege: read the repo, write GHCR packages. (`id-token: write` returns when image signing
+# Least privilege: read the repo, write ghcr packages. (`id-token: write` returns when image signing
 # lands — cosign/attestation — but is omitted until then so the workflow isn't over-privileged.)
 permissions:
   contents: read

@@ -5,7 +5,7 @@
  *
  *   The per-feature cell rows and the per-scenario measurement.
  *
- *   THE MEASUREMENT MUST STAY SPLIT BY SCENARIO. Twelve layers cover the same frontages with different
+ *   the measurement must stay split BY scenario. Twelve layers cover the same frontages with different
  *   extents, so a pooled `partial` share averages a present-day designation together with a 2105 projection
  *   and describes neither. The test below folds two scenarios into one index and asserts they come back
  *   apart.

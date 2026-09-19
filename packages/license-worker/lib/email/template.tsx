@@ -3,7 +3,7 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   The HTML body as a React tree over react-email's components, which carry the table layout and inline styles mail
+ *   The html body as a React tree over react-email's components, which carry the table layout and inline styles mail
  *   clients need. It renders the sections `content.ts` decides and adds no copy of its own. Styles are inline objects:
  *   mail clients drop stylesheets.
  */

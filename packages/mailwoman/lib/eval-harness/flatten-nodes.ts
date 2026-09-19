@@ -11,7 +11,7 @@ import { walkNodes } from "@mailwoman/core/decoder"
  * The node shape the boards walk.
  *
  * Deliberately looser than `AddressNode`: a board reads a tree back out of a decoder result, so it needs the three
- * fields it grades on and the recursion rather than the full contract. Naming the recursion is what keeps the walk
+ * fields it grades on and the recursion rather than the full interface. Naming the recursion is what keeps the walk
  * cast-free — a `children?: unknown` forces every push through an assertion, and the assertion is where a wrong shape
  * stops being a type error.
  */

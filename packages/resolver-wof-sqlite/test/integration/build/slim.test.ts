@@ -171,7 +171,7 @@ describe("buildSlimWOFDatabase", () => {
 		const output = scratch.resolve("slim.db")
 		buildFixtureWOF(adminSource)
 		// Postcode extract: same schema, only contributes postcodes (here, re-use the admin fixture's
-		// postcode rows to verify INSERT OR IGNORE actually de-dupes on id).
+		// postcode rows to verify insert or ignore actually de-dupes on id).
 		buildFixtureWOF(postcodeSource)
 
 		const result = await buildSlimWOFDatabase({
@@ -199,7 +199,7 @@ describe("buildSlimWOFDatabase", () => {
 		const namesExists = slim.prepare(`SELECT 1 FROM sqlite_master WHERE type = 'table' AND name = 'names'`).get()
 		expect(namesExists).toBeUndefined()
 
-		// place_search is a self-contained FTS5, so name `MATCH` still works with names gone.
+		// place_search is a self-contained FTS5, so name `match` still works with names gone.
 		const hit = slim.prepare(`SELECT wof_id FROM place_search WHERE place_search MATCH 'Chicago'`).get() as
 			| { wof_id: number }
 			| undefined

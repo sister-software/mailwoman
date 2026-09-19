@@ -3,11 +3,11 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   #920 — fold GeoNames POSTAL codes into a WOF/unified postcode extract as first-class
+ *   #920 — fold GeoNames postal codes into a WOF/unified postcode extract as first-class
  *   `postalcode` places, for the countries whose WOF postalcode repos don't exist (the
- *   namesake-tail locales: FI/CZ/SK/SI/DK/NO/HR/PL and any future gap).
+ *   namesake-tail locales: FI/CZ/SK/SI/DK/no/HR/PL and any future gap).
  *
- *   Why: the night-31 taxonomy measured the cross-locale resolve tail as NAMESAKE COLLISION
+ *   Why: the night-31 taxonomy measured the cross-locale resolve tail as namesake collision
  *   (FI 300/1k … PL 75/1k offender rows), and the controlled experiment showed postcode-extract
  *   coverage alone collapses it (FI 300→1, CZ 131→4): a resolvable postcode node feeds the
  *   resolver's coordinate-first sibling-postcode candidate injection, which binds the locality
@@ -16,14 +16,14 @@
  *   Two hard-won laws from the experiment are enforced here, in code rather than in a runbook:
  *
  *   1. **The name law (#920 format law):** a postcode row's `name` is stored in the
- *      SANITIZED-QUERY token shape — every non-letter/number stripped — because that is what
+ *      sanitized-query token shape — every non-letter/number stripped — because that is what
  *      `sanitizeFTSQuery` reduces the parsed token to at lookup time. Stored `"110 00"` (CZ) or
  *      `"11-041"` (PL) can never match the query `"11000"`/`"11041"`; the spaced CZ build
- *      measured WORSE than no coverage (+13 namesake rows) because its bigrams partial-matched
- *      WRONG codes. The display form is preserved as an alt row in `names`.
+ *      measured worse than no coverage (+13 namesake rows) because its bigrams partial-matched
+ *      wrong codes. The display form is preserved as an alt row in `names`.
  *   2. **Medoid centroids:** GeoNames postal is one row per (postcode, settlement); the naive
  *      mean-of-members centroid displaced tighter village coordinates on already-correct rows
- *      (the p50-tax that ni-failed SK/SI/HR at 1.10–1.94 km CI). The MEDOID — the member point
+ *      (the p50-tax that ni-failed SK/SI/HR at 1.10–1.94 km CI). The medoid — the member point
  *      nearest the mean — keeps the coordinate on a real settlement.
  *
  *   Package home for the same reason as `geonames-aliases.ts`: `build-unified-wof
@@ -71,7 +71,7 @@ export type PostcodePoint = readonly [number, number]
  */
 export interface MedoidSupport {
 	/**
-	 * The chosen coordinate — the medoid over the DISTINCT member points.
+	 * The chosen coordinate — the medoid over the distinct member points.
 	 */
 	point: PostcodePoint
 	/**
@@ -118,7 +118,7 @@ function collapseDuplicatePoints(points: readonly PostcodePoint[]): PostcodePoin
 }
 
 /**
- * The #920 MEDOID law: pick the member point nearest the group's mean, never the mean itself.
+ * The #920 medoid law: pick the member point nearest the group's mean, never the mean itself.
  *
  * A postcode whose evidence is several scattered points has no single "true" centre, and the tempting answer — average
  * them — puts the code somewhere no address is. The night-31 experiment measured that as a p50 tax severe enough to
@@ -130,7 +130,7 @@ function collapseDuplicatePoints(points: readonly PostcodePoint[]): PostcodePoin
  * changes no answer where the points differ — the mean of distinct points is the mean the law intends — and
  * {@link MedoidSupport.distinctPoints} reports how many points the answer rested on.
  *
- * Distance is squared-Euclidean in DEGREES rather than haversine. At the scale a postcode spans, the ranking the two
+ * Distance is squared-Euclidean in degrees rather than haversine. At the scale a postcode spans, the ranking the two
  * produce is the same, and this one carries no trig into a per-group inner loop. Ties go to the earliest member, which
  * makes the result a pure function of the input order — the property a rebuilt extract's ids depend on.
  *
@@ -191,7 +191,7 @@ export interface GeonamesPostalIngestResult {
 	 */
 	byCountry: Record<string, number>
 	/**
-	 * Per-country count of inserted codes the dump carried on SEVERAL rows that all named one point. The coordinate rests
+	 * Per-country count of inserted codes the dump carried on several rows that all named one point. The coordinate rests
 	 * on a single value no matter how many settlements sit under the code. Reported rather than refused: the point is
 	 * still the best the source offers, and a consumer weighing postal coverage needs to know how much of it is this.
 	 */
@@ -241,7 +241,7 @@ export async function ingestGeonamesPostal(
 			continue
 		}
 
-		// Group member settlement points per NORMALIZED code. remember one display form.
+		// Group member settlement points per normalized code. remember one display form.
 		const members = new Map<string, { display: string; pts: Array<[number, number]> }>()
 
 		// Streamed: a national dump is a caller-supplied size — GB's is 177 MB, and only the caller
@@ -265,7 +265,7 @@ export async function ingestGeonamesPostal(
 		let singlePoint = 0
 
 		for (const [name, m] of members) {
-			// Medoid over the DISTINCT member points — stays on a real settlement (the p50-tax law), and a code whose
+			// Medoid over the distinct member points — stays on a real settlement (the p50-tax law), and a code whose
 			// rows all name one point contributes one vote rather than one per row.
 			const support = medoidWithSupport(m.pts)
 			const best = support.point

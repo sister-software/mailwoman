@@ -3,8 +3,8 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   #936 option 3 — `officialNameExact`: an OFFICIAL name (preferred form in an official language
- *   of the place's country, `names.official = 1` from the #940 ingest bit) joins the NAME-exact
+ *   #936 option 3 — `officialNameExact`: an official name (preferred form in an official language
+ *   of the place's country, `names.official = 1` from the #940 ingest bit) joins the name-exact
  *   sub-tier instead of the alias-exact one, floor-conditioned on the holder's population. The Åbo
  *   fixture mirrors the motivating row: unscoped "Åbo" must reach Turku (its official Swedish
  *   name, pop 207k) rather than a hamlet literally named Åbo — while Paris Township's plain alias
@@ -92,7 +92,7 @@ function buildDB(places: SeedPlace[], opts?: { omitOfficialColumn?: boolean }): 
 	return db
 }
 
-// Turku holds "Åbo" as its OFFICIAL Swedish name. the hamlet holds "Åbo" as its own primary. Under
+// Turku holds "Åbo" as its official Swedish name. the hamlet holds "Åbo" as its own primary. Under
 // the plain #912 sub-tier the hamlet's primary wins. under option 3 Turku joins the name-exact
 // sub-tier and its population decides.
 const TURKU_ABO: SeedPlace[] = [

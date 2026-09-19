@@ -3,7 +3,7 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Composed PipelineExplorer stories against a MOCK runtime — no ONNX, no gazetteer. The `Ready`
+ *   Composed PipelineExplorer stories against a mock runtime — no ONNX, no gazetteer. The `Ready`
  *   story returns a fixed parse; `Loading` shows the bundle-load state.
  */
 

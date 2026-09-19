@@ -53,7 +53,7 @@ export const DE_BUNDESLAENDER = {
 } as const satisfies Record<string, GermanStateInfo>
 
 /**
- * An ISO 3166-2:DE state code (`BW`, `BY`, `BE`, …).
+ * An ISO 3166-2:DE state code (`BW`, `BY`, `be`, …).
  */
 export type GermanStateCode = keyof typeof DE_BUNDESLAENDER
 

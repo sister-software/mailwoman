@@ -139,7 +139,7 @@ export function wordsOf(text: string): string[] {
 
 /**
  * True when a word is USPS street-suffix vocabulary that unambiguously signals an address — the full Pub-28 table via
- * `@mailwoman/codex`, minus its curated name-prone canonicals (PARK, FIELD, HILL, LAKE, …). Those double as ordinary
+ * `@mailwoman/codex`, minus its curated name-prone canonicals (park, field, hill, lake, …). Those double as ordinary
  * proper-name heads ("Wrigley Field", "Menlo Park"), and disqualifying on them would reject the very venue and place
  * names the rules below exist to capture. Shared with `intent-rules.ts` so both rule sets read one definition.
  */

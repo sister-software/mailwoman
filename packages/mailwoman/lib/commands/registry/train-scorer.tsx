@@ -23,7 +23,7 @@ import {
 const variants = ["gbt", "cross-gbt", "org-cross-gbt"] as const
 
 /**
- * Native command-line contract consumed by the filesystem command router.
+ * Native command-line interface consumed by the filesystem command router.
  */
 export const spec = {
 	name: "train-scorer",

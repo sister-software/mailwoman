@@ -3,12 +3,12 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Verify the LOCAL export/quant toolchain matches the pinned training-image set (#480).
+ *   Verify the local export/quant toolchain matches the pinned training-image set (#480).
  *
  *   Why this exists: the set was once unpinned (`>=`) and drifted between v0.9.3 and v0.9.7, silently
  *   breaking int8 quant for Safari WebGPU (the value_info/opset incident — see
- *   project-v4.1.0-release + the pinned block in corpus-python/launch/app.py, which is the SOURCE
- *   OF TRUTH this script reads). Run before any local quantize. CI-able (exit 1 on mismatch). A
+ *   project-v4.1.0-release + the pinned block in corpus-python/launch/app.py, which is the source
+ *   OF truth this script reads). Run before any local quantize. CI-able (exit 1 on mismatch). A
  *   bumped dep here is never a free upgrade — it must re-prove the Safari int8 graph (opset <= 17,
  *   value_info strip) end to end.
  *
@@ -30,8 +30,8 @@ if (!(await pathExists(PYTHON))) {
 }
 
 /**
- * Local quantize needs only the QUANT subset (onnx, onnxruntime) — export runs on Modal, where the full image pins
- * apply. Export-side packages absent locally are a WARNING. present-but-mismatched is a FAILURE either way (a wrong
+ * Local quantize needs only the quant subset (onnx, onnxruntime) — export runs on Modal, where the full image pins
+ * apply. Export-side packages absent locally are a warning. present-but-mismatched is a failure either way (a wrong
  * version is worse than a missing one).
  */
 const QUANT_PKGS = new Set(["onnx", "onnxruntime"])
@@ -49,7 +49,7 @@ async function pinnedVersions(): Promise<Array<[string, string]>> {
 function installedVersion(pkg: string): string {
 	try {
 		// stderr → "ignore" mirrors the bash `2>/dev/null`: a not-installed package throws
-		// PackageNotFoundError with a noisy traceback we deliberately swallow (it's the MISSING path).
+		// PackageNotFoundError with a noisy traceback we deliberately swallow (it's the missing path).
 		return runFileSync(PYTHON, ["-c", `import importlib.metadata as m; print(m.version('${pkg}'))`], {
 			encoding: "utf8",
 			stdio: ["ignore", "pipe", "ignore"],

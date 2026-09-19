@@ -16,12 +16,12 @@ import { mailwomanCLIPath } from "mailwoman/cli-kit/metadata"
  *   locality at lat ~57) without a country hint — the original motivation. WOF ranking has since
  *   improved so US New York now wins even unfiltered, so `NY` no longer demonstrates the opt-out.
  *   The end-to-end test instead uses `Paris, TX`, which still flips: with the en-US hint it
- *   resolves to Paris, TEXAS (lat ~33.7); with `--default-country none` the global ranking picks
- *   the far-more- populous Paris, FRANCE (lat ~48.9) — a live differential that proves the opt-out
+ *   resolves to Paris, texas (lat ~33.7); with `--default-country none` the global ranking picks
+ *   the far-more- populous Paris, france (lat ~48.9) — a live differential that proves the opt-out
  *   changes the result.
  *
  *   The unit tests (the locale→country inference + the override precedence) are CI-safe. The
- *   end-to-end resolution check needs the GLOBAL admin DB, so it skips when that DB is absent.
+ *   end-to-end resolution check needs the global admin DB, so it skips when that DB is absent.
  */
 import { parseCommand } from "mailwoman/cli-native/spec"
 import { localeToCountry, resolverDefaultCountry, spec as parseSpec } from "mailwoman/commands/parse"
@@ -125,7 +125,7 @@ describe("--default-country schema validation", () => {
 	})
 })
 
-// End-to-end: needs the GLOBAL admin DB (the US-only DB can't reproduce the foreign homonym).
+// End-to-end: needs the global admin DB (the US-only DB can't reproduce the foreign homonym).
 // oxlint-disable-next-line vitest/valid-title, vitest/valid-describe-callback -- an aliased describe. the title and callback arrive where it is invoked
 const describeIfGlobal = describe.skipIf(!(await pathExists(GLOBAL_WOF)))
 
@@ -165,14 +165,14 @@ describeIfGlobal(`parse --resolve against the global WOF (${GLOBAL_WOF})`, () =>
 		"--default-country scoping is a real mechanism: US vs FR flips the resolved namesake",
 		async () => {
 			// `Paris, TX`, no postcode (a postcode would re-pin the country via the #369 anchor). The en-US
-			// default scopes "Paris" to Paris, TEXAS (~33.7°N); an explicit `--default-country FR` scopes it to
-			// Paris, FRANCE (~48.9°N). Same input, different country scope, demonstrably different place.
-			// HISTORY: this probe used `--default-country none` and asserted the unscoped ranking picks the
+			// default scopes "Paris" to Paris, texas (~33.7°N); an explicit `--default-country FR` scopes it to
+			// Paris, france (~48.9°N). Same input, different country scope, demonstrably different place.
+			// history: this probe used `--default-country none` and asserted the unscoped ranking picks the
 			// more-populous foreign twin (itself replacing the NY→Scotland probe #595 found dead). That premise
 			// broke on current gazetteer artifacts — unscoped ranking now keeps US namesakes (#905, pre-existing
-			// on main, invisible in CI because this suite needs the lab DB). Probing an EXPLICIT scope flip tests
+			// on main, invisible in CI because this suite needs the lab DB). Probing an explicit scope flip tests
 			// the same mechanism without depending on global-ranking policy. adminCoherence is pinned off so the
-			// probe observes scoping alone (default-ON since #895 — asserted separately below).
+			// probe observes scoping alone (default-on since #895 — asserted separately below).
 			const usLat = localityLat((await run("Paris, TX")).stdout)
 			const frLat = localityLat((await run("Paris, TX", ["--default-country", "FR", "--no-admin-coherence"])).stdout)
 

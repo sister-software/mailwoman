@@ -102,7 +102,7 @@ function run(cmd: string, args: string[], cwd: string, env: Record<string, strin
 		cwd,
 		stdio: ["ignore", "pipe", "pipe"],
 		encoding: "utf8",
-		// oxlint-disable-next-line sister-software/no-process-globals -- the child must inherit PATH and the rest. only the data root is added
+		// oxlint-disable-next-line sister-software/no-process-globals -- the child must inherit path and the rest. only the data root is added
 		env: { ...process.env, ...env },
 	})
 }

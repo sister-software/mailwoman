@@ -5,9 +5,9 @@
  *
  *   The repos-root audit, against fixture trees.
  *
- *   The distinction under test is DUPLICATED versus DIVERGED. Both copies of a repo at the same commit
+ *   The distinction under test is duplicated versus diverged. Both copies of a repo at the same commit
  *   cost read time and disk. two copies at different commits make the ingested value depend on FastGlob's
- *   enumeration order, because `spr` is written `INSERT OR REPLACE` and last writer wins. Reporting them
+ *   enumeration order, because `spr` is written `insert or replace` and last writer wins. Reporting them
  *   as the same thing would either raise an alarm about wasted disk or bury a correctness hazard —
  *   and `verifyAdmin` cannot catch the second, since it tests floors.
  */
@@ -39,9 +39,9 @@ async function reposRoot(): Promise<PathBuilder> {
 /**
  * A clone with one commit, so the audit has a vintage to read.
  *
- * The commit DATES are pinned: a git commit hash covers author + committer timestamps, so two same-content clones only
+ * The commit dates are pinned: a git commit hash covers author + committer timestamps, so two same-content clones only
  * hash identically when both commits land in the same wall-clock second. Fast local runs always did. a loaded CI runner
- * sometimes straddled the boundary, and the "duplicated" fixture read as DIVERGED — a flake that surfaced twice on
+ * sometimes straddled the boundary, and the "duplicated" fixture read as diverged — a flake that surfaced twice on
  * 2026-08-18 before the mechanism was pinned. With the dates fixed, identical content ⇒ identical hash, always.
  */
 async function clone(dir: PathBuilderLike, marker: string): Promise<void> {
@@ -98,7 +98,7 @@ describe("auditReposRoot — layouts", () => {
 		await clone(root("whosonfirst-data-admin-jp"), "same")
 		await clone(root("whosonfirst-data", "whosonfirst-data-admin-jp"), "same")
 		// Different content, so different commits: the state where the ingest's result depends on the order
-		// FastGlob happens to enumerate in, because spr is INSERT OR REPLACE and the last write wins.
+		// FastGlob happens to enumerate in, because spr is insert or replace and the last write wins.
 		await clone(root("whosonfirst-data-admin-kr"), "old")
 		await clone(root("whosonfirst-data", "whosonfirst-data-admin-kr"), "new")
 

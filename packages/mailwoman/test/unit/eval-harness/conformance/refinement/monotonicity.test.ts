@@ -7,7 +7,7 @@
  *   audit owes. Pure — no fixture file, no corpus, no engine. The committed suite is checked against the
  *   corpus in `refinement-monotonicity-suite.test.ts`.
  *
- *   THE DERIVATIONS ARE ASSERTED AGAINST THEIR OWN `null`. A step that returns the text unchanged would let a
+ *   the derivations are asserted against their own `null`. A step that returns the text unchanged would let a
  *   row state the identity law under a refinement name, and it would hold trivially — so every step reports
  *   an inapplicable input as an absence, and each of those absences is a case here.
  */

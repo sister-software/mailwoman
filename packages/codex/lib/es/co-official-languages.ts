@@ -18,8 +18,8 @@
  *   Asturian and Aragonese are guarded by their statutes and not co-official, so Asturias, Huesca, Teruel and Zaragoza
  *   carry no entry. Ceuta, Melilla and the province-less territories carry none.
  *
- *   WHY A TABLE AND NOT THE GAZETTEER. Who's On First stores a preferred name for a province in many languages, and for
- *   a language not spoken there the "preferred name" is often the AUTONOMOUS COMMUNITY's: Zamora's Catalan preferred
+ *   why A table and not the gazetteer. Who's On First stores a preferred name for a province in many languages, and for
+ *   a language not spoken there the "preferred name" is often the autonomous community's: Zamora's Catalan preferred
  *   name is `Castella i Lleó`, Seville's Asturian one is `Andalucía`, Ourense's Occitan one is `Galícia`. Reading every
  *   language's name as a surface of the province would teach those pairs. The statute says which languages a province's
  *   addresses are written in. this table carries that answer, keyed by the province's Castilian name as the gazetteer

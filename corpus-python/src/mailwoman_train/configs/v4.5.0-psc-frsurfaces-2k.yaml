@@ -1,11 +1,11 @@
 # === v4.5.0-psc-frsurfaces-2k — #1639 B1 probe (CZ NNN NN orthography + FR three-surface) ===
 # B11 fine-tune template on the v4.4.0 base (init_from step-060000, fresh optimizer, EWC lambda=1.0e4
 # with the base's own fisher-diag-v1). One data variable vs v4.4.0: corpus v0.19.0 -> v0.20.0, which
-# is the same base overlaid with the two REGENERATED surface sources, old vintages zeroed:
+# is the same base overlaid with the two regenerated surface sources, old vintages zeroed:
 #   - synth-cz-pcfirst-preposition-v20: 50% spaced 'NNN NN' PSC (#1640) — the 'Praha 100 00' mangle.
 #   - synth-fr-bare-street-v20: comma / comma-free / abbreviated-voie cycle (#1641) — the fr-fr
 #     panel's comma-free loss + the geocoder-tester colloquial register.
-# CHECK (pre-registered): at step-2000, the cz-full-praha-100-00 class parses postcode (spot decode)
+# check (pre-registered): at step-2000, the cz-full-praha-100-00 class parses postcode (spot decode)
 # and fr comma-free boundary improves on the golden fr subset, with no tier-1 golden regression
 # beyond noise vs the v4.4.0 base. On a pass, run the 8k full run (same config, max_steps 8000);
 # on a fail, read the probe and do not sweep lambda blind (the B11 rule).

@@ -4,9 +4,9 @@
  * @author Teffen Ellis, et al.
  *
  *   The streaming pass — every feature into `flood_zone_area` and into the build's touch table — as a
- *   unit of work that can run over PART of the source.
+ *   unit of work that can run over part of the source.
  *
- *   WHY THIS IS A CHUNK RATHER THAN THE WHOLE FILE. h3's WASM heap cannot be reset from JavaScript, and
+ *   why this is A chunk rather than the whole file. h3's wasm heap cannot be reset from JavaScript, and
  *   it does not survive an unbounded number of polyfill calls: over the real product, runs died after
  *   roughly 510,000 and 798,000 features on geometry that classifies in milliseconds in a fresh process.
  *   A build that completes only when fragmentation happens to stay low is not a reproducible build, so
@@ -15,7 +15,7 @@
  *   that starts empty. The call-removal shortcuts in `cells.ts` make this faster. they are not what makes
  *   it correct.
  *
- *   THE CHUNK OWNS NO ARTIFACT. It appends rows to a database the parent created and will seal, and
+ *   the chunk owns no artifact. It appends rows to a database the parent created and will seal, and
  *   returns counts the parent adds up. Chunks run one at a time against that file, so there is no
  *   concurrent writer and no locking to reason about.
  */

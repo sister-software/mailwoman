@@ -7,7 +7,7 @@
 import { greatCircleDistance, haversine, haversineKm } from "@mailwoman/spatial"
 import { expect, test } from "vitest"
 
-// Earth mean radius the formula uses (RADII.km). Reference distances below are derived from it rather than
+// Earth mean radius the formula uses (radii.km). Reference distances below are derived from it rather than
 // looked up — so they pin the exact constant + formula rather than an approximation.
 const R = 6371
 

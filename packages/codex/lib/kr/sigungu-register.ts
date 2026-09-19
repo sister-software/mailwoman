@@ -12,7 +12,7 @@
  *   model for the same reason) closes early, at `해` or `해운대`. The register states every boundary outright, so the
  *   decode-time repair in `@mailwoman/neural` extends a run to the one name the following characters spell.
  *
- *   Source: 행정안전부 (Ministry of the Interior and Safety), 도로명주소 (juso.go.kr), 공공누리 제1유형 (KOGL Type 1):
+ *   Source: 행정안전부 (Ministry of the Interior and Safety), 도로명주소 (juso.go.kr), 공공누리 제1유형 (kogl Type 1):
  *   attribution required. commercial use, derivatives and redistribution permitted.
  */
 

@@ -100,7 +100,7 @@ async function removeEmptiedDirectories(repoRoot: string, directories: readonly 
  * Delete what each moved source used to emit.
  *
  * `tsc -b --clean` does not: nothing claims the output of a source that is no longer there, so it survives every
- * rebuild. A stale `out/cli.js` then ANSWERS — it is a complete, loadable module compiled from the old tree — and the
+ * rebuild. A stale `out/cli.js` then answers — it is a complete, loadable module compiled from the old tree — and the
  * first thing it does is import a path that moved. Removing it here is what makes the next build's absence mean
  * absence.
  */

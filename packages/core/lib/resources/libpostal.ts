@@ -6,7 +6,7 @@
  *   The language vocabulary libpostal's dictionaries are keyed by.
  *
  *   The loaders that read those dictionaries into memory (`prepareLocaleIndex`, `getAvailableLanguages`,
- *   `generatePlurals`) were v1's lexicon path and are gone. The dictionaries themselves are still live, as BUILD input:
+ *   `generatePlurals`) were v1's lexicon path and are gone. The dictionaries themselves are still live, as build input:
  *   the corpus street-decompose adapters read them, and `gazetteer-pipeline/{fst,street-morphology,evidence-lexicons}`
  *   compile them into the artifacts the parser loads at runtime.
  */

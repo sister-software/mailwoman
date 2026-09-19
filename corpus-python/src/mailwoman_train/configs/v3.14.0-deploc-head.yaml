@@ -1,35 +1,35 @@
-# === v3.14.0-deploc-head — the v3.12/v3.13 feed recipe + a SEPARATE dependent_locality HEAD. ===
-# P-B PROBE (ROAD_TO_MAILWOMAN_V8_1_0 §4). Not a ship candidate — a ≤2k falsifier.
+# === v3.14.0-deploc-head — the v3.12/v3.13 feed recipe + a separate dependent_locality head. ===
+# P-B probe (ROAD_TO_MAILWOMAN_V8_1_0 §4). Not a ship candidate — a ≤2k falsifier.
 #
-# HYPOTHESIS. v3.13's verdict pinned the INV[comma-drop] "Pennsylvania Ave" break to EARLY
-# encoder+head CO-ADAPTATION lock-in: every FLAT-head resurrection (reinit the shared classifier's
+# hypothesis. v3.13's verdict pinned the INV[comma-drop] "Pennsylvania Ave" break to early
+# encoder+head CO-adaptation lock-in: every flat-head resurrection (reinit the shared classifier's
 # dep-loc rows + hot classifier LR) bought the dep-loc board and paid one invariance class, at every
 # checkpoint, hot and annealed. The cRT contrast (frozen encoder ⇒ clean 6k) showed the damage needs
 # a HOT encoder. P-B asks the next question: with the encoder shared+trainable but dep-loc grown in
 # its own head subspace (a fresh MLP that owns the B/I-dependent_locality columns, merge-in-forward
 # like the affix head), does the break still appear?
-#   - break GONE + dep-loc resurrects  ⇒ lock-in is HEAD-STRUCTURAL. Option B is live (and is A's
+#   - break gone + dep-loc resurrects  ⇒ lock-in is head-structural. Option B is live (and is A's
 #     enabler): a separate head lets the encoder stay shared while the capability grows apart.
-#   - break PERSISTS                    ⇒ lock-in is ENCODER-DEEP. B alone is insufficient. the axis
+#   - break persists                    ⇒ lock-in is encoder-deep. B alone is insufficient. the axis
 #     is A (representation/evidence), consistent with the P-C verdict (street↔locality is an
 #     evidence gap rather than a head-capacity gap).
 #
-# ONE VARIABLE vs v3.13 (everything else verbatim — same feed, same class weights incl. dep-loc 1.0,
-# punct-drop 0.6, same init_from v385): `model.use_deploc_head: true` REPLACES `train.reinit_label_rows`.
+# one variable vs v3.13 (everything else verbatim — same feed, same class weights incl. dep-loc 1.0,
+# punct-drop 0.6, same init_from v385): `model.use_deploc_head: true` replaces `train.reinit_label_rows`.
 # The fresh head is the resurrection (init_from v385 is strict=False → the head loads fresh); it rides
 # the classifier carveout so it trains at the same hot classifier_learning_rate 1e-3 the reinit'd rows
 # used. Single 2k hot phase — the resurrection window only. no two-phase anneal (that was v3.13's own,
 # now-falsified, hypothesis). Model+trainer changes: model.py deploc_head + merge-in-forward;
 # config.py use_deploc_head. train.py carveout adds "deploc_head." to the classifier LR group.
 #
-# PRE-REGISTERED (inherited v3.12/v3.13 bars — this is a probe, so the invariance suite is the read):
-#   BLOCKING AT EVERY CHECKPOINT (1k + 2k): metamorphic INVARIANCE SUITE (`mailwoman eval invariance
+# PRE-registered (inherited v3.12/v3.13 bars — this is a probe, so the invariance suite is the read):
+#   blocking AT every checkpoint (1k + 2k): metamorphic invariance suite (`mailwoman eval invariance
 #     --baseline v385`) — the Pennsylvania INV[comma-drop] class is the whole question. A new class vs
 #     v385 = break persists = B insufficient. no new class + dep-loc emits = break gone = B live.
-#   READ (not hard bars — this is a falsifier): GB dep-loc board w/ prior δ=5.0 emit/tag-correct;
+#   read (not hard bars — this is a falsifier): GB dep-loc board w/ prior δ=5.0 emit/tag-correct;
 #     NZ raw-BIO emission > 0. digit bare-street-hn ≥ 0.755. FR bare-locality ≥ 0.90. golden us/fr
 #     within ±0.7pp of v385 (87.6/91.1); presets byte-identical.
-#   VERDICT: 2k reached, invariance graded → B live | B insufficient. One run. no knob iteration.
+#   verdict: 2k reached, invariance graded → B live | B insufficient. One run. no knob iteration.
 #
 # Launch: cd corpus-python && modal run -d -m launch.train_remote --config v3.14.0-deploc-head.yaml --resume none
 #   (--resume none is required: init_from + the fresh head live in the else branch; --resume auto no-ops it.)
@@ -75,7 +75,7 @@ data:
     usgov-hrsa-fqhc: 2.0
     usgov-imls-pls: 2.0
     usgov-nad: 1.0
-    state-ia-contractors: 2.0
+    state-ia-builders: 2.0
     state-tx-notaries: 1.5
     state-ny-notaries: 2.0
     deepseek-kryptonite: 3.0
@@ -95,19 +95,19 @@ data:
     synth-no-street-led: 0.0
     synth-cz-pcfirst-preposition: 12.0
     synth-nl-postcode: 6.0
-    # PROBE 1: the fragment/autocomplete source (assay weight — moderate precedent).
+    # probe 1: the fragment/autocomplete source (assay weight — moderate precedent).
     synth-fragment: 6.0
     # #727 T2 new — the one variable. 12.0 = the targeted-fix precedent (fr-bare-street,
     # si-bare-village, no-street-led are all 12.0). Streets with no house number + the
     # bare-locality counter.
     synth-fr-fragment: 12.0
-    # Track B — the Norway (NO) house-number-licence change. 12.0 = the targeted-fix tier
+    # Track B — the Norway (no) house-number-licence change. 12.0 = the targeted-fix tier
     # (matches fr-fragment). Bare streets + street+number with no postcode partner, + counters.
     synth-no-fragment: 12.0
     synth-gb: 10.0 # FEED: 6.1% stream × .328 dep-loc (probe-2 had this at 20.2% — the skew culprit)
-    synth-nz: 4.0 # FEED NEW: 2.4% stream × .792 (synth-nz-v2 800k. key also covers the old 2,990-row po-box recipe output — harmless, same country)
-    synth-es-pedania: 5.0 # FEED NEW: 3.0% stream × .303 (post-4b formatter fix)
-    synth-fr-lieudit: 3.0 # FEED NEW: 1.8% stream × 1.00 (BAN nom_ld, 4ce6821a. directly feeds the bare-locality regression class)
+    synth-nz: 4.0 # FEED new: 2.4% stream × .792 (synth-nz-v2 800k. key also covers the old 2,990-row po-box recipe output — harmless, same country)
+    synth-es-pedania: 5.0 # FEED new: 3.0% stream × .303 (post-4b formatter fix)
+    synth-fr-lieudit: 3.0 # FEED new: 1.8% stream × 1.00 (BAN nom_ld, 4ce6821a. directly feeds the bare-locality regression class)
   train_rows_per_epoch: 1000000
   val_rows: 4096
   coarse_filter: true
@@ -148,7 +148,7 @@ model: # Verbatim from v2.4.1.
   use_postcode_anchor: true
   use_gazetteer_anchor: true
   gazetteer_feature_dim: 5
-  # #1104 country channel ON — dedicated 2-dim [country_surface, country_ambiguous] soft feed with its
+  # #1104 country channel on — dedicated 2-dim [country_surface, country_ambiguous] soft feed with its
   # own projection + confidence (must equal the lexicon's feature_dim). Default-False elsewhere, so a
   # resume from a pre-country checkpoint stays byte-identical until this flips.
   use_country_anchor: true

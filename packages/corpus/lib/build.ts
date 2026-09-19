@@ -17,17 +17,17 @@
  *        Manifest written to `splits/SPLIT_MANIFEST.json` + per-split `train.txt` / `val.txt` /
  *        `test.txt`.
  *   5. **Parquet files** — `writeParquetSplits` streams labeled rows into 1M-row `.parquet` files per split
- *        under `corpus-v<version>/{train,val,test}/part-NNNN.parquet` (SNAPPY-compressed, 50k-row
+ *        under `corpus-v<version>/{train,val,test}/part-nnnn.parquet` (snappy-compressed, 50k-row
  *        row groups), with per-file checksums + per-stage manifest in
- *        `corpus-v<version>/MANIFEST.json`.
- *   6. **Top-level manifest** — `<outputDir>/MANIFEST.json` ties every per-stage manifest together with
+ *        `corpus-v<version>/manifest.json`.
+ *   6. **Top-level manifest** — `<outputDir>/manifest.json` ties every per-stage manifest together with
  *        a top-level corpus_version, built_at, and aggregate counts.
  *
  *   Output layout:
  *
  *   ```
  *   <outputDir>/
- *   MANIFEST.json
+ *   manifest.json
  *   intermediate/
  *     <adapter.id>/canonical.jsonl   # one per adapter
  *     labeled.jsonl                  # post-alignment, pre-parquet
@@ -36,10 +36,10 @@
  *     SPLIT_MANIFEST.json
  *     train.txt / val.txt / test.txt
  *   corpus-v<version>/
- *     MANIFEST.json
- *     train/part-NNNN.parquet
- *     val/part-NNNN.parquet
- *     test/part-NNNN.parquet
+ *     manifest.json
+ *     train/part-nnnn.parquet
+ *     val/part-nnnn.parquet
+ *     test/part-nnnn.parquet
  * ```
  *
  *   The intermediate files live alongside the final parquet files for reproducibility + debugging. Operators
@@ -117,7 +117,7 @@ export interface BuildCorpusOptions {
 	onProgress?: (stage: BuildStage, message: string) => void
 
 	/**
-	 * License kinds to PURPOSELY exclude from this build (#26). Compiled patterns (see `compileLicenseExcludes` /
+	 * License kinds to purposely exclude from this build (#26). Compiled patterns (see `compileLicenseExcludes` /
 	 * `SHARE_ALIKE_PATTERN` in `license.ts`); a row whose `license` matches any is dropped at ingest. Default (omitted)
 	 * includes everything — exclusion is a deliberate act rather than a silent default. A proprietary-weights build
 	 * passes the share-alike set (`--exclude-share-alike`).
@@ -138,7 +138,7 @@ export interface BuildCorpusManifest {
 	quarantine_count: number
 	total_aligned_rows: number
 	/**
-	 * Resolved license set across all INCLUDED rows (license string → row count), + the count dropped by
+	 * Resolved license set across all included rows (license string → row count), + the count dropped by
 	 * `excludeLicenses` (#26). The model card derives its data-attribution table from `licenses`.
 	 */
 	licenses: Record<string, number>
@@ -176,8 +176,8 @@ export async function buildCorpus(opts: BuildCorpusOptions): Promise<BuildCorpus
 			continue
 		}
 
-		// Opt-in resume (MAILWOMAN_RESUME=1): if a complete per-adapter canonical.jsonl + MANIFEST.json
-		// already exist, reuse them instead of re-emitting. The MANIFEST is written only after the
+		// Opt-in resume (MAILWOMAN_RESUME=1): if a complete per-adapter canonical.jsonl + manifest.json
+		// already exist, reuse them instead of re-emitting. The manifest is written only after the
 		// canonical is fully flushed, so its presence guarantees completeness. row order is identical,
 		// so downstream holdout-split determinism is preserved. Recovers an align-phase crash without
 		// redoing the (expensive) emit phase. Default (unset) re-emits, preserving correctness. (2026-06-12.)
@@ -209,7 +209,7 @@ export async function buildCorpus(opts: BuildCorpusOptions): Promise<BuildCorpus
 	}
 
 	// 2 + 3. Synthesis + alignment: stream every canonical.jsonl, optionally augment, align,
-	// and route each labeled row directly to its split-specific JSONL (`labeled-{train,val,test}.
+	// and route each labeled row directly to its split-specific jsonl (`labeled-{train,val,test}.
 	// jsonl`). Memory cost is O(1) — the prior in-memory `splitInputs` array + `splitByIDMap`
 	// + `SplitManifest.{train,val,test}` arrays are gone. per-row split is decided inline via
 	// `splitForRow` (a pure function of source_id + region + holdout policy).
@@ -234,7 +234,7 @@ export async function buildCorpus(opts: BuildCorpusOptions): Promise<BuildCorpus
 	const holdouts = defaultHoldouts()
 	// License accounting + the deliberate exclusion filter (#26). `licenseCounts` is the resolved
 	// license set (→ manifest + model-card attribution); `excludeLicenses` (empty by default → include
-	// everything) is the operator's PURPOSEFUL exclusion, never a silent drop.
+	// everything) is the operator's purposeful exclusion, never a silent drop.
 	const excludeLicenses = opts.excludeLicenses ?? []
 	const licenseCounts = new Map<string, number>()
 	let excludedByLicense = 0
@@ -252,7 +252,7 @@ export async function buildCorpus(opts: BuildCorpusOptions): Promise<BuildCorpus
 			// Deliberate license exclusion (#26): drop a row only when the operator named its license
 			// kind via `excludeLicenses`. Default (no patterns) keeps everything — exclusion is a
 			// purposeful act rather than a silent default. Counted before the drop so the manifest's license
-			// set reflects what the corpus actually CONTAINED, and `excluded_by_license` what was removed.
+			// set reflects what the corpus actually contained, and `excluded_by_license` what was removed.
 			if (licenseExcluded(row.license, excludeLicenses)) {
 				excludedByLicense++
 
@@ -275,7 +275,7 @@ export async function buildCorpus(opts: BuildCorpusOptions): Promise<BuildCorpus
 				} catch (error) {
 					// Last-resort robustness (2026-06-12): no single row may crash a multi-hour build.
 					// alignRow's targeted paths normalize/quarantine known issues with specific reasons.
-					// this catches any UNKNOWN throw (e.g. assertSpanInvariants on an unforeseen span
+					// this catches any unknown throw (e.g. assertSpanInvariants on an unforeseen span
 					// shape) → quarantine + continue. A spike in `align-threw` reasons is a finding.
 					writeQuarantine(r, `align-threw:${(error as Error).message.slice(0, 160)}`)
 
@@ -321,7 +321,7 @@ export async function buildCorpus(opts: BuildCorpusOptions): Promise<BuildCorpus
 		holdouts,
 	})
 
-	// 5. Parquet files — per-split labeled JSONL streams in, `.parquet` files out. The prior
+	// 5. Parquet files — per-split labeled jsonl streams in, `.parquet` files out. The prior
 	// `splitFor(source_id)` callback (and the `Map<source_id, SplitName>` behind it) is gone.
 	opts.onProgress?.("parquet", "writing parquet files")
 

@@ -1,5 +1,5 @@
 ---
-title: Spatial-layer contract — the schema every layer database embeds
+title: Spatial-layer interface — the schema every layer database embeds
 role: reference
 audience: maintainer
 owner: operations
@@ -9,7 +9,7 @@ tags:
   - data
 ---
 
-# Spatial-layer contract
+# Spatial-layer interface
 
 Every mailwoman dataset — the shipped poi.db, a user's locally-built OSM layer, a private
 CRM layer — is the **same artifact shape**: a sealed, readonly, provenance-tracked SQLite
@@ -18,7 +18,7 @@ lets shipped, build-local, and private layers share one query surface (`@mailwom
 primitives, the `mailwoman_layer_manifest` MCP tool, future `layer_query`) without the
 consumer knowing or caring where the data came from.
 
-This page is the contract in prose, for layer authors. The code lives in
+This page is the interface in prose, for layer authors. The code lives in
 [`core/layers/`](https://github.com/sister-software/mailwoman/tree/main/core/layers)
 (`schema.ts` — the tables; `manifest.ts` — read/write IO); the design rationale lives in the
 spec named in the front matter. If you are building a specific layer, read the worked example
@@ -30,7 +30,7 @@ first four poi.db builds.
 A layer extends the gazetteer discipline (sealed 0444 artifacts, Kysely schema modules,
 build-then-swap) from reference data to analysis data. Concretely, a layer database:
 
-- Embeds the **two contract tables** below (`layer_manifest`, `layer_coverage`) regardless of
+- Embeds the **two interface tables** below (`layer_manifest`, `layer_coverage`) regardless of
   tier, plus whatever domain tables the layer needs.
 - Is **sealed 0444** on completion (`sealDatabase` from `@mailwoman/core/utils`) — a readonly
   artifact, never reopened read-write. Updates are full rebuilds, built-then-swapped into place
@@ -96,7 +96,7 @@ tier is compacted parent-ward (`compactCells`), and a polygon whose bounding box
 h3's allocator at the target is indexed coarser — so `flood_zone_cell.resolution` is per row, and a
 probe walks its own `cellToParent` chain over every resolution the table holds. A reader that
 probed only the manifest's resolution would read every row at the others as an absence, which is
-the false-negative shape this contract exists to prevent.
+the false-negative shape this interface exists to prevent.
 
 **`layer_coverage` stays SINGLE-resolution and is a different number again.** `recoverCoverageResolution`
 recovers one resolution from the stored coverage cells and throws on a table that mixes them, so
@@ -162,7 +162,7 @@ Two requirements follow, and the second is what makes the first checkable.
 
 ### An authority's designation rides the query-intent carrier and names the verdict's own kind
 
-Also settled here, for the same reason: it is a property of the contract rather than of one layer.
+Also settled here, for the same reason: it is a property of the interface rather than of one layer.
 
 A layer that reports what an authority designates at a resolved coordinate reaches a caller as a
 `QueryIntentMarker` with `code: "authority_designation"`, `mechanism` in the `family:rule` form with
@@ -170,10 +170,10 @@ A layer that reports what an authority designates at a resolved coordinate reach
 code, the authority's own definition of it, the containment path, the coverage row and the layer's
 manifest identity.
 
-**The marker names the verdict's own top kind.** `QueryIntentMarker.kind` is contractually a kind the
+**The marker names the verdict's own top kind.** `QueryIntentMarker.kind` is by agreement a kind the
 verdict carries, and a designation is not raised by intent at all — nothing about an address asks
 for a flood zone — so there is no kind of its own to name, and naming the top kind satisfies the
-contract literally. `declared_ambiguity` is the precedent for a marker raised at resolve time rather
+interface literally. `declared_ambiguity` is the precedent for a marker raised at resolve time rather
 than by the classifier; this one goes one step further and names no kind of its own. That is
 accepted in writing rather than worked around, because the alternative — widening the carrier with
 an optional-kind marker variant — would create a second advisory shape for no gain a reader can use.
@@ -310,7 +310,7 @@ built by `mw gazetteer build poi-coverage`.
 **The meaning-of-zero rule.** A _missing_ `layer_coverage` row means **UNKNOWN — unmapped**,
 never "surveyed and found empty." `readLayerCoverage` returns `undefined` for an unsurveyed
 cell, and callers must not conflate that with `{ completeness: 0 }`. Absence of a row is never
-evidence by itself. This is why the field is **contract-mandatory from day one** even for
+evidence by itself. This is why the field is **interface-mandatory from day one** even for
 layers that happen to be complete today: retrofitting epistemics onto a sealed artifact means
 rebuilding every one of them. See [the meaning of zero](./the-meaning-of-zero.mdx) for the general
 principle (a magnitude never carries its own absence — split presence from value).
@@ -326,7 +326,7 @@ through it; the domain tables are the layer's own business.
 
 ```ts
 import {
-	type LayerContractDatabase,
+	type layerschemadatabase,
 	createLayerManifestTable,
 	createLayerCoverageTable,
 	writeLayerManifest,
@@ -339,7 +339,7 @@ import {
 
 - **DDL** — `createLayerManifestTable(db)` and `createLayerCoverageTable(db)` build the two
   tables through Kysely's schema-builder (coverage is `WITHOUT ROWID` — small fixed-width rows
-  probed by PK, the sweet spot). Intersect `LayerContractDatabase` into your layer's own schema
+  probed by PK, the sweet spot). Intersect `layerschemadatabase` into your layer's own schema
   interface so a column added to one side is a compile error against the other.
 - **Write (build-time, cold path)** — `writeLayerManifest(db, manifest)` inserts the single
   identity row and validates invariants (known tier, known freshness policy, at least one spine
@@ -355,12 +355,12 @@ time rather than three joins downstream.
 
 ## Authoring checklist
 
-Building a new layer? The contract obligations, in order:
+Building a new layer? The interface obligations, in order:
 
 1. Define your domain schema as a Kysely schema module (`createXTable` co-located with the
    typed interface), following the house DB discipline — raw positional INSERTs for the hot
    bulk load, `WITHOUT ROWID` only for small PK-probed tables, FTS5 as raw DDL where needed.
-2. Intersect `LayerContractDatabase` into your schema and call `createLayerManifestTable` +
+2. Intersect `layerschemadatabase` into your schema and call `createLayerManifestTable` +
    `createLayerCoverageTable`.
 3. Pick a spine: carry every id space your source gives you, declare them in `spine_keys`, and
    key every domain row by at least one.

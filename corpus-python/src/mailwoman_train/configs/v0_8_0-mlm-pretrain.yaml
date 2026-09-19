@@ -1,21 +1,21 @@
 # v0.8.0 — MLM self-supervised PRE-training (phase 1 of pretrain -> fine-tune).
 #
 # The first run of the new objective="mlm" path (feat/mlm-pretraining). Pre-trains the
-# encoder on corpus TEXT (BIO labels ignored) via masked-language-modeling, producing a
-# checkpoint a later SUPERVISED run fine-tunes from (cfg.train.init_from). Goal: give the
+# encoder on corpus text (BIO labels ignored) via masked-language-modeling, producing a
+# checkpoint a later supervised run fine-tunes from (cfg.train.init_from). Goal: give the
 # encoder a self-supervised prior before it ever sees a label, to attack the two diagnosed
 # pathologies that two corpus-recipe cycles couldn't move — 81%-of-wrong-at->=0.9
 # overconfidence + format/delimiter over-reliance (the small-encoder literature attributes
 # both to training from scratch on labels only). See docs MLM spec.
 #
-# GEOMETRY IS IDENTICAL TO v0_7_2-intersection-bare.yaml on purpose: the pretrained encoder
+# geometry is identical TO v0_7_2-intersection-bare.yaml on purpose: the pretrained encoder
 # must be state_dict-key-identical to the supervised model so `init_from` loads it cleanly.
 # use_phrase_priors / use_crf stay true so their params exist in the checkpoint (untrained
 # here. the fine-tune trains them). forward_mlm skips the phrase-projection + CRF heads.
 #
-# This is a VALIDATION run: 20k steps to check the loss value descends sanely + the Trackio
+# This is a validation run: 20k steps to check the loss value descends sanely + the Trackio
 # dashboard works end to end, then a fine-tune from the resulting checkpoint decides whether
-# pretraining helps (pre-registered revert: fine-tune harness <22% AND resolver Acc@1 gain
+# pretraining helps (pre-registered revert: fine-tune harness <22% and resolver Acc@1 gain
 # <1.5pp vs the from-scratch baseline -> drop pretraining).
 #
 # Launch (Trackio debut):
@@ -34,7 +34,7 @@ data:
   country_weights:
     US: 1.0
     FR: 1.0
-  # No source_weights: MLM wants BROAD text exposure (it's learning token/morphology
+  # No source_weights: MLM wants broad text exposure (it's learning token/morphology
   # structure rather than a label distribution), so let every source through uniformly. The
   # supervised fine-tune re-applies its own sampling recipe.
   train_rows_per_epoch: 1000000

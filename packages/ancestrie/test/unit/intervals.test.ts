@@ -3,7 +3,7 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Containment contract: the pre/post interval truth table (ancestor / descendant / sibling / self
+ *   Containment interface: the pre/post interval truth table (ancestor / descendant / sibling / self
  *   / disjoint), descendant range scans, the DAG primary-parent rule, declared-but-absent parents,
  *   and cycle rejection at seal.
  */

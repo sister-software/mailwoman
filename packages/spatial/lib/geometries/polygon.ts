@@ -259,13 +259,13 @@ export function requireArealPolygons(geometry: ParsedGeometry, subject: string, 
 /**
  * Does an areal GeoJSON geometry contain the point?
  *
- * The three-valued return is the point of the function. `null` means the geometry is NOT AREAL — a Point or a
+ * The three-valued return is the point of the function. `null` means the geometry is not areal — a Point or a
  * LineString cannot contain anything — and a caller must read that as "no polygon on record", the same as a missing
  * geometry, never as a rejection. Collapsing it to `false` is how a place with a point-only record gets excluded from a
  * containment pass instead of falling through to the approximate path.
  *
  * `scripts/eval/pip-containment.py` grades the same containment truth against its own ray cast and has to be matched BY
- * HAND if this one changes — it is the one copy no import can reach.
+ * hand if this one changes — it is the one copy no import can reach.
  */
 export function geometryContains(
 	geometry: ParsedGeometry | null | undefined,
@@ -283,7 +283,7 @@ export function geometryContains(
  * An axis-aligned rectangle as a closed ring, in GeoJSON `[lon, lat]` order and counter-clockwise — the exterior
  * winding.
  *
- * SHARED BECAUSE THE WINDING IS A CONVENTION AND A SECOND COPY IS A SECOND PLACE FOR IT TO DRIFT. Three layer builders
+ * Shared because the winding is A convention and A second copy is A second place FOR IT TO drift. Three layer builders
  * hand-build rectangles for their fixture rungs, and each pairs this with {@link reversedRing} to make a hole. A copy
  * whose hole is wound the same way as its exterior produces a fixture that passes every structural check and tests
  * nothing about hole handling — which is the exact failure the area cross-check exists to catch in production data.

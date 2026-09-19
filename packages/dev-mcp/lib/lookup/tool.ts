@@ -3,7 +3,7 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   `mwdev_lookup`'s handler: resolve each source's artifact the way the RUNTIME resolves it, open it read-only, ask
+ *   `mwdev_lookup`'s handler: resolve each source's artifact the way the runtime resolves it, open it read-only, ask
  *   the probe, close it.
  *
  *   Resolution is the part worth reading. Every path here comes from the function the running system uses —
@@ -266,7 +266,7 @@ async function resolveCandidateDB(config: EngineConfig, dataRoot: string): Promi
 
 	if (resolved || !config.candidate_db || config.candidate_db === "none") return resolved
 
-	// Hand back the path AS PINNED so `openSealedArtifact` reports it by name.
+	// Hand back the path AS pinned so `openSealedArtifact` reports it by name.
 	return config.candidate_db
 }
 
@@ -425,7 +425,7 @@ async function runPostcodeLookup(args: LookupArgs): Promise<LookupResult> {
 /**
  * Read the anchor artifact behind the resolver interface.
  *
- * The binary is probed by binary SEARCH, never decoded whole: `postcode-gb.bin` holds 1,749,839 keys and
+ * The binary is probed by binary search, never decoded whole: `postcode-gb.bin` holds 1,749,839 keys and
  * `toAnchorLookup()` builds all of them into a Map in 2,035 ms (against 24 ms to construct the reader), which is the
  * wrong trade for a handful of queries. The JSON form has no search interface, so it is parsed and wrapped.
  */
@@ -451,7 +451,7 @@ async function loadAnchorArtifact(artifact: { path: string; binary: boolean }): 
  * The two FST sources, which need a warm session to learn which artifact the decoder would read.
  *
  * `gazetteer_prior: true` is forced. A session resolves the FST paths only when it will actually feed the prior, and it
- * is right to: `artifacts` reports what a session READ rather than what it could have. A lookup wants the artifact the
+ * is right to: `artifacts` reports what a session read rather than what it could have. A lookup wants the artifact the
  * decoder would consult, so it asks for an engine that loads one — resolving the path any other way would answer about
  * an FST no runtime configuration reads.
  */
@@ -468,7 +468,7 @@ async function runFSTLookup(registry: EngineRegistryLike, args: LookupArgs): Pro
 	if (args.locales?.length) {
 		const byLocale: NonNullable<LookupResult["by_locale"]> = {}
 
-		// Sequential, and each locale costs a full session build: `artifacts` reports what a session READ, so learning
+		// Sequential, and each locale costs a full session build: `artifacts` reports what a session read, so learning
 		// which artifact a locale's decoder consults means building that locale's decoder. The registry evicts to its
 		// cap as this walks, so a wide sweep rebuilds rather than accumulating.
 		for (const locale of args.locales) {
@@ -493,7 +493,7 @@ async function runFSTLookup(registry: EngineRegistryLike, args: LookupArgs): Pro
 }
 
 /**
- * One locale's answer, with a missing artifact reported IN PLACE rather than by omission.
+ * One locale's answer, with a missing artifact reported IN place rather than by omission.
  *
  * Five shipped overlays carry no FST at all, so a sweep that dropped those locales would read as a set of locales that
  * knew nothing about the queries.

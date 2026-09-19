@@ -6,9 +6,9 @@
  *   The activation-coverage census (#1719): is every mechanism in the parse path alive on at least one board row?
  *
  *   The rule this enforces is the operator's, stated 2026-08-16: a pipeline part with no test case that activates it
- *   is ITSELF a kind of failure. House history is the evidence — the FST prior dead because a session never fed it
+ *   is itself a kind of failure. House history is the evidence — the FST prior dead because a session never fed it
  *   (#1699), overlays fed the base classifier's FST (#1703), a channel shipped never-trained (#1349), dep_loc dead
- *   uniformly (R5) — and every one of them kept the board green, because soft mechanisms are DESIGNED to degrade
+ *   uniformly (R5) — and every one of them kept the board green, because soft mechanisms are designed to degrade
  *   silently and outcome tests cannot see a counterfactual. The census asks the question outcome tests cannot: not
  *   "did the rows pass" but "did each mechanism signal on any row at all".
  *
@@ -17,12 +17,12 @@
  *   - **L0 present** — the mechanism's record appears in the trace (the stage ran / the channel was configured). Near
  *     meaningless alone: Weimar carried `fst applied: true` beside three all-zero channels.
  *   - **L1 signaled** — it produced nonzero input to the next stage: a channel fed a nonzero feature, a prior's own
- *     `applied` contract ("moved anything") held, a repair changed labels. This file computes L0 and L1 from one
+ *     `applied` interface ("moved anything") held, a repair changed labels. This file computes L0 and L1 from one
  *     traced run.
  *   - **L2 moved an outcome** — needs ablation pairs and is not computed here. the gauntlet's ablation layer is the
  *     home for it. Reported as explicitly unmeasured so a reader cannot mistake L1 coverage for outcome relevance.
  *
- *   A mechanism at zero L1 across the whole set is reported as INERT with the standing rule attached: every zero needs
+ *   A mechanism at zero L1 across the whole set is reported as inert with the standing rule attached: every zero needs
  *   either a row that activates it or an allowlisted reason someone can state ({@link CENSUS_ALLOWLIST}). Trust the
  *   subtraction over the story.
  */
@@ -36,8 +36,8 @@ import { describeObservedRate } from "#power"
 import { inputSetProvenance, provenanceFor } from "#tool-kit"
 
 /**
- * Mechanisms whose L1 zero is EXPECTED, each with the reason a reader can check. The census reports them as
- * `allowlisted`, never as inert — and an allowlisted mechanism that unexpectedly FIRES is reported loudly, because the
+ * Mechanisms whose L1 zero is expected, each with the reason a reader can check. The census reports them as
+ * `allowlisted`, never as inert — and an allowlisted mechanism that unexpectedly fires is reported loudly, because the
  * reason on file is then stale.
  */
 export const CENSUS_ALLOWLIST: Partial<Record<string, string>> = {

@@ -10,7 +10,7 @@
  *   no runtime dependencies.
  *
  *   See `docs/engineering/reference/QUERY_SHAPE.md` for the design rationale and
- *   `docs/engineering/reference/STAGES.md` for how this fits into the runtime pipeline.
+ *   `docs/engineering/reference/stages.md` for how this fits into the runtime pipeline.
  */
 
 export {

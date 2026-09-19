@@ -55,7 +55,7 @@ body:
     attributes:
       label: Scope
       description: |
-        Locales and tiers affected. Name any tested contract this changes and
+        Locales and tiers affected. Name any tested interface this changes and
         any check or board row it touches.
     validations:
       required: true

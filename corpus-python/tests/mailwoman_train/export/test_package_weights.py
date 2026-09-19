@@ -80,7 +80,7 @@ def test_components_blurb_mentions_fine_tags():
 
 def test_target_status_uses_stage2_floors_for_fine_labels():
     # venue/street/house_number get the v0.3.0 issue-spec floors (0.60/0.70/0.80),
-    # not the 0.95 coarse contract. Provide eval numbers right between the two
+    # not the 0.95 coarse interface. Provide eval numbers right between the two
     # bands so the assertion only passes if the correct floor is in effect.
     report = {
         "per_component": {
@@ -111,7 +111,7 @@ def test_readme_includes_phase_and_components():
     assert "venue" in md
     assert "street" in md
     assert "house_number" in md
-    # SMOKE BUILD warning must not appear when smoke=False.
+    # smoke build warning must not appear when smoke=False.
     assert "SMOKE BUILD" not in md
 
 

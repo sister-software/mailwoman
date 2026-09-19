@@ -5,14 +5,14 @@
  *
  *   The content key for the derived-weights store at `$MAILWOMAN_DATA_ROOT/derived/weights/<key>`.
  *
- *   WHY A LOCAL STORE: the `weights-*` actions/cache entry carried 76.3 MB of real files and took
+ *   why A local store: the `weights-*` actions/cache entry carried 76.3 MB of real files and took
  *   48–54s to restore on the two `mailwoman-data` legs — about 1.6 MB/s over the lab's degraded path
  *   to GitHub's cache service — to a host that already has the source model on local disk
  *   (`release.config.json` → `dataRoot`). Only `postcode-<cc>.bin` and `pair-index-<cc>.bin` are
  *   expensive to produce, so those are what the store holds. The runners are self-hosted, so the
  *   filesystem persists across runs and the store is durable.
  *
- *   WHY THE GENERATORS ARE HASHED: on 2026-08-02 the workflow key hashed `release.config.json` and
+ *   why the generators are hashed: on 2026-08-02 the workflow key hashed `release.config.json` and
  *   `data/gazetteer/*` but not the extractor, so a currency-filter change produced new artifacts
  *   while the cache served old ones and the pair-index↔card parity guard failed with
  *   `expected 47878 to be 49033`. The generating code is part of the input rather than context around it.
@@ -30,8 +30,8 @@ import { Globerator } from "spliterator/node/fs"
  * Repo-relative files the derived binaries are a function of, beyond the `data/gazetteer` payload enumerated by
  * {@link derivedWeightsInputs}.
  *
- * The first entry mirrors the retired workflow cache key. The rest are what that key MISSED: the modules that generate
- * the binaries — each SOURCE module paired with its COMPILED counterpart, because the build spawns the compiled CLI.
+ * The first entry mirrors the retired workflow cache key. The rest are what that key missed: the modules that generate
+ * the binaries — each source module paired with its compiled counterpart, because the build spawns the compiled CLI.
  * Hashing source alone re-created the #1528 poisoning in cache form: a stale-compiled builder under already-fixed
  * source computes the fixed key, builds with the broken code, and the store then serves that artifact to every
  * fresh-compiled run forever. With the compiled bytes in the key, a stale compile keys separately from a fresh one, so
@@ -96,7 +96,7 @@ async function postcodePipelinePaths(): Promise<string[]> {
 }
 
 /**
- * One hashed input: a STABLE name plus wherever this checkout happens to keep it.
+ * One hashed input: a stable name plus wherever this checkout happens to keep it.
  */
 export interface DerivedWeightsInput {
 	/**
@@ -126,7 +126,7 @@ async function derivedWeightsInputs(): Promise<DerivedWeightsInput[]> {
 /**
  * Hash an explicit input list. Exported for testing. production callers want {@link derivedWeightsKey}.
  *
- * Sorted by name, so the caller's ordering cannot change the key. Each entry contributes its NAME and its bytes.
+ * Sorted by name, so the caller's ordering cannot change the key. Each entry contributes its name and its bytes.
  *
  * ⚠ The name is repo-relative and the absolute path is deliberately not hashed. Hashing absolute paths was the first
  * version's bug: every GitHub runner checks out to its own work directory, so lab-1, lab-2, lab-3 and a local worktree
@@ -158,7 +158,7 @@ export async function derivedWeightsKeyFrom(inputs: readonly DerivedWeightsInput
 }
 
 /**
- * The key for this checkout's derived weights. Identical across checkouts with identical input CONTENT, wherever they
+ * The key for this checkout's derived weights. Identical across checkouts with identical input content, wherever they
  * live on disk — that invariance is the whole point of the store.
  */
 export async function derivedWeightsKey(): Promise<string> {
@@ -177,7 +177,7 @@ export function derivedWeightsDir(key: string): string {
  *
  * The second net behind the build-time floors (#1509): the store once held a 10-byte empty `postcode-gb.bin` a
  * stale-compiled builder wrote, and served it as a HIT indefinitely (#1528). A `postcode-<cc>.bin` is refused when its
- * PCB1 header is malformed or its record count sits below the LOWEST calibrated floor for that country — for GB that is
+ * PCB1 header is malformed or its record count sits below the lowest calibrated floor for that country — for GB that is
  * the outward floor, so a legitimate outward-granularity bin is never false-refused while the empty/collapsed class
  * always is. The calibrated per-granularity check remains the builder's. this one only has the header to read.
  *

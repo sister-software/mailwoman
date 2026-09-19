@@ -843,7 +843,7 @@ The clients don't carry an independent version; `mailwoman clients generate` rea
 `mailwoman/package.json` (the same version the `api`/`photon`/`nominatim`/`libpostal` npm packages
 already release at in lockstep — see `mailwoman/tools/generate-clients.ts`) and stamps both the Python
 `pyproject.toml` and the Rust `Cargo.toml` with it. That's a deliberate simplification over the
-superseded `feat/api-clients` branch's design (which versioned the clients against the OpenAPI contract,
+superseded `feat/api-clients` branch's design (which versioned the clients against the OpenAPI interface,
 independently of the engine release) — one fewer version scheme to track, in exchange for one real
 constraint: **a client-only fix (a generator bug, a hand-written ergonomics change in
 `mailwoman_client/__init__.py` or `src/lib.rs`) cannot ship at a patch version of its own.** PyPI and

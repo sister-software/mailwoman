@@ -4,7 +4,7 @@
  * @author Teffen Ellis, et al.
  * @file Reading a delimited file whose `"` is an ordinary character.
  *
- *   `CSVSpliteratorInit.enableQuoteHandling` DEFAULTS TO TRUE, and a quote-aware reader over an unquoted source does
+ *   `CSVSpliteratorInit.enableQuoteHandling` defaults TO true, and a quote-aware reader over an unquoted source does
  *   not fail — it joins every line between one `"` and the next into a single record, so the caller sees a shorter
  *   file and reads it as a smaller dataset. Nothing downstream can tell that apart from a small file, because every
  *   count downstream is derived from what the reader returned.
@@ -19,7 +19,7 @@ import type { PathBuilderLike } from "path-ts"
 import { TextSpliterator, TSVSpliterator } from "spliterator"
 
 /**
- * Stream the records of an UNQUOTED tab-separated file.
+ * Stream the records of an unquoted tab-separated file.
  *
  * Use this for any source whose `"` is literal — the GeoNames dumps, and every register that writes plain TSV. A source
  * that really is quoted (a spreadsheet export, a register that escapes its delimiters) wants `TSVSpliterator` directly
@@ -45,7 +45,7 @@ export function readUnquotedTSVText(text: string): Iterable<string[]> {
 /**
  * The same read, checked against the file's own line count, raising rather than answering short.
  *
- * A reader that can return a PARTIAL result must say what it got or throw: a short read and a small file are the same
+ * A reader that can return a partial result must say what it got or throw: a short read and a small file are the same
  * number to every consumer, and absence is the answer a gazetteer build is looking for, so the wrong answer arrives
  * looking like a discovery. This costs one extra pass over the bytes and is the right default for a build step that
  * will bake its result into a shipped artifact.

@@ -14,7 +14,7 @@
  *   The status slot is where the loader says what it is fetching while the bar at the top of the viewport says how far
  *   along it is.
  *
- *   NODE-SAFE: pure React, no maplibre.
+ *   node-safe: pure React, no maplibre.
  */
 
 import { type ReactNode, useEffect, useId, useRef, useState } from "react"

@@ -1,6 +1,6 @@
 """Per-config label sets (v8 CJK Phase 2 — the 33→47 JP schema activation).
 
-Pins the activation contract: the JP set exists and is exactly STAGE3 + the seven SCHEMA.mdx JP
+Pins the activation interface: the JP set exists and is exactly STAGE3 + the seven SCHEMA.mdx JP
 tags. the default stays byte-identical STAGE3. the char encode path maps JP labels under the JP
 set and collapses them to O under the default (no silent cross-set leakage); a JP-headed model
 persists and restores ITS OWN label map. and the SP path refuses a non-default set loudly.

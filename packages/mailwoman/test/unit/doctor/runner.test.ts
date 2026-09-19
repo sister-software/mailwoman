@@ -74,7 +74,7 @@ describe("runDoctor (injected boundaries)", () => {
 		const report = await runDoctor(healthyDeps())
 		expect(report.exitCode).toBe(0)
 
-		// RUNTIME FIRST (#1577): a stale node or an unloadable native binding explains every later line,
+		// runtime first (#1577): a stale node or an unloadable native binding explains every later line,
 		// so it has to be read first. Weights follow, then the optional data layers, then the overlays.
 		expect(report.checks.map((c) => c.id)).toEqual([
 			"node-version",

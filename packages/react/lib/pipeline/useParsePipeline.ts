@@ -6,7 +6,7 @@
  *   `useParsePipeline` — the headless core of the pipeline explorer. Owns the query text, the
  *   busy/stage flags, the parse result, and the candidate selection. delegates the actual parse+resolve
  *   to the injected {@link PipelineRuntime}. No model or gazetteer code lives here — it just drives the
- *   contract and shapes the UI state.
+ *   interface and shapes the UI state.
  */
 
 import type { ParseResult, ResolvedPlaceView } from "@mailwoman/core/pipeline/client-result"
@@ -57,7 +57,7 @@ export function useParsePipeline({ runtime, defaultText }: UseParsePipelineOptio
 	const [parseError, setParseError] = useState<string | null>(null)
 
 	// `query` exists because `setText` does not reach this closure before the call after it runs. A preset that called
-	// `setText(value)` then `submit()` parsed the PREVIOUS text — the field showed the preset and the map answered the
+	// `setText(value)` then `submit()` parsed the previous text — the field showed the preset and the map answered the
 	// address before it. A caller that already knows the query passes it. the field's own submit passes nothing.
 	const submit = useCallback(
 		async (query?: string) => {

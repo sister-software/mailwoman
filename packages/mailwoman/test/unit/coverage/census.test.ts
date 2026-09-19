@@ -4,8 +4,8 @@
  * @author Teffen Ellis, et al.
  * @file `coverage-census` — the readers that decide what mailwoman is reported to support.
  *
- *   Each test here pins a way of getting the answer WRONG that has actually happened, because the failures in this
- *   file are all silent: a bare `NO` retyped to a boolean, a nested Arrow column read as a plain array, a glob that
+ *   Each test here pins a way of getting the answer wrong that has actually happened, because the failures in this
+ *   file are all silent: a bare `no` retyped to a boolean, a nested Arrow column read as a plain array, a glob that
  *   picks up a directory the loader excludes. None of them throws. each returns a confident number.
  */
 
@@ -54,8 +54,8 @@ describe("normalizeArrowListColumn", () => {
 
 describe("readAdmittedCountries", () => {
 	it("keeps a bare NO as the string it is", async () => {
-		// YAML 1.1 resolves bare `NO` to boolean false. A YAML parser here would report Norway as un-admitted while the
-		// config lists it — reproducing, inside the tool meant to SURFACE that bug, the bug itself.
+		// YAML 1.1 resolves bare `no` to boolean false. A YAML parser here would report Norway as un-admitted while the
+		// config lists it — reproducing, inside the tool meant to surface that bug, the bug itself.
 		const path = join(root, "norway.yaml")
 
 		await writeLocalTextFile(
@@ -100,7 +100,7 @@ describe("readAdmittedCountries", () => {
 			path
 		)
 
-		// `gb` and `fr` are SOURCE weights that happen to be two letters. Reading past the block would report them as
+		// `gb` and `fr` are source weights that happen to be two letters. Reading past the block would report them as
 		// admitted countries.
 		expect([...(await readAdmittedCountries(path))]).toEqual(["US"])
 	})
@@ -180,7 +180,7 @@ describe.skipIf(!(await pathExists(CORPUS)))("buildCorpusCensus against a real d
 		// carries 825,083 street rows out of 831,800.
 		const manifest = await readLocalJSONFile<Record<string, unknown>>(CORPUS)
 
-		// The stored key is part of the ARTIFACT and both spellings are live on disk, so the reader accepts either and
+		// The stored key is part of the artifact and both spellings are live on disk, so the reader accepts either and
 		// this test reads the same way. A test that knew only one spelling would skip on 33 of the 41 corpora built so
 		// far and report that as "not measurable here".
 		const entries = (manifest["slices"] ?? manifest["sh" + "ards"]) as
@@ -259,7 +259,7 @@ describe("sameCorpusVersion", () => {
 
 describe("readConfiguredCorpusVersion", () => {
 	/**
-	 * A config file the CALLER owns: the reader below opens it by path, so the directory has to outlive this helper.
+	 * A config file the caller owns: the reader below opens it by path, so the directory has to outlive this helper.
 	 */
 	async function config(body: string): Promise<TemporaryDirectory & { configPath: string }> {
 		const scratch = await temporaryDirectory("mw-cfg-")
@@ -297,8 +297,8 @@ describe("readConfiguredCorpusVersion", () => {
 
 describe("readAdmittedCountries — the Norway shape", () => {
 	it("keeps a QUOTED NO as the string it is, and counts it", async () => {
-		// A YAML parser turns a bare `NO` key into boolean false, which is the bug this reader exists to avoid
-		// reproducing. A quoted "NO" must still be counted — a regex requiring a bare key silently drops Norway and
+		// A YAML parser turns a bare `no` key into boolean false, which is the bug this reader exists to avoid
+		// reproducing. A quoted "no" must still be counted — a regex requiring a bare key silently drops Norway and
 		// reports it as never admitted.
 		await using scratch = await temporaryDirectory("mw-cfg-no-")
 		const path = scratch.resolve("c.yaml")

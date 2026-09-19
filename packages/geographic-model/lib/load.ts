@@ -14,7 +14,7 @@
  *
  *   1. **Enumeration order cannot reach the output.** {@link mergeGeographicModelFiles} sorts the
  *      files it was handed before reading any of them, so the merged tables are a function of the file
- *      NAMES and their contents. `readdir` order, and therefore the filesystem, is out of the answer.
+ *      names and their contents. `readdir` order, and therefore the filesystem, is out of the answer.
  *   2. **Every issue names the file it came from.** The document validator addresses a record by its
  *      position in the merged table (`$.concepts[7].kind`), which is the one thing an author cannot
  *      see. the loader keeps a per-record origin and re-addresses each issue to its source file. A
@@ -86,7 +86,7 @@ export interface SourcedIssue {
 	 */
 	file: string
 	/**
-	 * The JSONPath-style address into the MERGED document, kept so a reader can find the record in the table the
+	 * The JSONPath-style address into the merged document, kept so a reader can find the record in the table the
 	 * validator saw.
 	 */
 	path: string

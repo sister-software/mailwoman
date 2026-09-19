@@ -5,14 +5,14 @@
  *
  *   USPS Publication 28, Appendix C — Postal Service Standard Suffix Abbreviations.
  *
- *   The DATA lives in `./street-suffix.json` so non-TS consumers (the Python training loader's
+ *   The data lives in `./street-suffix.json` so non-TS consumers (the Python training loader's
  *   lexicon builder, audits) read the identical record — no hand-mirrored copies. Two keys:
  *
  *   - `variants` — verbatim USPS Pub-28: canonical suffix → every recognized variant in
  *     USPS-published order. the first variant is the preferred USPS abbreviation (e.g.
- *     `AVENUE → ["AVE", ...]` — `AVE` is what the post office prints).
+ *     `avenue → ["AVE", ...]` — `AVE` is what the post office prints).
  *   - `nameProneCanonicals` — OUR curation rather than Pub-28: canonicals also observed as ordinary
- *     proper-name heads in street names (PARK, HILL, CREEK…), from golden v0.1.3 + the OA street
+ *     proper-name heads in street names (park, hill, creek…), from golden v0.1.3 + the OA street
  *     pool. Shared by the golden relabel flags, the #1569 extract recipe, and (via the
  *     `gazetteer affix-relabel` v2 lexicon) the Python relabel pass, so the instrument and the
  *     training feed cannot drift onto different definitions of the ambiguous class.
@@ -38,7 +38,7 @@ export const US_STREET_SUFFIX_VARIANTS = streetSuffixData.variants
 export type USStreetSuffix = keyof typeof US_STREET_SUFFIX_VARIANTS
 
 /**
- * Pub-28 canonicals that are also common head nouns in street/place names ("Menlo PARK Road", "Blue HILL Rd") — the
+ * Pub-28 canonicals that are also common head nouns in street/place names ("Menlo park Road", "Blue hill Rd") — the
  * ambiguous class behind #1569. Curated (golden v0.1.3 + OA street pool), not part of the USPS publication. see
  * `nameProneCanonicals` in `./street-suffix.json`.
  */
@@ -48,7 +48,7 @@ export const NAME_PRONE_US_SUFFIXES: ReadonlySet<USStreetSuffix> = new Set(
 
 /**
  * Inverse lookup: every variant abbreviation or full canonical word → its canonical key. Built once at module load,
- * lowercase-keyed for case-insensitive matching (`street` → `"STREET"`, `st` → `"STREET"`, `strt` → `"STREET"`, …).
+ * lowercase-keyed for case-insensitive matching (`street` → `"street"`, `st` → `"street"`, `strt` → `"street"`, …).
  */
 export const US_STREET_SUFFIX_LOOKUP: ReadonlyMap<string, USStreetSuffix> = (() => {
 	const out = new Map<string, USStreetSuffix>()
@@ -58,7 +58,7 @@ export const US_STREET_SUFFIX_LOOKUP: ReadonlyMap<string, USStreetSuffix> = (() 
 
 		for (const variant of US_STREET_SUFFIX_VARIANTS[canonical]) {
 			// Don't overwrite — first canonical that claims a variant wins (matches USPS Pub-28's
-			// ordering). E.g. "WALK" and "WALKS" both list "WALK" as a variant; "WALK" wins because it
+			// ordering). E.g. "walk" and "walks" both list "walk" as a variant; "walk" wins because it
 			// sorts first in `Object.keys`.
 			if (!out.has(variant.toLowerCase())) {
 				out.set(variant.toLowerCase(), canonical)
@@ -70,7 +70,7 @@ export const US_STREET_SUFFIX_LOOKUP: ReadonlyMap<string, USStreetSuffix> = (() 
 })()
 
 /**
- * Preferred USPS abbreviation per canonical (`AVENUE → "AVE"`, `STREET → "ST"`).
+ * Preferred USPS abbreviation per canonical (`avenue → "AVE"`, `street → "ST"`).
  */
 export const US_STREET_SUFFIX_PREFERRED_ABBR: Readonly<Record<USStreetSuffix, string>> = Object.fromEntries(
 	// Every Pub-28 canonical carries >= 1 variant (the preferred abbreviation is first); the JSON
@@ -81,7 +81,7 @@ export const US_STREET_SUFFIX_PREFERRED_ABBR: Readonly<Record<USStreetSuffix, st
 /**
  * Apply `target`'s letters in the same case-pattern as `reference`. Three patterns covered:
  *
- * - All-uppercase reference (`"AVE"`) → uppercase target (`"AVENUE"`).
+ * - All-uppercase reference (`"AVE"`) → uppercase target (`"avenue"`).
  * - All-lowercase reference (`"ave"`) → lowercase target (`"avenue"`).
  * - Anything else (`"Ave"`, `"aVe"`) → title-case target (`"Avenue"`).
  */
@@ -120,12 +120,12 @@ export const StreetSuffixAbbreviationRecord = US_STREET_SUFFIX_VARIANTS
 export type StreetSuffixAbbreviationRecord = typeof US_STREET_SUFFIX_VARIANTS
 
 /**
- * A canonical USPS street suffix, i.e. "STREET", "AVENUE", "BOULEVARD". Aliases {@link USStreetSuffix}.
+ * A canonical USPS street suffix, i.e. "street", "avenue", "boulevard". Aliases {@link USStreetSuffix}.
  */
 export type StreetSuffix = USStreetSuffix
 
 /**
- * A standardized USPS street suffix abbreviation (the preferred form), i.e. "ST", "AVE", "BLVD".
+ * A standardized USPS street suffix abbreviation (the preferred form), i.e. "ST", "AVE", "blvd".
  */
 export type USPSStandardSuffixAbbreviation = StreetSuffixAbbreviationRecord[StreetSuffix][0]
 
@@ -139,7 +139,7 @@ export type StreetSuffixAbbreviation = StreetSuffixAbbreviationRecord[StreetSuff
  */
 export interface StreetSuffixMatch<S extends StreetSuffix = StreetSuffix> {
 	/**
-	 * The matched canonical USPS street suffix, i.e. "STREET", "AVENUE".
+	 * The matched canonical USPS street suffix, i.e. "street", "avenue".
 	 */
 	suffix: S
 	/**
@@ -164,14 +164,14 @@ export function lookupStreetSuffix(input: string | null | undefined): StreetSuff
 }
 
 /**
- * Type-predicate: is the input a canonical USPS street suffix (uppercase full word, e.g. "STREET")?
+ * Type-predicate: is the input a canonical USPS street suffix (uppercase full word, e.g. "street")?
  */
 export function isStreetSuffix(input: unknown): input is StreetSuffix {
 	return typeof input === "string" && Object.hasOwn(US_STREET_SUFFIX_VARIANTS, input)
 }
 
 /**
- * True when a token is any USPS street suffix or abbreviation (case-insensitive) — `"St"`, `"BLVD"`, `"trail"`.
+ * True when a token is any USPS street suffix or abbreviation (case-insensitive) — `"St"`, `"blvd"`, `"trail"`.
  */
 export function isStreetSuffixToken(input: unknown): boolean {
 	return typeof input === "string" && US_STREET_SUFFIX_LOOKUP.has(input.trim().toLowerCase())

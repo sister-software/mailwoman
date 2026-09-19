@@ -3,18 +3,18 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Train the CROSS-SOURCE link scorer (#655 option 2 — unblocked 2026-07-06). The dedup GBT (#603)
+ *   Train the cross-source link scorer (#655 option 2 — unblocked 2026-07-06). The dedup GBT (#603)
  *   is trained on within-NPPES labels, so its strongest feature (`spatial-exact × name-disagree`)
- *   REJECTS the prototypical cross-source pair ("same provider, different operational text across
+ *   rejects the prototypical cross-source pair ("same provider, different operational text across
  *   registries") — the reason the cross-dataset flows pin the FS baseline. The 2026-06-16
  *   feasibility doc blocked a cross-source retrain on "no non-circular anchor"; the anchor exists:
- *   **CMS Open Payments joins NPPES by NPI** — the same practitioner in two INDEPENDENT registries,
+ *   **CMS Open Payments joins NPPES by NPI** — the same practitioner in two independent registries,
  *   each with independently human-entered name + address. Same-NPI cross-source pairs are
  *   ground-truth positives labeled by a key the matcher's features never see.
  *
  *   Pipeline: assemble NPPES + Open Payments TX records for the same NPI population (Phases A/B
- *   here), then the SHARED `trainCrossSourceModel` runs Phases C–F — geocode through the standard
- *   ingest → block the UNION, keep only CROSS-source candidate pairs → the SHARED
+ *   here), then the shared `trainCrossSourceModel` runs Phases C–F — geocode through the standard
+ *   ingest → block the union, keep only cross-source candidate pairs → the shared
  *   `createMatchFeaturizer` (train ≡ inference) → label by NPI → held-out-NPI calibration (the #655
  *   threshold rule: max recall subject to a pairwise-precision bar, reported alongside F1-max) →
  *   train the shipped model on all pairs → emit `registry/models/crosssource-gbt-en-us.ts`.

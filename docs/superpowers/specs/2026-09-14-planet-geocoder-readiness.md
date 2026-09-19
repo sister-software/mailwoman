@@ -179,8 +179,7 @@ municipality and nothing below it — median input 16 characters, p90 19, longes
 
 ## What the gazetteer holds, per country
 
-Answered after the fact through the `mailwoman-dev` MCP daemon, which runs in the operator's environment and
-therefore has the data root a plain checkout does not. Places in `admin-global-priority.db`:
+Answered after the fact through the `mailwoman-dev` MCP daemon, which runs in the operator's environment and. Therefore, has the data root a plain checkout does not. Places in `admin-global-priority.db`:
 
 ```
 IN 1,113,550   CN 678,311   US 259,485   RU 159,485   PL 154,742

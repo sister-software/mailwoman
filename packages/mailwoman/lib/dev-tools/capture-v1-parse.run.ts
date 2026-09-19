@@ -3,7 +3,7 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Phase-0: golden `/v1/parse` outcomes from the CURRENT (rules-backed) serve engine, captured at
+ *   Phase-0: golden `/v1/parse` outcomes from the current (rules-backed) serve engine, captured at
  *   the engine layer (`createServeEngine().engine.parse`) — the semantic content of the endpoint.
  *   The route/wire wrapper is exercised by `@mailwoman/api`'s own tests, and the v7 swap changes
  *   the wire shape by design, so the check built on this artifact compares components rather than bytes.

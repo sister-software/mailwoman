@@ -146,7 +146,7 @@ export async function buildNPPESStateSamples(
 			addrTotal++
 		}
 
-		// Sample: in-state NPIs with ≥1 alternate name, up to maxNpisPerState — NO early break (the table
+		// Sample: in-state NPIs with ≥1 alternate name, up to maxNpisPerState — no early break (the table
 		// needs the full pass).
 		const npi = norm(r[C.npi])
 		const bucket = byState.get(norm(r[C.pState]).toUpperCase())
@@ -176,9 +176,9 @@ export async function buildNPPESStateSamples(
 					.join(" ")
 
 				// Entity-level (site) truth: same org + same physical address. Subparts (NPPES
-				// "Is Organization Subpart" + parent LBN/TIN) collapse to their PARENT, so the matcher isn't
+				// "Is Organization Subpart" + parent LBN/TIN) collapse to their parent, so the matcher isn't
 				// charged for correctly fusing one org's many subpart-NPIs at a site. an NPI's mailing-vs-
-				// practice records stay DISTINCT sites. orgKey = parent identity for subparts, else the NPI
+				// practice records stay distinct sites. orgKey = parent identity for subparts, else the NPI
 				// (independent orgs sharing an address stay distinct — the conservative choice).
 				const isSubpart = norm(r[C.isSubpart]).toUpperCase() === "Y"
 				const parentKey = `${norm(r[C.parentLBN])}|${norm(r[C.parentTIN])}`.toLowerCase()

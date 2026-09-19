@@ -44,7 +44,7 @@ export interface CorpusRecipe<TStats> {
 /**
  * The two input paths a recipe reads, plus the directory holding them.
  *
- * The CALLER owns it: a recipe opens both files by path well after this function returns, so the directory has to
+ * The caller owns it: a recipe opens both files by path well after this function returns, so the directory has to
  * outlive the call. Bind it with `using` and it goes when the test does.
  */
 export type RecipeInputs = TemporaryDirectory & { input: string; exclude: string }

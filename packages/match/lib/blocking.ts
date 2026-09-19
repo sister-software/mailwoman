@@ -11,7 +11,7 @@
  *   A {@link BlockingKey} maps a record to zero or more string keys. records sharing any key become
  *   candidates. Keys compose as a _union_ (the standard multi-pass approach — high recall from
  *   cheap rules): block on the spatial cell or the canonical key or the postcode, and a pair that
- *   any rule catches is scored. {@link conjunction} builds the AND-style key Geo-ER uses
+ *   any rule catches is scored. {@link conjunction} builds the and-style key Geo-ER uses
  *   (`name-cell and geo-cell`) when a single rule is too loose.
  *
  *   Recall is the priority — a pair the blocker never proposes can never match, the most dangerous

@@ -10,7 +10,7 @@ import type { LegalStatisticalAreaDescription } from "#legal-statistical-area"
 import type { AdminLevel1Code } from "#state"
 
 /**
- * @title TIGER County
+ * @title tiger County
  * @public
  */
 export interface TIGERCounty {
@@ -28,17 +28,17 @@ export interface TIGERCounty {
 	COUNTYFP: string
 
 	/**
-	 * @title County GNIS Code
+	 * @title County gnis Code
 	 *
 	 * @minLength 8
 	 * @maxLength 8
 	 * @pattern ^\d{8}$
-	 * @see {@link https://www.usgs.gov/us-board-on-geographic-names/domestic-names | USGS: Domestic Names}
+	 * @see {@link https://www.usgs.gov/us-board-on-geographic-names/domestic-names | usgs: Domestic Names}
 	 */
 	GEOID: string
 
 	/**
-	 * Fully Qualified GEOID as used in CEDSCI and other systems.
+	 * Fully Qualified geoid as used in cedsci and other systems.
 	 *
 	 * @title Fully Qualified Geographic Identifier
 	 * @minLength 19
@@ -71,9 +71,9 @@ export interface TIGERCounty {
 	CLASSFP: TIGERClassCode
 
 	/**
-	 * MAF/TIGER Feature Class Code.
+	 * MAF/tiger Feature Class Code.
 	 *
-	 * @title MAF/TIGER Feature Class Code
+	 * @title MAF/tiger Feature Class Code
 	 *
 	 * @minLength 5
 	 * @maxLength 5
@@ -132,6 +132,6 @@ export interface TIGERCounty {
 }
 
 /**
- * Brand symbol marking a value as a TIGER county record, so a bare object cannot be passed as one.
+ * Brand symbol marking a value as a tiger county record, so a bare object cannot be passed as one.
  */
 export const TIGERCountySymbol = Symbol.for("TIGERCounty")

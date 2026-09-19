@@ -6,13 +6,13 @@
  *   Codex-backed lexicon for the Stage 2.7 span proposer (`@mailwoman/core/pipeline`'s
  *   `proposeSpans`). Core stays codex-free. this module assembles the proposer's designator
  *   vocabulary from the provenance-tracked `@mailwoman/codex` tables — USPS Pub-28 C2 secondary
- *   unit designators, USPS PO-box designators, Australia Post AMAS delivery types, NZ Post ADV358
+ *   unit designators, USPS PO-box designators, Australia Post amas delivery types, NZ Post ADV358
  *   delivery-service types. Which systems are loaded conditions the proposer's locale-dependent
  *   readings (the AU/NZ `Flat 2/14` split exists only when those tables are present).
  *
  *   No entry here is hand-invented (the provenance-first rule): every token/pattern derives from a
- *   codex table row. AU `MS` (Mail Service) and the identifier-less counter types (CARE PO, CMA,
- *   CPA, Counter Delivery, Poste Restante) are excluded from the mid-text SCAN regex — a bare
+ *   codex table row. AU `MS` (Mail Service) and the identifier-less counter types (care PO, CMA,
+ *   CPA, Counter Delivery, Poste Restante) are excluded from the mid-text scan regex — a bare
  *   two-letter designator with no required number is exactly the false-positive shape ("Ms Smith")
  *   the AU matcher special-cases. the scan keeps only number-carrying forms.
  */
@@ -27,7 +27,7 @@ import {
 } from "#venue-structure"
 
 /**
- * USPS Pub-28 C2 canonicals whose designator is DESCRIPTIVE rather than addressing ("Building A" describes the
+ * USPS Pub-28 C2 canonicals whose designator is descriptive rather than addressing ("Building A" describes the
  * building; "Suite 9" addresses a unit). Inside a bracketed group, these read as annotation content (gold convention 2
  * of the punctuation-stress eval).
  */
@@ -43,7 +43,7 @@ const WEAK_CANONICALS: ReadonlySet<string> = new Set([
 ])
 
 /**
- * USPS canonicals that name a LEVEL of the building rather than a numbered unit on it.
+ * USPS canonicals that name a level of the building rather than a numbered unit on it.
  */
 const LEVEL_CANONICALS: ReadonlySet<string> = new Set(["FLOOR", "BASEMENT", "PENTHOUSE", "LOBBY"])
 
@@ -61,7 +61,7 @@ const SCAN_EXCLUDED_DELIVERY: ReadonlySet<string> = new Set([
 
 /**
  * Convert one designator phrase from a codex table into a scan-pattern fragment. Short alphabetic words (≤ 3 chars:
- * "PO", "GPO", "RMB") are treated as initialisms with optional periods/spacing — the punctuation AMAS tells mailers to
+ * "PO", "GPO", "RMB") are treated as initialisms with optional periods/spacing — the punctuation amas tells mailers to
  * strip but deliverable mail still carries ("P.O. Box", "R.M.B 4600"). Longer words match literally with flexible
  * whitespace.
  */
@@ -86,9 +86,9 @@ function phraseToPattern(phrase: string): string {
  */
 export function buildCodexSpanLexicon(systems: readonly SystemCode[] = ["us", "au", "nz"]): SpanProposerLexicon {
 	const sys = new Set<string>(systems)
-	// Venue-INTERIOR designators (WOF placetypes + OSM aeroway) join the unit vocabulary unconditionally: unlike the
+	// Venue-interior designators (WOF placetypes + OSM aeroway) join the unit vocabulary unconditionally: unlike the
 	// postal tables above they are not a property of any mail system, so keying them on a codex `system` would make
-	// "Terminal 5" parse in the US and not in the UK for no reason anyone could defend. The FORMATTER still renders
+	// "Terminal 5" parse in the US and not in the UK for no reason anyone could defend. The formatter still renders
 	// through Pub 28 — see core/resources/whosonfirst/placetypes/venue-structure.ts for why the decode and format
 	// vocabularies are deliberately different sizes.
 	const unitDesignators = new Set<string>(VENUE_STRUCTURE_DESIGNATORS)

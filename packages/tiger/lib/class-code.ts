@@ -5,10 +5,10 @@
  */
 
 /**
- * Defines the current class of a geographic entity. These codes can be found in the TIGER/Line products, gazetteer
+ * Defines the current class of a geographic entity. These codes can be found in the tiger/Line products, gazetteer
  * files, and other products.
  *
- * @title MAF/TIGER Feature Class Code
+ * @title MAF/tiger Feature Class Code
  */
 export const TIGERClassCode = {
 	/**
@@ -186,7 +186,7 @@ export const TIGERClassCode = {
 	 * Corporate entities with legal boundaries established to conduct both business and nonprofit affairs of Alaska
 	 * Natives pursuant to the Alaska Native Claims Settlement Act of 1972 (Public Law 92-203). There are twelve
 	 * geographically defined ANRCs and they are all within and cover most of the State of Alaska (the Annette Island
-	 * Reserve—an American Indian reservation—is excluded from any ANRC).
+	 * Reserve—an American Indian reservation—is excluded from any anrc).
 	 */
 	AlaskaNativeRegionalCorporation: "G2200",
 
@@ -280,8 +280,8 @@ export const TIGERClassCode = {
 	CountySubdivision: "G4040",
 
 	/**
-	 * A subdivision of the three major islands in the U.S. Virgin Islands (USVI). The estates have legally defined
-	 * boundaries and are much smaller in area than the Census Subdistricts (USVI county subdivisions), but do not
+	 * A subdivision of the three major islands in the U.S. Virgin Islands (usvi). The estates have legally defined
+	 * boundaries and are much smaller in area than the Census Subdistricts (usvi county subdivisions), but do not
 	 * necessarily nest within these districts.
 	 */
 	Estate: "G4050",
@@ -386,7 +386,7 @@ export const TIGERClassCode = {
 
 	/**
 	 * Statistical geographic areas defined for the tabulation and dissemination of American Community Survey (ACS) and
-	 * Puerto Rico Community Survey, Public Use Microdata Sample (PUMS) data, as well as ACS period estimates, and
+	 * Puerto Rico Community Survey, Public Use Microdata Sample (pums) data, as well as ACS period estimates, and
 	 * decennial census data. Nesting within states or equivalent entities, PUMAs cover the entirety of the United States,
 	 * Puerto Rico, Guam, and the U.S. Virgin Islands.
 	 */

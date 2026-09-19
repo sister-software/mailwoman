@@ -4,7 +4,7 @@
  * @author Teffen Ellis, et al.
  *
  *   The `mwdev_sources` tool definition — the description an agent reads, the input schema, and the handler wiring.
- *   The census itself lives in `../source-census.ts`; this file is the CONTRACT.
+ *   The census itself lives in `../source-census.ts`; this file is the interface.
  */
 
 import { stringifyJSON } from "@mailwoman/core/json"
@@ -81,7 +81,7 @@ export const sourcesTool = async (_deps: DevToolDeps): Promise<DevTool> => ({
 		const rows = await Promise.all(paths.map(async (path) => await censusArtifact(path, countries)))
 		const usable = rows.filter((row) => row.readable)
 
-		// Per COUNTRY across artifacts, so "where is VE data" is one read rather than a scan of every row.
+		// Per country across artifacts, so "where is VE data" is one read rather than a scan of every row.
 		const byCountry: Record<string, Array<{ artifact: string; n: number; join: string[] }>> = {}
 
 		for (const row of usable) {

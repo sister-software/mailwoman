@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # Regenerates portland.pmtiles from the hand-authored GeoJSON sources.
 # Requires tippecanoe (https://github.com/felt/tippecanoe). The output is
-# COMMITTED so tests and CI never need tippecanoe installed.
+# committed so tests and CI never need tippecanoe installed.
 set -euo pipefail
 cd "$(dirname "$0")/../test/fixtures"
 

@@ -15,7 +15,7 @@ import { type CommandSpec, CommandTaskResult, type CommandComponent, reportToStd
 export const description = "Train the coarse placer (#244) — SGD logistic regression, CPU-only"
 
 /**
- * Native command-line contract consumed by the filesystem command router.
+ * Native command-line interface consumed by the filesystem command router.
  */
 export const spec = {
 	name: "train",

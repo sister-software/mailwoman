@@ -55,7 +55,7 @@ $MAILWOMAN_DATA_ROOT/corpus/versioned/v0.4.0/corpus-v0.4.0/
 
 ## Generator (`corpus-python/src/mailwoman_train/corpora/deepseek/run.py`)
 
-### Model + API contract
+### Model + API interface
 
 | Knob             | Value                                          |
 | ---------------- | ---------------------------------------------- |
@@ -224,7 +224,7 @@ rate are pinned in the Changelog below.
 
 ### Prompt design
 
-`TRANSLIT_SYSTEM` in the generator script — the contract is:
+`TRANSLIT_SYSTEM` in the generator script — the interface is:
 
 - Keep digits / commas / periods / hyphens verbatim.
 - Transliterate place names + street-type words using _natural conventions for the

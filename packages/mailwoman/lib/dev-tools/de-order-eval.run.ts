@@ -3,8 +3,8 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   NOTE(de-shell): forwarding shim. The both-order order-robustness harness now lives at
- *   `mailwoman/eval-harness/de-order-eval.ts` and `promotion-eval.ts` calls it IN-PROCESS. This shim
+ *   note(de-shell): forwarding shim. The both-order order-robustness harness now lives at
+ *   `mailwoman/eval-harness/de-order-eval.ts` and `promotion-eval.ts` calls it IN-process. This shim
  *   keeps standalone invocation working unchanged. Output is byte-identical because the module owns
  *   every printed line. Do not add logic here.
  */
@@ -15,7 +15,7 @@ import { parseArguments } from "@mailwoman/core/scripting/arguments"
 import { deOrderEval } from "#eval-harness/de-order-eval"
 
 async function main(): Promise<void> {
-	// STRICT parseArgs — the original switch errored on unknown args. parity preserved.
+	// strict parseArgs — the original switch errored on unknown args. parity preserved.
 	let values: Record<string, string | boolean | undefined>
 
 	try {

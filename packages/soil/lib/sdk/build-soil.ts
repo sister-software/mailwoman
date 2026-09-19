@@ -3,26 +3,26 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Build `soil.db` — the sealed polygon layer, from the survey areas NRCS publishes.
+ *   Build `soil.db` — the sealed polygon layer, from the survey areas nrcs publishes.
  *
- *   THE ACCUMULATION IS IN SQL rather than IN A MAP. Classification is per delineation and shared with the
+ *   the accumulation is IN SQL rather than IN A MAP. Classification is per delineation and shared with the
  *   resolution measurement, but where the touches GO differs on purpose: the measuring instrument holds
  *   them in memory because it is comparing candidate resolutions in one pass, and the builder streams them
  *   into a temporary table because memory has to stay flat in row count. A polygon layer's touches
  *   outnumber its features, and Iowa is 99 survey areas.
  *
- *   ABSENCE IS NO ROW, IN EVERY TABLE. Land outside a published survey area gets no `layer_coverage` row and
+ *   absence is no row, IN every table. Land outside a published survey area gets no `layer_coverage` row and
  *   no summary row — never a zero, never an empty histogram. Inside a published area the coverage row says
- *   `designated` at completeness 1.0, because NRCS declares its own mapping complete for those areas at its
- *   own scale. a coverage cell reached only by `NOTCOM` and access-denied polygons gets no row either,
+ *   `designated` at completeness 1.0, because nrcs declares its own mapping complete for those areas at its
+ *   own scale. a coverage cell reached only by `notcom` and access-denied polygons gets no row either,
  *   because the polygon exists and the soil mapping behind it does not.
  *
- *   A COVERAGE ROW LICENSES ONLY THAT THE AUTHORITY MAPPED HERE. The reading is the class distribution, and
+ *   A coverage row licenses only that the authority mapped here. The reading is the class distribution, and
  *   a cell that is 100% `unrated_share` is `designated`-complete and carries no capability reading
  *   whatsoever. That pairing is not a corner case: 17.1% of national components carry no capability rating,
  *   and for the irrigated rating the figure is 85.1%.
  *
- *   THE AREA CROSS-CHECK USES THE AUTHORITY'S OWN PUBLISHED FIGURE. `legend.areaacres` is what NRCS states
+ *   the area cross-check uses the authority'S own published figure. `legend.areaacres` is what nrcs states
  *   the survey area covers — 378,800 acres for `IA153`, which is 1,532.9 km² against the 1,532.5 km² an
  *   independent projected measurement of the same shapefile reports. Comparing the spherical ring sum
  *   against it catches a hole read as an exterior ring, whose absence is silent: such a polygon is
@@ -81,7 +81,7 @@ export const SOIL_SCHEMA_VERSION = 1
  * Delineation ids per chunk process.
  *
  * Sized against the ceiling the flood layer measured rather than guessed: single-process runs over that product died
- * after roughly 510,000 and 798,000 features as h3's WASM heap fragmented. 100,000 leaves five times that margin, and
+ * after roughly 510,000 and 798,000 features as h3's wasm heap fragmented. 100,000 leaves five times that margin, and
  * the cost of a smaller number is one interpreter start per chunk. Iowa's largest survey area holds well under it, so
  * on this build the bound costs one process per area — which is what makes an area's failure nameable.
  */
@@ -95,7 +95,7 @@ const M2_PER_ACRE = 4046.8564224
 /**
  * The relative gap between the ring-area total and the authority's own published acreage that fails the build.
  *
- * Two percent. The comparison is a spherical ring area against a figure NRCS itself warns "may differ from that
+ * Two percent. The comparison is a spherical ring area against a figure nrcs itself warns "may differ from that
  * measured using GIS software due to different measuring techniques and rounding practices, or due to the fact that the
  * value has been adjusted so that the sum total of all map units in the legend equals that listed for soil survey area"
  * — so an exact test would be brittle. Two percent sits far above the 0.03% `IA153` measures and far below the error a
@@ -147,7 +147,7 @@ export interface BuildSoilOptions {
 	buildCmd: string
 	buildSHA: string
 	/**
-	 * ISO-8601, supplied by the caller. Never generated here: the contract says so, and a library-generated timestamp
+	 * ISO-8601, supplied by the caller. Never generated here: the interface says so, and a library-generated timestamp
 	 * makes two builds of the same inputs differ.
 	 */
 	createdAt: string
@@ -164,7 +164,7 @@ export interface BuildSoilOptions {
 	 */
 	chunkSize?: number
 	/**
-	 * Run the ingest IN THIS PROCESS rather than spawning chunk children. Only for fixtures, which carry no shapefile for
+	 * Run the ingest IN this process rather than spawning chunk children. Only for fixtures, which carry no shapefile for
 	 * a child to open.
 	 */
 	inProcess?: boolean
@@ -183,7 +183,7 @@ export interface BuildSoilResult {
 	wholeCellRows: number
 	partialCellRows: number
 	/**
-	 * `partialCellRows / (wholeCellRows + partialCellRows)` over the STORED index rows. The whole side is compacted, so
+	 * `partialCellRows / (wholeCellRows + partialCellRows)` over the stored index rows. The whole side is compacted, so
 	 * this is not the same number the resolution was chosen on and is reported separately.
 	 */
 	storedPartialShare: number
@@ -213,7 +213,7 @@ export interface BuildSoilResult {
 	coverageCells: number
 	/**
 	 * Coverage cells inside a survey-area outline that no delineation with soil mapping reached. Reported rather than
-	 * smoothed over: SSURGO is wall-to-wall inside a published area, so a large number means the outline and the
+	 * smoothed over: ssurgo is wall-to-wall inside a published area, so a large number means the outline and the
 	 * delineations disagree.
 	 */
 	coverageCellsWithoutMapping: number
@@ -293,10 +293,10 @@ export async function buildSoilDatabase(options: BuildSoilOptions): Promise<Buil
 			writeSurveyAreaRows(kdb, options, coverage.cellsByArea)
 			writeVocabularyRows(kdb, options.areas)
 
-			// THE SPINE KEY NAMES THE TABLE A CONSUMER JOINS ON, table-qualified, per the layer contract. For this layer
-			// that is the REDUCTION rather than the containment index: `soil_capability_cell` holds one row per cell at one
+			// the spine KEY names the table A consumer joins on, table-qualified, per the layer interface. For this layer
+			// that is the reduction rather than the containment index: `soil_capability_cell` holds one row per cell at one
 			// resolution, which `soil_map_unit_cell` does not — it is keyed `(cell, delineation)` and is mixed-resolution by
-			// construction, so it is a tier the reader walks rather than a key a consumer joins.
+			// construction. Therefore, it is a tier the reader walks rather than a key a consumer joins.
 			await writeLayerManifest(
 				kdb,
 				polygonLayerManifest(options, {
@@ -548,7 +548,7 @@ async function ingestInProcess(
 
 /**
  * Run the ingest as a sequence of bounded child processes, one per range of one survey area's FIDs. The shared chunk
- * contract — the parent's no-handle rule, and the fail-loud handling of a chunk that dies or prints nothing — lives
+ * interface — the parent's no-handle rule, and the fail-loud handling of a chunk that dies or prints nothing — lives
  * with `ingestChunkArguments` and `runChunkProcess`.
  */
 async function runBatchedIngest(tmpPath: string, options: BuildSoilOptions): Promise<SoilChunkResult[]> {
@@ -604,19 +604,19 @@ async function runBatchedIngest(tmpPath: string, options: BuildSoilOptions): Pro
 /**
  * The coverage rows: one per interior cell of the built footprint that soil mapping actually reaches, and none outside.
  *
- * THE INTERIOR TEST RUNS ONCE OVER THE UNION OF EVERY OUTLINE BUILT rather than PER SURVEY AREA, and the difference is
- * most of a state. The test is conservative — it keeps only cells lying WHOLLY inside — so applied per area it drops
+ * The interior test runs once over the union OF every outline built rather than PER survey area, and the difference is
+ * most of a state. The test is conservative — it keeps only cells lying wholly inside — so applied per area it drops
  * every cell a county border crosses. Measured on Polk County alone at resolution 6: 20 interior cells against the
  * roughly 42 the county spans by area, so more than half of it would read `unknown` while sitting inside a survey the
- * build had ingested. Run over the union, only the OUTER border of the built set is dropped, which is the honest edge:
+ * build had ingested. Run over the union, only the outer border of the built set is dropped, which is the honest edge:
  * beyond it lies ground this artifact does not hold.
  *
  * The conservatism itself stays. A cell wrongly called interior would state that an authority determined a location it
  * never looked at, and a point in the dropped strip reading `unknown` is the truthful answer for ground the built set
  * may or may not reach.
  *
- * `observed_rows` counts the delineations reaching the cell, which is what the contract's column means. A cell reached
- * only by `NOTCOM` and access-denied polygons gets no row — the polygon exists, the soil mapping behind it does not,
+ * `observed_rows` counts the delineations reaching the cell, which is what the interface's column means. A cell reached
+ * only by `notcom` and access-denied polygons gets no row — the polygon exists, the soil mapping behind it does not,
  * and the survey's §3.2 puts that case with the absences rather than with the coverage.
  */
 function buildCoverageCells(
@@ -655,7 +655,7 @@ function buildCoverageCells(
 			continue
 		}
 
-		// Attributed by the cell's CENTRE, so each row is counted for exactly one survey area even where the cell straddles
+		// Attributed by the cell's centre, so each row is counted for exactly one survey area even where the cell straddles
 		// two. The count is a per-area receipt rather than part of the coverage claim — the claim is the row set itself.
 		const [latitude, longitude] = cellToLatLng(cell)
 		const owner = options.areas.find((input) => geometryContains(input.outline, longitude, latitude))

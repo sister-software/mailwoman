@@ -2,14 +2,14 @@
  * @copyright Sister Software.
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
- * @file FCC/NITA Building Type Codes
+ * @file FCC/nita Building Type Codes
  * @see https://www.fcc.gov/sites/default/files/2019-08/Building%20Type%20Code%20List.pdf
  */
 
 /**
  * Code indicating the type of building at the location.
  *
- * @category NTIA
+ * @category Ntia
  * @category FCC
  * @title Building Type Code
  */
@@ -56,7 +56,7 @@ export const BuildingTypeCode = {
 } as const
 
 /**
- * @category NTIA
+ * @category Ntia
  * @category FCC
  */
 export type BuildingTypeCode = (typeof BuildingTypeCode)[keyof typeof BuildingTypeCode]

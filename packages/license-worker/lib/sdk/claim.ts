@@ -7,14 +7,14 @@
  *   `polling` moves. every other phase is terminal. `pending` past the deadline is the page saying the email will arrive
  *   on its own. an unanswered worker past the deadline is `unreachable`, a different word, because a customer who sees
  *   it acts differently, and a 200 whose body is not a claim counts as unanswered rather than as a claim with fields
- *   missing. The docs site is a browser bundle, so the request is a plain `fetch`: the worker's exact-origin CORS
+ *   missing. The docs site is a browser bundle, so the request is a plain `fetch`: the worker's exact-origin cors
  *   admits this site and answers `no-store`.
  */
 
-import { type ClaimResponse, type IssuedClaim, parseClaimResponse } from "#claim-contract"
+import { type ClaimResponse, type IssuedClaim, parseClaimResponse } from "#claim-interface"
 import { LICENSE_WORKER_URL } from "#sdk/constants"
 
-export type { ClaimResponse, IssuedClaim } from "#claim-contract"
+export type { ClaimResponse, IssuedClaim } from "#claim-interface"
 
 export type ClaimState =
 	| { phase: "polling"; attempts: number; startedAt?: number }

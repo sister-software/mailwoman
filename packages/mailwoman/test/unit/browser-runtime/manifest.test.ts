@@ -3,10 +3,10 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Wire contract for the releases manifest, post-migration (2026-07-04). History: the acronym
+ *   Wire interface for the releases manifest, post-migration (2026-07-04). History: the acronym
  *   sweep capitalized the manifest reads while the published R2 json kept the legacy keys — every
  *   release read `undefined`, silently disabling the demo's WOF cascade and FST for three days.
- *   The resolution keeps the house casing and migrates the WIRE: the publisher writes
+ *   The resolution keeps the house casing and migrates the wire: the publisher writes
  *   `hasFST`/`hasWOFDB`, `normalizeReleasesManifest` is the single boundary that tolerates both
  *   key generations (old HF mirrors still carry `hasFst`/`hasWofDb`), and no consumer reads raw
  *   wire keys outside it.
@@ -68,7 +68,7 @@ describe("normalizeReleasesManifest — the single wire boundary", () => {
 })
 
 describe("no consumer reads raw legacy wire keys outside the boundary", () => {
-	// Every other consumer reads through `ReleaseInfo`, which carries no legacy key, so a raw read there is a type error.
+	// Every other consumer reads through `ReleaseInfo`. It carries no legacy key. Therefore, a raw read there is a type error.
 	// these two are the writer and the loader, whose string literals the type cannot see.
 	for (const rel of ["lib/browser-runtime/load-assets.ts", "lib/release-tools/publish-hf.ts"]) {
 		test(`${rel} is house-cased only`, async () => {

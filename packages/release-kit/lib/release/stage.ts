@@ -4,15 +4,15 @@
  * @author Teffen Ellis, et al.
  *
  *   The staging + audit half of the #1894 release preflight: materialize the release tree in an
- *   ISOLATED staging root, then pack and audit every release workspace there — so a preflight can
+ *   isolated staging root, then pack and audit every release workspace there — so a preflight can
  *   exercise the exact pack-and-verify path CI publishes with, without a tag, a registry write, or a
  *   dirty source checkout.
  *
- *   Why staging is the mechanism and not try/finally: `packWorkspaceForPublish` EDITS the workspace
+ *   Why staging is the mechanism and not try/finally: `packWorkspaceForPublish` edits the workspace
  *   manifest in place while packing (the injected `publishConfig.exports`) and restores it after — a
- *   killed process mid-pack leaves the manifest dirty. A staging tree built by `git archive HEAD`
+ *   killed process mid-pack leaves the manifest dirty. A staging tree built by `git archive head`
  *   contains tracked files only and lives outside the checkout, so an interrupted run leaves every
- *   tracked file byte-identical BY CONSTRUCTION rather than by cleanup code that must survive kill
+ *   tracked file byte-identical BY construction rather than by cleanup code that must survive kill
  *   signals. Measured on this tree: `yarn pack` runs in the staged copy against a symlinked
  *   `node_modules` (74 ms for `@mailwoman/spatial`) and translates `workspace:*` to the concrete
  *   sibling version exactly as the publish path does.
@@ -95,7 +95,7 @@ export interface ReleaseListIdentity {
 
 /**
  * The named-absence identity: root `workspaces` minus the release list must equal the sanctioned set exactly. Every
- * discrepancy is reported by NAME, so the failure is actionable without counting.
+ * discrepancy is reported by name, so the failure is actionable without counting.
  */
 export async function checkReleaseListIdentity(repoRoot: PathBuilderLike): Promise<ReleaseListIdentity> {
 	const root = await readWorkspaceDirectories(repoRoot)
@@ -115,7 +115,7 @@ export async function checkReleaseListIdentity(repoRoot: PathBuilderLike): Promi
 /**
  * Materialize the release tree into `stagingRoot`:
  *
- * 1. `git archive HEAD` — tracked files only, so the staging tree can never leak uncommitted work into an audit and the
+ * 1. `git archive head` — tracked files only, so the staging tree can never leak uncommitted work into an audit and the
  *    source checkout is never written to.
  * 2. Each release workspace's compiled `out/` copied in — tarballs ship compiled JS + `.d.ts`, and `out/` is gitignored.
  * 3. The checkout's `node_modules` symlinked in — `yarn pack` needs the project context, reads it, and never writes it.
@@ -168,7 +168,7 @@ export async function auditStagedWorkspaces(
 
 	const results: WorkspaceAuditResult[] = []
 
-	// Sequential, and AWAITED: the pack edits the workspace manifest in place and restores it, and it must have
+	// Sequential, and awaited: the pack edits the workspace manifest in place and restores it, and it must have
 	// finished before the audit opens the tarball — an un-awaited pack audits a file that does not exist yet.
 	for (const workspace of workspaces) {
 		const tarball = join(tarballDir, `${workspace.replaceAll("/", "__")}.tgz`)

@@ -30,7 +30,7 @@
  *
  *   `prefer-spliterator`: `text.split("\n")` (or `"\t"`) materializes every segment into one array
  *   before the first is read — the whole-buffer parse the spliterator library exists to avoid (the
- *   quadratic-CSV episode in AGENTS.md started exactly there). The rule warns on those two literal
+ *   quadratic-CSV episode in agents.md started exactly there). The rule warns on those two literal
  *   delimiters only. splitting on anything else is not a streaming shape and stays silent.
  */
 
@@ -204,7 +204,7 @@ const noDatabaseHandleCastRule: Rule = {
 						"handle over a schema that EXTENDS the one a helper wants is not assignable to it — but the " +
 						"incompatibility lives in `transaction()` and `with()`, which such helpers do not call. Narrow the " +
 						'HELPER\'S PARAMETER to the members it actually uses (`Pick<Kysely<Schema>, "insertInto" | "schema" ' +
-						'| "selectFrom">`) and the caller passes its own handle with no cast at all; `LayerContractHandle` ' +
+						'| "selectFrom">`) and the caller passes its own handle with no cast at all; `layerschemahandle` ' +
 						"in `@mailwoman/core/layers` is the worked example. A cast here does not skip one check — it disarms " +
 						"every column-level guarantee those tables carry, branded normalization keys included.",
 				})
@@ -303,8 +303,8 @@ const requireDisableReasonRule: Rule = {
 
 /**
  * Each synchronous `node:fs` name, mapped to the asynchronous helper that replaces it. The three removal helpers and
- * the two stat helpers differ in what they treat as an error, so the suggestion names the builtin's own contract rather
- * than the nearest-looking helper.
+ * the two stat helpers differ in what they treat as an error, so the suggestion names the builtin's own interface
+ * rather than the nearest-looking helper.
  */
 const GLOBERATOR_DIRECTORY_HINT =
 	'`Globerator.from("*", { cwd: path, absolute: false })`, adding `withFileTypes: true, onlyFiles: false` when entry types are needed (spliterator/node/fs)'
@@ -619,11 +619,11 @@ function indexedBaseName(node: AstNode | undefined): string | null {
 }
 
 /**
- * Whether a computed index is a VARIABLE rather than a constant — `xs[i]`, not `xs[0]`.
+ * Whether a computed index is a variable rather than a constant — `xs[i]`, not `xs[0]`.
  *
  * Heapsort's extraction phase counts down from the last index, stops at 1, and swaps two computed indices of one array,
  * so it satisfies every other clause of the shuffle shape. What separates it is that one of its indices is the literal
- * 0: a shuffle swaps the loop variable with a DRAWN index, and neither is a constant.
+ * 0: a shuffle swaps the loop variable with a drawn index, and neither is a constant.
  */
 function isVariableIndex(node: AstNode | undefined): boolean {
 	if (node?.type !== "MemberExpression" || node.computed !== true) return false
@@ -702,7 +702,7 @@ function swapsTwoIndices(body: AstNode): boolean {
 
 /**
  * The name a template expression interpolates: the property for `place.locality` and `row["locality"]`, the identifier
- * for a bare `locality`. Anything else answers null, which cannot match a row and so cannot report one.
+ * for a bare `locality`. Anything else answers null. It cannot match a row. Therefore, it cannot report one.
  */
 function interpolatedName(node: AstNode): string | null {
 	if (node.type === "Identifier") return node.name ?? null

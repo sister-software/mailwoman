@@ -22,7 +22,7 @@ geo.reverse((38.8977, -77.0365))
 
 ## Endpoints
 
-| Endpoint        | Nominatim contract                                            | Status  |
+| Endpoint        | Nominatim interface                                           | Status  |
 | --------------- | ------------------------------------------------------------- | ------- |
 | `/`             | HTML landing page (endpoint index + example queries)          | ✓       |
 | `/search`       | free-text `q` + structured forward geocoding                  | ✓       |

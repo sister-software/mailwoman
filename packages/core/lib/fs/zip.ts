@@ -61,7 +61,7 @@ async function openStreamingArchive(
  */
 export interface ZipNameOptions {
 	/**
-	 * An `iconv-lite` label — `cp949`, `shift_jis`, `gbk`. Omit when the archive's names are ASCII or properly flagged
+	 * An `iconv-lite` label — `cp949`, `shift_jis`, `gbk`. Omit when the archive's names are ascii or properly flagged
 	 * UTF-8, which is every other archive this repository reads.
 	 */
 	filenameEncoding?: string
@@ -70,7 +70,7 @@ export interface ZipNameOptions {
 /**
  * A member's name, decoded as {@link ZipNameOptions} asks.
  *
- * `iconv-lite` rather than `TextDecoder` for the reason `decodeByteStream` gives: Node's WHATWG `euc-kr` is EUC-KR
+ * `iconv-lite` rather than `TextDecoder` for the reason `decodeByteStream` gives: Node's whatwg `euc-kr` is EUC-KR
  * proper and reads 8,824 of CP949's 17,048 two-byte sequences differently, so a member whose name uses the UHC
  * extension would be looked for under a name that does not exist.
  */
@@ -326,7 +326,7 @@ export async function extractZipEntries(
  * member at a time and the checksum is folded chunk by chunk, so memory is bounded by the inflate window.
  *
  * The CRC is computed here rather than delegated to yauzl's `validateCrc32`, which asserts `Cannot validate CRC32 for
- * uncompressed data` on a STORED member — and a corrupt stored member is precisely what this is meant to catch. Folding
+ * uncompressed data` on a stored member — and a corrupt stored member is precisely what this is meant to catch. Folding
  * it locally covers both storage methods with one path.
  *
  * @category Files

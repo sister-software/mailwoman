@@ -7,12 +7,12 @@
  *   read-only sibling of `data pull`. With no bundle names given, reports on every bundle in
  *   `data-bundles.ts`'s registry.
  *
- *   OFFLINE BY DEFAULT: an artifact already on disk (`resolveDatabasePath` for a versioned `us`
- *   per-state database, `existsSync` otherwise) is reported "present" against the SURVEYED size baked
+ *   offline BY default: an artifact already on disk (`resolveDatabasePath` for a versioned `us`
+ *   per-state database, `existsSync` otherwise) is reported "present" against the surveyed size baked
  *   into the registry (`BundleArtifact.approxBytes`) — a local size-only integrity check (catches a
  *   truncated/corrupt file), not a live version comparison. `--check-remote` upgrades this to a real
- *   HEAD `Content-Length` probe via `APIClient` (one small paced request per artifact THAT'S ALREADY
- *   PRESENT — nothing is fetched for an artifact reported missing, so the flag stays cheap even
+ *   head `Content-Length` probe via `APIClient` (one small paced request per artifact that'S already
+ *   present — nothing is fetched for an artifact reported missing, so the flag stays cheap even
  *   against the `us` bundle's 103 files).
  */
 
@@ -34,7 +34,7 @@ import { artifactURL, BUNDLES, needsDownload, resolveBundleArtifacts, type Bundl
 import { existingLocalPath, readReleaseManifest } from "#data/release"
 
 /**
- * Native command-line contract consumed by the filesystem command router.
+ * Native command-line interface consumed by the filesystem command router.
  */
 export const spec = {
 	name: "status",

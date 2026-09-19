@@ -2,7 +2,7 @@
  * @copyright Sister Software
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
- * @file The typed evidence union. The difference between the kinds is what each is ALLOWED to do:
+ * @file The typed evidence union. The difference between the kinds is what each is allowed to do:
  *
  *   - `observation` — retrieved from a named source at a named vintage. Carries no score. a source either said it or
  *     did not.

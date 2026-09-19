@@ -77,12 +77,12 @@ const DATED_FILENAME = /(^|\/)\d{4}-\d{2}-\d{2}[-.]/
  * Trees whose documents are point-in-time records although their filenames carry no date, each with the reason.
  *
  * A record states what was true when it was written, so a path it names is evidence rather than a claim about the
- * current tree — the same exemption `AGENTS.md` gives dated records from the acronym-casing convention and the banned
+ * current tree — the same exemption `agents.md` gives dated records from the acronym-casing convention and the banned
  * vocabulary. This declares a class of document rather than a list of broken citations: a new stale path inside one of
  * these trees is still out of scope, and a new one outside them still fails.
  */
 const RECORD_TREES = new Map([
-	// `AGENTS.md`: "The old implementation plan (`plan/README.mdx`) and the phase directory are historical design
+	// `agents.md`: "The old implementation plan (`plan/readme.mdx`) and the phase directory are historical design
 	// records — rationale rather than current state."
 	["docs/records/plan/", "the superseded implementation plan"],
 	["docs/records/retrospectives/", "retrospectives, written about a campaign that has ended"],
@@ -119,7 +119,7 @@ export const CitationRefusal = {
 	 */
 	Elided: "elided",
 	/**
-	 * A glob, a `<placeholder>`, a `{brace}` or a `$VARIABLE` — a pattern over paths rather than one path.
+	 * A glob, a `<placeholder>`, a `{brace}` or a `$variable` — a pattern over paths rather than one path.
 	 */
 	Pattern: "pattern",
 	/**

@@ -36,7 +36,7 @@ export const FAKE_SUGGESTIONS: Suggestion[] = [
 ]
 
 /**
- * A fake DEMO runtime — the map analogue of {@link makePipelineRuntime}. It composes the pipeline fake (canned
+ * A fake demo runtime — the map analogue of {@link makePipelineRuntime}. It composes the pipeline fake (canned
  * parse+resolve) with the map surface: the offline stub style, a version list, a backend, an injected autocomplete, and
  * a `resolveMapPlace` that hands the selected candidate a bbox so the declarative overlays draw a marker + outline. No
  * network, no ONNX, no maplibre-at-runtime — everything is data. `runParseWithBias` delegates to the base parse (the

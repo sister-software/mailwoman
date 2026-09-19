@@ -99,7 +99,7 @@ describe("readWeightsRecipe — buildable is not linkable", () => {
 		const recipe = await readWeightsRecipe(repoRoot, dataRoot)
 
 		// The config names `postalcode-us.db`; the resolver looks for `postcode-us.bin`. Treating the entry as
-		// linkable would place a DATABASE under the binary's name, and every sibling degrades to `undefined`, so
+		// linkable would place a database under the binary's name, and every sibling degrades to `undefined`, so
 		// the resolver would then report the artifact absent rather than wrong.
 		expect(recipe.linkableFor("en-us").some((a) => a.shippedName.startsWith("postcode-"))).toBe(false)
 

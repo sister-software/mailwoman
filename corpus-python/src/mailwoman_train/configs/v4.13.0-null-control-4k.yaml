@@ -1,9 +1,9 @@
-# v4.13.0 — THE NULL CONTROL (#1748 / #1821)
+# v4.13.0 — the NULL control (#1748 / #1821)
 #
 # No added source. The v0.22.0 base corpus, unchanged, fine-tuned for the same 4,000 steps at the same
 # seed and the same EWC brake as v4.11.0. The treatment is removed. everything else is held.
 #
-# WHY THIS EXISTS. Five runs varied the treatment and never measured the placebo:
+# why this exists. Five runs varied the treatment and never measured the placebo:
 #
 #   v4.8.0    admin source @ 9.4%                    net -18   12 venue-led
 #   v4.9.0    + dependent locality                   net -20   15 venue-led
@@ -11,12 +11,12 @@
 #   v4.11.0   venue-containing, no new source or weight net -13    9 venue-led
 #   v4.12.0   EWC brake x10                          net -12    9 venue-led
 #
-# Three unrelated changes — exposure, composition, regularization — reach the same floor with the SAME
-# NINE venue-led rows. A floor that three independent changes cannot move is not a property of any of
+# Three unrelated changes — exposure, composition, regularization — reach the same floor with the same
+# nine venue-led rows. A floor that three independent changes cannot move is not a property of any of
 # them, and the obvious remaining explanation was never tested: that a 4,000-step fine-tune of this
 # base moves those rows on its own, whatever it is fed.
 #
-# WHAT IT DECIDES:
+# what IT decides:
 #   - the nine still regress with no new data  -> the arc measured the wrong thing. Every corpus-side
 #     conclusion is void, the right baseline for a candidate is this run rather than the shipped model,
 #     and the question becomes whether fine-tuning this base is viable at all.
@@ -164,7 +164,7 @@ data:
     VU: 1.0
     ZA: 1.0
   source_weights:
-    # REPS-FIRST (#1677): weight = target_reps x rows x total / (samples - target_reps x rows).
+    # reps-first (#1677): weight = target_reps x rows x total / (samples - target_reps x rows).
     # 6 reps/row x 17,908 rows against 155.0 total over 8,000 x 128 = 1,024,000 samples -> 18.17,
     # a 10.5% share. Parity with the bare trailing-region sources, measured at 7.7 and 5.2 reps/row.
     # For contrast, the weight that collapsed v4.6.0 was 1.0 and bought 165 reps/row.

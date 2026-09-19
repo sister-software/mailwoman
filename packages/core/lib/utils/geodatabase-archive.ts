@@ -4,20 +4,20 @@
  * @author Teffen Ellis, et al.
  *
  *   Acquire one vintage of a published file geodatabase — transfer the archive, unzip it into a `.gdb`
- *   directory, and answer with the directory GDAL will open.
+ *   directory, and answer with the directory gdal will open.
  *
- *   THE ARCHIVE IS UNZIPPED **INTO** A `.gdb` DIRECTORY RATHER THAN IN PLACE. These publishers put the
- *   geodatabase's files at the archive's ROOT, and GDAL identifies a file geodatabase by the DIRECTORY
- *   SUFFIX. Unzipping in place produces a pile of `a0000000*.gdbtable` files no driver will open, which
+ *   the archive is unzipped **into** A `.gdb` directory rather than IN place. These publishers put the
+ *   geodatabase's files at the archive's root, and gdal identifies a file geodatabase by the directory
+ *   suffix. Unzipping in place produces a pile of `a0000000*.gdbtable` files no driver will open, which
  *   reads as an unsupported format rather than as an extraction that landed one level too high.
  *
- *   THE CACHE IS KEYED ON THE PRODUCT'S OWN VINTAGE, NEVER ON A LENGTH PROBE. The hosts these callers use
- *   answer `HEAD` with HTTP 405 and ignore `Range` — a `curl -r 0-1023` returns HTTP 200 with the whole
+ *   the cache is keyed on the product'S own vintage, never on A length probe. The hosts these callers use
+ *   answer `head` with http 405 and ignore `Range` — a `curl -r 0-1023` returns http 200 with the whole
  *   body — so "just check the size" starts a real transfer of a file already on disk. Keying on the vintage
  *   the catalogue declares means a re-run against the same vintage never re-transfers, and a new vintage
  *   never overwrites the old one in place.
  *
- *   SHARED RATHER THAN COPIED because nothing in it is any one product's: it is a cache key, a transfer and
+ *   shared rather than copied because nothing in it is any one product's: it is a cache key, a transfer and
  *   an extraction. What stays with each caller is where the URL came from and what the two names are.
  */
 

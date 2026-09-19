@@ -7,7 +7,7 @@
  *   default (every serve/query path), read-write only when `buildFTS` is requested (the FTS5 index build — the sole
  *   writer). Shipped extracts are sealed 0444 and Docker `:ro` mounts forbid write-mode opens (#1213).
  *
- *   Why this needs a construction spy rather than a plain 0444 open: SQLite silently DOWNGRADES a write-mode open to
+ *   Why this needs a construction spy rather than a plain 0444 open: SQLite silently downgrades a write-mode open to
  *   read-only on an owned read-only file, so a 0444 open succeeds under the old `readOnly: false` too and cannot
  *   distinguish old code from new. Recording the `readOnly` option actually passed to `DatabaseSync` is the reliable
  *   signal. (`lookup.test.ts` keeps an end-to-end 0444 smoke test proving a sealed file resolves. this file proves the
@@ -59,7 +59,7 @@ afterAll(() => vi.resetModules())
 
 // Dynamic imports after the reset (and after the hoisted vi.mock registration above) so the
 // module-under-test chain evaluates against the RecordingDatabaseSync mock.
-// oxlint-disable-next-line no-restricted-imports -- this probe RECORDS the construction, so it must name the builtin
+// oxlint-disable-next-line no-restricted-imports -- this probe records the construction, so it must name the builtin
 await import("node:sqlite")
 const { WOFSQLitePlaceLookup } = await import("@mailwoman/resolver-wof-sqlite/lookup")
 

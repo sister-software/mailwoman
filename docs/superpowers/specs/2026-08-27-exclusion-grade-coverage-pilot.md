@@ -2,8 +2,8 @@
 
 Design record for #1964, under the coverage register design of
 [`2026-08-11-coverage-register-design.md`](./2026-08-11-coverage-register-design.md) and the
-`layer_coverage` contract in
-[`../../engineering/reference/layer-contract.mdx`](../../engineering/reference/layer-contract.mdx).
+`layer_coverage` interface in
+[`../../engineering/reference/layer-interface.mdx`](../../engineering/reference/layer-interface.mdx).
 
 Every one of the 158,813 coverage cells in the shipped `poi.db` carries `basis = source_present` at
 `completeness = 1.0`, exactly as `build-poi.ts` writes them. `supportsExclusion` is therefore false
@@ -30,7 +30,7 @@ different layer's table. That settles the artifact shape on its own:
   `observed_rows` a claim about somebody else's rows.
 
 So the pilot builds a complete layer of its own — manifest, domain rows, coverage — and its coverage
-describes its own rows. That is the shape the contract already supports; no schema change was needed
+describes its own rows. That is the shape the interface already supports; no schema change was needed
 to reach an exclusion-grade basis, only a builder willing to write one.
 
 ## The completeness basis
@@ -129,7 +129,7 @@ that transfers to another region unmeasured.
   `basis = surveyed, observed_rows = 0`. That row is the storable form of "surveyed, and there is no
   pharmacy here" — the exclusion payload, and the reason the pilot exists.
 - Cells outside the region get **no row at all**. Not completeness 0: the measurement says nothing
-  about the region's outside, and a missing row is the contract's word for unknown.
+  about the region's outside, and a missing row is the interface's word for unknown.
 - 60 subject rows and 138 reference rows fell outside the interior cell set. They are counted and
   reported rather than silently dropped.
 - The shipped `poi.db` is unchanged — 158,813 cells, all `source_present`, `supportsExclusion` false,

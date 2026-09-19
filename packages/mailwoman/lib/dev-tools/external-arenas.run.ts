@@ -3,8 +3,8 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   NOTE(de-shell): forwarding shim. The three unbiased capability arenas now live at
- *   `mailwoman/eval-harness/external-arenas.ts` and `promotion-eval.ts` calls them IN-PROCESS. This
+ *   note(de-shell): forwarding shim. The three unbiased capability arenas now live at
+ *   `mailwoman/eval-harness/external-arenas.ts` and `promotion-eval.ts` calls them IN-process. This
  *   shim keeps standalone invocation working unchanged. Output is byte-identical because the module
  *   owns every printed line. Do not add logic here.
  */
@@ -15,7 +15,7 @@ import { parseArguments } from "@mailwoman/core/scripting/arguments"
 import { externalArenas } from "#eval-harness/external-arenas"
 
 async function main(): Promise<void> {
-	// Flags replace the bash-era env contract (MODEL=… TOKENIZER=… → --model … --tokenizer …).
+	// Flags replace the bash-era env interface (model=… tokenizer=… → --model … --tokenizer …).
 	const { values: cli } = parseArguments({
 		options: {
 			"out-dir": { type: "string" },

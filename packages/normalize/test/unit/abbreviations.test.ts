@@ -73,7 +73,7 @@ describe("expandAbbreviations — fr-FR", () => {
 describe("expandAbbreviations — es-ES / es-MX", () => {
 	// `Av.` is Avenida in Spanish and Avenue in French. Until 2026-08-05 there was no Spanish table at
 	// all, so every `es-*` locale fell through to the en-US default and `Av.` went unexpanded, while
-	// the locale-UNKNOWN set the geocode path uses expanded it to the ENGLISH "Avenue". Both MX rows in
+	// the locale-unknown set the geocode path uses expanded it to the english "Avenue". Both MX rows in
 	// the 2026-08-05 gauntlet batch record the second half of that (mx-op3-san-miguel-canada-zapopan,
 	// pr-op3-place-at-the-sea-ponce) and had to leave `street` unasserted because of it.
 	it("expands Av. → Avenida, not Avenue", () => {
@@ -105,7 +105,7 @@ describe("expandAbbreviations — the Av collision across locales", () => {
 		expect(expandAbbreviations("1 Av. de la Convention", "fr-FR").text).toBe("1 Avenue de la Convention")
 	})
 
-	// TRACKED DEFECT, pinned so a fix is a deliberate change and not a surprise. The locale-UNKNOWN set
+	// tracked defect, pinned so a fix is a deliberate change and not a surprise. The locale-unknown set
 	// is what the geocode path uses (`normalize(input, { locale: "und" })` in mailwoman/geocode-core.ts),
 	// because Stage 1 runs before the parse that would establish the locale. `Av` is in that set on the
 	// claim that it "reads Avenue in both" — true of en/fr, false of es/pt, which is how Spanish input

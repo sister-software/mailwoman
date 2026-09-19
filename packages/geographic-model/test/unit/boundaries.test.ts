@@ -59,7 +59,7 @@ describe("the geographic model's recorded dependency direction", () => {
 			.filter(([, field]) => field && "@mailwoman/geographic-model" in field)
 			.map(([name]) => name)
 
-		// Core ships the pipeline contract and its reference data to every consumer, so a world-semantics
+		// Core ships the pipeline interface and its reference data to every consumer, so a world-semantics
 		// dependency there is one every drop-in API inherits. Reversing the direction amends the boundary
 		// record. it is not a convenience during implementation.
 		expect(declaring).toEqual([])

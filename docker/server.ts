@@ -4,17 +4,17 @@
  * @author Teffen Ellis, et al.
  *
  *   Container entrypoint for the `ghcr.io/sister-software/mailwoman` image — a batteries-included
- *   native `/v1` HTTP API (parse, geocode, batch, format, health, metrics) over the published
+ *   native `/v1` http API (parse, geocode, batch, format, health, metrics) over the published
  *   `@mailwoman/*` npm packages baked into the image. This is deliberately not the `mailwoman serve`
  *   CLI: that command's `createServeEngine` exits(1) when no gazetteer is on disk (a supervisor-must-
  *   see-nonzero policy that suits a hand-run server), which would defeat the container's first-run
  *   story. Here the caller (this file) chooses the other branch the engine builder documents — "boot
  *   degraded (parse+health only)" — so `docker run` with no data volume still answers `/v1/parse`.
  *
- *   The wiring MIRRORS `mailwoman/api-engine.ts` (`createServeEngine`) using only that package's own
+ *   The wiring mirrors `mailwoman/api-engine.ts` (`createServeEngine`) using only that package's own
  *   exported building blocks — `mailwoman/geocode-core` (`geocodeAddress`, `RegionDatabaseProvider`) and
  *   `mailwoman/resolver-backend` (`createResolverBackend`, `resolveCandidateDBPath`, `wofExtractPaths`,
- *   `mailwomanDataRoot`) — so the geocode path does not drift from the real server. Model WEIGHTS ship
+ *   `mailwomanDataRoot`) — so the geocode path does not drift from the real server. Model weights ship
  *   IN the image via `@mailwoman/neural-weights-en-us`; the gazetteer / resolver DBs are volume-mounted
  *   read-only at `$MAILWOMAN_DATA_ROOT` (the image sets it to `/data`).
  *
@@ -28,7 +28,7 @@
  *
  *   The container always listens on port 3000 on 0.0.0.0. remap with `docker run -p <host>:3000`. The
  *   drop-in servers (`@mailwoman/nominatim`, `@mailwoman/photon`, `@mailwoman/libpostal`) are also in
- *   the image and can be run as alternative commands — see `docker/README.md`.
+ *   the image and can be run as alternative commands — see `docker/readme.md`.
  */
 
 import { createMailwomanAPI } from "@mailwoman/api"

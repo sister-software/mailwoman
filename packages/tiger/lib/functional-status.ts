@@ -7,7 +7,7 @@
 /**
  * A code indicating the functional status of a governmental unit.
  *
- * @title TIGER Functional Status
+ * @title tiger Functional Status
  */
 export const TIGERFunctionalStatus = {
 	/**

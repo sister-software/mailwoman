@@ -154,7 +154,7 @@ def sync_assets(
 ) -> None:
     """Pull named corpus versions, a tokenizer, the training code and arbitrary extra files from R2.
 
-    Layout contract, matching what `mailwoman corpus upload` writes:
+    Layout interface, matching what `mailwoman corpus upload` writes:
 
         :s3:{BUCKET}/corpus/<version>/  ->  {VOL_MOUNT}/corpus/versioned/<version>/corpus-<version>/
 

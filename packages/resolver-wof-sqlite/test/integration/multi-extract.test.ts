@@ -3,9 +3,9 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Multi-extract ATTACH tests for `WOFSQLitePlaceLookup`.
+ *   Multi-extract attach tests for `WOFSQLitePlaceLookup`.
  *
- *   Uses on-disk fixture DBs because ATTACH requires file paths. Tests run unconditionally (the
+ *   Uses on-disk fixture DBs because attach requires file paths. Tests run unconditionally (the
  *   fixture DBs are built in-test via the same shape the real WOF distribution uses), so this
  *   doesn't check on the real WOF being present.
  */

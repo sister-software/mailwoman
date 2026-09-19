@@ -5,7 +5,7 @@
  *
  *   Cross-dataset correlation (#618) — the marquee proof: resolve one record set across datasets that
  *   share no key. NPPES (the national provider registry), FCC Rural Health Care filings, and TX
- *   HHSC facility registries each describe overlapping physical entities under different names,
+ *   hhsc facility registries each describe overlapping physical entities under different names,
  *   formats, and schemas. Geo-first blocking is what makes resolving them tractable.
  *
  *   We ingest each source under its own {@link ColumnMapping} + a `source` provenance label into one
@@ -62,7 +62,7 @@ export interface CrossDatasetCorrelationOptions {
 	 */
 	state?: string
 	/**
-	 * The inverse-address-frequency change is a CORPUS statistic — it can't be synthesized from the geocoded sample. By
+	 * The inverse-address-frequency change is a corpus statistic — it can't be synthesized from the geocoded sample. By
 	 * default we scan the full files (cheap, parse-free) for an in-state corpus-wide frequency table and feed it to the
 	 * matcher, so the proven #617 change actually bites on a sub-sampled run. The scan adds a full pass over the 4.8 GB
 	 * NPPES file (~5 min); `--no-corpus-frequency` skips it and falls back to resolveEntities' zero-config input-scoped
@@ -96,7 +96,7 @@ function composeAddress(row: Record<string, string>, columns: string | string[] 
 }
 
 /**
- * FCC RHC funding commitments — TWO addressable entities per row (a Filing HCP and a Participating HCP), each exploded
+ * FCC RHC funding commitments — two addressable entities per row (a Filing HCP and a Participating HCP), each exploded
  * into its own record (the #618 B1 two-entity-per-row case). Composed after the shared {@link buildSpecs} trio, which
  * this probe correlates against.
  */
@@ -234,7 +234,7 @@ export async function crossDatasetCorrelation(
 	for (const spec of SPECS) {
 		const rows = rawBySource.get(spec.source)!
 		// Per-source geocode-rate snapshot (#694 diagnostic): the boundary counters are global, so delta
-		// them across each source to see WHERE nulls concentrate in the aggregate run.
+		// them across each source to see where nulls concentrate in the aggregate run.
 		const g0 = geo
 		const t0 = total
 		const recs = await ingestRows(rows, spec.mapping, { geocodeAddress: geocodeForIngest })
@@ -258,8 +258,8 @@ export async function crossDatasetCorrelation(
 	// resolveEntities auto-computes the input-scoped default. ---
 	report?.("[D] resolving across sources…")
 
-	// learnedScorer:false — the GBT default is calibrated for same-dataset DEDUP, where "same address +
-	// different name" means distinct co-located providers (reject). CROSS-dataset linkage is the opposite
+	// learnedScorer:false — the GBT default is calibrated for same-dataset dedup, where "same address +
+	// different name" means distinct co-located providers (reject). cross-dataset linkage is the opposite
 	// objective: "same address + different name" is the prototypical signal of the same facility under a
 	// different operational name across sources. The dedup GBT rejects exactly those true cross-source
 	// links (measured: cross-source 219→166, triple-source 10→1), so this flow uses the recall-appropriate

@@ -10,7 +10,7 @@
  *
  *   The classifier IDs in `ruleClassifiers` are the stable `ProposalClassifier.id` values that
  *   `wrapLegacyClassifier` assigns when the legacy classifier registry lands (see the Phase 0
- *   task-3 follow-up in DECISIONS.md).
+ *   task-3 follow-up in decisions.md).
  */
 
 import type { ComponentTag } from "@mailwoman/codex/component"

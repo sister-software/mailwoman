@@ -34,21 +34,21 @@
  *   defaults to today via {@linkcode todayISODate}, imported from `filer-lookup.ts` rather than redefined
  *   here, so every reader in this SDK shares one definition of "today."
  *
- *   Temporal scoping copies `filer-lookup.ts`'s exact half-open predicate verbatim — `valid_from <= asOf AND
- *   (valid_to IS NULL OR valid_to > asOf)` — rather than reimplementing it: dropping the `valid_to` half, or
+ *   Temporal scoping copies `filer-lookup.ts`'s exact half-open predicate verbatim — `valid_from <= asOf and
+ *   (valid_to is NULL or valid_to > asOf)` — rather than reimplementing it: dropping the `valid_to` half, or
  *   making either bound inclusive, are easy mistakes that read as correct, and every reimplementation is
  *   another place to make one and another place for the readers to diverge.
  *
- *   **EDGAR-sourced families need no change here.** `build-filer.ts`'s EDGAR ingest writes
+ *   **edgar-sourced families need no change here.** `build-filer.ts`'s edgar ingest writes
  *   `filer_family` rows shaped identically to every other writer's, so this module's query — generic over
  *   `relationship` and never keyed to a specific `source` — already answers a `familyID`/`nodeID` query for a
  *   `cik:`-named family exactly as it would for a `holding_company_name:`-named one. The one dependency this
  *   module has on a source-specific decision is `readFamilyDisplayNames` (`filer-lookup.ts`), which admits an
- *   INFERRED accompanying edge (EDGAR's subsidiary-name→FRN corroboration is inference by design, never
+ *   inferred accompanying edge (edgar's subsidiary-name→FRN corroboration is inference by design, never
  *   authoritative) — see that function's own docstring for why admitting one cannot misattribute a display
  *   name to the wrong member.
  *
- *   **`members` grade themselves via `assertion`/`match_score`, not via `source`.** EDGAR's is the repo's
+ *   **`members` grade themselves via `assertion`/`match_score`, not via `source`.** edgar's is the repo's
  *   first inferred family membership, and `source` cannot grade it — `edgar-exhibit-21` writes an
  *   authoritative disclosure edge and an inferred corroboration in the same build, so the source name spans
  *   both grades and a caller reading strength off it would need a private table of which sources are
@@ -83,7 +83,7 @@ export interface FamilyRollupMember {
 	/**
 	 * One of {@link FilerEdgeAssertion} (`schema.ts`) — how strongly this member's membership is evidenced. Carried here
 	 * even though `source` is already present, because `source` provably cannot answer the question: `edgar-exhibit-21`
-	 * writes an AUTHORITATIVE disclosure edge and an INFERRED corroboration in the same build, so one source name spans
+	 * writes an authoritative disclosure edge and an inferred corroboration in the same build, so one source name spans
 	 * both grades, and any caller reading strength off `source` would need a private table of which sources are
 	 * inferential — the same implicit-knowledge scheme `relationship` was added to end when relationship kind lived in
 	 * the target node's `identifier_type`.
@@ -107,12 +107,12 @@ export interface FamilyRollupMember {
  * spellings one member reported for the same family), so `members.length` alone over-counts whenever more than one row
  * corroborates the same member. This mirrors `filerLookup.ts`'s `cluster.members`, which is already deduped (one entry
  * per node) — without this field, a caller sizing a family by array length would get an inconsistent answer depending
- * on which rollup they read. It counts distinct member NODES, never rows, so widening `filer_family`'s primary key
+ * on which rollup they read. It counts distinct member nodes, never rows, so widening `filer_family`'s primary key
  * cannot inflate it.
  *
  * `display_names` (`family_id` alone is a canonicalized slug, and losing the raw name entirely was a real product loss
  * for the headline "these filers report holding company H" output) is {@linkcode readFamilyDisplayNames}'s output over
- * this family's current members — see that function's docstring for the exact join and for why a MULTI-spelling family
+ * this family's current members — see that function's docstring for the exact join and for why a multi-spelling family
  * (two raw names canonicalizing to the same `family_id`) surfaces every spelling, sorted, rather than picking one.
  */
 export interface FamilyRollup {
@@ -162,7 +162,7 @@ async function readFamilyRollup(
 }
 
 /**
- * Read every corporate family a `familyID`/`nodeID` resolves to — see the module docstring for the full contract (XOR
+ * Read every corporate family a `familyID`/`nodeID` resolves to — see the module docstring for the full interface (XOR
  * query, manifest-first, schema-version guard, temporal scoping, the always-array return shape). A `familyID` query
  * returns at most one element. a `nodeID` query may return more than one (a node legitimately belonging to more than
  * one family is a normal shape, never an error).

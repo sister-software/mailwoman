@@ -10,12 +10,12 @@
 import type { AddressNode } from "#decoder/types"
 
 /**
- * Every node of a forest in DOCUMENT order: parent before children, siblings by their position in the input. Generic
+ * Every node of a forest in document order: parent before children, siblings by their position in the input. Generic
  * over any node shape carrying `children`, so the eval harness's flat nodes and the admin-coherence tree walk the same
- * way the decoder's do — the one implementation the #2163 sweep replaced every hand-rolled LIFO walk with.
+ * way the decoder's do — the one implementation the #2163 sweep replaced every hand-rolled lifo walk with.
  *
  * The order is material rather than a convenience. `find` over this walk decides which of two same-tag spans becomes a
- * named result slot, and the flat component map (`decodeAsJSON`) keeps the first span in text order. A LIFO walk once
+ * named result slot, and the flat component map (`decodeAsJSON`) keeps the first span in text order. A lifo walk once
  * yielded siblings reversed, so `Village of Fae, Camino Real, …` answered `venue: "Camino Real"` in the named slot
  * while the component map said `Village of Fae`, and four board rows failed on the slot alone. One order, the text's,
  * for both.
@@ -53,7 +53,7 @@ export function collectNodes(roots: readonly AddressNode[], predicate: (node: Ad
 
 /**
  * A node the resolver grounded: it carries a coordinate, a place identifier, or a resolution-tier stamp from the street
- * tiers. Grounding is what a result may CLAIM about a span. an ungrounded span is text the parser labeled and nothing
+ * tiers. Grounding is what a result may claim about a span. an ungrounded span is text the parser labeled and nothing
  * more.
  */
 export function isGroundedNode(node: AddressNode): boolean {
@@ -69,7 +69,7 @@ export function isGroundedNode(node: AddressNode): boolean {
  * group in document order. Both the flat component map (`decodeAsJSON`) and the named result slots read this order, so
  * they name the same span.
  *
- * The rule is the one a gazetteer-backed geocoder applies by construction: a component is what RESOLVED, and the
+ * The rule is the one a gazetteer-backed geocoder applies by construction: a component is what resolved, and the
  * query's wording only decides among spans nothing resolved. `12 MG Road, Indiranagar, Bengaluru, Karnataka 560038,
  * India` parses two `locality` spans; `Bengaluru` resolves and `Karnataka` does not (it is a region), so the locality
  * is Bengaluru. `Village of Fae, Camino Real, Carmel-By-The-Sea, CA 93921` parses two `venue` spans and grounds

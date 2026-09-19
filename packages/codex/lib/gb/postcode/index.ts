@@ -6,17 +6,17 @@
  *   UK postcodes: the branded type, the validation shape, normalization, and the outward/inward
  *   split.
  *
- *   This is the MOST COMPLEX postcode of any system in the codex, and the contrast is the whole point
+ *   This is the most complex postcode of any system in the codex, and the contrast is the whole point
  *   of the file. A US ZIP, a German PLZ, and a French code postal are all a fixed five digits — the
  *   shape is trivial and the only interesting question is what admin unit the prefix maps to. The
  *   UK postcode is none of that:
  *
  *   - It is **variable-length alphanumeric**, from six characters (`M1 1AE`) to eight (`SW1A 1AA`),
  *       across forms like `B33 8TH`, `CR2 6XH`, `DN55 1PT`.
- *   - It splits into an **OUTWARD code** (area + district, the part before the space — `SW1A`) and an
- *       **INWARD code** (sector + unit, the three chars after — `1AA`). Royal Mail sorts on the
+ *   - It splits into an **outward code** (area + district, the part before the space — `SW1A`) and an
+ *       **inward code** (sector + unit, the three chars after — `1AA`). Royal Mail sorts on the
  *       outward to a delivery office, then on the inward to a walk.
- *   - And — the lesson that propagates to `postcode-area.ts` — it does **NOT align with administrative
+ *   - And — the lesson that propagates to `postcode-area.ts` — it does **not align with administrative
  *       geography**. A postcode area is a Royal Mail routing construct named after a sorting town
  *       (`SW` = south-west London, `EH` = Edinburgh), not a county or a constituent country. You
  *       cannot read a county off a UK postcode the way you read a département off a French one. the
@@ -50,7 +50,7 @@ export type Postcode = Tagged<string, "UkPostcode">
  * UK postcode shape. A permissive form of the Royal Mail / UK-gov regex: one or two leading letters (the area), a
  * district digit, an optional district letter-or-digit, then the inward sector digit and two unit letters, with the
  * inward space optional so an un-spaced `SW1A1AA` still validates. The full UK-gov pattern additionally whitelists the
- * British Overseas Territory codes (`ASCN`, `STHL`, `BBND`, …); those are rare enough to leave to the gazetteer.
+ * British Overseas Territory codes (`ascn`, `sthl`, `bbnd`, …); those are rare enough to leave to the gazetteer.
  */
 export const UK_POSTCODE_PATTERN = /^[A-Z]{1,2}\d[A-Z\d]? ?\d[A-Z]{2}$/i
 
@@ -78,7 +78,7 @@ export function isUkPostcode(input: unknown): input is Postcode {
 }
 
 /**
- * The OUTWARD code — the part before the space (area + district), e.g. `SW1A 1AA` → `SW1A`, `M1 1AE` → `M1`. Normalizes
+ * The outward code — the part before the space (area + district), e.g. `SW1A 1AA` → `SW1A`, `M1 1AE` → `M1`. Normalizes
  * first so an un-spaced input still cleaves correctly. null if invalid.
  */
 export function outwardCode(pc: unknown): string | null {
@@ -90,7 +90,7 @@ export function outwardCode(pc: unknown): string | null {
 }
 
 /**
- * The INWARD code — the three characters after the space (sector + unit), e.g. `SW1A 1AA` → `1AA`, `M1 1AE` → `1AE`.
+ * The inward code — the three characters after the space (sector + unit), e.g. `SW1A 1AA` → `1AA`, `M1 1AE` → `1AE`.
  * Null if invalid.
  */
 export function inwardCode(pc: unknown): string | null {
@@ -102,7 +102,7 @@ export function inwardCode(pc: unknown): string | null {
 }
 
 /**
- * The POSTCODE AREA — the leading one or two LETTERS of the outward code, the Royal Mail routing region named after a
+ * The postcode area — the leading one or two letters of the outward code, the Royal Mail routing region named after a
  * sorting town: `SW1A 1AA` → `SW`, `M1 1AE` → `M`, `B33 8TH` → `B`. This is the key into `postcode-area.ts`'s
  * area→country map. Null if the input is not a valid postcode.
  */

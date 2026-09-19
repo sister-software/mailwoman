@@ -5,6 +5,8 @@ sentence shapes that shipped in agent replies. It is linted with
 `.vale-chat.ini`, which layers MailwomanChat on the shared Mailwoman style.
 One line per rule token, so a token that stops firing is visible per line.
 
+The loader reads each row, which validates the fields and records the result, so the report can compare runs.
+
 The negative twin was mis-constructed — misconstructed, in the unhyphenated
 spelling — so nothing is deleted.
 
@@ -140,7 +142,7 @@ two lookups. (EconomyMetaphor: `cost` WITH ITS UNIT is what the rule asks for,
 so the noun must stay quiet — it is the remedy rather than the offence.)
 
 The worker allowlists two Price ids and the shop provisions both Prices.
-(EconomyMetaphor: `Price` is a Stripe API object, a third-party contract like
+(EconomyMetaphor: `Price` is a Stripe API object, a third-party interface like
 axios's `HttpStatusCode`, and 106 sites in `packages/license-worker` name it.)
 
 The POI taxonomy holds 970 entries and `erasableSyntaxOnly` is a tsconfig flag.
@@ -153,7 +155,7 @@ artifact names are exempt — that is the replacement both rules ask for.)
 
 The promotion eval ran from `promotion-eval.ts` after `mailwoman eval promote`
 printed the append command. (AmbiguousShorthand: a backticked script name and a
-backticked CLI command are contracts rather than prose, so neither may match.)
+backticked CLI command are interfaces rather than prose, so neither may match.)
 
 This paragraph names the thing you already read, which is filler in a reply.
 

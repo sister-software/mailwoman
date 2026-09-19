@@ -4,7 +4,7 @@
  * @author Teffen Ellis, et al.
  * @file The own-name variant predicate (#1882) — every measured contest from the census, pinned so the threshold
  *   cannot drift past the cases it was chosen on. The comparator choice is itself a pinned decision: Jaro-Winkler's
- *   common-prefix bonus scored `chanchun`/`cancun` at 0.925 — ABOVE the real positives — so the predicate uses edit
+ *   common-prefix bonus scored `chanchun`/`cancun` at 0.925 — above the real positives — so the predicate uses edit
  *   similarity, where the same pair reads 0.75.
  */
 

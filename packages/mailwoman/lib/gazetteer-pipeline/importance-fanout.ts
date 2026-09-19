@@ -5,28 +5,28 @@
  *
  *   Which WOF place does a Wikidata id actually mean? (#1497)
  *
- *   THE DEFECT. `gazetteer importance` joins Nominatim's Wikipedia importance onto WOF through the
+ *   the defect. `gazetteer importance` joins Nominatim's Wikipedia importance onto WOF through the
  *   `concordances` table, and that join is not a function: on the 2026-08-04 admin DB, **7,061
  *   Wikidata ids name more than one current WOF place**, covering 15,216 places. Every one of them
  *   received the same importance. Population importance could never do this — population is a
  *   property of the WOF row and cannot be misjoined — so the defect arrives with the Wikipedia
- *   signal, and it arrives large: `Q1874` (Odessa, UKRAINE) put 0.7138 on a 104-person Minnesota
+ *   signal, and it arrives large: `Q1874` (Odessa, ukraine) put 0.7138 on a 104-person Minnesota
  *   village, outranking Odessa, Texas (pop 114,000) at 0.5840. `neural/fst-prior.ts` makes the bias
- *   LINEAR in importance, so a bad join is not a rounding error, it is near-maximum decode bias on
+ *   linear in importance, so a bad join is not a rounding error, it is near-maximum decode bias on
  *   the wrong place.
  *
- *   WHY NOT JUST DROP EVERY FANNED-OUT ID. Because measuring first showed that most of the fan-out is
+ *   why not just drop every fanned-OUT ID. Because measuring first showed that most of the fan-out is
  *   not an error at all. Of the 7,061 groups:
  *
- *   - **5,044 (71.4%, 10,186 places) are COINCIDENT** — one real place that WOF models at several
+ *   - **5,044 (71.4%, 10,186 places) are coincident** — one real place that WOF models at several
  *     placetypes at one point. `Q61` is region "District of Columbia" + locality "Washington" +
  *     county "District of Columbia", all at 38.9047/-77.0163 with the same population. Dropping
  *     those would delete the importance of every city-state and consolidated city-county in the
  *     gazetteer.
- *   - **1,619 (22.9%) are POPULATION-RESOLVABLE** — genuinely different places, one decisively
+ *   - **1,619 (22.9%) are population-resolvable** — genuinely different places, one decisively
  *     larger. `Q18125` (Manchester, England) is also on Manchester, Pennsylvania (2,788) and
  *     Manchester, Minnesota (53); 547,627 wins.
- *   - **398 (5.6%, 1,009 places) are UNRESOLVABLE** — no population signal or a tie between distant
+ *   - **398 (5.6%, 1,009 places) are unresolvable** — no population signal or a tie between distant
  *     candidates. `Q340` (Montréal, Canada) sits on two French communes 182 km apart, neither with a
  *     population row. Nothing here says which, and both are wrong, so the id goes.
  *
@@ -34,11 +34,11 @@
  *   Net effect 3,411 places lose a wrong score and fall back to the population proxy, while 10,186
  *   legitimate multi-role rows keep theirs.
  *
- *   ORDER MATTERS: coincidence is checked before population. WOF does not populate every role's row,
+ *   order matters: coincidence is checked before population. WOF does not populate every role's row,
  *   so a city-state whose region row has population 0 would otherwise lose that row to its own
  *   locality.
  *
- *   WHAT THIS DOES NOT FIX. A wrong concordance with fan-out of one is invisible here — `Q1874` above
+ *   what this does not FIX. A wrong concordance with fan-out of one is invisible here — `Q1874` above
  *   is exactly that shape, a single bad edge, and it survives this guard. Catching those needs
  *   evidence this table does not carry (the TSV has only language/type/title/importance/wikidata_id —
  *   no geography), so it is a separate problem and not silently folded in.

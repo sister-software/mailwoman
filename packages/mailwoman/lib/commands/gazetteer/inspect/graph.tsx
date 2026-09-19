@@ -9,7 +9,7 @@
  *   Use this instead of `wof tree` when the root has many shared descendants (e.g. `planet`) — the
  *   graph shape stays compact regardless of DAG topology because each node and edge appears exactly
  *   once. Output format follows the d3-force / react-flow convention (`nodes`, `links` with
- *   `source`/`target`) so it drops into common HTML graph viewers without translation.
+ *   `source`/`target`) so it drops into common html graph viewers without translation.
  */
 
 import { Spinner } from "@inkjs/ui"
@@ -27,7 +27,7 @@ import { type CommandSpec, CommandTaskResult, type CommandComponent, parseRoles,
 const BATCH_SIZE = availableParallelism()
 
 /**
- * Native command-line contract consumed by the filesystem command router.
+ * Native command-line interface consumed by the filesystem command router.
  */
 export const spec = {
 	name: "graph",

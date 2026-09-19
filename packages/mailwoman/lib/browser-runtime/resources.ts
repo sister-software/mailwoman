@@ -14,7 +14,7 @@ import type { FSTMatcherLike, FSTProvenanceLike } from "#browser-runtime/types"
 
 /**
  * All demo assets are served from our Cloudflare R2 bucket (nexus-public) on a custom domain. R2 + Cloudflare gives a
- * stable clean URL, raw byte ranges (no gzip mangling), configurable CORS, low RTT, and free egress — the combination
+ * stable clean URL, raw byte ranges (no gzip mangling), configurable cors, low RTT, and free egress — the combination
  * GitHub Pages (force-gzips ranges) and HF (per-request presigned redirect) couldn't. The DBs are range-loaded via
  * sql.js-httpvfs from here. the rest is one-shot full-fetch. Mirrors the old HF key layout, so this was a base-URL
  * swap.
@@ -40,13 +40,13 @@ export function sqljsBaseURL(siteBaseURL: string): string {
 }
 
 /**
- * Per-state street extract URL (#377). The situs (exact address points) + interp (TIGER ranges) DBs are hosted
+ * Per-state street extract URL (#377). The situs (exact address points) + interp (tiger ranges) DBs are hosted
  * byte-range at `mailwoman/street/us/<slug>/<kind>.db` — a lookup touches ~KB of a multi-GB extract, so they're loaded
  * lazily by parsed region rather than bundled. Independent of the locale/version WOF asset layout (street extracts are
  * per-state rather than per-model-version).
  */
 export function streetExtractURL(slug: string, kind: "situs" | "interp"): string {
-	// National (non-US) extracts live under their country at a DATED path (immutable Cache-Control means
+	// National (non-US) extracts live under their country at a dated path (immutable Cache-Control means
 	// a rebuilt extract needs a fresh URL — the admin-gazetteer discipline); US extracts keep the
 	// per-state layout. Bump the version when the BAN artifact is rebuilt + re-uploaded.
 	if (NATIONAL_STREET_SLUGS.has(slug)) {
@@ -75,10 +75,10 @@ export const NATIONAL_STREET_EXTRACT_VERSION = "2026-07-10"
 export const NATIONAL_STREET_FALLBACK_SLUG = "fr" as const
 
 /**
- * Gazetteer (date) version for the byte-ranged admin DB. The admin gazetteer is MODEL-INDEPENDENT — it changes when
+ * Gazetteer (date) version for the byte-ranged admin DB. The admin gazetteer is model-independent — it changes when
  * WOF/Overture coverage is rebuilt rather than on every model release — so it lives on its own dated path rather than
  * under `<locale>/<model-version>/`. Bump this when `admin-global-priority.db` is rebuilt + re-uploaded (the immutable
- * Cache-Control means a fresh DB needs a fresh URL). See RELEASING.md "Rebuilding + swapping the canonical admin
+ * Cache-Control means a fresh DB needs a fresh URL). See releasing.md "Rebuilding + swapping the canonical admin
  * gazetteer".
  */
 export const ADMIN_GAZETTEER_VERSION = "2026-08-25b"
@@ -87,7 +87,7 @@ export const ADMIN_GAZETTEER_VERSION = "2026-08-25b"
  * Byte-ranged global "candidate" gazetteer (`candidate-global.db`, ~2.88 GB. US + intl postcodes + the GeoNames fold
  * across 244 countries) — the single-B-tree-probe lookup that replaces the slim per-model-version `wof-hot.db` and the
  * full-DB FTS. A resolve touches a handful of contiguous pages (~12 range fetches/session vs 243 on the full DB), with
- * GLOBAL coverage and no `SLIM_COUNTRIES` upkeep. It now also carries a co-located FTS5-trigram fuzzy index, consulted
+ * global coverage and no `SLIM_COUNTRIES` upkeep. It now also carries a co-located FTS5-trigram fuzzy index, consulted
  * only on an exact-name miss (typo tolerance, e.g. Manchestr→Manchester) so the contiguous fast path is untouched.
  * Resolved by {@link WOFCandidateTableLookup} (build-candidate.ts). Hosted at
  * `mailwoman/gazetteer/<date>/candidate.db`, version-independent like the street extracts.
@@ -98,8 +98,8 @@ export function adminGazetteerURL(): string {
 
 /**
  * Byte-ranged POI layer (`poi.db`, ~3.7 GB — 13.68M Overture-places rows across US/CA/MX/FR, spec §3.4) — the clustered
- * `(h3_cell, category_id, neg_rank, rowid_key)` `WITHOUT ROWID` B-tree the docs POI tester (`POIExplorer` /
- * `try-it.mdx`) range-loads for LIVE category search. Model-independent (like the admin gazetteer), so it lives on its
+ * `(h3_cell, category_id, neg_rank, rowid_key)` `without rowid` B-tree the docs POI tester (`POIExplorer` /
+ * `try-it.mdx`) range-loads for live category search. Model-independent (like the admin gazetteer), so it lives on its
  * own dated path rather than under `<locale>/<model-version>/`. Bump this when the layer is rebuilt + re-uploaded (the
  * immutable Cache-Control means a fresh DB needs a fresh URL).
  */
@@ -111,7 +111,7 @@ export function poiLayerURL(): string {
 
 /**
  * Slugs we host street extracts for (byte-range on R2). A state not in this set falls through to the WOF admin
- * centroid. National rollout (#735, 2026-06-21): the 50-state situs (#476/#567, 124.9M US address points) + TIGER
+ * centroid. National rollout (#735, 2026-06-21): the 50-state situs (#476/#567, 124.9M US address points) + tiger
  * interp extracts are hosted, so any US address resolves to its building (`address_point`, ≤10 m) or a calibrated
  * interp estimate — not a city centroid. `vi` = US Virgin Islands. (`il` is the whole state incl. Cook. the separate
  * `il-cook` build extract is not hosted.)
@@ -272,7 +272,7 @@ export function neuralClassifierLoadURLs(
 
 /**
  * Countries whose placetype-pair index the demo loads (placetype-pair-prior arc, #1278). The loader fetches each
- * TOLERANTLY (a 404 is skipped, never fatal), so this list is byte-stable for a country whose binary isn't published.
+ * tolerantly (a 404 is skipped, never fatal), so this list is byte-stable for a country whose binary isn't published.
  */
 export const PAIR_INDEX_COUNTRIES = ["gb", "nz"] as const
 
@@ -281,17 +281,17 @@ export const PAIR_INDEX_COUNTRIES = ["gb", "nz"] as const
  * `mailwoman/pair-index/<version>/pair-index-<cc>.bin`.
  *
  * The binaries carry the same `public, max-age=604800, immutable` Cache-Control as every other bucket object, so a
- * rebuilt index needs a FRESH URL — the discipline {@link ADMIN_GAZETTEER_VERSION}, {@link POI_LAYER_VERSION} and
+ * rebuilt index needs a fresh URL — the discipline {@link ADMIN_GAZETTEER_VERSION}, {@link POI_LAYER_VERSION} and
  * {@link NATIONAL_STREET_EXTRACT_VERSION} already follow. Bump this the same commit the binaries are rebuild and
  * re-uploaded. the mutable pointer is this constant inside the (revalidated) Pages bundle, never the binaries.
  *
  * Why a site-side constant rather than a `releases.json` field: the PIX reader that consumes these binaries
- * (`@mailwoman/neural`'s `pair-index-resolver`) is bundled into the SITE rather than fetched per model release, and it
- * THROWS on a `schemaVersion` older than its own (`KNOWN_SCHEMA_VERSION`). So the generation a page may safely request
+ * (`@mailwoman/neural`'s `pair-index-resolver`) is bundled into the site rather than fetched per model release, and it
+ * throws on a `schemaVersion` older than its own (`KNOWN_SCHEMA_VERSION`). So the generation a page may safely request
  * is a property of the deployed site rather than of the release the visitor selected — pinning it per release entry
  * would let a schema-3 reader ask for a schema-1 generation.
  *
- * 2026-08-05: the PIX schema-3 (typed parent record) rebuild. It was overwritten IN PLACE at the un-versioned path, and
+ * 2026-08-05: the PIX schema-3 (typed parent record) rebuild. It was overwritten IN place at the un-versioned path, and
  * the CDN kept serving the schema-1 bytes under the immutable header until a manual purge — the wound this scheme
  * closes.
  */
@@ -345,7 +345,7 @@ export async function loadFSTGazetteer(
  * check's signal source, shipped as a weights-package sibling (so it rides the same per-version R2 asset layout as the
  * model). Node runtimes rebuild this matcher from the bundled libpostal dictionaries when the artifact is absent. the
  * browser cannot, which is exactly the node/browser behavior fork the sealed artifact closes. Returns `null` when the
- * release predates the artifact (HTTP 404) — the demo then parses without the check, exactly as before. A
+ * release predates the artifact (http 404) — the demo then parses without the check, exactly as before. A
  * present-but-corrupt binary throws. the caller's tolerant catch treats that as absent too.
  */
 export async function loadStreetMorphologyFST(locale: string, version: string): Promise<FSTMatcherLike | null> {

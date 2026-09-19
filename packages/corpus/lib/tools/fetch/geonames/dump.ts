@@ -3,14 +3,14 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Fetch GeoNames per-country GAZETTEER dumps — the 19-column `<CC>.txt` files under
+ *   Fetch GeoNames per-country gazetteer dumps — the 19-column `<CC>.txt` files under
  *   `https://download.geonames.org/export/dump/` (not the postal exports. those are `export/zip/` and
- *   `geonames-postal.ts`'s job). The dumps carry feature classes and codes (column 8: `PPLC` national capital,
- *   `PPLA` first-order administrative seat), which is what the capitals reference build consumes (#1880).
+ *   `geonames-postal.ts`'s job). The dumps carry feature classes and codes (column 8: `pplc` national capital,
+ *   `ppla` first-order administrative seat), which is what the capitals reference build consumes (#1880).
  *
- *   The catalog question is answered by the SOURCE rather than by an ISO list: `countryInfo.txt` in the same directory
+ *   The catalog question is answered by the source rather than by an ISO list: `countryInfo.txt` in the same directory
  *   enumerates every country GeoNames publishes, one row per ISO alpha-2 code, and also names each country's
- *   capital — the cross-check the capitals build grades its `PPLC` extraction against. Fetch that first. derive
+ *   capital — the cross-check the capitals build grades its `pplc` extraction against. Fetch that first. derive
  *   the country set from it. then a dump absent from disk is a measured gap against the source's own catalog
  *   rather than a silent hole. The dump directory may hold files this tool did not fetch: present files are never
  *   overwritten, and a present `<CC>.txt` that is not a 19-column gazetteer dump (GeoNames' postal exports share
@@ -158,7 +158,7 @@ const FORMAT_SNIFF_BYTES = 65_536
 
 /**
  * Download `countryInfo.txt` plus every missing `<CC>.zip`, extracting each to `<outRoot>/<CC>.txt` beside the
- * hand-fetched dumps, with a `MANIFEST.json` naming fetched, skipped-present, and source-unavailable countries.
+ * hand-fetched dumps, with a `manifest.json` naming fetched, skipped-present, and source-unavailable countries.
  */
 export async function fetchGeonamesDumps(
 	options: FetchGeonamesDumpOptions,
@@ -226,7 +226,7 @@ export async function fetchGeonamesDumps(
 
 			const message = error instanceof Error ? error.message : String(error)
 
-			// Branch on the TYPED status (the geonames-postal lesson): message prose contains the URL, and a URL
+			// Branch on the typed status (the geonames-postal lesson): message prose contains the URL, and a URL
 			// can contain any substring.
 			if (error instanceof HTTPStatusError && error.status === HTTP_NOT_FOUND) {
 				report?.(`✗ ${country}: GeoNames publishes no gazetteer dump for this country`)

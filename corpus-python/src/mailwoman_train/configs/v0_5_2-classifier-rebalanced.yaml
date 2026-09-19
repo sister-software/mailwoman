@@ -7,7 +7,7 @@
 #   - lr_schedule: constant → cosine (decay after step 50K prevents overfitting)
 #
 # Everything else carries from v0.5.1 unchained:
-#   - h384, batch=128 direct, CE-only, phrase priors ON, class weights tuned
+#   - h384, batch=128 direct, CE-only, phrase priors on, class weights tuned
 #
 # Expected improvement: model learns positional "locality precedes region abbreviation"
 # pattern from OSM data instead of WOF bare-name frequency.
@@ -31,7 +31,7 @@ data:
     usgov-hrsa-fqhc: 2.0
     usgov-imls-pls: 2.0
     usgov-nad: 1.0
-    state-ia-contractors: 2.0
+    state-ia-builders: 2.0
     state-tx-notaries: 1.5
     state-ny-notaries: 2.0
   train_rows_per_epoch: 1000000

@@ -19,12 +19,12 @@ import { stringifyJSON } from "@mailwoman/core/json"
 const ISO_DATE_PATTERN = /^\d{4}-\d{2}-\d{2}$/
 
 /**
- * Validates `value` is an ISO `YYYY-MM-DD` date before it is written into a `valid_from` (or `valid_to`) column —
+ * Validates `value` is an ISO `yyyy-MM-DD` date before it is written into a `valid_from` (or `valid_to`) column —
  * applied at every site in `build-filer.ts` and `cluster-filers.ts` (and any future filer.db writer) that writes either
  * temporal column. One implementation, shared, so the rule can't drift between writers.
  *
  * `valid_from` participates in every downstream `asOf`-scoped predicate (`filer-lookup.ts`'s `valid_from <= asOf`) as a
- * plain STRING comparison — correct only when every value compared is drawn from the same ISO-sortable `YYYY-MM-DD`
+ * plain string comparison — correct only when every value compared is drawn from the same ISO-sortable `yyyy-MM-DD`
  * scheme. `source_vintage` is free to stay a human vintage label (`"2026-Q2"`, `"2026-cluster-v1"`) — that plurality is
  * exactly what the column is for (decision 7) — but that same label is not safe to also write into `valid_from`:
  * `"2026-Q2"` sorts lexicographically above any ISO date in the same year or earlier — string comparison decides at the

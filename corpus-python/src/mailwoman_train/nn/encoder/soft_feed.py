@@ -23,7 +23,7 @@ def soft_feed_channel(
 
     A disabled channel must construct nothing at all rather than construct-and-discard. `_init_weights`
     re-initializes by walking `self.parameters()`, which yields parameters in registration order
-    and draws from the global RNG for each, so an extra registered module shifts the initial
+    and draws from the global RNG for each. Therefore, an extra registered module shifts the initial
     weights of every parameter registered after it.
     """
     if not enabled:

@@ -57,7 +57,7 @@ export interface PoBoxBaseTuple {
 export interface LocaleTemplate {
 	locale: string
 	leaders: ReadonlyArray<string>
-	// Use 'pmb' to render as "STREET, PMB N, CITY ..." instead of replacing the street line.
+	// Use 'pmb' to render as "street, PMB N, city ..." instead of replacing the street line.
 	pmb?: ReadonlyArray<string>
 }
 
@@ -208,7 +208,7 @@ export function synthesizePoBoxRow(
 
 	if (!iso2) return null
 
-	// The country's own layout writes the order and the separators, and reports which components it PRINTED — France
+	// The country's own layout writes the order and the separators, and reports which components it printed — France
 	// absorbs the region into its postcode line, so a row that emitted `region` regardless would carry a label whose
 	// text is not in `raw`.
 	const adminTail: ComponentDict = { locality: base.locality, postcode: base.postcode }
@@ -306,11 +306,11 @@ export function synthesizeMilitaryPoBoxRow(opts: PoBoxSynthesisOpts = {}): Synth
 const PO_BOX_TEMPLATE_LOCALES: ReadonlySet<string> = new Set(PO_BOX_LOCALE_TEMPLATES.map((t) => t.locale))
 
 /**
- * The locale whose PO-BOX VOCABULARY a country's rows are written in — which is a narrower question than
+ * The locale whose PO-BOX vocabulary a country's rows are written in — which is a narrower question than
  * `countryToLocale`'s, and the reason this carries its own name rather than shadowing it.
  *
  * A locale the shared map resolves but {@link PO_BOX_LOCALE_TEMPLATES} does not carry falls back to `en-US`, so `DE`
- * (shared: `de-DE`, no PO-box template) renders the en-US box vocabulary. The ORDER is a separate axis and comes from
+ * (shared: `de-DE`, no PO-box template) renders the en-US box vocabulary. The order is a separate axis and comes from
  * the country's own codex layout, so such a row is German-ordered with American box words.
  */
 export function poBoxTemplateLocale(country: string): string {

@@ -6,7 +6,7 @@ import { stringifyJSON } from "@mailwoman/core/json"
  * @author Teffen Ellis, et al.
  *
  *   Two stand-ins for Stripe. `signedWebhook` signs a payload the way Stripe's destination does, so the verifier under
- *   test sees a real `Stripe-Signature`. `stripeFetch` is a fetch the SDK's HTTP client calls instead of the network:
+ *   test sees a real `Stripe-Signature`. `stripeFetch` is a fetch the SDK's http client calls instead of the network:
  *   `routes` maps `GET /v1/invoices/in_1`-style keys to JSON bodies, or to functions of the request's form body for a
  *   write. An object path matches exactly, so `in_1` never answers for `in_1b`; a list key ends in `?` and matches by
  *   prefix, whatever the query. Anything else is a 404 the SDK raises as an error, so an unexpected retrieval is loud

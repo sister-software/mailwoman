@@ -7,14 +7,14 @@
  *   loaded, and which backend actually executed it.
  *
  *   The backend is the one worth naming twice. `web/onnx-runner.ts` asks for `["webgpu", "wasm"]` and falls through
- *   to a WASM-only session inside a bare `catch`, so a page that works is not evidence that WebGPU ran — the two
+ *   to a wasm-only session inside a bare `catch`, so a page that works is not evidence that WebGPU ran — the two
  *   outcomes look identical from the outside. This row is the difference, which matters because the int8 graph's
  *   mobile-Safari invariant is about the WebGPU execution provider specifically.
  *
  *   It also logs the same record once per change, so a reporter can paste a console line instead of transcribing a
  *   panel, and so a remote session leaves the facts in the log it already collects.
  *
- *   NODE-SAFE: pure React, no maplibre.
+ *   node-safe: pure React, no maplibre.
  */
 
 import { type ReactNode, useEffect, useMemo } from "react"
@@ -27,12 +27,12 @@ export interface DebugInfoProps {
 	 */
 	activeBackend?: string
 	/**
-	 * Whether the CPU/WASM backend is currently forced, which explains a `wasm` backend that would otherwise be a WebGPU
+	 * Whether the CPU/wasm backend is currently forced, which explains a `wasm` backend that would otherwise be a WebGPU
 	 * failure.
 	 */
 	forceWASM?: boolean
 	/**
-	 * The model version the runtime loaded — the TRAINING series, which is not the npm version.
+	 * The model version the runtime loaded — the training series, which is not the npm version.
 	 */
 	selectedVersion?: string | null
 	/**

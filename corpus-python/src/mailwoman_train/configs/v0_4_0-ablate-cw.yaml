@@ -28,7 +28,7 @@ data:
     usgov-hrsa-fqhc: 2.0
     usgov-imls-pls: 2.0
     usgov-nad: 1.0
-    state-ia-contractors: 2.0
+    state-ia-builders: 2.0
     state-tx-notaries: 1.5
     state-ny-notaries: 2.0
   train_rows_per_epoch: null

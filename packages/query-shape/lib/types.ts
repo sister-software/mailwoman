@@ -27,7 +27,7 @@ export type CharacterClass = "numeric" | "alpha" | "alphanumeric" | "cjk" | "cyr
 /**
  * An ISO 15924 script code.
  *
- * It stands BESIDE `CharacterClass` rather than replacing it. The class answers what the decoder and the tokenizer ask
+ * It stands beside `CharacterClass` rather than replacing it. The class answers what the decoder and the tokenizer ask
  * — is this run ideographic, is it digits — and folds `cjk` over three scripts to do it. The script answers which
  * writing system, which is a different question and the one a locale hint needs: `서울특별시` and `東京都` are the same
  * `CharacterClass` and are `Hang` and `Hani`.
@@ -171,7 +171,7 @@ export interface NormalizedInputLite {
  * Read-only view of one known-format hit — the narrow subset of fields the downstream stages consume. `KnownFormatHit`
  * satisfies it structurally (its `SpanRange` carries `body` as well).
  *
- * The `(string & {})` union arms keep these views assignable from the dependency-free pipeline contract
+ * The `(string & {})` union arms keep these views assignable from the dependency-free pipeline interface
  * (`@mailwoman/core/pipeline`'s `QueryShapeLite`, whose fields are plain strings) while the named union still drives
  * editor completion at literal comparison sites.
  */
@@ -183,7 +183,7 @@ export interface KnownFormatHitView {
 
 /**
  * Narrow read-only view of a `QueryShape` for consumers that read only the format hits and the whole-input class —
- * `@mailwoman/locale-hint`'s input contract. The full `QueryShape` satisfies it structurally.
+ * `@mailwoman/locale-hint`'s input interface. The full `QueryShape` satisfies it structurally.
  */
 export interface QueryShapeFormatsView {
 	knownFormats: ReadonlyArray<KnownFormatHitView>
@@ -206,7 +206,7 @@ export interface SegmentView {
 }
 
 /**
- * `QueryShapeFormatsView` plus segmentation — `@mailwoman/kind-classifier`'s input contract.
+ * `QueryShapeFormatsView` plus segmentation — `@mailwoman/kind-classifier`'s input interface.
  */
 export interface QueryShapeSegmentsView extends QueryShapeFormatsView {
 	segments?: ReadonlyArray<SegmentView>
@@ -223,7 +223,7 @@ export interface TokenClassView {
 }
 
 /**
- * `QueryShapeSegmentsView` plus per-token classes — `@mailwoman/phrase-grouper`'s input contract.
+ * `QueryShapeSegmentsView` plus per-token classes — `@mailwoman/phrase-grouper`'s input interface.
  */
 export interface QueryShapeTokensView extends QueryShapeSegmentsView {
 	tokenClasses?: ReadonlyArray<TokenClassView>

@@ -17,7 +17,7 @@ import {
 } from "#cli/native/spec"
 
 /**
- * Native FST autocomplete command contract.
+ * Native FST autocomplete command interface.
  */
 export const spec = {
 	name: "autocomplete",

@@ -11,8 +11,8 @@
  *
  *   - MapLibre needs a real WebGL context — the shared harness (`./browser.ts`) provides one through
  *       SwiftShader.
- *   - The basemap tiles come from `tiles.mailwoman.ai`, which CORS-restricts to localhost + the docs
- *       domains — so the page must be served over localhost rather than opened as a file (a file:// page
+ *   - The basemap tiles come from `tiles.mailwoman.ai`, which cors-restricts to localhost + the docs
+ *       domains . Therefore, the page must be served over localhost rather than opened as a file (a file:// page
  *       renders accurate markers on a blank basemap). Serve the output dir first, e.g. `python3 -m
  *       http.server 8899 -d <dir>`, then point this at `http://localhost:8899/<page>.html`.
  *

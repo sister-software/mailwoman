@@ -5,7 +5,7 @@
  *
  *   `mailwoman tiger race-dots-map` — render a race-dots PMTiles tileset as a standalone MapLibre
  *   page (Protomaps basemap under the dot layer). `--serve` also serves the output directory with
- *   HTTP Range support (PMTiles reads via Range) and holds the process open — the long-running
+ *   http Range support (PMTiles reads via Range) and holds the process open — the long-running
  *   posture of `mailwoman serve`.
  */
 
@@ -16,7 +16,7 @@ import { useState } from "react"
 import { type CommandSpec, CommandTaskResult, type CommandComponent, reportToStderr, useCommandTask } from "#cli-kit"
 
 /**
- * Native command-line contract consumed by the filesystem command router.
+ * Native command-line interface consumed by the filesystem command router.
  */
 export const spec = {
 	name: "race-dots-map",

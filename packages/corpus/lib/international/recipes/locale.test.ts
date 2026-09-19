@@ -3,7 +3,7 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Tests for the `locale` recipe's OA CITY-noise normalization (#241) and the country-append fraction (#728
+ *   Tests for the `locale` recipe's OA city-noise normalization (#241) and the country-append fraction (#728
  *   pattern). The `cleanCityNoise` classes come from the 2026-07-02 full-stream audit of the
  *   ES/IT/NL sources — see the {@link cleanCityNoise} docstring for the audit numbers. The invariant under test:
  *   drop pseudo-localities, strip glued admin-code suffixes, and DON'T touch the audit-verified real names a naive
@@ -84,8 +84,8 @@ describe("readTuples (OA CSV parse)", () => {
 
 	afterAll(() => Promise.all(dirs.map((d) => removePathIfPresent(d))))
 
-	// A tiny OA sample exercising exactly what the CSVSpliterator migration touches: a CRLF terminator
-	// (the real OA files are CRLF), a quoted field with an embedded comma, an empty REGION cell that
+	// A tiny OA sample exercising exactly what the CSVSpliterator migration touches: a crlf terminator
+	// (the real OA files are crlf), a quoted field with an embedded comma, an empty region cell that
 	// must fall back to part.region, and a header-driven column index. rng is unused below RESERVOIR_CAP.
 	const OA_HEADER = "LON,LAT,NUMBER,STREET,UNIT,CITY,DISTRICT,REGION,POSTCODE,ID,HASH"
 
@@ -95,9 +95,9 @@ describe("readTuples (OA CSV parse)", () => {
 		await writeLocalTextFile(
 			[
 				OA_HEADER,
-				// Quoted street with an embedded comma. populated REGION.
+				// Quoted street with an embedded comma. populated region.
 				'22.6,49.3,12,"Main St, West",,Springfield,dist,Bayern,38-710,id1,hash1',
-				// Empty REGION cell → must fall back to part.region.
+				// Empty region cell → must fall back to part.region.
 				"22.7,49.2,5,Elm Ave,,Shelbyville,dist,,38-711,id2,hash2",
 			].join("\r\n") + "\r\n",
 			file
@@ -117,9 +117,9 @@ describe("readTuples (OA CSV parse)", () => {
 		await writeLocalTextFile(
 			[
 				OA_HEADER,
-				// NZ shape: CITY = suburb (Birkenhead), DISTRICT = city (Auckland). NZ OA carries no postcode.
+				// NZ shape: city = suburb (Birkenhead), district = city (Auckland). NZ OA carries no postcode.
 				"174.7,-36.8,31,Rawene Road,,Birkenhead,Auckland,,,id1,hash1",
-				// Empty DISTRICT (~18% of NZ rows) → CITY becomes the locality, no dependent_locality.
+				// Empty district (~18% of NZ rows) → city becomes the locality, no dependent_locality.
 				"174.4,-36.6,26A,Henley Road,,Kaukapakapa,,,,id2,hash2",
 			],
 			file
@@ -173,12 +173,12 @@ describe("readTuples (OA CSV parse)", () => {
 		await writeLocalTextFile(
 			[
 				OA_HEADER,
-				// CITY and DISTRICT name the same place (differing only in case) — the ES CNIG `poblacion ==
+				// city and district name the same place (differing only in case) — the ES cnig `poblacion ==
 				// municipio` majority case (the address point sits in the municipio's own main town rather than a
 				// pedanía). Must not surface as dependent_locality === locality.
 				"1,2,10,Main St,,AMURRIO,Amurrio,Araba,01450,id,hash",
-				// Genuinely distinct CITY/DISTRICT still produces dependent_locality (the districtAsLocality
-				// contract is otherwise unchanged).
+				// Genuinely distinct city/district still produces dependent_locality (the districtAsLocality
+				// interface is otherwise unchanged).
 				"1,2,11,Elm Ave,,Baranbio,Amurrio,Araba,01450,id2,hash2",
 			],
 			file
@@ -208,7 +208,7 @@ describe("readTuples (OA CSV parse)", () => {
 				// poblacion filled + distinct from municipio (real pedanía row, mirrors the verified Amurrio/Baranbio sample).
 				'-2.922,43.0507,"1","PK",CARRETERA,A-2522,35,,"1600005667",Baranbio,01450,01002,Amurrio,Araba/Álava,País Vasco/Euskadi,src,2017/04/03',
 				// poblacion empty → falls back to municipio→locality, no dependent_locality (the districtAsLocality
-				// NZ-pattern fallback, exercised here through the CNIG column names instead of CITY/DISTRICT).
+				// NZ-pattern fallback, exercised here through the cnig column names instead of city/district).
 				'-2.503,42.836,"2","PK",CARRETERA,A-4136,15,,,,01240,01001,Alegría-Dulantzi,Araba/Álava,País Vasco/Euskadi,src,2017/04/03',
 			],
 			file

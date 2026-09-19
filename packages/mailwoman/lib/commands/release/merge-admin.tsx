@@ -7,7 +7,7 @@
  *   bypass stays available for the nights the lab fleet is slow, but it runs the sub-second guards
  *   the skipped checks would have, synchronously, and refuses to merge over a failure.
  *
- *   Contract: the LOCAL checkout must be at the PR's head commit — the guards measure the tree they
+ *   Interface: the local checkout must be at the PR's head commit — the guards measure the tree they
  *   run in, and measuring a different tree than the one being merged answers a question nobody
  *   asked. The command verifies the SHA and refuses with the checkout command otherwise.
  */
@@ -23,7 +23,7 @@ import { type CommandSpec, CommandTaskResult, CLIUsageError, type CommandCompone
 export const description = "Admin-merge a pull request after running the sub-second guards the skipped checks carry."
 
 /**
- * Native command-line contract consumed by the filesystem command router.
+ * Native command-line interface consumed by the filesystem command router.
  */
 export const spec = {
 	name: "merge-admin",

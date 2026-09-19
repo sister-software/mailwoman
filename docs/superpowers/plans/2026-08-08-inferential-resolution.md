@@ -229,7 +229,7 @@ rather than an assumption embedded in application code.
 ## Consequence for OSM ingestion
 
 OSM should enter the engine as versioned observations rather than as a timeless truth table. The ingest
-contract is:
+interface is:
 
 ```text
 acquire snapshot/replication sequence

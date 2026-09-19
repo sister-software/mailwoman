@@ -2,7 +2,7 @@
 
 BERT 80/10/10 masking over a batch of token ids:
 
-  * select ``mask_prob`` of the ATTENDED (non-pad) positions, ~uniformly at random;
+  * select ``mask_prob`` of the attended (non-pad) positions, ~uniformly at random;
   * of the selected: 80% -> mask token, 10% -> random token, 10% -> unchanged;
   * the MLM target is the original id at selected positions, ``-100`` (ignore) elsewhere, so
     ``cross_entropy(ignore_index=-100)`` scores only the masked positions.

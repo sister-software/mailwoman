@@ -4,14 +4,14 @@
  * @author Teffen Ellis, et al.
  *
  *   `pk-register` and `bd-register` recipes — the typed forms of Pakistan and Bangladesh the country templates do
- *   not render, over the OpenStreetMap corpus JSONL the `osm` adapter reads (#1744, the F8 family). The adapter's own
+ *   not render, over the OpenStreetMap corpus jsonl the `osm` adapter reads (#1744, the F8 family). The adapter's own
  *   rows carry the template shape (`4 38th Street, DHA Phase 6, Karachi`; `24 Road 104, Dhaka - 1207`); these two carry
  *   the register:
  *
- *   - the HOUSE line, `House 4, Street 25, F-7/2, Islamabad` and `House 34, Road 4, Sector 9, Uttara, Dhaka 1230` —
+ *   - the house line, `House 4, Street 25, F-7/2, Islamabad` and `House 34, Road 4, Sector 9, Uttara, Dhaka 1230` —
  *     `House` in front of the number (untagged, the same rule as Singapore's `Blk`), the numbered street, the scheme or
  *     sector as the dependent locality, the city;
- *   - the PLAIN line with the trailing postcode and no dash, `58 Kalabagan 1st Ln, Dhaka 1205` — what a person types,
+ *   - the plain line with the trailing postcode and no dash, `58 Kalabagan 1st Ln, Dhaka 1205` — what a person types,
  *     where the template writes `Dhaka - 1205`.
  *
  *   Islamabad's sector codes (`F-7/2`, `G-10/3`) are the one synthesized value: the register carries them on a handful

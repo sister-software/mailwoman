@@ -10,12 +10,12 @@
  *
  *   Uploads go through `rclone`: the `RCLONE_S3_*` variables are its s3-backend config (source the repo `.env` first:
  *   `set -a. . ./.env. set +a`). rclone handles multipart for large archives, and the anti-501 flags skip the post-PUT
- *   HEAD and checksum operations R2 refuses. The worker reads the object through its R2 binding, so Content-Type and
+ *   head and checksum operations R2 refuses. The worker reads the object through its R2 binding, so Content-Type and
  *   Cache-Control do not matter.
  *
- *   CREDENTIALS for the `nexus-assets` bucket: the `RCLONE_S3_*` keys are scoped to `mailwoman-assets` (403 on
+ *   credentials for the `nexus-assets` bucket: the `RCLONE_S3_*` keys are scoped to `mailwoman-assets` (403 on
  *   nexus-assets); the `RCLONE_S3_PUBLIC_*` keys write nexus-assets. Map them onto the on-the-fly `:s3:` remote
- *   (`RCLONE_S3_ACCESS_KEY_ID=$RCLONE_S3_PUBLIC_ACCESS_KEY_ID`, plus SECRET and ENDPOINT) before running.
+ *   (`RCLONE_S3_ACCESS_KEY_ID=$RCLONE_S3_PUBLIC_ACCESS_KEY_ID`, plus secret and endpoint) before running.
  */
 
 import { formatFileSize, pathExists } from "@mailwoman/core/fs/readers"
@@ -61,7 +61,7 @@ const REQUIRED_ENV = ["RCLONE_S3_ENDPOINT", "RCLONE_S3_ACCESS_KEY_ID", "RCLONE_S
 
 /**
  * The default transport: rclone over the inherited `RCLONE_S3_*` credentials, on the on-the-fly `:s3:` remote. The
- * flags skip the post-PUT HEAD + checksum ops that 501 against R2.
+ * flags skip the post-PUT head + checksum ops that 501 against R2.
  */
 export const uploadWithRclone: UploadTransport = async ({ file, bucket, key }) => {
 	const { $private } = await import("#env")

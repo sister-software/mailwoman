@@ -35,7 +35,7 @@ async function scratch(): Promise<string> {
  * A stamped artifact, written through `stampLayerManifest` — the same writer every builder uses.
  *
  * The fixture is deliberately not hand-rolled SQL: a reader tested against a table this test invented would keep
- * passing after the contract's own writer changed shape, which is the one regression it exists to catch.
+ * passing after the interface's own writer changed shape, which is the one regression it exists to catch.
  */
 async function stamped(path: string, name: string, createdAt: string): Promise<string> {
 	await stampLayerManifest(path, {
@@ -57,7 +57,7 @@ async function stamped(path: string, name: string, createdAt: string): Promise<s
 }
 
 /**
- * A built database with no manifest — the state of every artifact built before the layer contract.
+ * A built database with no manifest — the state of every artifact built before the layer interface.
  */
 function bare(path: string): string {
 	using db = new DatabaseClient<WOFDatabase>(path)
@@ -76,7 +76,7 @@ describe("readFreshness — a stamped artifact", () => {
 		expect(entry?.manifest).toBe(ManifestState.Present)
 		expect(entry?.built).toBe("2026-08-17T19:21:17.000Z")
 		expect(entry?.version).toBe("candidate@2026-08-17")
-		// The candidate's source is a CHAIN — it names its ancestor admin build — and the vintage carries the
+		// The candidate's source is a chain — it names its ancestor admin build — and the vintage carries the
 		// database counts that make one candidate build different from another. Both, or neither identifies it.
 		expect(entry?.sources).toEqual(["admin-global-priority@2026-08-17", "postcode-databases=24"])
 		expect(entry?.reason).toBeUndefined()
@@ -108,7 +108,7 @@ describe("readFreshness — an artifact that cannot state its provenance", () =>
 		expect(entry?.manifest).toBe(ManifestState.Absent)
 		expect(entry?.name).toBe("gazetteer")
 		expect(entry?.path).toBe(path)
-		expect(entry?.reason).toContain("predates the layer contract")
+		expect(entry?.reason).toContain("predates the layer interface")
 		// No date is invented from the file's mtime, and the report declines to date itself.
 		expect(entry?.built).toBeUndefined()
 		expect(report.dataUpdated).toBeUndefined()

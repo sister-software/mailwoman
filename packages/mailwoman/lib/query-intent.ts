@@ -3,7 +3,7 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   THE DECLARED-AMBIGUITY MARKER (ROAD_TO_V9 §4.2 + the §4 guessing doctrine).
+ *   the declared-ambiguity marker (ROAD_TO_V9 §4.2 + the §4 guessing doctrine).
  *
  *   > when the dominance margin is thin (the measured 0.5 log10 line from the ablation-ladder work),
  *   > return the winner with declared ambiguity — the suggestion layer's nudge shape — and never
@@ -11,13 +11,13 @@
  *
  *   The three other intent markers are raised by the kind classifier, from the string alone
  *   (`@mailwoman/kind-classifier`'s `intent-markers.ts`). This one cannot be: its trigger is a
- *   property of the RESOLVED candidate list, which appears after Stage 6. So it lives
+ *   property of the resolved candidate list, which appears after Stage 6. So it lives
  *   here, on the geocode path, and `geocodeAddressOnce` appends it to the classifier's markers.
  *
  *   ## Reuse rather than re-derivation
  *
  *   {@linkcode DECISIVE_MARGIN_LOG10} (0.5) and {@linkcode COINCIDENT_PLACE_KM} (10) are imported
- *   from the ablation-expectation model rather than restated. Both are MEASURED numbers with a table
+ *   from the ablation-expectation model rather than restated. Both are measured numbers with a table
  *   behind them (see that module's docstring: below 0.5 the top-ranked place is the intended one
  *   52.4% of the time, above it 89.1%), and a second copy would be a second thing to keep in sync
  *   with a measurement nobody re-runs. `dominanceMarginLog10` itself is imported too — the
@@ -37,7 +37,7 @@
  *   reads maximally ambiguous and this marker fires on every capital in the world.
  *   `extractGeocodeResult`'s own candidate list already de-dupes, but on an ~11 m grid, which is two
  *   orders of magnitude too tight for this job. So the collapse here is at
- *   {@linkcode COINCIDENT_PLACE_KM} and it runs on the RESOLVER's places, before the geocode result's
+ *   {@linkcode COINCIDENT_PLACE_KM} and it runs on the resolver's places, before the geocode result's
  *   de-dupe, which is the only place the prominence column is still attached.
  *
  *   ## What it does not do
@@ -62,7 +62,7 @@ import type { ResolutionTier } from "#geocode/result"
 
 /**
  * The subset of a resolver `ResolvedPlace` this module reads. Structural on purpose — `AddressNode.alternatives` is
- * `ReadonlyArray<unknown>` in the decoder contract, so there is nothing to import.
+ * `ReadonlyArray<unknown>` in the decoder interface, so there is nothing to import.
  */
 interface RankedPlaceLike {
 	id?: number | string
@@ -72,7 +72,7 @@ interface RankedPlaceLike {
 	lat?: number
 	lon?: number
 	/**
-	 * The candidate's PROMINENCE. On the candidate backend this is exactly `-effectiveNegRank`
+	 * The candidate's prominence. On the candidate backend this is exactly `-effectiveNegRank`
 	 * (`resolver-wof-sqlite/candidate-lookup.ts`), so a difference of two prominences is a log10 population margin and
 	 * `DECISIVE_MARGIN_LOG10` applies to it directly.
 	 *
@@ -113,7 +113,7 @@ function toAblationPlace(place: RankedPlaceLike, rank: number): AblationPlace | 
 }
 
 /**
- * The node whose resolution the query is ABOUT — the deepest resolved node carrying a coordinate and the resolver's
+ * The node whose resolution the query is about — the deepest resolved node carrying a coordinate and the resolver's
  * name stamp, matching `extractGeocodeResult`'s own `primaryNode` selection so the marker and the returned candidate
  * list describe the same place.
  */
@@ -132,7 +132,7 @@ function primaryResolvedNode(tree: AddressTree, lat: number | null, lon: number 
  */
 export interface DeclaredAmbiguityOpts {
 	/**
-	 * The full kind verdict — top kind plus alternatives. `bare_toponym` is an ALTERNATIVE by design (see
+	 * The full kind verdict — top kind plus alternatives. `bare_toponym` is an alternative by design (see
 	 * `@mailwoman/kind-classifier`'s `intent-rules.ts`), so a caller that passes only the top kind will never see this
 	 * marker fire, which is a silent no-op rather than an error.
 	 */
@@ -171,7 +171,7 @@ export function declaredAmbiguityMarker(opts: DeclaredAmbiguityOpts): QueryInten
 	const ranked = [self, ...((node.alternatives as ReadonlyArray<RankedPlaceLike> | undefined) ?? [])]
 	const places = ranked.map(toAblationPlace).filter((p): p is AblationPlace => p !== null)
 
-	// Fewer than two rankable candidates is not "decisive" and not "ambiguous" — it is UNMEASURED. The resolver may
+	// Fewer than two rankable candidates is not "decisive" and not "ambiguous" — it is unmeasured. The resolver may
 	// simply not have stamped a prominence (the FTS path does not always), and asserting decisiveness off a list of one
 	// that we could not rank would be exactly the meaning-of-zero error this repo keeps writing down.
 	if (places.length < 2) return null
@@ -198,7 +198,7 @@ export function declaredAmbiguityMarker(opts: DeclaredAmbiguityOpts): QueryInten
 			margin: Number(margin.toFixed(4)),
 			decisiveMarginLog10: DECISIVE_MARGIN_LOG10,
 			/**
-			 * Named so a consumer knows what the margin IS. `log10_population` on the candidate backend. on FTS the
+			 * Named so a consumer knows what the margin is. `log10_population` on the candidate backend. on FTS the
 			 * prominence term is capped and proximity-contaminated, which the value states rather than hides.
 			 */
 			marginUnit: "resolver_prominence_delta",
@@ -212,9 +212,9 @@ export function declaredAmbiguityMarker(opts: DeclaredAmbiguityOpts): QueryInten
 }
 
 /**
- * The COARSEST tier at which each parsed component is still located, ranked by {@linkcode tierRank}.
+ * The coarsest tier at which each parsed component is still located, ranked by {@linkcode tierRank}.
  *
- * A component sets a FLOOR rather than a target. `house_number` reads `interpolated` and not `address_point` because
+ * A component sets a floor rather than a target. `house_number` reads `interpolated` and not `address_point` because
  * interpolation is how a house number is placed along a segment — the first version of this table put the floor at
  * `address_point` and fired on `129 E Burr Oak St, Athens, MI`, an interpolated answer at 124 m uncertainty that
  * locates the house as precisely as the tier permits. `postcode` reads `street` for the same reason from the other
@@ -245,7 +245,7 @@ export interface CoarserAnswerOpts {
 	 */
 	kinds: ReadonlyArray<QueryKind>
 	/**
-	 * The parsed components, by tag. Read for PRESENCE only. the values never enter the verdict.
+	 * The parsed components, by tag. Read for presence only. the values never enter the verdict.
 	 */
 	components: Readonly<Record<string, string | null | undefined>>
 	reachedTier: ResolutionTier

@@ -4,7 +4,7 @@
  * @author Teffen Ellis, et al.
  *
  *   Sample `address_point.source` rows from a state database and render them by source in MapLibre.
- *   The output requires an HTTP origin because the tile server does not serve `file:` origins.
+ *   The output requires an http origin because the tile server does not serve `file:` origins.
  */
 
 import { dataRootPath, tempRootPath } from "@mailwoman/core/data-root"
@@ -29,7 +29,7 @@ export interface SourceProvenanceMapOptions {
 	 */
 	db?: string
 	/**
-	 * Output HTML path. Default `/tmp/source-provenance.html`.
+	 * Output html path. Default `/tmp/source-provenance.html`.
 	 */
 	outHTML?: string
 	/**
@@ -84,7 +84,7 @@ export async function sourceProvenanceMap(
 	using db = new DatabaseClient<AddressPointDatabase>(DB, { readOnly: true })
 
 	// Two stratified samples so the smaller source (OpenAddresses, ~1/6 of NY) stays visible next to NAD.
-	// abs(random()) % mod == 0 keeps a spatially-uniform ~1/mod fraction. LIMIT caps the marker count.
+	// abs(random()) % mod == 0 keeps a spatially-uniform ~1/mod fraction. limit caps the marker count.
 	const sample = (where: string, mod: number): Row[] =>
 		db
 			.prepare(

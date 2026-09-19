@@ -67,7 +67,7 @@ describe("labelCNOrganizationalRow", () => {
 		expect(labelCNOrganizationalRow("苗辽林场 Zhejiang China")).toBeNull()
 		expect(labelCNOrganizationalRow("红卫大队 Zhejiang")).toBeNull()
 		expect(labelCNOrganizationalRow("淮海农场梁庄分场")).toBeNull()
-		// A NAMED team (`机耕队`, the machine-tillage team) under a named brigade: no ordinal, so no chain.
+		// A named team (`机耕队`, the machine-tillage team) under a named brigade: no ordinal, so no chain.
 		expect(labelCNOrganizationalRow("胜利大队机耕队, Inner Mongolia")).toBeNull()
 	})
 

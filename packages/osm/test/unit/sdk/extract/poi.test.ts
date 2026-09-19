@@ -4,10 +4,10 @@
  * @author Teffen Ellis, et al.
  *
  *   No fixture PBF exists under `osm/` test fixtures, so per the task brief this locks the two pure
- *   pure helpers instead: {@link matchOSMPOITagRule} (the AND/OR tag-rule matcher, over synthetic tag dicts)
- *   and {@link buildTelecomPOISQL} (the OGRSQL string builder). Neither spawns `ogr2ogr` — the actual
+ *   pure helpers instead: {@link matchOSMPOITagRule} (the and/or tag-rule matcher, over synthetic tag dicts)
+ *   and {@link buildTelecomPOISQL} (the ogrsql string builder). Neither spawns `ogr2ogr` — the actual
  *   `extractOSMPOIs` process-spawn integration is unexercised here and requires the build-local ladder
- *   (a real Geofabrik `.osm.pbf` + GDAL on the path); see the task report for a transcript verifying
+ *   (a real Geofabrik `.osm.pbf` + gdal on the path); see the task report for a transcript verifying
  *   the SQL this module builds against a hand-authored `.osm` XML fixture with the system `ogr2ogr`.
  */
 
@@ -85,7 +85,7 @@ test("buildTelecomPOISQL: selects promoted columns bare and hstore keys via hsto
 	const sql = buildTelecomPOISQL("points")
 
 	expect(sql).toContain("FROM points")
-	// name + man_made are promoted OGR fields per GDAL's default osmconf.ini — bare column references.
+	// name + man_made are promoted OGR fields per gdal's default osmconf.ini — bare column references.
 	expect(sql).toContain("SELECT name,")
 	expect(sql).toMatch(/\bman_made='telephone_exchange'/)
 	expect(sql).toMatch(/\bman_made AS man_made\b/)
@@ -148,7 +148,7 @@ test("extractOSMPOIs: also rejects a hostile rule table before ever spawning ogr
 })
 
 test("buildTelecomPOISQL: a key promoted on one layer only is read the right way on each", () => {
-	// GDAL's default osmconf.ini promotes `amenity` on `multipolygons` and not on `points`, and a promoted
+	// gdal's default osmconf.ini promotes `amenity` on `multipolygons` and not on `points`, and a promoted
 	// key is dropped from that layer's `other_tags`. Reading it through hstore on `multipolygons` returned 0
 	// rows against 178 real ones on the Île-de-France extract — a whole layer of matches reported as absent.
 	const rules = [{ categoryID: "pharmacy", all: [["amenity", "pharmacy"] as [string, string]] }]

@@ -24,7 +24,7 @@ JP_PREFECTURES = frozenset(
     "熊本県 大分県 宮崎県 鹿児島県 沖縄県".split()
 )
 
-# Hyphen-equivalence class. Applied to the NUMBER field only: U+30FC and U+FF70 are prolonged-sound
+# Hyphen-equivalence class. Applied to the number field only: U+30FC and U+FF70 are prolonged-sound
 # marks that belong inside katakana names, and folding them there would corrupt the name. In a
 # banchi-go they are a typed hyphen.
 _HYPHEN_CLASS = "‐‑‒–—―−ー﹘﹣－ｰ"

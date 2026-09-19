@@ -6,7 +6,7 @@
  *   `mailwoman gazetteer build` — the durable GeoNames-alias upstream fold + the byte-range candidate
  *   build (FTS5-trigram fuzzy index baked in), in one command. Every decision the 2026-06-27 manual
  *   rebuild needed (which countries fold, which postcode databases, FTS) is a default here. Progress
- *   streams to stderr. the final summary is on stdout. See RELEASING.md Step 5.
+ *   streams to stderr. the final summary is on stdout. See releasing.md Step 5.
  */
 
 import { tryStat } from "@mailwoman/core/fs/readers"
@@ -26,7 +26,7 @@ import { foldSourceAdminPath, foldStaleness, foldStalenessMessage } from "#gazet
 import { DEFAULT_CANDIDATE_OUT, DEFAULT_FOLD_COUNTRIES, DEFAULT_IMPORTANCE_DB } from "#gazetteer-pipeline/defaults"
 
 /**
- * Native command-line contract consumed by the filesystem command router.
+ * Native command-line interface consumed by the filesystem command router.
  */
 export const spec = {
 	name: "candidate",

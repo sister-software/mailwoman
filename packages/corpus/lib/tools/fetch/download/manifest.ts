@@ -13,7 +13,7 @@ import { tryParsingJSON, prettyJSON } from "@mailwoman/core/json"
 import { HTTPStatusError, type SourceManifest } from "#tools/fetch/download/network"
 
 /**
- * Read a MANIFEST.json; `null` when missing or corrupt (callers re-fetch from scratch).
+ * Read a manifest.json; `null` when missing or corrupt (callers re-fetch from scratch).
  */
 export async function readManifest<T>(path: string): Promise<T | null> {
 	if (!(await pathExists(path))) return null
@@ -40,14 +40,14 @@ export async function loadManifestEntries<T>(path: string, key: (entry: T) => st
 }
 
 /**
- * Write a MANIFEST.json in the house shape: pretty-printed, trailing newline.
+ * Write a manifest.json in the house shape: pretty-printed, trailing newline.
  */
 export async function writeManifest(path: string, manifest: unknown): Promise<void> {
 	await writeLocalTextFile(prettyJSON(manifest), path)
 }
 
 /**
- * The sibling `MANIFEST.json` shape for a source that is a COLLECTION of files behind one portal (a monthly register
+ * The sibling `manifest.json` shape for a source that is a collection of files behind one portal (a monthly register
  * published per region, per industry, or per first letter). It carries what a trained artifact has to be able to cite
  * later: the license the portal labels the data with, the attribution wording it requires, and one
  * {@link SourceManifest} per file.
@@ -63,8 +63,8 @@ export interface SourceCollectionManifest {
 
 /**
  * Pipe a response body to `dest` and answer the byte count. The one primitive the portal fetchers share when the
- * request is not a bare GET — a session cookie, a CSRF header, or a form POST stands between the listing and the file,
- * so {@link streamDownload}'s URL-only contract does not fit and each module builds its own `Response` first. Writes a
+ * request is not a bare GET — a session cookie, a csrf header, or a form post stands between the listing and the file,
+ * so {@link streamDownload}'s URL-only interface does not fit and each module builds its own `Response` first. Writes a
  * `.tmp` sibling and renames, so an interrupted transfer never lands at the final path looking complete.
  */
 export async function streamBodyToFile(res: Response, dest: string): Promise<number> {

@@ -12,7 +12,7 @@
  *   the NPI (geocode → block → Fellegi-Sunter + EM → cluster) and score the recovered clusters
  *   against the NPI grouping (pairwise P/R/F1 + adjusted Rand).
  *
- *   Honest reading (per the epic): NPI-as-truth is CONSERVATIVE. A cluster that merges two NPIs is a
+ *   Honest reading (per the epic): NPI-as-truth is conservative. A cluster that merges two NPIs is a
  *   candidate "same entity, two NPIs" surfaced for review rather than an error we adjudicate. and a single
  *   NPI split across two genuinely-distant addresses is geo-first behaving correctly, counted here
  *   as a recall miss. We resolve and report. interpretation is the consumer's.
@@ -65,7 +65,7 @@ import { stateOption } from "#tools/shared"
 export interface NPPESDedupBenchmarkOptions {
 	/**
 	 * The injected geocoder factory (the command wires `mailwoman/geocode-core`; see `./eval-geocoder.ts`). Model-swap
-	 * overrides (`--model`/`--tokenizer`/`--model-card`) are the COMMAND's factory config rather than tool options.
+	 * overrides (`--model`/`--tokenizer`/`--model-card`) are the command's factory config rather than tool options.
 	 */
 	createGeocoder: EvalGeocoderFactory
 	/**
@@ -152,7 +152,7 @@ export async function nppesDedupBenchmark(
 
 	// Geocode and ingest records, carrying the held-out NPI in record.id.
 	// geocoder is injected (see ./eval-geocoder.ts); model-swap for a multi-version curve rides the
-	// command's factory config (--model/--tokenizer/--model-card. modelCardPath is MANDATORY when
+	// command's factory config (--model/--tokenizer/--model-card. modelCardPath is mandatory when
 	// modelPath is set — without it a STAGE3 model silently mis-decodes into empty parses). ---
 	report?.("[C] building the geocoder + geocoding records…")
 
@@ -242,7 +242,7 @@ export async function nppesDedupBenchmark(
 	// once, resolve many — config is cheap). ---
 	report?.(`[D] resolving the setting progression${TRAIN_EM ? " (EM-trained)" : ""}…`)
 
-	// learnedScorer:false throughout — this benchmark studies the FS COMPARISON-MODEL settings (#617/#625).
+	// learnedScorer:false throughout — this benchmark studies the FS comparison-model settings (#617/#625).
 	// The learned scorer is now default-on, so it must be pinned off here or every row would silently be the
 	// GBT. the learned scorer is measured separately (learned-scorer-clustering-eval / -crossstate-eval).
 	const progression = buildSettings(addressFrequency).map((l) => {
@@ -294,7 +294,7 @@ export async function nppesDedupBenchmark(
 
 	// Score the same clusters against NPI-level and entity-level truth.
 	// reveal how much of the apparent over-merge is NPI over-segmentation (one org / many subpart-NPIs,
-	// where merging is CORRECT) rather than model error. Two production configs: the FS full setting stack
+	// where merging is correct) rather than model error. Two production configs: the FS full setting stack
 	// and the shipped default (GBT, default-on) — each fed the corpus-wide address-frequency table. ---
 	const entityCount = new Set(records.map((r) => entityLabel(r))).size
 	const orgCount = new Set(records.map((r) => orgNameLabel(r))).size

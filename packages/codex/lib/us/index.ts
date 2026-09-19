@@ -5,7 +5,7 @@
  *
  *   The United States address system (USPS): street suffixes, secondary unit designators, floor-class
  *   designators (USPS Pub 28 C2 floor/level subset), military/diplomatic post office designators
- *   (USPS Pub 28 Chapter 7: APO/FPO/DPO + PSC/CMR/UNIT), ZIP codes, and the state abbreviations
+ *   (USPS Pub 28 Chapter 7: APO/FPO/DPO + PSC/CMR/unit), ZIP codes, and the state abbreviations
  *   they hang off of.
  */
 

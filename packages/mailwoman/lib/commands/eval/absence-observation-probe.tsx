@@ -14,12 +14,12 @@
  *   route reads the finished answer. The semantic phrase route (#1929) is injected, because the
  *   activity-phrased rows cannot reach a category without it.
  *
- *   The coverage layer is BUILD-LOCAL (ODbL), so it is not committed and not published. Without it the run
+ *   The coverage layer is build-local (ODbL), so it is not committed and not published. Without it the run
  *   refuses at construction rather than reporting an empty board — see
  *   `docs/superpowers/specs/2026-08-27-exclusion-grade-coverage-pilot.md` for the build command.
  *
- *   Report-only by design: the exit code is non-zero only when the HARNESS broke — a moved ruler, a
- *   missing coverage layer, a missing database. A recorded BREACHED is a result rather than a crash, and it is
+ *   Report-only by design: the exit code is non-zero only when the harness broke — a moved ruler, a
+ *   missing coverage layer, a missing database. A recorded breached is a result rather than a crash, and it is
  *   the result the asymmetry claim is graded on.
  */
 
@@ -30,7 +30,7 @@ import { type CommandSpec, harnessCommand } from "#cli-kit"
 export const description = "Pre-registered coverage-qualified absence-observation probe (#1965)"
 
 /**
- * Native command-line contract consumed by the filesystem command router.
+ * Native command-line interface consumed by the filesystem command router.
  */
 export const spec = {
 	name: "absence-observation-probe",

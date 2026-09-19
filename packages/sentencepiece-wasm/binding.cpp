@@ -94,7 +94,7 @@ public:
 
 	/**
 	 * Detokenize ids back to text. Invalid ids surface as the empty string plus the error field on
-	 * the wrapper's contract being violated upstream — the TS layer validates lengths.
+	 * the wrapper's interface being violated upstream — the TS layer validates lengths.
 	 */
 	std::string decodeIDs(const std::vector<int>& ids) const {
 		std::string out;

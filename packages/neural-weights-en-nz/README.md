@@ -1,5 +1,5 @@
 ---
-license: agpl-3.0
+license: AGPL-3.0
 language:
   - en
 library_name: onnx
@@ -57,7 +57,7 @@ parsed address to coordinates via a gazetteer/resolver.
 The Mailwoman model expects the soft anchor + gazetteer channels fed at
 inference. Construct the scorer through `@mailwoman/neural`'s `createScorer`
 (the canonical `ProductionScorer`), which reads the bundle's
-`requires`/channel contract and **fails closed** if a declared channel isn't
+`requires`/channel interface and **fails closed** if a declared channel isn't
 fed. Do not hand-wire the raw ONNX session with the anchor input zero-filled.
 
 ## Evaluation
@@ -87,8 +87,8 @@ repeated-name-convention story: `model-card.json`'s `eval` and `notes` blocks.
 
 ## License & links
 
-- **License:** [AGPL-3.0-only](https://www.gnu.org/licenses/agpl-3.0.html).
+- **License:** [AGPL-3.0-only](https://www.gnu.org/licenses/AGPL-3.0.html).
 - **Docs & concepts:** https://mailwoman.ai
 - **Loader / scorer API:** `@mailwoman/neural` (`createScorer`).
-- The functional contract for this bundle is `model-card.json`; this
+- The functional interface for this bundle is `model-card.json`; this
   `README.md` is the HuggingFace-facing card.

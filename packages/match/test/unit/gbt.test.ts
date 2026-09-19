@@ -11,7 +11,7 @@ import { describe, expect, it } from "vitest"
  * Deterministic LCG so the synthetic data + the test are reproducible (no Math.random).
  */
 /**
- * The Numerical-Recipes LCG, kept local ON PURPOSE. `@mailwoman/match` has no `@mailwoman/core` dependency, and taking
+ * The Numerical-Recipes LCG, kept local on purpose. `@mailwoman/match` has no `@mailwoman/core` dependency, and taking
  * one so a test can reach `makeLcg` would pull core's ~11 MB of shipped data into a package that is otherwise pure
  * comparator math. Same trade recorded in nuts-lookup and timezone-lookup. see core/utils/python-random.ts for the
  * shared implementation.
@@ -29,7 +29,7 @@ function lcg(seed: number): () => number {
 
 /**
  * A non-linearly-separable target: positive IFF x0 XOR x1 — the interaction a linear model can't capture but a depth-2+
- * tree ensemble can. x0/x1 are BINARY (matching the matcher's one-hot agreement-level features, which get clean
+ * tree ensemble can. x0/x1 are binary (matching the matcher's one-hot agreement-level features, which get clean
  * midpoint splits); x2 is pure continuous noise that carries no signal, so the trees should ignore it.
  */
 function makeXor(n: number, seed: number): { X: number[][]; y: number[] } {
@@ -107,7 +107,7 @@ describe("trainGBT / gbtScore", () => {
 		expect(posUpWtd).toBeGreaterThan(posUpFlat)
 	})
 
-	it("round-trips through JSON (the ship-as-a-data-file contract)", () => {
+	it("round-trips through JSON (the ship-as-a-data-file interface)", () => {
 		const { X, y } = makeXor(200, 3)
 
 		const model = trainGBT(

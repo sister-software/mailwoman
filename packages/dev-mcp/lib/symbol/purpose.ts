@@ -3,16 +3,16 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   What each exported function SAYS IT DOES, so the question "does something that reads a manifest already exist" can
+ *   What each exported function says IT does, so the question "does something that reads a manifest already exist" can
  *   be asked without guessing the name.
  *
- *   WHY A SECOND INDEX. `symbol-index.ts` matches names, and a name search only helps an author who already guessed the
+ *   why A second index. `symbol-index.ts` matches names, and a name search only helps an author who already guessed the
  *   existing name — the one thing an author about to duplicate does not know. `readPackageJSON` shares no substring
  *   with `loadManifest`, `getPkg` or `readProjectJSON`, so every name-shaped query for it comes back empty and reads as
  *   an absence. This indexes the first sentence of each declaration's docstring instead, which is the sentence the
  *   repository already writes and which describes the behaviour rather than the spelling.
  *
- *   IT PARSES. An earlier draft matched a docstring to the `export` below it with a regular expression, which assumed
+ *   IT parses. An earlier draft matched a docstring to the `export` below it with a regular expression, which assumed
  *   an adjacency the language does not require and could not tell an exported declaration from a private one carrying
  *   the same shape. The parse reads the modifiers and the leading comment from the statement itself. What stays
  *   uncovered is stated in the tool's `not_covered`: a declaration with no docstring has nothing to index.
@@ -58,7 +58,7 @@ function exportedName(statement: ts.Statement): string | null {
 		const [declaration] = statement.declarationList.declarations
 		const initializer = declaration?.initializer
 
-		// Only a declaration carrying LOGIC is a reuse question: a table or a literal is a different one.
+		// Only a declaration carrying logic is a reuse question: a table or a literal is a different one.
 		if (
 			declaration &&
 			initializer &&
@@ -173,7 +173,7 @@ function terms(phrase: string): string[] {
  * Every documented export in a workspace's `lib/`, read from the working tree.
  */
 async function readEntries(repoRoot: string): Promise<PurposeEntry[]> {
-	// The pathspec names a DIRECTORY and the shape is filtered here. A pathspec with a globstar inside it silently drops
+	// The pathspec names a directory and the shape is filtered here. A pathspec with a globstar inside it silently drops
 	// every file sitting directly in `lib/`, because git's wildmatch requires a separator after one — which is how
 	// `packages/core/lib/stats.ts` and `packages/spatial/lib/distance.ts` went missing from the first index.
 	const files = await trackedFiles(repoRoot, ["packages"])
@@ -238,7 +238,7 @@ export async function loadPurposeIndex(repoRoot: string): Promise<PurposeEntry[]
 	const status = (await workingTreeStatus(repoRoot, ["packages"])).toSorted()
 	const cached = await readLocalJSONFile<Partial<PurposeCache>>(cachePath()).catch(() => null)
 
-	// A cache written by an earlier shape of this module is a MISS rather than a crash: the fields are checked rather than
+	// A cache written by an earlier shape of this module is a miss rather than a crash: the fields are checked rather than
 	// assumed, so a renamed key rebuilds instead of throwing inside a tool call.
 	if (
 		cached?.head === head &&
@@ -266,7 +266,7 @@ export interface PurposeFinding extends PurposeEntry {
 /**
  * The declarations whose name or opening sentence answers `phrase`, best first.
  *
- * Scoring is term overlap, weighted so a word in the NAME counts double: a name is chosen to describe the thing, while
+ * Scoring is term overlap, weighted so a word in the name counts double: a name is chosen to describe the thing, while
  * a sentence also carries the words around it. A single matching term is not enough — one shared word is what every
  * sentence in a domain has in common — so a finding needs two, or one that appears in the name.
  */

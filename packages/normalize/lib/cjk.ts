@@ -13,7 +13,7 @@ export interface CjkResult {
 	text: string
 	map: number[]
 	/**
-	 * Count of characters folded in place (full-width → ASCII, ideographic space → ' ').
+	 * Count of characters folded in place (full-width → ascii, ideographic space → ' ').
 	 */
 	folded: number
 	/**

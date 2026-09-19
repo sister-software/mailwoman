@@ -36,7 +36,7 @@ The architecture has rightful homes for this instinct, in escalating order of am
    layer over all codex designator tables emitting typed span proposals
    (`{span: "PO Box 123", kind: PO_BOX_PHRASE, confidence}`), consumed as phrase priors today —
    the classifier conditions on the boundary hypothesis and can still disagree. This also
-   subsumes the #518 bracket/paren proposer's implementation (same stage, same output contract) —
+   subsumes the #518 bracket/paren proposer's implementation (same stage, same output interface) —
    one proposer, two cue families (designators + paired delimiters).
 3. **Stage 5 second emitter (#478's capstone — where this is ultimately heading).** Codex
    matchers emit full CANDIDATES (`po_box="P.O. Box 19"` at chars 0–11, conf from matcher

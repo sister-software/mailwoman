@@ -3,7 +3,7 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Build/probe CONSISTENCY is the only contract the locale normalizer must hold: the OSM `addr:street`
+ *   Build/probe consistency is the only interface the locale normalizer must hold: the OSM `addr:street`
  *   tag and the parser's `street` constituent must fold to the same key. These cases lock the FR/DE/NL
  *   folding (and the Paris acceptance key) so a future tweak can't silently desync the two sides.
  */

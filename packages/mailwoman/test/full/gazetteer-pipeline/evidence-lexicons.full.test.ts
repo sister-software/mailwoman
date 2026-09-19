@@ -3,14 +3,14 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   The FULL-SCALE locality-surface build against the live WOF admin DB.
+ *   The full-scale locality-surface build against the live WOF admin DB.
  *
- *   NOT ON THE PR PATH by default. Measured 2026-08-02 this pair of tests was 236.9s of a 253s CI
+ *   not on the PR path by default. Measured 2026-08-02 this pair of tests was 236.9s of a 253s CI
  *   leg (172s after the scan memoization), and it grows with the gazetteer. It runs in three places,
  *   each catching something the others cannot:
  *
  *   - `test.yml` job `lexicon-full`, path-conditional — a PR that changes the builder or its inputs.
- *   - `lexicon-nightly.yml` — DATA drift. The gazetteer is rebuilt outside any PR, so no path filter
+ *   - `lexicon-nightly.yml` — data drift. The gazetteer is rebuilt outside any PR, so no path filter
  *       can see it. This is the only layer that catches that and the control for the fixture
  *       layer: if the fixture stops representing the real data, this is what says so.
  *   - `publish.yml` prepare — the release eval.
@@ -71,7 +71,7 @@ describe.skipIf(!(await pathExists(ADMIN_DB)))("locality-surface build — integ
 			expect(j.entries[s], s).toBeUndefined()
 		}
 
-		// Family F2 — region vocabulary (the evidence→REGION rotation rows):
+		// Family F2 — region vocabulary (the evidence→region rotation rows):
 		for (const s of ["washington", "wyoming", "vermont", "missouri", "north dakota"]) {
 			expect(j.entries[s], s).toBeUndefined()
 		}
@@ -80,8 +80,8 @@ describe.skipIf(!(await pathExists(ADMIN_DB)))("locality-surface build — integ
 		expect(j.entries.school).toBeUndefined()
 		expect(j.entries.state).toBeUndefined()
 
-		// The lexicon still carries the ordinary locality surfaces the census rows NEED. (Not casper/
-		// powell: Casper WY is a GIVEN-NAME homograph at 0.42 < the 0.45 law-3 tier, Powell WY is below
+		// The lexicon still carries the ordinary locality surfaces the census rows need. (Not casper/
+		// powell: Casper WY is a given-name homograph at 0.42 < the 0.45 law-3 tier, Powell WY is below
 		// the law-2 floor — both were absent from v4 too. their census flips were family-F1 street-code
 		// evidence, fixed in the street lexicon.)
 		for (const s of ["fargo", "minot", "rutland", "plainfield", "cheyenne"]) {

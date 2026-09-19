@@ -1,10 +1,10 @@
 # POI Pipeline (Plan 2 of 3) Implementation Plan
 
-> **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
+> **For agentic workers:** required sub-skill: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
 **Goal:** The `poi_query` pipeline arc: a lexicon-conditional `poi_query` QueryKind, the `POIIntent` record, the intent-extraction stage (subject split + anchor re-parse), an OverpassQL export emitter, and the `poiQueryKind` factory flag — default-OFF, byte-identical when off by construction.
 
-**Architecture:** Spec §3.1–3.2 (`docs/superpowers/specs/2026-07-18-spatial-layers-and-poi-design.md`). Detection lives in `kind-classifier` behind an injected `POIPhraseLookup` (the package keeps its "no dictionaries" invariant — the lexicon arrives only via the factory). The intent stage lives in `core` as a new optional `stages.poiIntent`; `runPipeline` branches on `kind === "poi_query"`, and a `null` outcome falls through to the full pipeline (mis-detection safety valve). Assembly happens in `mailwoman/`: the `poiQueryKind` factory flag wires `@mailwoman/poi-taxonomy` into the classifier factory and builds the intent stage with a recursion-guarded anchor re-parse. Brand subjects: the `POIIntent` contract includes the brand variant now, but Plan 2 wires **category** detection only — the brand table (Wikidata QIDs) is Plan 3 data work.
+**Architecture:** Spec §3.1–3.2 (`docs/superpowers/specs/2026-07-18-spatial-layers-and-poi-design.md`). Detection lives in `kind-classifier` behind an injected `POIPhraseLookup` (the package keeps its "no dictionaries" invariant — the lexicon arrives only via the factory). The intent stage lives in `core` as a new optional `stages.poiIntent`; `runPipeline` branches on `kind === "poi_query"`, and a `null` outcome falls through to the full pipeline (mis-detection safety valve). Assembly happens in `mailwoman/`: the `poiQueryKind` factory flag wires `@mailwoman/poi-taxonomy` into the classifier factory and builds the intent stage with a recursion-guarded anchor re-parse. Brand subjects: the `POIIntent` interface includes the brand variant now, but Plan 2 wires **category** detection only — the brand table (Wikidata QIDs) is Plan 3 data work.
 
 **Tech Stack:** TypeScript (erasable-only, `.ts` imports), vitest, oxfmt/oxlint. No new dependencies except workspace edges: `kind-classifier` gains nothing; `mailwoman` gains `@mailwoman/poi-taxonomy`.
 
@@ -42,7 +42,7 @@
 **Interfaces:**
 
 - Consumes: existing `NormalizedInputLite`, `LocaleHint`, `AddressTree`, `PipelineOpts`.
-- Produces (contract for Tasks 3–5): `"poi_query"` in `QueryKind`; `POIIntent`, `POIIntentOutcome`; `RuntimePipelineStages.poiIntent?: (input: NormalizedInputLite, locale: LocaleHint, opts?: PipelineOpts) => Promise<POIIntentOutcome | null>`; `PipelineResult.poiIntent?: POIIntentOutcome`; `PipelineResult.path` gains `"poi"`.
+- Produces (interface for Tasks 3–5): `"poi_query"` in `QueryKind`; `POIIntent`, `POIIntentOutcome`; `RuntimePipelineStages.poiIntent?: (input: NormalizedInputLite, locale: LocaleHint, opts?: PipelineOpts) => Promise<POIIntentOutcome | null>`; `PipelineResult.poiIntent?: POIIntentOutcome`; `PipelineResult.path` gains `"poi"`.
 
 - [ ] **Step 1: Write the failing test**
 
@@ -164,7 +164,7 @@ export type QueryKind =
 	| "vague"
 ```
 
-3b. After the `QueryKindResult` interface, add the POI intent contract:
+3b. After the `QueryKindResult` interface, add the POI intent interface:
 
 ```ts
 /**
@@ -279,7 +279,7 @@ Expected: all existing pipeline + kind-classifier tests still pass (no behaviora
 cd /home/lab/Projects/mailwoman-exotic-poi
 yarn oxfmt core/pipeline/types.ts core/pipeline/runtime-pipeline.ts core/pipeline/poi-branch.test.ts
 git add core/pipeline/types.ts core/pipeline/runtime-pipeline.ts core/pipeline/poi-branch.test.ts
-git commit -m "feat(core): poi_query kind + POIIntent contract + poi pipeline branch"
+git commit -m "feat(core): poi_query kind + POIIntent interface + poi pipeline branch"
 git log -1 --oneline
 ```
 
@@ -833,7 +833,7 @@ In `mailwoman/package.json` dependencies (alphabetical, near `"@mailwoman/phrase
  *
  *   POI intent stage assembly (spec §3.1–3.2). This is the ONLY module that joins the pieces:
  *   `@mailwoman/poi-taxonomy` (the lexicon), `@mailwoman/kind-classifier` (subject matching), and
- *   the pipeline contract from core. Wired by `createRuntimePipeline({ poiQueryKind: true })`;
+ *   the pipeline interface from core. Wired by `createRuntimePipeline({ poiQueryKind: true })`;
  *   dormant otherwise.
  */
 

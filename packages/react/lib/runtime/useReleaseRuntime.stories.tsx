@@ -4,8 +4,8 @@
  * @author Teffen Ellis, et al.
  *
  *   Storybook coverage for `useReleaseRuntime` — a small `<ReleaseRuntimeInspector>` renders the hook's state
- *   over a FAKE injected loader (no network, no ONNX, no httpvfs). The `Interactive` story lets you
- *   switch versions + toggle WASM and watch the load state machine drive; `SlowLoad` adds artificial
+ *   over a fake injected loader (no network, no ONNX, no httpvfs). The `Interactive` story lets you
+ *   switch versions + toggle wasm and watch the load state machine drive; `SlowLoad` adds artificial
  *   latency so the staged loading state is visible; `AssetError` exercises the failure branch.
  */
 
@@ -126,7 +126,7 @@ export default meta
 type Story = StoryObj<typeof ReleaseRuntimeInspector>
 
 /**
- * Instant fake loader — flip versions / WASM and watch the bundle reload.
+ * Instant fake loader — flip versions / wasm and watch the bundle reload.
  */
 export const Interactive: Story = { args: { delayMs: 0 } }
 

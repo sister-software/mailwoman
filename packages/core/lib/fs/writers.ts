@@ -7,10 +7,10 @@
  *   The companion to `./readers.ts`, and the reason both exist is in that file's header.
  *
  *   Two ceremonies are encoded here rather than repeated at the call site. Every file writer creates the parent
- *   directory first, because the alternative is an ENOENT that names the file and not the missing directory.
- *   {@linkcode createSymbolicLink} unlinks its destination first, because `symlink` onto an existing path is EEXIST
- *   and `copyFile` onto an existing symlink writes THROUGH it — the defect that put symlinks in a publish tarball and
- *   made npm answer HTTP 415.
+ *   directory first, because the alternative is an enoent that names the file and not the missing directory.
+ *   {@linkcode createSymbolicLink} unlinks its destination first, because `symlink` onto an existing path is eexist
+ *   and `copyFile` onto an existing symlink writes through it — the defect that put symlinks in a publish tarball and
+ *   made npm answer http 415.
  */
 
 import { appendFile, chmod, copyFile, cp, mkdir, rename, rm, symlink, utimes, writeFile } from "node:fs/promises"
@@ -36,12 +36,12 @@ export function makeDirectories<T extends PathBuilderLike[]>(...paths: T): Promi
 }
 
 /**
- * Create one directory, raising EEXIST when something is already there.
+ * Create one directory, raising eexist when something is already there.
  *
- * The exclusive counterpart to {@linkcode makeDirectories}, which is recursive and therefore idempotent. That
- * idempotence is what disqualifies it here: `mkdir` without `recursive` is an atomic test-and-set, and it is how both
- * of this repository's inter-process locks are held. Swapping one for {@linkcode makeDirectories} would let every waiter
- * take the lock at once, and nothing would report it.
+ * The exclusive counterpart to {@linkcode makeDirectories}. It is recursive. Therefore, idempotent. That idempotence is
+ * what disqualifies it here: `mkdir` without `recursive` is an atomic test-and-set, and it is how both of this
+ * repository's inter-process locks are held. Swapping one for {@linkcode makeDirectories} would let every waiter take
+ * the lock at once, and nothing would report it.
  */
 export function makeDirectoryExclusive(path: PathBuilderLike): Promise<void> {
 	return mkdir(path.toString()).then(() => undefined)
@@ -65,7 +65,7 @@ export type BufferLike =
  * Write a local text file, creating its parent directory first.
  *
  * A string is written verbatim. Any other iterable of strings — an array, a `Set`, a generator — is written one element
- * per LINE, every line terminated including the last: an unterminated final line appends badly and is not what
+ * per line, every line terminated including the last: an unterminated final line appends badly and is not what
  * `TextSpliterator` round-trips. An empty iterable writes an empty file rather than a lone newline, because "no lines"
  * and "one blank line" are different files and a bare `join` produces the second.
  *
@@ -139,10 +139,10 @@ export function writeLocalJSONFile<T = Record<string, unknown>, S extends PathBu
 }
 
 /**
- * Write one JSON value per line, newline-terminated — the JSONL shape every panel, fixture and result file in this
+ * Write one JSON value per line, newline-terminated — the jsonl shape every panel, fixture and result file in this
  * repository is read back with by `JSONSpliterator.fromAsync`.
  *
- * The trailing newline is part of the contract: a file whose last line has none appends badly and diffs noisily.
+ * The trailing newline is part of the interface: a file whose last line has none appends badly and diffs noisily.
  *
  * @category Files
  * @runtime node
@@ -204,7 +204,7 @@ export async function writePrivateTextFile<S extends PathBuilderLike[]>(
 	const filePath = resolvePath(...pathSegments)
 
 	await makeDirectories(dirname(filePath))
-	// Not `writeLocalTextFile` + `changeMode`: the mode has to be set at CREATION, or the secret exists world-readable
+	// Not `writeLocalTextFile` + `changeMode`: the mode has to be set at creation, or the secret exists world-readable
 	// between the two calls. `changeMode` afterwards covers a file that already existed with a wider mode.
 	await writeFile(filePath, await content, { encoding: "utf8", mode: 0o600 })
 	await changeMode(filePath, 0o600)
@@ -322,8 +322,8 @@ export async function copyPath(source: PathBuilderLike, destination: PathBuilder
 /**
  * Copy one file, replacing whatever is at the destination.
  *
- * The destination is unlinked first: `copyFile` onto a SYMLINK writes through it and leaves the link in place, which is
- * how a materialized weights artifact stayed a symlink and made `npm publish` answer HTTP 415.
+ * The destination is unlinked first: `copyFile` onto a symlink writes through it and leaves the link in place, which is
+ * how a materialized weights artifact stayed a symlink and made `npm publish` answer http 415.
  */
 export async function copyFileTo(source: PathBuilderLike, destination: PathBuilderLike): Promise<void> {
 	const target = destination.toString()

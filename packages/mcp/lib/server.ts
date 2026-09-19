@@ -4,7 +4,7 @@
  * @author Teffen Ellis, et al.
  *
  *   MCP server wiring — thin glue that registers `tools.ts`'s tool table on an `McpServer`. The tool table is the
- *   stable, tested contract (`tools.test.ts`); this module only adapts it to the SDK's `registerTool` signature and
+ *   stable, tested interface (`tools.test.ts`); this module only adapts it to the SDK's `registerTool` signature and
  *   `CallToolResult` envelope. `cli.ts` owns building the real `MCPToolDeps` and connecting a transport.
  */
 
@@ -17,7 +17,7 @@ import { buildToolTable, type MCPToolDeps } from "#tools"
 /**
  * The advertised server version — keep in lockstep with `package.json`'s `version` (not read from it dynamically: a
  * static string avoids `resolveJsonModule`/`composite` friction for one cosmetic field, the same tradeoff
- * `nominatim`/`photon`'s OpenAPI `info.version` DON'T make since theirs is a documented public contract. an MCP client
+ * `nominatim`/`photon`'s OpenAPI `info.version` DON'T make since theirs is a documented public interface. an MCP client
  * only ever logs this).
  */
 const MCP_SERVER_VERSION = "7.1.0"

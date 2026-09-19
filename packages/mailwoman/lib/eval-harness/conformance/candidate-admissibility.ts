@@ -7,32 +7,32 @@
  *   of {@linkcode ResolveNodeTrace} and returns a reading. it never runs a geocode and never asks a backend
  *   anything.
  *
- *   WHAT THE LAW SAYS. Adding information to a query must not make an admissible candidate inadmissible. It
- *   may reorder the pool, it may add to it, and it may remove a candidate the added information CONTRADICTS.
+ *   what the LAW says. Adding information to a query must not make an admissible candidate inadmissible. It
+ *   may reorder the pool, it may add to it, and it may remove a candidate the added information contradicts.
  *   What it may not do is drop a candidate that is still compatible with everything the query says.
  *
- *   `top5(refined) ⊆ top5(base)` IS NOT THAT LAW, and the difference is the whole reason this module exists.
+ *   `top5(refined) ⊆ top5(base)` is not that LAW, and the difference is the whole reason this module exists.
  *   A subset assertion fails on a valid refinement that surfaces a candidate which was sixth before, and it
  *   passes on a real violation whenever the dropped candidate happened to sit past the window. Both readings
  *   are measured here instead of assumed: the walk's fetch window is recorded per lookup as
  *   {@linkcode ResolveNodeTrace.query.limit} (5 by default) and the trace's own cap reports its overflow as
  *   `candidatesTruncated`, so "absent" and "absent from what we looked at" are different findings.
  *
- *   FIVE ACCOUNTS, AND `unexplained` IS THE ONLY ONE THAT FAILS. Every candidate on either side is assigned
+ *   five accounts, and `unexplained` is the only one that fails. Every candidate on either side is assigned
  *   exactly one — see {@linkcode CANDIDATE_ACCOUNTS}. A candidate the refined lookup's country scope
- *   contradicts is an EXPLAINED removal. A candidate that left a lookup re-scoped through a different
+ *   contradicts is an explained removal. A candidate that left a lookup re-scoped through a different
  *   hierarchy path is an explained removal too, and the account names the path. A candidate absent from a
  *   table that was sitting at its window is not evidence of anything, and says so.
  *
- *   A REMOVAL AT THE WINDOW LEAVES THE ROW `unmeasured`, NOT PASSING. That is the one place this instrument
+ *   A removal AT the window leaves the row `unmeasured`, not passing. That is the one place this instrument
  *   is deliberately less conclusive than a verdict: the observation could not decide the question, and
  *   reporting the law as holding there would count a blind spot as evidence. An addition at the window is a
  *   different matter and does not hold the row back — the law constrains what refinement removes, so a
  *   candidate the coarse table was too small to show is explained by the window rather than unexplained by it.
  *
- *   LOOKUPS ARE PAIRED BY WHAT WAS ASKED rather than BY WHEN. The pairing key is tag + placetype + folded value, so
+ *   lookups are paired BY what was asked rather than BY when. The pairing key is tag + placetype + folded value, so
  *   the base's unscoped `Springfield` lookup pairs with the refined query's `Springfield` lookup under
- *   Illinois, which is exactly the pair the law is about. Repeats of one lookup within a single run are FOLDED
+ *   Illinois, which is exactly the pair the law is about. Repeats of one lookup within a single run are folded
  *   into one pool: the walk records `#lookupAndPick` per call and a query can reach the same lookup twice, so
  *   counting them apart would report one pool as two.
  */
@@ -42,7 +42,7 @@ import type { ResolveCandidateTrace, ResolveNodeTrace } from "@mailwoman/core/re
 
 /**
  * The closed set of accounts a candidate can be assigned. Every candidate observed on either side gets exactly one, and
- * the name states what was READ rather than what it implies for the verdict.
+ * the name states what was read rather than what it implies for the verdict.
  *
  * - `held` — present in both pools. Its rank may have moved. a rank change is reported and never fails, because the law
  *   is about admissibility and a reordering leaves every candidate admissible.
@@ -117,7 +117,7 @@ interface PooledCandidate {
 	name: string
 	country: string
 	/**
-	 * The BEST final rank observed across the repeats. A candidate that ranked 5th once and 2nd another time was
+	 * The best final rank observed across the repeats. A candidate that ranked 5th once and 2nd another time was
 	 * reachable at 2, and the pessimistic reading would invent a demotion the walk never performed.
 	 */
 	rank: number
@@ -287,7 +287,7 @@ export interface RefinementReading {
 	/**
 	 * - `refines` — every removal is accounted for and every addition is explained. the law holds over the observed pool.
 	 * - `diverges` — a candidate left the pool unexplained, or one entered it unexplained.
-	 * - `unmeasured` — no unexplained movement, but at least one removal sat at a fetch window, so the law is UNPROVEN
+	 * - `unmeasured` — no unexplained movement, but at least one removal sat at a fetch window, so the law is unproven
 	 *   rather than holding.
 	 * - `undecidable` — no lookup ran on both sides, so there is no pool to compare.
 	 */
@@ -306,7 +306,7 @@ export interface RefinementReading {
 	 */
 	addedLookups: string[]
 	/**
-	 * Lookups only the BASE performed. Reported rather than graded — a refinement that stops probing a value it still
+	 * Lookups only the base performed. Reported rather than graded — a refinement that stops probing a value it still
 	 * carries has changed its hierarchy path, and that is a finding a reader wants beside the pool counts.
 	 */
 	droppedLookups: string[]
@@ -565,7 +565,7 @@ export function accountRefinement(
 		}
 	}
 
-	// Only a REMOVAL at the window holds the row back. The law constrains what refinement removes, so a candidate the
+	// Only a removal at the window holds the row back. The law constrains what refinement removes, so a candidate the
 	// coarse table was too small to show is explained by that window rather than left unproven by it.
 	const unprovable = readings.filter(
 		(reading) => reading.account === "beyond_window" && reading.direction === "removed"

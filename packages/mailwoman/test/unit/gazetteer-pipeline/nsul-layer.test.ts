@@ -3,7 +3,7 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   The NSUL builder's contract: the line classifier's input-tail behavior (BOM header, empty `PCDS`,
+ *   The nsul builder's interface: the line classifier's input-tail behavior (BOM header, empty `pcds`,
  *   a postcode-shaped column holding something else, a truncated line), the vintage parse, and a full
  *   fixture build through `buildNSULLayer` — the `uprn.db` join, both skipped classes, DDL, checks,
  *   coverage, manifest, seal — verified by reading the sealed artifact back through the production
@@ -22,7 +22,7 @@ import {
 	readLayerManifest,
 	writeLayerCoverage,
 	writeLayerManifest,
-	type LayerContractDatabase,
+	type layerschemadatabase,
 } from "@mailwoman/core/layers"
 import { CoverageBasis } from "@mailwoman/evidence"
 import { NSUL_COVERAGE_H3_RESOLUTION, NSULLookup } from "@mailwoman/resolver-wof-sqlite/nsul"
@@ -51,12 +51,12 @@ const fixtures = new AsyncDisposableStack()
 afterAll(() => fixtures.disposeAsync())
 
 /**
- * U+FEFF, by char code so no invisible character hides in this source file.
+ * U+feff, by char code so no invisible character hides in this source file.
  */
 const BOM = String.fromCharCode(0xfe_ff)
 
 /**
- * A real Epoch 127 line (UPRN 14000003, `RG40 4HR`), 29 columns.
+ * A real Epoch 127 line (uprn 14000003, `RG40 4HR`), 29 columns.
  */
 const WILD_LINE =
 	"14000003,478872,164520,RG40 4HR,E00084004,E99999999,E99999999,E06000041,E05015787,E18000009,E92000001,E12000008," +
@@ -153,7 +153,7 @@ describe("nsulAttribution", () => {
 })
 
 /**
- * The fixture `uprn.db`: three points. UPRN 5 is deliberately absent so a register row naming it becomes
+ * The fixture `uprn.db`: three points. uprn 5 is deliberately absent so a register row naming it becomes
  * `skipped-no-coordinate`.
  */
 const UPRN_POINTS = [
@@ -199,7 +199,7 @@ async function writeFixtureUPRNDatabase(dir: string): Promise<string> {
 }
 
 /**
- * Eleven region files in the wild file's exact shape — BOM-prefixed header, CRLF terminators — with the rows spread
+ * Eleven region files in the wild file's exact shape — BOM-prefixed header, crlf terminators — with the rows spread
  * over two regions and the other nine header-only, so the region-set check and the per-region counts are exercised.
  */
 async function writeFixtureRegions(
@@ -233,10 +233,10 @@ describe("buildNSULLayer (fixture)", () => {
 				line(14_000_003, "RG40 4HR"),
 				line(14_000_005, "RG40 4HR"),
 				line(100_062_353_961, "PO21 1HR"),
-				// PCDS empty: the postcode is not in Code-Point Open.
+				// pcds empty: the postcode is not in Code-Point Open.
 				line(14_000_007, ""),
 			],
-			// A register row for a UPRN uprn.db does not hold.
+			// A register row for a uprn uprn.db does not hold.
 			LN: [line(5, "SW1A 1AA")],
 		})
 
@@ -284,7 +284,7 @@ describe("buildNSULLayer (fixture)", () => {
 			},
 		])
 
-		using kdb = new DatabaseClient<LayerContractDatabase>(out, { readOnly: true })
+		using kdb = new DatabaseClient<layerschemadatabase>(out, { readOnly: true })
 
 		const manifest = await readLayerManifest(kdb)
 
@@ -301,7 +301,7 @@ describe("buildNSULLayer (fixture)", () => {
 		expect(manifest.sourceVintage).toBe("2026-06 (Epoch 127)")
 		expect(manifest.spineKeys.h3).toEqual({ column: "h3_cell", resolution: 9 })
 
-		// Coverage: the res-6 parent of a written point is designated-complete. an unsurveyed cell is UNKNOWN.
+		// Coverage: the res-6 parent of a written point is designated-complete. an unsurveyed cell is unknown.
 		const parent = shortCellToInt(
 			cellToParent(uprnFullCell(UPRN_POINTS[0]!.lat, UPRN_POINTS[0]!.lon), NSUL_COVERAGE_H3_RESOLUTION) as H3Cell
 		)

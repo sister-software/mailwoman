@@ -10,7 +10,7 @@ verified-with: mailwoman v7.3.0, geopy 2.5.0
 
 You already have a geocoding client. It's a `geopy.Nominatim` call in a Python script, or a `fetch` against `/search` somewhere in a batch job. It points at the public Nominatim server, and that server asks for at most one request per second, so a table of any size takes days. Or it points at a hosted API that bills per request, and the bill scales with the table. Or you run your own Nominatim, which means PostgreSQL, an `osm2pgsql` import measured in hours and tens of gigabytes, and a box you can't put inside an app.
 
-You don't have to rewrite the client to fix any of that. Mailwoman ships a [Nominatim-compatible endpoint](../concepts/switching-from-nominatim.mdx) — same `/search` and `/reverse` contract, from a SQLite file instead of a PostgreSQL cluster. Point the client you already have at a local instance and it works, with no code change. By the end of this page you'll have that instance running from one `docker run`, and your geopy (or plain-HTTP) calls hitting it.
+You don't have to rewrite the client to fix any of that. Mailwoman ships a [Nominatim-compatible endpoint](../concepts/switching-from-nominatim.mdx) — same `/search` and `/reverse` interface, from a SQLite file instead of a PostgreSQL cluster. Point the client you already have at a local instance and it works, with no code change. By the end of this page you'll have that instance running from one `docker run`, and your geopy (or plain-HTTP) calls hitting it.
 
 ## Start the server
 
@@ -103,7 +103,7 @@ print(tz["name"], tz["offset_sec"])
 
 ## Other stacks: any HTTP client
 
-geopy is one client. The endpoint is plain HTTP with the Nominatim query contract, so anything that speaks `GET /search?q=…` works — `curl`, `requests`, a Go or Rust client, a browser `fetch`. Here it is with `curl`:
+geopy is one client. The endpoint is plain HTTP with the Nominatim query interface, so anything that speaks `GET /search?q=…` works — `curl`, `requests`, a Go or Rust client, a browser `fetch`. Here it is with `curl`:
 
 ```bash
 curl -s "http://localhost:8080/search?q=350+5th+Ave,+New+York,+NY+10118&format=json&addressdetails=1"

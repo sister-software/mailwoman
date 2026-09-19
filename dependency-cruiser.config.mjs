@@ -18,13 +18,13 @@
 const GENERATED_TREES = "(?:^|/)(?:out|dist|node_modules|public/sqljs|sentencepiece[.]mjs)(?:/|$)"
 
 /**
- * Modules an external runner, a bundler, or an export condition loads BY PATH, so no import names them and `no-orphans`
+ * Modules an external runner, a bundler, or an export condition loads BY path, so no import names them and `no-orphans`
  * cannot see the edge. Each entry states who does the loading.
  */
 const LOADED_WITHOUT_AN_IMPORT = [
 	// Test-runner and build-tool configs. The preset exempts babel and webpack by name; these are the ones this
-	// repository runs. `.storybook/main.ts` sits under a dotted DIRECTORY, which the preset's dotfile pattern
-	// (`(^|/)\.[^/]+\.(js|cjs|mjs|ts|json)$`) matches only as a dotted FILE.
+	// repository runs. `.storybook/main.ts` sits under a dotted directory, which the preset's dotfile pattern
+	// (`(^|/)\.[^/]+\.(js|cjs|mjs|ts|json)$`) matches only as a dotted file.
 	"(^|/)(?:vitest|vitest[.]node|vite|playwright|styleframe)[.]config[.](?:js|cjs|mjs|ts)$",
 	"(^|/)[.]storybook/",
 	// Playwright specs: the runner collects them from disk by glob.

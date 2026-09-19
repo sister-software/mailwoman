@@ -1,9 +1,9 @@
-# v4.12.0 — house-venue INTL, EWC BRAKE RAISED 10x (#1748 / #1821)
+# v4.12.0 — house-venue intl, EWC brake raised 10x (#1748 / #1821)
 #
-# ONE VARIABLE against v4.11.0: ewc_lambda 1e4 -> 1e5. Same corpus (v0.27.0), same source, same
+# one variable against v4.11.0: ewc_lambda 1e4 -> 1e5. Same corpus (v0.27.0), same source, same
 # weight, same steps, same seed. A difference here is attributable to the brake alone.
 #
-# WHY THE BRAKE. Five runs regressed FR/GB/IE venue rows, and v4.11.0 eliminated the two corpus-side
+# why the brake. Five runs regressed FR/GB/IE venue rows, and v4.11.0 eliminated the two corpus-side
 # explanations: it introduced no new source and no new weight, put a venue + street + house_number in
 # 100% of its rows, and still graded 5 improved / 18 regressed with the same nine venue-led losses as
 # the 3.1%-share admin-only arm. Composition and exposure modulate the size of the shift. neither
@@ -11,21 +11,21 @@
 # hold a new tail convention without moving an old one, and `ewc_lambda` is the knob that decides how
 # hard the old one is held.
 #
-# WHAT THIS CAN CONCLUDE, both directions useful:
+# what this can conclude, both directions useful:
 #   - regressions fall and the 5 gains survive -> the brake was the change, and this is shippable;
 #   - regressions fall and the gains vanish too -> the brake trades learning for stability 1:1, so a
 #     fine-tune cannot carry this data at all and the next step is a from-scratch base that sees every
 #     tail at once;
 #   - nothing moves -> the brake is not the change either, and the search moves to capacity.
 #
-# PRE-REGISTERED CHECK, unchanged from v4.11.0:
+# PRE-registered check, unchanged from v4.11.0:
 #   1. the venue-led rows v4.8.0 regressed must all hold;
 #   2. FR, GB and DE show no regression anywhere (D-rule, iron rule 6);
 #   3. net improved-minus-regressed >= 0 on the 649-row board.
 #
-# THE FOURTH SHAPE, AND THE FIRST THAT CONTAINS ITS OWN ALTERNATIVES.
+# the fourth shape, and the first that contains its own alternatives.
 #
-# Four trailing-region runs graded DO-NOT-SHIP because the recipe output carried only admin segments and so
+# Four trailing-region runs graded do-not-ship because the recipe output carried only admin segments and so
 # damaged whichever class occupied the position it taught:
 #
 #   v4.8.0   9.4%   7/25 regressed, 12 venue-led   "Ye Three Lords, 27 Minories, London EC3N 1DE"
@@ -38,7 +38,7 @@
 # the same shape — and every row it emits carries a venue, a street and a house number. The surface is
 # taught with its alternatives present rather than against them.
 #
-# WHAT IS ADDED: 18,000 rows, IN/PT/MX, REAL (postcode, locality, region) triples from the GeoNames
+# what is added: 18,000 rows, IN/PT/MX, real (postcode, locality, region) triples from the GeoNames
 # postal exports with the corrected column mapping (admin2 is the city. column 3 is a street or a
 # colonia and becomes the dependent locality). Measured on the emitted rows: venue 100%, street 100%,
 # house_number 100%.
@@ -46,15 +46,15 @@
 #   Bob's Pizza, 9 Lake Dr, Srikakulam, Andhra Pradesh 532001
 #   8457 Maple Blvd, Brasserie du Marche, Aguascalientes, Aguascalientes 20000
 #
-# EXPOSURE: none to tune. The rows are emitted under the EXISTING `synth-house-venue` source, so they join
+# exposure: none to tune. The rows are emitted under the existing `synth-house-venue` source, so they join
 # a bucket that has shipped at weight 2.0 and take their share of it rather than claiming their own.
 # That is deliberate — every previous failure in this arc came from a new source carrying ~9% of the
 # stream on its own.
 #
-# STEPS: 4,000 rather than 8,000. The change is small and additive to a proven bucket, and the wall
+# steps: 4,000 rather than 8,000. The change is small and additive to a proven bucket, and the wall
 # clock is real. if it needs longer it can resume.
 #
-# PRE-REGISTERED CHECK:
+# PRE-registered check:
 #   1. the 12 venue-led rows v4.8.0 regressed must all hold — that is the defect this design fixes;
 #   2. FR, GB and DE show no regression anywhere (D-rule, iron rule 6);
 #   3. net improved-minus-regressed >= 0 on the 649-row board.
@@ -199,7 +199,7 @@ data:
     VU: 1.0
     ZA: 1.0
   source_weights:
-    # REPS-FIRST (#1677): weight = target_reps x rows x total / (samples - target_reps x rows).
+    # reps-first (#1677): weight = target_reps x rows x total / (samples - target_reps x rows).
     # 6 reps/row x 17,908 rows against 155.0 total over 8,000 x 128 = 1,024,000 samples -> 18.17,
     # a 10.5% share. Parity with the bare trailing-region sources, measured at 7.7 and 5.2 reps/row.
     # For contrast, the weight that collapsed v4.6.0 was 1.0 and bought 165 reps/row.

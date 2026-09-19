@@ -37,12 +37,12 @@ import type { Tagged } from "type-fest"
 export type PostalCode = Tagged<string, "JpPostalCode">
 
 /**
- * The postal-code shape: `NNN-NNNN`, the hyphen optional on input (`1000001` or `100-0001`).
+ * The postal-code shape: `NNN-nnnn`, the hyphen optional on input (`1000001` or `100-0001`).
  */
 export const JP_POSTAL_CODE_PATTERN = /^\d{3}-?\d{4}$/
 
 /**
- * Normalize a postal-code surface form to the canonical hyphenated `NNN-NNNN`: strip a leading 〒 mark and any
+ * Normalize a postal-code surface form to the canonical hyphenated `NNN-nnnn`: strip a leading 〒 mark and any
  * whitespace, then re-insert the hyphen if the input gave the bare seven digits (`〒100-0001` → `100-0001`, `1000001` →
  * `100-0001`). Returns null if the result is not seven digits.
  */

@@ -48,7 +48,7 @@ const pickClass = (draw: number): string => {
 }
 
 /**
- * Generate PO-box and CEDEX rows from US, French, Canadian, Australian, and New Zealand source pools.
+ * Generate PO-box and cedex rows from US, French, Canadian, Australian, and New Zealand source pools.
  */
 export const poBoxCedexRecipe: CorpusRecipe = {
 	name: "po-box-cedex",

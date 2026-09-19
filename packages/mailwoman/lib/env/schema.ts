@@ -23,9 +23,9 @@ const RuntimeEnvSchema = z.object({
 			description: "BCP-47 locale override used when a request supplies no locale.",
 			examples: ["en-US", "fr-FR"],
 		}),
-	// Geocode server batch row cap (`POST /v1/batch`).
+	// Geocode server batch row cap (`post /v1/batch`).
 	//
-	// `MAILWOMAN_BATCH_CONCURRENCY` was REMOVED — it was inert. In-process concurrency cannot overlap a geocode:
+	// `MAILWOMAN_BATCH_CONCURRENCY` was removed — it was inert. In-process concurrency cannot overlap a geocode:
 	// `onnxruntime-node`'s `session.run()` blocks the JS thread instead of releasing to the libuv pool, and
 	// `node:sqlite` reads are synchronous. Measured 1.00x flat from 1→16 workers on both parse and full geocode. Don't
 	// reintroduce it without re-measuring. worker threads (see `mailwoman/geocode-stream.ts`) are the only change that

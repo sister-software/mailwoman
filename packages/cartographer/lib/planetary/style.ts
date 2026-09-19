@@ -64,7 +64,7 @@ export function createPlanetaryStyle(options: PlanetaryStyleOptions): StyleSpeci
 		sky: { "sky-color": palette.space, "horizon-color": palette.space },
 	}).toJSON()
 
-	// MapLibre 6 reads the projection from the STYLE. Passed as a map option instead it is ignored and the body
+	// MapLibre 6 reads the projection from the style. Passed as a map option instead it is ignored and the body
 	// renders flat, which is a mercator sheet of terrain rather than a world.
 	return { ...style, projection: { type: "globe" } }
 }

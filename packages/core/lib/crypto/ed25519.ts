@@ -4,7 +4,7 @@
  * @author Teffen Ellis, et al.
  *
  *   Ed25519 on `crypto.subtle`, the one implementation Node, a Cloudflare Worker and a browser share. Keys
- *   travel as PEM: PKCS8 for the private half, SPKI for the public half, which is what `node:crypto` wrote before and
+ *   travel as PEM: PKCS8 for the private half, spki for the public half, which is what `node:crypto` wrote before and
  *   what an operator's signing key file already holds. The PEM codec here is a base64 transform of the DER bytes the
  *   WebCrypto API imports and exports. nothing parses ASN.1.
  *
@@ -45,7 +45,7 @@ function derToPEM(der: Uint8Array<ArrayBuffer>, label: "PRIVATE KEY" | "PUBLIC K
 }
 
 /**
- * The SPKI DER bytes of a PEM public key: the stable encoding to derive an identifier from, since PEM line wrapping and
+ * The spki DER bytes of a PEM public key: the stable encoding to derive an identifier from, since PEM line wrapping and
  * trailing whitespace vary between writers.
  */
 export function publicKeyDER(publicKeyPEM: string): Uint8Array<ArrayBuffer> {
@@ -66,13 +66,13 @@ export async function generateEd25519KeyPair(): Promise<Ed25519KeyPairPEM> {
 }
 
 /**
- * The SPKI DER header for an Ed25519 public key: a SEQUENCE holding the AlgorithmIdentifier (OID 1.3.101.112) and a
- * 32-byte BIT STRING. Fixed for the algorithm, so the public key's DER is this header plus the point.
+ * The spki DER header for an Ed25519 public key: a sequence holding the AlgorithmIdentifier (OID 1.3.101.112) and a
+ * 32-byte BIT string. Fixed for the algorithm, so the public key's DER is this header plus the point.
  */
 const SPKI_ED25519_HEADER = new Uint8Array([0x30, 0x2a, 0x30, 0x05, 0x06, 0x03, 0x2b, 0x65, 0x70, 0x03, 0x21, 0x00])
 
 /**
- * The public half of a PKCS8 private key, as SPKI PEM. A private key's JWK carries its public point as `x`, so an
+ * The public half of a PKCS8 private key, as spki PEM. A private key's JWK carries its public point as `x`, so an
  * issuer holding only the private key can still say which key id it signs for.
  */
 export async function publicKeyFromPrivateKey(privateKeyPEM: string): Promise<string> {

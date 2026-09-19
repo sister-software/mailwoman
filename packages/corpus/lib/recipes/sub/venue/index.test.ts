@@ -8,7 +8,7 @@
  *   What is pinned here is the part no downstream count can catch. A composition report tells you the
  *   recipe output has 84,000 positives. it cannot tell you that one of them is a bare `Halle`, which the
  *   de-DE board says is a city of 240,000 people. So the promotion gate, the `identifier-required`
- *   shape constraint, the per-REGION identifier draw and the word-boundary rule that separates
+ *   shape constraint, the per-region identifier draw and the word-boundary rule that separates
  *   `Gate` from `Briggate` are asserted directly, against the committed lexicon.
  */
 
@@ -110,7 +110,7 @@ describe("matchesPromotedShape", () => {
 
 	it("refuses a German hall whose follower is a WORD, not an identifier", () => {
 		// The 2026-08-05 smoke put `Halle Wohnstadt Nord` in the attested pool under a looser rule.
-		// `Wohnstadt` is a name. the de-DE board turns on an IDENTIFIER following the phrase.
+		// `Wohnstadt` is a name. the de-DE board turns on an identifier following the phrase.
 		expect(matchesPromotedShape("halle wohnstadt nord", halle)).toBe(false)
 		expect(matchesPromotedShape("halle rosengarten", halle)).toBe(false)
 		expect(matchesPromotedShape("halle-südstadt", halle)).toBe(false)

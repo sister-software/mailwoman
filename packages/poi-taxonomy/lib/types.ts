@@ -29,7 +29,7 @@ export function toPOICategoryID(id: string): POICategoryID {
  */
 export const CategorySource = {
 	/**
-	 * The Overture Places `taxonomy` snapshot (CDLA-Permissive-2.0).
+	 * The Overture Places `taxonomy` snapshot (cdla-Permissive-2.0).
 	 */
 	Overture: "overture",
 	/**
@@ -50,7 +50,7 @@ export interface CategoryRecord {
 	 */
 	label: string
 	/**
-	 * Ordered ancestry, top level first, ENDING with this category's own id.
+	 * Ordered ancestry, top level first, ending with this category's own id.
 	 */
 	hierarchy: POICategoryID[]
 	/**
@@ -64,7 +64,7 @@ export interface CategoryRecord {
 	osmTag?: string
 	source: CategorySource
 	/**
-	 * Overture `taxonomy.primary` LEAF ids that roll up into this canonical category — i.e. the values a built `poi.db`
+	 * Overture `taxonomy.primary` leaf ids that roll up into this canonical category — i.e. the values a built `poi.db`
 	 * actually stores. The seed taxonomy keys categories by curated ids (`supermarket`, `trail`), but the db stores
 	 * Overture leaves (`grocery_store`, `hiking_trail`, …); this is the one-to-many translation layer between the two
 	 * namespaces. Omitted/empty ⇒ the id is its own probe id (identity — 21 of 23 seeds rely on that, e.g. `hospital` =
@@ -166,7 +166,7 @@ export interface POIBrandSourceLayer {
  */
 export interface POIBrandTable {
 	/**
-	 * The brand TABLE's own schema/data version — independent of {@link POIBrandSourceLayer.version}.
+	 * The brand table's own schema/data version — independent of {@link POIBrandSourceLayer.version}.
 	 */
 	version: string
 	sourceLayer: POIBrandSourceLayer

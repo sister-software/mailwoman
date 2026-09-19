@@ -14,10 +14,10 @@ import type { CoverageCell } from "#layers/manifest"
  * The coverage rows for a layer whose coverage is `source_present`: one per cell the authority's own polygons reach,
  * and none anywhere else.
  *
- * `observedRows` counts the polygons reaching the cell, which is what the contract's column means. There is no zero-row
- * cell here and there cannot be one: a cell with no polygon gets no row, because a `source_present` layer publishes
- * nothing that would let an empty cell be distinguished from unmapped ground. A layer whose absence carries meaning
- * (flood's Zone 1) emits its rows from the designated extent instead, and does not use this.
+ * `observedRows` counts the polygons reaching the cell, which is what the interface's column means. There is no
+ * zero-row cell here and there cannot be one: a cell with no polygon gets no row, because a `source_present` layer
+ * publishes nothing that would let an empty cell be distinguished from unmapped ground. A layer whose absence carries
+ * meaning (flood's Zone 1) emits its rows from the designated extent instead, and does not use this.
  */
 export function sourcePresentCoverageCells(observed: ReadonlyMap<number, number>): CoverageCell[] {
 	const cells: CoverageCell[] = []
@@ -35,7 +35,7 @@ export function sourcePresentCoverageCells(observed: ReadonlyMap<number, number>
 }
 
 /**
- * The coverage rows for a layer whose footprint an authority DESIGNATES: one per cell of the realized footprint, every
+ * The coverage rows for a layer whose footprint an authority designates: one per cell of the realized footprint, every
  * one at completeness 1 on the `designated` basis — `observed_rows` zero included, because a designated cell no polygon
  * reaches is the storable form of a designated absence, and the row a reader must not confuse with the absent row an
  * out-of-footprint cell has.
@@ -65,7 +65,7 @@ export function designatedCoverageCells(
 }
 
 /**
- * Refuse a coverage row that would license a NEGATIVE claim — the check the meaning-of-zero rule turns on for a
+ * Refuse a coverage row that would license a negative claim — the check the meaning-of-zero rule turns on for a
  * `source_present` layer, and a condition rather than a convention: the day someone writes a stronger basis without
  * settling the footprint question, the build refuses rather than letting an absent polygon be read as a designation.
  *
@@ -171,7 +171,7 @@ const M2_PER_KM2 = 1_000_000
 
 /**
  * An {@link AreaAgreement} whose witness is stated: either the source published a figure and the gap is against it, or
- * it published none and there is NOTHING TO AGREE WITH. The no-witness case is a TYPE rather than a zero, because a
+ * it published none and there is nothing TO agree with. The no-witness case is a type rather than a zero, because a
  * `relativeGap` of 0 is indistinguishable from a pass, and a check that never ran must not read as one.
  */
 export type AreaAgreementReading =

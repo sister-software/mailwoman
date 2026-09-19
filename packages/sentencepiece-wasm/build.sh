@@ -4,17 +4,17 @@
 # @license AGPL-3.0
 # @author Teffen Ellis, et al.
 #
-# Build the committed `sentencepiece.mjs` artifact: google/sentencepiece at the PINNED tag below,
-# compiled to WASM with emscripten and linked against binding.cpp (the embind wrapper exposing
+# Build the committed `sentencepiece.mjs` artifact: google/sentencepiece at the pinned tag below,
+# compiled to wasm with emscripten and linked against binding.cpp (the embind wrapper exposing
 # native per-piece byte offsets — task #26).
 #
-# The artifact is COMMITTED (like core/data's reference blobs): consumers import
+# The artifact is committed (like core/data's reference blobs): consumers import
 # `@mailwoman/sentencepiece-wasm` as a plain dependency and never need emscripten. Re-run this
 # script only to bump the sentencepiece tag or change the binding; commit the regenerated .mjs in
 # the same PR and note the tag bump in the header of index.d.ts.
 #
 # Prereqs: emsdk activated (`source ~/tools/emsdk/emsdk_env.sh`), cmake, git. The sentencepiece
-# checkout is cached OUTSIDE the repo (a toolchain input, not a repo artifact).
+# checkout is cached outside the repo (a toolchain input, not a repo artifact).
 #
 # Single-file output on purpose: -sSINGLE_FILE=1 embeds the wasm as base64 in the .mjs, matching
 # how the previous runtime (@sctg/sentencepiece-js) shipped — no separate .wasm delivery path to
@@ -23,7 +23,7 @@
 
 set -euo pipefail
 
-# The pin. corpus-python trains with `sentencepiece>=0.2.2` — the runtime MUST tokenize
+# The pin. corpus-python trains with `sentencepiece>=0.2.2` — the runtime must tokenize
 # byte-identically to the trainer, so the tags travel together (see project-tokenizer-mismatch).
 SP_TAG="v0.2.2"
 
@@ -43,8 +43,8 @@ fi
 git -C "$SP_SRC" fetch --tags
 git -C "$SP_SRC" checkout "$SP_TAG"
 
-# Static library build. SPM_ENABLE_SHARED=OFF is required under emscripten; the TCMalloc probe is
-# meaningless in WASM.
+# Static library build. SPM_ENABLE_SHARED=off is required under emscripten; the TCMalloc probe is
+# meaningless in wasm.
 emcmake cmake -S "$SP_SRC" -B "$BUILD_DIR" \
 	-DCMAKE_BUILD_TYPE=Release \
 	-DSPM_ENABLE_SHARED=OFF \
@@ -59,13 +59,13 @@ cmake --build "$BUILD_DIR" -j "$(nproc)" > /dev/null
 ABSL_LIBS=$(find "$BUILD_DIR/third_party/abseil-cpp" -name "*.a" | sort)
 
 # Link the binding. Notes on the flags:
-# - MODULARIZE + EXPORT_ES6: the artifact default-exports an async factory (createSentencePiece).
+# - modularize + EXPORT_ES6: the artifact default-exports an async factory (createSentencePiece).
 # - SINGLE_FILE: wasm embedded as base64 (see header).
-# - ENVIRONMENT=web,webview,worker,node: every consumer surface (browser demo, workers, Node CLI).
+# - environment=web,webview,worker,node: every consumer surface (browser demo, workers, Node CLI).
 # - ALLOW_MEMORY_GROWTH: tokenizer.model is ~1.6MB and encode allocations scale with input length.
 # - DISABLE_EXCEPTION_CATCHING=0: protobuf-lite + sentencepiece throw in cold error paths; without
-#   catching enabled a bad model file ABORTS the runtime instead of returning a status.
-# - FILESYSTEM=0: only LoadFromSerializedProto is bound — no FS use anywhere.
+#   catching enabled a bad model file aborts the runtime instead of returning a status.
+# - filesystem=0: only LoadFromSerializedProto is bound — no FS use anywhere.
 emcc "$SCRIPT_DIR/binding.cpp" \
 	-I "$SP_SRC/src" -I "$SP_SRC" -I "$SP_SRC/third_party/abseil-cpp" -I "$SP_SRC/third_party/protobuf-lite" -I "$SP_SRC/src/builtin_pb" -I "$BUILD_DIR" \
 	"$BUILD_DIR/src/libsentencepiece.a" \

@@ -5,7 +5,7 @@
  *
  *   The `mailwoman corpus fetch <source>` family — reproducible bulk-download recovery modules for
  *   the open-data sources the corpus build pipeline consumes. Each module writes the raw download
- *   files **plus** a sibling `MANIFEST.json` capturing the origin URL, fetch timestamp, byte count,
+ *   files **plus** a sibling `manifest.json` capturing the origin URL, fetch timestamp, byte count,
  *   and sha256 so downstream adapters can verify provenance.
  *
  *   The corpus build pipeline itself does not call these modules — the existing convention is for
@@ -24,7 +24,7 @@
  *   mailwoman corpus fetch state-sources --out-root /data/corpus/sources
  *   ```
  *
- *   Each adapter under `corpus/src/adapters/<adapter>/README.md` documents the specific URL its
+ *   Each adapter under `corpus/src/adapters/<adapter>/readme.md` documents the specific URL its
  *   input was pulled from. these modules mirror those URLs in a single executable place.
  *
  *   ## Coverage
@@ -35,7 +35,7 @@
  *       (US PD).
  *   - `geonames-postal` — GeoNames per-country postal exports (~80 countries). Tier B (CC-BY-4.0,
  *       attribute "GeoNames"). The only source in this family carrying `(postcode, locality, region)`
- *       with the names INLINE, which is why it exists: the `parent_id` join route covers exactly five
+ *       with the names inline, which is why it exists: the `parent_id` join route covers exactly five
  *       countries and the nearest-centroid fallback measured under 50% agreement on four of those five.
  *       GeoNames does not publish every country — Venezuela 404s.
  *   - `hrsa` — HRSA Health Center Service Delivery Sites (federal). Tier A (US PD).
@@ -46,17 +46,17 @@
  *   - `openaddresses` — OpenAddresses country collections (default: Canada / `ca`). Tier B/C mixed
  *       — per-row filter.
  *   - `ourairports` — OurAirports global airport CSVs (~83K airports + the country/region/runway
- *       joins). Tier A (public domain). The VENUE half of the sub-venue arc (#35); it carries no
+ *       joins). Tier A (public domain). The venue half of the sub-venue arc (#35); it carries no
  *       interior structure, which comes from `@mailwoman/osm/sdk`'s `extractOSMSubVenues`.
- *   - `wikidata-subvenue` — the multilingual sub-venue DESIGNATOR vocabulary, pulled as the labels
+ *   - `wikidata-subvenue` — the multilingual sub-venue designator vocabulary, pulled as the labels
  *       and aliases of eight Wikidata concepts (terminal, gate, concourse, campus, …) plus the
  *       airport-terminal instance labels as attested usage. Tier A (CC0). The only module in this
  *       family built on `APIClient` — see its docstring for why.
- *   - `state-sources` — NY/TX/DE/OR notaries, IA contractors, WA health providers, HI lobbyists.
+ *   - `state-sources` — NY/TX/DE/or notaries, IA contractors, WA health providers, HI lobbyists.
  *       Tier A (state PD-equivalent).
- *   - `state-hi-schools` — Hawaii DOE school directory (original XLSX. HIDOE + PCS sheets). Tier A
+ *   - `state-hi-schools` — Hawaii DOE school directory (original xlsx. hidoe + PCS sheets). Tier A
  *       (state PD-equivalent).
- *   - `tiger-full` — US Census TIGER 2024 ADDRFEAT, all US counties. Tier A (US PD).
+ *   - `tiger-full` — US Census tiger 2024 addrfeat, all US counties. Tier A (US PD).
  *   - `juso-kr` — the Korean road-name address register (주소DB, plus the English road-name DB) from
  *       business.juso.go.kr. Asserts `address` on `premise` rows: the ministry assigns the road name and
  *       the building number. Tier B ("이용허락범위 제한 없음", attribution).
@@ -69,7 +69,7 @@
  *       `observation` for two address columns in different roles — 公司地址 is `registered-office`,
  *       營業地址 is `facility`. Tier B (Open Government Data License v1.0 — the prescribed attribution is
  *       a condition of the grant).
- *   - `acra-sg` — Singapore's ACRA corporate-entity register, 27 CSVs with the address fielded. Asserts
+ *   - `acra-sg` — Singapore's acra corporate-entity register, 27 CSVs with the address fielded. Asserts
  *       `identity` for the entity number and `observation` for the address, on `registered-office` rows.
  *       Tier B (Singapore Open Data Licence 1.0).
  *   - `houjin-jp` — the National Tax Agency's corporate-number register, the nationwide Unicode CSV.
@@ -112,11 +112,11 @@
  *
  *   1. Pick the right module (or create a sibling one if the source is from a meaningfully
  *      different family).
- *   2. Append to the `SOURCES` array: `{ slug, filename, url }`.
+ *   2. Append to the `sources` array: `{ slug, filename, url }`.
  *   3. Confirm the destination URL via `curl -sI -L <url> | head` before committing — state
  *      open-data portals occasionally rotate Socrata view IDs.
  *   4. Run the command against a scratch `--out-root` to verify the download succeeds + the
- *      MANIFEST is well-formed.
+ *      manifest is well-formed.
  *   5. Add the source's adapter (or extend an existing one) under `corpus/src/adapters/`.
  */
 

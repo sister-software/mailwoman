@@ -14,7 +14,7 @@ import { verifyBody } from "#build/verify"
 import { parseBody } from "#commands/options"
 
 /**
- * The command's contract, in the shape mailwoman's filesystem router reads.
+ * The command's interface, in the shape mailwoman's filesystem router reads.
  */
 export const spec = {
 	name: "verify",

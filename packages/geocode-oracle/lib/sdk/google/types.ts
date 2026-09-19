@@ -4,11 +4,11 @@
  * @author Teffen Ellis, et al.
  * @file The subset of the Google Geocoding API's JSON response this package actually consumes.
  *
- *   WHY THESE ARE HAND-WRITTEN rather than imported from `@googlemaps/google-maps-services-js`, which
+ *   why these are hand-written rather than imported from `@googlemaps/google-maps-services-js`, which
  *   is already in this monorepo's tree (`spatial` lists it as a dev + optional dependency and
  *   type-imports `LatLng`/`LatLngLiteral` from it):
  *
- *     1. It is an OPTIONAL dependency of `spatial`, which means a tree where it failed to install is a
+ *     1. It is an optional dependency of `spatial`, which means a tree where it failed to install is a
  *        supported tree. A client whose entire correctness rests on the response shape should not have
  *        its response shape vanish under an install flag.
  *     2. The isp-nexus original that this port descends from had to write `axiosInstance: this.axios as
@@ -23,16 +23,16 @@
  *   {@linkcode APIClient}.
  *
  *   Field names are Google's wire keys (`snake_case`), which the house acronym-casing rule
- *   deliberately does not touch: they are string contracts rather than identifiers we chose.
+ *   deliberately does not touch: they are string interfaces rather than identifiers we chose.
  */
 
 /**
- * The `status` field every Geocoding API response carries — Google's IN-BAND error channel.
+ * The `status` field every Geocoding API response carries — Google's IN-band error channel.
  *
- * THIS IS THE SINGLE MOST IMPORTANT THING ABOUT THIS API. Every one of these arrives under **HTTP 200**, including the
- * ones that mean "your key is invalid" and "you are over quota". A client that only inspects the HTTP status treats a
+ * This is the single most important thing about this API. Every one of these arrives under **http 200**, including the
+ * ones that mean "your key is invalid" and "you are over quota". A client that only inspects the http status treats a
  * `REQUEST_DENIED` as a successful geocode with zero results, caches it, and reports an empty answer forever.
- * `google-client.ts` maps each of these onto a `ResourceError` with a synthetic HTTP status so callers branch on
+ * `google-client.ts` maps each of these onto a `ResourceError` with a synthetic http status so callers branch on
  * `error.status` / `isTransientResourceError(error)` exactly as they do for every other client in this repo.
  *
  * @see https://developers.google.com/maps/documentation/geocoding/requests-geocoding#StatusCodes
@@ -43,7 +43,7 @@ export const GoogleGeocoderStatus = {
 	 */
 	OK: "OK",
 	/**
-	 * The geocode succeeded but returned no results. A LEGITIMATE, CACHEABLE ANSWER: the address does not resolve, and
+	 * The geocode succeeded but returned no results. A legitimate, cacheable answer: the address does not resolve, and
 	 * asking again tomorrow will not change that.
 	 */
 	ZeroResults: "ZERO_RESULTS",
@@ -52,7 +52,7 @@ export const GoogleGeocoderStatus = {
 	 */
 	OverDailyLimit: "OVER_DAILY_LIMIT",
 	/**
-	 * The per-second/per-minute request rate was exceeded. TRANSIENT — the one status here worth retrying.
+	 * The per-second/per-minute request rate was exceeded. transient — the one status here worth retrying.
 	 */
 	OverQueryLimit: "OVER_QUERY_LIMIT",
 	/**
@@ -187,7 +187,7 @@ export interface GoogleGeocodeResult {
 	place_id: string
 	plus_code?: GooglePlusCode
 	/**
-	 * Every category Google assigns the RESULT (as opposed to its components) — `"street_address"`, `"premise"`,
+	 * Every category Google assigns the result (as opposed to its components) — `"street_address"`, `"premise"`,
 	 * `"postal_code"`, `"establishment"`.
 	 */
 	types: string[]

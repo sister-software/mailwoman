@@ -33,7 +33,7 @@ describe("assessAdminCoherence — region verdicts", () => {
 	})
 
 	it("confirmed on a fold-equal region ancestor — case and diacritics are folded", () => {
-		// The shared fold lowercases and strips diacritics: "Thüringen" ≡ "thuringen" ≡ "THÜRINGEN".
+		// The shared fold lowercases and strips diacritics: "Thüringen" ≡ "thuringen" ≡ "THÜringen".
 		const winner: AdminCoherenceWinner = {
 			tag: "locality",
 			countryCode: "DE",

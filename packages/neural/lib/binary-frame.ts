@@ -96,7 +96,7 @@ export function writeFramedHeader(magic: number, header: unknown): Uint8Array {
 
 /**
  * Validate the magic and decode the header JSON, returning the header plus a {@link ByteCursor} positioned at the first
- * record byte. `badMagicMessage` is the format's own wording — each reader's message is an error contract its tests
+ * record byte. `badMagicMessage` is the format's own wording — each reader's message is an error interface its tests
  * pin.
  */
 export function readFramedHeader<Header>(

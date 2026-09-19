@@ -6,7 +6,7 @@
  *   The Environment Agency's own words, as data: the product identity, the zone domain it publishes, the
  *   coverage sentence that licenses a `designated` basis, and the attribution string OGL v3.0 requires.
  *
- *   THE ZONE DOMAIN IS CLOSED AND THE BUILDER THROWS ON A VALUE OUTSIDE IT. An unknown code is a
+ *   the zone domain is closed and the builder throws on A value outside IT. An unknown code is a
  *   source-schema change, which is the event a reader most needs to hear about. coercing it to a nearest
  *   neighbour or to null converts "the source changed" into "there is nothing here".
  *
@@ -16,7 +16,7 @@
  *   540,282 `FZ2` and 273,345 `FZ3`, 813,627 together. A builder written against the metadata prose finds
  *   nothing.
  *
- *   ZONE 1 IS NOT IN THIS TABLE, BECAUSE IT IS NOT IN THE DATA. The Planning Practice Guidance defines it
+ *   zone 1 is not IN this table, because IT is not IN the data. The Planning Practice Guidance defines it
  *   as "all land outside Zones 2, 3a and 3b" — an absence rather than a polygon. It reaches a reader through
  *   `layer_coverage` instead: inside England a cell the authority designated and no polygon covering the
  *   point is the Zone 1 designation. {@linkcode FLOOD_ZONE_1} carries its definition for that reading.
@@ -73,7 +73,7 @@ export const EA_FLOOD_ZONE_DEFINITIONS: ReadonlyArray<FloodZoneDefinition> = [
 export const EA_FLOOD_ZONE_CODES: ReadonlySet<string> = new Set(EA_FLOOD_ZONE_DEFINITIONS.map((zone) => zone.code))
 
 /**
- * Zone 1, which the product represents by ABSENCE. Not a row in `flood_zone_vocabulary`, because the authority ships no
+ * Zone 1, which the product represents by absence. Not a row in `flood_zone_vocabulary`, because the authority ships no
  * Zone 1 polygon. carried here so a reader rendering a designated-absence answer can quote the definition it rests on.
  */
 export const FLOOD_ZONE_1: FloodZoneDefinition = {

@@ -80,7 +80,7 @@ describe("isStrictlyFiner", () => {
 
 	it("checks differently from a negated isAtLeastAsSpecific at the EQUAL rung — the 955-row conflation", () => {
 		// The currency backfill blocks a resurrection when a live row covers the dead one. Written the wrong way round
-		// it reads "block when the live row is strictly COARSER", which stops a live locality from blocking a dead
+		// it reads "block when the live row is strictly coarser", which stops a live locality from blocking a dead
 		// locality of the same name. Measured on the real artifact that took blocked rows 973 → 18.
 		const wrong = (live: string, dead: string) => isAtLeastAsSpecific(live, dead) !== true
 		const right = (live: string, dead: string) => isStrictlyFiner(live, dead) !== true
@@ -122,11 +122,11 @@ describe("the table", () => {
 })
 
 /**
- * The admin ladder, coarsest first — a copy of `resolver-wof-sqlite/ancestry.ts`'s `PLACETYPE_DEPTH` ORDER, and the
+ * The admin ladder, coarsest first — a copy of `resolver-wof-sqlite/ancestry.ts`'s `PLACETYPE_DEPTH` order, and the
  * only place in `core` allowed to know it.
  *
  * `core` cannot import from `resolver-wof-sqlite` (the dependency runs the other way), so the two tables cannot be
- * derived from one another and this list is what keeps them honest. It records the ORDER only: the scales differ in
+ * derived from one another and this list is what keeps them honest. It records the order only: the scales differ in
  * offset by design, and `PLACETYPE_DEPTH` additionally maps an unranked placetype to 0 where this one answers
  * `undefined`.
  */

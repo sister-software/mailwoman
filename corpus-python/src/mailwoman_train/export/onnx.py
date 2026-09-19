@@ -42,7 +42,7 @@ def export_to_onnx(
     graph that took them would bind the runtime to a SentencePiece vocabulary the model does not have.
     ``char_window`` is the training config's ``max_unit_width`` (the unit plus its context characters), a
     data-side constant the model does not carry, so the caller must pass it; ``max_length`` is
-    ``max_units``. The char path is channel-free by contract (D5), so none of the anchor, gazetteer or
+    ``max_units``. The char path is channel-free by interface (D5), so none of the anchor, gazetteer or
     lexicon inputs are exported for it.
 
     Always exports from CPU. torch.onnx.export on a ROCm/HIP device on gfx1103 has been

@@ -8,7 +8,7 @@
  *   `EngineConfig` is the CLI's snake_case; `GeocodeSessionOptions` is camelCase. `resolveConfig` translates, and
  *   `EFFECTIVE_KEY_FOR` names the same translation for `confound.ts`. A change added to one and not the other compiles
  *   and passes every other test — and silently makes every correctly-declared comparison grade itself ambiguous, which
- *   is a defect in a verdict rather than in a number, so no measurement fails either.
+ *   is a defect in a verdict rather than in a number. Therefore, no measurement fails either.
  */
 
 import { EFFECTIVE_KEY_FOR, effectiveKeyFor, resolveConfig } from "@mailwoman/dev-mcp/engine/registry"

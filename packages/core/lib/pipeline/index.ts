@@ -3,7 +3,7 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Runtime pipeline coordinator — see `STAGES.md` for the full contract.
+ *   Runtime pipeline coordinator — see `stages.md` for the full interface.
  */
 
 export {

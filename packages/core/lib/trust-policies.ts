@@ -3,7 +3,7 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   The one sanctioned route from an untrusted string to an HTML sink: DOMPurify behind Trusted
+ *   The one sanctioned route from an untrusted string to an html sink: DOMPurify behind Trusted
  *   Types policies. Under a CSP with `require-trusted-types-for 'script'`, a sink refuses a plain
  *   string. every injection site must go through a named policy, and these three are the named
  *   policies.
@@ -14,7 +14,7 @@
  *   passthrough. The plain {@link sanitizeHTML} and {@link stripHTML} functions are that engine
  *   without the Trusted Types wrapper, for callers that need the transform rather than a sink token.
  *
- *   KEEP THIS MODULE A LEAF. The Node build constructs its jsdom window at import time — measured at
+ *   keep this module A leaf. The Node build constructs its jsdom window at import time — measured at
  *   0.45 s and ~130 MB over a bare Node process — so an import from a barrel (`core/utils`, the CLI
  *   graph) would tax every process in the repo. It is priced for modules that actually sanitize.
  */
@@ -27,7 +27,7 @@ import { escapeHTML } from "#strings/escape"
 export { escapeHTML } from "#strings/escape"
 
 /**
- * Untrusted HTML through DOMPurify's default allowlist: safe markup survives, scripts and event handlers do not.
+ * Untrusted html through DOMPurify's default allowlist: safe markup survives, scripts and event handlers do not.
  */
 export function sanitizeHTML(untrustedHTML: string): string {
 	assertSanitizerSupported("sanitizeHTML")
@@ -38,7 +38,7 @@ export function sanitizeHTML(untrustedHTML: string): string {
 const STRIP_CONFIG: DOMPurifyConfig = { ALLOWED_TAGS: [], ALLOWED_ATTR: [] }
 
 /**
- * Every tag and attribute removed. only text content survives, entity-ENCODED for an HTML sink. For decoded plain text
+ * Every tag and attribute removed. only text content survives, entity-encoded for an html sink. For decoded plain text
  * — comparison, storage — use {@link stripHTMLToText}.
  */
 export function stripHTML(untrustedHTML: string): string {
@@ -48,7 +48,7 @@ export function stripHTML(untrustedHTML: string): string {
 }
 
 /**
- * The text CONTENT of untrusted HTML: tags gone, entities decoded, script/style bodies discarded. A real parse, so a
+ * The text content of untrusted html: tags gone, entities decoded, script/style bodies discarded. A real parse, so a
  * `<` inside an attribute value, an unclosed tag, or a comment cannot corrupt the reading the way a regex scan can.
  * Whitespace arrives as the source wrote it — collapse it at the caller if the caller compares.
  */
@@ -94,7 +94,7 @@ export function escapeTrustPolicy(): ReturnType<typeof trustedTypes.createPolicy
 }
 
 /**
- * `mw-sanitize` — {@link sanitizeHTML} as a policy. The grade for values that are legitimately HTML from a source we
+ * `mw-sanitize` — {@link sanitizeHTML} as a policy. The grade for values that are legitimately html from a source we
  * render but do not author: tile attributions, service-provided rich text.
  */
 export function sanitizeTrustPolicy(): ReturnType<typeof trustedTypes.createPolicy> {

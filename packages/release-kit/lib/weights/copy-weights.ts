@@ -8,7 +8,7 @@
  *   git (gitignored model.onnx + tokenizer.model); this operation materializes the binaries at release
  *   time.
  *
- *   The source model + tokenizer FILENAMES come from `release.config.json` (`weights.model` /
+ *   The source model + tokenizer filenames come from `release.config.json` (`weights.model` /
  *   `weights.tokenizer`) so the versioned names live in one place rather than hardcoded here.
  *   They resolve against `mailwomanDataRoot()`, which is the one home for the root itself. Override
  *   at release time via env vars:
@@ -17,9 +17,9 @@
  *   - MAILWOMAN_PUBLISH_MODEL: absolute path to the int8 quantized model.onnx (wins outright)
  *   - MAILWOMAN_PUBLISH_TOKENIZER: absolute path to the matching tokenizer.model (wins outright)
  *
- *   Also materializes the #718 D1 SOFT-FEED artifacts so the library default `loadFromWeights` feeds
+ *   Also materializes the #718 D1 soft-feed artifacts so the library default `loadFromWeights` feeds
  *   the anchor + gazetteer channels the trained model expects (without these, the package's default
- *   load path serves the model anchor-OFF — the #566/#685 OOD crater):
+ *   load path serves the model anchor-off — the #566/#685 OOD crater):
  *
  *   - `postcode-<cc>.bin` — the compact PCB1 postcode-anchor binary, built from the WOF postcode extract
  *       (`softFeed.postcodeDBByCountry[<cc>]`) via `mailwoman gazetteer postcode-binary`.
@@ -27,7 +27,7 @@
  *       (`softFeed.gazetteerLexicon`).
  *   - `pair-index-<cc>.bin` — the placetype-pair-prior arc's PIX1 retrieval index, built from a
  *       PPD-style (child, parent) tuples CSV (`softFeed.pairIndexByCountry[<cc>].source` + `.delta`) via
- *       `mailwoman gazetteer pair-index`. COUNTRY-SPECIFIC BY DESIGN — a workspace whose country has no
+ *       `mailwoman gazetteer pair-index`. country-specific BY design — a workspace whose country has no
  *       `pairIndexByCountry` entry ships no sibling and is silently skipped (see materializePairIndex).
  *
  *   Idempotent. Used by .release-it.json's before:init hook through `mwops release copy-weights`.
@@ -80,7 +80,7 @@ interface MaterializationContext {
 	softFeed: SoftFeedRecipe
 	/**
 	 * The repo-committed soft-feed lexicons (gazetteer #464, country #1104, street-type Option-A), shipped-name →
-	 * absolute source. The per-key base-directory rule lives in `weights-recipe.ts`; only the BUILT locality-surface
+	 * absolute source. The per-key base-directory rule lives in `weights-recipe.ts`; only the built locality-surface
 	 * lexicon resolves against the data root instead.
 	 */
 	repoCommittedSources: Map<string, string>
@@ -120,9 +120,9 @@ async function serveFromDerivedStore(context: MaterializationContext, dir: strin
 
 	const dest = resolvePath(dir, filename)
 
-	// Unlink first. `fs.copyFile` FOLLOWS a symlink at the destination and writes THROUGH it, leaving
-	// the symlink in place — and the registry refuses a tarball containing one (HTTP 415, YN0035).
-	// Same discipline as the rest of this module. see AGENTS.md "symlinks in the publish tarball".
+	// Unlink first. `fs.copyFile` follows a symlink at the destination and writes through it, leaving
+	// the symlink in place — and the registry refuses a tarball containing one (http 415, YN0035).
+	// Same discipline as the rest of this module. see agents.md "symlinks in the publish tarball".
 	await removePathIfPresent(dest)
 
 	await copyFileTo(cached, dest)
@@ -224,7 +224,7 @@ export async function copyWeights({
 		// Unlink first so a pre-existing symlink (from link-dev-weights.ts) is
 		// replaced with a real file. Otherwise copyFile follows the symlink and
 		// writes through it, leaving the symlink in place — which yarn refuses
-		// to publish (npm registry rejects symlinks with HTTP 415).
+		// to publish (npm registry rejects symlinks with http 415).
 		await removePathIfPresent(modelDest)
 		await removePathIfPresent(tokenizerDest)
 		await copyFileTo(sourceModel, modelDest)
@@ -299,7 +299,7 @@ async function materializeFST(context: MaterializationContext, workspace: string
 }
 
 /**
- * Materialize the locale-GENERAL street-morphology FST (`fst-street-morphology.bin`, the #1315 street-context check's
+ * Materialize the locale-general street-morphology FST (`fst-street-morphology.bin`, the #1315 street-context check's
  * signal source) into a weights workspace — a verbatim copy of the sealed artifact staged by `mailwoman gazetteer build
  * street-morphology` at $MAILWOMAN_DATA_ROOT/wof/. Shipping it as a weights sibling is what carries it to the
  * per-version R2 asset layout the browser demo fetches — the node runtimes can rebuild from the bundled libpostal
@@ -345,7 +345,7 @@ async function materializeSoftFeed(context: MaterializationContext, workspace: s
 		context.log(`copied soft-feed → ${workspace}/${basename}`)
 	}
 
-	// The BUILT locality-surface lexicon (~7 MB, data-root, never in git) — the one that breaks its
+	// The built locality-surface lexicon (~7 MB, data-root, never in git) — the one that breaks its
 	// three neighbours' base-directory pattern.
 	if (context.sourceLocalitySurface) {
 		if (!(await tryStat(context.sourceLocalitySurface))) {
@@ -407,7 +407,7 @@ async function materializeSoftFeed(context: MaterializationContext, workspace: s
 /**
  * Materialize the placetype-pair-prior arc's PIX1 index (`pair-index-<cc>.bin`) into a weights workspace — mirrors
  * {@link materializeSoftFeed}'s postcode-binary block exactly, but keyed off `softFeed.pairIndexByCountry` (a CSV
- * source + a required calibrated `--delta`, not a WOF DB) instead of `postcodeDBByCountry`. COUNTRY-SPECIFIC BY DESIGN,
+ * source + a required calibrated `--delta`, not a WOF DB) instead of `postcodeDBByCountry`. country-specific BY design,
  * same as the runtime resolver (`neural/weights.ts`'s `resolvePairIndexSibling`): a workspace whose country has no
  * `pairIndexByCountry` entry ships no pair-index sibling and is skipped silently (not every locale gets one).
  */
@@ -426,7 +426,7 @@ async function materializePairIndex(context: MaterializationContext, workspace: 
 	const source = entry.source ? resolvePath(context.dataRoot, entry.source) : undefined
 	const boroughDB = entry.boroughDB ? resolvePath(context.dataRoot, entry.boroughDB) : undefined
 
-	// A COMMA-SEPARATED list since R7 (London + NI): resolve each entry, then rejoin.
+	// A comma-separated list since R7 (London + NI): resolve each entry, then rejoin.
 	const pairsJsonl = entry.pairsJsonl
 		? entry.pairsJsonl
 				.split(",")

@@ -6,11 +6,11 @@
  *   `usgov-nad`: US DOT National Address Database — ~97M structured address-point records.
  *
  *   The single largest US address source available — federal aggregation of state + local 911-grade
- *   address points (every addressable location). Compared to TIGER ADDRFEAT (~20M segment-level, no
+ *   address points (every addressable location). Compared to tiger addrfeat (~20M segment-level, no
  *   city/locality) and NPPES (~7M provider-centric venues), NAD covers the entire residential +
  *   commercial address space with full structured components.
  *
- *   The adapter consumes NDJSON files produced by `fetch-nad.ts`'s featureserver mode (operator
+ *   The adapter consumes ndjson files produced by `fetch-nad.ts`'s featureserver mode (operator
  *   pre-downloads via `mailwoman corpus fetch nad`). Each file is per-OID-range
  *   `oids_<start>-<end>.ndjson` with a sibling `.manifest.json`. Adapter iterates every `.ndjson`
  *   in the input directory, skipping the `quarantined-bash-bug/` subdir (legacy of the bash-
@@ -24,7 +24,7 @@
  *       - St_PosDir + St_PosMod composition
  *   - Locality: `Post_City` > `Inc_Muni` > `Census_Plc` > `Uninc_Comm` (first non-empty)
  *   - Region: `State` (2-char USPS code, including territories: PR, GU, VI, AS, MP)
- *   - Postcode: `Zip_Code` + `Plus_4` (joined as `XXXXX-NNNN` when both present)
+ *   - Postcode: `Zip_Code` + `Plus_4` (joined as `xxxxx-nnnn` when both present)
  *   - Venue: `LandmkName` (typically a park, school, hospital, named facility — when present)
  *
  *   License: stamped `"Public Domain"` per 17 U.S.C. § 105 (US federal works).
@@ -235,7 +235,7 @@ export function createUsgovNADAdapter(): CorpusAdapter {
 				throw new Error(`usgov-nad adapter: only US supported, got country=${opts.country}`)
 			}
 
-			// inputPath is a directory of NDJSON files (per fetch-nad.ts featureserver output).
+			// inputPath is a directory of ndjson files (per fetch-nad.ts featureserver output).
 			// Single-file inputs (e.g. a bulk-extracted CSV) are not currently supported — the
 			// featureserver per-OID-range file pattern is the primary distribution.
 			const files = await Globerator.files("ndjson", {

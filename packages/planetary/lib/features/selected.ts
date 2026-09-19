@@ -24,7 +24,7 @@ export interface SelectedFeature {
 	origin?: string
 	approvalStatus?: string
 	/**
-	 * `YYYY-MM-DD`.
+	 * `yyyy-MM-DD`.
 	 */
 	approvalDate?: string
 }

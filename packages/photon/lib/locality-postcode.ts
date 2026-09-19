@@ -3,7 +3,7 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Reverse lookup over the `postcode-locality-*.db` artifacts: the CONTAINING postcode of a
+ *   Reverse lookup over the `postcode-locality-*.db` artifacts: the containing postcode of a
  *   resolved locality, keyed by its WOF id — no name matching. Serves the drop-ins' answer
  *   enrichment: a village answer carries the postcode the gazetteer attests for it.
  *
@@ -38,7 +38,7 @@ export async function createLocalityPostcodeLookup(): Promise<LocalityPostcodeLo
 
 			// No `is_containing` filter: villages routinely carry 0 (the builder's containment test is
 			// distance-classified, and a village near its postcode centroid still has exactly one code).
-			// The exactly-one DISTINCT rule below is the entire ambiguity guard.
+			// The exactly-one distinct rule below is the entire ambiguity guard.
 			statements.set(
 				suffix,
 				db.prepare(`SELECT DISTINCT postcode FROM postcode_locality WHERE locality_id = ? LIMIT 2`)

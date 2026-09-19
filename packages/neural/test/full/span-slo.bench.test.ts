@@ -3,7 +3,7 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   #378 SLO probe for the #727 span output, on the BROWSER runtime (onnxruntime-web WASM EP) rather
+ *   #378 SLO probe for the #727 span output, on the browser runtime (onnxruntime-web wasm EP) rather
  *   than onnxruntime-node — the Phase-2 bench measured the node runtime, which is not what ships.
  *
  *   Reported rather than asserted: a wall-clock threshold in CI is a flake generator. The number goes in the

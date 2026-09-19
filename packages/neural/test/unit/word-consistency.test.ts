@@ -15,7 +15,7 @@ const peak = (idx: number, hi: number): number[] => LABELS.map((_l, i) => (i ===
 
 describe("enforceWordConsistency (#727 / admin-token fragmentation)", () => {
 	it("heals a fragmented word to ONE type by confidence-weighted vote (not first-piece-wins)", () => {
-		// `▁VER` leans locality (idx1, modest), `MONT` is near-certain region (idx3, strong). The vote
+		// `▁VER` leans locality (idx1, modest), `mont` is near-certain region (idx3, strong). The vote
 		// sums region mass > locality mass → the whole word becomes region (the `VER`-bleed is fixed).
 		const pieces = [{ piece: "▁VER" }, { piece: "MONT" }]
 		const emissions = [peak(1, 2), peak(3, 8)]
@@ -62,7 +62,7 @@ describe("enforceWordConsistency (#727 / admin-token fragmentation)", () => {
 	})
 })
 
-describe("enforceWordConsistency only arbitrates DISAGREEING words (the documented contract)", () => {
+describe("enforceWordConsistency only arbitrates DISAGREEING words (the documented interface)", () => {
 	it("never rewrites an already-consistent multi-piece word, even when the vote mass prefers another type", () => {
 		// `▁G am le` all street (B,I,I — consistent), but the summed emissions lean locality. The heal's
 		// job is consistency rather than re-decoding: viterbi's global choice stands. (The `Gamle Drammensvei`

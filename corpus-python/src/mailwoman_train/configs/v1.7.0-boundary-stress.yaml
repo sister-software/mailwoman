@@ -1,21 +1,21 @@
 # === v1.7.0-boundary-stress (night shift 2026-06-18) =============================================
-# The corrective retrain after v1.6.0 conditional NO-PROMOTE. v1.6.0 added the boundary source at weight 1.0 and
-# LIFTED the boundaries (fr-prefix 55→99.7) but was a NARROW distribution — every row a clean full address
+# The corrective retrain after v1.6.0 conditional no-promote. v1.6.0 added the boundary source at weight 1.0 and
+# lifted the boundaries (fr-prefix 55→99.7) but was a narrow distribution — every row a clean full address
 # — so the model over-fit it and regressed on OOD real rows (held-out us.locality 66.3→58.2%; 84% of the
-# regression was dropped locality on bare "City, STATE" rows). Diagnosed via three probes + a DeepSeek consult.
-# THE HEADLINE VARIABLE: the BALANCED recipe output (corpus v0.6.1-boundary-stress) — two new shapes widen the
-# distribution: bare-locality (~11%, the ship-blocker fix. VENUES #511-linted) + house-number-before-street
+# regression was dropped locality on bare "City, state" rows). Diagnosed via three probes + a DeepSeek consult.
+# the headline variable: the balanced recipe output (corpus v0.6.1-boundary-stress) — two new shapes widen the
+# distribution: bare-locality (~11%, the ship-blocker fix. venues #511-linted) + house-number-before-street
 # (7:3 before:after, the confounding mirror for the order-bias). Co-change (hygiene): lr constant→cosine.
 #
-# BUNDLE (DeepSeek-validated 2026-06-17 — the rule is "one CONFOUNDING variable per run, each change its
+# bundle (DeepSeek-validated 2026-06-17 — the rule is "one confounding variable per run, each change its
 # own check row"). The boundary source is the headline data-mix variable. Riding alongside it, NON-confounding
 # because they don't shift the distribution the recipe output trains on, three additions, each conditional below:
-#   (a) use_conventions_loss_mask — ❌ DISABLED 2026-06-18. The "non-confounding, different axis" call was
-#       WRONG: the FR convention forbids street_prefix/street_suffix, but the boundary recipe output's fr-prefix
-#       shape TEACHES FR street_prefix ("Rue"). The mask -inf'd the gold label → train_loss ~7M, broken
+#   (a) use_conventions_loss_mask — ❌ disabled 2026-06-18. The "non-confounding, different axis" call was
+#       wrong: the FR convention forbids street_prefix/street_suffix, but the boundary recipe output's fr-prefix
+#       shape teaches FR street_prefix ("Rue"). The mask -inf'd the gold label → train_loss ~7M, broken
 #       run killed at step 2000. v1.5.1 trained fine without it. Off until the table↔FR-data are reconciled.
-#   (c) an EXPANDED check grading the FR/DE composition wins the recipe output already trains for free
-#       (fr.house_number #564, FR street_prefix, number-after-street #435). READY NOW (check rows below).
+#   (c) an expanded check grading the FR/DE composition wins the recipe output already trains for free
+#       (fr.house_number #564, FR street_prefix, number-after-street #435). ready now (check rows below).
 #   (b) [not ride-ready — a focused #517 corpus task, do it first if you want it this run] extend
 #       synth-po-box for NZ + military. It's more than leaders: the synthesizer needs an en-NZ template +
 #       `countryToLocale` NZ→en-NZ + a new military template (CMR/PSC/Unit + Box, APO/FPO/DPO + AE/AP/AA —
@@ -25,59 +25,59 @@
 # competition is the v4.2.0 trap (affix 78→27). DeepSeek also flagged a per-locale CRF transition penalty
 # (street→cedex) as a clean future rider. it needs wiring (crf_loss_weight is 0.0) so it's a later run.
 #
-# WHY: the failure taxonomy named boundary instability the #1 parser change, and the within-token
+# why: the failure taxonomy named boundary instability the #1 parser change, and the within-token
 # decomposition (#702) showed it surfacing under many names. The "before" baseline
 # (docs/articles/evals/2026-06-17-boundary-stress-baseline.md) measured the current model at 38.7–70%
 # on these boundaries vs ~95%+ on clean canonical:
-#   (diverse-pool baseline, BASE-LOCALES-ONLY US/FR/DE — the #511 lint flagged an Australian draft as a
+#   (diverse-pool baseline, base-locales-only US/FR/DE — the #511 lint flagged an Australian draft as a
 #   real contradiction, so AU/NZ/UK + the slash shape are deferred to a separate AU-coverage recipe):
 #   street-eats-affix street_suffix 40.7 / street 38 | comma-less(US) street 46 / locality 91 |
 #   fr-prefix prefix 47.7 / street 43 | house-number-after-street house_number 50.7 / street 49.
-#   The STREET span is the common casualty (38-49% across all four shapes).
+#   The street span is the common casualty (38-49% across all four shapes).
 # The recipe output puts the gold boundary on diverse realizations of exactly these 4 shapes (alignRow-clean,
 # 0% quarantine). It also reinforces fr.house_number (the number-after-street shape).
 #
-# PRE-REGISTERED CHECK (DeepSeek-signed targets. per-shape via scripts/eval/boundary-stress-baseline.ts):
+# PRE-registered check (DeepSeek-signed targets. per-shape via scripts/eval/boundary-stress-baseline.ts):
 #   - street_suffix 40.7 → ≥55 ; comma-less(US) street 46 → ≥65 ; fr-prefix 47.7 → ≥70 ;
-#     house-number-after-street 50.7 → ≥65 ; and the shared STREET span ≥65 on all four shapes
+#     house-number-after-street 50.7 → ≥65 ; and the shared street span ≥65 on all four shapes
 #     (anchored to the diverse base-locale baseline).
-#   NON-REGRESSION FLOORS (checks/v1.7.0-boundary-stress.json): the v1.6.0 floors (us.street 74, locality
+#   NON-regression floors (checks/v1.7.0-boundary-stress.json): the v1.6.0 floors (us.street 74, locality
 #     72.9, US postcode 97, affix 78/67, FR postcode 99.5, fr.house_number 87, DE locality 83.8, country
 #     83.3) plus two new v1.7.0 guards — us.bare_locality (the 84%-drop surface. re-probe v1.5.1, floor just
 #     below) and us.street_recall_full (street recall where gold has both street+locality — DeepSeek's
-#     blind-spot: bare-locality emphasis can eat the street on full addresses; >1% drop below v1.5.1 = STOP).
-#   WATCH (DeepSeek): street_suffix OVER-fire (its check target vs the floor — a boundary recipe output can push
+#     blind-spot: bare-locality emphasis can eat the street on full addresses; >1% drop below v1.5.1 = stop).
+#   watch (DeepSeek): street_suffix over-fire (its check target vs the floor — a boundary recipe output can push
 #     suffix onto non-suffix tokens) ; affix CRF transition stability (prefix↔street↔suffix) — a relabel
 #     bug presents as boundary noise rather than dilution. If slash/comma-less land short at 1.0, sweep the
 #     weight up (1.5) — one variable, do not stack other changes.
-#   DECISION: targets move up + floors hold → ship candidate. Spine regression → STOP, re-audit the
+#   decision: targets move up + floors hold → ship candidate. Spine regression → stop, re-audit the
 #     recipe output's alignment before any weight surgery.
 #
-#   BUNDLE CHECK ROWS (each rider attributable on its own):
+#   bundle check rows (each rider attributable on its own):
 #   - conventions loss-mask: ❌ removed (rider a disabled — it conflicts with the FR street_prefix the
 #     recipe output teaches. see the header). No check row needed.
-#   - po_box NZ + military [ONLY IF rider (b) is built first]: the postal arena po_box class 0/4 → >0 (and
-#     military 0/3 → >0), with NO US/FR/CA po_box regression (existing synth-po-box rows only extended).
-#   - FREE-RIDER MEASURES (the recipe output trains these — grade as wins rather than just floors): fr.house_number holds
-#     ≥87 AND targets the plateau-break >87 (#564) ; FR street_prefix (the fr-prefix shape) up ;
-#     number-after-street house_number (the hn-after shape, #435/#444) up. A lift is a free win. a DROP
-#     means the recipe output's FR/DE shapes are fighting the native-order sources — STOP and re-audit.
+#   - po_box NZ + military [only if rider (b) is built first]: the postal arena po_box class 0/4 → >0 (and
+#     military 0/3 → >0), with no US/FR/CA po_box regression (existing synth-po-box rows only extended).
+#   - free-rider measures (the recipe output trains these — grade as wins rather than just floors): fr.house_number holds
+#     ≥87 and targets the plateau-break >87 (#564) ; FR street_prefix (the fr-prefix shape) up ;
+#     number-after-street house_number (the hn-after shape, #435/#444) up. A lift is a free win. a drop
+#     means the recipe output's FR/DE shapes are fighting the native-order sources — stop and re-audit.
 #
-# CORPUS PREREQUISITE: the recipe output JSONL→parquet + the overlay manifest are BUILT (a v0.6.0-boundary-stress
+# corpus prerequisite: the recipe output jsonl→parquet + the overlay manifest are built (a v0.6.0-boundary-stress
 # corpus is staged at $MAILWOMAN_DATA_ROOT/corpus/versioned/v0.6.0-boundary-stress/ — assembled via
 # scripts/assemble-boundary-stress-overlay-manifest.py against the v0.5.0 base, schema-matched).
 #
-# #511 locality/street overlap — INVESTIGATED + RESOLVED (no longer a pre-retrain blocker). A targeted
+# #511 locality/street overlap — investigated + resolved (no longer a pre-retrain blocker). A targeted
 # base scan (label distribution per recipe-vocab locality) found the original US vocab was a real contradiction
-# (Madison 96% street, Portland 95%, Springfield-IL 84% — the "5th Avenue Theatre" class). FIXED: the US
-# vocab is now DERIVED + verified locality-dominant (Albuquerque 258584:8, Indianapolis 219700:29, …). The
-# FR flag was a SAMPLING artifact (the whole-corpus scan undersampled the FR ban block. the FR-block scan
+# (Madison 96% street, Portland 95%, Springfield-IL 84% — the "5th Avenue Theatre" class). fixed: the US
+# vocab is now derived + verified locality-dominant (Albuquerque 258584:8, Indianapolis 219700:29, …). The
+# FR flag was a sampling artifact (the whole-corpus scan undersampled the FR ban block. the FR-block scan
 # shows Paris/Marseille/Lyon 95–99% locality in FR data) → familiar dept-diverse FR cities kept. DE dropped
 # (street-dominated too. synth-german covers its native order). Re-baselined: street_suffix 41.7, comma-less
 # 47, fr-prefix 55, hn-after 51.3. Affix-tag lint flags are train-time-relabel artifacts (lexicon-verified).
 # Operator steps: (1) upload the regenerated parquet + manifest with `mailwoman corpus upload
 # --corpus-version v0.6.1-boundary-stress` and stage them with `sync_assets --corpus-versions
-# v0.6.1-boundary-stress` — NOT `modal volume put`, which a mounted container cannot see; (2) launch.
+# v0.6.1-boundary-stress` — not `modal volume put`, which a mounted container cannot see; (2) launch.
 #
 # Launch: cd corpus-python && modal run -d -m launch.train_remote --config v1.7.0-boundary-stress.yaml --resume none
 data:
@@ -97,7 +97,7 @@ data:
     usgov-hrsa-fqhc: 2.0
     usgov-imls-pls: 2.0
     usgov-nad: 1.0
-    state-ia-contractors: 2.0
+    state-ia-builders: 2.0
     state-tx-notaries: 1.5
     state-ny-notaries: 2.0
     deepseek-kryptonite: 3.0
@@ -108,7 +108,7 @@ data:
     synth-po-box-cedex: 1.5
     synth-affix: 2.0
     synth-country: 2.0
-    # THE #375 #1-change variable (DeepSeek-signed 2026-06-17): the boundary-instability stress source.
+    # the #375 #1-change variable (DeepSeek-signed 2026-06-17): the boundary-instability stress source.
     # Conservative 1.0 start (prevents street_suffix over-fire); sweep to 1.5 if slash/comma-less land
     # short. One change vs v1.5.1 — nothing else moves.
     synth-boundary-stress: 1.0
@@ -138,7 +138,7 @@ model:
   label_smoothing: 0.1
   use_locale_conditioning: true
   locale_loss_weight: 0.3
-  # conventions loss-mask rider (a) — DISABLED 2026-06-18. It DIRECTLY CONFLICTS with the boundary recipe output:
+  # conventions loss-mask rider (a) — disabled 2026-06-18. It directly conflicts with the boundary recipe output:
   # CONVENTIONS_FORBIDDEN_TAGS forbids FR street_prefix/street_suffix, but the recipe output's fr-prefix shape
   # labels exactly that ("Rue" -> street_prefix). Enabling it -inf'd the gold label the recipe output teaches and
   # exploded train_loss to ~7M (a broken run, killed at step 2000). v1.5.1 trained fine without it. The
@@ -202,8 +202,8 @@ train:
   precision: bf16
   num_workers: 0
   csv_log_path: "{output_dir}/../train_log.csv"
-  # v1.7.0 hygiene co-change (STATED rather than a change): was `constant`. v1.6.0's constant LR let the spine
-  # drift PAST its ~26k optimum (final-checkpoint spine worse than mid-training). Cosine decay (peak after
+  # v1.7.0 hygiene co-change (stated rather than a change): was `constant`. v1.6.0's constant LR let the spine
+  # drift past its ~26k optimum (final-checkpoint spine worse than mid-training). Cosine decay (peak after
   # warmup → ~0 over max_steps) makes the final checkpoint the best, so the check needn't checkpoint-select.
   lr_schedule: cosine
   gazetteer_curriculum: false

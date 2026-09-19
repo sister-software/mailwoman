@@ -5,27 +5,27 @@
  *
  *   The delineation-keyed cell index, and the two numbers the index resolution is chosen from.
  *
- *   THE CLASSIFIER ITSELF LIVES IN `@mailwoman/spatial`, because the traps it guards are properties of
- *   h3-js rather than of SSURGO: a centre-containment polyfill drops every polygon smaller than a cell, an
- *   exhausted WASM allocator reports success and returns zeros, and the allocator is sized from the
- *   bounding box. The layer contract states all three as requirements on every polygon builder. What is
- *   soil-shaped is the ACCUMULATOR below, which keys on the delineation rather than on a hazard class,
+ *   the classifier itself lives IN `@mailwoman/spatial`, because the traps it guards are properties of
+ *   h3-js rather than of ssurgo: a centre-containment polyfill drops every polygon smaller than a cell, an
+ *   exhausted wasm allocator reports success and returns zeros, and the allocator is sized from the
+ *   bounding box. The layer interface states all three as requirements on every polygon builder. What is
+ *   soil-shaped is the accumulator below, which keys on the delineation rather than on a hazard class,
  *   because the reduction weights by the area a delineation covers.
  *
- *   EXPECT THE `partial` SHARE TO INVERT AGAINST THE FLOOD LAYER, AND DO NOT READ THAT AS A DEFECT. Flood
+ *   expect the `partial` share TO invert against the flood layer, and do not read that AS A defect. Flood
  *   polygons are large against their cells, so most cells fall wholly inside one zone and `compactCells`
  *   collapses long uniform interiors. Soil delineations are the opposite: 85.4% of `IA153`'s 17,966 of them
  *   are smaller than one resolution-9 cell, and the median is 24,863 m² against a 105,333 m² cell. Small
  *   polygons against large cells means most cells are crossed by a boundary — so the `partial` share should
- *   be HIGH, `compactCells` should yield close to nothing, and the index alone will rarely answer a point
+ *   be high, `compactCells` should yield close to nothing, and the index alone will rarely answer a point
  *   probe. That is not an argument against storing the geometry. it is the argument for why this layer
  *   carries the reduced `soil_capability_cell` alongside the index rather than relying on the index the way
  *   the flood layer can.
  *
- *   TWO NUMBERS GET REPORTED AT EACH CANDIDATE RESOLUTION, AND THEY MOVE IN OPPOSITE DIRECTIONS. The
+ *   two numbers GET reported AT each candidate resolution, and they move IN opposite directions. The
  *   `partial` cell share says whether the containment index answers most probes alone. The share of cells
  *   whose top class holds less than half the cell says whether the layer is answering or hedging — the
- *   cell-grain analogue of NRCS's own `niccdcdpct` distribution, which reads 3.3% below half nationally.
+ *   cell-grain analogue of nrcs's own `niccdcdpct` distribution, which reads 3.3% below half nationally.
  *   Going coarser improves the first and worsens the second, and picking between them is what the
  *   measurement is for.
  */
@@ -104,7 +104,7 @@ export interface SoilCellIndexMeasurement {
 /**
  * Accumulate one resolution's cell index over a stream of delineations.
  *
- * Held as short-cell STRINGS rather than the integers the tables store, because `compactCells` is an h3-js function
+ * Held as short-cell strings rather than the integers the tables store, because `compactCells` is an h3-js function
  * over full indexes and round-tripping through the integer form at every step would cost more than the strings do.
  */
 export class SoilCellIndex {
@@ -196,7 +196,7 @@ export class SoilCellIndex {
 }
 
 /**
- * The measurement as markdown table ROWS — what a build receipt carries, one line per element so a caller printing them
+ * The measurement as markdown table rows — what a build receipt carries, one line per element so a caller printing them
  * never has to split a joined string back apart.
  */
 export function formatSoilResolutionRows(

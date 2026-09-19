@@ -3,10 +3,10 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   OSGB36 / British National Grid (EPSG:27700) → WGS84 (EPSG:4326).
+ *   OSGB36 / British National Grid (epsg:27700) → WGS84 (epsg:4326).
  *
  *   Ordnance Survey ships its open products in eastings/northings on the National Grid rather than in
- *   degrees — Code-Point Open, OS Open UPRN, OS Open Names all do. Nothing else in the repo speaks
+ *   degrees — Code-Point Open, OS Open uprn, OS Open Names all do. Nothing else in the repo speaks
  *   that coordinate system, so this module is the one place that converts it, and it lives in
  *   `@mailwoman/spatial` because that is the math home (`projection.ts` names the datums. this file
  *   moves between two of them).
@@ -19,7 +19,7 @@
  *      reproduces the guide's Annexe C.2 worked example to **1.3e-5 arc-seconds (~0.4 mm)**, which
  *      is that example's own published rounding rather than our error.
  *   2. **Seven-parameter Helmert** — Airy-1830 geodetic → geocentric cartesian → rotate/scale/shift
- *      → WGS84 (GRS80) geodetic. This step is APPROXIMATE, and that is the whole accuracy story
+ *      → WGS84 (GRS80) geodetic. This step is approximate, and that is the whole accuracy story
  *      below. Against the guide's own Annexe D Helmert worked example — which uses this same
  *      transform, so it tests the implementation and not the approximation — the round trip lands
  *      **8.4 mm** out, i.e. the published DMS rounding plus the ignored ellipsoidal height.
@@ -32,7 +32,7 @@
  *   seven-parameter Helmert implemented here is OS's own documented approximation to it, which the
  *   guide rates at "up to 3.5 m (95%)".
  *
- *   MEASURED against OS's official 40-point OSTN15/OSGM15 test set (`OSTN15_OSGM15_TestInput_*`, the
+ *   measured against OS's official 40-point OSTN15/OSGM15 test set (`OSTN15_OSGM15_TestInput_*`, the
  *   developer-pack vectors, joining each point's published OSGB36 E/N to its published ETRS89 lat/lon):
  *
  *   | p50    | p90    | p95    | max    | mean   |
@@ -121,14 +121,14 @@ const ARCSEC_TO_RAD = Math.PI / (180 * 3600)
 const PPM = 1e-6
 
 /**
- * Convergence threshold for the meridional-arc iteration in {@link osgb36GridToAiryLatLon}, in METRES of northing. OS's
+ * Convergence threshold for the meridional-arc iteration in {@link osgb36GridToAiryLatLon}, in metres of northing. OS's
  * guide specifies 0.01 mm. this is that figure. It bounds the northing residual rather than the latitude, which is why
  * it is expressed in metres and compared against `northing - N0 - M`.
  */
 const MERIDIONAL_ARC_TOLERANCE_M = 1e-5
 
 /**
- * Convergence threshold for the cartesian→geodetic latitude iteration in {@link osgb36AiryToWGS84}, in RADIANS. 1e-13
+ * Convergence threshold for the cartesian→geodetic latitude iteration in {@link osgb36AiryToWGS84}, in radians. 1e-13
  * rad is ~0.6 µm on the ground — far below anything this module claims, and reached in four or five passes at GB
  * latitudes.
  */
@@ -142,7 +142,7 @@ const GEODETIC_LATITUDE_TOLERANCE_RAD = 1e-13
  * parameter is negated — valid to well inside the transform's own metre-scale error because the rotations are
  * microradian-scale and the second-order terms of a proper inversion are sub-millimetre.
  *
- * The rotation convention is **Position Vector** (EPSG method 1033), NOT Coordinate Frame Rotation (EPSG 1032). The two
+ * The rotation convention is **Position Vector** (epsg method 1033), not Coordinate Frame Rotation (epsg 1032). The two
  * differ only in the sign of the three rotations, which is why citing the method code matters more than it looks: paste
  * these numbers into a library expecting 1032 and every result moves by roughly 20 m with no error raised.
  *
@@ -294,7 +294,7 @@ export function osgb36GridToAiryLatLon({ easting, northing }: NationalGridPoint)
 /**
  * Convert OSGB36 geodetic lat/lon (Airy 1830) to WGS84 lat/lon (GRS80) via the seven-parameter Helmert.
  *
- * This is the APPROXIMATE half — see the module docstring for the ±5 m budget and when it stops being acceptable.
+ * This is the approximate half — see the module docstring for the ±5 m budget and when it stops being acceptable.
  * Heights are not modelled: the input is treated as sitting on the Airy ellipsoid and the output's ellipsoidal height
  * is discarded. For a horizontal postcode centroid that costs well under a metre. for anything vertical it is wrong by
  * the ~50 m geoid–ellipsoid separation over GB, so this function does not pretend to return a height.
@@ -348,7 +348,7 @@ export function osgb36AiryToWGS84({ latitude, longitude }: GeodeticLatLon): Geod
 }
 
 /**
- * Convert a British National Grid (EPSG:27700) easting/northing straight to WGS84 (EPSG:4326) lat/lon — the composition
+ * Convert a British National Grid (epsg:27700) easting/northing straight to WGS84 (epsg:4326) lat/lon — the composition
  * of {@link osgb36GridToAiryLatLon} and {@link osgb36AiryToWGS84}, and the function callers actually want.
  *
  * Accurate to about ±5 m across GB (see the module docstring). Does not validate that the input lies within the grid's

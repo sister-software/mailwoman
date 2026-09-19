@@ -3,12 +3,12 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   `mailwoman situs interpolation` — national TIGER EDGES download + interpolation-database build
+ *   `mailwoman situs interpolation` — national tiger edges download + interpolation-database build
  *   driver (#483 follow-on).
  *
  *   Orchestrates the per-state `mailwoman situs interpolation-database` command across every county in
  *   the contiguous US (3,143 counties) without running them all at once. Downloads county-level
- *   EDGES ZIPs from https://www2.census.gov/geo/tiger/TIGER2023/EDGES/ in parallel (capped at
+ *   edges ZIPs from https://www2.census.gov/geo/tiger/TIGER2023/edges/ in parallel (capped at
  *   `--concurrency`, default 12), retrying on 5xx / network errors, then builds one database DB per
  *   state via that sibling command.
  *
@@ -18,7 +18,7 @@
  *   time if you kill the run early.
  *
  *   Idempotency: ZIPs already present in `--edges-dir` are skipped (size-verified). State database DBs
- *   already present in `--out-dir` are skipped unless `--force` is passed. The per-state CHILD owns
+ *   already present in `--out-dir` are skipped unless `--force` is passed. The per-state child owns
  *   its own DB's write. this driver only orchestrates downloads + child builds and writes the small
  *   ranked-county cache, so there is no national-DB temp-then-rename here — large-artifact
  *   atomicity lives one level down in the database builder. Progress streams to stderr. the summary
@@ -71,7 +71,7 @@ const HTTP_SERVER_ERROR_MIN = 500
 const MAX_LISTED_FAILURES = 20
 
 /**
- * Native command-line contract consumed by the filesystem command router.
+ * Native command-line interface consumed by the filesystem command router.
  */
 export const spec = {
 	name: "interpolation",
@@ -156,8 +156,8 @@ const STATE_FIPS: Record<string, string> = {
 const RANKED_FILE = String(repoRootPathBuilder("mailwoman", "data", "county-population-ranked.json"))
 
 /**
- * The per-state STREET-SEGMENT builder is now the sibling `situs interpolation-database` command (the old
- * `scripts/build-interpolation-database.ts` was migrated into the CLI). Re-invoke the SAME CLI entry this process was
+ * The per-state street-segment builder is now the sibling `situs interpolation-database` command (the old
+ * `scripts/build-interpolation-database.ts` was migrated into the CLI). Re-invoke the same CLI entry this process was
  * started from, so dev + published installs both resolve correctly.
  */
 const CLI_ENTRY = scriptEntryPath()
@@ -175,8 +175,8 @@ interface CountyRecord {
 }
 
 /**
- * Fetch and parse the Census Population Estimates CSV, then materialise the sorted county list. SUMLEV=050 rows are
- * county-level. STATE + COUNTY form the 5-digit GEOID (zero-padded).
+ * Fetch and parse the Census Population Estimates CSV, then materialise the sorted county list. sumlev=050 rows are
+ * county-level. state + county form the 5-digit geoid (zero-padded).
  */
 async function fetchAndBuildRanking(): Promise<CountyRecord[]> {
 	console.error("Fetching Census Population Estimates CSV (co-est2023-alldata.csv)…")
@@ -281,13 +281,13 @@ async function downloadFile(url: string, dest: string, retries = 3): Promise<voi
 //#region ZIP extraction
 
 /**
- * The shapefile components DuckDB needs out of a TIGER EDGES archive. The siblings are useless without each other, so a
+ * The shapefile components DuckDB needs out of a tiger edges archive. The siblings are useless without each other, so a
  * partial extract is a broken layer rather than a smaller one.
  */
 const SHAPEFILE_MEMBERS = /\.(?:shp|dbf|prj|shx)$/i
 
 /**
- * Unpack a TIGER EDGES ZIP into --edges-dir, flattened. Silently overwrites existing files (idempotent at the shapefile
+ * Unpack a tiger edges ZIP into --edges-dir, flattened. Silently overwrites existing files (idempotent at the shapefile
  * level).
  */
 async function extractEdgesZip(zipPath: string, destDir: string): Promise<void> {
@@ -428,7 +428,7 @@ async function buildStateDatabase(
 	}
 
 	// The child's parse-relevant facts span its Ink summary (stdout: "N segment-sides → …") + plain
-	// progress (stderr: "N county shapefiles for …") — combine + strip ANSI, then match without line
+	// progress (stderr: "N county shapefiles for …") — combine + strip ansi, then match without line
 	// anchors so the summary's "✓ " render prefix doesn't defeat the regex.
 	const stdout = stripAnsi(result.stdout ?? "")
 	const stderr = stripAnsi(result.stderr ?? "")

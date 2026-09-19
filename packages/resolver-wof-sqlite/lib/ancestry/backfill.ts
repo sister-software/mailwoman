@@ -37,7 +37,7 @@
  *   parent_id is -4. This reads it for every candidate and inserts the missing ancestor rows (one per
  *   distinct ancestor across branches).
  *
- *   Must run after populateAncestors and before the build freezes (VACUUM INTO), so the rows land in
+ *   Must run after populateAncestors and before the build freezes (vacuum into), so the rows land in
  *   the shipped artifact — `scripts/build-unified-wof.ts` Phase 3 calls it inline. The standalone
  *   `scripts/backfill-ancestors-from-hierarchy.ts` is a thin CLI over the same function for ad-hoc
  *   repair of an already-built DB. Idempotent by the per-pair existence check rather than by the candidate
@@ -143,7 +143,7 @@ export async function backfillAncestorsFromHierarchy(
 	// "No country-tier ancestor" is the dead-end signal at any depth — see the module docstring. The
 	// earlier "<= 1 ancestor row" test only caught the dead end's origin, never the children that
 	// inherit it (a child of a repaired -4 place has two rows: itself and that parent) (#1445).
-	// The id bound is stated first so SQLite prunes by the PK index before the NOT EXISTS runs at all.
+	// The id bound is stated first so SQLite prunes by the PK index before the not exists runs at all.
 	const candidateBase = db
 		.selectFrom("spr")
 		.where("id", "<", maxID)

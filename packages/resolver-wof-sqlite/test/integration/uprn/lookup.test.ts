@@ -3,7 +3,7 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   The UPRN reader's probe contract, pinned over a fixture DB built by the SAME DDL + cell
+ *   The uprn reader's probe interface, pinned over a fixture DB built by the same DDL + cell
  *   derivation the real builder uses (`uprn-schema.ts`) — so a fixture row and a production row can
  *   never disagree on which cell a coordinate keys to.
  */
@@ -18,7 +18,7 @@ import {
 	readLayerManifest,
 	writeLayerCoverage,
 	writeLayerManifest,
-	type LayerContractDatabase,
+	type layerschemadatabase,
 } from "@mailwoman/core/layers"
 import { CoverageBasis } from "@mailwoman/evidence"
 import {
@@ -57,11 +57,11 @@ beforeAll(async () => {
 	databasePath = join(dir, "uprn.db")
 
 	using kdb = new DatabaseClient<UPRNDatabase>(databasePath)
-	const contract = kdb
+	const database = kdb
 
 	await createUPRNTable(kdb)
-	await createLayerManifestTable(contract)
-	await createLayerCoverageTable(contract)
+	await createLayerManifestTable(database)
+	await createLayerCoverageTable(database)
 
 	const insert = kdb.prepare("INSERT INTO uprn (uprn, lat, lon, h3_cell) VALUES (?, ?, ?, ?)")
 
@@ -71,7 +71,7 @@ beforeAll(async () => {
 
 	await createUPRNIndexes(kdb)
 
-	await writeLayerManifest(contract, {
+	await writeLayerManifest(database, {
 		name: "os-open-uprn-fixture",
 		version: "fixture",
 		schemaVersion: 1,
@@ -87,7 +87,7 @@ beforeAll(async () => {
 		createdAt: "2026-08-18T00:00:00.000Z",
 	})
 
-	await writeLayerCoverage(contract, [
+	await writeLayerCoverage(database, [
 		{ h3Cell: 1, completeness: 1, basis: CoverageBasis.Designated, observedRows: FIXTURE_POINTS.length },
 	])
 
@@ -146,9 +146,9 @@ describe("nearestUPRN", () => {
 	})
 })
 
-describe("layer contract", () => {
+describe("layer interface", () => {
 	it("round-trips the manifest, spine declaration included", async () => {
-		using kdb = new DatabaseClient<LayerContractDatabase>(databasePath, { readOnly: true })
+		using kdb = new DatabaseClient<layerschemadatabase>(databasePath, { readOnly: true })
 
 		const manifest = await readLayerManifest(kdb)
 
@@ -158,7 +158,7 @@ describe("layer contract", () => {
 	})
 
 	it("keeps unsurveyed cells UNKNOWN — the meaning-of-zero rule", async () => {
-		using kdb = new DatabaseClient<LayerContractDatabase>(databasePath, { readOnly: true })
+		using kdb = new DatabaseClient<layerschemadatabase>(databasePath, { readOnly: true })
 
 		const surveyed = await readLayerCoverage(kdb, 1)
 

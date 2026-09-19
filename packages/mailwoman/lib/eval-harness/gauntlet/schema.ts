@@ -4,13 +4,13 @@
  * @author Teffen Ellis, et al.
  *
  *   The Gauntlet — a full-pipeline integration-test corpus (`input → expected assembled output`). This is
- *   the CURATED REGRESSION layer (DeepSeek 019f1144): the executable memory of fixed bugs. Its check is
- *   REGRESSION-ONLY — "must not break what already passed" — and its pass-rate is never a ship gauge (that
+ *   the curated regression layer (DeepSeek 019f1144): the executable memory of fixed bugs. Its check is
+ *   regression-only — "must not break what already passed" — and its pass-rate is never a ship gauge (that
  *   would re-invent the Pelias acceptance-test false-trust pass-list). Generalization is conditional elsewhere:
  *   the held-out fresh-draw runner (`holdout.ts`) and the metamorphic invariants (`metamorphic.ts`), which
- *   need no stored expected values and so can't be over-fit.
+ *   need no stored expected values and. Therefore, can't be over-fit.
  *
- *   The `source` + `address_kind` columns are required: coverage is tracked BY KIND (po-box nonprofits,
+ *   The `source` + `address_kind` columns are required: coverage is tracked BY kind (po-box nonprofits,
  *   suite-heavy clinics, rural-route facilities, bare intl streets…), so "we tested 10k addresses" can never
  *   hide "…all suburban-US residential." That is CheckList's capability matrix applied to addresses.
  */
@@ -18,21 +18,21 @@
 import type { Kysely } from "kysely"
 
 /**
- * The address KIND a case exercises — a free string, deliberately extensible (the taxonomy grows with the corpus). Seed
+ * The address kind a case exercises — a free string, deliberately extensible (the taxonomy grows with the corpus). Seed
  * examples: `fr_street_bare`, `fr_street_postcode`, `us_residential`, `us_business_suite`, `us_po_box`,
  * `us_rural_route`, `us_intersection`, `de_street`, `nl_street`, `intl_multitoken_street`.
  */
 export type AddressKind = string
 
 /**
- * Pelias-style status: tracked as a DELTA (regression / improvement), never as a raw pass-rate gauge.
+ * Pelias-style status: tracked as a delta (regression / improvement), never as a raw pass-rate gauge.
  */
 export type CaseStatus = "pass" | "known_fail" | "improvement_target"
 
 export type ResolutionTier = "address_point" | "interpolated" | "street" | "admin" | "venue" | "plus_code"
 
 /**
- * One Gauntlet case: a raw input and its expected ASSEMBLED output (parse + place + coordinate + tier).
+ * One Gauntlet case: a raw input and its expected assembled output (parse + place + coordinate + tier).
  */
 export interface GauntletCaseTable {
 	/**
@@ -48,7 +48,7 @@ export interface GauntletCaseTable {
 	 */
 	source: string
 	/**
-	 * The address KIND this case exercises (coverage is tracked by this).
+	 * The address kind this case exercises (coverage is tracked by this).
 	 */
 	address_kind: AddressKind
 	/**
@@ -64,8 +64,8 @@ export interface GauntletCaseTable {
 	 */
 	expect_components: string | null
 	/**
-	 * OPT-IN multi-script rendering contract as JSON `{ tag: [rendering, …] }` (null = no contract). For a listed key the
-	 * grader asserts that `scriptRenderings(got)` contains every listed rendering, case-folded, and the same key in
+	 * OPT-IN multi-script rendering interface as JSON `{ tag: [rendering, …] }` (null = no interface). For a listed key
+	 * the grader asserts that `scriptRenderings(got)` contains every listed rendering, case-folded, and the same key in
 	 * {@linkcode expect_components} is superseded — see `check-case.ts`. Every list must be non-empty (the seed schema
 	 * refuses an empty one. the grader throws on one that reaches a built DB anyway).
 	 */
@@ -90,7 +90,7 @@ export interface GauntletCaseTable {
 	expect_lat: number | null
 	expect_lon: number | null
 	/**
-	 * Accepted great-circle tolerance in METERS (Pelias's distanceThresh. null defaults at runtime).
+	 * Accepted great-circle tolerance in meters (Pelias's distanceThresh. null defaults at runtime).
 	 */
 	expect_tolerance_m: number | null
 	/**
@@ -114,39 +114,39 @@ export interface GauntletCaseTable {
 	 */
 	note: string | null
 	/**
-	 * ABLATION ONLY, and optional: a JSON `{ component: rung }` hand-pin overriding the ablation layer's DERIVED
+	 * Ablation only, and optional: a JSON `{ component: rung }` hand-pin overriding the ablation layer's derived
 	 * graceful-degradation ladder for this row (`{"country": "region"}`, `{"region": "abstain"}`). `rung` is `abstain`,
 	 * `base`, or a WOF placetype naming the rung the deletion should degrade to.
 	 *
 	 * Absent (the normal case) = the derived ladder decides. It exists for the two classes no threshold fixes:
-	 * TERRITORIES, whose ancestry is politically rather than geographically shaped, and DUAL-ROLE places (#402), where
+	 * territories, whose ancestry is politically rather than geographically shaped, and dual-role places (#402), where
 	 * one name is both a locality and its own county and the ladder double-counts a rung. A corpus that needed many of
 	 * these would be telling you the derivation is wrong rather than that the rows are special.
 	 */
 	ablation_expect: string | null
 	/**
 	 * The CLI locale this row runs under (`en-NZ`), or null for the harness default. The runner derives the weights
-	 * overlay from its region subtag, mirroring production's locale-hint routing. This is a LOCALE HINT, never a country
+	 * overlay from its region subtag, mirroring production's locale-hint routing. This is a locale hint, never a country
 	 * constraint: `--locale` selects an address system and supplies a country prior, and an exact foreign match must
-	 * still resolve under it (#1585's contract) — `country` above stays the TRUTH's country, which for a locale row can
+	 * still resolve under it (#1585's interface) — `country` above stays the truth's country, which for a locale row can
 	 * differ (`Paris` under `en-US` is an FR row run with the US overlay).
 	 */
 	locale: string | null
 	/**
-	 * 1 = this row's expected outcome is NO COORDINATE — the resolver abstains rather than answering. The grade inverts:
+	 * 1 = this row's expected outcome is no coordinate — the resolver abstains rather than answering. The grade inverts:
 	 * any resolved coordinate fails the row. For the #1585 fuzzy-scope class, a scoped-empty typo correction must abstain
-	 * rather than fall through to a world-fuzzy candidate. the abstain pin is the contract, and lands re-pinned to real
+	 * rather than fall through to a world-fuzzy candidate. the abstain pin is the interface, and lands re-pinned to real
 	 * coordinates once coverage arrives (the row's note says which artifact).
 	 */
 	expect_abstain: number | null
 }
 
 /**
- * The build stamp — ONE row, describing the committed corpus the DB was built from.
+ * The build stamp — one row, describing the committed corpus the DB was built from.
  *
  * Exists because `regression.db` is a derived artifact with no link back to its source: on 2026-08-06 `eval
- * gauntlet-build regression-db` rebuilt it from a STALE COMPILED TREE (an `out/` loader still holding the deleted
- * pre-JSONL case array), printed "built", and every check afterwards graded a corpus nobody had. Nothing in the DB
+ * gauntlet-build regression-db` rebuilt it from a stale compiled tree (an `out/` loader still holding the deleted
+ * pre-jsonl case array), printed "built", and every check afterwards graded a corpus nobody had. Nothing in the DB
  * could contradict it. The stamp is that contradiction — the same posture as #1488's FST freshness stamps.
  */
 export interface GauntletMetaTable {
@@ -160,7 +160,7 @@ export interface GauntletMetaTable {
 	 */
 	corpus_hash: string
 	/**
-	 * How many rows were written. Redundant with the hash for detection, required for the DIAGNOSIS: "0 cases" reads as
+	 * How many rows were written. Redundant with the hash for detection, required for the diagnosis: "0 cases" reads as
 	 * an empty loader, "306 vs 192" as a corpus that moved under the artifact.
 	 */
 	case_count: number
@@ -189,7 +189,7 @@ export const GAUNTLET_META_ROW_ID = "corpus"
 export const GAUNTLET_META_TABLE = "gauntlet_meta"
 
 /**
- * Column order for the positional INSERT — derived once so the builder + writer can't drift.
+ * Column order for the positional insert — derived once so the builder + writer can't drift.
  */
 export const GAUNTLET_CASE_COLUMNS = [
 	"id",
@@ -209,12 +209,12 @@ export const GAUNTLET_CASE_COLUMNS = [
 	"added_at",
 	"bug_ref",
 	"note",
-	// Appended 2026-08-05 (the ablation expectation model). APPEND-ONLY: this list is the positional INSERT order, so a
+	// Appended 2026-08-05 (the ablation expectation model). append-only: this list is the positional insert order, so a
 	// new column goes on the END or every existing row shifts.
 	"ablation_expect",
-	// Appended 2026-08-11 (the per-row multi-script rendering contract). Same append-only rule.
+	// Appended 2026-08-11 (the per-row multi-script rendering interface). Same append-only rule.
 	"expect_component_renderings",
-	// Appended 2026-08-11 (the #1585 fuzzy-scope board: per-row locale arm + the abstain contract).
+	// Appended 2026-08-11 (the #1585 fuzzy-scope board: per-row locale arm + the abstain interface).
 	"locale",
 	"expect_abstain",
 ] as const

@@ -158,7 +158,7 @@ export interface UnfoldedEvalClassifierOptions {
 	 */
 	model: string
 	/**
-	 * PACKAGE-SHAPED (#718-safe): `<root>` loads model + tokenizer + card + ALL soft channels from the package via
+	 * Package-shaped (#718-safe): `<root>` loads model + tokenizer + card + all soft channels from the package via
 	 * `loadFromWeights` — the only in-distribution grade for a country-channel model (v6.2.0+). Takes precedence over the
 	 * explicit {@linkcode UnfoldedEvalClassifierOptions.model} path.
 	 */
@@ -233,7 +233,7 @@ export interface LocaleEvalSpec {
 	 */
 	system: SystemCode
 	/**
-	 * Eval JSONL files (raw + components). Multiple files are concatenated.
+	 * Eval jsonl files (raw + components). Multiple files are concatenated.
 	 */
 	files: string[]
 }
@@ -244,7 +244,7 @@ export interface LocaleEvalSpec {
  * measurable — the folded `per-locale-f1.ts` joins the three street parts and cannot see it. FR uses the dedicated
  * street-prefix eval set (`fr-street-prefix-real.jsonl`, the #719 reproduction), not the broad golden dev set, for the
  * essential tags: golden FR carries only ~7 `street_prefix` rows against ~1535 without it, so the unfolded
- * `street_prefix` F1 there is dominated by absent-gold rows (measured 5.3) — it would UNDER-certify the very capability
+ * `street_prefix` F1 there is dominated by absent-gold rows (measured 5.3) — it would under-certify the very capability
  * the delta check exists to guard. On the purpose-built eval set the model emits FR `street_prefix` at F1 80.0 (the
  * figure the #719 fix cites), which is the honest capability number the loader must guard.
  */
@@ -280,11 +280,11 @@ export interface MaskOffOnOptions {
 }
 
 /**
- * Score one locale's rows mask-OFF (conventions disabled — the model's raw capability; `createScorer` warns about the
- * declared-required override, which is expected) and mask-ON (conventions `auto`: locale-head detection applies the
- * detected system's `forbiddenTags` as a hard emission mask — the SHIP behavior whose damage the callers measure).
+ * Score one locale's rows mask-off (conventions disabled — the model's raw capability; `createScorer` warns about the
+ * declared-required override, which is expected) and mask-on (conventions `auto`: locale-head detection applies the
+ * detected system's `forbiddenTags` as a hard emission mask — the ship behavior whose damage the callers measure).
  *
- * Full SHIP-CONFIG otherwise (anchor-on + gazetteer-on — `createScorer`'s defaults, less any declared tier override).
+ * Full ship-config otherwise (anchor-on + gazetteer-on — `createScorer`'s defaults, less any declared tier override).
  * Only the conventions channel toggles. `strict: true` fails closed if a declared channel can't be fed, so a
  * stale/incomplete feed surfaces loudly rather than silently grading a handicapped model.
  */

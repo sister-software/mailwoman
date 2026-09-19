@@ -3,7 +3,7 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   #267 — `ingestGeonamesAliases({ includeAdmin: true })` folds the GeoNames A-class admin (PCLI country
+ *   #267 — `ingestGeonamesAliases({ includeAdmin: true })` folds the GeoNames A-class admin (pcli country
  *   + ADM1 regions) alongside the P-class localities and links the locality→region→country ancestry, so
  *   `parentID` scoping and adminCoherence reach the gap countries ("Tbilisi, GE" can resolve).
  */
@@ -40,11 +40,11 @@ beforeAll(async () => {
 	dir = await temporaryDirectory("geonames-admin-")
 
 	const lines = [
-		// PCLI country: Georgia
+		// pcli country: Georgia
 		row({ 0: "614540", 1: "Georgia", 2: "Georgia", 4: "42.0", 5: "43.5", 6: "A", 7: "PCLI", 8: "GE" }),
 		// ADM1 region: T'bilisi (admin1 code 51)
 		row({ 0: "611716", 1: "Tbilisi", 2: "Tbilisi", 4: "41.7", 5: "44.8", 6: "A", 7: "ADM1", 8: "GE", 10: "51" }),
-		// PPLC locality: Tbilisi (in admin1 51)
+		// pplc locality: Tbilisi (in admin1 51)
 		row({
 			0: "611717",
 			1: "Tbilisi",
@@ -137,7 +137,7 @@ test("default (no includeAdmin) stays localities-only with no admin rows — byt
 
 	expect((db2.prepare("SELECT COUNT(*) n FROM spr WHERE placetype IN ('country','region')").get() as Row).n).toBe(0)
 
-	// No LINKAGE — the point of the admin check. The self row is not linkage: `populateAncestors` writes
+	// No linkage — the point of the admin check. The self row is not linkage: `populateAncestors` writes
 	// one for every spr row, so withholding it just made the fold-on-copy path disagree with a full build
 	// by exactly the non-gap localities (#1514).
 	expect(
@@ -184,7 +184,7 @@ test("recognizes a PCLS special-administrative-region as the country (HK/MO/PS)"
 	hk.exec(`CREATE TABLE place_population (id INTEGER PRIMARY KEY, population INTEGER)`)
 	await ingestGeonamesAliases(hk, ["HK"], d, () => {}, { adminForCountries: new Set(["HK"]) })
 
-	// PCLS is a country-level code. the fold must seat Hong Kong as the country (not skip it like pre-PCL*).
+	// pcls is a country-level code. the fold must seat Hong Kong as the country (not skip it like pre-PCL*).
 	expect((hk.prepare("SELECT name FROM spr WHERE placetype='country' AND country='HK'").get() as Row)?.name).toBe(
 		"Hong Kong"
 	)

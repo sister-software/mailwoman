@@ -30,7 +30,7 @@ def test_collect_sample_codepoints_nonascii_only(samples: dict[str, Path]) -> No
 
 def test_check_passes_and_reports_when_disjoint(tmp_path: Path, samples: dict[str, Path]) -> None:
     report_path = tmp_path / "report.json"
-    # ą/ż do not appear in either sample → disjoint → PASS, empty overlaps in the report.
+    # ą/ż do not appear in either sample → disjoint → pass, empty overlaps in the report.
     report = check_codepoint_overlap(["▁Grudzi", "ądz", "ż"], samples, report_path)
     assert report == {"fr": [], "us": []}
     on_disk = json.loads(report_path.read_text(encoding="utf-8"))

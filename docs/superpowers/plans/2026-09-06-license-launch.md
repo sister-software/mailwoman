@@ -74,7 +74,7 @@ yarn workspace @mailwoman/license-worker wrangler secret put STRIPE_WEBHOOK_SECR
 
 ### Task 3: the sandbox end to end
 
-- [x] **Step 1:** open the test-mode monthly Payment Link from the provisioning report in a browser, pay with card `4242 4242 4242 4242`, any future expiry, any CVC, a licensee legal name in the custom field, accept the terms. Stripe redirects to `https://mailwoman.ai/license/issued?session_id=cs_test_…`; the deployed site runs #2162's page and polls `license.mailwoman.ai`, which is still missing, so read the session id from the URL and claim it from the sandbox by hand:
+- [x] **Step 1:** open the test-mode monthly Payment Link from the provisioning report in a browser, pay with card `4242 4242 4242 4242`, any future expiry, any CVC, a licensee legal name in the custom field, accept the terms. Stripe redirects to `https://mailwoman.ai/license/issued?session_id=cs_test_…`; the deployed site runs #2162's page and polls `license.mailwoman.ai`, which is still missing. Therefore, read the session id from the URL and claim it from the sandbox by hand:
 
 ```bash
 curl -s https://mailwoman-license-sandbox.<account>.workers.dev/v1/checkout-sessions/cs_test_…/license
@@ -145,7 +145,7 @@ every event itself; nothing was replayed or signed by hand.
 
 A defect the cron surfaced: the two older invoices it minted were the local run's purchases, which this ledger had
 never seen, and one of them (`in_1UCW4vANyI6tE9BzaAvybZrc`) had been fully refunded during that run. The drift sweep
-read only the subscription's status, which a refund leaves `active`, so the ledger issued `lic_cPAjF5Rawybt-3rDURvvMQ`
+read only the subscription's status, which a refund leaves `active`. Therefore, the ledger issued `lic_cPAjF5Rawybt-3rDURvvMQ`
 for a refunded payment and reported nothing to correct. The sweep now reads the charge behind each active license's
 current token and revokes on a full refund, the same rule the `charge.refunded` handler applies; the deployed sandbox
 corrects that license at the next pass after the fix deploys.

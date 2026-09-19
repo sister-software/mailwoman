@@ -5,14 +5,14 @@
  *
  *   Serialize CLI spawns across vitest workers.
  *
- *   Vitest runs test FILES in parallel across forked workers, and several suites spawn the compiled CLI as a child.
+ *   Vitest runs test files in parallel across forked workers, and several suites spawn the compiled CLI as a child.
  *   One spawn costs ~5.6 s wall, 541 MB and 11 threads on a 16-core box — 2.7 s of it node boot and the CLI's import
  *   graph, before any model loads — so a handful in parallel saturate the machine and every one of them slows down.
  *
- *   A lock rather than a vitest concurrency setting: the constraint is a property of the CHILD process, which the
+ *   A lock rather than a vitest concurrency setting: the constraint is a property of the child process, which the
  *   runner cannot see. Timeouts alone provide margin without stopping the stacking.
  *
- *   The lock is a DIRECTORY, because `mkdir` is atomic on every platform we run on and needs no dependency. It carries
+ *   The lock is a directory, because `mkdir` is atomic on every platform we run on and needs no dependency. It carries
  *   the holder's pid so a crashed worker's lock can be reclaimed rather than wedging the suite, and it always releases
  *   in a `finally` — a leaked test lock turns one failure into a whole-suite timeout.
  *
@@ -41,7 +41,7 @@ const POLL_MS = 50
  * Remove the lock directory, tolerating every failure.
  *
  * Two workers can race here — one reclaiming a stale lock while its holder releases, or two reclaiming at once — and
- * the removal throws ENOTEMPTY when the pid file is rewritten between its scan and the rmdir. A lock whose BOOKKEEPING
+ * the removal throws enotempty when the pid file is rewritten between its scan and the rmdir. A lock whose bookkeeping
  * can throw is worse than no lock: it turns contention into a test failure in whichever suite happened to be holding
  * it. A failed removal degrades to the next acquirer reclaiming it as stale, which is already the recovery path.
  */
@@ -81,7 +81,7 @@ export async function withCLISpawnLockAsync<T>(fn: () => Promise<T>): Promise<T>
 	// The catch path sleeps and retries. only a successful mkdir breaks out. oxlint reads the try/break as
 	// the loop's sole exit and misses the fallthrough, the same false positive packages/release-kit/lib/release/bless-package.ts
 	// suppressed for its OTP retry. The directive must sit immediately above the loop — on a multi-line
-	// note it lands on the next COMMENT line and silently does nothing.
+	// note it lands on the next comment line and silently does nothing.
 	// oxlint-disable-next-line eslint/no-unreachable-loop -- retryable catch falls through to the next timed attempt
 	while (Date.now() < deadline) {
 		try {

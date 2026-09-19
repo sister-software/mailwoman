@@ -86,7 +86,7 @@
 	}
 
 	/*
-	 * A default face for a host that sets none. Wrapped in `:where()` so it carries ZERO specificity: Docusaurus's own
+	 * A default face for a host that sets none. Wrapped in `:where()` so it carries zero specificity: Docusaurus's own
 	 * `body` rule wins on the docs site and keeps that page's typography, while Storybook and a bare React host — which
 	 * declare nothing — stop falling back to the user agent's serif.
 	 */
@@ -801,7 +801,7 @@
 	/*
  * The <MapCanvas> wrapper. Sizing is the host's call (pass `style`/`className`), but a min-height keeps
  * the map from collapsing to zero when a consumer forgets. The inner <Map> fills 100% of this box.
- * The host must ALSO import `maplibre-gl/dist/maplibre-gl.css` for the map's own control/canvas styles.
+ * The host must also import `maplibre-gl/dist/maplibre-gl.css` for the map's own control/canvas styles.
  */
 	.mw-demo-map {
 		position: relative;
@@ -1000,7 +1000,7 @@
 
 	/*
 	 * Each segment is a column sized to max(text, tag), so a long tag under a short span widens the segment — which is
-	 * why `350 5th Ave` renders spread out. What it did NOT have was any space BETWEEN neighbouring tags, so the row
+	 * why `350 5th Ave` renders spread out. What it did not have was any space BETWEEN neighbouring tags, so the row
 	 * read as one run-on word: `house_numberstreetstreet_suffix locality regionpostcode`. The padding separates the
 	 * tags and, because the segment sizes to the tag, spreads the text above them to match.
 	 */
@@ -1365,7 +1365,7 @@
 	/* #region Chrome layout — where the floating pieces sit over a map */
 
 	/*
-	 * THE panel: search, examples and result on one surface.
+	 * the panel: search, examples and result on one surface.
 	 *
 	 * It replaces a floating pill plus a separate bottom sheet. Two surfaces meant the search field shared its row
 	 * with the control rail — which covered its right end at any width where the two met — and meant a phone could
@@ -1386,7 +1386,7 @@
 		width: min(24rem, calc(100vw - 6rem));
 		/* Stops short of the footer strip, so a long result never runs under the credits. */
 		max-height: calc(100% - var(--map-footer-height) - var(--safe-area-top) - var(--safe-area-bottom) - 2rem);
-		/* NO TOP PADDING: the grip bar carries it, so the bar's paint can reach the panel's top edge. */
+		/* no TOP PADDING: the grip bar carries it, so the bar's paint can reach the panel's top edge. */
 		padding: 0 var(--space-4) var(--space-4);
 		border-radius: var(--radius-sheet);
 		overflow: auto;
@@ -1402,7 +1402,7 @@
 	}
 
 	/*
-	 * The header: the grab bar and the search field as ONE sticky block.
+	 * The header: the grab bar and the search field as one sticky block.
 	 *
 	 * The field is in here rather than down in the scroll because scrolling a long result used to carry it off the
 	 * top of the panel, and the field is what a visitor reaches for next. The reference map apps pin exactly this
@@ -1412,7 +1412,7 @@
 	 * paint reaches the panel's top edge. Opaque, because the panel's material is glass and a result read straight
 	 * through a translucent pinned header.
 	 *
-	 * NO NEGATIVE TOP MARGIN to reach that edge. In a grid the track is sized from the margin box while the item is
+	 * no NEGATIVE TOP MARGIN to reach that edge. In a grid the track is sized from the margin box while the item is
 	 * laid out at the track's start, so a bar pulled up by 12px painted 12px past its own row, onto the field below.
 	 */
 	.mw-map-panel__header {
@@ -1432,7 +1432,7 @@
 	/*
 	 * The grab bar's own row, inside the header.
 	 *
-	 * NO MINIMUM on the desktop column: the row holds a handle that only the drawer offers and a close that only a
+	 * no MINIMUM on the desktop column: the row holds a handle that only the drawer offers and a close that only a
 	 * result offers, so on a desktop with nothing found it holds nothing — and a minimum drew that nothing as a band
 	 * of empty glass above the search field. Its height is whatever it is carrying; the drawer rule below puts a
 	 * minimum back, where the handle is the thing being reached for.
@@ -1488,7 +1488,7 @@
 		padding: var(--space-5);
 		border-radius: var(--radius-panel);
 		/*
-		 * THE TOP OF THE MAP'S LADDER: panel 3 (5 as a drawer), control rail 4, side sheet 6. A side sheet is a
+		 * the TOP OF the MAP'S LADDER: panel 3 (5 as a drawer), control rail 4, side sheet 6. A side sheet is a
 		 * different task and covers the answer rather than sharing an edge with it. It was 5 — a tie with the drawer,
 		 * resolved by nothing but the order the two happen to render in, and one JSX reorder from inverting.
 		 */
@@ -1559,7 +1559,7 @@
 	 * of the search field below it — the overlap this whole panel was meant to end. In flow it carries the bar, and
 	 * the field starts under it.
 	 *
-	 * The phone rule below puts it back to absolute, where the handle IS the bar and has to stay centred on the sheet
+	 * The phone rule below puts it back to absolute, where the handle is the bar and has to stay centred on the sheet
 	 * rather than on the space the close leaves, and where the target grows to a full 44px because the drawer is the
 	 * whole panel and this is the only way out of it.
 	 */
@@ -1726,7 +1726,7 @@
 			bottom: calc(var(--map-footer-height) + var(--safe-area-bottom));
 			width: auto;
 			/*
-			 * ABOVE the control rail (`z-index: 4`), which the desktop column never reaches. Pulled to its tall detent
+			 * above the control rail (`z-index: 4`), which the desktop column never reaches. Pulled to its tall detent
 			 * the drawer's top edge crosses the rail's corner, and drawn under it the rail sat on the drawer's own
 			 * close. A sheet raised over a map covers what it covers; it does not share a corner with it.
 			 */
@@ -1764,7 +1764,7 @@
 		}
 
 		/*
-		 * The drawer's bar IS the grab target, so it keeps a full row — but only while it holds one. With no result the
+		 * The drawer's bar is the grab target, so it keeps a full row — but only while it holds one. With no result the
 		 * bar is empty on a phone too, and an empty band over the search field is the gap this rule would otherwise put
 		 * back. `:has()` is the test; where it is unsupported the bar collapses, which is the harmless half.
 		 */
@@ -1816,7 +1816,7 @@
 	 */
 
 	/*
-	 * EVERY glass surface is listed here, and the two fallback blocks at the end of this region repeat exactly this
+	 * every glass surface is listed here, and the two fallback blocks at the end of this region repeat exactly this
 	 * list. Composing the material at each component instead left the sheets and the sources popover out of both
 	 * fallbacks, so a viewer who asked for reduced transparency still got a translucent panel.
 	 */
@@ -1830,7 +1830,7 @@
 		background: var(--material-glass-background);
 		border: 1px solid var(--material-glass-border);
 		/*
-		 * PREFIXED FIRST, STANDARD LAST. The minifier collapses two declarations carrying the same value and keeps the
+		 * PREFIXED first, STANDARD last. The minifier collapses two declarations carrying the same value and keeps the
 		 * last one; written the other way round the shipped rule had `-webkit-backdrop-filter` alone, so every glass
 		 * surface lost its blur on Firefox, which implements the standard property and not the alias.
 		 */
@@ -2093,7 +2093,7 @@
 	 * `visibility` rather than `display` is what lets the opacity transition run at all.
 	 */
 	/*
-	 * The compass sits INSIDE a control capsule like the other controls, so it carries no material of its own — the
+	 * The compass sits inside a control capsule like the other controls, so it carries no material of its own — the
 	 * capsule supplies the glass, and a second background here would read as a button on a button.
 	 */
 	.mw-map-compass {
@@ -2161,7 +2161,7 @@
 	 * take height from the thing a visitor asked for. Long credits scroll instead.
 	 */
 	/*
-	 * THE STRIP ITSELF DOES NOT CLIP. A non-visible overflow on one axis makes the other clip as well, so an
+	 * the STRIP ITSELF does not CLIP. A non-visible overflow on one axis makes the other clip as well, so an
 	 * `overflow-x` here erased the sources popover outright — it is positioned above the strip, entirely outside the
 	 * box that would have been doing the clipping. The scroll belongs to the identity region, which is the part
 	 * carrying text long enough to need one.
@@ -2184,7 +2184,7 @@
 		color: var(--color-text-secondary);
 	}
 
-	/* Identity, then whatever is loading. The status is where the loader says WHAT; the bar on top says how far. */
+	/* Identity, then whatever is loading. The status is where the loader says what; the bar on top says how far. */
 	.mw-map-footer__identity {
 		flex: 1 1 auto;
 		min-width: 0;

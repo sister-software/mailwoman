@@ -10,7 +10,7 @@
  *   reported a regression that was, in substantial part, the cost of fine-tuning at all. The two controls that say so
  *   were run eighth and ninth. They were not skipped because anyone decided to skip them. they were skipped because
  *   running them is three more commands at the moment you already have a number in hand, and a number in hand feels
- *   like an answer. Making the controls the DEFAULT PATH rather than a discipline is the only fix that survives a
+ *   like an answer. Making the controls the default path rather than a discipline is the only fix that survives a
  *   fresh context.
  *
  *   Two facts this encodes that an agent otherwise re-derives every time:
@@ -38,8 +38,8 @@ import type { ComparedRow } from "#tool-kit"
  * No default-on mechanism ships with a known regression on any of these, whatever the net says. A candidate that wins
  * 40 rows and loses one in France is not a candidate.
  *
- * It is DERIVED rather than written here because the written version drifted. `["FR", "GB", "DE"]` stood under a
- * docstring claiming iron rule 6's protection while `SCOPE.mdx` put US and FR in tier 1 — so a candidate regressing US
+ * It is derived rather than written here because the written version drifted. `["FR", "GB", "DE"]` stood under a
+ * docstring claiming iron rule 6's protection while `scope.mdx` put US and FR in tier 1 — so a candidate regressing US
  * rows raised no D-rule reason at all, which is the one reading the rule exists to force. Tier-1 membership now comes
  * from the register the table is checked against, and every country guarded beyond it carries its reason.
  */
@@ -70,7 +70,7 @@ export interface ArcLeg {
 	/**
 	 * The addresses that improved. Carried for the same reason as the regressions, and originally omitted — which made
 	 * every report from this tool one-sided: "35 regressed" with the 37 wins reduced to a count nobody could inspect. A
-	 * candidate is a TRADE, and a reader cannot price a trade with one side hidden.
+	 * candidate is a trade, and a reader cannot price a trade with one side hidden.
 	 */
 	improvedInputs: string[]
 	runID?: string
@@ -136,7 +136,7 @@ function legFrom(label: string, weights: string, result: Record<string, unknown>
 /**
  * How the candidate was trained.
  *
- * This is not bookkeeping: it decides whether a null leg is MISSING or INAPPLICABLE. A fine-tune inherits a base and
+ * This is not bookkeeping: it decides whether a null leg is missing or inapplicable. A fine-tune inherits a base and
  * pays to touch it, so a null is the only thing that separates the change's cost from the tax. A from-scratch run
  * inherits nothing, so there is no tax to subtract and demanding a null would be asking for a control of nothing.
  * Reporting the second case with the first case's caveat is how a correct number gets discounted.
@@ -252,7 +252,7 @@ export function decideArc(
 }
 
 /**
- * Run the arc. Legs run SEQUENTIALLY — three concurrent board runs saturate the lab host, and the arc is not on
+ * Run the arc. Legs run sequentially — three concurrent board runs saturate the lab host, and the arc is not on
  * anyone's critical path.
  */
 export async function runArc(registry: EngineRegistryLike, options: ArcOptions): Promise<ArcResult> {
@@ -286,7 +286,7 @@ export async function runArc(registry: EngineRegistryLike, options: ArcOptions):
  *
  * It lives beside {@linkcode decideArc} rather than in the tool wrapper because the first version computed the same
  * sentence in both places and they disagreed on their first live run: `reasons` correctly called a from-scratch run's
- * null INAPPLICABLE while the wrapper's summary still called the number an upper bound carrying a fine-tune tax. Two
+ * null inapplicable while the wrapper's summary still called the number an upper bound carrying a fine-tune tax. Two
  * copies of a rule agree until one of them is fixed.
  */
 export function summarizeArc(arc: ArcResult): string {

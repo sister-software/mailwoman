@@ -43,7 +43,7 @@ REFERENCE_README = [
     "parameter_checksums: each parameter's initial sum. Most are constants, not RNG state:",
     "  _init_weights zeroes biases and cue vectors, resets every LayerNorm gamma to 1.0 (a zeroed",
     "  gamma collapses the layer to a constant output, which it has done), and zeroes locale_film",
-    "  last so locale conditioning starts as the identity. The remaining xavier_uniform_ weights",
+    "  last. Therefore, locale conditioning starts as the identity. The remaining xavier_uniform_ weights",
     "  are the RNG-dependent ones: they move if module construction is REORDERED, which the logits",
     "  do not detect because the reference forward supplies no channel features.",
 ]
@@ -184,7 +184,7 @@ def test_forward_is_deterministic_under_a_fixed_seed() -> None:
 #: a reordered channel, a dropped term, a head wired to the wrong input — moves a logit by a
 #: fraction of its own magnitude, four orders of magnitude above this floor. Registration ORDER is
 #: pinned exactly by `parameter_checksums`, which sums initial weights straight off the RNG and
-#: never reaches a matmul, so the strict half of this file is unaffected.
+#: never reaches a matmul. Therefore, the strict half of this file is unaffected.
 TOLERANCE = 1e-4
 
 
@@ -234,7 +234,7 @@ def test_a_checkpoint_round_trips_through_save_and_load(tmp_path: Path) -> None:
     reloaded.save_pretrained(tmp_path / "again")
     assert json.loads((tmp_path / "again" / "config.json").read_text()) == written
 
-    # `from_pretrained` returns a model in TRAIN mode, which is what a resume wants. Compare in
+    # `from_pretrained` returns a model in train mode, which is what a resume wants. Compare in
     # eval: `nn.MultiheadAttention` takes a different kernel path while training, so the reduction
     # order differs by ~1e-6 even at dropout 0.0. In eval the two are bitwise equal.
     reloaded.eval()

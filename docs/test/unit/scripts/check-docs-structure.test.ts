@@ -3,14 +3,14 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Unit tests for the six-role frontmatter contract (`validatePage`, `docs-frontmatter-contract.ts`)
+ *   Unit tests for the six-role frontmatter metadata (`validatePage`, `docs-frontmatter-metadata.ts`)
  *   that `check-docs-structure.ts` enforces on every published page under `--strict` (docs-reorg
  *   Phase 0, task 2). Pure fixture objects only — no filesystem, no sidebar, no real corpus — the
  *   orphan/duplicate-title checks and the legacy per-path role check keep their own coverage (or lack
  *   thereof) unchanged by this file.
  */
 
-import { PAGE_ROLES, validatePage } from "@mailwoman/docs/scripts/docs-frontmatter-contract"
+import { PAGE_ROLES, validatePage } from "@mailwoman/docs/scripts/docs-frontmatter-metadata"
 import { describe, expect, it } from "vitest"
 
 describe("validatePage", () => {

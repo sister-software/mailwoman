@@ -3,11 +3,11 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   The plan → execute contract for external writes. `computeReleasePlan` describes what a release of
- *   this checkout would publish — HEAD, the version, every release workspace at its manifest version,
+ *   The plan → execute interface for external writes. `computeReleasePlan` describes what a release of
+ *   this checkout would publish — head, the version, every release workspace at its manifest version,
  *   every weights artifact a checkout does not carry, and the destinations — and seals it under a
  *   digest. An external-write operation takes the plan file back, recomputes the plan from the
- *   checkout it is about to publish, and refuses when HEAD is dirty, HEAD moved, or the digest
+ *   checkout it is about to publish, and refuses when head is dirty, head moved, or the digest
  *   differs: the tree being published is then not the tree that was planned.
  *
  *   The digest covers everything but itself, over canonical JSON (sorted keys), so two checkouts of

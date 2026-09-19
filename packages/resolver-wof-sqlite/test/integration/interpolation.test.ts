@@ -101,7 +101,7 @@ beforeAll(() => {
 				[1.001, 1],
 			],
 		},
-		// Descending range: numbers DECREASE walking from-node → to-node.
+		// Descending range: numbers decrease walking from-node → to-node.
 		{
 			street_norm: "river road",
 			side: "R",
@@ -153,8 +153,8 @@ beforeAll(() => {
 				[0.001, 4],
 			],
 		},
-		// Stored under the CANONICAL route key (as the builder writes it from TIGER's
-		// "State Rte 100") — the query side must fold "VT ROUTE 100" to the same key.
+		// Stored under the canonical route key (as the builder writes it from tiger's
+		// "State Rte 100") — the query side must fold "VT route 100" to the same key.
 		{
 			street_norm: "state route 100",
 			side: "L",
@@ -208,7 +208,7 @@ describe("StreetInterpolator", () => {
 		const hit = interpolator.find({ street: "River Rd", number: "450", postcode: "05601" })
 		expect(hit!.lon).toBeCloseTo(0.0005, 9)
 		expect(hit!.lat).toBeCloseTo(1, 9)
-		// And the from-boundary sits at the polyline START even though it's the range MAX.
+		// And the from-boundary sits at the polyline start even though it's the range MAX.
 		const atFrom = interpolator.find({ street: "River Rd", number: "500", postcode: "05601" })
 		expect(atFrom!.lon).toBeCloseTo(0, 9)
 	})
@@ -256,7 +256,7 @@ describe("StreetInterpolator", () => {
 	})
 
 	it("matches a TIGER-spelled route key from the E911/Overture route spelling", () => {
-		// TIGER says "State Rte 100"; E911/Overture say "VT ROUTE 100" — both fold to the same
+		// tiger says "State Rte 100"; E911/Overture say "VT route 100" — both fold to the same
 		// canonical key (build side stores it folded, query side folds before matching).
 		const hit = interpolator.find({ street: "VT ROUTE 100", number: "1043", postcode: "05601" })
 		expect(hit).not.toBeNull()

@@ -7,16 +7,16 @@
  *   `docs/articles/plan/2026-06-11-resolution-ladder.md`): when the exact address-point tier (#476)
  *   misses a house number, bracket the number with real neighbor points on the same street from the
  *   same #476 extract and interpolate linearly in house-number space between them. Real occupancy
- *   replaces TIGER's uniform-spacing assumption — the dominant error term of the TIGER pilot's check
- *   miss. TIGER range interpolation (`StreetInterpolator`) demotes to the fallback for streets too
+ *   replaces tiger's uniform-spacing assumption — the dominant error term of the tiger pilot's check
+ *   miss. tiger range interpolation (`StreetInterpolator`) demotes to the fallback for streets too
  *   sparse to bracket.
  *
- *   Matching key is `street_key` — THE shared normalizer plus the route fold
+ *   Matching key is `street_key` — the shared normalizer plus the route fold
  *   (`canonicalizeRouteKey`), identical at build time (`mailwoman situs address-points`) and
  *   query time, by construction. Scope is postcode-first like the segment tier. a query without a
  *   postcode goes straight to the fallback (which carries its own statewide-ambiguity abstention).
  *
- *   Bracketing contract:
+ *   Bracketing interface:
  *
  *   - Neighbor candidates never include the queried number itself (any unit/duplicate row of it) — in
  *       production the exact tier would already have answered an on-file number, and in the eval
@@ -28,7 +28,7 @@
  *       carries no evidence and the query falls through); `uncertaintyM` = the pair distance plus
  *       the extrapolated overshoot, explicitly larger than the both-sided radius.
  *   - No bracket (no neighbors, a single known number, or past the extrapolation cap): fall through to
- *       the TIGER fallback when configured, else null.
+ *       the tiger fallback when configured, else null.
  *
  *   Standalone like the segment tier — core wiring rides the Phase 2 ordered `spatialTiers` list.
  */

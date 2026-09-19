@@ -1,8 +1,8 @@
-# === v0.9.10-country-bal (#464) — MODEL-FIRST country, the balanced recipe output. ===================
-# The shipped v4.1.0 model is STARVED on `country` (P=R=F1=0 on the homograph eval — it never emits
-# the tag. the night-9 49-F1/23%-precision over-fire was a SEPARATE bad recipe output). So this fills a void,
-# the same way `unit` did — but the corpus is built to AVOID re-creating the over-fire, and the change
-# is MODEL-FIRST (no deterministic override. the gazetteer informs the model, never substitutes —
+# === v0.9.10-country-bal (#464) — model-first country, the balanced recipe output. ===================
+# The shipped v4.1.0 model is starved on `country` (P=R=F1=0 on the homograph eval — it never emits
+# the tag. the night-9 49-F1/23%-precision over-fire was a separate bad recipe output). So this fills a void,
+# the same way `unit` did — but the corpus is built to avoid re-creating the over-fire, and the change
+# is model-first (no deterministic override. the gazetteer informs the model, never substitutes —
 # see docs/engineering/reference/closed-vocab-fields-model-first.mdx).
 #
 # One variable vs v4.1.0 (v0.9.7-unit-v3): the balanced country recipe output is overlaid on the shipped
@@ -11,23 +11,23 @@
 # lags). Class-weight B/I-country stays at 2.0 (shipped model had 2.0 and country was 0% → the gap was
 # data). Everything else held — v0.9.3 recipe (anchor on, self-cond on, region-tail German), seed 42.
 #
-# THE RECIPE OUTPUT (the country-balanced recipe, `packages/corpus/lib/recipes/country-balanced.ts`, 50k): breadth (OA skeletons + varied ISO country forms
+# the recipe output (the country-balanced recipe, `packages/corpus/lib/recipes/country-balanced.ts`, 50k): breadth (OA skeletons + varied ISO country forms
 # + ~25% absent) + homograph contrast (~26%: Georgia/Jordan/Lebanon/Mexico/Peru/Turkey both as
 # country [foreign city] and as US region/locality [US ZIP]) + code-as-region negatives (~10%:
 # CA/GA/IN/MA/PA/AL). The contrast is the signal the over-firing v0.9.9 recipe output lacked.
 #
-# PRE-REGISTERED CHECK (stop at 20k) — data/eval/external/country-homograph-real.jsonl (n=54, held-out):
+# PRE-registered check (stop at 20k) — data/eval/external/country-homograph-real.jsonl (n=54, held-out):
 #   - `country` F1 >> 0 (was 0) and over-fire = 0 (no region/locality token mistagged as country).
 #   - `region` / `locality` F1 stay at the v4.1.0 baseline (region 76.9, locality 62.1 on the homograph eval).
 #   - No regression (within ~1pp, fp32-to-fp32): US house_number / postcode / street / locality;
-#     FR per-class floors. DE native-order (de-order-eval.ts). RETAIN unit >= 88 (unit-real-designators).
-#   DECISION: country alive + over-fire 0 + region/locality held + no regression check -> candidate.
+#     FR per-class floors. DE native-order (de-order-eval.ts). retain unit >= 88 (unit-real-designators).
+#   decision: country alive + over-fire 0 + region/locality held + no regression check -> candidate.
 #     If long-tail recall lags: bump class-weight B/I-country 2->3-4 + add the soft gazetteer anchor.
 #     If it over-fires: raise the homograph/negative balance (HOMOGRAPH_FRAC/ABBREV_FRAC) + rerun.
 # Measure: scripts/eval/score-country-homograph.ts + per-locale-f1.ts (US/FR) + de-order-eval.ts +
 #   unit-real-designators (fp32-to-fp32).
 #
-# CORPUS: v0.4.10-country-bal (v0.4.5-unit-v2 base + the balanced country recipe output). Launch:
+# corpus: v0.4.10-country-bal (v0.4.5-unit-v2 base + the balanced country recipe output). Launch:
 #   cd corpus-python && modal run -d -m launch.train_remote \
 #     --config v0.9.10-country-bal.yaml --resume none \
 #     --trackio --trackio-space sister-software/mailwoman-trackio
@@ -49,7 +49,7 @@ data:
     usgov-hrsa-fqhc: 2.0
     usgov-imls-pls: 2.0
     usgov-nad: 1.0
-    state-ia-contractors: 2.0
+    state-ia-builders: 2.0
     state-tx-notaries: 1.5
     state-ny-notaries: 2.0
     deepseek-kryptonite: 3.0

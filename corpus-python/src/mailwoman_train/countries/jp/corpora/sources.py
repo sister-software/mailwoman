@@ -32,7 +32,7 @@ class KenAllIndex:
     """The 〒 join: TOWN-level first, municipality catch-all only as the fallback.
 
     The probe joined at municipality granularity, which always returns the ``NNN-0000`` catch-all
-    Japan Post lists first — so every probe row carried a postcode whose last four digits were
+    Japan Post lists first . Therefore, every probe row carried a postcode whose last four digits were
     ``0000``. Real Japanese postcodes are town-level, and KEN_ALL carries the town (``大字`` /
     ``町``) in column 4. Joining there instead makes the trailing digits real.
 

@@ -164,7 +164,7 @@ describe("ingestWOF adjudication scope (#1905)", () => {
 		await makeDirectories(dataDir)
 
 		// Modeled on wof:85688753 (Texas): lbl at the label placement, geom at the polygon centroid,
-		// and the GeoNames admin1 record sitting near the CENTROID — the anchor premise inverted.
+		// and the GeoNames admin1 record sitting near the centroid — the anchor premise inverted.
 		await writeLocalFile(
 			feature(8, {
 				"wof:placetype": "region",

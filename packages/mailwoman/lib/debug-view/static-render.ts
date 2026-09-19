@@ -32,7 +32,7 @@ import type React from "react"
 class CaptureStream extends Duplex {
 	columns: number
 	// `boolean`, not the literal `false`: `WriteStream` declares `isTTY: true`, and a literal type on this side leaves
-	// the two mutually unassignable, which is what forces an assertion through `unknown`. The VALUE stays false —
+	// the two mutually unassignable, which is what forces an assertion through `unknown`. The value stays false —
 	// Ink resolves its interactive mode from it, and a static render wants the non-interactive single frame.
 	isTTY = false
 

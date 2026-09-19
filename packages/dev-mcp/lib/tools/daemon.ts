@@ -4,7 +4,7 @@
  * @author Teffen Ellis, et al.
  *
  *   The `mwdev_daemon` tool definition — the description an agent reads, the input schema, and the handler wiring.
- *   The measurement itself lives in the package root. this file is the CONTRACT, and the description is the
+ *   The measurement itself lives in the package root. this file is the interface, and the description is the
  *   required half of it.
  */
 
@@ -33,7 +33,7 @@ export const daemonTool = (deps: DevToolDeps): DevTool => {
 			const fingerprint = await registry.fingerprint()
 
 			if (action === "reload") {
-				// The refusal is the whole point. `reload` used to close the sessions, return the CURRENT digest and a
+				// The refusal is the whole point. `reload` used to close the sessions, return the current digest and a
 				// note admitting it could not re-import — a success shape carrying its own contradiction, which a
 				// caller reading `engines_closed` and a fresh fingerprint reasonably takes for a completed reload. It
 				// then measures new-tree answers out of old-tree code with nothing left to flag it.

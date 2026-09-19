@@ -15,7 +15,7 @@ import { type CommandSpec, CommandTaskResult, type CommandComponent, reportToStd
 export const description = "Int8-quantize the coarse placer (#244) weights (4× smaller)"
 
 /**
- * Native command-line contract consumed by the filesystem command router.
+ * Native command-line interface consumed by the filesystem command router.
  */
 export const spec = {
 	name: "quantize",

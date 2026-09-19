@@ -61,7 +61,7 @@
 			"expectedOutcome": "cell_unsurveyed",
 			"requiresSemanticRoute": false,
 			"anchorDerivation": "Outside the pilot region entirely. The layer holds no coverage row for the cell the search is centred on.",
-			"guards": "The whole contract. The answer is empty for exactly the same reason shape as a target row's — the layer holds nothing there — and the route must stay silent, because a missing coverage row is unmapped, never surveyed-and-empty."
+			"guards": "The whole interface. The answer is empty for exactly the same reason shape as a target row's — the layer holds nothing there — and the route must stay silent, because a missing coverage row is unmapped, never surveyed-and-empty."
 		},
 		{
 			"id": "abs-c-02",

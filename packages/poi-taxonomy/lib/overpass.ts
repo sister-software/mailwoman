@@ -5,7 +5,7 @@ import { stringifyJSON } from "@mailwoman/core/json"
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   OverpassQL EXPORT emitter over a POI intent (spec §1: "we print the query. we never run it").
+ *   OverpassQL export emitter over a POI intent (spec §1: "we print the query. we never run it").
  *   Overpass is not a serving backend — this exists so users who live in Overpass-turbo can take
  *   a mailwoman intent there. The category→OSM-tag mapping is the caller's input (from
  *   `@mailwoman/poi-taxonomy`'s `osmTag`); the emitter is a pure string builder.
@@ -16,8 +16,8 @@ import { stringifyJSON } from "@mailwoman/core/json"
  *   `mailwoman/poi-overpass.ts` is a thin re-export of this module, kept for backward compatibility.
  *
  *   Two escaping contexts: the category branch and the `area["name"="…"]` anchor scope are string
- *   EQUALITY, so `escapeQL` alone is correct. The brand/name branches interpolate into a `~"…"`
- *   REGEX context, so they need `escapeQLRegex` to neutralize regex metacharacters first.
+ *   equality, so `escapeQL` alone is correct. The brand/name branches interpolate into a `~"…"`
+ *   regex context, so they need `escapeQLRegex` to neutralize regex metacharacters first.
  */
 
 /**

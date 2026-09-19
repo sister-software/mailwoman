@@ -5,7 +5,7 @@
  *
  *   Generate `man/mailwoman.1` from the CLI's own help tree. The command descriptions already live once, in each
  *   command module — a hand-written man page would be a second copy of every sentence, stale by the first help edit, so
- *   this derives the page instead: root help supplies NAME/SYNOPSIS/COMMANDS, each user-facing command's `--help`
+ *   this derives the page instead: root help supplies name/synopsis/commands, each user-facing command's `--help`
  *   supplies its own section. npm links `package.json#man` on a global install, which is what makes `man mailwoman`
  *   answer.
  *
@@ -13,7 +13,7 @@
  *   `test/unit/` re-renders and fails on drift), matching the sentencepiece-wasm single-file-ESM precedent — consumers
  *   get the artifact, CI proves it fresh.
  *
- *   Run: `mailwoman dev generate man-page` (after `yarn compile` — it spawns the COMPILED CLI, the same binary consumers
+ *   Run: `mailwoman dev generate man-page` (after `yarn compile` — it spawns the compiled CLI, the same binary consumers
  *   run).
  */
 
@@ -45,7 +45,7 @@ async function help(cliPath: string, args: string[]): Promise<string> {
 
 /**
  * Escape troff-significant characters. Leading dots/quotes control troff. hyphens in option names must be literal `\-`
- * so `man` renders ASCII hyphens (grep-able flags).
+ * so `man` renders ascii hyphens (grep-able flags).
  */
 function troffEscape(line: string): string {
 	const escaped = line.replaceAll("\\", "\\\\").replaceAll("-", "\\-")

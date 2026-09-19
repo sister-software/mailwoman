@@ -10,7 +10,7 @@
  *   query-shape / resolver packages while still composing them at runtime when callers wire them
  *   up.
  *
- *   See `docs/engineering/reference/STAGES.md` for the full contract this implements.
+ *   See `docs/engineering/reference/stages.md` for the full interface this implements.
  */
 
 import type { AddressTree } from "#decoder/types"
@@ -28,7 +28,7 @@ export type UserLocation = { lat: number; lon: number } | { country: string } | 
 
 /**
  * Opaque placetype-pair prior handle (placetype-pair-prior arc, #1278). `@mailwoman/core` carries no neural dependency,
- * so this is a PURE PASSTHROUGH: core never constructs or inspects it — it threads the value verbatim from
+ * so this is a pure passthrough: core never constructs or inspects it — it threads the value verbatim from
  * {@link PipelineOpts.placetypePair} into {@link ClassifierOpts.placetypePair}, and on into the neural classifier's
  * `parse` opts, where it is typed concretely (`PlacetypePairPriorOpts | false`). The browser demo produces it via
  * `@mailwoman/neural/web-loader`'s `LoadResult.selectPairIndexForText`. `undefined` (the default) is the byte-stable
@@ -59,10 +59,10 @@ export interface PipelineOpts {
 	 */
 	resolveOpts?: ResolveOpts
 	/**
-	 * #690: title-case detected all-caps ASCII input before the Stage 3 classifier (helps on all-caps registry/compliance
+	 * #690: title-case detected all-caps ascii input before the Stage 3 classifier (helps on all-caps registry/compliance
 	 * data). Threaded to `ClassifierOpts.normalizeCase`. Detection-restricted
 	 *
-	 * - **Default-ON** (#895 settled drift D2. the classifier applies it when unset) — byte-stable for mixed-case input
+	 * - **Default-on** (#895 settled drift D2. the classifier applies it when unset) — byte-stable for mixed-case input
 	 *   either way. Pass `false` to restore the raw-case parse.
 	 */
 	normalizeCase?: boolean
@@ -77,9 +77,9 @@ export interface PipelineOpts {
 	/**
 	 * #743/#194: promote a confident coarse-placer guess from the soft `anchorPosterior` boost to a hard country filter
 	 * (empty→unresolved) — see {@link ResolveOpts.hardCountry}. Conditioned three ways: the placer's confidence ≥
-	 * `HARD_PLACE_COUNTRY_MIN_CONF` (ambiguous DK↔NO stay soft), the country is in the coverage
+	 * `HARD_PLACE_COUNTRY_MIN_CONF` (ambiguous DK↔no stay soft), the country is in the coverage
 	 * `HARD_PLACE_COUNTRY_SAFELIST` (or a {@link hardCountrySafelist} override), and no caller
-	 * `hardCountry`/`defaultCountry` is already set. **Default-ON** in the shipped
+	 * `hardCountry`/`defaultCountry` is already set. **Default-on** in the shipped
 	 * `createRuntimePipeline`/`geocodeAddress` (#743, 2026-06-22) — but the safelist confines the hard filter to
 	 * well-covered countries, so the low-coverage tail (FI/PL) keeps its recall on the soft path with no regression. Pass
 	 * `false` to force the pre-#194 soft-only behavior.
@@ -128,7 +128,7 @@ export interface QueryShapeLite {
 	 * Per-token class and script. Optional so a hand-built shape stays valid; `computeQueryShape` always supplies it.
 	 *
 	 * The per-token script is the half a fold cannot reconstruct: `金龍酒家, 12 Gerrard Street, London WC2H 7JS` folds to
-	 * `mixed`, and `mixed` names no script, so which SPAN carried the Han was unrecoverable downstream.
+	 * `mixed`, and `mixed` names no script, so which span carried the Han was unrecoverable downstream.
 	 */
 	tokenClasses?: ReadonlyArray<{
 		span: { start: number; end: number; body: string }
@@ -151,9 +151,9 @@ export interface LocaleHint {
 	 * The ISO 15924 scripts the input is written in, ranked by share of its script-containing characters. Empty when
 	 * nothing in the input names a script — a bare postcode does not.
 	 *
-	 * SEPARATE FROM `locale`, and added because it had nowhere else to go. `locale` is one BCP-47 tag, so a Hangul
+	 * Separate from `locale`, and added because it had nowhere else to go. `locale` is one BCP-47 tag, so a Hangul
 	 * address and a kanji address both had to be reported under one of them, and the rule that picks it answers `ja-JP`
-	 * for every CJK input. on the Korean reference set that is every row. The tag is not wrong about ROUTING — the
+	 * for every CJK input. on the Korean reference set that is every row. The tag is not wrong about routing — the
 	 * character path is one weights family for Japanese, Korean and Chinese — it is wrong about what it says, and a
 	 * consumer reading the hint could not tell "Japanese" from "a script I cannot resolve a language for".
 	 *
@@ -162,7 +162,7 @@ export interface LocaleHint {
 	 * rows of the Korean reference set — and does not where it is not: Han is shared, and kana decides Japanese on 356 of
 	 * 11,946 JP gold rows, because 県/市/区 and most place names are written in Han.
 	 *
-	 * `script` is plain strings for the reason every field on this contract is: `@mailwoman/core/pipeline` declares the
+	 * `script` is plain strings for the reason every field on this interface is: `@mailwoman/core/pipeline` declares the
 	 * dependency-free shape and `@mailwoman/query-shape` owns the named `ScriptCode` union.
 	 */
 	script?: ReadonlyArray<{ script: string; confidence: number }>
@@ -189,11 +189,11 @@ export type QueryKind =
 	| "poi_query"
 	| "vague"
 	/**
-	 * ROAD_TO_V9 §4 — the query-INTENT vocabulary. Four kinds that describe what the user is ASKING FOR rather than what
+	 * ROAD_TO_V9 §4 — the query-intent vocabulary. Four kinds that describe what the user is asking FOR rather than what
 	 * their string is shaped like. They are ordinary members of this union (intent is vocabulary of the existing Stage
 	 * 2.5, never a new stage), and each one, when it fires, attaches a {@link QueryIntentMarker} to the result.
 	 *
-	 * Two of the four are deliberately RANKED BELOW their structural incumbent and therefore surface in
+	 * Two of the four are deliberately ranked below their structural incumbent and therefore surface in
 	 * {@link QueryKindResult.alternatives} rather than as the top kind — see the individual docstrings in
 	 * `@mailwoman/kind-classifier`'s `intent-rules.ts`. That is the D-rule discharge: the top kind is the only thing the
 	 * coordinator routes on (`deriveInputMode`, `canShortCircuit`, the POI branch), so leaving it untouched is what makes
@@ -201,20 +201,20 @@ export type QueryKind =
 	 */
 	/**
 	 * A single coherent place-name carrying no address grammar — no house number, no postcode, no street-type word. A
-	 * strict REFINEMENT of `locality_only` (which also admits an admin tail: `Paris, FR`), scored just below it so the
-	 * top kind never moves. Feeds the declared-ambiguity path: a bare toponym whose resolved candidates are not DECISIVE
+	 * strict refinement of `locality_only` (which also admits an admin tail: `Paris, FR`), scored just below it so the
+	 * top kind never moves. Feeds the declared-ambiguity path: a bare toponym whose resolved candidates are not decisive
 	 * gets a `declared_ambiguity` marker at geocode time.
 	 */
 	| "bare_toponym"
 	/**
-	 * Two coherent toponyms with no address grammar between them — `Paris London`. Classification plus a DECLARED FORK,
+	 * Two coherent toponyms with no address grammar between them — `Paris London`. Classification plus a declared fork,
 	 * never a router (ROAD_TO_V9 §4.3): structure alone cannot separate a route pair from a comma-free locality+region
 	 * fragment (`Moscow Idaho`), so both interpretations are named in the marker and neither wins.
 	 */
 	| "route_pair"
 	/**
 	 * Preposition/deictic locator with no anchor — `gas station near me`, `restaurants nearby`. The query names a
-	 * category and a relation to the ASKER, and the asker's position is not in the string. Classification only in v9: the
+	 * category and a relation to the asker, and the asker's position is not in the string. Classification only in v9: the
 	 * marker states that a focus point is required and absent.
 	 */
 	| "near_me"
@@ -228,11 +228,11 @@ export type QueryKind =
 /**
  * The advisory codes an intent kind can raise. Named per the suggestion-layer plan's rules
  * (`docs/superpowers/plans/2026-08-05-suggestion-layer.md` § Naming): never `*Coherence` (that vocabulary belongs to
- * the passes that decide what the answer IS), and never `correction`/`validation`. This surface only ever REPORTS.
+ * the passes that decide what the answer is), and never `correction`/`validation`. This surface only ever reports.
  */
 export const QueryIntentCode = {
 	/**
-	 * The query named a place, and the gazetteer's answer for that name is not decisive. Raised at RESOLVE time (the
+	 * The query named a place, and the gazetteer's answer for that name is not decisive. Raised at resolve time (the
 	 * margin is a property of the candidate list rather than of the string), so the classifier never emits it.
 	 */
 	DeclaredAmbiguity: "declared_ambiguity",
@@ -262,7 +262,7 @@ export const QueryIntentCode = {
 	 * vocabulary, with the product and vintage it was read from and the coverage record stating that the authority made a
 	 * determination there. `evidence.layer` names the artifact; `evidence.coverage` carries the cell and its basis.
 	 *
-	 * The code is raised at RESOLVE time and names the verdict's own top kind rather than a kind of its own: the marker
+	 * The code is raised at resolve time and names the verdict's own top kind rather than a kind of its own: the marker
 	 * is about the coordinate an answer reached rather than about how the query was read, so there is no intent kind to
 	 * name. A reading the authority does not make raises nothing — outside its footprint there is no coverage row, and an
 	 * advisory there would report a determination nobody made.
@@ -272,16 +272,16 @@ export const QueryIntentCode = {
 	 * The query supplied components finer than the answer reached, and the answer says which ones it could not use.
 	 *
 	 * The counterpart of `declared_ambiguity`, and it exists because the two failures were reported asymmetrically. Too
-	 * MANY answers raised a marker with a margin and a runner-up. too FEW — a street parsed and a locality centroid
+	 * many answers raised a marker with a margin and a runner-up. too FEW — a street parsed and a locality centroid
 	 * returned — raised nothing, so `301 College Ave #101, Athens, GA 30601` and `Athens, GA` came back as the same shape
 	 * of answer at the same tier with `uncertainty_m` null on both. A consumer could not tell "a city is the whole
 	 * answer" from "I was handed a street and a house number and discarded them".
 	 *
-	 * Raised at RESOLVE time, because the shortfall is a property of the tier reached rather than of the string.
+	 * Raised at resolve time, because the shortfall is a property of the tier reached rather than of the string.
 	 * `evidence.unusedComponents` names the parsed tags the answer's tier does not carry, `evidence.impliedTier` the tier
 	 * the finest of them implies, and `evidence.reachedTier` what the walk actually returned.
 	 *
-	 * It REPORTS and never re-ranks: an answer that degraded for a good reason — the street is genuinely absent from
+	 * It reports and never re-ranks: an answer that degraded for a good reason — the street is genuinely absent from
 	 * coverage — raises the same marker as one that degraded for a bad one, because this surface cannot tell them apart
 	 * and saying so is the honest reading. What it removes is the silence.
 	 */
@@ -328,7 +328,7 @@ export interface QueryKindResult {
 	/**
 	 * Advisories raised by the intent vocabulary (ROAD_TO_V9 §4). Optional on this interface — a pre-intent classifier
 	 * (including `runtime-pipeline.ts`'s built-in default) simply doesn't set it — but `PipelineResult.intentMarkers` is
-	 * always an array, so a consumer reading the RESULT never has to distinguish "absent" from "empty".
+	 * always an array, so a consumer reading the result never has to distinguish "absent" from "empty".
 	 */
 	intentMarkers?: ReadonlyArray<QueryIntentMarker>
 }
@@ -384,7 +384,7 @@ export interface POIIntent {
 				categoryIDs: string[]
 				matched: string
 				/**
-				 * How the set was bound to the PLACE, present only when at least one reached category carried a country scope.
+				 * How the set was bound to the place, present only when at least one reached category carried a country scope.
 				 * `anchorCountry` is the resolved anchor's ISO 3166-1 alpha-2 country, or `null` when no anchor resolved to one
 				 * — and `null` admits no scoped claim. `excludedCategoryIDs` are the categories every one of whose authorities
 				 * scoped its claim to countries that do not include it. they were reached by the phrase and are not in
@@ -425,7 +425,7 @@ export interface POIResult {
 	country: string
 	confidence: number
 	/**
-	 * Overture GERS id — nullable METADATA ONLY, never a key (the #470 rule).
+	 * Overture gers id — nullable metadata only, never a key (the #470 rule).
 	 */
 	gersID: string | null
 	/**
@@ -454,7 +454,7 @@ export type POIIntentOutcome =
  * boundary candidates for joint decoding.
  *
  * Taxonomy is purely structural — no place-name knowledge. A `LOCALITY_PHRASE` proposal is "this looks shaped like a
- * multi-word capitalized phrase that could be a city name" — not "this IS New York." Typing the span is the
+ * multi-word capitalized phrase that could be a city name" — not "this is New York." Typing the span is the
  * classifier's job.
  *
  * See `docs/articles/concepts/the-knowledge-ladder.md` § Phrase grouper for the design rationale.
@@ -469,7 +469,7 @@ export type PhraseKind =
 	| "HYPHENATED_COMPOUND"
 
 /**
- * One phrase proposal emitted by Stage 2.7. The contract:
+ * One phrase proposal emitted by Stage 2.7. The interface:
  *
  * - `span`: the input span (a sub-span of the tokenized input) the proposal applies to.
  * - `kindHypothesis`: structural shape this span looks like.
@@ -486,16 +486,16 @@ export interface PhraseProposal {
 }
 
 /**
- * Stage 2.7 contract. Structural — any of the rule-based grouper (`@mailwoman/phrase-grouper`), a learned span proposer
- * (future), or a fake for tests satisfies this. Async so the coordinator can stay uniform even when implementations
- * call into models.
+ * Stage 2.7 interface. Structural — any of the rule-based grouper (`@mailwoman/phrase-grouper`), a learned span
+ * proposer (future), or a fake for tests satisfies this. Async so the coordinator can stay uniform even when
+ * implementations call into models.
  */
 export interface PhraseGrouper {
 	group(input: NormalizedInputLite, shape: QueryShapeLite, locale: LocaleHint): Promise<PhraseProposal[]>
 }
 
 /**
- * Stage 3 contract: classifier that turns a text into an `AddressTree`. Structural — any of `@mailwoman/neural`'s
+ * Stage 3 interface: classifier that turns a text into an `AddressTree`. Structural — any of `@mailwoman/neural`'s
  * `NeuralAddressClassifier`, a rule-based classifier, or a fake for tests satisfies this.
  */
 /**
@@ -522,8 +522,8 @@ export interface ClassifierOpts {
 	fst?: FSTMatcherLike
 	fstBiasScale?: number
 	/**
-	 * Street-morphology matcher. In the pipeline this is the signal source for the FST street-context CHECK (#1315),
-	 * always paired with zeroed `fstStreetMorphologyOpts` — the morphology EMISSION prior measured US-golden-negative
+	 * Street-morphology matcher. In the pipeline this is the signal source for the FST street-context check (#1315),
+	 * always paired with zeroed `fstStreetMorphologyOpts` — the morphology emission prior measured US-golden-negative
 	 * (−48, 2026-07-25 decomposition) and stays off on the production paths. it remains reachable via direct
 	 * `classifier.parse` for measured, opt-in use.
 	 */
@@ -537,13 +537,13 @@ export interface ClassifierOpts {
 	 */
 	postcodeRepair?: boolean
 	/**
-	 * #690: title-case a detected all-caps ASCII input before the model (all-caps registry/compliance data is partly
-	 * OOD). Detection-restricted — mixed-case + non-ASCII input is untouched. **Default-ON** (#895 settled drift D2);
+	 * #690: title-case a detected all-caps ascii input before the model (all-caps registry/compliance data is partly
+	 * OOD). Detection-restricted — mixed-case + non-ascii input is untouched. **Default-on** (#895 settled drift D2);
 	 * `false` restores the raw-case parse.
 	 */
 	normalizeCase?: boolean
 	/**
-	 * Per-word BIO consistency repair (#727): force each SentencePiece word whose pieces DISAGREE in type to one tag via
+	 * Per-word BIO consistency repair (#727): force each SentencePiece word whose pieces disagree in type to one tag via
 	 * a confidence-weighted vote. Structural mirror of `@mailwoman/neural`'s `WordConsistencyOpts` (core carries no
 	 * neural dependency) — see `neural/word-consistency.ts` for the semantics of each check.
 	 */
@@ -602,10 +602,10 @@ export interface RuntimePipelineStages {
 	classifyKind?: (input: NormalizedInputLite, shape: QueryShapeLite, locale: LocaleHint) => Promise<QueryKindResult>
 	/**
 	 * Coarse country router (#244). A `(normalizedText) → { country, confidence, posterior? }` predictor (a
-	 * `CoarsePlacer`-backed fn); `country: null` ⇒ abstained, `"OTHER"` ⇒ off-map. When provided, a confident IN-MAP
+	 * `CoarsePlacer`-backed fn); `country: null` ⇒ abstained, `"other"` ⇒ off-map. When provided, a confident IN-MAP
 	 * guess becomes a soft country prior fed into the resolver's #369 `anchorPosterior` re-rank (boosts the right-country
 	 * candidate, never filters); it defers to a caller-supplied posterior (a stronger postcode anchor) and is a no-op on
-	 * abstain/OTHER. Off by default → byte-stable.
+	 * abstain/other. Off by default → byte-stable.
 	 *
 	 * `posterior` (residual upgrade) is the full per-in-map-country distribution: when present it is the
 	 * `anchorPosterior` (so the resolver breaks country-ambiguous ties with its own place-level evidence); when absent
@@ -644,7 +644,7 @@ export interface RuntimePipelineStages {
 	streetMorphology?: FSTMatcherLike
 	resolver?: Resolver
 	/**
-	 * The gazetteer BACKEND (lower-level than `resolver`), enabling the reconciler's concordance axes (#478): a bounded
+	 * The gazetteer backend (lower-level than `resolver`), enabling the reconciler's concordance axes (#478): a bounded
 	 * pre-fetch turns it into the resolver-candidate + parent-chain lookups `reconcileSpans` scores with. Optional —
 	 * absent, reconcile runs classifier-only (today's behavior, byte-stable).
 	 */

@@ -9,7 +9,7 @@
  *   gazetteer builders (`mailwoman gazetteer build`, `@mailwoman/resolver-wof-sqlite`'s GeoNames
  *   fold), never at query time.
  *
- *   Each language is emitted under EVERY ISO-639 spelling CLDR aliases to it (fi + fin, sv + swe)
+ *   Each language is emitted under every ISO-639 spelling CLDR aliases to it (fi + fin, sv + swe)
  *   so consumers can test WOF's 639-3 tags, Overture's BCP-47 keys, and GeoNames' mixed 2/3-letter
  *   codes without a mapping step.
  *
@@ -166,11 +166,11 @@ export async function generateOfficialLanguages(
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   GENERATED — do not edit by hand. Official languages per ISO 3166-1 territory, derived from
+ *   generated — do not edit by hand. Official languages per ISO 3166-1 territory, derived from
  *   Unicode CLDR ${cldrVersion} supplemental territoryInfo (\`_officialStatus\`). \`official\` merges
  *   CLDR's \`official\` + \`de_facto_official\`; \`regional\` is \`official_regional\` (kept separate —
  *   the #936 probe showed it pulls in cross-border quirks like Korean-in-CN, so consumers opt in).
- *   Every language appears under each ISO-639 spelling CLDR aliases to it (fi AND fin) so WOF
+ *   Every language appears under each ISO-639 spelling CLDR aliases to it (fi and fin) so WOF
  *   639-3 tags, Overture BCP-47 keys, and GeoNames codes all match without mapping.
  *   Regenerate with: mailwoman dev generate official-languages
  */

@@ -6,7 +6,7 @@
  *   The WebCrypto Ed25519 module against the `node:crypto` implementation it replaces, with the fixture token as the
  *   reference: its signature was produced under the old module over `mwl1.<payload>`, so it must verify here, and the
  *   same key and bytes must sign to the same signature, because Ed25519 is deterministic. Its key id is the first eight
- *   hex digits of SHA-256 over the SPKI DER, so the DER decoder and the digest are checked by the same fixture. No
+ *   hex digits of SHA-256 over the spki DER, so the DER decoder and the digest are checked by the same fixture. No
  *   builtin is imported, which is the property under test.
  */
 
@@ -39,7 +39,7 @@ const signedBytes = utf8Bytes(`${prefix}.${payloadPart}`)
 const legacySignature = fromBase64URL(signaturePart)
 
 /**
- * An Ed25519 public key in SPKI DER is a 12-byte algorithm header plus the 32-byte key.
+ * An Ed25519 public key in spki DER is a 12-byte algorithm header plus the 32-byte key.
  */
 const SPKI_ED25519_DER_LENGTH = 44
 

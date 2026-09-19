@@ -126,7 +126,7 @@ afterAll(async () => {
 
 describe("WOFWasmPlaceLookup", () => {
 	test("coincidentLocalitiesFor reads the relation carried into the slim DB (#402)", async () => {
-		// End-to-end: the fixture source had coincident_roles → build-slim carried it → the WASM lookup reads it.
+		// End-to-end: the fixture source had coincident_roles → build-slim carried it → the wasm lookup reads it.
 		const { db } = await loadSlimWOFDatabase({ source: slimBytes })
 		const lookup = new WOFWasmPlaceLookup({ db })
 

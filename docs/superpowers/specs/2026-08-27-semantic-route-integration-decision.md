@@ -180,7 +180,7 @@ this record does not pretend otherwise.
 
 ### 3.1 The consuming surface
 
-**`createRuntimePipeline`'s `poiSemanticLookup` option, unchanged in position and contract.** The
+**`createRuntimePipeline`'s `poiSemanticLookup` option, unchanged in position and interface.** The
 subject lookup stays three rungs and the order is frozen by this record:
 
 1. `poiTaxonomyLookup` — the committed category lexicon.
@@ -395,7 +395,7 @@ route hands them out through a `takeObservations()` drain the harness owns, and
 `POIIntentOutcome` has no field for them. A consumer of `createRuntimePipeline` gets the category
 and none of the authority behind it.
 
-There is an existing contract shaped for exactly this. `QueryKindResult.intentMarkers` carries
+There is an existing interface shaped for exactly this. `QueryKindResult.intentMarkers` carries
 `QueryIntentMarker`, whose own docstring states that a marker never changes which answer wins — it
 is additive, attributed, and always accompanied by the ordinary result — with `mechanism` naming the
 rule that produced it in a `family:rule` form and `evidence` carrying the measurement so the marker
@@ -511,7 +511,7 @@ later integration decision".
 
 **This is that decision, and §6 is left standing, unamended.** `@mailwoman/core` gains no dependency
 on `@mailwoman/geographic-model`, now or as a consequence of anything §8 authorizes. The reason §6
-gives — core ships the pipeline contract and roughly 9 MB of reference data to every consumer, so a
+gives — core ships the pipeline interface and roughly 9 MB of reference data to every consumer, so a
 world-semantics dependency there is one every drop-in API inherits whether it asked or not — is
 unweakened by this record, and §3.2 shows the integration needs nothing from core anyway: the POI
 branch lives in `mailwoman`, and `@mailwoman/kind-classifier` takes its lexicon injected.

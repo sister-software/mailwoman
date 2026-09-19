@@ -1,19 +1,19 @@
 # === v3.4.1-norway-full — "what v310 would have been with #1145 fixed." 8k, ship candidate. ===
 #
 # v310's exact recipe (init_from v264, 8k, v3.1.0-fr-fragment corpus + weights), with one difference:
-# the config now carries the Norway fix (`"NO": 1.0` quoted, #1145), so ~4.2% Norwegian corpus flows
-# that v310 never saw. This is the pre-registered ESCALATION from v3.4.0-norway-coverage-probe: the
+# the config now carries the Norway fix (`"no": 1.0` quoted, #1145), so ~4.2% Norwegian corpus flows
+# that v310 never saw. This is the pre-registered escalation from v3.4.0-norway-coverage-probe: the
 # 2k fine-tune off v310 could not overwrite v310's "Norwegian street = locality" prior (the rows read
-# IDENTICAL), so we learn Norway from v264 (the less-committed parent) over the full schedule.
+# identical), so we learn Norway from v264 (the less-committed parent) over the full schedule.
 #
-# PRE-REGISTERED READ:
-#   PRIMARY — the brief's Norwegian rows read as STREET rather than locality:
+# PRE-registered read:
+#   primary — the brief's Norwegian rows read as street rather than locality:
 #     Epleskogen 39A / Tindvegen nedre 44B / Ovste Skogen 121 -> street (+ hopefully house_number).
-#   DO-NO-HARM — the FR fragment board (board 2), global parity, and the 6 demo presets stay at v310's
+#   do-no-harm — the FR fragment board (board 2), global parity, and the 6 demo presets stay at v310's
 #     levels. This is v310's recipe + Norway. French/US must not regress (v310 shipped them).
-#   SHIP CHECK — if the Norwegian rows fix and do-no-harm holds, this is a v6.5.0 candidate (the
+#   ship check — if the Norwegian rows fix and do-no-harm holds, this is a v6.5.0 candidate (the
 #     v6.4.0 promote's successor), pre-registered against the same rows + the v6.0.0-shipped-baseline.
-#   NEGATIVE — if the Norwegian rows still read locality at 8k off v264, coverage alone is not the
+#   negative — if the Norwegian rows still read locality at 8k off v264, coverage alone is not the
 #     fix and the street->locality defect is deeper than the YAML bug. That would be a genuine finding.
 #
 # Promotion is the operator's act. Launch:
@@ -56,7 +56,7 @@ data:
     usgov-hrsa-fqhc: 2.0
     usgov-imls-pls: 2.0
     usgov-nad: 1.0
-    state-ia-contractors: 2.0
+    state-ia-builders: 2.0
     state-tx-notaries: 1.5
     state-ny-notaries: 2.0
     deepseek-kryptonite: 3.0
@@ -76,9 +76,9 @@ data:
     synth-no-street-led: 12.0
     synth-cz-pcfirst-preposition: 12.0
     synth-nl-postcode: 6.0
-    # PROBE 1: the fragment/autocomplete source (assay weight — moderate precedent).
+    # probe 1: the fragment/autocomplete source (assay weight — moderate precedent).
     synth-fragment: 6.0
-    # #727 T2 NEW — the one variable. 12.0 = the targeted-fix precedent (fr-bare-street,
+    # #727 T2 new — the one variable. 12.0 = the targeted-fix precedent (fr-bare-street,
     # si-bare-village, no-street-led are all 12.0). Streets with no house number + the
     # bare-locality counter.
     synth-fr-fragment: 12.0
@@ -117,12 +117,12 @@ model: # Verbatim from v2.4.1.
   use_postcode_anchor: true
   use_gazetteer_anchor: true
   gazetteer_feature_dim: 5
-  # #1104 country channel ON — dedicated 2-dim [country_surface, country_ambiguous] soft feed with its
+  # #1104 country channel on — dedicated 2-dim [country_surface, country_ambiguous] soft feed with its
   # own projection + confidence (must equal the lexicon's feature_dim). Default-False elsewhere, so a
   # resume from a pre-country checkpoint stays byte-identical until this flips.
   use_country_anchor: true
   country_feature_dim: 2
-  # #1104 homograph-guard SOFTENER — the one variable vs v263. Scales the country_ambiguous dim by 0.5
+  # #1104 homograph-guard softener — the one variable vs v263. Scales the country_ambiguous dim by 0.5
   # before the country_projection (bakes into the exported ONNX. no lexicon/inference change). v263's
   # hard guard (scale 1.0) over-suppressed homograph countries Georgia/Jordan (country-homograph F1
   # 89.8->82.6); softening should recover homograph recall without giving back the country F1 the

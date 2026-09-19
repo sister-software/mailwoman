@@ -4,7 +4,7 @@
  * @author Teffen Ellis, et al.
  *
  *   One chunk of the soil ingest, as its own process — spawned by `buildSoilDatabase`, never run by hand.
- *   The process boundary and the stdout contract live with `runIngestChunkScript`; what stays here is only
+ *   The process boundary and the stdout interface live with `runIngestChunkScript`; what stays here is only
  *   this product's flags and its feature-source constructor.
  */
 
@@ -34,7 +34,7 @@ await runIngestChunkScript({
 				fidFrom: Number(requiredArgument("soil ingest-chunk", "fid-from", values["fid-from"])),
 				fidTo: Number(requiredArgument("soil ingest-chunk", "fid-to", values["fid-to"])),
 				// A range's own count is not knowable up front — `ogrinfo` reports the layer's total and nothing narrower — so
-				// the chunk asserts nothing about its size and the PARENT checks the per-area sum against the shapefile's.
+				// the chunk asserts nothing about its size and the parent checks the per-area sum against the shapefile's.
 				declaredFeatureCount: 0,
 			}),
 			indexResolution: chunk.indexResolution,

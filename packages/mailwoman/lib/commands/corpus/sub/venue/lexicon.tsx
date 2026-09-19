@@ -16,7 +16,7 @@
  *     --out          corpus/data/sub-venue-lexicon.json
  *   ```
  *
- *   `--extracts` takes `REGION=path` pairs because the REGION is the axis every curation decision is
+ *   `--extracts` takes `region=path` pairs because the region is the axis every curation decision is
  *   taken on and no extract filename carries it reliably (`ile-de-france` is FR, `great-britain` is
  *   GB). A bare path is accepted and lands region `""`, which means the surfaces it produces can never
  *   be promoted — that is the correct failure rather than a convenience.
@@ -28,7 +28,7 @@ import { Text } from "ink"
 import { type CommandSpec, CommandTaskResult, type CommandComponent, useCommandTask } from "#cli-kit"
 
 /**
- * Native command-line contract consumed by the filesystem command router.
+ * Native command-line interface consumed by the filesystem command router.
  */
 export const spec = {
 	name: "sub-venue-lexicon",

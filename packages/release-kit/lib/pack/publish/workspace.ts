@@ -10,8 +10,8 @@
  *
  *   1. `yarn pack -o <tmpfile>` — yarn 4 translates `workspace:*` deps to the concrete sibling version
  *        while building the tarball. npm's own publish step does not do this translation, and
- *        shipping `workspace:*` to consumers breaks `npm install` (EUNSUPPORTEDPROTOCOL).
- *   2. Derive the PUBLISH exports map from the dev map inside the tarball — every `node → .ts`
+ *        shipping `workspace:*` to consumers breaks `npm install` (eunsupportedprotocol).
+ *   2. Derive the publish exports map from the dev map inside the tarball — every `node → .ts`
  *        condition is rewritten to emitted JavaScript (the repo runs source under node. consumers get `out/`). The dev
  *        `exports` in each workspace's package.json is the single source of truth. there is no
  *        hand-maintained `publishConfig.exports` (that duplication shipped a fully-broken v7.2.0
@@ -22,7 +22,7 @@
  *        auto-detects GitHub Actions' OIDC environment and uses it for Trusted Publishing. Yarn's
  *        `yarn npm publish` doesn't integrate with npm's OIDC flow.
  *
- *   Env contract from the plugin (see node_modules/@release-it-plugins/workspaces/index.js):
+ *   Env interface from the plugin (see node_modules/@release-it-plugins/workspaces/index.js):
  *
  *   - RELEASE_IT_WORKSPACES_PATH_TO_WORKSPACE: ./<workspace>
  *   - RELEASE_IT_WORKSPACES_TAG: dist-tag (latest / next / etc.)
@@ -63,7 +63,7 @@ export interface PublishWorkspaceReport {
 }
 
 /**
- * The plugin's environment contract, read once so the operation's schema can default from it.
+ * The plugin's environment interface, read once so the operation's schema can default from it.
  */
 export function releaseItWorkspaceEnvironment(): {
 	workspacePath: string | undefined
@@ -97,7 +97,7 @@ export async function publishWorkspace(options: PublishWorkspaceOptions): Promis
 
 	// Dereference any symlinks among the workspace's `files` entries before
 	// publishing — npm/yarn refuse to upload tarballs containing symlinks
-	// (registry returns HTTP 415). The neural-weights workspaces in particular
+	// (registry returns http 415). The neural-weights workspaces in particular
 	// can end up with symlinks from a dev linker.
 	await dereferenceWorkspaceSymlinks(cwd)
 
@@ -170,5 +170,5 @@ export async function publishWorkspace(options: PublishWorkspaceOptions): Promis
 // shipped without the one binary it exists to carry.
 
 // dereferenceWorkspaceSymlinks lives in pack-workspace.ts so packWorkspaceForPublish derefs for every
-// caller (smoke included); the explicit call above stays as the documented safety net (AGENTS.md
+// caller (smoke included); the explicit call above stays as the documented safety net (agents.md
 // "symlinks in the publish tarball").

@@ -256,7 +256,7 @@ The phenomenon is established; the demand is not.
 1. Stage 2 of the staged path on #1571 (negative evidence) is not earned by the board. It is not
    scheduled.
 2. The coverage-register work #1672 asked for (a `basis` beside `completeness`) stays correct and
-   stays independent of this result; nothing here changes the layer contract.
+   stays independent of this result; nothing here changes the layer interface.
 3. Structural affinity (constraint source 3) survives its falsifier on the trees family. No mechanism
    is built: with F1's D1 at zero useful rows there is nothing for it to act on. The finding is
    recorded as an input the support-surface design may draw on, and the trigger for revisiting it is

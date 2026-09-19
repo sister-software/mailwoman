@@ -15,7 +15,7 @@ import type { PlacetypeID } from "#fst/types"
  * an older artifact format-stale without re-typing the number (mirrors `REQUIRED_PAIR_INDEX_SCHEMA`'s role for PIX1 —
  * see `fst-freshness.ts`).
  *
- * One constant for the writer and both readers, deliberately. The browser reader's acceptance criterion was a SEPARATE
+ * One constant for the writer and both readers, deliberately. The browser reader's acceptance criterion was a separate
  * `MAX_VERSION` number from the layout branches, and it drifted twice: left stale at 2 when the v4 wide-state layout
  * shipped (rejecting every real artifact), and stale again at 4 through the v5 two-score split until the line moved by
  * hand. A check that is the writer's version cannot drift from it.
@@ -76,7 +76,7 @@ export const LEGACY_PLACE_ENTRY_SIZE = 56
 export const ENCYCLOPEDIC_OFFSET = 56
 
 /**
- * `placeFlags` bit 0 (byte `pp+7`, v5+): this place carries an encyclopedic score. Per-PLACE rather than per-file
+ * `placeFlags` bit 0 (byte `pp+7`, v5+): this place carries an encyclopedic score. Per-place rather than per-file
  * because absence is the common case — roughly 89% of the 2026-08-05 gazetteer has no Wikipedia article — and a
  * file-level flag would force every one of those rows to claim a 0 it never had.
  */

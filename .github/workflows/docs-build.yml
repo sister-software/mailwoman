@@ -5,14 +5,14 @@
 # (docs/src/contexts/RuntimeEmbed.tsx), the explorers and license pages under docs/src/components, and the
 # OpenAPI documents plus the CLI reference the `prebuild` script generates from four package CLIs.
 #
-# On pull_request: the build job runs on EVERY PR (so it can be a required status check), but the
+# On pull_request: the build job runs on every PR (so it can be a required status check), but the
 # structure check + build steps execute only when a path the site reads changed — otherwise the job
 # reports green in seconds. Catches broken links, MDX parse errors, and — before any install —
 # frontmatter/duplicate-title/orphan regressions via docs/scripts/check/docs-structure.ts.
 # On push to main: same steps (path-filtered at the trigger), then deploy to GitHub Pages.
 #
 # Binary assets (model.onnx, tokenizer.model, fst-en-US.bin, wof-hot.db) are
-# fetched at runtime from the HF Bucket (sister-software/mailwoman), NOT bundled
+# fetched at runtime from the HF Bucket (sister-software/mailwoman), not bundled
 # into the static site. The runtime-assets plugin still runs loadContent() to
 # validate the model card, but binary staging is skipped in CI because the
 # neural-weights-en-us package has no model files without link-dev-weights.ts.
@@ -28,8 +28,8 @@ on:
   # workspace's manifest closure is nearly the whole monorepo, and a list that long is no filter. workflow_dispatch
   # is the override when a change outside these paths should rebuild the site.
   #
-  # The pull_request trigger deliberately carries NO `paths:` filter, so the `build` job runs and
-  # reports a check on EVERY PR — a prerequisite for making it a required status check in the
+  # The pull_request trigger deliberately carries no `paths:` filter, so the `build` job runs and
+  # reports a check on every PR — a prerequisite for making it a required status check in the
   # branch ruleset. A workflow-level `paths:` filter would leave PRs that touch none of these paths
   # with no check reported at all, which a required-check rule reads as "waiting forever" and the
   # PR can never merge. Instead the heavy steps are conditional per-job below on a change-detection step;
@@ -65,7 +65,7 @@ permissions:
 
 env:
   FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: "true"
-  # onnxruntime-node's postinstall downloads OPTIONAL GPU-provider binaries from Microsoft's Akamai
+  # onnxruntime-node's postinstall downloads optional GPU-provider binaries from Microsoft's Akamai
   # CDN — the CPU libs the runners actually use are bundled in the npm tarball. That CDN edge is
   # intermittently unreachable from the lab runners (2026-07-28: three CI rounds died on it —
   # ETIMEDOUT IPv4 + ENETUNREACH IPv6). Skip the download entirely: deterministic installs, no GPU
@@ -93,7 +93,7 @@ jobs:
       # pull_request, this computes whether any path the site reads changed. the heavy steps below
       # run only when it did. On push/workflow_dispatch the filter is skipped and the steps run
       # unconditionally (the push trigger already path-filtered the event, and dispatch is manual).
-      # This keeps the job — and therefore its status check — reported on EVERY PR.
+      # This keeps the job — and therefore its status check — reported on every PR.
       - name: Detect changes the site reads
         id: changes
         if: github.event_name == 'pull_request'
@@ -127,20 +127,20 @@ jobs:
         uses: actions/setup-node@v7
         with:
           node-version-file: .nvmrc
-          # actions-cache restore DISABLED (2026-07-29): the restore against GitHub's cache service
+          # actions-cache restore disabled (2026-07-29): the restore against GitHub's cache service
           # hangs through the lab's degraded path (multiple 20m job-budget deaths in Setup Node) and
           # is redundant — .yarnrc.yml's enableGlobalCache serves installs offline on the runners.
 
-      # Fast structural check (docs-architecture cleanup, Phase 4): frontmatter contract +
+      # Fast structural check (docs-architecture cleanup, Phase 4): frontmatter interface +
       # required fields, exact duplicate titles, orphan pages. Static parse over node built-ins
       # only — no install, no build — so a structural regression fails in seconds instead of
       # after the full Docusaurus build.
       #
       # --strict since the docs-reorg Task 5 skeleton cutover: the flag selects the six-role
-      # frontmatter contract (docs/scripts/docs/frontmatter/contract.ts) and enforces `role:` on
+      # frontmatter metadata (docs/scripts/docs/frontmatter/metadata.ts) and enforces `role:` on
       # every published page, rather than the legacy seven-role vocabulary that only required one
       # on a manifest of entry pages. It was held off until the old tree left docs/articles/,
-      # because that corpus predated the contract and failed the check wholesale. Voice and
+      # because that corpus predated the interface and failed the check wholesale. Voice and
       # section rules that the check cannot see live in docs/engineering/writing-system.md.
       # (--disable-warning: sidebars.ts is format-ambiguous — the docs workspace can't carry
       # type:module without breaking the Docusaurus SSR bundle. see docs/scripts/package.json.)

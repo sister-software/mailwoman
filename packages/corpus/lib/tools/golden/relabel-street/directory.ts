@@ -60,7 +60,7 @@ export interface RelabelGoldenOptions {
 	 */
 	output: string
 	/**
-	 * Review-deck JSONL path. Default `<output>/REVIEW-DECK.jsonl`.
+	 * Review-deck jsonl path. Default `<output>/review-deck.jsonl`.
 	 */
 	deck?: string
 	/**
@@ -106,7 +106,7 @@ const EMPTY_COUNTS = (): GoldenRelabelCounts => ({
 })
 
 /**
- * Classes that are LEFT FOLDED but still belong in the deck, because the operator asked to see them by name: a street
+ * Classes that are left folded but still belong in the deck, because the operator asked to see them by name: a street
  * that is entirely one suffix word, and a bare post-directional tail.
  */
 const DECK_WORTHY_UNCHANGED: ReadonlySet<GoldenRelabelClass> = new Set([
@@ -116,8 +116,8 @@ const DECK_WORTHY_UNCHANGED: ReadonlySet<GoldenRelabelClass> = new Set([
 ])
 
 /**
- * Relabel every `.jsonl` in a golden version dir, writing a new version dir plus a review deck and a MANIFEST that
- * records the convention, the parent, and the counts. Non-JSONL siblings (README, split manifests) are copied forward
+ * Relabel every `.jsonl` in a golden version dir, writing a new version dir plus a review deck and a manifest that
+ * records the convention, the parent, and the counts. Non-jsonl siblings (readme, split manifests) are copied forward
  * so the new version is self-contained. nested split dirs (`dev/`, `test/`) are relabelled recursively.
  */
 export async function relabelGoldenDirectory(
@@ -145,7 +145,7 @@ export async function relabelGoldenDirectory(
 			}
 
 			if (!name.name.endsWith(".jsonl")) {
-				// MANIFEST is rewritten below. everything else (README, SPLIT-MANIFEST) rides forward.
+				// manifest is rewritten below. everything else (readme, split-manifest) rides forward.
 				if (name.name !== "MANIFEST.json") {
 					await writeLocalFile(await readLocalBuffer(from), to)
 				}
@@ -164,7 +164,7 @@ export async function relabelGoldenDirectory(
 				if (!line.trim()) continue
 
 				lineNumber++
-				// A corrupt answer-key line must STOP the relabel rather than silently drop a row — a golden file
+				// A corrupt answer-key line must stop the relabel rather than silently drop a row — a golden file
 				// short by one row is a floor threshold against a different denominator.
 				const row = parseJSONStrict<GoldenStreetRow>(line)
 				const result = relabelGoldenStreetRow(row, { splitPrefix: options.splitPrefix ?? true })
@@ -271,7 +271,7 @@ export async function relabelGoldenDirectory(
 
 /**
  * Render the operator-facing half of the review deck: the flagged rows first (those are the ones asking for a ruling),
- * then the classes the tool LEFT FOLDED by name, then a sample of the ordinary corrections. The JSONL sibling carries
+ * then the classes the tool left folded by name, then a sample of the ordinary corrections. The jsonl sibling carries
  * every row. this file is the one a human reads.
  */
 function renderDeckMarkdown(deck: GoldenRelabelDeckEntry[], parent: string, version: string): string {
@@ -329,7 +329,7 @@ export function isLeftFolded(rowClass: GoldenRelabelClass): boolean {
 }
 
 /**
- * True when a golden dir declares the US-split convention — i.e. it is safe to grade it with an UNFOLDED scorer.
+ * True when a golden dir declares the US-split convention — i.e. it is safe to grade it with an unfolded scorer.
  */
 export async function goldenDeclaresSplitStreets(dir: string): Promise<boolean> {
 	for (const candidate of [join(dir, "MANIFEST.json"), join(dir, "..", "MANIFEST.json")]) {

@@ -4,13 +4,13 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Materialize a release's weights artifacts from the PUBLIC Hugging Face bucket — the `--source hf`
+ *   Materialize a release's weights artifacts from the public Hugging Face bucket — the `--source hf`
  *   half of the #1894 preflight, and the recipe `.github/workflows/publish.yml` now calls in place of
  *   the curl-and-cp block it used to carry inline. One recipe, two callers: the preflight points it at
  *   a staging tree, the publish job points it at the checkout. `copy-weights.ts` is the same shape for
  *   the operator's data root. both take a destination root and touch nothing else.
  *
- *   WHAT IS FETCHED IS DERIVED rather than LISTED. A `neural-weights-<locale>` package's `files` array is its
+ *   what is fetched is derived rather than listed. A `neural-weights-<locale>` package's `files` array is its
  *   author stating which artifacts the tarball carries, and `git ls-files` says which of those a
  *   checkout already has. the difference is exactly the set something must materialize — the same
  *   predicate `verify-tarball.ts` refuses a publish over (`literalFilesEntries`, shared with it). The
@@ -18,7 +18,7 @@
  *   `@mailwoman/neural-weights-en-au`, whose four declared lexicons the YAML's hand-maintained copy
  *   list did not name. A derived list cannot fall behind a manifest that way.
  *
- *   NO CREDENTIALS, NO WRITES ANYWHERE BUT THE DESTINATION ROOT. The bucket is public — the same files
+ *   no credentials, no writes anywhere but the destination root. The bucket is public — the same files
  *   the browser demo loads. Nothing here writes to Hugging Face, npm, git, or R2.
  */
 
@@ -39,7 +39,7 @@ import { downloadRemote, probeRemote, verifyChecksum, writeArtifact } from "#wei
 
 export interface FetchHFWeightsOptions {
 	/**
-	 * The checkout the recipe is READ from — manifests, model cards, committed lexicons. Never written to unless it is
+	 * The checkout the recipe is read from — manifests, model cards, committed lexicons. Never written to unless it is
 	 * also the destination.
 	 */
 	repoRoot?: string
@@ -61,7 +61,7 @@ function writeStderr(line: string): void {
  * Materialize every planned artifact under `destRoot`.
  *
  * Fetches each distinct bucket object once and writes it to every workspace that declares it — the `cp` fan-out the
- * YAML spelled out by hand. HEAD-probes the whole remote set first so an unstaged version fails in one pass with every
+ * YAML spelled out by hand. head-probes the whole remote set first so an unstaged version fails in one pass with every
  * missing object named, rather than after the first 39 MB download dies on a 404.
  */
 export async function fetchHFWeights(

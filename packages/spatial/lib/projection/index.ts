@@ -17,7 +17,7 @@ export const CoordinateProjection = {
 	 */
 	WGS84: "4326",
 	/**
-	 * North American Datum 1983, a geodetic reference system used in the TIGER/Line data.
+	 * North American Datum 1983, a geodetic reference system used in the tiger/Line data.
 	 */
 	NAD83: "4269",
 } as const

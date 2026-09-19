@@ -11,7 +11,7 @@ import type { Exclusion } from "@mailwoman/evidence"
 
 /**
  * A street-name existence probe. Backend-agnostic. the FR instance is BAN street-centroids, a future US instance is
- * TIGER, etc. (per the registry-backed-structured-prediction doctrine tiers).
+ * tiger, etc. (per the registry-backed-structured-prediction doctrine tiers).
  */
 export interface StreetLocalityEvidence {
 	/**
@@ -19,7 +19,7 @@ export interface StreetLocalityEvidence {
 	 * carries one (fragments usually don't. unscoped is the measured mode). The implementation is responsible for folding
 	 * the surface with {@link foldStreetSurface} so the caller passes raw text.
 	 *
-	 * POSITIVE EVIDENCE ONLY: return `false` on any doubt — a missing index, an unsupported country, a read error — so
+	 * Positive evidence only: return `false` on any doubt — a missing index, an unsupported country, a read error — so
 	 * {@link pickByStreetEvidence} fails open to the model's ranking. Absence is never a veto.
 	 */
 	hasStreetName(streetSurface: string, scope?: StreetEvidenceScope): boolean
@@ -126,13 +126,13 @@ export interface PickByStreetEvidenceOpts {
 	/**
 	 * G2 — the margin cap. A candidate whose score is more than this far below rank-1 is never promoted by evidence
 	 * (without it, evidence reaches deep down the list and moves off correct rank-1 parses). Default 2.5 — the value the
-	 * v2 board measured (148 fixes / 3 breaks). UNCALIBRATED across models: re-fit when the span head retrains, since raw
+	 * v2 board measured (148 fixes / 3 breaks). uncalibrated across models: re-fit when the span head retrains, since raw
 	 * score margins are not comparable across models. (Plan #1134 pre-registers an isotonic ambiguity check to replace
 	 * it.)
 	 */
 	marginCap?: number
 	/**
-	 * One entry per candidate, positionally aligned. A non-null entry DEMOTES that candidate by one bit — it is
+	 * One entry per candidate, positionally aligned. A non-null entry demotes that candidate by one bit — it is
 	 * considered only after every un-excluded sibling. It is never removed: with every candidate excluded the pick is
 	 * still rank-1, because the worst case this policy accepts is the model's own ranking.
 	 *
@@ -169,7 +169,7 @@ export interface StreetEvidencePick<T = unknown> {
  * to the name signal: one bit, no blending. `opts.exclusions` adds one more bit in the same fold: a coverage-licensed
  * absence demotes its candidate behind every un-excluded sibling and never removes it.
  *
- * @param candidates Parse candidates, rank-1 FIRST (the caller sorts by score descending).
+ * @param candidates Parse candidates, rank-1 first (the caller sorts by score descending).
  */
 export function pickByStreetEvidence<T>(
 	candidates: ReadonlyArray<StreetCandidate<T>>,

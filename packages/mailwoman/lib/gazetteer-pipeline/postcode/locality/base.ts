@@ -3,7 +3,7 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Build the postcode → containing-locality candidate table (#274), offline, FROM SOURCE.
+ *   Build the postcode → containing-locality candidate table (#274), offline, from source.
  *
  *   The PIP-containment probe (#274 groundwork) showed coordinate-first resolution lifts German
  *   locality accuracy where name-match misses (Sachsen +22pp). This productizes it: for every
@@ -12,7 +12,7 @@
  *   set), with WOF alt-name aliases.
  *
  *   The resolver consumes this at resolve time: postcode → candidate localities → soft-score by
- *   (postcode-proximity + name-match) → pick. It supplies the COORDINATE candidate the FTS
+ *   (postcode-proximity + name-match) → pick. It supplies the coordinate candidate the FTS
  *   name-match can't generate when a small town isn't well-indexed.
  *
  *   Build-from-source per the standing rule: locality polygons from the whosonfirst-data-admin-<cc>
@@ -25,13 +25,13 @@
  *   --output $MAILWOMAN_DATA_ROOT/wof/postcode-locality-de.db\
  *   --radius-km 10 --max-candidates 4
  *
- *   PORT NOTE (from scripts/build-postcode-locality.py): faithful TypeScript port. Point-in-polygon
- *   REUSES the canonical even-odd ray cast `geometryContains` from `@mailwoman/spatial`
+ *   port note (from scripts/build-postcode-locality.py): faithful TypeScript port. Point-in-polygon
+ *   reuses the canonical even-odd ray cast `geometryContains` from `@mailwoman/spatial`
  *   (byte-identical to the Python `in_geom`/`ray_in_ring`; `scripts/eval/pip-containment.py` is the
  *   one copy no import can reach and must be matched by hand). Haversine is ported inline (asin form)
- *   to match the Python exactly. The output is written DIRECTLY to `--output` — NOT via a
- *   temp-then-move — because this builder is deliberately ACCUMULATIVE: `CREATE TABLE IF NOT
- *   EXISTS` + `DELETE FROM … WHERE country=?` lets one shared DB be filled DE, FR, … in successive
+ *   to match the Python exactly. The output is written directly to `--output` — not via a
+ *   temp-then-move — because this builder is deliberately accumulative: `create table if not
+ *   exists` + `delete from … where country=?` lets one shared DB be filled DE, FR, … in successive
  *   `--country` runs (a temp-build would wipe prior countries' rows).
  */
 
@@ -101,7 +101,7 @@ function pushTo<V>(m: Map<string, V[]>, k: string, v: V): void {
  * A fixed-cell proximity grid: entries bucketed by cell, neighbors gathered from the 3×3 block around a query
  * coordinate, filtered by great-circle radius, and answered nearest-first under a caller-owned tie-break.
  *
- * THE CELL KEYING IS PART OF EACH BUILDER'S OUTPUT CONTRACT — `pyRound` vs `Math.round`, ×10 (0.1°) vs ×2 (0.5°) — so
+ * The cell keying is part OF each builder'S output interface — `pyRound` vs `Math.round`, ×10 (0.1°) vs ×2 (0.5°) — so
  * it is a constructor parameter rather than a convention, and a builder's keying must not be "fixed" to match a
  * sibling's.
  */
@@ -182,7 +182,7 @@ export interface PostcodeLocalityBaseOptions {
 /**
  * Freeze the accumulated table into a self-contained, read-only, distributable sqlite asset (the same shape as our
  * other WOF tables): a provenance/license `meta` table, query-planner stats, an integrity check, a rollback (non-WAL)
- * journal mode so there's no sidecar, and a VACUUM to compact.
+ * journal mode so there's no sidecar, and a vacuum to compact.
  */
 export async function finalizePostcodeLocality(output: string): Promise<void> {
 	using db = new DatabaseClient<PostcodeLocalityDatabase>(output)
@@ -193,7 +193,7 @@ export async function finalizePostcodeLocality(output: string): Promise<void> {
 		)
 		.all() as Array<{ country: string; n: number; con: number | null }>
 
-	// Ordered (SQL ORDER BY country) summary of {rows, containing}.
+	// Ordered (SQL order BY country) summary of {rows, containing}.
 	const summary = new Map<string, { rows: number; containing: number }>()
 
 	for (const c of counts) {
@@ -352,8 +352,8 @@ export async function buildPostcodeLocalityBase(args: PostcodeLocalityBaseOption
 
 	{
 		using db = new DatabaseClient<PostcodeLocalityDatabase>(output)
-		// Accumulate per country into one shared DB (the resolver attaches a SINGLE postcode_locality database
-		// and country-filters at query time). CREATE-IF-NOT-EXISTS + DELETE-this-country makes each --country
+		// Accumulate per country into one shared DB (the resolver attaches a single postcode_locality database
+		// and country-filters at query time). create-if-not-exists + delete-this-country makes each --country
 		// run idempotent, so `--output postcode-locality-intl.db` can be filled DE, FR, … in turn.
 
 		await createPostcodeLocalityTable(db, { ifNotExists: true })

@@ -3,39 +3,39 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Sql.js-httpvfs-backed resolver for the demo. Range-loads the SAME-ORIGIN DB (served from the
+ *   Sql.js-httpvfs-backed resolver for the demo. Range-loads the same-origin DB (served from the
  *   Pages deploy) so a session fetches ~5 MB instead of the whole 53 MB, which is the saving that
  *   matters on mobile / metered links.
  *
  *   The query SQL + ranking mirror `@mailwoman/resolver-wof-wasm`'s `WOFWasmPlaceLookup` (exact-name
- *   tier → population-adjusted bm25, plus a point-in-bbox region constraint), but run ASYNC over
+ *   tier → population-adjusted bm25, plus a point-in-bbox region constraint), but run async over
  *   the worker's `db.exec`. We can't share that class directly: it consumes a synchronous in-memory
  *   `@sqlite.org/sqlite-wasm` handle, whereas this talks to a Comlink-proxied sql.js worker. Keep
- *   the two ranking implementations in lockstep. (sql.js-httpvfs's WASM has no rtree module, so we
+ *   the two ranking implementations in lockstep. (sql.js-httpvfs's wasm has no rtree module, so we
  *   only use FTS5 + plain-column bbox here — which is all the resolver path needs.)
  *
- *   Sql.js-httpvfs ships a webpack UMD bundle (not ESM) and a Worker + WASM. The demo-assets plugin
+ *   Sql.js-httpvfs ships a webpack UMD bundle (not ESM) and a Worker + wasm. The demo-assets plugin
  *   stages all three into `static/mailwoman/sqljs/`; we load the UMD via a classic <script> (→
  *   `window.createDbWorker`) and hand the worker + wasm URLs to it. Nothing here is bundled by
  *   webpack — that's what keeps the Docusaurus build warning-free.
  *
  *   `createDbWorker` (lowercase b) is sql.js-httpvfs's own export name — the acronym-casing
- *   convention explicitly exempts external library names (AGENTS.md), and the batch-B sweep
+ *   convention explicitly exempts external library names (agents.md), and the batch-B sweep
  *   (da54bc8c) violating that here silently killed the street tier for three days: the UMD loaded,
  *   `window.createDbWorker` never existed, and the demo fell back to the admin cascade. The
- *   contract test pins the library's export name against this file.
+ *   interface test pins the library's export name against this file.
  */
 
 import { expandPlacetypeFilter } from "@mailwoman/codex/placetype-map"
 import { tryParsingJSON } from "@mailwoman/core/json"
 import { isPresent } from "@mailwoman/core/objects"
 import { referentialFromPopulation } from "@mailwoman/core/resolver"
-// The SHARED candidate schema (build-candidate.ts writes it. the Node WOFCandidateTableLookup reads it
-// too) — so this browser reader's row accesses are type-checked against the same column contract.
+// The shared candidate schema (build-candidate.ts writes it. the Node WOFCandidateTableLookup reads it
+// too) — so this browser reader's row accesses are type-checked against the same column interface.
 import type { CandidateTable } from "@mailwoman/resolver-wof-sqlite/candidate-schema"
 // Browser-safe subpath (fts.ts's only node:sqlite import is type-only. aliased in
 // docs/plugins/demo-assets/workspace-aliases.ts) — the shared alias-bag parser keeps this backend's exact
-// tier identical to the Node + WASM resolvers'.
+// tier identical to the Node + wasm resolvers'.
 import { ALIAS_SEPARATOR, aliasBagExactMatch } from "@mailwoman/resolver-wof-sqlite/fts"
 import {
 	rankByPrimaryPreference,
@@ -67,10 +67,10 @@ type CandidateProbeRow = Pick<
 	| "max_lon"
 	| "neg_rank"
 > &
-	// The vintage-dependent columns are OPTIONAL on the row rather than `number | null`, mirroring the Node reader:
-	// whether the SELECT names each depends on the hosted artifact (`population`/`is_primary` predate `importance`,
+	// The vintage-dependent columns are optional on the row rather than `number | null`, mirroring the Node reader:
+	// whether the select names each depends on the hosted artifact (`population`/`is_primary` predate `importance`,
 	// #28), and `undefined` means "this build cannot tell you" — the same answer as `null`'s "no measurement", both
-	// UNMEASURED (meaning-of-zero).
+	// unmeasured (meaning-of-zero).
 	Partial<Pick<CandidateTable, "population" | "is_primary" | "importance">>
 
 const POPULATION_BOOST = 4
@@ -83,9 +83,9 @@ const normName = (s: string): string => s.toLowerCase().trim().replaceAll(/\s+/g
 const sqlStr = (s: string): string => `'${s.replaceAll("'", "''")}'`
 
 /**
- * Trim raw input into an FTS5-safe `MATCH` term. Mirrors resolver-wof-wasm's sanitizeFTSQuery intent. Unlike the
- * Node/WASM sanitizers (which strip everything outside `\p{L}\p{N}`), this one strips a denylist — so the alias-bag
- * separator must be stripped EXPLICITLY or a pasted U+E000 could address the boundary token in the quoted phrase
+ * Trim raw input into an FTS5-safe `match` term. Mirrors resolver-wof-wasm's sanitizeFTSQuery intent. Unlike the
+ * Node/wasm sanitizers (which strip everything outside `\p{L}\p{N}`), this one strips a denylist — so the alias-bag
+ * separator must be stripped explicitly or a pasted U+E000 could address the boundary token in the quoted phrase
  * below.
  */
 function sanitizeFTS(text: string): string {
@@ -124,7 +124,7 @@ interface RawWorkerHTTPVFS {
 
 export interface HTTPSVFSOptions {
 	/**
-	 * Bytes per HTTP range request. Default 65536 (64 KiB = 16 SQLite pages). Fetches inside the worker are SYNCHRONOUS
+	 * Bytes per http range request. Default 65536 (64 KiB = 16 SQLite pages). Fetches inside the worker are synchronous
 	 * XHR, so cold latency ≈ uncached-chunk-count × RTT: bigger chunks reduce round-trips on FTS-walk-heavy access (the
 	 * hot DB) at the cost of over-fetching on sparse single-row access (the polygon DB). Measure against the measured
 	 * baseline (38 req / 3.6 MB per session) before changing.
@@ -164,7 +164,7 @@ export async function loadHTTPVFSDatabase(
 	}
 
 	// Open over byte-range fetches, then force the header + schema pages through SQLite with a
-	// cheap read. On mobile Safari the HTTP cache can hand sql.js-httpvfs a torn 64 KB range chunk,
+	// cheap read. On mobile Safari the http cache can hand sql.js-httpvfs a torn 64 KB range chunk,
 	// which surfaces as "database disk image is malformed"; the assets' immutable Cache-Control means
 	// a once-poisoned cache entry is trusted indefinitely, so the only escape is a fresh URL. Try the
 	// cacheable URL first (fast — Cloudflare edge-caches the ranges); if it opens corrupt, retry once
@@ -435,7 +435,7 @@ export class WOFHTTPVFSPlaceLookup implements MailwomanLookupLike {
 
 				// Alias tier: `alt_names` is the FTS row's alias bag, aliases joined on the
 				// boundary-preserving ALIAS_SEPARATOR (#523). The shared parser does a per-alias equality
-				// check, unrestricted. on a LEGACY bag (pre-#523 slim artifact, boundaries lost) it falls back
+				// check, unrestricted. on a legacy bag (pre-#523 slim artifact, boundaries lost) it falls back
 				// to padded containment conditioned on "no strictly exact candidate" so interior fragments
 				// ("York" inside "New York City") can't be false-promoted. Mirrors WOFWasmPlaceLookup.
 				const aliasExact =
@@ -481,11 +481,11 @@ interface CandidateCodeMaps {
 }
 
 /**
- * PlaceLookup over the byte-range CANDIDATE table (`build-candidate.ts`) — the FTS-free gazetteer that replaces the
+ * PlaceLookup over the byte-range candidate table (`build-candidate.ts`) — the FTS-free gazetteer that replaces the
  * slim `wof-hot.db` for the demo. A resolve is a single contiguous B-tree probe on `name_key` (the shared
  * {@link normalizeLocalityForKey}, build/query-consistent): no FTS, no join — each row is denormalized (display `name`,
  * centroid, bbox) and population rank is precomputed into `neg_rank`. Drop-in for {@link WOFHTTPVFSPlaceLookup} (same
- * `MailwomanLookupLike` surface), but ~12 range fetches per session instead of 243 on the full DB, with GLOBAL
+ * `MailwomanLookupLike` surface), but ~12 range fetches per session instead of 243 on the full DB, with global
  * coverage.
  *
  * Disambiguation rides the same mechanism the demo cascade already uses: a parsed region resolves to its stored bbox
@@ -509,9 +509,9 @@ export class WOFCandidateTableLookup implements MailwomanLookupLike {
 	/**
 	 * Memoized column set of the `candidate` table (one worker round trip). The reader must stay correct against every
 	 * hosted artifact vintage — the live demo points at whatever `ADMIN_GAZETTEER_VERSION` names, which can trail this
-	 * code — so the probe SELECT names `population` / `is_primary` / `importance` only when the artifact carries them,
-	 * and each consumer degrades: no `is_primary` → the primary-preference re-rank no-ops (population order, today's
-	 * behavior); no `importance` → no fame prior. Mirrors the Node reader's `hasColumn` guard.
+	 * code . Therefore, the probe select names `population` / `is_primary` / `importance` only when the artifact carries
+	 * them, and each consumer degrades: no `is_primary` → the primary-preference re-rank no-ops (population order,
+	 * today's behavior); no `importance` → no fame prior. Mirrors the Node reader's `hasColumn` guard.
 	 */
 	readonly #columns = memoizeResettable(async (): Promise<Set<string>> => {
 		const res = await this.#worker.db.exec(`SELECT name FROM pragma_table_info('candidate')`)
@@ -571,7 +571,7 @@ export class WOFCandidateTableLookup implements MailwomanLookupLike {
 		if (!nameKey) return []
 
 		// #741: postcode-keyed postal-city alias. An exact (name_key, postcode) hit resolves a
-		// user-typed POSTAL city ("Antioch", 37013) to the geographic locality the postcode sits in
+		// user-typed postal city ("Antioch", 37013) to the geographic locality the postcode sits in
 		// ("Nashville"), bypassing the population/region ranking that can't see the postcode. Conditioned on
 		// the side-index being present, a postcode in the query, and a locality-tier request — so the
 		// common path is byte-identical, and inert on a candidate.db built without the side-index
@@ -641,7 +641,7 @@ export class WOFCandidateTableLookup implements MailwomanLookupLike {
 			)
 		}
 
-		// Vintage-guarded projection: `population` / `is_primary` / `importance` join the SELECT only when
+		// Vintage-guarded projection: `population` / `is_primary` / `importance` join the select only when
 		// the hosted artifact carries them. Absent `is_primary`, the primary-preference re-rank no-ops by
 		// construction (no row reads as primary → zero penalty, population order); absent the others, the
 		// corresponding emits stay off. One memoized round trip.
@@ -657,7 +657,7 @@ export class WOFCandidateTableLookup implements MailwomanLookupLike {
 
 			// Over-fetch to RERANK_FETCH so the bounded cross-country primary-preference re-rank can promote
 			// the intended primary past a cluster of more-populous foreign aliases — the same fetch discipline
-			// as the Node reader (the #861 server↔demo parity contract).
+			// as the Node reader (the #861 server↔demo parity interface).
 			const sql =
 				`SELECT spr_id, name, country_id, placetype_id, latitude, longitude, min_lat, min_lon, max_lat, max_lon, neg_rank` +
 				`${optionalSelect} FROM candidate WHERE ${conds.join(" AND ")} ORDER BY neg_rank ASC LIMIT ${Math.max(limit, RERANK_FETCH)}`
@@ -688,7 +688,7 @@ export class WOFCandidateTableLookup implements MailwomanLookupLike {
 				name: String(row.name ?? ""),
 				placetype: idToPlacetype.get(Number(row.placetype_id)) ?? "",
 				// Surfaced so the cascade can country-restrict a postcode by the resolved locality (an ambiguous
-				// international postcode like 10115 = Berlin DE AND New York US must not out-resolve the city).
+				// international postcode like 10115 = Berlin DE and New York US must not out-resolve the city).
 				country: idToCountry.get(Number(row.country_id)),
 				lat: Number(row.latitude),
 				lon: Number(row.longitude),

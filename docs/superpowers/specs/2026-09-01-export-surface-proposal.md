@@ -135,8 +135,7 @@ It has not been noticed because it fails softly: `resolvePackageFile` returns `n
 
 `mailwoman`'s 55 collapse toward the count of its top-level directories; `core`'s 80 toward `./fs`, `./utils`,
 `./strings`, `./layers`, `./api`, `./decoder` and the rest. The exact figure is not predictable before the
-folds are drawn, which is the reason for the sequencing in §4: **the directory structure is the new export
-list**, so drawing it twice would be doing the work twice.
+folds are drawn. The directory structure is the new export list. Drawing it twice would repeat the work.
 
 `dev-mcp` is the single largest cheap win — **51 subpaths, private**, so a `./*` wildcard there breaks no
 consumer because nothing outside this monorepo installs it. `docs` (12, already 4 wildcards),

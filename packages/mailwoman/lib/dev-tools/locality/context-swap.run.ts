@@ -3,7 +3,7 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Does a locality resolve differently because of its NAME, or because of the admin context around it? (#2311)
+ *   Does a locality resolve differently because of its name, or because of the admin context around it? (#2311)
  *
  *   The bare admin surface reads 100.0% in Vermont and 2.3% in Arkansas over a region-stratified panel, a 97.7-point
  *   spread. `Greensboro Bend, VT 05842` and `Horseshoe Bend, AR 72512` share a tail word and a shape. one answers a
@@ -43,7 +43,7 @@ const { values } = parseArguments({
 		eval: { type: "string", default: String(dataRootPath("eval", "coord", "us.jsonl")) },
 		mode: { type: "string", default: "swap", choices: ["swap", "grid"] },
 		/**
-		 * Regions whose localities are the SUBJECTS — the ones whose behaviour is in question.
+		 * Regions whose localities are the subjects — the ones whose behaviour is in question.
 		 */
 		home: { type: "string", default: "AR,TN,MO,TX" },
 		/**

@@ -4,9 +4,9 @@
  * @author Teffen Ellis, et al.
  *
  *   The committed case-folding suite, checked against the corpus it was drawn from. No model, no gazetteer —
- *   two JSONL files and the pure law module, so this runs wherever the repo does.
+ *   two jsonl files and the pure law module, so this runs wherever the repo does.
  *
- *   THE POINT IS THAT NOTHING HERE IS AUTHORED. Every `base` must be the verbatim `input` of the committed
+ *   the point is that nothing here is authored. Every `base` must be the verbatim `input` of the committed
  *   board row its `rowRef` names, and every `variant` must be exactly the named transformation applied to that
  *   base. A hand-typed variant is how a case-folding row quietly acquires a dropped accent or a collapsed
  *   space, and the law then reports on a transformation nobody declared — so the suite is re-derived here

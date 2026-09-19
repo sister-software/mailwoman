@@ -70,7 +70,7 @@ interface ListResponse {
 
 export interface FetchJusoKROptions extends BaseFetchOptions {
 	/**
-	 * The month to fetch as `YYYYMM`. Defaults to the latest month the portal lists as present.
+	 * The month to fetch as `yyyymm`. Defaults to the latest month the portal lists as present.
 	 */
 	month?: string
 }

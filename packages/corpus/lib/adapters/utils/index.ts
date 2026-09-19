@@ -16,8 +16,8 @@
  *       US CSV adapter uses.
  *   - `canonicalDedupKey(row)`: normalized signature used to drop near-identical rows during a run.
  *       Adapter-internal dedup. cross-adapter dedup is the runner's job.
- *   - `streamingSha256()`: thin wrapper around `node:crypto` so the runner can hash JSONL output as it
- *       streams (avoids re-reading the JSONL for the manifest checksum).
+ *   - `streamingSha256()`: thin wrapper around `node:crypto` so the runner can hash jsonl output as it
+ *       streams (avoids re-reading the jsonl for the manifest checksum).
  *   - `loadLibpostalDictionary(language, filename)`: the curated libpostal dictionary reader the
  *       street-decompose modules share — the one read this module performs. everything else here is
  *       pure, and other side-effecting code goes in `./runner.ts`.
@@ -228,8 +228,8 @@ export function canonicalDedupKey(row: CanonicalRow): string {
 /**
  * Streaming SHA-256 hasher.
  *
- * The runner feeds every JSONL line into one of these so the per-adapter checksum can be recorded in `MANIFEST.json`
- * without a second pass over the JSONL. Implementation is a one-line wrapper, but giving it a name keeps the runner's
+ * The runner feeds every jsonl line into one of these so the per-adapter checksum can be recorded in `manifest.json`
+ * without a second pass over the jsonl. Implementation is a one-line wrapper, but giving it a name keeps the runner's
  * hash-tracking intent obvious.
  */
 export interface StreamingHasher {
@@ -243,7 +243,7 @@ export interface StreamingHasher {
 /**
  * @see {@link StreamingHasher} — this is the incremental counterpart to `sha256Hex`, not a copy of
  *   it. `@mailwoman/core/utils` exposes one-shot digests (`sha256Hex`) and whole-file digests
- *   (`sha256File`); the runner needs neither, because it hashes JSONL lines as they stream past.
+ *   (`sha256File`); the runner needs neither, because it hashes jsonl lines as they stream past.
  */
 export function streamingSha256(): StreamingHasher {
 	const h: Hash = createHash("sha256")

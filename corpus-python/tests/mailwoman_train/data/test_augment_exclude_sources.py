@@ -2,7 +2,7 @@
 
 Augmented copies fill 25.5% of the emitted row budget (full-epoch mixture audit), and copies
 of an OVERSAMPLED synthetic source are near-duplicates that compound its reps per row while
-adding none of the diversity that moves OOD boards (Hernandez 2022 × Chen 2024). Contract:
+adding none of the diversity that moves OOD boards (Hernandez 2022 × Chen 2024). Interface:
 ``augment_exclude_sources`` lists sources whose rows pass through the augmentation stage
 untouched — original emitted exactly once, no copies — while every other source keeps the
 configured augmentation policy. The affix relabel still applies to excluded sources (label

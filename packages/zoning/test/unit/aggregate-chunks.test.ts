@@ -5,12 +5,12 @@
  *
  *   The chunk merge, which is the part of the batched path a fixture build cannot reach.
  *
- *   TWO OF THESE MERGES PRODUCE A WELL-FORMED WRONG ARTIFACT WHEN THEY GO WRONG, and neither would fail
+ *   two OF these merges produce A well-formed wrong artifact when they GO wrong, and neither would fail
  *   anything else.
  *
- *   1. COVERAGE COUNTS ADD RATHER THAN REPLACE. A coverage cell straddles chunk boundaries, so taking the
+ *   1. coverage counts ADD rather than replace. A coverage cell straddles chunk boundaries, so taking the
  *      last chunk's value reports the cell as holding only the last range's polygons.
- *   2. CROSSWALK PAIRS MERGE AS A UNION. A mapping that is not a function can look like one inside any single
+ *   2. crosswalk pairs merge AS A union. A mapping that is not a function can look like one inside any single
  *      chunk — Cork County Council's `Special Policy Area` takes 14 generic types across the county, and a
  *      chunk holding a prefix of its feature ids may well have seen one. A per-chunk verdict would report the
  *      mapping as a function and license an edge table the publisher never authored.
@@ -67,7 +67,7 @@ describe("aggregateChunks", () => {
 		expect(merged.crosswalkPairs).toHaveLength(1)
 		expect(merged.crosswalkPairs[0]![2]).toEqual(["C2.1", "M1", "R2"])
 
-		// EACH CHUNK ALONE LOOKS LIKE A FUNCTION. That is the whole reason the pairs merge here rather than being decided per
+		// each chunk alone looks like A function. That is the whole reason the pairs merge here rather than being decided per
 		// chunk.
 		expect(nonFunctionalPairs([["CO", "Special Policy Area", ["C2.1"]]])).toHaveLength(0)
 		expect(nonFunctionalPairs(merged.crosswalkPairs)).toHaveLength(1)

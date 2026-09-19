@@ -3,15 +3,15 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Canadian street types and directionals — BILINGUAL, because Canada Post recognizes both English
+ *   Canadian street types and directionals — bilingual, because Canada Post recognizes both English
  *   and French forms on the same national network.
  *
  *   The informative contrast with `us/street-suffix.ts`, `de/street-type.ts`, and `fr/voie.ts`:
  *
  *   - US — a trailing word with a USPS-standardized abbreviation (`Main Street` → `ST`).
- *   - German — a fused TRAILING suffix (`Hauptstraße`).
- *   - French — a LEADING standalone word (`Rue de la Paix`).
- *   - Canadian — BOTH at once. An English street puts the type last (`Maple Avenue`, `Sunset
+ *   - German — a fused trailing suffix (`Hauptstraße`).
+ *   - French — a leading standalone word (`Rue de la Paix`).
+ *   - Canadian — both at once. An English street puts the type last (`Maple Avenue`, `Sunset
  *       Crescent`); a French street puts it first (`Rue Sainte-Catherine`, `Boulevard
  *       René-Lévesque`). So {@link isCanadianStreetWord} matches a whole token against either
  *       vocabulary and stays position-agnostic — it cannot assume a side the way the
@@ -26,7 +26,7 @@
 import { foldToken } from "#normalize"
 
 /**
- * English Canadian street-type words (Canada Post's recognized set, lowercase). Appear as the TRAILING token of an
+ * English Canadian street-type words (Canada Post's recognized set, lowercase). Appear as the trailing token of an
  * English street name (`Maple Avenue`, `Sunset Crescent`).
  */
 export const CA_STREET_TYPES_EN: ReadonlySet<string> = new Set([
@@ -62,7 +62,7 @@ export const CA_STREET_TYPES_EN: ReadonlySet<string> = new Set([
 ])
 
 /**
- * French Canadian street-type words (Canada Post's recognized set, lowercase, accent-containing). Appear as the LEADING
+ * French Canadian street-type words (Canada Post's recognized set, lowercase, accent-containing). Appear as the leading
  * token of a French street name (`Rue Sainte-Catherine`, `Chemin du Roy`). Folded for matching in
  * {@link isCanadianStreetWord}, so `Côte`/`cote` and `Allée`/`allee` key alike.
  */

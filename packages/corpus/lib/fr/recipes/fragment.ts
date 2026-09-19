@@ -3,11 +3,11 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   `fr-fragment` recipe (#727 T2) — the HOUSE-NUMBER-LICENCE change.
+ *   `fr-fragment` recipe (#727 T2) — the house-number-licence change.
  *
  *   The measured problem (T1c, `2026-07-16-t1c-fragment-board-verdict.md`): the shipped model scores
  *   **0.925** on `<n> Rue X` and **0.215** on `Rue X`. Same streets, same model. the only difference
- *   is a leading number. It has learned that a house number LICENSES a street reading at all — strip
+ *   is a leading number. It has learned that a house number licenses a street reading at all — strip
  *   it and a designator-led phrase parses as a locality, designator included:
  *
  *   ```
@@ -18,18 +18,18 @@
  *   `Rue` can only mean street in French. The model is not mislabelling an ambiguous toponym. it is
  *   mislabelling `Rue`.
  *
- *   WHY THE EXISTING RECIPE DOESN'T COVER THIS. {@link frBareStreetRecipe} (#251) mints
- *   `<n> Rue <name>, <City>` — the bare COMMA form, no postcode. It targets postcode-anchoring
+ *   why the existing recipe doesn'T cover this. {@link frBareStreetRecipe} (#251) mints
+ *   `<n> Rue <name>, <City>` — the bare comma form, no postcode. It targets postcode-anchoring
  *   imbalance, and every row it emits still carries a house number and a locality. It cannot teach
  *   the class above, because it never shows the model a street standing alone.
  *
- *   WHAT THIS MINTS. Five street forms — the first three carry no house number and no locality, which
+ *   what this mints. Five street forms — the first three carry no house number and no locality, which
  *   is the whole point — plus the counter-distribution:
  *
  *   1. `bare-street`         "Rue Montmartre"
  *   2. `street-particle`     "Rue de la Paix"
  *   3. `date-name`           "Allee du 11 Novembre 1918"
- *   4. `street-housenumber`  "12 Rue Montmartre"     — the anchor, so the licence isn't UNLEARNED
+ *   4. `street-housenumber`  "12 Rue Montmartre"     — the anchor, so the licence isn't unlearned
  *   5. `alnum-housenumber`   "12 bis Rue Montmartre"
  *   6. `bare-locality`       "Mery-sur-Oise"         — negative: a bare toponym that is a locality
  *
@@ -40,17 +40,17 @@
  *   need a second pass over the commune set to label them, buying a `synth_method` string and no
  *   training signal.
  *
- *   FORM 7 IS NOT OPTIONAL. T1c's standing prediction: the board's `bare-locality` cell reads 0.980
- *   for the WRONG REASON — the model calls everything without a house number a locality, and on bare
+ *   form 7 is not optional. T1c's standing prediction: the board's `bare-locality` cell reads 0.980
+ *   for the wrong reason — the model calls everything without a house number a locality, and on bare
  *   localities that is accidentally right. Teach bare streets alone and the model has every incentive
  *   to flip that default rather than learn the distinction, trading a 0.215 for a 0.980. The recipe
  *   must show both bare forms so the discriminating evidence is the designator, which is the only
  *   thing that actually distinguishes them. This is the same counter-distribution principle
  *   {@link noStreetRecipe} established after synth-street pushed the model into "decompose mode".
  *
- *   SPLIT. `--exclude-surfaces` takes the fragment board's reserved surface list
+ *   split. `--exclude-surfaces` takes the fragment board's reserved surface list
  *   (`mailwoman/eval-harness/fixtures/ban-fragments-fr.surfaces.txt`). Every listed surface is
- *   skipped — source-disjoint by normalized street SURFACE, never by record row. Row-disjoint leaks
+ *   skipped — source-disjoint by normalized street surface, never by record row. Row-disjoint leaks
  *   the surface across the boundary and measures memorization of `Rue de Rivoli` while claiming
  *   generalization to unseen streets. The recipe refuses to run without the list rather than
  *   silently minting a contaminated recipe output.
@@ -63,7 +63,7 @@
  *   after filtering and the tuple extractor already takes every one. if that class needs more, the
  *   change is source weight rather than invented data.
  *
- *   ⚠ Convention loss-mask: like {@link frBareStreetRecipe}, this recipe TEACHES FR `street_prefix`.
+ *   ⚠ Convention loss-mask: like {@link frBareStreetRecipe}, this recipe teaches FR `street_prefix`.
  *   The conventions loss-mask forbids it for FR and will `-inf` these gold labels (the v1.6.0 ~7M-loss
  *   blow-up). Disable that mask for any run including this recipe's output.
  */
@@ -88,8 +88,8 @@ const HOUSE_NUMBERS = [
  */
 const ALNUM_SUFFIXES = ["bis", "ter", "A", "B"]
 
-// Recipe-fidelity: this accent-STRIPPING fold is the surface key every committed fr-fragment recipe output and the
-// fragment board's reserved list were built with — not the diacritic-KEEPING `foldNOSurface` the Norwegian recipes share.
+// Recipe-fidelity: this accent-stripping fold is the surface key every committed fr-fragment recipe output and the
+// fragment board's reserved list were built with — not the diacritic-keeping `foldNOSurface` the Norwegian recipes share.
 const norm = (value: string): string =>
 	value
 		.normalize("NFD")
@@ -228,7 +228,7 @@ export const frFragmentRecipe: CorpusRecipe = {
 				continue
 			}
 
-			// THE SPLIT. A surface on the fragment board never enters training.
+			// the split. A surface on the fragment board never enters training.
 			if (excluded.has(norm(fullStreet))) {
 				contaminated++
 

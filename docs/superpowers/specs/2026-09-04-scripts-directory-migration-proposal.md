@@ -89,7 +89,7 @@ interface RepoCheck {
 export const checks: readonly RepoCheck[] = [
 	verifyExports,
 	verifyVersionSync,
-	verifyTestContract,
+	verifyTestLayout,
 	nodeModulesReacharound,
 	debtCounters,
 	vocabCensus,
@@ -117,7 +117,7 @@ both; a file added beside the registry appears in neither and knip reports it.
 
 ## 5. External writes are plan → execute
 
-Publishing has credentials and irreversible effects, so no adapter runs it in one step. The contract,
+Publishing has credentials and irreversible effects, so no adapter runs it in one step. The interface,
 shared by CI and agents:
 
 ```
@@ -133,7 +133,7 @@ mwops release plan --json > release-plan.json
 mwops release publish --plan release-plan.json
 ```
 
-One implementation, one contract, two consumers; CI's publish workflow becomes those two lines plus
+One implementation, one interface, two consumers; CI's publish workflow becomes those two lines plus
 `mwops release preflight`, in place of eight `node scripts/…` invocations.
 
 `dev-mcp` stays non-publishing. Its package description is a warm geocoder and measurement; an
@@ -155,7 +155,7 @@ does not belong on the installed product's help tree. RELEASING.md's nine `scrip
 AGENTS.md's release-pipeline pitfalls follow the operations.
 
 **Health (13) → `repo-health` checks.** `repo-health` (the debt counters), `verify-exports`,
-`verify-test-contract`, `verify-version-sync`, `vocab-census`, `node-modules-reacharound.test`,
+`verify-test-interface`, `verify-version-sync`, `vocab-census`, `node-modules-reacharound.test`,
 `typecheck-tests`, with `tracked-sources` and `ts-ast` as its internal helpers. `package.json`'s
 `health:*` targets become `mwops health <id>` and `mwops health all`. `generate-man` generates, so it
 fails the admission rule; it goes to the CLI's `commands/dev/generate/` beside the generators there.
@@ -186,7 +186,7 @@ four probes follow the eval triage.
    `scriptsUnreferenced`, ratcheting to zero. Every later PR is graded against it.
 1. **`release-kit` with its registry, and `mwops`.** The release family becomes registered operations;
    `mwops release …` replaces every `node scripts/…` in the six workflows and `.release-it.json`;
-   `release plan` and `release publish` record the digest contract; `mailwoman release hf` moves in.
+   `release plan` and `release publish` record the digest interface; `mailwoman release hf` moves in.
    Proof before merge: `mwops release preflight` against a staging root, since the publish workflow
    only runs on release day.
 2. **`repo-health` with its registry.** `yarn health` becomes `mwops health all`.
@@ -243,9 +243,9 @@ have stopped there; #2141 and #2147 make that a PR-time check).
 
 Step 4, the `release-mcp` adapter, landed 2026-09-05 as `packages/release-mcp` (private): one tool per registered
 operation, named after its id, the declared `effect` opening every description, `dry_run` threaded on the writers, and a
-`release_operations` tool listing the whole registry. The operator's contract decision: the two `external-write`
+`release_operations` tool listing the whole registry. The operator's interface decision: the two `external-write`
 operations are off the tool list by default and appear only when the server starts with `--allow-external-write`; they
-then still run the plan → execute contract the operations enforce. Packaging follows `ops-cli` (its own private
+then still run the plan → execute interface the operations enforce. Packaging follows `ops-cli` (its own private
 workspace with a `bin`), which settles decision 2's `bin` question for the MCP view; `release-kit` itself stays bin-less.
 
 Decision 4 is now enforced rather than stated: `no-root-scripts` refuses a workflow or `package.json` target that runs a

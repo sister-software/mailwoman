@@ -49,7 +49,7 @@ export interface ReleaseAssets {
 	fstMatcher: FSTMatcherLike | null
 	fstProvenance: FSTProvenanceLike | null
 	/**
-	 * The street-morphology matcher — the #1315 street-context check's signal source, the node/browser parity fix (SCOPE
+	 * The street-morphology matcher — the #1315 street-context check's signal source, the node/browser parity fix (scope
 	 * invariant 2: node runtimes wire this by default. the browser previously never could). Loaded with the FST gazetteer
 	 * because the check needs both (core's `streetContextRequirementFor` only fires when the two stages are present).
 	 * `null` when the release ships no `fst-street-morphology.bin` (pre-artifact bundles) — the demo then parses without
@@ -62,7 +62,7 @@ export interface ReleaseAssets {
 	 */
 	lookup: MailwomanLookupLike | null
 	/**
-	 * Give this bundle's native memory back — the ONNX session's weights and arenas, which live in the WASM heap outside
+	 * Give this bundle's native memory back — the ONNX session's weights and arenas, which live in the wasm heap outside
 	 * the JavaScript heap and are not reclaimed by dropping this object. A host that loads a second bundle over a page's
 	 * life (a version switch, a backend-force toggle, compare mode) must call this on the one it is replacing.
 	 */
@@ -120,7 +120,7 @@ export async function loadReleaseAssets(
 	const pairIndexBase = pairIndexBaseURL(PAIR_INDEX_VERSION)
 
 	// Dynamic so the onnxruntime-web chunk loads only when a release does. The result is narrowed to the structural
-	// classifier contract this module exposes, so the neural package's own classifier type never enters a host bundle.
+	// classifier interface this module exposes, so the neural package's own classifier type never enters a host bundle.
 	const { loadNeuralClassifierFromURLs } = await import("@mailwoman/neural/web-loader")
 
 	// The model is the only artifact here whose transfer a visitor waits on — tens of megabytes against kilobytes for
@@ -163,7 +163,7 @@ export async function loadReleaseAssets(
 		diagnostics ? `${diagnostics.backend} (${(diagnostics.modelBytes / 1024 / 1024).toFixed(0)} MB int8)` : "unknown"
 	)
 
-	// The model is in. What follows is the lexicons and the optional gazetteer, which the step index reports, so the
+	// The model is in. What follows is the lexicons and the optional gazetteer. It the step index reports. Therefore, the
 	// byte channel goes quiet rather than holding its last value at 100%.
 	progress.setByteFraction?.(null)
 	progress.setStepIndex(0)

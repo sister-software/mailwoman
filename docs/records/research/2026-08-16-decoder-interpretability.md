@@ -362,7 +362,7 @@ that class existed, emitted a novelty p-value telling the triager to mint it.
 ## 6. Feasibility summary and recommended order (one lab GPU + Modal bursts)
 
 1. **Ship the predicate** (days, CPU): "channels silent + confidence high" flag from the existing
-   `SoftFeatures` confidences, surfaced through the scorer/ProductionScorer contract and into the
+   `SoftFeatures` confidences, surfaced through the scorer/ProductionScorer interface and into the
    resolver as a caution bit. Zero model work; would have flagged Weimar.
 2. **Country probe + decision depth** (a weekend, lab GPU): linear probe on the residual stream
    for implied country; logit-lens depth per token. Both are matmul-cheap at inference and give

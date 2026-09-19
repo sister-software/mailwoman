@@ -11,7 +11,7 @@ import { resolveInputSet } from "@mailwoman/dev-mcp/input-sets"
 import { describe, expect, it } from "vitest"
 
 /**
- * The board and parity corpora are COMMITTED, so they grade everywhere. The panel and golden sets live under
+ * The board and parity corpora are committed, so they grade everywhere. The panel and golden sets live under
  * `$MAILWOMAN_DATA_ROOT` and are absent in CI, so their suites are presence-conditional the way `weights.test.ts`
  * checks on the dev model.
  *
@@ -219,7 +219,7 @@ describe.skipIf(!haveHoldoutUS)("resolveInputSet — holdout", () => {
 	})
 
 	it("refuses an unknown source rather than resolving to an empty set", async () => {
-		// `source` arrives from an MCP tool call as untrusted JSON, so the refusal is a RUNTIME check on a value the
+		// `source` arrives from an MCP tool call as untrusted JSON, so the refusal is a runtime check on a value the
 		// signature forbids. `Reflect.set` puts the value in the field the way the transport does, without asserting to
 		// the compiler that "de" is a HoldoutSource — which is the claim under test, and a false one.
 		const unknownSource: Extract<InputSetRef, { kind: "holdout" }> = { kind: "holdout" }

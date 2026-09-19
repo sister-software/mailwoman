@@ -23,7 +23,7 @@ export interface CountryCoverageFact {
 	 */
 	country: string
 	/**
-	 * The promotion-eval VERDICT: hard-filtering this country is a pure win (a hard-filter miss is almost always a
+	 * The promotion-eval verdict: hard-filtering this country is a pure win (a hard-filter miss is almost always a
 	 * genuine non-match rather than a coverage gap). Stored as a verdict — not re-derived from `hardResolveRate` at read
 	 * time — because the check is a judgment over a panel rather than a pure rate function (CA cleared at the #928
 	 * promote on the postcode-format-prior rationale despite a sub-95% panel resolve rate).
@@ -73,11 +73,11 @@ export interface CountryBBoxFact {
  */
 export interface GazetteerArtifactCoverage {
 	/**
-	 * Country → measured coverage fact. ABSENCE = never measured (meaning-of-zero), never "failed".
+	 * Country → measured coverage fact. absence = never measured (meaning-of-zero), never "failed".
 	 */
 	countryCoverage: ReadonlyMap<string, CountryCoverageFact>
 	/**
-	 * Country → guard-B bbox. ABSENCE = no box → the plausibility guard fails open for that country.
+	 * Country → guard-B bbox. absence = no box → the plausibility guard fails open for that country.
 	 */
 	countryBBoxes: ReadonlyMap<string, CountryBBoxFact>
 	/**

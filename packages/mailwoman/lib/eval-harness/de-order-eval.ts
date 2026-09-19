@@ -10,13 +10,13 @@
  *   ablation; #887), plus US + FR for the no-regression check. The German "collapse" was
  *   substantially an eval-order artifact (docs/articles/evals/resolver-geo/2026-06-06-anchor-pilot.md); this
  *   makes native-vs-international a first-class, repeatable measurement instead of a one-off.
- *   Self-emits every figure (each run writes its own .md), then prints a 2x2 + US/FR summary. NOTE:
+ *   Self-emits every figure (each run writes its own .md), then prints a 2x2 + US/FR summary. note:
  *   anchor on/off only differs for an anchor-trained (4-input) model. for a plain model both
  *   columns are identical (the anchor inputs are ignored / absent).
  *
- *   `promotion-eval.ts` calls {@linkcode deOrderEval} IN-PROCESS and captures its report into
+ *   `promotion-eval.ts` calls {@linkcode deOrderEval} IN-process and captures its report into
  *   `<out-dir>/<tag>-deorder.md` — the file the verdict assembler regex-reads for
- *   `de.native_locality` (the `native DE` row's anchor-ON cell). Each of the six inner
+ *   `de.native_locality` (the `native DE` row's anchor-on cell). Each of the six inner
  *   `oaResolverEval` runs is likewise in-process now. their markdown still lands in
  *   `<out>/<name>.md` and their narration in `<out>/<name>.log`, byte-for-byte as the child
  *   processes wrote them.
@@ -39,9 +39,9 @@ import { oaResolverEval } from "#eval-harness/oa/resolver/eval"
 /**
  * The six runs, in the order they execute and by the name each writes its `.md`/`.log` under.
  *
- * `de-native-on` is the only one a promotion floor reads — the `native DE` anchor-ON cell of the 2x2 is
- * `de.native_locality`, which is also in the fp32↔int8 delta cap, so that run executes on both arms. The other five are
- * recorded rather than floored.
+ * `de-native-on` is the only one a promotion floor reads — the `native DE` anchor-on cell of the 2x2 is
+ * `de.native_locality`. It is also in the fp32↔int8 delta cap. Therefore, that run executes on both arms. The other
+ * five are recorded rather than floored.
  */
 export const DE_ORDER_RUNS = ["de-native-on", "de-native-off", "de-intl-on", "de-intl-off", "us-on", "fr-on"] as const
 
@@ -115,7 +115,7 @@ export interface DeOrderEvalOptions {
 	/**
 	 * Row cap applied to each of the six runs (0/omitted = all rows).
 	 *
-	 * PROFILING ONLY. The six corpora are 3,000 rows each except the US no-regression run at 10,000, and a capped run
+	 * Profiling only. The six corpora are 3,000 rows each except the US no-regression run at 10,000, and a capped run
 	 * reads the first N rows in file order — which is not a stratified sample. A capped run's locality percentages are
 	 * therefore not comparable with a floor reading, and `promotion-eval.ts` never passes this.
 	 */
@@ -128,7 +128,7 @@ export interface DeOrderEvalOptions {
 	/**
 	 * Which of {@linkcode DE_ORDER_RUNS} to execute. Omitted runs all six.
 	 *
-	 * A run not selected prints its heading with `SKIPPED` and its 2x2 cell reads `—`, so a cell nobody measured cannot
+	 * A run not selected prints its heading with `skipped` and its 2x2 cell reads `—`, so a cell nobody measured cannot
 	 * be read as a cell that measured nothing. Selecting a subset that omits `de-native-on` produces no
 	 * `de.native_locality` and fails the promotion verdict, which is the correct outcome rather than a silent absence.
 	 */
@@ -136,7 +136,7 @@ export interface DeOrderEvalOptions {
 	/**
 	 * Write one `<run-name>.json` wall-time attribution file per run into this directory.
 	 *
-	 * PROFILING ONLY, and it must name somewhere outside the promotion output directory: the receipt comparator reads
+	 * Profiling only, and it must name somewhere outside the promotion output directory: the receipt comparator reads
 	 * every file under that directory byte-for-byte, and a timing number differs between two runs of the same artifact.
 	 */
 	profileDirectory?: string
@@ -183,14 +183,14 @@ export async function deOrderEval(
 	const selected = new Set<DeOrderRunName>(options.runs ?? DE_ORDER_RUNS)
 
 	const run = async ({ name: outName, evalJSONL, anchorOn, country }: DeOrderRun): Promise<void> => {
-		// Anchor OFF = oa-resolver-eval's `anchorOff` (overrides.anchor=false — the sanctioned, declared
+		// Anchor off = oa-resolver-eval's `anchorOff` (overrides.anchor=false — the sanctioned, declared
 		// ablation; #887). The old idiom (an empty-anchor.json fed as the anchor lookup) is refused by the
 		// #718 fail-closed check: a lookup parsing to size 0 → UnfedChannelError.
 		const anchorOptions = anchorOn ? { modelAnchorLookup: lookup } : { anchorOff: true }
 
 		// The try/catch is the in-process spelling of the `nothrow:` this call used to carry.
 		// oa-resolver-eval signals its own internal regression by exiting non-zero even when it wrote a
-		// valid report. this is a MEASUREMENT harness (loc() reads the .md), so a thrown failure must not
+		// valid report. this is a measurement harness (loc() reads the .md), so a thrown failure must not
 		// abort before the 2x2 summary prints (it false-failed de.native_locality). The two sinks stay
 		// separate because the child's stdout and stderr went to two different files.
 		const outLines: string[] = []
@@ -222,7 +222,7 @@ export async function deOrderEval(
 
 	// Pull the neural locality-match % out of a result .md (the "| **neural** | XX.X% |" row).
 	const loc = async (name: DeOrderRunName): Promise<string> => {
-		// A run nobody asked for reads `—`, not empty. An empty cell is what a SELECTED run leaves when it wrote no
+		// A run nobody asked for reads `—`, not empty. An empty cell is what a selected run leaves when it wrote no
 		// locality row, and the two readings are different facts.
 		if (!selected.has(name)) return "—"
 

@@ -2,31 +2,31 @@
 #
 # Control: v5.5.0-restored-generations-60k.yaml at seed 42. This config differs from it in the corpus
 # version, one `source_reps` line and one receipt, so every difference between the two arms is the
-# added source. FROM SCRATCH: no `init_from`, launched with `--resume none`.
+# added source. from scratch: no `init_from`, launched with `--resume none`.
 #
-# WHAT IS BEING FIXED. `100 00` is a real Prague postcode. v5.3.0 read it as one. v5.4.0 and v5.5.0 read
+# what is being fixed. `100 00` is a real Prague postcode. v5.3.0 read it as one. v5.4.0 and v5.5.0 read
 # `100` as a house number and `00` as a street, so the resolver is handed no postcode and returns
 # nothing. Held out, 32 CZ/SK codes of the `NNN NN` shape: 31/32 under v5.0.0, v5.2.0 and v5.3.0, then
 # 0/32 under v5.4.0 and v5.5.0. The v5.0.0/v5.2.0 pair share a corpus and differ only in seed, so their
 # agreement at 31/32 is what makes the collapse attributable to the corpus rather than to seed noise.
 #
-# WHY IT COLLAPSED. Across all 685,187,151 rows of the v0.29.0 mixture the bare two-token `NNN NN` shape
-# appears zero times, and `NNNN LL` appears once. The correct reading was always generalization off
+# why IT collapsed. Across all 685,187,151 rows of the v0.29.0 mixture the bare two-token `NNN NN` shape
+# appears zero times, and `nnnn LL` appears once. The correct reading was always generalization off
 # longer addresses. v5.4.0's added OpenStreetMap PK/BD/VN rows raise the evidence for "a leading digit
 # group is a house number" at that opening from 393.2 to 443.7 rows per pass, and an unsupported
 # generalization gives way. Nothing in v5.5.0 addressed that: restoring the two dropped generations put
-# 12,759 IN-CONTEXT `NNN NN` rows back, and they do not transfer to the bare input — 0/32 confirms it.
+# 12,759 IN-context `NNN NN` rows back, and they do not transfer to the bare input — 0/32 confirms it.
 #
-# WHAT IS ADDED. `synth-bare-postcode`: 20,460 rows of real codes read from the OpenAddresses extracts,
+# what is added. `synth-bare-postcode`: 20,460 rows of real codes read from the OpenAddresses extracts,
 # no synthesis, each emitting a postcode and nothing else. CZ 5,290 / SK 2,112 / SE 3,058 / NL 10,000,
 # half spaced and half compact per country. Every surface is checked through `computeQueryShape` at build
 # time, so a surface the detector will not read as a postcode cannot ship.
 #
-# HELD-OUT INTEGRITY. All 56 evaluation strings (32 CZ/SK, 24 NL) are excluded from the recipe GLOBALLY
+# held-OUT integrity. All 56 evaluation strings (32 CZ/SK, 24 NL) are excluded from the recipe globally
 # by normalized form, so a Czech case cannot re-enter training as the identical Swedish input. Verified
 # against the built parquet rather than its source jsonl: 0 of 56 present.
 #
-# THE GAUNTLET BARE-POSTCODE ROWS ARE NOT HELD OUT, and two of the nine are now memorization checks.
+# the gauntlet bare-postcode rows are not held OUT, and two of the nine are now memorization checks.
 # Checked each of the nine against the built parquet: `cz/bare-postcode.jsonl`'s `100 00` and `110 00`
 # are real OpenAddresses Czech codes and are IN training — they were never on the 56-string reserve,
 # which is the designed held-out set. Read those two rows as "the source drew", never as the capability.
@@ -34,7 +34,7 @@
 # GB is absent from the recipe by design (`SW1A 1AA` opens with letters and was never in doubt), US is
 # not a recipe country, and `1012 LG` and `811 01` did not draw.
 #
-# EXPOSURE IS NOT SETTLED BY THIS FILE. `synth-bare-postcode: 1.0` below is an exposure the operator has
+# exposure is not settled BY this file. `synth-bare-postcode: 1.0` below is an exposure the operator has
 # to choose, and the epoch audit against these exact bytes has now measured what it delivers. Realized,
 # over 1,000,000 sampled rows at seed 43:
 #
@@ -46,37 +46,37 @@
 # pass per row, and it lands beside `synth-sg-register` (0.132) and `synth-pk-register` (0.130), well
 # under the audit's outlier threshold of 8 x a 0.2 median.
 #
-# THE EMITTED LEVEL IS 23% LOWER, AND THAT IS THE NUMBER TO REASON WITH. Augmentation expands long
+# the emitted level is 23% lower, and that is the number TO reason with. Augmentation expands long
 # addresses into more rows, so a short-row source keeps a smaller part of a fixed emitted budget: at
 # 0.2049% this source delivers about 15,736 rows over the run, or 0.77 passes per row rather than 1.0. That is
 # not the `augment_exclude_sources` entry below — `synth-no-fragment` (0.7696) and `synth-fr-fragment`
 # (0.7708) are not excluded and carry the same ratio, and `synth-sg-register` sits at 0.8247.
 #
-# THERE IS NO RATIO TO BEAT AT THIS SHAPE, and the 443.7 comparison this file used to carry was the
+# there is no ratio TO beat AT this shape, and the 443.7 comparison this file used to carry was the
 # wrong instrument. `census_opening_token` counted the openings over the same 1,000,000 sampled rows:
 #
 #   opening                      as house_number   as postcode
 #   any digit group                    249,934         93,665     2.67:1 toward house_number
 #   exactly three digits                53,451         18,140     2.95:1 toward house_number
-#   three then two digits                  273         18,140       66:1 toward POSTCODE
-#   the same, as a COMPLETE row              0            508     no contrary evidence at all
+#   three then two digits                  273         18,140       66:1 toward postcode
+#   the same, as a complete row              0            508     no contrary evidence at all
 #
 # At the exact failing opening the mixture already favours postcode 66 to 1, and v5.5.0 still reads
 # `100 00` as a house number 0 times out of 32. So no exposure justified by an opening-level ratio can
 # be right: 17,632 of those 18,140 rows come from `synth-cz-pcfirst-preposition-v21` and are in-context
 # surfaces like `100 00 Praha, Czechia`, which the 0/32 result already showed do not transfer.
 #
-# What separates `100 00` from `100 00 Praha, Czechia` is that the row ENDS after two tokens. Counted as
+# What separates `100 00` from `100 00 Praha, Czechia` is that the row ends after two tokens. Counted as
 # a complete row, the mixture carries 508 per 1,000,000 emitted — 3,901 over the run, every one from
 # this source — against zero labelled house_number at either level, and against zero of any kind before
 # v0.30.0. The quantity is a shape going from absent to present rather than a margin over rival evidence, so
 # the only open question is whether about 3,900 instances teach it. A census cannot answer that. the run
 # can.
 #
-# PRE-REGISTERED WATCH. Grade these in order, before any target metric:
+# PRE-registered watch. Grade these in order, before any target metric:
 #
-#   1. The held-out spaced-postcode sweep — `eval bare-postcode`, 32 CZ/SK `NNN NN` and 24 NL `NNNN LL`,
-#      none of them on the board. v5.5.0 reads 0/32 and 19/24. This arm must recover CZ/SK WITHOUT
+#   1. The held-out spaced-postcode sweep — `eval bare-postcode`, 32 CZ/SK `NNN NN` and 24 NL `nnnn LL`,
+#      none of them on the board. v5.5.0 reads 0/32 and 19/24. This arm must recover CZ/SK without
 #      losing NL. a partial recovery is a partial result rather than a pass.
 #   2. `fr.bare_street_intact` in the promotion battery, which v5.5.0 raised 95 -> 100. FR is tier 1, so
 #      a drop here disqualifies the arm outright.
@@ -286,7 +286,7 @@ data:
     # generations dropped before v5.5.0 were named nowhere and cost nothing to omit, which is why nothing
     # failed for five model versions.
     #
-    # The floor is COUNTED rather than chosen by symmetry with the entries below. A reps target of 1.0 is exactly
+    # The floor is counted rather than chosen by symmetry with the entries below. A reps target of 1.0 is exactly
     # rows/samples of the run (`derive_source_weights`), so 20,460 rows over 7,680,000 samples draw about
     # 2,664 per 1,000,000-row epoch, and the measured CZ share of the parquet — 5,290 of 20,460 — puts
     # about 689 of those under `country: CZ`. 250 is the floor a real draw clears three times over and a

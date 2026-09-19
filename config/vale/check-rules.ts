@@ -15,24 +15,24 @@
  *   leaking banned words out of a fence/import/JSX/details block into real alerts, shows up here as
  *   the wrong fixture producing the wrong verdict.
  *
- *   `dirty.md` also carries NEGATIVE assertions, each checked only by its line staying quiet:
+ *   `dirty.md` also carries negative assertions, each checked only by its line staying quiet:
  *
- *   - The phrase "full-text search" sits in plain prose and must NOT trip `Terms.yml`'s
+ *   - The phrase "full-text search" sits in plain prose and must not trip `Terms.yml`'s
  *     `text search` swap. That swap is guarded precisely so the FTS5 vocabulary this repo ships
  *     survives it.
  *   - A backticked `neighbourhood` (a real Who's On First placetype) and a backticked `licence`
- *     (Nominatim's response field) must NOT trip `Spelling.yml`, nor must the JSON fence carrying
+ *     (Nominatim's response field) must not trip `Spelling.yml`, nor must the JSON fence carrying
  *     both. Vale's markdown parser skips inline code and fences natively, which is the whole reason
  *     those two en-GB-looking identifiers can stay on the swap list.
  *   - `promotion-eval.ts`, `packages/corpus/lib/recipes/` and `mailwoman eval promote` are
  *     backticked, so `AmbiguousShorthand` must stay quiet on all three — that is how a
- *     contract-tied name survives the vocabulary ban without being renamed.
+ *     interface-tied name survives the vocabulary ban without being renamed.
  *
- *   The CODE leg exists because that last mechanism does not reach a source comment. Vale's
+ *   The code leg exists because that last mechanism does not reach a source comment. Vale's
  *   markdown parser skips inline code. Its comment scanner has no markdown parser, so a
  *   backticked identifier in a `//` comment is flagged exactly like bare prose (measured on
- *   @vvago/vale 3.17.0). `AmbiguousShorthandCode.yml` therefore protects contract-tied
- *   names by NAME, and `dirty.ts` asserts the negative that matters: a backticked `the check` MUST
+ *   @vvago/vale 3.17.0). `AmbiguousShorthandCode.yml` therefore protects interface-tied
+ *   names by name, and `dirty.ts` asserts the negative that matters: a backticked `the check` must
  *   still fire. If it stops, the Code rule has been replaced by the markdown one and every name in
  *   the exceptions list is relying on a mechanism that is not there.
  *
@@ -88,7 +88,7 @@ interface StyleLeg {
 	cleanFixture: string
 	/**
 	 * The error-severity count the dirty fixture produces today (measured rather than estimated). It is a `>=` bar, so
-	 * adding a rule plus its fixture line passes without a bump. Only a rule that STOPS firing fails.
+	 * adding a rule plus its fixture line passes without a bump. Only a rule that stops firing fails.
 	 */
 	minDirtyErrors: number
 	/**
@@ -126,6 +126,7 @@ const LEGS: StyleLeg[] = [
 			"styles.Grammar.SentenceFragments",
 			"styles.Grammar.EllipticalCoordination",
 			"styles.Grammar.SloganAssertions",
+			"styles.Grammar.RelativeClauseChains",
 		],
 		cleanCountsEverySeverity: false,
 	},
@@ -145,6 +146,7 @@ const LEGS: StyleLeg[] = [
 			"styles.Grammar.SentenceFragments",
 			"styles.Grammar.EllipticalCoordination",
 			"styles.Grammar.SloganAssertions",
+			"styles.Grammar.RelativeClauseChains",
 		],
 		// Both rules this config runs are error-severity, so the exit code carries the whole
 		// verdict.
@@ -181,6 +183,7 @@ const LEGS: StyleLeg[] = [
 			"styles.Grammar.SentenceFragments",
 			"styles.Grammar.EllipticalCoordination",
 			"styles.Grammar.SloganAssertions",
+			"styles.Grammar.RelativeClauseChains",
 		],
 		cleanCountsEverySeverity: true,
 	},
@@ -195,7 +198,7 @@ const $vale = $({ cwd: VALE_DIR, nothrow: true })
 async function runVale(config: string, fixture: string): Promise<{ alerts: ValeAlert[]; exitCode: number }> {
 	const result = await $vale`${VALE.file} ${VALE.argv} --config ${config} --output=JSON ${fixture}`.quiet()
 
-	// Vale writes a config or rule-file error to STDERR and leaves stdout empty. Parsing that empty string raises
+	// Vale writes a config or rule-file error to stderr and leaves stdout empty. Parsing that empty string raises
 	// `Expected JSON input, got` and names neither the rule file nor the reason, so a malformed token in a style reads as
 	// a defect in this script — `did not find expected node content` is the message that was being thrown away.
 	if (!result.stdout.trim()) {

@@ -99,7 +99,7 @@ row to the quarantine pile and the build keeps walking.
 The build already worked this way for every other kind of failure. A component it couldn't find
 in the raw text, a row with empty text — those have always been quarantine lines, written out
 with a reason, counted, and stepped over. The NFC assertion was the one place in the whole
-pipeline that broke that contract and reached for a stack trace. We brought it back in line with
+pipeline that broke that interface and reached for a stack trace. We brought it back in line with
 how the rest of the system already treated bad data: a multi-hour unattended build should hold
 every row guilty until it proves itself alignable, and the cost of a guilty row is a line in a
 quarantine file rather than a dead process.

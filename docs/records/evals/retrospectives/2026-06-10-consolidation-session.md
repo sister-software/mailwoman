@@ -142,7 +142,7 @@ The flag-plant claim is made on the artifact users get, with resolver-coupled be
   (watch the value_info-strip quant fix, [[project-v4.1.0-release]]). Claim parity on int8 rather than fp32.
 - **Bookkeeping makes it real** — eval-ledger row, dated eval report, re-emit the parity scorecard
   at v4.2.0, and a row in **releases.mdx** (PR #489's "status and releases change together or not
-  at all" contract — v4.2.0 is its first test).
+  at all" interface — v4.2.0 is its first test).
 
 **5. Merge debt — these merge to main before v4.2.0 is reduce (RELEASING flows from main; a model whose
 recipe lives on an unmerged branch reproduces the #480 gap):** **#468** (choreography) → **#469**

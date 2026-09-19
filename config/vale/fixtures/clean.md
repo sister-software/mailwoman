@@ -24,7 +24,7 @@ The trace names the stage that diverged, and the key names the reduction rather 
 column. Both are the plain verb, which published prose is free to use.
 
 The higher score wins, and the hand-authored entries take precedence.
-The guard rejects requests with a mismatched port, and the API contract requires `message.id`.
+The guard rejects requests with a mismatched port, and the API interface requires `message.id`.
 The invariant `candidate.distance <= radius` holds for every returned candidate.
 The hypothesis that 4-5 digit pieces cause the postcode drop is not yet supported.
 Excluding 4-5 digit tokens keeps parity postcode at 0.986.

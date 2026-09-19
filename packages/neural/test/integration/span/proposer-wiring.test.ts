@@ -3,7 +3,7 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Contract tests for the Stage 2.7 consumption wiring: the codex-backed lexicon builder and the
+ *   Interface tests for the Stage 2.7 consumption wiring: the codex-backed lexicon builder and the
  *   span-proposal emission priors. Essential properties: the lexicon derives strictly from codex
  *   tables (no invented designators, no bare "MS" in the scan); the priors are soft additive biases
  *   with B-/I- structure. annotation O-bias respects its confidence floor. QUOTED_SPAN contributes
@@ -105,7 +105,7 @@ describe("buildSpanProposalPriors", () => {
 	})
 
 	it("dual-path alternatives bias their own spans — both readings stay alive", () => {
-		// "Unit 4/22": SPLIT_UNIT [0,6) + SPLIT_HOUSE_NUMBER [7,9) + FUSED [5,9) at lower conf.
+		// "Unit 4/22": SPLIT_UNIT [0,6) + SPLIT_HOUSE_NUMBER [7,9) + fused [5,9) at lower conf.
 		const proposals: ProposedSpan[] = [
 			{ start: 0, end: 6, kind: "SPLIT_UNIT", confidence: 0.85, alternativeGroup: 0, source: "slash" },
 			{ start: 7, end: 9, kind: "SPLIT_HOUSE_NUMBER", confidence: 0.85, alternativeGroup: 0, source: "slash" },

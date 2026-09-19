@@ -23,7 +23,7 @@ const config = createOxlintConfig({
 	// ranges, status maps) are left alone, which is why `no-magic-numbers` stays off.
 	unnamedThresholds: true,
 	// Exported module-level constants carry a JSDoc block saying what the value means and where it came
-	// from — provenance rather than a restatement of the identifier. Scoped to EXPORTED only: on the local
+	// from — provenance rather than a restatement of the identifier. Scoped to exported only: on the local
 	// SCREAMING_CASE constants the name is usually the documentation already (`STREET_TYPES_FILENAME`,
 	// `SVG_WIDTH`), and requiring a sentence there produces restatements, which cost the next reader
 	// more than the missing comment did. Public surface is where a reader has no other context.
@@ -96,11 +96,11 @@ const config = createOxlintConfig({
 // shallow-spreads, so merge `rules` explicitly to avoid clobbering the base rule set.
 /**
  * `@mailwoman/neural` is bundled for a browser whole: the demo reaches its web loader, which reaches the classifier and
- * every soft-feature channel behind it. So the browser-reachable set is the package MINUS its Node tier, stated that
+ * every soft-feature channel behind it. So the browser-reachable set is the package minus its Node tier, stated that
  * way round because the Node tier is the short, stable list — an enumeration of the browser half needs an edit every
  * time a module is added, and gets one only if its author remembered this file.
  *
- * A VALUE import of a Node-only module from here breaks the client bundle: webpack follows it eagerly and chokes on
+ * A value import of a Node-only module from here breaks the client bundle: webpack follows it eagerly and chokes on
  * `onnxruntime-node`'s binary assets. `import type` is erased before the bundler sees it and stays legal.
  *
  * No node-side check catches a violation: `yarn compile`, the test legs and the gauntlet never bundle. Only the
@@ -218,7 +218,7 @@ export default {
 			// the ray cast rather than importing `@mailwoman/spatial`.
 			//
 			// Only the printer entry is lifted. `JSON.parse` still binds, because these files already answer it per
-			// site with something this override cannot say — whether a throw on corrupt input is the contract there.
+			// site with something this override cannot say — whether a throw on corrupt input is the interface there.
 			// Lifting both would leave those six disable comments dead while reading as though they still did work.
 			files: [
 				"docs/static/**/*.mjs",
@@ -302,7 +302,7 @@ export default {
 			},
 		},
 		{
-			// Corpus tests are co-located with the modules they cover. Test-only HTTP/TCP servers need Node builtins, while
+			// Corpus tests are co-located with the modules they cover. Test-only http/TCP servers need Node builtins, while
 			// production corpus modules continue to use the package-wide builtin homes.
 			files: ["packages/corpus/lib/**/*.test.ts", "packages/corpus/lib/**/*.test.tsx"],
 			rules: {
@@ -311,7 +311,7 @@ export default {
 		},
 		{
 			// Builtins with no idiom to wrap yet, each reached directly by the one file that needs it: a line reader over
-			// a fixed-width feed, a worker's `workerData`, the cluster primary, a test-local HTTP server and the two
+			// a fixed-width feed, a worker's `workerData`, the cluster primary, a test-local http server and the two
 			// `https.get` downloads that predate `APIClient`.
 			files: [
 				"packages/filer/lib/sdk/form499/index.ts",
@@ -338,7 +338,7 @@ export default {
 	rules: {
 		...(config.rules as Record<string, unknown>),
 		"guard-for-in": "error",
-		// The shared base sets this to `warn`, which every run prints and no run refuses, so an unused binding
+		// The shared base sets this to `warn`. It every run prints and no run refuses. Therefore, an unused binding
 		// accumulates. `tsc` does not catch it either — `noUnusedLocals` and `noUnusedParameters` are off in
 		// `@sister.software/tsconfig`. Measured before promoting: those two flags over every package's source and test
 		// project report zero, so this refuses the next one rather than a backlog. The base's options are repeated
@@ -403,7 +403,7 @@ export default {
 		// `JSON.parse` throws on corrupt input and returns `any`, so every direct call site either
 		// wraps it in its own try/catch or lets the exception escape untyped. `tryParsingJSON<T>`
 		// (`@mailwoman/core/objects`) is the house wrapper: typed result, non-throwing, explicit
-		// fallback. Sites where throw-on-corrupt is the contract — sealed-artifact readers, JSONL
+		// fallback. Sites where throw-on-corrupt is the interface — sealed-artifact readers, jsonl
 		// bulk loaders that must fail loudly with position info — keep `JSON.parse` behind a scoped
 		// disable stating why. Note the wrapper returns the fallback for non-string input, so a
 		// `JSON.parse(buffer)` site converts with an explicit `.toString()` or not at all.

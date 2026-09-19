@@ -3,13 +3,13 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   `mailwoman situs address-points --state VT` — build a per-state ADDRESS-POINT database (#476) from
+ *   `mailwoman situs address-points --state VT` — build a per-state address-point database (#476) from
  *   the pinned-release Overture Parquet: exact `(street, number)` within a `(postcode | locality)`
  *   scope → exact point. The geocoder's street-level opening move — when the point exists you look
  *   it up. you interpolate (#483) only on miss. This database is also the gold standard the future
- *   TIGER interpolation is graded against.
+ *   tiger interpolation is graded against.
  *
- *   `mailwoman situs address-points --country TW` — the NATIONAL shape of the same build, for a country whose
+ *   `mailwoman situs address-points --country TW` — the national shape of the same build, for a country whose
  *   Overture addresses are one register rather than fifty: one `address-points-<cc>.db`, read by
  *   `OvertureNationalDatabaseProvider`. The country names its street locale through that provider's
  *   registry, so the keys here are the keys the reader probes with. Taiwan (`zh`) scopes a point by
@@ -24,8 +24,8 @@
  *   dataset + release pinned in-table.
  *
  *   County scoping (#483 density characterization): Overture carries no county field, so an optional
- *   --county-fips filter does a point-in-polygon against the TIGER COUNTY boundary shapefile
- *   (--county-boundary, same TIGER vintage as the EDGES the interpolation database reads) — keeps a
+ *   --county-fips filter does a point-in-polygon against the tiger county boundary shapefile
+ *   (--county-boundary, same tiger vintage as the edges the interpolation database reads) — keeps a
  *   county-scoped gold comparable to a county-scoped segment table.
  *
  *   Alternate source: --oa-csv builds from OpenAddresses conformed CSV(s) instead of the Overture
@@ -34,7 +34,7 @@
  *   Maintainer-only: needs the local parquet/CSV inputs + the @duckdb/node-api dev dep + the optional
  * @mailwoman/resolver-wof-sqlite peer (the shared schema + normalizer). Progress streams to stderr.
  *   the final summary lands on stdout. The build writes to a temp path, then atomically swaps into
- *   place (scripts/AGENTS.md) — the original script rebuilt in place.
+ *   place (scripts/agents.md) — the original script rebuilt in place.
  */
 
 import { removePathIfPresent, makeDirectories } from "@mailwoman/core/fs/writers"
@@ -48,7 +48,7 @@ import { basename, dirname, resolvePath } from "path-ts"
 import { type CommandSpec, CommandTaskResult, type CommandComponent, useCommandTask } from "#cli-kit"
 
 /**
- * Native command-line contract consumed by the filesystem command router.
+ * Native command-line interface consumed by the filesystem command router.
  */
 export const spec = {
 	name: "address-points",
@@ -186,7 +186,7 @@ const SitusAddressPoints: CommandComponent<typeof spec> = ({ options }) => {
 		const allowedDatasets: Set<string> = new Set(extractDelimited(options.licenseFilter).map((d) => d.toLowerCase()))
 
 		await makeDirectories(dirname(finalOut))
-		// Build into a temp path. atomically swap on success (scripts/AGENTS.md).
+		// Build into a temp path. atomically swap on success (scripts/agents.md).
 		const tmpOut = `${finalOut}.building-${process.pid}.db`
 
 		for (const sfx of ["", "-wal", "-shm"]) {
@@ -201,7 +201,7 @@ const SitusAddressPoints: CommandComponent<typeof spec> = ({ options }) => {
 			await duck.run(`SET threads TO ${options.threads}`)
 		}
 
-		// Optional county scope: PIP against the TIGER COUNTY polygon (GEOID = state+county FIPS).
+		// Optional county scope: PIP against the tiger county polygon (geoid = state+county FIPS).
 		// DuckDB hoists the scalar subquery to a constant, so the per-row cost is the containment test.
 		let countyFilter = ""
 
@@ -220,8 +220,8 @@ const SitusAddressPoints: CommandComponent<typeof spec> = ({ options }) => {
 			: ""
 
 		const kdb = new DatabaseClient<AddressPointDatabase>(tmpOut)
-		// DDL + column order come from the SHARED schema (address-point-schema) so the writer can't drift
-		// from AddressPointSqliteLookup (the reader). The INSERT stays a POSITIONAL prepared statement —
+		// DDL + column order come from the shared schema (address-point-schema) so the writer can't drift
+		// from AddressPointSqliteLookup (the reader). The insert stays a positional prepared statement —
 		// tens of millions of rows per state — but its column list is derived from ADDRESS_POINT_COLUMNS.
 		kdb.exec("PRAGMA journal_mode = WAL;")
 
@@ -239,7 +239,7 @@ const SitusAddressPoints: CommandComponent<typeof spec> = ({ options }) => {
 		let kept = 0
 		let totalReturned = 0
 
-		// STREAM the parquet scan in DuckDB DataChunks (~2048 rows each) rather than materialising the
+		// stream the parquet scan in DuckDB DataChunks (~2048 rows each) rather than materialising the
 		// whole result — a 13.5M-row state (CA/FL/TX) blows the ~4GB V8 heap that way (OOM 2026-06-14).
 		// stream()+fetchChunk() keeps JS memory bounded to one chunk. the growing data lives in the
 		// on-disk SQLite WAL inside a single transaction.
@@ -397,7 +397,7 @@ const SitusAddressPoints: CommandComponent<typeof spec> = ({ options }) => {
 
 		await kdb.destroy() // closes the underlying `db` handle
 
-		// Stamped on the TEMP file, before the swap, for the same reason the interpolation database is: the swap
+		// Stamped on the temp file, before the swap, for the same reason the interpolation database is: the swap
 		// is the moment the artifact becomes live.
 		const { buildSHA, stampLayerManifest } = await import("#gazetteer-pipeline/stamp-manifest")
 		const { LayerFreshnessPolicy, LayerTier } = await import("@mailwoman/core/layers")
@@ -408,7 +408,7 @@ const SitusAddressPoints: CommandComponent<typeof spec> = ({ options }) => {
 			version: options.release,
 			schemaVersion: 1,
 			tier: LayerTier.BuildLocal,
-			// The manifest admits only an SPDX expression the obligations table knows. The US build records Overture's
+			// The manifest admits only an spdx expression the obligations table knows. The US build records Overture's
 			// theme license. which source datasets it kept is the attribution beside it, since a database built with a
 			// different allow-list carries different per-dataset terms. A national build records the theme license and
 			// the register's own.

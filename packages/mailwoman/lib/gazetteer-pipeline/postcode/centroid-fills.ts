@@ -4,13 +4,13 @@
  * @author Teffen Ellis, et al.
  *
  *   Postcode-centroid fills (#240/#525), ported from the standalone `backfill-postcode-centroids.ts` /
- *   `fill-zcta-centroids.ts` mutators into BUILD steps — they now run on the STAGING db inside
+ *   `fill-zcta-centroids.ts` mutators into build steps — they now run on the staging db inside
  *   `buildPostcodeDatabase`, never against a shipped artifact (the sealed-artifact invariant).
  *
  *   Fill priority (each pass touches only rows still `(0,0)`; a placeholder never overwrites a real
  *   coordinate. all passes are idempotent):
  *
- *   1. US ONLY — Census ZCTA Gazetteer internal points (public domain), then GeoNames `US.txt` for the
+ *   1. US only — Census zcta Gazetteer internal points (public domain), then GeoNames `US.txt` for the
  *      PO-box/unique-ZIP residual (`zcta-centroids.ts`, provenance in `centroid_source`).
  *   2. GeoNames postal (`<CC>.txt`) — the postcode's own centroid, string-matched (WOF ids stay the
  *      eval keys. corrects WOF mis-links like the Italian Milan→Liguria case). CC-BY 4.0 — any DB
@@ -69,16 +69,16 @@ export interface CentroidFillResult {
  * untouched, so the eval keys stay WOF's.
  */
 /**
- * Rows per multi-row INSERT. SQLite binds one variable per column per row and caps the total per statement
+ * Rows per multi-row insert. SQLite binds one variable per column per row and caps the total per statement
  * (`SQLITE_MAX_VARIABLE_NUMBER`, 32,766 on current builds); eight columns at this width leaves ample headroom.
  */
 const INSERT_CHUNK = 1000
 
 /**
- * GeoNames files a US territory under its OWN ISO code — Puerto Rico as `PR`, Guam as `GU` — while the WOF postcode
+ * GeoNames files a US territory under its own ISO code — Puerto Rico as `PR`, Guam as `GU` — while the WOF postcode
  * repo files all of them as `US`. Reading only `US` rows therefore leaves every territory postcode unnamed and
- * unplaced: 149 of them, verified against the 2024 Census ZCTA gazetteer, which is the entire set of five-digit ZIPs
- * ZCTA lists and GeoNames appears to miss. GeoNames misses no mainland ZIP at all.
+ * unplaced: 149 of them, verified against the 2024 Census zcta gazetteer, which is the entire set of five-digit ZIPs
+ * zcta lists and GeoNames appears to miss. GeoNames misses no mainland ZIP at all.
  */
 const GEONAMES_COUNTRY_ALIASES: Readonly<Record<string, readonly string[]>> = {
 	US: ["US", "PR", "VI", "GU", "MP", "AS"],
@@ -123,7 +123,7 @@ async function readGeonamesPostal(
 
 	if (!(await pathExists(source))) return acc
 
-	// Streamed: `source` is a per-country dump of ~1 MB OR the 140 MB combined file, and only the caller
+	// Streamed: `source` is a per-country dump of ~1 MB or the 140 MB combined file, and only the caller
 	// knows which. `header: false` is required — the spliterator consumes row 1 as a header even in
 	// array mode, and GeoNames postal is headerless, so the first postcode would vanish without it.
 	//
@@ -163,7 +163,7 @@ async function readGeonamesPostal(
  * Attach each postcode's GeoNames delivery-city name(s) to the database's `names` table.
  *
  * Separate from the centroid pass because the two select different rows: a centroid is only wanted where one is
- * MISSING, while a name is wanted on every postcode — 11201 has had a Census ZCTA coordinate all along and no name at
+ * missing, while a name is wanted on every postcode — 11201 has had a Census zcta coordinate all along and no name at
  * all. Rows are the USPS delivery city, which is frequently not the geographic locality (11201 is Brooklyn, inside the
  * locality New York), and for Queens is a neighbourhood name rather than the borough (Astoria, Flushing, Jamaica).
  *
@@ -243,7 +243,7 @@ async function geonamesFill(
 	geonamesDir: PathBuilderLike,
 	combinedPath: PathBuilderLike
 ): Promise<number> {
-	// The GeoNames UPDATE matches on (country, name); the build only indexes placetype/country/parent,
+	// The GeoNames update matches on (country, name); the build only indexes placetype/country/parent,
 	// so without this the per-postcode UPDATEs scan each country's rows (minutes on 400k+ rows). `kdb`
 	// wraps `db` for the DDL. the caller owns `db`'s lifecycle, so we don't destroy it here.
 	const kdb = db
@@ -284,7 +284,7 @@ async function geonamesFill(
 
 /**
  * Pass-4 fallback: for postcodes still coordinate-less after the parent-borrow (their immediate parent locality is
- * absent from the admin DB — common for city-states like Berlin), borrow the finest available ANCESTOR centroid from
+ * absent from the admin DB — common for city-states like Berlin), borrow the finest available ancestor centroid from
  * the GeoJSON hierarchy. County is preferred over region for tighter placement.
  */
 async function ancestorFallback(db: DatabaseClient<WOFDatabase>, reposDir: string): Promise<number> {
@@ -356,7 +356,7 @@ async function ancestorFallback(db: DatabaseClient<WOFDatabase>, reposDir: strin
 }
 
 /**
- * Run the fill ladder (passes 2–4) on an OPEN staging postcode DB. See the module docstring for priorities.
+ * Run the fill ladder (passes 2–4) on an open staging postcode DB. See the module docstring for priorities.
  */
 export async function fillPostcodeCentroids(
 	db: DatabaseClient<WOFDatabase>,
@@ -395,7 +395,7 @@ export async function fillPostcodeCentroids(
 		db.exec(`ATTACH '${opts.adminPath.replaceAll("'", "''")}' AS adm`)
 
 		try {
-			// Pass 3: borrow the parent locality's centroid. A single correlated UPDATE keeps the WOF id
+			// Pass 3: borrow the parent locality's centroid. A single correlated update keeps the WOF id
 			// and every other column intact.
 			phase("fill-parent-borrow")
 			db.exec("BEGIN")

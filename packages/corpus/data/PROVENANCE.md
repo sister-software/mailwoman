@@ -64,7 +64,7 @@ one that does not.
 
 The `A`/`A~`/`B`/`C`/`D` column is `backboneState`, and it is deliberately not called a tier: this
 repository already has locale tiers 1 through 5 in `scope.config.json` and the
-`shipped` / `build-local` / `private` tiers in the layer contract.
+`shipped` / `build-local` / `private` tiers in the layer interface.
 
 ### Three things the research pass did not resolve, on any row
 

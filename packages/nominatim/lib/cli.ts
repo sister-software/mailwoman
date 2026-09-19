@@ -5,13 +5,13 @@
  * @author Teffen Ellis, et al.
  *
  *   `mailwoman-nominatim` — boot a Nominatim-compatible endpoint via the `serve` command. Usage +
- *   examples live in the package README.
+ *   examples live in the package readme.
  *
  *   Wires the real engine: `/search` over `geocodeAddress` (parse → resolve), `/reverse` over
  *   `WOFReverseGeocoder` (point-in-polygon over WOF admin polygons), reusing the same
  *   resolver-backend selector GeocodeRouter uses. Results carry the OpenCage-style `annotations`
  *   block — coordinate formats, flag, calling code, currency, and (when their DBs are present)
- *   timezone, UN/LOCODE, NUTS — composed from the `@mailwoman/*` annotators.
+ *   timezone, UN/locode, nuts — composed from the `@mailwoman/*` annotators.
  */
 
 import { composeAnnotators, toOpenCage } from "@mailwoman/annotations"
@@ -84,7 +84,7 @@ async function serve(engineStamp: ResolvedEngineStamp): Promise<void> {
 			port: { type: "string", default: "8080" },
 			host: { type: "string", default: "0.0.0.0" },
 			"candidate-db": { type: "string" },
-			// Permissive CORS is on by default (browser geocoder clients need it). `--no-cors` turns it off for
+			// Permissive cors is on by default (browser geocoder clients need it). `--no-cors` turns it off for
 			// deployments where a reverse proxy already sets the headers.
 			cors: { type: "boolean", default: true },
 		},
@@ -137,9 +137,9 @@ async function serve(engineStamp: ResolvedEngineStamp): Promise<void> {
 
 	const annotate = composeAnnotators(annotators)
 
-	// Read once, at boot, from the artifacts THEMSELVES (#997). The handles above are held for the life of
+	// Read once, at boot, from the artifacts themselves (#997). The handles above are held for the life of
 	// the process, so this describes what the endpoint is serving from for as long as it serves — and every
-	// artifact appears, including one carrying no manifest, which says so rather than being left out.
+	// artifact appears, including one carrying no manifest. It says so rather than being left out.
 	const status = nominatimStatus(await gazetteerFreshness(gazetteer))
 
 	const engine: NominatimEngine = {
@@ -167,7 +167,7 @@ async function serve(engineStamp: ResolvedEngineStamp): Promise<void> {
 			if (result.lat == null || result.lon == null) return []
 			const resolved = forwardToResolved(result)
 
-			// #1041: a rooftop (`address_point`) / house-number-estimate (`interpolated`) tier is HOUSE-GRADE — tag the
+			// #1041: a rooftop (`address_point`) / house-number-estimate (`interpolated`) tier is house-grade — tag the
 			// result `class: place` / `type: house` (upstream Nominatim's own class/type for a house), so a client that
 			// keys on `class`/`type`/`addresstype` treats it as a building rather than an untyped admin hit. The admin tier
 			// (a locality centroid) carries no class/type here, as before.

@@ -36,8 +36,8 @@ export const RepoRootAlias = "mailwoman" as const
 export type RepoRootAlias = typeof RepoRootAlias
 
 // Depth shared by both trees: this file sits at `core/lib/paths.ts` and its emit at
-// `core/out/paths.js`, so "lib" here is the sibling of "out". Count from repo root to the FILE'S
-// DIRECTORY: packages/core/lib is 3. The ancestor this file was extracted from sat one level deeper
+// `core/out/paths.js`, so "lib" here is the sibling of "out". Count from repo root to the file'S
+// directory: packages/core/lib is 3. The ancestor this file was extracted from sat one level deeper
 // (packages/core/utils, 4) and its reflection still had "out" written where this has "lib".
 const PathReflection = ["packages", "core", "lib"] as const
 
@@ -53,27 +53,27 @@ const __dirname = dirname(fileURLToPath(import.meta.url)) as Join<[RepoRootAlias
 /**
  * The absolute path to the root of the repository.
  *
- * THERE IS NO SOURCE/COMPILED BRANCH HERE ANY MORE, and that is a property of the layout rather than a simplification
+ * There is no source/compiled branch here any more, and that is a property of the layout rather than a simplification
  * anyone is free to undo. Source lives at `core/lib/paths.ts` and its emit at `core/out/paths.js`: `lib/` and `out/`
- * are SIBLINGS, so both trees put this file at the same depth and one constant serves both. If this file moves to a
+ * are siblings, so both trees put this file at the same depth and one constant serves both. If this file moves to a
  * different depth, {@link PathReflection} must move with it — the dictionary-path failure that followed the 2026-09
  * extraction was this constant counting the old depth.
  *
  * Before source moved under `lib/`, source sat one level shallower than its own output and this file carried an
  * `__isCompiledTree` flag — `basename(resolvePath(__dirname, "..")) === "out"` — to pick between two `__upCount`s and
  * two {@link CorePackageAbsolutePath} spellings. That flag was wrong in production once: it checked `resolvePath("..",
- * "..")`, which overshoots `out/` to `core/` and so was always false, resolving {@link CorePackageAbsolutePath} to
- * `core/out` in the compiled tree and landing dictionary reads at the nonexistent `core/out/data` (#481). Equal depth
- * removes the branch that bug lived in.
+ * "..")`. It overshoots `out/` to `core/`. Therefore, the flag was always false, resolving
+ * {@link CorePackageAbsolutePath} to `core/out` in the compiled tree and landing dictionary reads at the nonexistent
+ * `core/out/data` (#481). Equal depth removes the branch that bug lived in.
  *
  * If a future layout change breaks that equality — moving this file to a different depth under `lib/`, or pointing
  * `outDir` somewhere that is not a sibling of `lib/` — the fix is to restore the equality rather than to reintroduce
  * the flag. {@link PathReflection} is the single declaration of that shared depth.
  *
- * WHY NOT NATIVE RESOLUTION (2026-08-05 triage, still current). `node:module`'s `findPackageJSON` would compute
+ * Why not native resolution (2026-08-05 triage, still current). `node:module`'s `findPackageJSON` would compute
  * {@link CorePackageAbsolutePath} without any arithmetic, but it cannot name {@link RepoRootAbsolutePath} — the
- * MONOREPO root is not a package on any resolution path from here — so the arithmetic survives regardless. It would
- * also break the demo bundle: this module is reachable from a BUNDLED graph (`core/resources/libpostal.ts` imports it
+ * monorepo root is not a package on any resolution path from here — so the arithmetic survives regardless. It would
+ * also break the demo bundle: this module is reachable from a bundled graph (`core/resources/libpostal.ts` imports it
  * and `@mailwoman/core/resources` is a webpack alias), and that build maps every `node:` specifier to an empty shim
  * (`docs/plugins/demo-assets/plugin.ts` lists `node:module` beside `node:path` and `node:url`). A shimmed builtin fails
  * silently — the import succeeds and the binding is `undefined` — so a `node:module` call here would be an undefined

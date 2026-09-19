@@ -159,14 +159,14 @@ v0.4.1 thread proposals (drafted in [`PR i116 body`](https://github.com/sister-s
 
 Six items from the [TODO.md parallel-work list](https://github.com/sister-software/mailwoman/blob/main/TODO.mdx) shipped to `main` during the GPU-bound training windows (host-claude worked them in parallel):
 
-| Commit    | What                                                                                   |
-| --------- | -------------------------------------------------------------------------------------- |
-| `ceb2c1f` | `@mailwoman/locale-hint` workspace — Stage 2 of the runtime pipeline                   |
-| `58eee3b` | `mailwoman parse --candidates <N>` — Springfield-class disambiguation surface          |
-| `5566cd2` | `corpus-audit` tool — extract distribution × source_weights diagnostic                 |
-| `150c7db` | runtime-pipeline test hardening (AbortSignal, timing-budget, non-graceful failure)     |
-| `d94261b` | `mailwoman parse --benchmark <N>` — per-stage p50/p95/p99                              |
-| `c1f82ac` | `docs/articles/concepts/staged-pipeline-contract.md` — "how to plug in a custom stage" |
+| Commit    | What                                                                                    |
+| --------- | --------------------------------------------------------------------------------------- |
+| `ceb2c1f` | `@mailwoman/locale-hint` workspace — Stage 2 of the runtime pipeline                    |
+| `58eee3b` | `mailwoman parse --candidates <N>` — Springfield-class disambiguation surface           |
+| `5566cd2` | `corpus-audit` tool — extract distribution × source_weights diagnostic                  |
+| `150c7db` | runtime-pipeline test hardening (AbortSignal, timing-budget, non-graceful failure)      |
+| `d94261b` | `mailwoman parse --benchmark <N>` — per-stage p50/p95/p99                               |
+| `c1f82ac` | `docs/articles/concepts/staged-pipeline-interface.md` — "how to plug in a custom stage" |
 
 Plus the decoder sidecar (`c72ab4c`) and the PHASE_2 iteration-log updates (`6ddc170` / `d499288` / `09d0d9f` / `404cceb`).
 

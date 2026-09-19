@@ -5,8 +5,8 @@
  *
  *   `synth-po-box`: PO box / PMB / Apartado / BP synthesizer adapter.
  *
- *   Consumes a JSONL stream of (locality, region, postcode, country) tuples — typically extracted
- *   from existing corpus output (TIGER/NAD/BAN/WOF) — and emits synthetic PO box training rows. See
+ *   Consumes a jsonl stream of (locality, region, postcode, country) tuples — typically extracted
+ *   from existing corpus output (tiger/NAD/BAN/WOF) — and emits synthetic PO box training rows. See
  *   `@mailwoman/corpus/synthesizers/po-box` for the per-locale templates and number-noise logic.
  *
  *   Why an adapter and not an augmenter:
@@ -16,7 +16,7 @@
  *       The clean shape is: read just (locality, region, postcode, country) and produce a fresh
  *       PO-box-shaped row.
  *   - Per-DeepSeek (3-turn consult, 2026-05-28): PMB rows that combine a street line with a PMB number
- *       are valid (CMRA addresses). Those are produced when `pmbRatio > 0` and the input tuple
+ *       are valid (cmra addresses). Those are produced when `pmbRatio > 0` and the input tuple
  *       carries a `street` field.
  */
 
@@ -69,7 +69,7 @@ export interface SynthPoBoxAdapterOptions {
 	 * Probability (0..1), evaluated per input tuple, of also emitting one US military/diplomatic PO-box row
 	 * (`PSC/CMR/Unit <id> Box <box>, APO/FPO/DPO AA/AE/AP <zip>`, #517). These rows are self-contained — they draw no
 	 * field from the input tuple, so military volume scales with the input stream size. Default 0 (off) — the adapter's
-	 * contract is "one row per input"; the corpus build recipe opts in to seed the rare-but-real military class without
+	 * interface is "one row per input"; the corpus build recipe opts in to seed the rare-but-real military class without
 	 * changing the default.
 	 */
 	militaryRatio?: number
@@ -116,7 +116,7 @@ export function createSynthPoBoxAdapter(opts: SynthPoBoxAdapterOptions = {}): Co
 					continue
 				}
 
-				// Region is required EXCEPT for region-less locales (NZ: `Private Bag 12, Auckland 1010`
+				// Region is required except for region-less locales (NZ: `Private Bag 12, Auckland 1010`
 				// has no region token, #517). synthesizePoBoxRow handles region absence. the guard just
 				// must not discard those tuples as "missing region".
 				const regionOptional = input.country ? REGION_OPTIONAL_LOCALES.has(poBoxTemplateLocale(input.country)) : false

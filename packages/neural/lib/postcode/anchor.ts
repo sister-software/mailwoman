@@ -18,11 +18,11 @@
  *   Two design rules carried from the DeepSeek consult
  *   (`.agents/skills/deepseek-consult/ds-pc-turn{1,2}-postcode-anchor.txt`):
  *
- *   - The country posterior is UNIFORM over the countries a string actually exists in. We never weight
+ *   - The country posterior is uniform over the countries a string actually exists in. We never weight
  *       by per-country postcode volume, because that skews "75001" toward whichever country owns
  *       more 5-digit codes — the exact bias the anchor exists to avoid. Disambiguation is the
  *       parser's job, using script, city tokens, and user locale.
- *   - Confidence combines gazetteer MEMBERSHIP with country AMBIGUITY. A string that matches a postcode
+ *   - Confidence combines gazetteer membership with country ambiguity. A string that matches a postcode
  *       regex but exists in no gazetteer (a bare `27`, or a 5-digit house number that is not a real
  *       code) gets confidence 0, so the parser treats it as a house number. A real-but-ambiguous
  *       code (`75001` in FR and US) gets moderate confidence. A real, single-country code gets
@@ -48,7 +48,7 @@ export interface PostcodePlace {
 /**
  * The minimal surface the anchor needs from a gazetteer. Implementations: an in-memory fake (tests) or a SQLite-backed
  * lookup over the `postalcode-*.db` extracts (`@mailwoman/resolver-wof-sqlite`). Keeping this boundary narrow lets a
- * future FST/WASM resolver drop in without touching the anchor logic.
+ * future FST/wasm resolver drop in without touching the anchor logic.
  */
 export interface PostcodeResolver {
 	/**
@@ -241,13 +241,13 @@ const NL_STREET_SUFFIXES = ["straat", "laan", "plein", "gracht", "kade", "dijk",
 
 /**
  * True when a token denotes a street. US suffixes come from the USPS Pub-28 table in `@mailwoman/codex/us` (complete,
- * so `Trl`/`Holw`/`Xing` all match), EXCEPT the abbreviations that collide with a state code — `KY` (Key vs Kentucky),
+ * so `Trl`/`Holw`/`Xing` all match), except the abbreviations that collide with a state code — `KY` (Key vs Kentucky),
  * `PR` (Prairie vs Puerto Rico) — which sit in the postcode's own `City, ST ZIP` segment. German compounds come from
  * `@mailwoman/codex/de` ({@link isGermanStreetToken}), whose suffix set already excludes the place-name endings
  * (`-berg`, `-burg`, `-dorf`) that would otherwise flag a city token. French voie words come from `@mailwoman/codex/fr`
  * ({@link isFrenchStreetWord}). ES/IT and Dutch fall back to the inline lists.
  *
- * `systems` RESTRICTS which vocabularies are consulted — only the systems the postcode plausibly belongs to (its
+ * `systems` restricts which vocabularies are consulted — only the systems the postcode plausibly belongs to (its
  * gazetteer membership, e.g. a US-only ZIP restricts to `{us}` and never checks the German or French vocab). This is
  * what lets the check scale to 15-20 systems without a cross-locale collision (German `-ring` vs English `spring`): an
  * unrelated system's vocabulary is simply never asked. The restriction carries lowercase system/locale tags (`us`,

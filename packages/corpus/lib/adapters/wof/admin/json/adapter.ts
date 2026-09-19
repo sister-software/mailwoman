@@ -9,7 +9,7 @@
  *   `packages/corpus/lib/adapters/wof-admin/`, removed in this same change) was replaced by this
  *   one because the SQLite distribution path was unworkable for the real corpus build:
  *
- *   1. `dist.whosonfirst.org/sqlite/` is dead (NXDOMAIN); the Geocode-Earth mirror is the only one.
+ *   1. `dist.whosonfirst.org/sqlite/` is dead (nxdomain); the Geocode-Earth mirror is the only one.
  *   2. The Geocode-Earth-hosted postalcode DB tags every row `mz:is_current = -1` ("unknown but treated
  *        as active"); the SQLite adapter's `is_current = 1` predicate emitted zero rows.
  *   3. The `names` table in the SQLite distribution is empty — localized `name:*` variants live in a
@@ -55,7 +55,7 @@ import { buildAncestryIndex, walkFeatures, type WOFRecord } from "#utils"
 /**
  * Map a WOF placetype to a Mailwoman `ComponentTag`, or `undefined` to skip.
  *
- * Per-adapter deliberately (the postalcode adapter carries its own): each table is a record FILTER for its adapter's
+ * Per-adapter deliberately (the postalcode adapter carries its own): each table is a record filter for its adapter's
  * emission set rather than a shared vocabulary.
  */
 function placetypeToTag(placetype: WhosOnFirstPlacetype | string): ComponentTag | undefined {
@@ -220,7 +220,7 @@ export function createWOFAdminAdapter(): CorpusAdapter {
 
 			const ancestry = buildAncestryIndex(byID)
 
-			// Pass 2: emit rows in sorted-id order for deterministic JSONL.
+			// Pass 2: emit rows in sorted-id order for deterministic jsonl.
 			yield* emitWOFJSONRows({
 				records: byID,
 				ancestry,

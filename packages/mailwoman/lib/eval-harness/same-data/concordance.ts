@@ -59,7 +59,7 @@ export const GOLD_COHERENCE_KM = 25
 const IDENTIFIERS_PER_QUERY = 900
 
 /**
- * The two tables this reader touches in the WOF admin gazetteer, as the READ contract only — the artifact is built
+ * The two tables this reader touches in the WOF admin gazetteer, as the read interface only — the artifact is built
  * elsewhere (`@mailwoman/resolver-wof-sqlite`'s unified schema owns its DDL), and a second builder here would be a
  * second definition of a shipped table.
  */
@@ -181,7 +181,7 @@ export async function readGoldSets(databasePath: PathBuilderLike, subjects: read
 			continue
 		}
 
-		// The register writes two names for a place — its own and an ASCII transliteration — and either may be the one
+		// The register writes two names for a place — its own and an ascii transliteration — and either may be the one
 		// the gazetteer carries.
 		const accepted = new Set([normalizeLocalityForKey(subject.name), normalizeLocalityForKey(subject.asciiname)])
 

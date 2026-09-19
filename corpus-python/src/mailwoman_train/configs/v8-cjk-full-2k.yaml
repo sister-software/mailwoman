@@ -2,7 +2,7 @@
 #
 # Same role as v8-jp-full-2k for v8-jp-full, with the same deliberate deviations (warmup 200, cosine fully
 # annealed inside 2,000 steps, eval every 250, val_rows 4096, two saves) so the two probes are read against
-# EACH OTHER and neither against a full run. It answers, before the 24k spend:
+# each other and neither against a full run. It answers, before the 24k spend:
 #
 #   1. Does the 49-label `stage3-cjk` head load, train, save and reload on the char path? The launch log
 #      must print the head param group as 49 × 384 + 49 = 18,865 params at 0.001.
@@ -39,7 +39,7 @@ data:
     overture-jp: 0.98
     coarse-placer-cn-units: 0.02
   coarse_filter: false
-  # 4,096 as in v8-jp-full-2k: eight eval points read the SHAPE. About 82 of them are CN pulls.
+  # 4,096 as in v8-jp-full-2k: eight eval points read the shape. About 82 of them are CN pulls.
   val_rows: 4096
   # The 49-label CJK head. Supported only on the char path. the SP path raises (#1349's lesson).
   label_set: stage3-cjk
@@ -71,7 +71,7 @@ train:
   warmup_steps: 200
   max_steps: 2000
   eval_every_steps: 250
-  # Saves at step 1000 AND 2000: the char-path save is what v8-jp-full-2k bought insurance against.
+  # Saves at step 1000 and 2000: the char-path save is what v8-jp-full-2k bought insurance against.
   save_every_steps: 1000
   log_every_steps: 50
   precision: bf16

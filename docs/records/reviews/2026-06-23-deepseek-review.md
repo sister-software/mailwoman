@@ -59,7 +59,7 @@ The change is backend-agnostic. After the admin resolution walk, it finds the re
 - Default-off + byte-stable when unset.
 - Composes correctly with postcode coverage (#193): only fires where the postcode resolved to a point; a no-postcode tree is untouched.
 
-**One concern:** The `alternatives` cast is technically a layer-escape. The resolver types module can't be imported from the decoder types module without a dependency cycle, and the `unknown[]` type is a deliberate firewall. The cast works because `decorateNode` in the same file is the only writer. But if another code path ever writes to `node.alternatives` in a different shape, this cast becomes a runtime bug with no compile error. The resolver's test coverage guards against this within the resolver path, but not against external writers. Low risk given the repo's conventions; worth a comment in `decoder/types.ts` next to the `alternatives` field noting the contract.
+**One concern:** The `alternatives` cast is technically a layer-escape. The resolver types module can't be imported from the decoder types module without a dependency cycle, and the `unknown[]` type is a deliberate firewall. The cast works because `decorateNode` in the same file is the only writer. But if another code path ever writes to `node.alternatives` in a different shape, this cast becomes a runtime bug with no compile error. The resolver's test coverage guards against this within the resolver path, but not against external writers. Low risk given the repo's conventions; worth a comment in `decoder/types.ts` next to the `alternatives` field noting the interface.
 
 ### 4. `#370` span-rescore — raw-text locality recovery + production wiring
 
@@ -100,7 +100,7 @@ This is the German v0.9.2 artifact again — same root cause, different locale.
 
 ### The resolver change pattern is maturing well
 
-The three changes on this branch — `spanRescore`, `postcodeConsistency`, `addressPoints` — all follow the same disciplined contract:
+The three changes on this branch — `spanRescore`, `postcodeConsistency`, `addressPoints` — all follow the same disciplined interface:
 
 1. **Default-off + byte-stable when unset.** No change to existing behavior without an explicit opt-in.
 2. **Flag + check-km pair.** Each change has a boolean toggle and a tunable distance check.
@@ -181,7 +181,7 @@ Five copies across core and scripts. Consolidate to `core/spatial/haversine.ts` 
 
 ### 5. The `alternatives` type-cast is sound but fragile
 
-`resolve.ts:applyPostcodeConsistency` casts `node.alternatives` from `unknown[]` to `ResolvedPlace[]`. The cast is correct (only `decorateNode` writes it, and only with `ResolvedPlace[]`), but it's a cross-layer assumption that has no compile-time enforcement. A comment on `AddressNode.alternatives` in `decoder/types.ts` documenting the contract would close this.
+`resolve.ts:applyPostcodeConsistency` casts `node.alternatives` from `unknown[]` to `ResolvedPlace[]`. The cast is correct (only `decorateNode` writes it, and only with `ResolvedPlace[]`), but it's a cross-layer assumption that has no compile-time enforcement. A comment on `AddressNode.alternatives` in `decoder/types.ts` documenting the interface would close this.
 
 ### 6. The failure-dump classifier conflates two distinct "postcode-available" cases
 
@@ -209,7 +209,7 @@ Mailwoman is now competitive with (and on Europe, ahead of) the incumbents on th
 ### What's healthy
 
 - The eval discipline: benchmark → classify → drill-down → fix. No hunch-driven work.
-- The resolver change contract: default-off, byte-stable, tested, measured before promotion.
+- The resolver change interface: default-off, byte-stable, tested, measured before promotion.
 - The honesty about limitations: centroid-vs-rooftop, AU drag, @1km gap — all stated directly.
 - The blog voice: technical, self-critical, doesn't flatter.
 

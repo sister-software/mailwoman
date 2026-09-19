@@ -7,19 +7,19 @@
  *
  *   Every standing eval scores the TOP-1 parse, which made hypothesis-space improvements invisible —
  *   the instrument-blindness the 2026-07-15 stage-2 plan names. This eval measures the k-best
- *   headroom directly: a semi-Markov Viterbi over the CURRENT model's post-prior emissions (span
+ *   headroom directly: a semi-Markov Viterbi over the current model's post-prior emissions (span
  *   score = summed B-/I- log-probs over word-aligned segments, smoothed empirical segment-type
  *   transition bigrams from the golden dev gold orderings), returning the top-k whole segmentations.
  *   `oracle@k` = the gold value appears in any of the top-k hypotheses' extractions.
  *
- *   Baselines are REGISTERED rather than restated here — see `baselines.json` (profiles `v264`, `v301`)
+ *   Baselines are registered rather than restated here — see `baselines.json` (profiles `v264`, `v301`)
  *   and pass `--assert-baseline <profile>` to make this harness refuse to print when its
- *   instruments read wrong. The night-3 read: the naive re-decode is WORSE at rank 1 than the token
+ *   instruments read wrong. The night-3 read: the naive re-decode is worse at rank 1 than the token
  *   decode (a trained span scorer is necessary) while the correct reading exists in the top-10 ~75%
  *   of the time. Both halves of the DeepSeek-designed falsifier (session 019f6471) — details in
  *   `docs/superpowers/plans/2026-07-15-727-stage2-kbest-plan.md`.
  *
- *   This decoder is deliberately the same shape the stage-2 JS/WASM post-processing decode will
+ *   This decoder is deliberately the same shape the stage-2 JS/wasm post-processing decode will
  *   take (span enumeration + pruning + k-way Viterbi outside the ONNX graph); when the trained span
  *   head lands, its scores replace the summed BIO log-probs here and this eval's oracle@k becomes
  *   the rerank ceiling tracker.

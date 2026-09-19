@@ -5,7 +5,7 @@
  *
  *   Types for the POI explorer. The intent path (classification → subject → OverpassQL) is fully
  *   self-contained over the pure `@mailwoman/*` packages. the live poi.db path is expressed only as an
- *   INJECTED async function ({@link POILiveSearch}) so the httpvfs/worker implementation stays out of this
+ *   injected async function ({@link POILiveSearch}) so the httpvfs/worker implementation stays out of this
  *   package's browser graph (it lives in the docs site, which knows where the layer is served).
  */
 
@@ -39,7 +39,7 @@ export interface POISubjectBase {
 }
 
 /**
- * A resolved POI subject that names a taxonomy CATEGORY (`cafe`, `hospital`, `drinking fountain`).
+ * A resolved POI subject that names a taxonomy category (`cafe`, `hospital`, `drinking fountain`).
  */
 export interface POICategorySubject extends POISubjectBase {
 	kind: "category"
@@ -51,7 +51,7 @@ export interface POICategorySubject extends POISubjectBase {
 }
 
 /**
- * A resolved POI subject that names a chain BRAND (`chevron`, `applebee's`). Brands carry a Wikidata QID and are
+ * A resolved POI subject that names a chain brand (`chevron`, `applebee's`). Brands carry a Wikidata QID and are
  * searched by that QID rather than by category k-ring — see `@mailwoman/poi-taxonomy`'s brand table + the layer's
  * `brand_wikidata` index.
  */
@@ -107,7 +107,7 @@ export type POILiveSearchResult =
  * The injected live-search function. Given the resolved category (+ its Overture leaf fan-out) and the anchor text, it
  * probes the published poi.db and returns hits. Absent ⇒ the explorer runs intent-only (no "Search live" button).
  *
- * Brand support is ADDITIVE: when the resolved subject is a chain brand, `brandWikidata` carries its QID and the probe
+ * Brand support is additive: when the resolved subject is a chain brand, `brandWikidata` carries its QID and the probe
  * fetches by that QID instead of a category k-ring (`categoryID`/`overtureCategoryIDs` are then the brand name / empty
  * and unused). The category path is byte-identical to before. A probe that can't serve brands simply leaves brand live
  * search unwired at the call site (see `usePOISearch`'s `brandLiveSearch` option) — the docs' httpvfs probe does

@@ -42,7 +42,7 @@
  *   | Bordeaux   |        3.295 | —                   |
  *
  *   Two things to read out of that table. The threshold lands where the doctrine wants it: Cambridge
- *   (MA/UK/ON, three cities within 0.07 of each other) and Richmond (VA/BC/CA) are declared, and
+ *   (MA/UK/on, three cities within 0.07 of each other) and Richmond (VA/BC/CA) are declared, and
  *   every capital-city query stays silent. And **Paris reads 1.94 rather than 0.01**, which is the
  *   coincident-collapse working — without it the `locality`/`localadmin` twin sits 0.3 km away with a
  *   0.01 margin and every major city on earth reads maximally ambiguous.
@@ -66,7 +66,7 @@
  *   | Moscow      |                    1 → 2  | — (see below)               |
  *
  *   `Moscow` was the row that still read wrong, and it was a different defect: it answered Moscow,
- *   Idaho. Span-rescore's exact-name filter re-compared the PRIMARY name folded to `[a-z0-9 ]`, so a
+ *   Idaho. Span-rescore's exact-name filter re-compared the primary name folded to `[a-z0-9 ]`, so a
  *   gazetteer name in a non-Latin script folds to the empty string and could never match — Москва was
  *   not in that candidate list to be ranked, and Moscow, Idaho won by default among the Latin-named
  *   bearers. Athens survived the same trap only because it reaches the admin walk instead (`Αθήνα`

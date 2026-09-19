@@ -10,9 +10,9 @@
  *   template had the slot, and by splicing a line in above the locality where none did. `dependent_locality` is a tag
  *   the model is trained to emit, so losing the line loses a labeled span rather than tidying a layout.
  *
- *   THE LIST IS MEASURED rather than READ, and the measurement has to cover the whole path rather than the templates. Reading
+ *   the list is measured rather than read, and the measurement has to cover the whole path rather than the templates. Reading
  *   a template is unreliable twice over: the United States names `suburb` as the fourth alternative of an alternation
- *   whose first alternative is the city, which is always populated, so the slot is present in the source and never
+ *   whose first alternative is the city. It is always populated. Therefore, the slot is present in the source and never
  *   renders — while Germany names no sub-locality slot at all and still printed one, because the old formatter spliced
  *   a line in after the render for exactly that case. Each country below was rendered through the old engine with a
  *   `suburb` value against an otherwise full dict, and appears here only when the value did not come back and the
@@ -20,7 +20,7 @@
  *
  *   The line goes directly above the locality, which is where every template that has one puts it.
  *
- *   REFRESHING IT is deliberate work: the source is no longer a dependency of this repository. The better source is
+ *   refreshing IT is deliberate work: the source is no longer a dependency of this repository. The better source is
  *   each postal operator's own addressing guide, one country at a time, which is a larger task than a re-run.
  */
 

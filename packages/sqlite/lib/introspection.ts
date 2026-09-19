@@ -4,7 +4,7 @@
  * @author Teffen Ellis, et al.
  * @file Questions asked of `sqlite_master`.
  *
- *   ITS OWN SUBPATH ON PURPOSE — do not fold this into the package barrel. `@mailwoman/sqlite`'s root export
+ *   its own subpath on purpose — do not fold this into the package barrel. `@mailwoman/sqlite`'s root export
  *   reaches `node:sqlite`, and the docs demo bundles this package for the browser. importing the barrel to
  *   ask whether a table exists dragged the builtin into that graph. The split is what keeps these three
  *   pure-SQL questions reachable from a bundled consumer.
@@ -13,14 +13,14 @@
 import type { DatabaseClient } from "#client"
 
 /**
- * Whether a TABLE named `name` exists. An index, view or trigger of that name answers `false`.
+ * Whether a table named `name` exists. An index, view or trigger of that name answers `false`.
  */
 export function tableExists<DB>(db: DatabaseClient<DB>, name: string): boolean {
 	return Boolean(db.prepare("SELECT 1 FROM sqlite_master WHERE type = 'table' AND name = ?").get(name))
 }
 
 /**
- * `COUNT(*)` over `table`. The name is interpolated, so it must come from the schema, never from input.
+ * `count(*)` over `table`. The name is interpolated, so it must come from the schema, never from input.
  */
 export function countRows<DB>(db: DatabaseClient<DB>, table: string): number {
 	const row = db.prepare(`SELECT COUNT(*) AS n FROM ${table}`).get() as { n?: number } | undefined
@@ -29,7 +29,7 @@ export function countRows<DB>(db: DatabaseClient<DB>, table: string): number {
 }
 
 /**
- * Whether an INDEX named `name` exists.
+ * Whether an index named `name` exists.
  */
 export function indexExists<DB>(db: DatabaseClient<DB>, name: string): boolean {
 	return Boolean(db.prepare("SELECT 1 FROM sqlite_master WHERE type = 'index' AND name = ?").get(name))
@@ -47,7 +47,7 @@ export function listTables<DB>(db: DatabaseClient<DB>): string[] {
 }
 
 /**
- * Whether `table` has a column named `column`. The table name is spliced into a PRAGMA, so it must come from the
+ * Whether `table` has a column named `column`. The table name is spliced into a pragma, so it must come from the
  * schema, never from input.
  */
 export function hasColumn<DB>(db: DatabaseClient<DB>, table: string, column: string): boolean {

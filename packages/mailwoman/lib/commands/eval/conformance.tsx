@@ -3,7 +3,7 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   `mailwoman eval conformance` — run the CONFORMANCE-LAW suites: pairs of queries that differ by one
+ *   `mailwoman eval conformance` — run the conformance-LAW suites: pairs of queries that differ by one
  *   declared transformation, each graded on the axis its own row names (entity identity, assembled
  *   coordinate, strict parse, component map, mechanism shape). Every suite in the register runs by default,
  *   with rows drawn from committed board cases and variants derived from those same queries by the named
@@ -21,7 +21,7 @@ import { type CommandSpec, harnessCommand } from "#cli-kit"
 export const description = "Every committed conformance-law suite, through the Gauntlet's deps"
 
 /**
- * Native command-line contract consumed by the filesystem command router.
+ * Native command-line interface consumed by the filesystem command router.
  */
 export const spec = {
 	name: "conformance",

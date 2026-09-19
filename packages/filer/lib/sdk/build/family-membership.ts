@@ -4,7 +4,7 @@
  * @author Teffen Ellis, et al.
  * @file The `filer_family` write that accompanies a `HoldingCompany`/`ManagementCompany` edge.
  *
- *   A `filer_edge` row ALONE is invisible to `familyRollup`/`filerLookup.families` — both answer "which family
+ *   A `filer_edge` row alone is invisible to `familyRollup`/`filerLookup.families` — both answer "which family
  *   does this node belong to" from `filer_family` alone. An ownership/control edge and its family membership are
  *   therefore two writes of one fact, and every caller emitting the first must emit the second.
  */
@@ -55,7 +55,7 @@ export interface FamilyMembershipFact {
 	assertion: string
 	/**
 	 * The inferred match's score; `null` on an authoritative membership, where nothing was matched (the schema's own
-	 * CHECK constraint rejects a score there — see `createFilerFamilyTable`).
+	 * check constraint rejects a score there — see `createFilerFamilyTable`).
 	 */
 	matchScore: number | null
 	source: string
@@ -64,14 +64,14 @@ export interface FamilyMembershipFact {
 }
 
 /**
- * Write one `filer_family` membership row for a `HoldingCompany`/`ManagementCompany` edge's SOURCE node (the edge's own
+ * Write one `filer_family` membership row for a `HoldingCompany`/`ManagementCompany` edge's source node (the edge's own
  * `from_node_id` — an FRN or `bdcProviderID`) — see {@linkcode mintFamilyID} for how `family_id` is derived from the
- * TARGET name's canonical form. Skips silently (no row, no error, no `skipped` increment — a family row is a bonus
+ * target name's canonical form. Skips silently (no row, no error, no `skipped` increment — a family row is a bonus
  * derived fact rather than an edge opportunity) when the name canonicalizes to nothing. `insFamily` (the prepared
  * statement it writes through) is passed in rather than closed over, so every emission path writes through the one
  * statement `buildFilerDatabase` prepared against the shared handle.
  *
- * {@link FamilyMembershipFact.namingNodeID} is the company node this row's `family_id` was minted FROM — the edge's
+ * {@link FamilyMembershipFact.namingNodeID} is the company node this row's `family_id` was minted from — the edge's
  * `to_node_id`, which every caller has already minted immediately above its call. It is deliberately taken as a field
  * rather than re-derived from `identifierType`/`name` here, so the family row and the edge can never name two different
  * nodes. Persisting it is what lets `filer-lookup.ts`'s `readFamilyDisplayNames` recover the raw spelling by a plain

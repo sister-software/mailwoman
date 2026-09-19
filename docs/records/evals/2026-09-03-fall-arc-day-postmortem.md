@@ -80,7 +80,7 @@ Decision packages posted, no build: #1998, #1999, #2048, and step 4 (#1684 exp 1
 - The #1942 rule was widened from the pre-registered "letter after the comma" to "letter or digit,
   unless the comma is a numeric separator", because the registered rule left the Köln row diverging.
   The deviation is stated in the PR and graded on the same three arms.
-- #2016's contract went the documented way: an inside-but-unlabelled service polygon is its own
+- #2016's interface went the documented way: an inside-but-unlabelled service polygon is its own
   outcome, never agreement, because the alternative manufactures a Zone 1 reading.
 - No Modal run was launched. No candidate treatment exists for the F1 family, so a control run
   would only re-measure the fine-tune row loss already on record.

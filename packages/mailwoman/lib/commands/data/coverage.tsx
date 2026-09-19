@@ -3,7 +3,7 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   `mailwoman data coverage` — what mailwoman can do PER COUNTRY, parse and geocode kept apart.
+ *   `mailwoman data coverage` — what mailwoman can do PER country, parse and geocode kept apart.
  *
  *   Sibling of `data inventory`, which asks what artifacts are on disk and whether they can say how they were built.
  *   This asks the question a reader actually has: for a given country, can we parse an address there, and can we place
@@ -34,7 +34,7 @@ import {
 import { trains, type CoverageReport } from "#coverage/census"
 
 /**
- * Native command-line contract consumed by the filesystem command router.
+ * Native command-line interface consumed by the filesystem command router.
  */
 export const spec = {
 	name: "coverage",
@@ -59,7 +59,7 @@ const CoverageCommand: CommandComponent<typeof spec> = ({ options }) => {
 		const repoRoot = String(repoRootPath())
 		const configDir = `${repoRoot}/corpus-python/src/mailwoman_train/configs`
 
-		// By MTIME rather than filename: the version scheme sorts neither lexically nor numerically — `v8-leg2-sp.yaml` beats
+		// By mtime rather than filename: the version scheme sorts neither lexically nor numerically — `v8-leg2-sp.yaml` beats
 		// `v4.8.0-...` both ways, and picking it reports every country as dropped, which reads as a catastrophic
 		// finding rather than as the wrong file. The report always names the config it used.
 		let newest: string | undefined
@@ -79,7 +79,7 @@ const CoverageCommand: CommandComponent<typeof spec> = ({ options }) => {
 		const versioned = String(dataRootPath("corpus", "versioned"))
 		const manifests: Array<{ path: string; at: number }> = []
 
-		// By MTIME rather than directory name. Corpus versions sort neither lexically (`v0.9.9` beats `v0.26.0`, because
+		// By mtime rather than directory name. Corpus versions sort neither lexically (`v0.9.9` beats `v0.26.0`, because
 		// `9` > `2`) nor numerically (`v8-jp-full` beats both) — measured: the name sort picked `v0.9.9` and silently
 		// reported the coverage of a corpus nine versions old. The report always names the manifest it used.
 		if (await pathExists(versioned)) {

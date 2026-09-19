@@ -3,13 +3,13 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   #655 measurement — can a RE-THRESHOLDED dedup GBT beat the FS baseline on the cross-SOURCE link
+ *   #655 measurement — can a RE-thresholded dedup GBT beat the FS baseline on the cross-source link
  *   discovery objective? The dedup GBT (#603) is pinned off for cross-dataset flows because its
  *   over-merge features (`spatial-exact × name/org-disagree`) push true "same facility, different
  *   operational name across sources" pairs negative — and the GBT logit replaces the FS weight, so
  *   a threshold can't trivially separate them. This quantifies that.
  *
- *   Geocode the three sources once (NPPES + FCC-RHC + TX HHSC, TX-scoped), then resolve repeatedly:
+ *   Geocode the three sources once (NPPES + FCC-RHC + TX hhsc, TX-scoped), then resolve repeatedly:
  *   the FS baseline (the recall-correct baseline) and the bundled GBT at a fine threshold sweep.
  *   For each arm, report cross-source links (entities spanning ≥2 sources), triple-source entities,
  *   total entities (an over-merge proxy — fewer = more collapsing), and a label-free precision
@@ -19,7 +19,7 @@
  *
  *   Verdict logic: if some GBT threshold matches FS's cross-source link count at ≥ FS phone-corrob,
  *   the threshold fix (option 1) works → ship a cross-source threshold. If matching FS link count
- *   only comes with collapsing total entities and a LOWER phone-corrob (junk over-merges), the
+ *   only comes with collapsing total entities and a lower phone-corrob (junk over-merges), the
  *   threshold is insufficient by construction → FS stays pinned / a cross-objective retrain (#655
  *   option 2) is the only change.
  *
@@ -76,7 +76,7 @@ export interface CrossSourceThresholdSweepOptions {
 	 */
 	state?: string
 	/**
-	 * #655 option 2: a trained CROSS-SOURCE GBT module (exports CROSS_SOURCE_GBT_MODEL + _META) to grade as a third arm
+	 * #655 option 2: a trained cross-source GBT module (exports CROSS_SOURCE_GBT_MODEL + _META) to grade as a third arm
 	 * at its recommended threshold — the model `registry train-scorer cross-gbt` emits.
 	 */
 	candidate?: string
@@ -267,7 +267,7 @@ export async function crossSourceThresholdSweep(
 	)
 
 	// Evaluate the bundled GBT over a fine threshold sweep.
-	// cross-source pairs sit at strongly NEGATIVE logits). ---
+	// cross-source pairs sit at strongly negative logits). ---
 	const SWEEP = [-8, -6, -5, -4, -3, -2, -1, 0, 1, 2, DEDUP_GBT_META.recommendedThreshold]
 	const gbtArms: ArmMetrics[] = []
 
@@ -335,7 +335,7 @@ export async function crossSourceThresholdSweep(
 	)
 
 	// The candidate (#655 option-2 models) gets its own verdict scan — the hardcoded option-1 verdict
-	// below is about the DEDUP GBT and must not silently absorb (or ignore) a candidate arm.
+	// below is about the dedup GBT and must not silently absorb (or ignore) a candidate arm.
 	const candidateDominating = candidateArms.find(
 		(a) => a.crossSource >= fs.crossSource && rate(a) >= fsCorrobRate && a.entities >= minEntities
 	)

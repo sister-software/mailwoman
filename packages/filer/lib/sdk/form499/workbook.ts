@@ -2,11 +2,11 @@
  * @copyright Sister Software.
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
- * @file Form 499 filer database, read from the FCC's own XLSX export.
+ * @file Form 499 filer database, read from the FCC's own xlsx export.
  *
  *   `form499.ts`'s {@linkcode parseForm499} reads a headerless 17-column TSV. That shape is not something
  *   the FCC publishes — it is what a human produced by hand-massaging this workbook, column by column, into
- *   the tuple Nexus's `csv.parse` was configured with. The tuple being POSITIONAL is why the massaging had
+ *   the tuple Nexus's `csv.parse` was configured with. The tuple being positional is why the massaging had
  *   to be exact, and the massaging is why the pipeline could never be re-run from source.
  *
  *   This reads the published workbook directly: 122 columns, a real header row, 19,852 filers in the
@@ -17,26 +17,26 @@
  *   - `note1`/`note2`/`note3` — the filer lifecycle. 11,533 rows carry one, and they parse to a closed
  *     eight-template vocabulary with zero unrecognized across the whole file (`form499-notes.ts`). Two of
  *     the eight are data the schema already has columns for: a cessation date, and a successor filer ID.
- *   - 59 per-jurisdiction TRUE/FALSE columns — the registered operating footprint. 11,256 filers operate in
+ *   - 59 per-jurisdiction true/false columns — the registered operating footprint. 11,256 filers operate in
  *     exactly one state, 1,780 in fifty or more.
- *   - `CORESID` — the FRN, under a name the 17-column tuple called `frn`.
+ *   - `coresid` — the FRN, under a name the 17-column tuple called `frn`.
  *
  *   **Three mappings would corrupt data if done naively**, which is the real argument for a reader rather
  *   than a spreadsheet export:
  *
- *   1. `LastFiling` is `M/D/YYYY`. It becomes `valid_from`, `assertISODate` REJECTS it, and
+ *   1. `LastFiling` is `M/D/yyyy`. It becomes `valid_from`, `assertISODate` rejects it, and
  *      `build-filer.ts` picks the latest legal name per FRN by comparing these as plain strings — where
  *      `4/1/2025` sorts below `12/31/2018`. Converted here, once.
  *   2. `USF_Contributor_1` is `Yes`/`No`. {@link Form499Row.usfContributor} is documented as true iff the
- *      raw value is the literal `TRUE`, so a pass-through makes every filer a non-contributor.
+ *      raw value is the literal `true`, so a pass-through makes every filer a non-contributor.
  *   3. The address is six columns (`HQ_Address1..3`, city, state, zip) where the row shape has one string.
  *
- *   **Header keys come from `normalizeColumnNames`, which returns every key LOWER CASE** whatever case the
+ *   **Header keys come from `normalizeColumnNames`, which returns every key lower case** whatever case the
  *   FCC ships. A key spelled with a capital reads `undefined` on every row, silently, losing that column for
  *   every filer — so {@linkcode FORM_499_WORKBOOK_KEYS} pins the keys this reader depends on and
  *   {@linkcode assertWorkbookHeader} refuses a header missing any of them.
  *
- *   **Memory:** `XLSXSpliterator` materializes the sheet — XLSX is a ZIP of XML with shared strings in a
+ *   **Memory:** `XLSXSpliterator` materializes the sheet — xlsx is a ZIP of XML with shared strings in a
  *   separate entry, so bounded-memory streaming is not available. ~20k × 122 is fine. this note exists so
  *   nobody points it at a genuinely large workbook expecting otherwise.
  */
@@ -166,7 +166,7 @@ const STATE_CODE_BY_KEY: Record<string, string> = {
 type WorkbookRow = Record<string, XLSXCellValue | boolean>
 
 /**
- * One cell as a trimmed string. `null` (an empty XLSX cell), numbers and dates all normalize here, so no caller has to
+ * One cell as a trimmed string. `null` (an empty xlsx cell), numbers and dates all normalize here, so no caller has to
  * branch on {@linkcode XLSXCellValue}'s union.
  */
 function cell(row: WorkbookRow, key: string): string {
@@ -192,12 +192,12 @@ function joinAddress(row: WorkbookRow, keys: readonly string[]): string {
 const US_DATE_PATTERN = /^(\d{1,2})\/(\d{1,2})\/(\d{4})$/
 
 /**
- * Convert the workbook's `M/D/YYYY` filing date to ISO `YYYY-MM-DD`.
+ * Convert the workbook's `M/D/yyyy` filing date to ISO `yyyy-MM-DD`.
  *
  * Returns `""` for anything that isn't that shape rather than inventing a date. That is deliberate and it is not
  * silent: `lastFiledAt` becomes `valid_from`, and `assertISODate` throws on a non-ISO value — so an unconverted date
  * fails the build loudly at the point it would be written, which is where a reader can see which filer caused it.
- * Emitting the raw `M/D/YYYY` here would fail the same assertion. emitting a guess would not fail at all.
+ * Emitting the raw `M/D/yyyy` here would fail the same assertion. emitting a guess would not fail at all.
  */
 export function toISOFilingDate(value: string): string {
 	// A workbook whose cells are real dates rather than text arrives pre-converted by `cell`.
@@ -213,7 +213,7 @@ export function toISOFilingDate(value: string): string {
 }
 
 /**
- * Read the jurisdiction columns into sorted USPS codes. A column is set when its cell is the literal `TRUE` — the same
+ * Read the jurisdiction columns into sorted USPS codes. A column is set when its cell is the literal `true` — the same
  * comparison `usfContributor` uses, and the same one the workbook's own values follow.
  */
 export function readOperatingStates(row: WorkbookRow): string[] {
@@ -238,7 +238,7 @@ export function toForm499Row(row: WorkbookRow): Form499Row {
 		form499ID: cell(row, keys.form499ID),
 		frn: toFRN(cell(row, keys.frn)),
 		lastFiledAt: toISOFilingDate(cell(row, keys.lastFiling)),
-		// The workbook says Yes/No where the row shape is documented as "true iff the raw value is TRUE".
+		// The workbook says Yes/No where the row shape is documented as "true iff the raw value is true".
 		// Both spellings are accepted so this reader stays correct if the export ever switches back.
 		usfContributor: ["yes", "true"].includes(cell(row, keys.usfContributor).toLowerCase()),
 		legalNameOfCarrier: cell(row, keys.legalName),

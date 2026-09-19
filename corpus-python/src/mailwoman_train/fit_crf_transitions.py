@@ -69,7 +69,7 @@ def fit(parquet_files: list[str], labels: list[str], temperature: float) -> dict
         total = sum(row)
         logs = [math.log(c / total) for c in row]
         # Row-max centering: the decoder's structural mask uses 0 = permitted, so bolt-on potentials
-        # must be RELATIVE penalties (best transition = 0), not absolute log-probs — raw logP puts
+        # must be relative penalties (best transition = 0), not absolute log-probs — raw logP puts
         # -2..-16 on every step and swamps the emissions the model was calibrated for.
         peak = max(logs)
 

@@ -16,9 +16,9 @@
  *   a redesign of the thing that was supposed to be fixed in advance.
  *
  *   Everything below is synthetic. The identifiers sit in the same reserved 0-prefixed range
- *   `@mailwoman/core/resolver`'s fixture provider uses, which no real UPRN occupies. the addresses name
+ *   `@mailwoman/core/resolver`'s fixture provider uses, which no real uprn occupies. the addresses name
  *   a town that does not exist. the coordinates are round numbers in the sea of arbitrary. The one
- *   rule this file must keep is that the ROWS and the PROVIDER'S ANSWERS are derived from a single
+ *   rule this file must keep is that the rows and the provider'S answers are derived from a single
  *   table — two hand-maintained lists that must agree drift the moment someone edits one of them.
  */
 
@@ -308,7 +308,7 @@ export function syntheticFixtureProvider(options: { log?: AuthoritativeQuery[] }
 			const haystack = query.normalizedQuery.toLowerCase()
 
 			if (throwingKeys.some((key) => haystack.includes(key))) {
-				// Logged before the throw so the record is every query the provider RECEIVED rather than only the ones
+				// Logged before the throw so the record is every query the provider received rather than only the ones
 				// it answered — a consult that failed is still a consult, and a log that omits it under-counts.
 				options.log?.push(query)
 

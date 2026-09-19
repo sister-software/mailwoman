@@ -31,7 +31,7 @@ test("GeoPoint.from: an out-of-lat-range longitude is still just the longitude",
 // `inferGeoJSONCoordOrder`, which transposes the pair when the first magnitude is in [-90, 90] and
 // the second is not. That fires on a [latitude, longitude] pair only where |longitude| > 90 — the
 // Americas and the Pacific — so the same caller mistake was silently repaired in Dallas and silently
-// kept in Berlin. A contract that depends on which continent the data is from is not a contract.
+// kept in Berlin. A interface that depends on which continent the data is from is not a interface.
 test("GeoPoint.from: a [latitude, longitude] pair is never silently transposed, on any continent", () => {
 	// Berlin written lat-first. The literal GeoJSON reading is 52.52°E 13.4°N — the Arabian Sea. The
 	// old heuristic returned exactly this too (both magnitudes ≤ 90, so it declined to guess).
@@ -40,8 +40,8 @@ test("GeoPoint.from: a [latitude, longitude] pair is never silently transposed, 
 	expect(berlin.longitude).toBe(52.52)
 	expect(berlin.latitude).toBe(13.405)
 
-	// Dallas written lat-first. The old heuristic REPAIRED this one to [-96.797, 32.7767]. The literal
-	// reading puts latitude at -96.797, which is off the globe, so it is now rejected outright.
+	// Dallas written lat-first. The old heuristic repaired this one to [-96.797, 32.7767]. The literal
+	// reading puts latitude at -96.797. It is off the globe. Therefore, it is now rejected outright.
 	expect(GeoPoint.from([32.7767, -96.797])).toBeNull()
 })
 
@@ -65,7 +65,7 @@ test("GeoPoint: the constructor throws on an out-of-range coordinate", () => {
 	expect(() => new GeoPoint([Number.NaN, 0])).toThrow(RangeError)
 })
 
-// The compatibility receipt for dropping the inference: for a pair that is ACTUALLY valid GeoJSON,
+// The compatibility receipt for dropping the inference: for a pair that is actually valid GeoJSON,
 // the heuristic was already a no-op in every case. It transposes only when the second magnitude is
 // outside [-90, 90] — i.e. when the pair claims a latitude off the globe — so no well-formed input
 // changes meaning. These cover all four longitude bands and both hemispheres.

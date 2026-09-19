@@ -67,7 +67,7 @@ def test_long_leading_form_paints_every_word_unambiguous():
     assert w["United"] == S
     assert w["States"] == S
     assert w["of"] == S
-    assert w["America"] == S  # inside the phrase → NOT the standalone ambiguous "america"
+    assert w["America"] == S  # inside the phrase → not the standalone ambiguous "america"
     assert w["Wyoming"] == 0  # a US region rather than a country surface
     assert w["Cheyenne"] == 0
 

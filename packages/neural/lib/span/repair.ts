@@ -13,9 +13,9 @@
  *   skeleton was duplicated line-for-line — including two byte-identical sort comparators. This
  *   module is that skeleton, extracted once so the two passes cannot drift on it.
  *
- *   What stays in each pass is what actually differs: the patterns, the ADD/SNAP eligibility rules,
+ *   What stays in each pass is what actually differs: the patterns, the ADD/snap eligibility rules,
  *   the `ADD_OVER_TAGS` set, and the smear-cleanup policy (postcode-repair hands a trailing smear
- *   BACK to a following locality. unit-repair always clips to `O`). Those are the changes — do not
+ *   back to a following locality. unit-repair always clips to `O`). Those are the changes — do not
  *   pull them up here.
  */
 

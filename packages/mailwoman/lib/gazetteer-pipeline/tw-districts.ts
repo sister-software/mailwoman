@@ -6,24 +6,24 @@
  *   Build `localities-tw-districts.db` — Taiwan's 鄉鎮市區 (the township / county-administered-city / district tier)
  *   as one locality row each, derived from the civil-affairs address register rather than from WOF.
  *
- *   WHY NOT WOF: the admin artifact carries the tier twice and both copies are wrong for a Han query. A parsed
+ *   why not WOF: the admin artifact carries the tier twice and both copies are wrong for a Han query. A parsed
  *   `新北市林口區` scoped to New Taipei City finds no in-region row keyed `林口區`: the record that carries the Han
  *   names (WOF 102026697) has no parent and a centroid 54 km away in the hills, while the correctly parented record
  *   (WOF 890467835) carries only the Latin `Linkou`. Across the 289 units the training board holds, 102 have no
  *   Han-keyed TW row at all, 15 have one only on a namesake in another 縣市, and 10 only on a parentless row.
  *
- *   SOURCE + LICENSE: the pinned Overture Maps addresses parquet for Taiwan (`overture/<release>/addresses-tw.parquet`,
- *   CDLA-Permissive-2.0), whose rows come from the 15 civil-affairs bureaus' registers under the Open Government Data
+ *   source + LICENSE: the pinned Overture Maps addresses parquet for Taiwan (`overture/<release>/addresses-tw.parquet`,
+ *   cdla-Permissive-2.0), whose rows come from the 15 civil-affairs bureaus' registers under the Open Government Data
  *   License, Taiwan, v1.0 — the same input and the same license expression as the rooftop tier
  *   (`situs address-points --country TW`). `address_levels[1]` is the 縣市 and `address_levels[2]` the 鄉鎮市區,
  *   the register's own administrative pair. there is no free-text grouping here, so no thin-group threshold either —
  *   every pair is a real unit, and the smallest (金門縣烏坵鄉, 3 points) is reported rather than dropped.
  *
- *   SHAPE: one `spr` row per (縣市, 鄉鎮市區), placetype `locality` — the tier `placetypeMapForCountry("tw")` maps a
- *   parsed `subregion` onto — with the MEDIAN address point as the centroid and the p5–p95 envelope as the bbox. The
+ *   shape: one `spr` row per (縣市, 鄉鎮市區), placetype `locality` — the tier `placetypeMapForCountry("tw")` maps a
+ *   parsed `subregion` onto — with the median address point as the centroid and the p5–p95 envelope as the bbox. The
  *   縣市 is matched to its WOF region by name (the official `zho` name first, then any Han name that names exactly one
  *   region, then the name minus its 縣/市 suffix, which is how 桃園市 reaches a region WOF still names 桃園縣), and the
- *   match is written as an `ancestors` row so the candidate build stamps the row with the region's scope. `names`
+ *   match is written as an `ancestors` row. Therefore, the candidate build stamps the row with the region's scope. `names`
  *   carries the register's spelling as the official name and its 臺/台 twin as an alias. Population is 0 (unmeasured:
  *   an address-point count is not a population), so a row wins only where its key is the answer.
  *

@@ -3,7 +3,7 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Docs structural check (docs-architecture cleanup, Phase 4. frontmatter contract rewrite, docs-reorg
+ *   Docs structural check (docs-architecture cleanup, Phase 4. frontmatter interface rewrite, docs-reorg
  *   Phase 0 task 2). Static frontmatter parse only — no install, no Docusaurus build — so it runs in
  *   seconds as the first step of the Docs workflow (`.github/workflows/docs-build.yml`) and locally
  *   via `yarn workspace @mailwoman/docs lint:structure` (or `node docs/scripts/check/docs-structure.ts`
@@ -12,13 +12,13 @@
  *   Five checks:
  *
  *   1. Frontmatter validity — two modes, chosen by the `--strict` CLI flag:
- *        - Strict (`--strict`) — THE LIVE MODE. Both CI (`.github/workflows/docs-build.yml`) and
+ *        - Strict (`--strict`) — the live mode. Both CI (`.github/workflows/docs-build.yml`) and
  *          `yarn workspace @mailwoman/docs lint:structure` pass the flag as of the docs-reorg
- *          Task 5 skeleton cutover. It enforces the six-role contract
- *          (`docs-frontmatter-contract.ts`): `role:` is required on every published page, value ∈
+ *          Task 5 skeleton cutover. It enforces the six-role interface
+ *          (`docs-frontmatter-metadata.ts`): `role:` is required on every published page, value ∈
  *          {tutorial, guide, reference, explanation, landing, evidence}, with role-conditional
  *          required fields (`validatePage`).
- *        - Legacy (default, no flag): the seven-role vocabulary the contract replaced
+ *        - Legacy (default, no flag): the seven-role vocabulary the interface replaced
  *          (guide/tutorial/concept/reference/decision/evidence/landing), required only on a
  *          manifest of entry pages and every recipe (`ROLE_REQUIRED_PAGES` /
  *          `ROLE_REQUIRED_DIRECTORIES`). Nothing invokes it now. It is kept because the pages it
@@ -45,8 +45,8 @@
 import { parseArgs } from "node:util"
 
 import sidebars from "../../sidebars.ts"
-import { validatePage } from "../docs/frontmatter/contract.ts"
 import { collectDocPages, type DocPage, isDelegatedWorkstream, isExcludedFromBuild } from "../docs/frontmatter/index.ts"
+import { validatePage } from "../docs/frontmatter/metadata.ts"
 import { collectMarkdownFiles, findBrokenLinks } from "../docs/links.ts"
 import { censusPathCitations } from "../docs/path-citations.ts"
 import { allowedDuplicateTitles, allowedOrphans } from "../docs/structure-allowlist.ts"
@@ -185,7 +185,7 @@ function toFrontmatterRecord(page: DocPage): Record<string, unknown> {
 }
 
 /**
- * Strict frontmatter check — the six-role contract, enforced on every published page (minus the delegated
+ * Strict frontmatter check — the six-role interface, enforced on every published page (minus the delegated
  * evals/retrospectives workstream, same boundary as the legacy check). This is what CI runs and what the corpus
  * satisfies: 79 of 79 published pages pass.
  *
@@ -300,7 +300,7 @@ function checkOrphans(pages: DocPage[]): string[] {
 /**
  * Unlike the three checks above, this one reads the whole docs tree rather than the published pages: 62 of the 109
  * broken links this check was written for sit under `docs/engineering`, which `collectDocPages` never walks and
- * Docusaurus never builds, so nothing had ever resolved a path there.
+ * Docusaurus never builds. Therefore, nothing had ever resolved a path there.
  */
 async function checkRelativeLinks(): Promise<string[]> {
 	const broken = await findBrokenLinks(await collectMarkdownFiles())
@@ -332,7 +332,7 @@ const published = pages.filter((page) => !isExcludedFromBuild(page))
 
 const failuresByCheck: [name: string, failures: string[]][] = [
 	[
-		strict ? "Frontmatter validity (--strict: six-role contract)" : "Frontmatter validity (legacy vocabulary)",
+		strict ? "Frontmatter validity (--strict: six-role interface)" : "Frontmatter validity (legacy vocabulary)",
 		strict ? checkFrontmatterStrict(published) : checkFrontmatterLegacy(published),
 	],
 	["Duplicate titles", checkDuplicateTitles(published)],
@@ -382,7 +382,7 @@ for (const allowance of allowedDuplicateTitles) {
 if (failureCount > 0) {
 	console.error(
 		`\nDocs structure check FAILED (${failureCount} finding${failureCount === 1 ? "" : "s"}). ` +
-			`Contract: docs/scripts/docs/frontmatter/contract.ts · voice + section rules: ` +
+			`Metadata: docs/scripts/docs/frontmatter/metadata.ts · voice + section rules: ` +
 			`docs/engineering/writing-system.md · allowlist: docs/scripts/docs/structure-allowlist.ts`
 	)
 

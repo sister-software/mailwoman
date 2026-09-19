@@ -5,20 +5,20 @@
  *
  *   The fixture rung: build a real sealed artifact from hand-built geometry, then read it.
  *
- *   FOUR THINGS ARE PINNED HERE AND EACH IS SILENT WHEN WRONG.
+ *   four things are pinned here and each is silent when wrong.
  *
- *   1. THE MEANING-OF-ZERO RULE, checked three ways rather than asserted once. Every coverage row must fail
+ *   1. the meaning-OF-zero rule, checked three ways rather than asserted once. Every coverage row must fail
  *      `supportsExclusion`. a builder handing a stronger basis to the coverage writer must be refused. and an
- *      artifact carrying one must be refused at OPEN time. The sibling flood layer reports a point inside its
- *      footprint and outside every polygon as the authority's Zone 1 DESIGNATION. This layer must report the
+ *      artifact carrying one must be refused at open time. The sibling flood layer reports a point inside its
+ *      footprint and outside every polygon as the authority's Zone 1 designation. This layer must report the
  *      same geometry as `unknown` with no designation, because a location with no zoning polygon is one of at
  *      least four different things.
- *   2. THE VOCABULARY DECISION AS STORAGE. The local code is stored byte-identically, the crosswalk sits
+ *   2. the vocabulary decision AS storage. The local code is stored byte-identically, the crosswalk sits
  *      beside it rather than instead of it, and a generic type the publisher uses without declaring is
  *      recorded as observed-but-undeclared rather than coerced or dropped.
- *   3. THE HOLE ROLES, which arrive the way the real service publishes them — each ring its own part — so a
+ *   3. the hole roles. It arrive the way the real service publishes them — each ring its own part. Therefore, a
  *      point inside a hole must read as outside the zone.
- *   4. THE TWO POSTURES THAT ARE GUARDS RATHER THAN FIELDS: the coverage basis above, and the `build-local`
+ *   4. the two postures that are guards rather than fields: the coverage basis above, and the `build-local`
  *      tier, which the builder refuses to raise while the licence is unresolved.
  */
 
@@ -118,7 +118,7 @@ describe("the sealed artifact", () => {
 		expect(result.jurisdictions).toBe(1)
 		expect(result.plans).toBe(2)
 
-		// 0o444 — sealed, per the layer contract's build-then-swap discipline.
+		// 0o444 — sealed, per the layer interface's build-then-swap discipline.
 		expect((await statPath(databasePath)).mode & 0o777).toBe(0o444)
 	})
 
@@ -185,7 +185,7 @@ describe("the vocabulary decision", () => {
 		expect(designation!.localCode).toBe("R2 - Existing Residential")
 		expect(designation!.crosswalk?.scheme).toBe("IE-GZT")
 		expect(designation!.crosswalk?.code).toBe("R2")
-		// The publisher's own label for the generic type, from its DECLARED domain.
+		// The publisher's own label for the generic type, from its declared domain.
 		expect(designation!.crosswalk?.label).toBe("Existing residential")
 		expect(designation!.crosswalk?.declared).toBe(true)
 	})
@@ -303,7 +303,7 @@ describe("the plan is part of the claim", () => {
 		const reading = lookup.lookup(INSIDE_ZONE_A.latitude, INSIDE_ZONE_A.longitude)
 		const designation = reading.designations[0]!
 
-		// `currentPlan = 1` means NOT SUPERSEDED. Whether the window has closed is `validTo`, and the comparison against a
+		// `currentPlan = 1` means not superseded. Whether the window has closed is `validTo`, and the comparison against a
 		// date is the caller's — 2,363 of the real product's 85,330 rows carry a `validTo` already in the past.
 		expect(designation.plan.currentPlan).toBe(1)
 		expect(designation.plan.validFrom).toBeTruthy()
@@ -368,8 +368,8 @@ describe("the meaning-of-zero rule", () => {
 		expect(rows.length).toBeGreaterThan(0)
 		expect(result.coverageBasis).toBe(CoverageBasis.SourcePresent)
 
-		// THE FAILING TEST THE ISSUE ASKS FOR: not one assertion on one row, but the whole table read back and every row
-		// checked through the contract's own predicate. A code path that read `supportsExclusion` as true for this layer
+		// the failing test the issue asks FOR: not one assertion on one row, but the whole table read back and every row
+		// checked through the interface's own predicate. A code path that read `supportsExclusion` as true for this layer
 		// would have to make one of these rows carry a stronger basis, and this fails the moment it does.
 		for (const row of rows) {
 			expect(row.basis).toBe(CoverageBasis.SourcePresent)
@@ -403,7 +403,7 @@ describe("the meaning-of-zero rule", () => {
 
 		using tampered = new DatabaseClient<ZoningDatabase>(path)
 
-		// Keyed on `h3_cell` rather than on `rowid`, because `layer_coverage` is `WITHOUT ROWID` and has none.
+		// Keyed on `h3_cell` rather than on `rowid`, because `layer_coverage` is `without rowid` and has none.
 		tampered.exec(
 			`UPDATE layer_coverage SET basis = '${CoverageBasis.Designated}' ` +
 				"WHERE h3_cell = (SELECT min(h3_cell) FROM layer_coverage)"
@@ -425,7 +425,7 @@ describe("the provenance grade", () => {
 
 		expect(grades).toEqual(["authoritative"])
 
-		// The CHECK is what makes the grade a constraint rather than a convention. `NOT NULL` alone accepts `''`, and a
+		// The check is what makes the grade a constraint rather than a convention. `not NULL` alone accepts `''`, and a
 		// blank matches neither half of every read that splits on grade.
 		const path = scratch.resolve("grade-check.db")
 		using source = new DatabaseClient<ZoningDatabase>(databasePath, { readOnly: true })
@@ -442,7 +442,7 @@ describe("the provenance grade", () => {
 			/CHECK constraint failed/u
 		)
 
-		// And the one grade this artifact does not hold is still a legal VALUE — the constraint is about the vocabulary,
+		// And the one grade this artifact does not hold is still a legal value — the constraint is about the vocabulary,
 		// and keeping the grades apart is the artifact's job rather than the column's.
 		expect(() => copy.exec("UPDATE zoning_area SET provenance_grade = 'inferred' WHERE area_id = '1'")).not.toThrow()
 	})

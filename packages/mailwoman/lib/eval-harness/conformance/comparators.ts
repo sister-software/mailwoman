@@ -9,15 +9,15 @@
  *   exists and is already tested: `componentMatches` and `DEFAULT_TOL_M` from the Gauntlet's `check-case.ts`,
  *   `haversineKm` from `@mailwoman/spatial`, `compareComponents` from the invariance mini-suite,
  *   `accountRefinement` from `candidate-admissibility.ts`. What lives here is the part none of them has an
- *   opinion about — which AXIS a given law is stated on, and what `equivalent` / `refines` / `diverges` mean on
+ *   opinion about — which axis a given law is stated on, and what `equivalent` / `refines` / `diverges` mean on
  *   that axis.
  *
- *   THE AXES ARE DISJOINT ON PURPOSE. `resolution_identity` never reads a coordinate and
+ *   the axes are disjoint on purpose. `resolution_identity` never reads a coordinate and
  *   `assembled_coordinate` never reads a place id. That separation is the whole reason the comparator set is
  *   closed: an identity law that could fall back to distance would pass whenever two different places
  *   happened to sit inside the tolerance, which is precisely the failure the Gauntlet's own place-identity
  *   check was added for — Gaborone resolving to an Austrian hamlet came back with the right parsed locality
- *   and only a coordinate 8,045 km away to say so, and a namesake inside a 25 km bar would have had nothing
+ *   and only a coordinate 8,045 km away to say. A namesake inside a 25 km bar would have had nothing
  *   at all.
  *
  *   An axis absent on both sides is `undecidable`, never `equivalent`. Two runs that resolved no place agree
@@ -78,7 +78,7 @@ export interface ConformanceOutcome {
  * `undecidable` is a first-class reading: the comparator could not read its axis, and says so rather than reporting the
  * agreement of two absences.
  *
- * `unmeasured` is the narrower one, and only `candidate_admissibility` can report it. The comparator READ its axis and
+ * `unmeasured` is the narrower one, and only `candidate_admissibility` can report it. The comparator read its axis and
  * found nothing that violates the law — but the observation window was too small to prove the law either, so the
  * reading is neither a hold nor a failure. Both are counted apart from the verdict by `summarizeConformanceRun`: an
  * unmeasured row leaves the denominator rather than joining the numerator, so a suite that stops being able to measure
@@ -126,7 +126,7 @@ function populatedComponents(result: GauntletResult): Record<string, string> {
  *
  * A `placeID` is namespaced (`wof:1108826319`), so the source travels with the key: two ids minted by different
  * gazetteers can never compare equal by accident, which is the provenance half of "stable identity". An entry with no
- * `placeID` is UNVERIFIABLE, counted apart rather than folded in under its name — a name is not an identity, and
+ * `placeID` is unverifiable, counted apart rather than folded in under its name — a name is not an identity, and
  * counting it as one is how a namesake passes.
  */
 function identityChain(result: GauntletResult): { keys: string[]; unverifiable: number } {
@@ -145,7 +145,7 @@ function identityChain(result: GauntletResult): { keys: string[]; unverifiable: 
 }
 
 /**
- * Is `outer` the same chain as `inner` extended at the FINE end? `hierarchy` runs locality → country, so a refinement
+ * Is `outer` the same chain as `inner` extended at the fine end? `hierarchy` runs locality → country, so a refinement
  * adds entries at the front and leaves the tail untouched.
  */
 function extendsChain(inner: readonly string[], outer: readonly string[]): boolean {
@@ -335,9 +335,9 @@ function compareComponentMap(base: ConformanceOutcome, variant: ConformanceOutco
 		}
 	}
 
-	// The invariance suite's severity reading, carried WHATEVER branch is taken below. Its critical-tag rule
+	// The invariance suite's severity reading, carried whatever branch is taken below. Its critical-tag rule
 	// (house_number / street / postcode) is the judgment this module must not re-invent, and a law that fails
-	// still wants to know whether the drift was `DEGRADED` or `LOST`.
+	// still wants to know whether the drift was `degraded` or `lost`.
 	const { verdict, diff } = compareComponents(a, b)
 	const basis = `compareComponents verdict ${verdict} · base {${aKeys.toSorted().join(", ") || "empty"}} · variant {${bKeys.toSorted().join(", ") || "empty"}}`
 
@@ -348,10 +348,10 @@ function compareComponentMap(base: ConformanceOutcome, variant: ConformanceOutco
 	const added = bKeys.filter((tag) => a[tag] === undefined)
 
 	// A refinement law's variant carries more information, so `compareComponents`'s hallucination rule does not
-	// apply to it: that rule reads a gained critical tag as `LOST` because its premise is that both sides were fed
+	// apply to it: that rule reads a gained critical tag as `lost` because its premise is that both sides were fed
 	// the same information. Containment plus at least one new component is the refinement reading, and the
 	// severity verdict above still travels with it — an invariance law reaches this branch too, sees `refines`
-	// where it expected `equivalent`, and fails with `LOST` printed beside the gained tag.
+	// where it expected `equivalent`, and fails with `lost` printed beside the gained tag.
 	if (added.length && containsAll(a, b)) {
 		return {
 			comparator: "component_map",

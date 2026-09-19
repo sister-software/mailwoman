@@ -4,10 +4,10 @@
  * @author Teffen Ellis, et al.
  * @file The release-metadata surfaces over a planted tree, and the constraint that keeps the status page published.
  *
- *   The defect this pins (#2259): the check verified that A FILE cites the shipped model, never that the file is
+ *   The defect this pins (#2259): the check verified that A file cites the shipped model, never that the file is
  *   the one the site publishes, so it read the archived August copy and passed for four releases while
  *   https://mailwoman.ai said release 8.6.0 and model 7.0.0. A target that can move out from under a check while
- *   still RESOLVING reports success from the wrong place.
+ *   still resolving reports success from the wrong place.
  */
 
 import { temporaryDirectory } from "@mailwoman/core/fs/temporary"

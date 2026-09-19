@@ -3,7 +3,7 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Direct hook test for `useReleaseRuntime` — driven through a tiny harness with a FAKE injected loader
+ *   Direct hook test for `useReleaseRuntime` — driven through a tiny harness with a fake injected loader
  *   (no network, no ONNX, no httpvfs). Exercises the state machine: mount → manifest → default version
  *   → assets → ready. a version switch reloads the bundle. `forceWASM` reloads with the flag set. a
  *   rejecting `loadAssets` surfaces `errorMessage` and keeps `ready` false. and the staged

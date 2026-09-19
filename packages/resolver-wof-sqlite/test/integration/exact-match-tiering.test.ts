@@ -4,7 +4,7 @@
  * @author Teffen Ellis, et al.
  *
  *   Tests for exact-match tiering in `WOFSQLitePlaceLookup.findPlace` — the ranking fix that keeps
- *   the population/importance prior as an INTRA-tier tiebreaker instead of letting it promote a
+ *   the population/importance prior as an intra-tier tiebreaker instead of letting it promote a
  *   worse-matching candidate across tiers.
  *
  *   The motivating bug: querying the 2-letter region abbreviation "ME" returned Maine (which has the
@@ -16,7 +16,7 @@
  *   The population-override is forced deterministically here (large `populationBoost` + a decoy state
  *   with population while Maine has none) rather than relying on the small in-memory fixture's BM25
  *   balance happening to mirror the 1.8 GB production DB — where Maine's hundreds of alt-name rows
- *   dilute its FTS doc score (the real-world trigger). This isolates the TIERING logic.
+ *   dilute its FTS doc score (the real-world trigger). This isolates the tiering logic.
  */
 
 import type { RankingWeights } from "@mailwoman/resolver-wof-sqlite/lookup"
@@ -185,7 +185,7 @@ describe("findPlace — exact-match tiering", () => {
 		// is in the pool and tiering lifts it. No `country` hint — this is the bare, no-context path.
 		const decoys: SeedRegion[] = Array.from({ length: 60 }, (_, i) => ({
 			id: 1000 + i,
-			name: `Ny Province ${i}`, // tokenizes to include "ny" → matches `MATCH 'ny'`; short doc → good BM25
+			name: `Ny Province ${i}`, // tokenizes to include "ny" → matches `match 'ny'`; short doc → good BM25
 			country: "GB",
 			lat: 50 + i * 0.01,
 			lon: -1 + i * 0.01,

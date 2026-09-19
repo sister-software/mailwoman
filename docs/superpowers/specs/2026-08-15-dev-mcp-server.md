@@ -123,7 +123,7 @@ It returns `GeocodeSession { initTiming, geocode(input): Promise<GeocodeRun>, cl
 where `GeocodeRun` carries `result`, the `AddressTree` it resolved from, a `PipelineTiming`, and an
 optional `GeocodeTrace` (`:124-166`) holding `NeuralParseTrace`, `QueryShape`, the kind verdict, the
 `InputMode` and the locale. It has a documented `close()` that releases every handle (`:411-418`), and
-its construction order **is** the CLI's error contract (`:10-18`).
+its construction order **is** the CLI's error interface (`:10-18`).
 
 **The dev daemon builds on this rather than beside it.** Everything the trace surface needs is already
 assembled; `packages/mcp/lib/cli.ts` only does not use it.
@@ -344,7 +344,7 @@ unless the fingerprint is itself the declared variable (§6).
 - **Start.** `mwdevd` is started on demand by the MCP shim, or explicitly. It binds a Unix domain
   socket under `$XDG_RUNTIME_DIR` (falling back to the data root), one socket per `(dataRoot, repo
 path)` pair so two checkouts do not share a daemon. It holds **no** engine at startup; the first
-  tool call that needs one builds it. This mirrors `packages/mcp/lib/cli.ts:14-17`'s laziness contract, and
+  tool call that needs one builds it. This mirrors `packages/mcp/lib/cli.ts:14-17`'s laziness interface, and
   for the same reason: an agent may connect, list tools, and never call one.
 - **Idle.** Engines are evicted after a configurable idle interval; the daemon exits after a longer one
   with no clients. Both intervals are reported by `mwdev_daemon`.
@@ -433,7 +433,7 @@ out (describe): { set_id, n, sha256, source, strata: { by_country: {…}, by_add
   `{ kind: "board", status: "pass" }` — a declared subset, reported with its own denominator and with
   what the subset excluded.
 - `{ kind: "panel", version: "v2" | "v3" }` — the benchmark panel (420 / 424 rows), which carries
-  `truth_type` and so supports stratified reporting.
+  `truth_type` and. Therefore, supports stratified reporting.
 - `{ kind: "golden", version: "v0.1.3", split: "dev" }`
 - `{ kind: "parity" }` — the 321-row triaged parse-parity fixtures.
 - `{ kind: "holdout", source: "fr" | "us", n: 300, seed: … }` — a fresh draw, the only set the model
@@ -983,7 +983,7 @@ These need a decision from the operator; each is a real fork rather than a detai
    panels are multi-country and a US-only oracle cannot speak to most of them. Three properties make the
    permission safe to hold. The opt-in lives in `$MAILWOMAN_DATA_ROOT/dev-mcp/oracle-config.json` and
    deliberately **not** on a tool argument — a tool argument is set by whoever is driving the agent, which
-   for a spend decision is the wrong signature, so an agent cannot talk its way into spending money. The
+   for a spend decision is the wrong signature. Therefore, an agent cannot talk its way into spending money. The
    cap is checked for the whole run before the first query, so a set the caller cannot afford costs zero
    calls rather than a partial arm that can still be graded as a whole one. And the meter counts queries
    rather than issued requests, so a warm cache over-counts — the direction whose failure is refusing an

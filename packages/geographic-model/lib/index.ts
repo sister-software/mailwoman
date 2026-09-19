@@ -35,7 +35,7 @@
  *   4. **Empirical affordance statistics.** #1683 fits those. This package owns the stable
  *      activity and affordance identifiers they are fitted against, and nothing numeric about them.
  *
- *   `@mailwoman/core` must not depend on this package. Core ships the pipeline contract and roughly
+ *   `@mailwoman/core` must not depend on this package. Core ships the pipeline interface and roughly
  *   9 MB of reference data to every consumer, so a world-semantics dependency there is one every
  *   drop-in API inherits without asking for it. Reversing that direction is an explicit amendment to
  *   the boundary record rather than a convenience during implementation.

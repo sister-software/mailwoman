@@ -44,7 +44,7 @@ pytestmark = pytest.mark.skipif(
 
 # Inline node driver: imports the real TS converter (Node strips types natively), runs it on
 # the argv-supplied paths, and forwards any thrown error's message to stderr with a non-zero
-# exit — so the loud-failure assertions below exercise the converter's own contract text.
+# exit — so the loud-failure assertions below exercise the converter's own interface text.
 _NODE_DRIVER = """
 import { pathToFileURL } from "node:url";
 const { jsonlToParquet } = await import(pathToFileURL(%s).href);

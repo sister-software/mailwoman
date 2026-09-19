@@ -1,6 +1,6 @@
 # Gazetteer CLI PR E: the last ports — drawer endgame (#1029)
 
-> **For agentic workers:** REQUIRED SUB-SKILL: superpowers:executing-plans (inline). The established
+> **For agentic workers:** required sub-skill: superpowers:executing-plans (inline). The established
 > pattern (PR B Tasks 5–8, PR D Task 1): script body → pipeline function (verbatim, seal kept),
 > `parseArgs` → zod options, thin Ink command; tsc + lint per commit; per-family commits.
 

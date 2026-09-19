@@ -3,15 +3,15 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   #1514 — the alias fold must be IDEMPOTENT against a DB that already carries a fold.
+ *   #1514 — the alias fold must be idempotent against a DB that already carries a fold.
  *
- *   The synthetic id a GeoNames place gets is its POSITION in the run (`GEONAMES_ID_BASE + n`,
+ *   The synthetic id a GeoNames place gets is its position in the run (`GEONAMES_ID_BASE + n`,
  *   counted across the country list in order), not a derivation from its geonameid. So two runs with
  *   different country lists put different places at the same id. That alone is survivable — a fold
  *   output is only ever read as a whole — but the writes were not: `spr`/`place_population` used
- *   `INSERT OR REPLACE` (overwrite the PREFIX the new run reaches, leave the tail), while
- *   `names`/`ancestors` used a bare `INSERT` (append, never clear). Re-folding therefore left the
- *   previous run's NAMES bound to ids whose `spr` row now described a different place.
+ *   `insert or replace` (overwrite the prefix the new run reaches, leave the tail), while
+ *   `names`/`ancestors` used a bare `insert` (append, never clear). Re-folding therefore left the
+ *   previous run's names bound to ids whose `spr` row now described a different place.
  *
  *   Live receipt (2026-08-05 18:09, `admin-global-priority-geonames.db`): id 9000000121151 held
  *   Gaborone/BW from the 161-country fold baked into `admin-global-priority.db`; a 14-country re-fold

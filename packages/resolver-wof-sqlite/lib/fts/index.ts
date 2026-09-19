@@ -24,34 +24,34 @@ export const PLACE_SEARCH_TABLE = "place_search"
 
 /**
  * Boundary-preserving separator between aliases in the `alt_names` bag (#523): U+E000, the first Private Use Area
- * codepoint, written as an escape so the source stays plain ASCII.
+ * codepoint, written as an escape so the source stays plain ascii.
  *
- * Why a PUA codepoint and not punctuation: the goal is to stop a phrase query from matching ACROSS two adjacent
+ * Why a PUA codepoint and not punctuation: the goal is to stop a phrase query from matching across two adjacent
  * aliases' concatenation boundary ("York" + "New City" must not phrase-match `"york new"`). FTS5 assigns token
- * positions to TOKENS only — separator characters never consume a position — so any character the tokenizer treats as a
+ * positions to tokens only — separator characters never consume a position — so any character the tokenizer treats as a
  * boundary leaves the two aliases' tokens adjacent and the false phrase match intact. The separator must therefore be
- * an INDEXED TOKEN that sits between the aliases and breaks positional adjacency.
+ * an indexed token that sits between the aliases and breaks positional adjacency.
  *
  * Empirical probe (node:sqlite, `tokenize = 'unicode61 remove_diacritics 2'` — the exact config below). Bag = the
- * aliases "York" and "New City" joined by each candidate separator. query = the cross-boundary phrase `MATCH '"york
+ * aliases "York" and "New City" joined by each candidate separator. query = the cross-boundary phrase `match '"york
  * new"'`:
  *
  * - `' '` (the pre-#523 join, no separator) — false HIT
  * - `' ; '` (punctuation) — false HIT
  * - `' \u2016 '` (double vertical line) — false HIT
- * - `' \x1F '` (ASCII unit separator) — false HIT
- * - `' \uE000 '` (PUA, this constant) — NO match, while `'"york"'` and `'"new city"'` still match the bag individually
+ * - `' \x1F '` (ascii unit separator) — false HIT
+ * - `' \uE000 '` (PUA, this constant) — no match, while `'"york"'` and `'"new city"'` still match the bag individually
  *   under every variant above.
  *
  * U+E000 works because unicode61 classifies it (category Co — neither space nor punctuation) as a token character, so
  * the standalone `\uE000` between aliases is indexed as its own token and the aliases' tokens are no longer
  * positionally adjacent. The remaining requirements also hold:
  *
- * - **Unreachable from queries**: `sanitizeFTSQuery` (Node + WASM resolvers) strips everything outside `\p{L}\p{N}` from
+ * - **Unreachable from queries**: `sanitizeFTSQuery` (Node + wasm resolvers) strips everything outside `\p{L}\p{N}` from
  *   token bodies, and U+E000 is neither — no user query can ever address the separator token. The demo's `sanitizeFTS`
  *   strips it explicitly.
  * - **Never in place names**: PUA codepoints are unassigned by definition. real-world WOF names don't carry them.
- *   Defensively, the INSERT below also strips any embedded U+E000 from source names so a poisoned row can't forge an
+ *   Defensively, the insert below also strips any embedded U+E000 from source names so a poisoned row can't forge an
  *   alias boundary.
  * - **Survives GROUP_CONCAT**: verified — `GROUP_CONCAT(name, ' ' || char(57344) || ' ')` emits the codepoint intact
  *   (`57344` = 0xE000).
@@ -68,14 +68,14 @@ export const PLACE_SEARCH_TABLE = "place_search"
 export const ALIAS_SEPARATOR = "\uE000"
 
 /**
- * `char()` argument for {@link ALIAS_SEPARATOR} in SQL — keeps the SQL text plain ASCII.
+ * `char()` argument for {@link ALIAS_SEPARATOR} in SQL — keeps the SQL text plain ascii.
  */
 const ALIAS_SEPARATOR_CODEPOINT = ALIAS_SEPARATOR.codePointAt(0) as number
 
 /**
  * The query/name fold every exact-tier comparison uses: lowercase, trim, collapse internal whitespace. The `alt_names`
  * bag is compared alias-by-alias against a query folded this way, so the fold lives beside the bag parser — every
- * consumer (the Node resolver's exact tier, the WASM resolver, the name-exact sub-tier sort) folds through this one
+ * consumer (the Node resolver's exact tier, the wasm resolver, the name-exact sub-tier sort) folds through this one
  * function.
  */
 export function foldQueryText(input: string): string {
@@ -84,14 +84,14 @@ export function foldQueryText(input: string): string {
 
 /**
  * Does any alias in an `alt_names` bag exactly equal the (already-normalized) query? The single shared implementation
- * of the exact-tier alias check for every consumer of the bag — the Node resolver's `#exactMatchIDs` fallback, the WASM
+ * of the exact-tier alias check for every consumer of the bag — the Node resolver's `#exactMatchIDs` fallback, the wasm
  * resolver, and the demo's httpvfs resolver — so the bag format and its parsers can't drift.
  *
  * Two formats exist in the wild:
  *
  * - **Separated bags** (built since #523): aliases joined with {@link ALIAS_SEPARATOR}, plus a trailing separator so even
  *   a single-alias bag self-identifies as separator-formatted. Split + per-alias equality — a true exact-alias check,
- *   matching the semantics of the full `names` table (`names.name = ? COLLATE NOCASE`), so it runs unrestricted: an
+ *   matching the semantics of the full `names` table (`names.name = ? collate nocase`), so it runs unrestricted: an
  *   alias match is an exact match whether or not another candidate matched on its canonical name.
  * - **Legacy bags** (pre-#523 artifacts, e.g. an already-deployed slim DB): aliases space-joined, boundaries lost. Falls
  *   back to the historical padded-containment check, conditioned on `anyStrictExact` — unrestricted containment would
@@ -129,7 +129,7 @@ export const PLACE_BBOX_TABLE = "place_bbox"
  * penalty. Built upstream by `scripts/build-unified-wof.ts` at ingest (and copied through by `build-slim`) — this
  * module consumes it, never builds it.
  *
- * Schema: `(id INTEGER PRIMARY KEY, population INTEGER NOT NULL)`. Plain table rather than virtual.
+ * Schema: `(id integer primary KEY, population integer not NULL)`. Plain table rather than virtual.
  */
 export const PLACE_POPULATION_TABLE = "place_population"
 
@@ -139,7 +139,7 @@ export const PLACE_POPULATION_TABLE = "place_population"
  * gazetteer importance`; schema and derivations in `place-importance-schema.ts`.
  *
  * The lookup reads only `encyclopedic` from it, and only to carry the value onto the result — referential is derived
- * from the population already joined, and no ORDER BY anywhere touches this table (ROAD_TO_V9 §2). Sparse and
+ * from the population already joined, and no order BY anywhere touches this table (ROAD_TO_V9 §2). Sparse and
  * schema-versioned: a pre-split gazetteer has this table with a single conflated `importance` column instead, which the
  * lookup's column probe deliberately refuses to read.
  */
@@ -181,7 +181,7 @@ export interface BuildPlaceSearchFTSOpts {
 	drop?: boolean
 	/**
 	 * Optional progress callback invoked after each phase. Useful for CLI output on the planet-scale builds where the
-	 * INSERT step can take minutes.
+	 * insert step can take minutes.
 	 */
 	onProgress?: (
 		phase: "checking" | "dropping" | "creating" | "populating" | "creating-bbox" | "populating-bbox" | "done",
@@ -193,7 +193,7 @@ export interface BuildPlaceSearchFTSOpts {
  * Build (or rebuild, with `drop: true`) the `place_search` FTS5 virtual table and the `place_bbox` R*Tree virtual table
  * from the existing `spr` + `names` tables in a WOF SQLite distribution.
  *
- * The FTS5 index is used for name-based `MATCH` queries. the R*Tree is used for bbox + proximity filtering. Both are
+ * The FTS5 index is used for name-based `match` queries. the R*Tree is used for bbox + proximity filtering. Both are
  * pure SQLite — no extensions required.
  *
  * Returns a `BuildPlaceSearchFTSResult` summary. Idempotent when `drop: false` — re-running against an already-indexed
@@ -239,7 +239,7 @@ export function buildPlaceSearchFTS<DB>(
 		//
 		// Aliases join on the boundary-preserving ALIAS_SEPARATOR token (#523) — space-padded so each
 		// alias still tokenizes normally — and any U+E000 embedded in a source name is defensively
-		// flattened to a space so it can't forge a boundary. A TRAILING separator marks the bag as
+		// flattened to a space so it can't forge a boundary. A trailing separator marks the bag as
 		// separator-formatted even when it holds a single alias, so `aliasBagExactMatch` never
 		// mistakes a new bag for a legacy (pre-#523) one. See the ALIAS_SEPARATOR docs for the
 		// probe + rationale.
@@ -277,8 +277,8 @@ export function buildPlaceSearchFTS<DB>(
 	if (!bboxExisting || opts.drop) {
 		onProgress("creating-bbox")
 
-		// R*Tree requires INTEGER PRIMARY KEY (id) + paired min/max for each indexed dimension.
-		// `rtree` (not `rtree_i32`) keeps coordinates in the SQLite REAL type — what we want for WGS-84.
+		// R*Tree requires integer primary KEY (id) + paired min/max for each indexed dimension.
+		// `rtree` (not `rtree_i32`) keeps coordinates in the SQLite real type — what we want for WGS-84.
 		db.exec(`
 			CREATE VIRTUAL TABLE ${PLACE_BBOX_TABLE} USING rtree(
 				id,
@@ -317,7 +317,7 @@ export function buildPlaceSearchFTS<DB>(
 
 	const bboxCountRow = db.prepare(`SELECT COUNT(*) AS n FROM ${PLACE_BBOX_TABLE}`).get() as { n: number }
 
-	// NOTE: `place_population` is not built here. `scripts/build-unified-wof.ts` extracts
+	// note: `place_population` is not built here. `scripts/build-unified-wof.ts` extracts
 	// `wof:population` straight into that table at ingest (the canonical source carries no `geojson`
 	// table), and `build-slim` copies it through. This function only owns the two FTS-derived virtual
 	// tables, both of which build from `spr` + `names` alone. `placePopulationExists` lets callers

@@ -5,7 +5,7 @@
  *
  *   The `soil.db` reader — what the soil survey assigns at a coordinate, and on what basis.
  *
- *   THREE ANSWERS, AND KEEPING THEM APART IS THE WHOLE JOB.
+ *   three answers, and keeping them apart is the whole JOB.
  *
  *   1. `designated` — the survey mapped this location and the cell's class distribution is the answer.
  *   2. `designated_no_rating` — the survey mapped this location and rated nothing there. A cell that is
@@ -15,28 +15,28 @@
  *   3. `unknown` — no coverage row. Outside any published survey area, or inside one where the polygon
  *      exists and the soil mapping behind it does not.
  *
- *   READINGS 2 AND 3 LOOK THE SAME FROM A CLASS CODE AND ARE OPPOSITE ANSWERS FROM THE READER. A layer that
+ *   readings 2 and 3 look the same from A class code and are opposite answers from the reader. A layer that
  *   could not tell them apart would report unmapped ground as unrated ground, which is one of the four
  *   absences this whole layer exists to keep separate.
  *
- *   THE ANSWER IS A DISTRIBUTION, AND THE TOP CLASS ALWAYS ARRIVES WITH THE SHARE IT RESTS ON. NRCS's own
+ *   the answer is A distribution, and the TOP class always arrives with the share IT rests on. nrcs's own
  *   `muaggatt` ships `niccdcd` beside `niccdcdpct` for exactly this reason, with an observed minimum of 2%.
  *   A caller that wants one class may take `topClass`; it cannot take it without also being handed
  *   `topClassShare`, because a 2% plurality and an 85% majority are different claims.
  *
- *   NEITHER READING IS A STATEMENT ABOUT WHETHER THE LAND CAN BE FARMED. The layer reports what the soil
- *   survey assigns to the map unit covering a location, which is a fact about the map. NRCS states that its
+ *   neither reading is A statement about whether the land can be farmed. The layer reports what the soil
+ *   survey assigns to the map unit covering a location, which is a fact about the map. nrcs states that its
  *   data "do not eliminate the need for onsite sampling, testing, and detailed study of specific sites for
  *   intensive uses" and are "intended for planning purposes only" — so `limits` carries the authority's own
  *   exclusions on every answer.
  *
- *   THE PROBE IS ONE PRIMARY-KEY READ. The reduction is single-resolution and one row per cell, which is
+ *   the probe is one primary-KEY read. The reduction is single-resolution and one row per cell, which is
  *   what makes it the spine key: a coordinate becomes a cell, the cell becomes a row, and the geometry tier
  *   underneath is never touched at read time. The unsimplified rings are there for a caller that wants to
  *   re-derive the claim rather than for the probe.
  *
- *   THE READER IS SYNCHRONOUS AND USES RAW PREPARED STATEMENTS, matching the resolution ladder's existing
- *   shape. The DDL that created these tables IS Kysely — see `schema.ts`.
+ *   the reader is synchronous and uses RAW prepared statements, matching the resolution ladder's existing
+ *   shape. The DDL that created these tables is Kysely — see `schema.ts`.
  */
 
 import { parseJSONStrict, stringifyJSON } from "@mailwoman/core/json"
@@ -131,7 +131,7 @@ export interface SoilSurveyAreaRecord {
 	 */
 	saverest: string
 	/**
-	 * The FIELD survey date, which is a different fact and is usually much older.
+	 * The field survey date, which is a different fact and is usually much older.
 	 */
 	surveySourceDate: string | null
 	surveySourceTitle: string | null
@@ -199,7 +199,7 @@ export interface SoilCapabilityLookupOptions {
 /**
  * Read a sealed `soil.db`.
  *
- * Everything that would make the reader answer a well-formed wrong thing is refused at CONSTRUCTION rather than at
+ * Everything that would make the reader answer a well-formed wrong thing is refused at construction rather than at
  * query time: a manifest naming a different product, a coverage table with no rows, a vocabulary with no classes. Each
  * of those would otherwise present as a reader that simply always answers `unknown`, which on a receipt is
  * indistinguishable from a region the authority genuinely has not surveyed.
@@ -246,7 +246,7 @@ export class SoilCapabilityLookup implements Disposable {
 		const indexCell = latLngToCell(latitude, longitude, this.identity.indexResolution) as H3Cell
 		const coverage = this.#readCoverage(indexCell)
 
-		// COVERAGE QUALIFIES THE READING, and without it there is nothing to report. Unlike a polygon hit — which is a
+		// coverage qualifies the reading, and without it there is nothing to report. Unlike a polygon hit — which is a
 		// determination at a location and needs no coverage row to be true — every answer this layer gives is a per-cell
 		// summary, so a summary row without a coverage row would state a determination outside the authority's footprint.
 		if (!coverage) {
@@ -329,7 +329,7 @@ export class SoilCapabilityLookup implements Disposable {
 	 * the reading came from, and two neighbouring counties' rectangles overlap at their corners. The reading itself does
 	 * not depend on it — the cell row is the answer — so a corner ambiguity costs a label rather than a determination.
 	 *
-	 * A LINEAR SCAN, WHICH THE PILOT'S 99 SURVEY AREAS MAKE FREE AND A NATIONAL BUILD WOULD NOT. It returns on the first
+	 * A linear scan, which the pilot'S 99 survey areas make free and A national build would not. It returns on the first
 	 * containing rectangle, so the pilot costs a few dozen comparisons per geocode. At the 3,380 survey areas the country
 	 * holds this wants a bounding-box index. it is left as a scan because a structure sized for a set this build does not
 	 * hold would be untested at the size it was built for.
@@ -365,7 +365,7 @@ function readIdentity(
 		Record<string, string | number | null>
 	>
 
-	// The name's SUFFIX names the region a build covers, so the reader checks the prefix rather than a whole name — which
+	// The name's suffix names the region a build covers, so the reader checks the prefix rather than a whole name — which
 	// is why it asserts its own identity instead of taking `parseManifestRows`: one authority, one product, one rating
 	// vocabulary per artifact, over whichever survey areas were built.
 	const row = singleManifestRow(manifestRows, `soil reader: ${databasePath}`)

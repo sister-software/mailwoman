@@ -9,7 +9,7 @@
  *   metered reference geocoder, and a stored past run.
  *
  *   Every kind gets its own schema branch, and that is the required detail in this file. A bare {@link EngineConfig}
- *   stays legal as shorthand so the older two-mailwoman-arms call keeps working, and a zod object STRIPS unknown keys —
+ *   stays legal as shorthand so the older two-mailwoman-arms call keeps working, and a zod object strips unknown keys —
  *   so without an explicit branch, `{kind:"oracle", provider:"google"}` parses cleanly as an empty mailwoman config and
  *   silently runs the production default against itself. The caller would get a comparison, a verdict, and no
  *   indication whatever that they did not get the arm they asked for. That is why a kind is never handled by falling
@@ -28,7 +28,7 @@ import { WORKING_TREE_REF } from "#worktree/arm"
 /**
  * How one arm answers one raw query string, whichever kind of arm it is.
  *
- * Lives beside the arm SPECS rather than inside the comparison, so a new arm kind can be implemented in its own module
+ * Lives beside the arm specs rather than inside the comparison, so a new arm kind can be implemented in its own module
  * without that module importing the comparison — which would close a cycle, since the comparison must import it back.
  */
 export interface ArmRunner {
@@ -41,8 +41,8 @@ export interface ArmRunner {
 /**
  * A mailwoman arm — one warm engine under one configuration.
  *
- * "Configuration" includes the MODEL: `config.weights_cache` names a candidate weights bundle, so shipped-vs-candidate
- * is an ordinary two-arm comparison here rather than a pair of hand-written scripts. What it cannot vary is SOURCE —
+ * "Configuration" includes the model: `config.weights_cache` names a candidate weights bundle, so shipped-vs-candidate
+ * is an ordinary two-arm comparison here rather than a pair of hand-written scripts. What it cannot vary is source —
  * both arms run whatever this process imported, which is what {@link WorktreeArm} exists for.
  */
 interface MailwomanArm {
@@ -76,7 +76,7 @@ export interface OracleArm {
  * A stored past run, replayed row by row.
  *
  * `arm` names which side of that run to replay, because a stored comparison has two. It defaults to `mailwoman` at the
- * call site rather than here, so this type keeps saying that a recorded arm is a run PLUS a side.
+ * call site rather than here, so this type keeps saying that a recorded arm is a run plus a side.
  */
 export interface RecordedArm {
 	kind: "recorded"
@@ -85,17 +85,17 @@ export interface RecordedArm {
 }
 
 /**
- * A mailwoman arm running a DIFFERENT VERSION OF THE SOURCE, in its own process (see `worktree-arm.ts`).
+ * A mailwoman arm running a different version OF the source, in its own process (see `worktree-arm.ts`).
  *
  * The kind a source change needs and the other four cannot express. A `mailwoman` arm runs whatever this process
- * imported, so two of them can only differ by CONFIG — which does cover the model, via `weights_cache`, but never the
+ * imported, so two of them can only differ by config — which does cover the model, via `weights_cache`, but never the
  * code that loads it. a `recorded` arm replays a past run but cannot produce a new one at an old ref. Neither answers
  * "what does my edit do", which is the question most maintainer changes are.
  */
 export interface WorktreeArm {
 	kind: "worktree"
 	/**
-	 * A git ref, or `WORKTREE` for the uncommitted working tree.
+	 * A git ref, or `worktree` for the uncommitted working tree.
 	 */
 	ref: string
 	config: EngineConfig

@@ -93,15 +93,15 @@ describe("openPlausibilityPOIDeps", () => {
 		expect(await openPlausibilityPOIDeps("/nonexistent/path/poi.db")).toBeUndefined()
 	})
 
-	it("opens a lookup + contractDB pair sharing one handle when the file is present", async () => {
+	it("opens a lookup + schemadb pair sharing one handle when the file is present", async () => {
 		const path = await poiFixtureFile("poi.db")
 		const poi = await openPlausibilityPOIDeps(path)
 
 		expect(poi).toBeDefined()
 		expect(poi?.lookup).toBeDefined()
-		expect(poi?.contractDB).toBeDefined()
+		expect(poi?.schemadb).toBeDefined()
 
-		await poi?.contractDB.destroy()
+		await poi?.schemadb.destroy()
 	})
 })
 

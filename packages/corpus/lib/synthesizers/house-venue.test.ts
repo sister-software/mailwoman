@@ -80,7 +80,7 @@ describe("synthesizeHouseVenueRow", () => {
 		})
 
 		expect(row).not.toBeNull()
-		// The exact gauntlet failure family: "VENUE, 20 Rue de la Huchette, 75005 Paris".
+		// The exact gauntlet failure family: "venue, 20 Rue de la Huchette, 75005 Paris".
 		expect(row!.raw).toMatch(/^.+, 20 Rue de la Huchette, 75005 Paris$/)
 		expect(row!.components.region).toBeUndefined()
 		expect(row!.components.postcode).toBe("75005")
@@ -103,7 +103,7 @@ describe("synthesizeHouseVenueRow", () => {
 		})
 
 		expect(row).not.toBeNull()
-		// The #1366 gauntlet failure family: "VENUE, 27 Minories, London EC3N 1DE".
+		// The #1366 gauntlet failure family: "venue, 27 Minories, London EC3N 1DE".
 		expect(row!.raw).toMatch(/^.+, 27 Minories, London EC3N 1DE$/)
 		expect(row!.components.region).toBeUndefined()
 		expect(row!.components.postcode).toBe("EC3N 1DE")

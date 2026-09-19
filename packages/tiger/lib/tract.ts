@@ -10,7 +10,7 @@ import type { TIGERProperty, TIGERPropertyRecord } from "#constants"
 import type { FIPSTractGeoID, GeoIDPart, ParsedGeoIDTractLevel } from "#geoid"
 
 /**
- * @title TIGER Tract
+ * @title tiger Tract
  * @public
  */
 export interface TIGERTract extends ParsedGeoIDTractLevel {

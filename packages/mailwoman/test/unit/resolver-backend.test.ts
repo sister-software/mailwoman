@@ -139,7 +139,7 @@ test("loadCapitalIndex prefers the artifact's capital table, falls back to the r
 		/capital_tier/
 	)
 
-	// The DEFAULT-ON path degrades on the same absence instead of failing session construction.
+	// The default-on path degrades on the same absence instead of failing session construction.
 	expect(
 		await loadCapitalIndex({ candidateDB: barePath, path: join(dir, "missing.json"), missing: "degrade" })
 	).toBeUndefined()

@@ -57,7 +57,7 @@ above:
 - **Immunity to near-postcode suppression.** The country channel is built independently and is NOT
   passed through `suppressGazetteerNearPostcode`, closing the "…12345 USA" recall hole.
 - **Clean mirror of the two-channel architecture.** Same char-paint → SP-projection → per-piece
-  `{features, confidence}` contract; same ONNX feed pattern (`country_features` /
+  `{features, confidence}` interface; same ONNX feed pattern (`country_features` /
   `country_confidence`); same `requires.country` fail-closed declaration; same confidence=0 identity
   when a country-trained model runs without the lexicon.
 

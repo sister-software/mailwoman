@@ -3,9 +3,9 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   The pty fixture behind `input.pty.test.ts`: the REAL {@link QueryInput}, wired the way
+ *   The pty fixture behind `input.pty.test.ts`: the real {@link QueryInput}, wired the way
  *   `DebugSessionApp` wires it (a parent `useInput` owning escape, the field owning everything else), plus a plain
- *   `VALUE=[…]` echo the test asserts against.
+ *   `value=[…]` echo the test asserts against.
  *
  *   JSX-free `createElement`, like the component it renders, because bare node strips types but does not transform
  *   JSX — and running the shipped source under a real terminal is the whole point of the probe. A fixture that

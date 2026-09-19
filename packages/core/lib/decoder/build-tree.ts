@@ -74,7 +74,7 @@ function bioParts(label: BIOLabel): { prefix: "B" | "I" | "O"; tag: ComponentTag
 // produces a clean canonical value and clean start/end offsets so downstream consumers slicing
 // raw[start:end] get the same string as node.value.
 //
-// EXCEPTION: a trailing period directly adjacent to a word character is an abbreviation marker
+// exception: a trailing period directly adjacent to a word character is an abbreviation marker
 // ("Str." / "St." / "Ave."). The model includes these in the span correctly. stripping them loses
 // the abbreviation suffix. We preserve the period when it is immediately preceded by \p{L}\p{N}
 // and not separated by whitespace — the slip pattern we guard against is ", 22220" / "Paris 75004,"

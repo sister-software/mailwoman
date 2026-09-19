@@ -7,14 +7,14 @@
  *   coverage-reconciliation.ts` does inline, so the CLI (`registry --reconcile`) and any consumer
  *   can reuse it.
  *
- *   Given entities already resolved ACROSS sources (#618), classify each by which KIND of source its
+ *   Given entities already resolved across sources (#618), classify each by which kind of source its
  *   records come from. You tag each source label as either an **eligibility** source (it denotes
  *   membership in some base set — e.g. registered providers/facilities) or a **funding/enrollment**
  *   source (it denotes participation in a program). Three buckets fall out per entity:
  *
  *   - **enrolled** — resolves to both an eligibility and a funding record.
  *   - **eligible rather than enrolled** — an eligibility record with no funding record resolving to it (the
- *       ANTI-JOIN).
+ *       anti-join).
  *   - **funded rather than in the eligibility set** — a funding record with no eligibility record resolving to
  *       it.
  *

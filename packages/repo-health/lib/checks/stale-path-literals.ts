@@ -5,14 +5,14 @@
  * @file A quoted repository path naming a file that moved.
  *
  *   A moved file leaves two kinds of reference behind. The compiler reads one of them — an import specifier — and
- *   reports it. The other is a STRING: a registry entry, a `run:` block, a CLI flag default, a docstring, a
+ *   reports it. The other is a string: a registry entry, a `run:` block, a CLI flag default, a docstring, a
  *   provenance line written into a generated artifact. Nothing reads those until something runs, and each is read
- *   by code that treats absence as a NEGATIVE ANSWER rather than an error, so the failure is a well-formed wrong
+ *   by code that treats absence as a negative answer rather than an error, so the failure is a well-formed wrong
  *   result rather than a crash. `mwops health fix prefix-directories` rewrites a moved file's references from
  *   other files and not a file's references to itself, so the tool built for this class shares the blind spot.
  *
- *   TWO TESTS, AND THE SECOND IS THE ONE THAT MAKES IT USABLE. A literal must look like a repository path — first
- *   segment a repository directory, last segment carrying a file extension — AND name a path this repository once
+ *   two tests, and the second is the one that makes IT usable. A literal must look like a repository path — first
+ *   segment a repository directory, last segment carrying a file extension — and name a path this repository once
  *   tracked. The shape test alone reported 93 literals over this tree, almost all of them correct: a path a
  *   `.run.ts` writes does not exist until it runs, `packages/neural-weights-en-us/model.onnx` is materialized and
  *   deliberately uncommitted, and a symbol test plants `packages/foo/new.ts` as fixture data. Requiring the path
@@ -20,12 +20,12 @@
  *   which is what the check is for. A typo naming a path that never existed is a different defect, and the tool
  *   reading it fails immediately rather than answering wrongly.
  *
- *   TEST SOURCES ARE OUT OF SCOPE. All 20 survivors are in tests OF the path machinery itself — the symbol
+ *   test sources are OUT OF scope. All 20 survivors are in tests OF the path machinery itself — the symbol
  *   index's fixtures, `manifest-targets`, `move/specifiers` — which necessarily name paths that no longer exist.
  *   A test plants trees, so a path there is fixture data as often as a reference, and the two are not separable
  *   by inspection.
  *
- *   WHAT IT CANNOT SEE, stated because silence is otherwise read as a clean tree: a path assembled from segments,
+ *   what IT cannot SEE, stated because silence is otherwise read as a clean tree: a path assembled from segments,
  *   a path behind a variable, a template literal that interpolates, and a browser selector, which is not a path at
  *   all. Those are `yarn test`'s to catch.
  *
@@ -94,7 +94,7 @@ export async function findStalePathLiterals(context: {
 	const tracked = new Set(context.trackedFiles)
 
 	// `existingOnly`: the index can name a file the working tree no longer has — a rename staged and not committed is
-	// enough — and this walk OPENS every path it is given, so the absent one throws ENOENT and the check fails for a
+	// enough — and this walk opens every path it is given, so the absent one throws enoent and the check fails for a
 	// reason that has nothing to do with path literals. `tracked` above keeps the full index, because a literal naming a
 	// staged-for-deletion file is still a literal naming a tracked file.
 	const sources = (await trackedSourcePaths(context, { existingOnly: true }))

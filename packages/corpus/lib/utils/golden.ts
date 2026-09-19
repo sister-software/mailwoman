@@ -72,7 +72,7 @@ export interface GoldenReport {
 }
 
 /**
- * Parse a single JSONL line into a `GoldenEntry`. Throws on schema violations.
+ * Parse a single jsonl line into a `GoldenEntry`. Throws on schema violations.
  */
 export function parseGoldenLine(line: string): GoldenEntry {
 	// The throw is the result: `validateGoldenFile` catches it and records the message against the line
@@ -133,8 +133,8 @@ export function unreachableComponents(entry: GoldenEntry): ComponentTag[] {
 /**
  * Validate one `.jsonl` file end-to-end, returning a list of issues.
  *
- * Parses line by line over `TextSpliterator` rather than `JSONSpliterator`: every issue this returns carries the LINE
- * NUMBER it was found on, and a malformed line has to be REPORTED rather than thrown. `JSONSpliterator` parses each row
+ * Parses line by line over `TextSpliterator` rather than `JSONSpliterator`: every issue this returns carries the line
+ * number it was found on, and a malformed line has to be reported rather than thrown. `JSONSpliterator` parses each row
  * for you and throws on the first bad one — correct for consumers that want the rows, wrong for the validator whose
  * whole job is locating the bad ones.
  */

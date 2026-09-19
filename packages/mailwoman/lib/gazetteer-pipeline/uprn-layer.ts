@@ -3,26 +3,26 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Build `uprn.db` — the OS **Open UPRN** spatial layer: every GB Unique Property Reference Number
- *   with the WGS84 point OS publishes for it, so mailwoman results can carry UPRN as an
+ *   Build `uprn.db` — the OS **Open uprn** spatial layer: every GB Unique Property Reference Number
+ *   with the WGS84 point OS publishes for it, so mailwoman results can carry uprn as an
  *   interoperability key beside our own `@mailwoman/address-id`. Schema + the shared cell derivation
  *   live in `@mailwoman/resolver-wof-sqlite/uprn-schema`; the Node reader is
  *   `@mailwoman/resolver-wof-sqlite/uprn-lookup`.
  *
  *   ## Acquisition
  *
- *   Open UPRN is an OS OpenData product on the same public **OS Downloads API** as Code-Point Open
+ *   Open uprn is an OS OpenData product on the same public **OS Downloads API** as Code-Point Open
  *   (two unauthenticated GETs. the listing carries OS's own md5 + byte size, which the download is
  *   verified against). The API client is shared with `postcode/codepoint/fetch.ts` — the client is
  *   product-neutral even though its module home is not. hoisting the whole fetch trio out of
  *   `postcode/codepoint/` is the follow-up when a third OS product arrives. Acquisitions land in a
- *   dated `$MAILWOMAN_DATA_ROOT/os-uprn/<YYYY-MM-DD>/` directory with an `acquisition.json` + `.md5`
+ *   dated `$MAILWOMAN_DATA_ROOT/os-uprn/<yyyy-MM-DD>/` directory with an `acquisition.json` + `.md5`
  *   sidecar, so an offline rebuild recovers provenance without re-asking an API whose answer has
  *   moved on.
  *
  *   ## Coordinates: OS's WGS84 columns, never reconverted
  *
- *   The CSV carries both OSGB36 eastings/northings AND WGS84 `LATITUDE`/`LONGITUDE` per row. This
+ *   The CSV carries both OSGB36 eastings/northings and WGS84 `latitude`/`longitude` per row. This
  *   build takes OS's lat/lon verbatim: re-deriving them from eastings through our 7-parameter
  *   Helmert (measured p95 4.18 m) would replace the publisher's OSTN15-grade answer with a strictly
  *   worse one.
@@ -39,7 +39,7 @@
  *   ## Coverage
  *
  *   GB only — England, Scotland, Wales (the Downloads API publishes a single `GB` area). OS
- *   designates the product complete (every UPRN in AddressBase Premium, with geometry), so every
+ *   designates the product complete (every uprn in AddressBase Premium, with geometry), so every
  *   res-6 cell holding rows is written `basis: designated, completeness: 1`. Cells with no rows are
  *   left absent — some are genuinely empty GB moorland, some are Northern Ireland or open sea, and
  *   without a GB polygon the builder cannot tell which, so per the meaning-of-zero rule it claims
@@ -84,12 +84,12 @@ import { readAcquisitionSidecar, UNKNOWN_PROVENANCE } from "#gazetteer-pipeline/
 import { createOSDownloadsClient, OS_DOWNLOADS_API_BASE } from "#gazetteer-pipeline/postcode/codepoint/fetch"
 
 /**
- * The OS Data Hub product id for Open UPRN.
+ * The OS Data Hub product id for Open uprn.
  */
 export const OPEN_UPRN_PRODUCT_ID = "OpenUPRN"
 
 /**
- * SPDX id for the Open Government Licence v3.0 — the `layer_manifest.license` form.
+ * Spdx id for the Open Government Licence v3.0 — the `layer_manifest.license` form.
  */
 export const OPEN_UPRN_LICENSE = "OGL-UK-3.0"
 
@@ -170,7 +170,7 @@ export interface OpenUPRNVersions {
 	 */
 	fileName: string
 	/**
-	 * `03-07-2026` (DD-MM-YYYY) — when OS extracted the extract from AddressBase Premium.
+	 * `03-07-2026` (DD-MM-yyyy) — when OS extracted the extract from AddressBase Premium.
 	 */
 	extractionDate: string
 }
@@ -199,13 +199,13 @@ export interface OpenUPRNPoint {
 }
 
 /**
- * Parse one data line of the Open UPRN CSV, or `null` when the line is malformed.
+ * Parse one data line of the Open uprn CSV, or `null` when the line is malformed.
  *
- * The file is CRLF-terminated (the G-NAF lesson: strip the `\r` at the reader boundary, or the last column — here
- * `LONGITUDE` — silently carries it into every value). Quote-free by construction: every field is numeric, so a plain
+ * The file is crlf-terminated (the G-NAF lesson: strip the `\r` at the reader boundary, or the last column — here
+ * `longitude` — silently carries it into every value). Quote-free by construction: every field is numeric, so a plain
  * comma split is exact rather than an assumption about lucky data.
  *
- * The UPRN must be a literal digit string (≤12 digits in the wild, so always a safe integer); the WGS84 columns 4–5 are
+ * The uprn must be a literal digit string (≤12 digits in the wild, so always a safe integer); the WGS84 columns 4–5 are
  * taken and the OSGB36 columns 2–3 deliberately ignored (see the module docstring).
  */
 export function parseOpenUPRNLine(line: string): OpenUPRNPoint | null {
@@ -221,7 +221,7 @@ export function parseOpenUPRNLine(line: string): OpenUPRNPoint | null {
 
 	if (!Number.isSafeInteger(uprn) || uprn <= 0) return null
 
-	// Shape-checked as STRINGS before Number(): `Number("")` is 0, so a truncated line like `1,2,3,51.5,`
+	// Shape-checked as strings before Number(): `Number("")` is 0, so a truncated line like `1,2,3,51.5,`
 	// would otherwise sail through as longitude zero — a plausible-looking point in the wrong hemisphere.
 	if (!/^-?\d+(\.\d+)?$/.test(parts[3]!) || !/^-?\d+(\.\d+)?$/.test(parts[4]!)) return null
 
@@ -263,10 +263,10 @@ export interface DownloadOpenUPRNResult {
 }
 
 /**
- * Download the Open UPRN CSV archive into `destDir`, verifying against OS's published md5.
+ * Download the Open uprn CSV archive into `destDir`, verifying against OS's published md5.
  *
  * The two metadata GETs go through the shared, paced `APIClient`; the ~600 MB archive body is a RAW `fetch` streamed to
- * disk — the `AGENTS.md` file-transfer carve-out, same as `downloadCodePointOpen` and `osm/sdk/fetch.ts`.
+ * disk — the `agents.md` file-transfer carve-out, same as `downloadCodePointOpen` and `osm/sdk/fetch.ts`.
  */
 export async function downloadOpenUPRN(options: DownloadOpenUPRNOptions): Promise<DownloadOpenUPRNResult> {
 	const { destDir, reuseExisting = true } = options
@@ -315,7 +315,7 @@ export async function downloadOpenUPRN(options: DownloadOpenUPRNOptions): Promis
 
 	phase("download", `${download.fileName} (${download.size.toLocaleString()} bytes)`)
 
-	// Raw `fetch`: an OS Open UPRN archive, streamed to disk below rather than held in memory.
+	// Raw `fetch`: an OS Open uprn archive, streamed to disk below rather than held in memory.
 	const response = await fetch(download.url)
 
 	if (!response.ok || !response.body) {
@@ -361,7 +361,7 @@ export interface ExtractOpenUPRNResult {
 
 /**
  * Decode a small provenance text file whose encoding OS does not declare. Strict UTF-8 first. a failure falls back to
- * Latin-1, whose only plausible non-ASCII byte here is `0xA9` (`©`) — the Code-Point mojibake lesson.
+ * Latin-1, whose only plausible non-ascii byte here is `0xA9` (`©`) — the Code-Point mojibake lesson.
  */
 function decodeProvenanceText(bytes: Uint8Array): string {
 	try {
@@ -372,7 +372,7 @@ function decodeProvenanceText(bytes: Uint8Array): string {
 }
 
 /**
- * Extract the CSV + provenance texts from the Open UPRN archive into `<destDir>/extracted/`.
+ * Extract the CSV + provenance texts from the Open uprn archive into `<destDir>/extracted/`.
  *
  * The extracted CSV is reused when its on-disk size matches the zip entry's uncompressed size exactly — the dated
  * acquisition directory is the cache, and the size check is what tells a completed extraction from one that died
@@ -442,7 +442,7 @@ export async function extractOpenUPRN(options: {
 export interface BuildUPRNLayerOptions {
 	/**
 	 * Acquisition directory holding (or to hold) the archive and its `extracted/` tree. Default
-	 * `<data-root>/os-uprn/<YYYY-MM-DD>` — a new dated directory per acquisition.
+	 * `<data-root>/os-uprn/<yyyy-MM-DD>` — a new dated directory per acquisition.
 	 */
 	sourceDir?: PathBuilderLike
 	/**
@@ -459,7 +459,7 @@ export interface BuildUPRNLayerOptions {
 	 */
 	now?: Date
 	/**
-	 * ISO-8601 `layer_manifest.created_at`. Caller-supplied per the layer contract. defaults to `now`.
+	 * ISO-8601 `layer_manifest.created_at`. Caller-supplied per the layer interface. defaults to `now`.
 	 */
 	createdAt?: string
 	/**
@@ -486,7 +486,7 @@ export interface BuildUPRNLayerResult {
 	 */
 	read: number
 	/**
-	 * UPRN rows written.
+	 * Uprn rows written.
 	 */
 	inserted: number
 	/**
@@ -494,7 +494,7 @@ export interface BuildUPRNLayerResult {
 	 */
 	skippedMalformed: number
 	/**
-	 * Lines whose UPRN collided with an already-written row — expected to be 0 (UPRN is the source's own primary key).
+	 * Lines whose uprn collided with an already-written row — expected to be 0 (uprn is the source's own primary key).
 	 */
 	skippedDuplicate: number
 	/**
@@ -551,7 +551,7 @@ export async function buildUPRNLayer(options: BuildUPRNLayerOptions): Promise<Bu
 	const minimumPlausibleRows = options.minimumPlausibleRows ?? OPEN_UPRN_MINIMUM_PLAUSIBLE_ROWS
 
 	// Acquire the source. offline rebuilds recover provenance from acquisition.json, and when that
-	// is missing, the layer records the ABSENCE in words (the Code-Point discipline).
+	// is missing, the layer records the absence in words (the Code-Point discipline).
 	let archiveMD5: string
 	let osVersion: string
 
@@ -589,7 +589,7 @@ export async function buildUPRNLayer(options: BuildUPRNLayerOptions): Promise<Bu
 		extracted = await extractOpenUPRN({ archivePath: download.archivePath, destDir: sourceDir, onPhase: phase })
 	}
 
-	// resolver-wof-sqlite is an OPTIONAL peer — lazy import (the gazetteer-pipeline convention).
+	// resolver-wof-sqlite is an optional peer — lazy import (the gazetteer-pipeline convention).
 	const { createUPRNTable, createUPRNMetaTable, createUPRNIndexes, uprnFullCell, UPRN_COVERAGE_H3_RESOLUTION } =
 		await import("@mailwoman/resolver-wof-sqlite/uprn")
 
@@ -620,8 +620,8 @@ export async function buildUPRNLayer(options: BuildUPRNLayerOptions): Promise<Bu
 	await createLayerManifestTable(kdb)
 	await createLayerCoverageTable(kdb)
 
-	// Hot positional INSERT — raw prepared statement, per the AGENTS.md bulk-load carve-out. OR IGNORE so a
-	// source-side duplicate UPRN is COUNTED (via `changes === 0`) rather than aborting a 41M-row load. the
+	// Hot positional insert — raw prepared statement, per the agents.md bulk-load carve-out. or ignore so a
+	// source-side duplicate uprn is counted (via `changes === 0`) rather than aborting a 41M-row load. the
 	// accounting check then reports any as a defect.
 	const insert = kdb.prepare("INSERT OR IGNORE INTO uprn (uprn, lat, lon, h3_cell) VALUES (?, ?, ?, ?)")
 

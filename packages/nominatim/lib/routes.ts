@@ -63,8 +63,8 @@ function parseBool(raw: unknown): boolean {
 }
 
 /**
- * A friendly HTML landing page for `GET /` (#1022). Nominatim itself has no root page (just `/status`), so there's no
- * wire contract to match — this is pure courtesy: a browser visitor who pastes the bare host in gets a one-glance
+ * A friendly html landing page for `GET /` (#1022). Nominatim itself has no root page (just `/status`), so there's no
+ * wire interface to match — this is pure courtesy: a browser visitor who pastes the bare host in gets a one-glance
  * orientation with clickable example queries instead of Express's `Cannot GET /` 404, which reads as "the service is
  * broken". Relative example URLs so they resolve against whatever host/port serves this.
  */
@@ -88,7 +88,7 @@ footer { margin-top: 2rem; font-size: .9rem; opacity: .8 }
 </head>
 <body>
 <h1>@mailwoman/nominatim</h1>
-<p>A Nominatim-compatible geocoding API — the same <code>/search</code>, <code>/reverse</code>, <code>/lookup</code>, and <code>/status</code> contract, served from a SQLite gazetteer instead of a PostgreSQL/PostGIS import.</p>
+<p>A Nominatim-compatible geocoding API — the same <code>/search</code>, <code>/reverse</code>, <code>/lookup</code>, and <code>/status</code> interface, served from a SQLite gazetteer instead of a PostgreSQL/PostGIS import.</p>
 <p>Try a query:</p>
 <ul>
 <li><a class="q" href="/search?q=berlin&amp;format=jsonv2&amp;limit=3">/search?q=berlin&amp;format=jsonv2&amp;limit=3</a></li>
@@ -276,7 +276,7 @@ export function registerNominatimRoutes(app: OpenAPIHono, engine: NominatimEngin
 
 		const results = await engine.lookup(params)
 
-		// NOTE: no jsonld branch here — a legacy quirk of the express handler, preserved verbatim. `format=jsonld`
+		// note: no jsonld branch here — a legacy quirk of the express handler, preserved verbatim. `format=jsonld`
 		// on `/lookup` falls through to the raw jsonv2 results, unlike `/search` and `/reverse`.
 		return c.json(
 			params.format === "geojson"

@@ -3,7 +3,7 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   How often does the decoded tree violate its own structural contract?
+ *   How often does the decoded tree violate its own structural interface?
  *
  *   `validateTree` states two invariants a tree can settle about itself — no illegal parent edge, no strict dependent
  *   left without an anchor. A parse can satisfy every asserted component and break both: the orphan fragments are
@@ -15,10 +15,10 @@
  *   let a zero stand unexplained.
  *
  *   **A zero means opposite things for the two checks, and blending them is the trap.** `illegal-edge` is enforced by
- *   `build-tree.ts` at construction, so zero is the DESIGNED state and any nonzero count is a regression in the
+ *   `build-tree.ts` at construction, so zero is the designed state and any nonzero count is a regression in the
  *   builder. `stranded-dependent` is a real model behaviour, so zero there is ambiguous until you know whether the tag
  *   appeared at all — a `cedex` stranding count of 0 on a US-heavy board says nothing about stranding if no row ever
- *   produced a `cedex`. So the report carries tag PRESENCE beside every stranding count, and the two are never summed.
+ *   produced a `cedex`. So the report carries tag presence beside every stranding count, and the two are never summed.
  */
 
 import type { ComponentTag } from "@mailwoman/codex/component"
@@ -52,7 +52,7 @@ export interface ViolationClass {
 export interface StrandingReading {
 	tag: string
 	/**
-	 * Rows whose parse produced this tag AT ALL. The denominator that makes the stranding count readable: 0 stranded out
+	 * Rows whose parse produced this tag AT all. The denominator that makes the stranding count readable: 0 stranded out
 	 * of 0 produced is not a measurement of the model's stranding behaviour.
 	 */
 	produced_on_rows: number
@@ -63,7 +63,7 @@ export interface StrandingReading {
 	stranding_rate: number | null
 }
 
-export interface ContractCensus {
+export interface InterfaceCensus {
 	n_evaluated: number
 	rows_violating: number
 	classes: ViolationClass[]
@@ -101,7 +101,7 @@ export interface DuplicateTagCensus {
 	 */
 	rows: number
 	/**
-	 * `rows / ContractCensus.n_evaluated`; null when no tree was evaluated.
+	 * `rows / InterfaceCensus.n_evaluated`; null when no tree was evaluated.
 	 */
 	rate: number | null
 	/**
@@ -113,7 +113,7 @@ export interface DuplicateTagCensus {
 
 const DUPLICATE_TAG_TOPOLOGIES = ["sibling", "nested", "separate-branches"] as const
 
-export interface ContractRow {
+export interface InterfaceRow {
 	id: string
 	input: string
 	tree: AddressTree
@@ -125,7 +125,7 @@ export interface ContractRow {
  * Takes trees rather than inputs so the walk is pure and testable — the parse is the caller's, and the cost of a warm
  * engine is not this function's concern.
  */
-export function censusTrees(rows: readonly ContractRow[]): ContractCensus {
+export function censusTrees(rows: readonly InterfaceRow[]): InterfaceCensus {
 	const classes = new Map<string, ViolationClass>()
 	const produced = new Map<string, number>()
 	const stranded = new Map<string, number>()
@@ -314,7 +314,7 @@ function tagsPresent(tree: AddressTree): ComponentTag[] {
 
 	walk(tree.roots)
 
-	// Distinct per ROW: a parse with two stranded `unit` nodes still produced `unit` on one row, and counting it twice
+	// Distinct per row: a parse with two stranded `unit` nodes still produced `unit` on one row, and counting it twice
 	// would let a single pathological row look like broad coverage.
 	return [...new Set(tags)]
 }

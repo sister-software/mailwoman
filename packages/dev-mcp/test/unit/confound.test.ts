@@ -82,7 +82,7 @@ describe("the declared vocabulary", () => {
 		// The defect this closes, found 2026-08-16 by running a real A/B: `variable: ["place_country"]` is the spelling
 		// the tool schema documents, and the effective configs differ at `placeCountry`. Compared raw, the same change was
 		// counted twice under two spellings — once as declared-but-unmoved, once as moved-but-undeclared — so every
-		// honest single-change comparison reported ATTRIBUTION AMBIGUOUS.
+		// honest single-change comparison reported attribution ambiguous.
 		const reading = checkConfounds({ placeCountry: true }, { placeCountry: false }, ["place_country"])
 
 		expect(reading.variable_isolation).toBe("clean")

@@ -74,7 +74,7 @@ A useful chain has this form:
 2. Why did that stage choose the wrong value?
 3. Why did its input or rule permit that choice?
 4. Why did the test or pipeline fail to catch the condition?
-5. Why does the system contract allow the condition?
+5. Why does the system interface allow the condition?
 
 Do not force exactly five levels. Use fewer when the cause is direct. Use more when evidence supports
 the longer chain.
@@ -226,7 +226,7 @@ run (v5.0.1)"), monetary metaphors for non-monetary cost (`the fine-tune tax`, `
 the cost and its unit), and scheduling or wind-down words (`tomorrow`, `good place to pause` — state the
 next action and stop; the operator sets cadence).
 
-A name tied to a contract keeps its spelling: `@mailwoman/locale-hint`, `mailwoman eval promote`,
+A name tied to a interface keeps its spelling: `@mailwoman/locale-hint`, `mailwoman eval promote`,
 `mwdev_promotion_eval`, `promotion-eval.ts`, `packages/corpus/lib/recipes/`,
 `RegionDatabaseProvider`. Inline code is exempt from the rule, so backtick the identifier and the sentence
 passes. Renaming one is a separate change the operator approves.

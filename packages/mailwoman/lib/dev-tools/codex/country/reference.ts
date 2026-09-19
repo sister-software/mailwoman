@@ -8,7 +8,7 @@
  *   output is committed. this tool makes it reproducible (provenance), not a hand-typed dictionary.
  *
  *   Calling-code rule: mledoze splits the code as `idd.root` + `idd.suffixes`. For most countries a
- *   single suffix completes the code (GB `+4` + `4` = 44); NANP members share root `+1` with their
+ *   single suffix completes the code (GB `+4` + `4` = 44); nanp members share root `+1` with their
  *   area code as the suffix, so they map to 1.
  *
  *   Usage: mailwoman dev generate country-reference
@@ -147,8 +147,8 @@ export async function generateCountryReference(
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   GENERATED — do not edit by hand. Country calling codes (E.164) + currencies (ISO 4217), derived
- *   from mledoze/countries (https://github.com/mledoze/countries, ODbL). NANP members map to 1.
+ *   generated — do not edit by hand. Country calling codes (E.164) + currencies (ISO 4217), derived
+ *   from mledoze/countries (https://github.com/mledoze/countries, ODbL). nanp members map to 1.
  *   Regenerate with: mailwoman dev generate country-reference
  */
 

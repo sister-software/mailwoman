@@ -7,9 +7,9 @@
  *   plus four separately-remembered post-build steps (the #1015 rebuild missed two of them), in one
  *   verified, sealed pipeline:
  *
- *   ingest-wof → fold-overture → fold-geonames → freeze → enrich → VACUUM INTO → FTS → VERIFY → SEAL.
+ *   ingest-wof → fold-overture → fold-geonames → freeze → enrich → vacuum into → FTS → verify → seal.
  *
- *   A failed verify THROWS and leaves the artifact UNSEALED for inspection — do not swap it. On
+ *   A failed verify throws and leaves the artifact unsealed for inspection — do not swap it. On
  *   success the build appends itself to the build log (`data/gazetteer/wof-build-manifest.json` — a LOG rather than
  *   a recipe. the recipe is `../defaults.ts`).
  */
@@ -54,7 +54,7 @@ export interface BuildAdminOptions {
 	 */
 	dataDir?: string
 	/**
-	 * Output artifact path. Default `<data-root>/wof/admin-global-priority.REBUILD.db` (staging — swap deliberately).
+	 * Output artifact path. Default `<data-root>/wof/admin-global-priority.rebuild.db` (staging — swap deliberately).
 	 */
 	out?: string
 	overtureCountries?: readonly string[]
@@ -99,7 +99,7 @@ export async function buildAdmin(opts: BuildAdminOptions = {}): Promise<BuildAdm
 	const geonamesCountries = opts.geonamesCountries ?? DEFAULT_GEONAMES_COUNTRIES
 	const overtureRelease = opts.overtureRelease ?? DEFAULT_OVERTURE_RELEASE
 
-	// resolver-wof-sqlite is an OPTIONAL peer — lazy import (the gazetteer-pipeline convention).
+	// resolver-wof-sqlite is an optional peer — lazy import (the gazetteer-pipeline convention).
 	const { createUnifiedSchema } = await import("@mailwoman/resolver-wof-sqlite/unified-schema")
 
 	const ingestPath = out + ".ingest"
@@ -163,7 +163,7 @@ export async function buildAdmin(opts: BuildAdminOptions = {}): Promise<BuildAdm
 		overtureIngested = await ingestOvertureDivisions(db, overtureCountries, overtureRelease)
 		phase("fold-overture", `${overtureIngested.toLocaleString()} divisions`)
 
-		// #1026: the A-class admin fold for the zero-coverage locales — country + region NODES + locality
+		// #1026: the A-class admin fold for the zero-coverage locales — country + region nodes + locality
 		// ancestry. Scoped to the countries actually in this run's geonames set.
 		const gapSet = new Set(geonamesAdminGapCountries().filter((cc) => geonamesCountries.includes(cc)))
 		phase("fold-geonames", `${geonamesCountries.length} countries (${gapSet.size} with admin fold)`)

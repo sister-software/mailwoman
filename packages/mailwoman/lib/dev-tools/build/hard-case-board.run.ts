@@ -3,8 +3,8 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Emit `eval-harness/fixtures/hard-case-board.jsonl` (ROAD_TO_V9 §3). The board's SELECTION is curated by
- *   hand — every row below pins one discrimination case and says why — but its NUMBERS are machine-filled
+ *   Emit `eval-harness/fixtures/hard-case-board.jsonl` (ROAD_TO_V9 §3). The board's selection is curated by
+ *   hand — every row below pins one discrimination case and says why — but its numbers are machine-filled
  *   from primary data, and that split is the point:
  *
  *   - **Coordinates + place names** come from the WOF admin DB by place id, so a row's truth is never a
@@ -12,7 +12,7 @@
  *   - **`popBias` / `impBias`** come from walking the two FST binaries themselves and collapsing the
  *       accepting entries exactly as `neural/fst-prior.ts`'s `applyBias` does (max per BIO tag, and only the
  *       four placetypes `PLACETYPE_TO_BIO` maps — `localadmin`/`county`/`borough`/`neighbourhood` reach no
- *       label and contribute nothing). So the recorded delta is the bias the DECODER sees rather than a proxy for it
+ *       label and contribute nothing). So the recorded delta is the bias the decoder sees rather than a proxy for it
  *       computed off the database.
  *
  *   The sweep-derived classes (`country_structure`, `fst_out_of_reach`) are lifted verbatim from
@@ -83,7 +83,7 @@ async function matchers(locale: string): Promise<{ pop: unknown; imp: unknown }>
 
 /**
  * `max(importance)` per BIO tag for `surface` — the collapse `applyBias` performs before it touches the emission
- * matrix. A surface the FST does not accept returns an empty map, which is ABSENCE (the gazetteer has nothing to say),
+ * matrix. A surface the FST does not accept returns an empty map, which is absence (the gazetteer has nothing to say),
  * reported by the caller as a zero bias on a named tag rather than silently as 0.
  */
 function biasOf(matcher: unknown, surface: string): Map<string, number> {
@@ -126,7 +126,7 @@ for (const c of [...FRAGMENT_ROWS, ...TOPONYM_ROWS]) {
 	const { pop, imp } = await matchers(c.locale)
 	const popTags = biasOf(pop, c.probeSurface)
 	const impTags = biasOf(imp, c.probeSurface)
-	// Report on the tag the row is ABOUT — locality unless the curator named another. A surface the FST
+	// Report on the tag the row is about — locality unless the curator named another. A surface the FST
 	// does not accept yields 0 on that named tag, which is a declared zero (the gazetteer has nothing), not
 	// a missing measurement.
 	const tag = c.probeTag ?? "locality"
@@ -168,13 +168,13 @@ for (const s of SWEEP_ROWS) {
 	const hasCoord = lat !== undefined && lon !== undefined && tol !== undefined
 	// Sweep rows grade under the base package: no overlay ships for these countries.
 	const locale = "en-us"
-	// MEASURED, never declared. The first version of this builder wrote `popBias: 0, impBias: 0` here on the
-	// reasoning that "no FST covers Botswana", and that was WRONG in the way this repo keeps finding: the
-	// arm loads the FST by LOCALE rather than by answer-country, so an en-us row's surface is scored against the
+	// measured, never declared. The first version of this builder wrote `popBias: 0, impBias: 0` here on the
+	// reasoning that "no FST covers Botswana", and that was wrong in the way this repo keeps finding: the
+	// arm loads the FST by locale rather than by answer-country, so an en-us row's surface is scored against the
 	// US gazetteer whatever the answer's country is. "Moscow" carries 0.3411 → 0.5465 from 33 US bearers
 	// and "Nassau" 0.0755 → 0.4234 from 8 — real bias, on rows whose correct answer is in RU and BS. A
 	// declared zero would have hidden the single most interesting thing about this class, which is that
-	// the gazetteer can only pull these rows toward the WRONG place.
+	// the gazetteer can only pull these rows toward the wrong place.
 	const { pop, imp } = await matchers(locale)
 	const popTags = biasOf(pop, s.probeSurface)
 	const impTags = biasOf(imp, s.probeSurface)

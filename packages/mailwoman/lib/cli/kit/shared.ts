@@ -43,7 +43,7 @@ export type ParsedCommandComponent<Options = Record<string, never>, Args extends
 >
 
 /**
- * A command component whose options are DERIVED from the command's own `spec`.
+ * A command component whose options are derived from the command's own `spec`.
  *
  * This is the annotation a command wants: naming `typeof spec` leaves the flags as the one declaration, where
  * {@linkcode ParsedCommandComponent} takes an options type a command had to write beside its spec and keep in agreement
@@ -104,7 +104,7 @@ type LazyComponentState<P extends object> =
 	| { status: "error"; message: string }
 
 /**
- * Wrap a heavy child component so its module loads on FIRST RENDER rather than at import.
+ * Wrap a heavy child component so its module loads on first render rather than at import.
  *
  * A component reached from JSX normally needs a top-level import, so one `import { DebugView } from "…"` in a branch
  * nobody took still widens the selected command's graph. `load` runs in an effect instead, and the wrapper renders
@@ -114,7 +114,7 @@ type LazyComponentState<P extends object> =
  * it draws, so a "loading…" line taller than zero is a line the real first frame has to scrub. Commands that want a
  * spinner own one inside the loaded component, where it can outlive the load.
  *
- * A REJECTED import is a command failure, and it takes {@linkcode useCommandTask}'s exact contract: the message renders
+ * A rejected import is a command failure, and it takes {@linkcode useCommandTask}'s exact interface: the message renders
  * red and the process exits 1 from a `setImmediate`, after the frame has committed. That matters here more than for an
  * ordinary task — the usual reason a deferred import rejects is a missing optional peer dependency, and the alternative
  * is an unhandled rejection: node's default handler prints a react-reconciler stack over whatever the command had drawn
@@ -197,7 +197,7 @@ export interface Check {
 }
 
 /**
- * The ✓/✗ check-list + PASS/FAIL renderer (extracted from `gazetteer verify`). Pass `verdict` to append the summary
+ * The ✓/✗ check-list + pass/fail renderer (extracted from `gazetteer verify`). Pass `verdict` to append the summary
  * line.
  */
 export function CheckList({ checks, verdict }: { checks: readonly Check[]; verdict?: boolean }): React.ReactElement {
@@ -314,7 +314,7 @@ export function splitUSStateCodes(raw: string | undefined): USStateAbbreviation[
 /**
  * A count flag: a non-negative integer, or `fallback` when the flag is absent. Throws on anything else.
  *
- * The reason this is a function and not `Number(raw) || fallback`: ZERO IS FALSY, so that idiom silently answers the
+ * The reason this is a function and not `Number(raw) || fallback`: zero is falsy, so that idiom silently answers the
  * fallback for a flag whose whole purpose is to switch something off. `corpus slice --variants 0` asks the po-box
  * recipe to emit its self-contained military rows and none of its tuple-driven ones; `Number("0") || 1` read it as one
  * and the recipe output came out at 10,558 rows against the 5,279 requested. A typo is refused for the same reason
@@ -345,7 +345,7 @@ export function splitNumberList(raw: string | undefined): number[] {
 const ANSI_PATTERN = new RegExp(`${String.fromCharCode(27)}\\[[0-9;?]*[A-Za-z]`, "gu")
 
 /**
- * Drop ANSI escape sequences from captured child-process output.
+ * Drop ansi escape sequences from captured child-process output.
  */
 export function stripAnsi(value: string): string {
 	return value.replace(ANSI_PATTERN, "")
@@ -447,7 +447,7 @@ export function runProcessOrFail(
  * silently-degraded output to the neural parser. Two failure modes are distinguished:
  *
  * - Weights absent (package not installed / carries no binaries) → an install hint, no scary error text.
- * - Weights present but the encoder FAILED to load (corrupt / partial bundle, a bad explicit path) → the underlying error
+ * - Weights present but the encoder failed to load (corrupt / partial bundle, a bad explicit path) → the underlying error
  *   is surfaced rather than swallowed.
  *
  * `onDegrade` receives the warning line. callers send it to stderr so piped stdout parsing is unaffected.

@@ -51,7 +51,7 @@ const { values, positionals } = parseArguments({
 	allowPositionals: true,
 })
 
-// A ROOT version request, which is why the positional count is required: `--version` reached from anywhere in the
+// A root version request, which is why the positional count is required: `--version` reached from anywhere in the
 // vector would make the launcher answer `mw geocode --version` itself, swallowing a flag that belongs to the command.
 const rootVersionRequest = values.version === true && !positionals.length
 

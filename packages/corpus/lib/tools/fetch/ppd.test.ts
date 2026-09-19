@@ -1,7 +1,7 @@
 import { extractPPDTuples, type PPDExtractStats } from "@mailwoman/corpus/tools/fetch/ppd"
 import { describe, expect, it } from "vitest"
 
-// PPD columns: id,price,date,postcode,type,new,tenure,PAON,SAON,street,locality,town,district,county,cat,status
+// PPD columns: id,price,date,postcode,type,new,tenure,paon,saon,street,locality,town,district,county,cat,status
 const row = (
 	over: Partial<Record<"postcode" | "paon" | "saon" | "street" | "locality" | "town" | "county", string>>
 ): string[] => {

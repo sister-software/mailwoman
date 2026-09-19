@@ -12,8 +12,8 @@
  *   `locale` is asserted here too, unchanged, because the change is worthless if it moved. A consumer mapping the hint
  *   to a weights package would go from a wrong-but-present label to nothing at all.
  *
- *   THE CHINESE BOARD IS WHY THE FIELD IS A RANKED LIST AND NOT A VALUE. Its rows are a Han organizational unit beside
- *   a ROMANIZED province and country — `逊克二分场四队, HEILONGJIANG, CHINA` — so Latin writes more of the row than Han
+ *   the chinese board is why the field is A ranked list and not A value. Its rows are a Han organizational unit beside
+ *   a romanized province and country — `逊克二分场四队, heilongjiang, china` — so Latin writes more of the row than Han
  *   does and `script[0]` is `Latn` on most of them. Han is present on every row and is what a router would want. A
  *   consumer that reads the head of the list gets the majority script. one that asks whether a script is present gets
  *   the answer this board exists to give.
@@ -33,7 +33,7 @@ const JAPANESE_GOLD = "data/eval/external/jp-overture-gold.jsonl"
 
 /**
  * The four keys of the Korean reference file that carry addresses. `centroids` and `report` carry neither a `raw` nor
- * an input, and `README` is prose.
+ * an input, and `readme` is prose.
  */
 const KOREAN_ROW_KEYS = ["label", "board", "registry", "registry_board"] as const
 
@@ -86,7 +86,7 @@ describe("the Korean reference set", () => {
 
 describe("the Chinese organizational-units board", () => {
 	it("finds Han on every row, and Latin at the head of most of them", () => {
-		// `逊克二分场四队, HEILONGJIANG, CHINA` — the unit is Han, the province and country are romanized, and Latin writes
+		// `逊克二分场四队, heilongjiang, china` — the unit is Han, the province and country are romanized, and Latin writes
 		// more of the row. A predicate over `script[0]` alone would read this board as Latin.
 		expect(chineseRows).toHaveLength(21)
 
@@ -125,7 +125,7 @@ describe("the Japanese Overture gold set", () => {
 		// The measurement the script rule rests on. Kana is diagnostic of Japanese and Han is not — 県/市/区/郡/町 and
 		// most place names are Han — so a rule that waits for kana abstains on 95.5% of this set.
 		//
-		// It is a FLOOR rather than a rate: these rows carry a postcode, a prefecture and a municipality and nothing
+		// It is a floor rather than a rate: these rows carry a postcode, a prefecture and a municipality and nothing
 		// finer. A set with building lines would carry more kana.
 		const kanaRowCount = japaneseRows.filter((row) => {
 			const scripts = scriptsOf(row)
@@ -164,7 +164,7 @@ describe("the regression board", () => {
 
 describe("what reaches the parse surface", () => {
 	/**
-	 * Both fields reach `mailwoman parse --debug` and `mwdev_trace` by PASS-THROUGH — the pipeline threads the query
+	 * Both fields reach `mailwoman parse --debug` and `mwdev_trace` by pass-through — the pipeline threads the query
 	 * shape and the hint whole, and neither surface rebuilds them field by field. Pass-through is invisible, which is why
 	 * it is pinned here: a projection added between the stage and the serializer would drop the script silently and every
 	 * other assertion in this file would still pass.
@@ -178,7 +178,7 @@ describe("what reaches the parse surface", () => {
 		expect(result.locale?.script?.map((entry) => entry.script)).toEqual(["Latn", "Hani"])
 
 		// The Han venue, which is the span the fold made invisible: `characterClass` reads `mixed` for this input and
-		// `mixed` names no script, so nothing downstream could see that 金龍酒家 is written in Han.
+		// `mixed` names no script. Therefore, nothing downstream could see that 金龍酒家 is written in Han.
 		expect(result.queryShape?.tokenClasses?.[0]).toMatchObject({
 			span: { body: "金龍酒家" },
 			class: "cjk",

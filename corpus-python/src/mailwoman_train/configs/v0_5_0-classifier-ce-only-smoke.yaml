@@ -3,7 +3,7 @@
 # Bisect 3 of the v0.5.0 divergence campaign. The first two bisects ruled out
 # hidden_size (h384 → h256) and phrase-prior conditioning (PR #128 input layer).
 # A gradient-norm ratio probe on diverged checkpoints then revealed CRF gradient
-# DOMINATES CE gradient by 8-20× — not the dual-loss collapse the original
+# dominates CE gradient by 8-20× — not the dual-loss collapse the original
 # DeepSeek synthesis predicted but the opposite: CRF as aggressor.
 #
 # Cooperative-vs-conflict regime model: above loss ~0.41 CE + CRF agree
@@ -24,18 +24,18 @@
 #   - output_dir: -phrase-off-smoke → -ce-only-smoke
 #
 # Recipe history of the campaign:
-#   v1   h384 §1+§3 ON  LR=1.5e-4 priors=ON  crf_w=1.0   → diverged step ~700
-#   v2   h384 §1+§3 ON  LR=1e-4   priors=ON  crf_w=1.0   → diverged step ~1100
-#   v3   h384 §1+§3 OFF LR=1.5e-4 priors=ON  crf_w=0.05  → diverged step ~800
-#   bsk  h256 §1+§3 OFF LR=1.5e-4 priors=ON  crf_w=0.05  → diverged step ~1050
-#   p_off h256 §1+§3 OFF LR=1.5e-4 priors=OFF crf_w=0.05 → diverged step ~1100
-#   THIS h256 §1+§3 OFF LR=1.5e-4 priors=OFF crf_w=0.00 → ?
+#   v1   h384 §1+§3 on  LR=1.5e-4 priors=on  crf_w=1.0   → diverged step ~700
+#   v2   h384 §1+§3 on  LR=1e-4   priors=on  crf_w=1.0   → diverged step ~1100
+#   v3   h384 §1+§3 off LR=1.5e-4 priors=on  crf_w=0.05  → diverged step ~800
+#   bsk  h256 §1+§3 off LR=1.5e-4 priors=on  crf_w=0.05  → diverged step ~1050
+#   p_off h256 §1+§3 off LR=1.5e-4 priors=off crf_w=0.05 → diverged step ~1100
+#   this h256 §1+§3 off LR=1.5e-4 priors=off crf_w=0.00 → ?
 #
 # Promotion bar (per DeepSeek round-2 conversation):
-#   - PASS: train_loss stable past step 2000 (no climb >20% from basin minimum)
-#     AND val_macro_F1 ≥ 0.35 at step 2000
-#     AND per-tag F1 trajectory shows no single-tag collapse.
-#   - FAIL: any of the above — diagnose tokenizer/corpus next rather than recipe.
+#   - pass: train_loss stable past step 2000 (no climb >20% from basin minimum)
+#     and val_macro_F1 ≥ 0.35 at step 2000
+#     and per-tag F1 trajectory shows no single-tag collapse.
+#   - fail: any of the above — diagnose tokenizer/corpus next rather than recipe.
 #
 # See docs/articles/concepts/dual-loss-curvature-conflict.md for the full
 # technical write-up of the diagnostic + the cooperative-vs-conflict model.
@@ -56,7 +56,7 @@ data:
     usgov-hrsa-fqhc: 2.0
     usgov-imls-pls: 2.0
     usgov-nad: 1.0
-    state-ia-contractors: 2.0
+    state-ia-builders: 2.0
     state-tx-notaries: 1.5
     state-ny-notaries: 2.0
   train_rows_per_epoch: 1000000
@@ -75,7 +75,7 @@ model:
   use_crf: true # CRF stays for inference Viterbi (frozen mask); training skips it via the check
   label_smoothing: 0.0
   crf_normalization: per_sequence
-  crf_loss_weight: 0.0 # NEW: triggers the crf_loss_weight > 0 check to skip CRF forward
+  crf_loss_weight: 0.0 # new: triggers the crf_loss_weight > 0 check to skip CRF forward
   # class_weights omitted → uniform 1.0 per tag (v0.4.0-shipped configuration)
   use_phrase_priors: false
   phrase_feature_dim: 10

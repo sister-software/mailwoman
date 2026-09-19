@@ -10,7 +10,7 @@
  *   the Latin model came back as a locality holding the whole string. The routing rule has two readings, either of
  *   which names the family. The first is the locale hint's own script rule (`scoreByScript`: the `cjk` character
  *   class answers `ja-JP`) folded to its weights family (`scriptFamilyBase`: `ja` / `zh` / `ko` → `cjk`), so the
- *   decision the hint reports and the model that runs agree by construction. The second is per SEGMENT: a comma
+ *   decision the hint reports and the model that runs agree by construction. The second is per segment: a comma
  *   segment written wholly in a script the family serves names it, whatever the rest of the input is written in
  *   (`carriesFamilySegment`). The whole-input fold cannot see that reading — it answers `mixed` for a Han address
  *   line beside a Latin province and for a Han venue name inside a Latin line alike, and only the first of those
@@ -46,10 +46,10 @@ export const FAMILY_SCRIPTS: ReadonlySet<string> = new Set(["Hani", "Kana", "Hir
 const FAMILY = "cjk"
 
 /**
- * Whether some comma segment of the input is written WHOLLY in a script the character-path family serves.
+ * Whether some comma segment of the input is written wholly in a script the character-path family serves.
  *
- * This is the reading that separates an address LINE in another script from a NAME in another script: `逊克二分场四队,
- * HEILONGJIANG, CHINA` carries its Han unit as its own segment, while the Han in `Far East Chinese 口福羊汤, 13 Gerrard St,
+ * This is the reading that separates an address line in another script from a name in another script: `逊克二分场四队,
+ * heilongjiang, china` carries its Han unit as its own segment, while the Han in `Far East Chinese 口福羊汤, 13 Gerrard St,
  * London W1D 5PS` shares its segment with the Latin words that introduce it, and the character model reading those
  * Latin words by codepoint answers `country: "Chi"`. Tokens carrying no script (`Zyyy` — a house number, a postal code)
  * abstain rather than disqualifying a segment, which is what keeps `六分场七队 100` a Han line. A share threshold is not the

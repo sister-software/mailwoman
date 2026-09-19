@@ -14,14 +14,14 @@
 # even at v0.3.0-stable LR. §3 class_weights on top of v0.3.0 dual-loss recipe is
 # the largest measured improvement. Recipe = v0.3.0 base + §3 + §4 at lr=1.5e-4.
 #
-# Identical to v0_4_0-stableLR-cw-only.yaml in every field EXCEPT:
+# Identical to v0_4_0-stableLR-cw-only.yaml in every field except:
 #   - output_dir: /data/models/checkpoints/v0_4_0-final (smoke checkpoints preserved)
 #   - max_steps: 50000 (full schedule. smoke ran 3000 then cosine-tail saturated)
 #
 # Hand off after this completes:
-#   CHECKPOINT=/data/models/checkpoints/v0_4_0-final/step-XXXXX \
+#   checkpoint=/data/models/checkpoints/v0_4_0-final/step-xxxxx \
 #     scripts/ship_v0_4_0.sh
-#   (where XXXXX is the best-eval checkpoint. do not npm publish per operator rule)
+#   (where xxxxx is the best-eval checkpoint. do not npm publish per operator rule)
 
 data:
   corpus_dir: /data/corpus/versioned/v0.3.0/corpus-v0.3.0
@@ -39,7 +39,7 @@ data:
     usgov-hrsa-fqhc: 2.0
     usgov-imls-pls: 2.0
     usgov-nad: 1.0
-    state-ia-contractors: 2.0
+    state-ia-builders: 2.0
     state-tx-notaries: 1.5
     state-ny-notaries: 2.0
   train_rows_per_epoch: null
@@ -59,7 +59,7 @@ model:
   label_smoothing: 0.0
   # v0.3.0 dual-loss recipe (per_sequence default + crf_loss_weight=0.05).
   crf_loss_weight: 0.05
-  # §3 class_weights ON — the v0.4.0 change that actually helps at safe LR.
+  # §3 class_weights on — the v0.4.0 change that actually helps at safe LR.
   class_weights:
     O: 1.0
     B-country: 2.0

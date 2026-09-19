@@ -31,7 +31,7 @@ function clinic(
 	}
 }
 
-// Two records for the same clinic — different address STRINGS, same place + name — and a distinct one far away.
+// Two records for the same clinic — different address strings, same place + name — and a distinct one far away.
 const records: SourceRecord[] = [
 	clinic("1", "Robert", "Smith", "123 main st", 45.5152, -122.6784, "123 Main St, Portland, OR"),
 	clinic("2", "Robert", "Smith", "123 main street apt 2", 45.5153, -122.6785, "123 Main Street Apt 2, Portland, OR"),
@@ -229,7 +229,7 @@ describe("exactDiscriminators — code-SET overlap (#625 A5)", () => {
 		const shared = resolveEntities([a, b], { threshold: -100, exactDiscriminators: ["taxonomy"] })
 		expect(shared.entities).toHaveLength(1)
 		// The disjoint pair still merges here (same name+address dominate) — the assertion is the model
-		// BUILDS and the comparator runs. the weight-level separation is the benchmark's to measure.
+		// builds and the comparator runs. the weight-level separation is the benchmark's to measure.
 		const disjoint = resolveEntities([a, c], { threshold: -100, exactDiscriminators: ["taxonomy"] })
 		expect(disjoint.entities.length).toBeGreaterThanOrEqual(1)
 	})

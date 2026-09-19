@@ -3,10 +3,10 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   POI subject detection for the `poi_query` kind. The lexicon is INJECTED (`POIPhraseLookup`) —
+ *   POI subject detection for the `poi_query` kind. The lexicon is injected (`POIPhraseLookup`) —
  *   this package keeps its bitter-lesson invariant (no dictionaries in-tree); the phrase table
  *   lives in `@mailwoman/poi-taxonomy` and is wired in by `createRuntimePipeline` behind the
- *   `poiQueryKind` flag (default-ON since 2026-07-20). Spec §3.1.
+ *   `poiQueryKind` flag (default-on since 2026-07-20). Spec §3.1.
  */
 
 import type { NormalizedInputLite, QueryShapeSegmentsView as QueryShapeLike } from "@mailwoman/query-shape"
@@ -40,7 +40,7 @@ export interface POIPhraseMatch {
 	 */
 	wikidata?: string
 	/**
-	 * Whether this hit is one member of a set the caller must search TOGETHER, rather than one candidate in a preference
+	 * Whether this hit is one member of a set the caller must search together, rather than one candidate in a preference
 	 * list.
 	 *
 	 * A lookup returning several hits means two different things, and the difference decides whether narrowing to the
@@ -59,7 +59,7 @@ export interface POIPhraseMatch {
 	 * ISO 3166-1 alpha-2 countries the authority behind this hit scopes its claim to. Absent = the condition is true
 	 * everywhere.
 	 *
-	 * A scope is a statement about ESTABLISHMENTS, so it is judged against the country of the place being searched rather
+	 * A scope is a statement about establishments, so it is judged against the country of the place being searched rather
 	 * than the caller's locale: the locale is the lens the phrase is read through, and it says nothing about where the
 	 * condition is true. `matchPOISubject` carries the value untouched. the POI intent stage binds it once the anchor has
 	 * resolved.
@@ -88,7 +88,7 @@ export interface POIQuerySpan {
  */
 export interface POISubjectMatch {
 	/**
-	 * The hit the subject SCORES under — its kind and its confidence. Always `matches[0]`; the two are built together in
+	 * The hit the subject scores under — its kind and its confidence. Always `matches[0]`; the two are built together in
 	 * one place so they cannot disagree.
 	 */
 	match: POIPhraseMatch
@@ -277,7 +277,7 @@ const POI_CATEGORY_CONFIDENCE = 0.93
  * `poi_category` scorer (ROAD_TO_V9 §4.4) — a bare taxonomy category with nowhere to search: "tacos", "grocery store",
  * "drinking fountain".
  *
- * Fires only on a whole-input lexicon hit (`remainder === ""`) whose subject is a CATEGORY. A brand (`kind: "brand"`)
+ * Fires only on a whole-input lexicon hit (`remainder === ""`) whose subject is a category. A brand (`kind: "brand"`)
  * is excluded: a bare "Starbucks" is a name lookup rather than a category, and the taxonomy id a category marker
  * promises to carry does not exist for it — `POIPhraseMatch.categoryID` holds the brand's display name in that case,
  * which would make the marker's `categoryID` evidence a lie.

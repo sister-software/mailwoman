@@ -16,7 +16,7 @@
  *
  * Signal handling is not optional here. This is a raw-mode app on the alternate screen with mouse reporting on, and
  * there is no framework underneath to put any of that back — a process killed between `start` and `restore` leaves the
- * user with an unusable shell. So `restore` is wired to SIGINT, SIGTERM and `exit`, and it is idempotent for exactly
+ * user with an unusable shell. So `restore` is wired to sigint, sigterm and `exit`, and it is idempotent for exactly
  * that reason.
  */
 

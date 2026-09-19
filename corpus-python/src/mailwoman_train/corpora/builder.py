@@ -35,11 +35,11 @@ SCHEMA = pa.schema(
 # Budget for one row's field values (prefecture + municipality + street + number). The char model
 # runs at S=96 units and ``encode_row_units`` truncates past that silently, so the corpus must not
 # contain a row that cannot fit. 64 leaves 32 characters of headroom for everything rendering adds:
-# 〒NNN-NNNN + space (10), 日本 (2), three separator spaces, and the designator register's kanji.
+# 〒NNN-nnnn + space (10), 日本 (2), three separator spaces, and the designator register's kanji.
 # Measured distribution: median rendered row is 18 characters, so this truncates far out in the tail.
 MAX_FIELD_CHARS = 64
 
-# The hard invariant the field budget exists to produce. Violation RAISES — reaching it means the
+# The hard invariant the field budget exists to produce. Violation raises — reaching it means the
 # field budget stopped bounding the rendered length, which is a code defect rather than tail data.
 MAX_RENDERED_CHARS = 96
 

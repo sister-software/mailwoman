@@ -1,39 +1,39 @@
-# === v3.23.0-bundle-guard-8k — PRODUCTION BUNDLE CANDIDATE, INCREMENT 5 (Option-A Phase 3). ===
+# === v3.23.0-bundle-guard-8k — production bundle candidate, increment 5 (Option-A Phase 3). ===
 # (Claude-owned. operator go 2026-07-28 "Sounds right, pre-register it and go".)
 #
 # What v3.22.0 settled (record: .superpowers/sdd/progress.md): feed-passenger diagnosis confirmed
-# (ablated 16/17 floors, us.street healed 75.3->80.1); the fr.cedex floor was MISCALIBRATED (the
+# (ablated 16/17 floors, us.street healed 75.3->80.1); the fr.cedex floor was miscalibrated (the
 # shipped v385 reads 85.6 vs the 85.8 floor through the current harness -> spec re-anchored to
-# 84.6); the residual cedex gap (~-5 vs shipped) attaches to CONTINUED TRAINING (rare-class
+# 84.6); the residual cedex gap (~-5 vs shipped) attaches to continued training (rare-class
 # forgetting, CA-specific), present in every fine-tune, bundle or not. The remaining G1 blocker:
 # house-number classes fail at every save (alnum-hn -0.325 lower+heal at the 4k peak) — evidence
 # painted beside a digit swallows the number into the span. The P0 fixture classes separate
-# PERFECTLY on digit presence: every win class (homonym/bare-street/particle/bare-locality) is
+# perfectly on digit presence: every win class (homonym/bare-street/particle/bare-locality) is
 # 100% digit-free. every damage class (alnum-hn/street-hn/date-name) is 100% digit-carrying.
 #
-# TWO NAMED DELTAS vs v3.22.0:
-#   1. DIGIT-GUARD LEXICONS (street v3 + locality v6. entries unchanged from v2/v5 — only
+# two named deltas vs v3.22.0:
+#   1. digit-guard lexicons (street v3 + locality v6. entries unchanged from v2/v5 — only
 #      rules.digit_guard added): a matched span paints nothing when any span word or nearest
 #      non-empty neighbor carries a Unicode-Nd digit. guarded matches still consume their span.
 #      Carried in the artifact rules so both painters apply it (17-case parity fixture v2, 24/24
-#      byte-equal. precedent: suppress-gaz-near-postcode). PREDICTION: win classes untouched
-#      (digit-free rows keep painting), damage classes -> ON~OFF (withheld evidence = the
+#      byte-equal. precedent: suppress-gaz-near-postcode). prediction: win classes untouched
+#      (digit-free rows keep painting), damage classes -> on~off (withheld evidence = the
 #      curriculum-trained zero identity); date-name gives back its small rise (accepted).
 #   2. synth-po-box-cedex 1.5 -> 3.0 (fine-tune replay boost. independent instrument, measured on
 #      the ablated-column cedex read + the us.po_box_real overfit watch).
 #
-# PRE-REGISTERED CHECKS (Decision-A shape, v3.22 wording):
+# PRE-registered checks (Decision-A shape, v3.22 wording):
 #   G1 fragment bars (P0 grid, --lexicon locality-surface-lexicon-v6.json
-#      --street-lexicon street-type-lexicon-v3.json, every save): homonym ON-OFF >= +0.050 asis
-#      and >= +0.25 lower+heal. house-number classes >= -0.020 asis raw. lowercase-heal ALL >= +0.015.
+#      --street-lexicon street-type-lexicon-v3.json, every save): homonym on-off >= +0.050 asis
+#      and >= +0.25 lower+heal. house-number classes >= -0.020 asis raw. lowercase-heal all >= +0.015.
 #   G2 ablation vs the v385 same-grader reference.
 #   G3 invariance (int8, --baseline v385): zero new classes.  G4 gauntlet x3.
-#   G5 golden ABLATED: all floors incl. the re-anchored fr.cedex_real 84.6 — delta-2 must close
+#   G5 golden ablated: all floors incl. the re-anchored fr.cedex_real 84.6 — delta-2 must close
 #      ~-4.1 from 80.5. if cedex alone still misses, the verdict names fine-tune forgetting as
-#      UNSOLVED-BY-REPLAY and the options (longer runs / LR-guard / accept-with-re-anchor) go to
+#      unsolved-BY-replay and the options (longer runs / LR-guard / accept-with-re-anchor) go to
 #      the operator.  G5b golden FED recorded (misroute-cost input).  G6 canary zero-flip in
 #      formatted mode.
-#   VERDICT: G1-G5 + G6-formatted => promotion battery + the inputMode implementation arc.
+#   verdict: G1-G5 + G6-formatted => promotion battery + the inputMode implementation arc.
 #   No knob iteration inside the run.
 #
 # Launch: cd corpus-python && modal run -d -m launch.train_remote --config v3.23.0-bundle-guard-8k.yaml --resume none
@@ -78,7 +78,7 @@ data:
     usgov-hrsa-fqhc: 2.0
     usgov-imls-pls: 2.0
     usgov-nad: 1.0
-    state-ia-contractors: 2.0
+    state-ia-builders: 2.0
     state-tx-notaries: 1.5
     state-ny-notaries: 2.0
     deepseek-kryptonite: 3.0
@@ -98,9 +98,9 @@ data:
     synth-no-street-led: 0.0
     synth-cz-pcfirst-preposition: 12.0
     synth-nl-postcode: 6.0
-    # PROBE 1: the fragment/autocomplete source (assay weight — moderate precedent).
+    # probe 1: the fragment/autocomplete source (assay weight — moderate precedent).
     synth-fragment: 6.0
-    # #727 T2 NEW — the one variable. 12.0 = the targeted-fix precedent (fr-bare-street,
+    # #727 T2 new — the one variable. 12.0 = the targeted-fix precedent (fr-bare-street,
     # si-bare-village, no-street-led are all 12.0). Streets with no house number + the
     # bare-locality counter.
     synth-fr-fragment: 12.0
@@ -151,12 +151,12 @@ model: # Verbatim from v2.4.1.
   use_postcode_anchor: true
   use_gazetteer_anchor: true
   gazetteer_feature_dim: 5
-  # #1104 country channel ON — dedicated 2-dim [country_surface, country_ambiguous] soft feed with its
+  # #1104 country channel on — dedicated 2-dim [country_surface, country_ambiguous] soft feed with its
   # own projection + confidence (must equal the lexicon's feature_dim). Default-False elsewhere, so a
   # resume from a pre-country checkpoint stays byte-identical until this flips.
   use_country_anchor: true
   country_feature_dim: 2
-  # P-A street-type channel ON — a dedicated 1-dim street_type soft feed with its own projection +
+  # P-A street-type channel on — a dedicated 1-dim street_type soft feed with its own projection +
   # confidence (must equal the lexicon's feature_dim=1). Separate from the gazetteer, so init_from v385
   # loads clean (v385 lacks street_type_* → strict=False leaves only those fresh).
   use_street_type_anchor: true
@@ -164,7 +164,7 @@ model: # Verbatim from v2.4.1.
   # v3.16.0 — the locality-surface channel is on (the bundle).
   use_locality_surface_anchor: true
   locality_surface_feature_dim: 2
-  # #1104 homograph-guard SOFTENER — the one variable vs v263. Scales the country_ambiguous dim by 0.5
+  # #1104 homograph-guard softener — the one variable vs v263. Scales the country_ambiguous dim by 0.5
   # before the country_projection (bakes into the exported ONNX. no lexicon/inference change). v263's
   # hard guard (scale 1.0) over-suppressed homograph countries Georgia/Jordan (country-homograph F1
   # 89.8->82.6); softening should recover homograph recall without giving back the country F1 the

@@ -10,7 +10,7 @@ import { $public as corePublic, liveEnv } from "@mailwoman/core/env"
 import { z } from "zod"
 
 /**
- * The hot-set WOF database the WASM resolver serves.
+ * The hot-set WOF database the wasm resolver serves.
  */
 export const PublicWOFWASMEnvSchema = z.object({
 	MAILWOMAN_WOF_HOT_DB: z.string().optional().meta({
@@ -20,6 +20,6 @@ export const PublicWOFWASMEnvSchema = z.object({
 })
 
 /**
- * Live WASM resolver settings over core's, sharing core's getters and cached values.
+ * Live wasm resolver settings over core's, sharing core's getters and cached values.
  */
 export const $public = liveEnv(PublicWOFWASMEnvSchema, corePublic)

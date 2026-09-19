@@ -1,4 +1,4 @@
-# Word-consistency heal: re-diagnosis, contract fix, ship default-ON (night-3)
+# Word-consistency heal: re-diagnosis, interface fix, ship default-ON (night-3)
 
 **Model:** v264 (v6.3.0 shipped weights) — no retrain; every change is decode-side library code.
 **Change set:** PR #1132. **Check revision (explicit):** the parity check now grades the ship-config
@@ -13,7 +13,7 @@ as the path to a clean win.
 
 Night-3 re-diagnosis: the regression was **two defects in the heal** rather than vote noise —
 
-1. **Contract bug.** The vote re-decoded words whose pieces already AGREED in type whenever local
+1. **Interface bug.** The vote re-decoded words whose pieces already AGREED in type whenever local
    type-mass preferred another type, silently overriding viterbi's global decision. Single-piece
    `▁Broadway` (B-street) flipped to O; all-street `Gamle` rewrote to locality. The module docstring
    had always claimed "a word whose pieces already agree is left byte-identical" — the code only

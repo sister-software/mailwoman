@@ -5,21 +5,21 @@
  *
  *   `state-hi-schools`: Hawaii DOE public + charter school workbook consumer.
  *
- *   The Hawaii State Department of Education publishes a directory of all HIDOE schools and public
- *   charter schools (PCS) as an XLSX workbook (`SchoolList.xlsx`) with two sheets: `HIDOE` (~258
+ *   The Hawaii State Department of Education publishes a directory of all hidoe schools and public
+ *   charter schools (PCS) as an xlsx workbook (`SchoolList.xlsx`) with two sheets: `hidoe` (~258
  *   rows) and `PCS` (~38 rows). Total ~296 rows statewide. Each row carries a school name,
  *   single-line street address, city, ZIP, a numeric `code`, and HI-specific administrative columns
  *   (complex, complex_area, district, island, charter).
  *
- *   The adapter consumes the original XLSX retained by the fetcher and reads both worksheets directly.
+ *   The adapter consumes the original xlsx retained by the fetcher and reads both worksheets directly.
  *   Legacy flat CSV artifacts remain accepted so existing source caches do not need conversion.
  *
  *   Address parsing notes: Hawaii's residential numbering is hyphenated on Oahu (`47-470 Hui Aeko
  *   Place`), Kauai (`2-4035 Kaumualii Hwy`), and elsewhere. The shared HOUSE_NUMBER_PREFIX regex
  *   covers this via its optional `(?:-\d+)?` group.
  *
- *   The `island` and `district` columns are HIDOE administrative labels (Honolulu, Central, Leeward,
- *   Windward, Hilo, Hawaii, Maui, Kauai) — they are NOT US counties and intentionally are not
+ *   The `island` and `district` columns are hidoe administrative labels (Honolulu, Central, Leeward,
+ *   Windward, Hilo, Hawaii, Maui, Kauai) — they are not US counties and intentionally are not
  *   surfaced as `subregion`.
  *
  *   Output: one row per school with `venue` (school name), `(house_number?, street, locality,
@@ -54,7 +54,7 @@ function normalizeZip(raw: HiSchoolRow["zip"]): string {
 
 	if (!trimmed) return ""
 
-	// XLSX → CSV conversion may emit numeric ZIPs without leading zeros. HI ZIPs all begin
+	// xlsx → CSV conversion may emit numeric ZIPs without leading zeros. HI ZIPs all begin
 	// with 96, so a 4-digit value indicates a leading-zero stripped during numeric coercion
 	// (defensive — has not been observed in the published file as of 2026-05).
 	if (/^\d{4}$/.test(trimmed)) return `0${trimmed}`

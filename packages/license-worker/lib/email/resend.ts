@@ -3,7 +3,7 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Resend over its HTTP API, the provider when the worker has no `send_email` binding. The `Idempotency-Key` header is
+ *   Resend over its http API, the provider when the worker has no `send_email` binding. The `Idempotency-Key` header is
  *   the invoice id, so a retried send is one message.
  */
 

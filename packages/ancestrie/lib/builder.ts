@@ -6,7 +6,7 @@
  *   Build side of the ancestrie: accumulate entries into a token trie, then seal — compute pre/post
  *   interval labels over the primary-parent forest and serialize to the versioned binary described
  *   in `format.ts`. The output is canonical: sealing the same entry set yields identical bytes
- *   regardless of add order (see the CANONICAL OUTPUT note in the format doc), so artifact diffs
+ *   regardless of add order (see the canonical output note in the format doc), so artifact diffs
  *   mean data changed, never that a build iterated differently.
  *
  *   No Node imports — the builder runs anywhere the reader does. Serialization is a build-time
@@ -462,7 +462,7 @@ export class AncestrieBuilder {
 	}
 
 	/**
-	 * Record (or verify) the id-carried fields of an entry — the alias contract: every add of the same id must agree.
+	 * Record (or verify) the id-carried fields of an entry — the alias interface: every add of the same id must agree.
 	 */
 	private registerMeta(entry: AncestrieEntry): void {
 		const payload = encodePayload(entry.payload)

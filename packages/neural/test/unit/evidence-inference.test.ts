@@ -3,7 +3,7 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   TS↔Python EVIDENCE-CHANNEL painter parity (Option-A Phase 2). The fixture
+ *   TS↔Python evidence-channel painter parity (Option-A Phase 2). The fixture
  *   (`test/fixtures/evidence-parity-v2.json`, regenerate via `generate-evidence-parity.py`) carries
  *   mini street-type + locality-surface lexicons and per-piece features painted by corpus-python's
  *   real painter. this test replays the same lexicons + piece offsets through the generic TS painter

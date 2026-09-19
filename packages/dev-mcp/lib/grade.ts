@@ -31,7 +31,7 @@ const Z_CRITICAL_95 = 1.96
 /**
  * Project a committed seed row into the table shape {@link checkCase} reads.
  *
- * Written with NAMED fields on purpose. `build-regression-db.ts` inserts the same mapping positionally for bulk-load
+ * Written with named fields on purpose. `build-regression-db.ts` inserts the same mapping positionally for bulk-load
  * speed, so it cannot be shared as-is — but naming every field here means a column added to {@link GauntletCaseTable} is
  * a compile error against this function rather than a silently-null column at grade time.
  */
@@ -82,7 +82,7 @@ export type RowGrade = "improved" | "regressed" | "neutral" | "ungradeable"
 /**
  * Grade one row's two arms against its expectations.
  *
- * `checkCase` returns the list of issues, so fewer issues is better. Comparing COUNTS rather than the issue text is
+ * `checkCase` returns the list of issues, so fewer issues is better. Comparing counts rather than the issue text is
  * deliberate: an arm that trades one wrong component for a different wrong component has not improved, and a text diff
  * would report a change where the grade is unmoved.
  */
@@ -117,7 +117,7 @@ export interface SignificanceReading {
 	p: number | null
 	verdict: "a_better" | "b_better" | "indistinguishable" | "untestable"
 	/**
-	 * The smallest true difference this many rows could have detected, in PERCENTAGE POINTS.
+	 * The smallest true difference this many rows could have detected, in percentage points.
 	 *
 	 * Always reported, including — especially — when the verdict is `indistinguishable`, because that verdict without an
 	 * MDE is indistinguishable from "no effect", and those are different claims.

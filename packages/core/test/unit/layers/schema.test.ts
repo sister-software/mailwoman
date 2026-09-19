@@ -10,18 +10,18 @@ import {
 	createLayerCoverageTable,
 	createLayerManifestTable,
 	LayerTier,
-	type LayerContractDatabase,
+	type layerschemadatabase,
 } from "@mailwoman/core/layers/schema"
 import { supportsExclusion, CoverageBasis } from "@mailwoman/evidence"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
 import { sql } from "kysely"
 import { describe, expect, it } from "vitest"
 
-function openMemoryDB(): DatabaseClient<LayerContractDatabase> {
-	return DatabaseClient.temp<LayerContractDatabase>()
+function openMemoryDB(): DatabaseClient<layerschemadatabase> {
+	return DatabaseClient.temp<layerschemadatabase>()
 }
 
-describe("layer contract DDL", () => {
+describe("layer interface DDL", () => {
 	it("creates layer_manifest and accepts a typed row", async () => {
 		using db = openMemoryDB()
 		await createLayerManifestTable(db)

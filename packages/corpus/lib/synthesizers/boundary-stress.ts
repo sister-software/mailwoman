@@ -5,13 +5,13 @@
  *
  *   Boundary-instability synthesizer (#375 — the highest-impact parser change). The failure taxonomy
  *
- *   The within-token-punctuation decomposition (#702) found one failure FAMILY surfacing under many
+ *   The within-token-punctuation decomposition (#702) found one failure family surfacing under many
  *   names: the model mis-places token boundaries between adjacent components when the boundary is
  *   ambiguous or unmarked. This generator emits diverse BIO-labeled rows that put the gold boundary
  *   exactly where the model wobbles, so a retrain learns the boundary from context rather than the
  *   lexeme.
  *
- *   The four token-aligned stress shapes, all in BASE LOCALES (US/FR/DE) so the recipe output never
+ *   The four token-aligned stress shapes, all in base locales (US/FR/DE) so the recipe output never
  *   introduces tokens the base corpus lacks (the #511 base-consistency lint flagged an earlier
  *   Australian draft: AU 4-digit postcodes collide with US house numbers, and AU localities are
  *   absent from the US/FR/DE base — a real contradiction). Each component is a whitespace-separated
@@ -29,19 +29,19 @@
  *   4. `house-number-after-street` — FR/DE number-follows-street (`Neuve-des-Capucines 5` → street +
  *        house_number), the model absorbs the number into the street.
  *
- *   Two BALANCING shapes (added 2026-06-18 after the v1.6.0 probes). The first pass at weight 1.0
- *   lifted the boundaries but over-fit a NARROW distribution — every row was a clean, full,
+ *   Two balancing shapes (added 2026-06-18 after the v1.6.0 probes). The first pass at weight 1.0
+ *   lifted the boundaries but over-fit a narrow distribution — every row was a clean, full,
  *   structured address — so the model regressed on out-of-distribution real rows (held-out US
  *   locality 66.3→58.2%). These two widen the distribution the recipe output teaches over, per the
  *   diagnosis (scripts/eval/locality-regression-probe): 5. `bare-locality` — locality with no
  *   street (`Public Library, Lisbon ND`, `75003 Paris`), the ship-blocker: 84% of the v1.6.0
- *   locality regression was dropped locality on bare "City, STATE" rows, because every other shape
+ *   locality regression was dropped locality on bare "City, state" rows, because every other shape
  *   placed a street before the city. Bare / comma-less / postcode'd / venue-prefixed forms, US +
  *   FR. 6. `house-number-before-street` — the confounding mirror of #4 (same FR vocab, number
  *   before the street). A balanced before:after mix breaks the positional shortcut behind the #4
  *   order-bias.
  *
- *   EXCLUDED: the region+postcode glue (`NY14201` — sub-token, no punctuation to split) and the
+ *   excluded: the region+postcode glue (`NY14201` — sub-token, no punctuation to split) and the
  *   AU/NZ/UK slash unit-convention (`4/2A` → unit+house_number). The slash labels cleanly (the
  *   tokenizer splits `/`) and is the worst within-token class — but it inherently requires non-base
  *   AU/NZ/UK locales, which contradict the US/FR/DE base (the lint catch). It belongs in a
@@ -69,7 +69,7 @@ export type BoundaryStressTemplate =
 	| "comma-less-city-state"
 	| "fr-prefix"
 	| "house-number-after-street"
-	// Added 2026-06-18 after the v1.6.0 probes (the recipe output's NARROW distribution over-fit "full structured
+	// Added 2026-06-18 after the v1.6.0 probes (the recipe output's narrow distribution over-fit "full structured
 	// address" and regressed OOD). These two re-balance the contexts the model actually sees:
 	| "bare-locality" // the ship-blocker fix: locality with no street (the 84%-dropped "City, STATE" rows)
 	| "house-number-before-street"
@@ -100,7 +100,7 @@ export interface SynthesizedBoundaryStressRow {
 
 /**
  * Multi-word street names — the suffix boundary only bites when "Club" could be read as part of the name. Single-word
- * names alone teach nothing about the suffix edge. Multi-word names are what make the suffix boundary BITE (the model
+ * names alone teach nothing about the suffix edge. Multi-word names are what make the suffix boundary bite (the model
  * must not read the trailing suffix word as part of the name). Kept diverse so the recipe output teaches the boundary
  * rather than the lexeme.
  */
@@ -227,7 +227,7 @@ const SUFFIXES = [
 	"Walk",
 ] as const
 
-// Vocabulary compile-checked against the codex. the ORDER stays this literal's. `Object.values(DirectionalAbbreviation)`
+// Vocabulary compile-checked against the codex. the order stays this literal's. `Object.values(DirectionalAbbreviation)`
 // runs N,E,S,W,… — deriving the array from it would re-map every sample() draw and change shipped recipe-output bytes.
 const DIRECTIONALS = ["N", "S", "E", "W", "NE", "NW", "SE", "SW"] as const satisfies readonly DirectionalAbbreviation[]
 
@@ -280,12 +280,12 @@ const FR_NAMES = [
 ] as const
 
 /**
- * Org/venue prefixes for the bare-locality shape — the v1.6.0 locality drop hit org-PREFIXED real rows hardest ("LISBON
- * PUBLIC LIBRARY, …, Lisbon ND"; "Alburg Health Center"). Teaching the locality with a leading venue keeps the model
- * emitting it on facility-style addresses (NPPES/HRSA shapes). `venue` is a base ComponentTag. #511-LINTED 2026-06-18
- * (scripts/lint-venue-vocab — scan of nppes/hrsa/tiger/nad/wof-admin): every token here is venue-DOMINANT in the base,
+ * Org/venue prefixes for the bare-locality shape — the v1.6.0 locality drop hit org-prefixed real rows hardest ("lisbon
+ * public library, …, Lisbon ND"; "Alburg Health Center"). Teaching the locality with a leading venue keeps the model
+ * emitting it on facility-style addresses (NPPES/HRSA shapes). `venue` is a base ComponentTag. #511-linted 2026-06-18
+ * (scripts/lint-venue-vocab — scan of nppes/hrsa/tiger/nad/wof-admin): every token here is venue-dominant in the base,
  * so the recipe output agrees with it. The first draft was naive — 9 terms were dropped because their tokens are
- * dominantly street/locality and would CONTRADICT the base the way Madison-as-street did (#511): "Fire" 93% street,
+ * dominantly street/locality and would contradict the base the way Madison-as-street did (#511): "Fire" 93% street,
  * "Veterans" 94% street, "City" 68% locality, "Hall" 63% street, "Memorial"/"Hospital" 62-63% street, "Recreation" 79%
  * street, "Town" 48% locality, "Library" 51% street, "County" 68% street, "Arts"/"Courthouse"/"Municipal"
  * dependent_locality. Kept tokens: Clinic 98%, Practice 98%, Dental 100%, Health 99%, Medical 88%, Community 92%,
@@ -309,9 +309,9 @@ const VENUES = [
 ] as const
 
 /**
- * Localities DERIVED from the base corpus (#511): every name here is verified locality-DOMINANT in the training data
+ * Localities derived from the base corpus (#511): every name here is verified locality-dominant in the training data
  * (B-locality ≫ I-street), so the recipe output agrees with the base instead of fighting it. The night's targeted scan
- * caught the prior vocab (Madison, Portland, Springfield IL…) at 92–100% STREET in the base ("Madison Ave"), the "5th
+ * caught the prior vocab (Madison, Portland, Springfield IL…) at 92–100% street in the base ("Madison Ave"), the "5th
  * Avenue Theatre" #511 trap. See 2026-06-17-locality-vocab-fix.
  */
 const US_TUPLES: ReadonlyArray<BoundaryStressBaseTuple> = [
@@ -346,8 +346,8 @@ const US_TUPLES: ReadonlyArray<BoundaryStressBaseTuple> = [
 ]
 
 /**
- * FR localities DERIVED from the FR (ban) parquet files specifically — where these famous cities are 95–99%
- * locality-DOMINANT (Paris 515605/24789, Marseille 247014/1752, Lyon 106239/3114). NB: the all-files scan falsely
+ * FR localities derived from the FR (ban) parquet files specifically — where these famous cities are 95–99%
+ * locality-dominant (Paris 515605/24789, Marseille 247014/1752, Lyon 106239/3114). NB: the all-files scan falsely
  * flagged them street-dominant by undersampling the FR block (parts 180–209) and mixing in US street-contexts. the
  * FR-block scan is the honest distribution. Dept-diverse (28 depts), region empty (French addresses carry no region
  * token. the generator's region-optional path handles it).
@@ -401,14 +401,14 @@ export function synthesizeBoundaryStressRow(
 	const template = opts.forceTemplate ?? sample(ALL_TEMPLATES, random)
 
 	if (template === "bare-locality") {
-		// The v1.6.0 ship-blocker fix: locality was dropped on bare/short "City, STATE" rows (84% of the
+		// The v1.6.0 ship-blocker fix: locality was dropped on bare/short "City, state" rows (84% of the
 		// regression) because every prior shape placed a street before the city, so the model learned "the
 		// city follows a street" and stopped emitting locality without one. Teach the locality with no street,
 		// across the forms real data carries it — bare, comma-less, postcode'd, and venue/org-prefixed.
 		const b = base ?? (random() < 0.3 ? sample(FR_TUPLES, random) : sample(US_TUPLES, random))
 		const venue = random() < 0.45 ? sample(VENUES, random) : ""
 		// ~12% carry a trailing country token — the v1.7.1 country patch (DeepSeek 2026-06-18). The pure
-		// "City, STATE" bare rows carry no country token, which cost ~4pp on us.country_homograph in v1.7.0.
+		// "City, state" bare rows carry no country token, which cost ~4pp on us.country_homograph in v1.7.0.
 		// teaching "…, USA"/"…, France" recovers it as a single-variable additive without diluting locality.
 		const withCountry = random() < 0.12
 
@@ -430,7 +430,7 @@ export function synthesizeBoundaryStressRow(
 		}
 
 		const withZip = random() < 0.5
-		const comma = random() < 0.6 ? "," : "" // include the comma-LESS "City STATE" form too
+		const comma = random() < 0.6 ? "," : "" // include the comma-less "City STATE" form too
 		// "United States" (United 98% / States 98% country in the base) rather than "USA" — the #511 lint found
 		// "USA" is locality-dominant (75%, only 6% country) in the base. labeling it country would contradict.
 		const countryName = "United States"
@@ -463,7 +463,7 @@ export function synthesizeBoundaryStressRow(
 		if (template === "house-number-before-street") {
 			// The confounding mirror of house-number-after-street: the same FR street vocab with the number
 			// before the name. A balanced before:after mix (the build/recipe sets the ratio, ~7:3 to keep US
-			// house_number 99.8% safe) teaches the model a street-adjacent number is a house_number by FORM rather than position — the probe found v1.6.0 confidently absorbs the TRAILING number into street (I-street
+			// house_number 99.8% safe) teaches the model a street-adjacent number is a house_number by form rather than position — the probe found v1.6.0 confidently absorbs the trailing number into street (I-street
 			// P=0.96), the order-bias.
 			const raw = `${hn} ${name}, ${b.postcode} ${b.locality}`
 
@@ -494,7 +494,7 @@ export function synthesizeBoundaryStressRow(
 			}
 		}
 
-		// house-number-after-street: "{name} {hn}, {postcode} {locality}" — number FOLLOWS the street.
+		// house-number-after-street: "{name} {hn}, {postcode} {locality}" — number follows the street.
 		const raw = `${name} ${hn}, ${b.postcode} ${b.locality}`
 
 		return {

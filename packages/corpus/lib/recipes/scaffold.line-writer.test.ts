@@ -3,7 +3,7 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   The recipe line writer's delimiter contract.
+ *   The recipe line writer's delimiter interface.
  *
  *   A missing delimiter is silent at the point of the fault: two rows land on one line, and the error surfaces in
  *   whatever parses the output rather than in the recipe that wrote it. One line per call, and the delimiter as its

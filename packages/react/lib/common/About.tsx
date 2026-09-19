@@ -73,8 +73,8 @@ export function About({ collapsible = true }: AboutProps = {}): ReactNode {
 				<h3 className="mw-about__heading">Byte-range gazetteer</h3>
 				<p>
 					The gazetteer is a multi-gigabyte SQLite file served from a public bucket. It loads via{" "}
-					<strong>sql.js-httpvfs</strong>, which range-requests only the pages a lookup touches, so your browser fetches
-					a few hundred kilobytes per session instead of the whole file.
+					<strong>sql.js-httpvfs</strong>. It range-requests only the pages a lookup touches. Therefore, your browser
+					fetches a few hundred kilobytes per session instead of the whole file.
 				</p>
 			</section>
 

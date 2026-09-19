@@ -3,7 +3,7 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   ArcGIS REST errors arrive under HTTP 200 as a JSON envelope, `{ "error": { "code", "message", "details" } }`, so
+ *   ArcGIS rest errors arrive under http 200 as a JSON envelope, `{ "error": { "code", "message", "details" } }`, so
  *   nothing upstream maps them: a caller that reads `data.features` off an error body gets `undefined` and reports an
  *   empty layer, or a message about a missing field that names the wrong fact. Every ArcGIS JSON read a layer product
  *   makes goes through {@link assertNoArcGISError} before it reads a field.

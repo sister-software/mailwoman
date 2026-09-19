@@ -59,7 +59,7 @@ export function incDecimalString(s: string): string {
 /**
  * Python `round()` — correctly-rounded, round-half-to-even. Works off the double's exact (terminating) decimal
  * expansion via `toFixed(80)`, so it matches Python both on ordinary values (where a naïve `x * 10**nd` would diverge
- * by a ULP) and on exact half-way ties like `40.890625` → `40.89062` (where `toFixed(nd)` rounds half-UP and would
+ * by a ULP) and on exact half-way ties like `40.890625` → `40.89062` (where `toFixed(nd)` rounds half-up and would
  * diverge). `nd === 0` keeps a fast half-even path on the double.
  */
 export function pyRound(x: number, nd = 0): number {

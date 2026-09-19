@@ -71,13 +71,13 @@ export interface FSTProvenance {
 	edgeCount: number
 	nameInsertions: number
 	/**
-	 * How many places carried a non-zero REFERENTIAL score at build time. Named `importanceMatches` for stamp
+	 * How many places carried a non-zero referential score at build time. Named `importanceMatches` for stamp
 	 * compatibility with every artifact written before the two-score split — renaming the JSON key would make every
 	 * existing stamp unreadable, and the number means the same thing it always did on a population-built artifact.
 	 */
 	importanceMatches: number
 	/**
-	 * How many places carried an ENCYCLOPEDIC score at build time. `undefined` on a pre-split build — which is not the
+	 * How many places carried an encyclopedic score at build time. `undefined` on a pre-split build — which is not the
 	 * same as 0 (a v5 build against a population-only database), so the freshness report says the two in different
 	 * words.
 	 */
@@ -91,9 +91,9 @@ export interface FSTProvenance {
 	/**
 	 * MD5 of the source database's bytes at build time — the artifact's link to the gazetteer it is a projection of.
 	 *
-	 * `sourceDB` records the PATH, which is exactly the field that cannot change when the bytes behind it do: the admin
-	 * DB is a sealed readonly artifact that a rebuild REPLACES in place, so every FST built before the 2026-08-04 swap
-	 * still names the current file and none of them was built from it. Compared by `fst-freshness.ts`.
+	 * `sourceDB` records the path, which is exactly the field that cannot change when the bytes behind it do: the admin
+	 * DB is a sealed readonly artifact that a rebuild replaces in place. Therefore, every FST built before the 2026-08-04
+	 * swap still names the current file and none of them was built from it. Compared by `fst-freshness.ts`.
 	 *
 	 * `undefined` = built before the stamp existed (every artifact predating 2026-08-05). Never conflate that with "built
 	 * from a database whose md5 is unknown" — the freshness check reports the two in different words.
@@ -151,7 +151,7 @@ export interface BuildFSTOpts {
 	 * (across the whole admin DB rather than just this build's country scope) with a place carrying that surface. When
 	 * supplied, every inserted place row records the count for its accepting surface (`PlaceEntry.crossCountryBranches`)
 	 * — an entry accessible under several surfaces records each surface's own count. Serialized into the place row's
-	 * former `_pad` byte with presence signaled by header flags bit0, so VERSION stays put and pre-ambiguity artifacts
+	 * former `_pad` byte with presence signaled by header flags bit0, so version stays put and pre-ambiguity artifacts
 	 * read as "no data" (never "0 branches" — the meaning-of-zero rule). No decoder consumes it yet. consumers (FST-prior
 	 * tempering, the Option-A evidence channel) arrive behind their own measured checks.
 	 */

@@ -6,12 +6,12 @@
  *   standing between a malformed row and a degenerate shared node.
  *
  *   Every mint is `${identifierType}:${value}`, so two rows carrying the same identifier land on one node by
- *   construction. That is the dedup mechanism and also what has to be defended: a BLANK value mints one degenerate
+ *   construction. That is the dedup mechanism and also what has to be defended: a blank value mints one degenerate
  *   node (`frn:`, `form499_id:`) that every other blank-valued row silently collapses into, joining unrelated filers
  *   under a single identity. So the identifier mints throw on a blank rather than accept it. the company-name mints
  *   do not, because each is reached only after its caller has established the name is non-empty.
  *
- *   The two assertions here guard TEMPORAL columns rather than identity: `valid_from` is mandatory on every edge and
+ *   The two assertions here guard temporal columns rather than identity: `valid_from` is mandatory on every edge and
  *   every `asOf`-scoped read compares it as a plain string, so a blank value reads as "valid since forever" and a
  *   non-ISO one matches nothing.
  */
@@ -29,7 +29,7 @@ import { assertISODate } from "#sdk/guards"
  * in JS, so that branch is already skipped before this function is ever reached there. the guard is unreachable on that
  * path rather than merely redundant. On the provider-list path `ProviderListRow.frn` is typed as always-present (`FRN`,
  * never `FRN | null`), and {@linkcode parseProviderList} validates it via `toFRN` on the production (file-reading) route
- * — but the `providerRows` TEST INJECTION POINT bypasses that parser entirely. Without this guard, two rows for two
+ * — but the `providerRows` test injection point bypasses that parser entirely. Without this guard, two rows for two
  * different, unrelated providers each carrying a blank `frn` would silently mint and share one degenerate `frn:` node —
  * a false identity link joining unrelated filers, the worst failure class this crosswalk can produce.
  */
@@ -81,7 +81,7 @@ export function mintSubsidiaryNameNodeID(name: string): string {
 /**
  * Mints the `form499_id:` node id, throwing when `form499ID` is blank — see `build-filer.ts`'s module docstring,
  * "malformed input is loud" section. An empty string is not a legitimate missing value here (unlike a `null` `frn`):
- * every 499 row has SOME `form499ID` in the real file, so a blank one signals a malformed row, and silently minting
+ * every 499 row has some `form499ID` in the real file, so a blank one signals a malformed row, and silently minting
  * `form499_id:` would collapse every such row into one degenerate shared node.
  */
 export function mintForm499NodeID(form499ID: string, rowIndex: number): string {
@@ -98,11 +98,11 @@ export function mintForm499NodeID(form499ID: string, rowIndex: number): string {
 
 /**
  * Validates `lastFiledAt` is non-blank before it is written into both `filer_edge.source_vintage`/`valid_from` and
- * every attribute's `source_vintage` for this row. Decision 7 / criterion 1 make `valid_from` MANDATORY on every edge —
+ * every attribute's `source_vintage` for this row. Decision 7 / criterion 1 make `valid_from` mandatory on every edge —
  * but `Form499Row.lastFiledAt` is a raw, unvalidated TSV string (`form499.ts`'s own docstring: "no `Date` parsing
- * happens at this layer"), and SQLite's `NOT NULL` does not reject an empty string. An unguarded blank `lastFiledAt`
+ * happens at this layer"), and SQLite's `not NULL` does not reject an empty string. An unguarded blank `lastFiledAt`
  * would silently write `source_vintage: ""`/`valid_from: ""` onto every edge/attribute this row produces — a
- * time-scoped read (`valid_from <= asOf`) then treats that edge as valid SINCE FOREVER, exactly the dishonesty decision
+ * time-scoped read (`valid_from <= asOf`) then treats that edge as valid since forever, exactly the dishonesty decision
  * 7 exists to prevent. Guarded here — in the builder rather than in `form499.ts`'s parser — for the same reason
  * {@linkcode mintForm499NodeID} guards `form499ID` here rather than upstream: this file already owns the "which fields
  * are required for this artifact's identity/provenance" discipline, and `form499.ts` is deliberately a raw,
@@ -124,9 +124,9 @@ export function assertLastFiledAt(lastFiledAt: string, form499ID: string, rowInd
 /**
  * Requires + ISO-validates {@link BuildFilerOptions.validFrom} — called once, up front, only when a provider-list source
  * is actually supplied. Fails fast, before any file/DB I/O, matching the "pass at least one … source" options-level
- * guard just above it in {@linkcode buildFilerDatabase} — this is the same class of check (an options contract violation
- * rather than a malformed data row), so it is validated at the same point in the function rather than lazily inside the
- * provider-row loop.
+ * guard just above it in {@linkcode buildFilerDatabase} — this is the same class of check (an options interface
+ * violation rather than a malformed data row), so it is validated at the same point in the function rather than lazily
+ * inside the provider-row loop.
  */
 export function assertProviderValidFrom(validFrom: string | undefined): string {
 	if (validFrom === undefined) {
@@ -144,7 +144,7 @@ export function assertProviderValidFrom(validFrom: string | undefined): string {
 /**
  * Mints the `bdc_provider_id:` node id, throwing when `providerID` is not a safe integer — mirrors `peekProviderID`'s
  * `Number.isSafeInteger` guard (`build-bdc.ts`:259). `ProviderListRow.providerID` is already validated by
- * {@linkcode parseProviderList} on the production (file-reading) path, but the `providerRows` TEST INJECTION POINT
+ * {@linkcode parseProviderList} on the production (file-reading) path, but the `providerRows` test injection point
  * bypasses that parser entirely — a directly-constructed row with a `NaN` `providerID` would otherwise mint the node id
  * string `"bdc_provider_id:NaN"`, silently merging every malformed row under that one shared identity, the same failure
  * class `build-filer.ts`'s module docstring describes for `form499ID`.

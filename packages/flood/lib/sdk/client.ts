@@ -7,12 +7,12 @@
  *   the Office for National Statistics boundary service the coverage statement's "England" is realized
  *   from.
  *
- *   BOTH ARE API REQUESTS AND BOTH GO THROUGH {@linkcode APIClient}. Small bodies, repeated calls,
+ *   both are API requests and both GO through {@linkcode APIClient}. Small bodies, repeated calls,
  *   third-party hosts — the pacing, bounded retry, response caching and `ResourceError` mapping are
  *   exactly what these need. The 367 MB geodatabase is not one of them: it is a file transfer, it streams
  *   to disk on raw `fetch`, and `download.ts` says so in place.
  *
- *   FRESHNESS CANNOT BE PROBED BY CONTENT LENGTH. The EA's download host answers `HEAD` with HTTP 405 and
+ *   freshness cannot be probed BY content length. The EA's download host answers `head` with http 405 and
  *   ignores `Range` — it returns 200 with the whole file — so a size probe starts a real 367 MB download.
  *   {@linkcode EAFloodClient.readCatalogueRecord} reads the ISO revision date out of the catalogue entry
  *   instead, which is the authority's own statement about what changed and the only cheap freshness signal
@@ -49,7 +49,7 @@ export const EA_DATASET_BASE_URL = "https://environment.data.gov.uk/dataset"
 /**
  * Minimum spacing between EA requests, in milliseconds.
  *
- * The EA publishes no rate limit for these services and its WFS `GetCapabilities` reports `<ows:Fees>NONE`, so this is
+ * The EA publishes no rate limit for these services and its WFS `GetCapabilities` reports `<ows:Fees>none`, so this is
  * courtesy pacing rather than a published ceiling — stated as such rather than dressed up as a measured limit. Two
  * requests a second is far below anything a public OGC endpoint is provisioned for and costs a build nothing: the
  * acquisition path makes single-digit numbers of calls.
@@ -95,7 +95,7 @@ export class EAFloodClient extends APIClient<APIClientConfig> {
 	/**
 	 * The catalogue entry: reference dates, licence, and the direct file URLs.
 	 *
-	 * The download URL is READ FROM HERE rather than assembled, because the EA's file service keys on an opaque
+	 * The download URL is read from here rather than assembled, because the EA's file service keys on an opaque
 	 * `fileDataSetId` that has no relationship to the dataset id — a hard-coded URL survives a republish by pointing at a
 	 * file that is no longer the product.
 	 *

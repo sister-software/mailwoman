@@ -118,7 +118,7 @@ describe("buildCorpus end-to-end against wof-admin JSON-bundle fixture", () => {
 		expect(vermontHeldOut.length).toBeGreaterThan(0)
 		expect(trainVermont).toEqual([])
 
-		// The .txt manifests stay in lockstep with the per-split JSONL.
+		// The .txt manifests stay in lockstep with the per-split jsonl.
 		const trainIDs = new Set(await TextSpliterator.fromAsync(join(outDir, "splits", "train.txt")).toArray())
 
 		for (const r of vermontHeldOut) {

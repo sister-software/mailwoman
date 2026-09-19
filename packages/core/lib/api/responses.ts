@@ -13,7 +13,7 @@ import { isRetryableStatus } from "#api/retry"
 import { ResourceError } from "#errors/schema"
 
 /**
- * Whether an HTTP status is a 2xx success.
+ * Whether an http status is a 2xx success.
  *
  * Exists so a caller that opts out of throwing — `validateStatus: () => true`, for a graceful non-2xx path — can still
  * ask the question by name. Written against axios's own `HttpStatusCode` because this package already owns that
@@ -98,12 +98,12 @@ export function pluckResponseData<Body>(input: ResponseContainer<Body> | Body): 
  */
 export const ResourceErrorKind = {
 	/**
-	 * The request never reached an HTTP response: a connect failure, a DNS failure, a timeout, or a body read that died
+	 * The request never reached an http response: a connect failure, a DNS failure, a timeout, or a body read that died
 	 * mid-transfer.
 	 */
 	Network: "network",
 	/**
-	 * An HTTP response came back and carried a failing status.
+	 * An http response came back and carried a failing status.
 	 */
 	Response: "response",
 	/**
@@ -112,8 +112,8 @@ export const ResourceErrorKind = {
 	 */
 	Request: "request",
 	/**
-	 * A response arrived with a SUCCESS status, but its body could not be decoded into the requested type — the classic
-	 * case being an upstream that serves an HTML error page under a 200.
+	 * A response arrived with a success status, but its body could not be decoded into the requested type — the classic
+	 * case being an upstream that serves an html error page under a 200.
 	 *
 	 * Never transient, deliberately: retrying an unchanged bad body cannot help, and a client that treated this as
 	 * retryable would spend its whole attempt budget re-downloading the same broken payload.
@@ -159,8 +159,8 @@ export function resourceErrorKind(error: unknown): ResourceErrorKind | null {
 }
 
 /**
- * Whether `error` is the kind of failure a caller should REQUEUE rather than give up on — every network-class failure
- * (connect, DNS, timeout, mid-transfer drop) and every transient HTTP status (408/429/5xx).
+ * Whether `error` is the kind of failure a caller should requeue rather than give up on — every network-class failure
+ * (connect, DNS, timeout, mid-transfer drop) and every transient http status (408/429/5xx).
  *
  * This stays `true` even after a client exhausted its own bounded attempts: the client's ceiling is a statement about
  * one call, while a caller's requeue is a new, separate attempt budget minutes or hours later. Callers branch on this
@@ -180,7 +180,7 @@ export function isTransientResourceError(error: unknown): boolean {
 }
 
 /**
- * Build a {@linkcode ResourceError} carrying the `(source, kind, reason)` URN AND the originating `AxiosError` as its
+ * Build a {@linkcode ResourceError} carrying the `(source, kind, reason)` URN and the originating `AxiosError` as its
  * `cause`, so a debugger keeps the full Axios context (config, request, response) that the mapped error summarizes.
  */
 function taggedResourceError(
@@ -198,7 +198,7 @@ function taggedResourceError(
 }
 
 /**
- * The `reason` component for a failing HTTP status, chosen so the common branches a caller cares about are nameable
+ * The `reason` component for a failing http status, chosen so the common branches a caller cares about are nameable
  * without re-deriving them from the number.
  */
 function responseReason(status: number): string {
@@ -222,21 +222,21 @@ function responseReason(status: number): string {
  * Always throws — every failure past this point is a {@linkcode ResourceError} carrying a numeric `status`, a `(source,
  * kind, reason)` URN on `name`, and the originating `AxiosError` on `cause`. A non-Axios error is rethrown untouched.
  *
- * WHAT CHANGED, measured rather than recalled — a differential against `98c4dda1` across 18 failure shapes in the exact
+ * What changed, measured rather than recalled — a differential against `98c4dda1` across 18 failure shapes in the exact
  * `TileAPI` configuration found **16 of them changed**, not the two originally claimed:
  *
- * - Every RESPONSELESS failure (`ERR_NETWORK`, `ECONNREFUSED`, `ECONNRESET`, `ECONNABORTED`, `ETIMEDOUT`, `ERR_CANCELED`)
+ * - Every responseless failure (`ERR_NETWORK`, `econnrefused`, `econnreset`, `econnaborted`, `etimedout`, `ERR_CANCELED`)
  *   used to collapse into a uniform 500. they now split into 503 / 504 / 400 by cause, and `ERR_CANCELED` flips from
  *   transient to terminal, which is the point — a caller who cancelled should not requeue.
- * - Every non-401 HTTP status used to rethrow the raw `AxiosError`, so `status`-based branching (404 → skip, 403 → abort)
+ * - Every non-401 http status used to rethrow the raw `AxiosError`, so `status`-based branching (404 → skip, 403 → abort)
  *   had to reach into `error.response`. 401's own message and URN changed too.
  *
- * The earlier claim that `ECONNABORTED`/`ETIMEDOUT`/`ERR_CANCELED` resolved the chain with `undefined` was wrong for
+ * The earlier claim that `econnaborted`/`etimedout`/`ERR_CANCELED` resolved the chain with `undefined` was wrong for
  * every shape axios actually produces: the old `if (!response) throw` ran before that `switch`, and axios never
  * attaches a `response` to a timeout or a cancellation, so a real one threw `axios:response:missing` 500 — a
  * misclassified 500 rather than a `TypeError` at the caller. Note the `return` arms were not unreachable in general,
  * only unreachable via axios: reaching the `switch` required a response to be present, and an error carrying both a
- * `response` and `ECONNABORTED` did resolve with `undefined`. Stock adapters never pair those, but this repo's own
+ * `response` and `econnaborted` did resolve with `undefined`. Stock adapters never pair those, but this repo's own
  * `axiosLikeError(message, code, config, response)` helper builds that shape in one argument. No regression follows
  * from any of this — the sole call site has no `.catch`, and every shape that rejects now also rejected before.
  *
@@ -250,7 +250,7 @@ export async function delegateAxiosError(error: unknown): Promise<never> {
 	if (response) {
 		const { status } = response
 
-		// A SUCCESS status that still produced an error means the STATUS was fine and the BODY was not —
+		// A success status that still produced an error means the status was fine and the body was not —
 		// Axios's `transformResponse` rejecting an unparseable JSON payload, most often. That is a
 		// different failure from "the server said 500", and a different retry answer.
 		if (status >= HttpStatusCode.Ok && status < HttpStatusCode.MultipleChoices) {
@@ -293,7 +293,7 @@ export async function delegateAxiosError(error: unknown): Promise<never> {
 	}
 
 	if (networkErrorCode === "ENOTFOUND") {
-		// DELIBERATELY NO CONNECTIVITY PROBE. An earlier version issued a live `HEAD` here to word the
+		// deliberately no connectivity probe. An earlier version issued a live `head` here to word the
 		// message as "are we connected to the internet?" rather than "could not resolve host". It cost
 		// one unbounded, un-timed-out request per exhausted DNS failure — with a never-settling `fetch`
 		// the client never settled at all — and no test could reach it: deleting the whole branch caused

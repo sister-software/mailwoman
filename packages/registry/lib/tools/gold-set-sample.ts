@@ -4,14 +4,14 @@
  * @author Teffen Ellis, et al.
  *
  *   Gold-set P3 (#625) — sample the hard stratum for adjudication. The programmatic entity truth
- *   (`nppes-dedup-benchmark.ts`) collapses only NPPES-FLAGGED subparts (Is-Subpart + parent
+ *   (`nppes-dedup-benchmark.ts`) collapses only NPPES-flagged subparts (Is-Subpart + parent
  *   LBN/TIN); it can't settle the genuinely-ambiguous co-located collisions: distinct NPIs at one
  *   address with near-identical names that are not flagged subparts of the same parent. Those are
  *   where NPI-truth and any programmatic rule disagree — exactly the pairs a frozen adjudicated
  *   gold set must cover.
  *
  *   This finds them (over the full TX registry, geocode-free — the shared co-location scan
- *   `dedup-ceiling.ts` also runs) and writes each as a JSONL row carrying both records' fields (org
+ *   `dedup-ceiling.ts` also runs) and writes each as a jsonl row carrying both records' fields (org
  *   name, address, authorized official, taxonomy, subpart/parent flags) plus the programmatic
  *   verdict, so an adjudicator (human or LLM-as-judge, flagged as such) can label "same real-world
  *   entity? yes/no" and we can measure how often the programmatic truth matches judgment.
@@ -52,7 +52,7 @@ export interface GoldSetSampleOptions {
 	 */
 	n?: number
 	/**
-	 * Write the sampled pairs here as JSONL (otherwise the first 10 print to stdout).
+	 * Write the sampled pairs here as jsonl (otherwise the first 10 print to stdout).
 	 */
 	outJSONL?: string
 }
@@ -116,7 +116,7 @@ export async function goldSetSample(
 			bothSubpartSameParent: false,
 			// Programmatic heuristic verdict (what an entity-level rule would say, beyond the flagged
 			// subparts): same authorized official ⇒ likely one org. different official + different
-			// specialty ⇒ likely distinct. The whole point is to ADJUDICATE whether this is right.
+			// specialty ⇒ likely distinct. The whole point is to adjudicate whether this is right.
 			programmaticVerdict: sameAuth ? "same-entity" : "distinct",
 			adjudication: null,
 		})

@@ -13,7 +13,7 @@
 
 import type Stripe from "stripe"
 
-import { type ClaimResponse, parseClaimResponse } from "#claim-contract"
+import { type ClaimResponse, parseClaimResponse } from "#claim-interface"
 import { calendarDateUTC, plusDays } from "#dates"
 import { GRACE_DAYS } from "#plans"
 import { checkoutCollection, type ShopPlan, shopURLs } from "#shop/catalog"

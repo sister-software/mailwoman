@@ -6,7 +6,7 @@
 ## than in StockPhrases.yml. "The real question is…" is covered by
 ## JudgmentJargon's rhetorical-noun pattern, not repeated here.
 extends: existence
-message: "Cut the stock form '%s' — agreement must carry information, and openers/closers carry none."
+message: "Remove the stock form '%s' — agreement must carry information, and an opener or closer carries none."
 level: error
 ignorecase: true
 tokens:

@@ -23,7 +23,7 @@
  *   register tools without importing zod schemas from this side — that import is exactly the staleness it exists to
  *   avoid. Tool handlers run here verbatim. the shim adds no behavior beyond transport and restart.
  *
- *   STDOUT DISCIPLINE: this process's stdout is piped to the shim's STDERR, so library noise can never corrupt the
+ *   stdout discipline: this process's stdout is piped to the shim's stderr, so library noise can never corrupt the
  *   MCP channel. All protocol traffic rides the IPC channel via `process.send`.
  */
 
@@ -150,7 +150,7 @@ process.on("message", (message: WorkerInbound) => {
 	}
 })
 
-// The shim restarts by SIGTERM. the same cleanup the old single-process server ran on its signals.
+// The shim restarts by sigterm. the same cleanup the old single-process server ran on its signals.
 for (const signal of ["SIGINT", "SIGTERM"] as const) {
 	process.on(signal, () => {
 		registry.evictAll()

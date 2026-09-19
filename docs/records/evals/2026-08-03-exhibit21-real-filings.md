@@ -133,7 +133,7 @@ parser (`filer/test-fixtures/edgar/reference-oracle.py`, kept so the numbers can
 re-derived), read line by line against the source documents.
 
 That distinction is the whole point of this exercise. An `expected.json` generated from the
-parser would have recorded, as the contract, the eight zero-yield documents and the eighteen
+parser would have recorded, as the interface, the eight zero-yield documents and the eighteen
 fabricated names — all of which the hand-written fixture suite was perfectly happy with.
 
 ## Name resolution is not solved, and is out of scope here

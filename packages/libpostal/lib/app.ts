@@ -3,7 +3,7 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   The libpostal-compatible Hono app: CORS + error safety net + routes + the emitted OpenAPI
+ *   The libpostal-compatible Hono app: cors + error safety net + routes + the emitted OpenAPI
  *   document. Engine-agnostic — the CLI wires the real parser. tests inject fixtures.
  */
 
@@ -18,7 +18,7 @@ import { registerLibpostalRoutes } from "#routes"
 
 /**
  * 100 KiB — express.json's default cap, the closest thing to a legacy precedent for this endpoint. There is no legacy
- * 413 contract to match. the `{ error: "request body too large" }` envelope below is a recorded free choice, shaped
+ * 413 interface to match. the `{ error: "request body too large" }` envelope below is a recorded free choice, shaped
  * like the rest of this API's error responses.
  */
 const MAX_BODY_BYTES = 102_400
@@ -28,10 +28,10 @@ const MAX_BODY_BYTES = 102_400
  */
 export interface LibpostalAppOptions {
 	/**
-	 * Emit permissive CORS headers (`Access-Control-Allow-Origin: *`) on every response and answer preflight `OPTIONS`
-	 * with `204`. Default `true` — without it, a cross-origin XHR (including the `POST /parse` preflight) is blocked
+	 * Emit permissive cors headers (`Access-Control-Allow-Origin: *`) on every response and answer preflight `options`
+	 * with `204`. Default `true` — without it, a cross-origin XHR (including the `post /parse` preflight) is blocked
 	 * outright, and browser clients need this to work at all (#1017). Set `false` for deployments where a reverse proxy
-	 * already owns the CORS headers.
+	 * already owns the cors headers.
 	 */
 	cors?: boolean
 
@@ -83,10 +83,10 @@ export function createLibpostalApp(engine: LibpostalEngine, options: LibpostalAp
 		app.use(engineHeaders(options.engine))
 	}
 
-	// Safety net: an engine fault returns the clean legacy JSON error, never a crash (wire contract).
+	// Safety net: an engine fault returns the clean legacy JSON error, never a crash (wire interface).
 	app.onError((_error, c) => c.json({ error: "internal error" }, 500))
 
-	// Ahead of the canonicalizers (which buffer the full body into memory) so an oversized POST is rejected
+	// Ahead of the canonicalizers (which buffer the full body into memory) so an oversized post is rejected
 	// before that buffering happens rather than after.
 	const guardBodySize = bodyLimit({
 		maxSize: MAX_BODY_BYTES,

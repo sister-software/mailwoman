@@ -3,9 +3,9 @@
 # Hand off: not for immediate use. This config is parked here as part of Thread C-s
 # (the scaffold-now-train-later ship). It becomes invocable when:
 #
-#   - Thread A (tokenizer retrain) has landed under /data/models/tokenizer/v0.5.0/, AND
+#   - Thread A (tokenizer retrain) has landed under /data/models/tokenizer/v0.5.0/, and
 #   - Thread B (corpus-v0.4.0 with phrase proposals + adversarial expansion) has landed
-#     under /data/corpus/versioned/v0.4.0/corpus-v0.4.0/, AND
+#     under /data/corpus/versioned/v0.4.0/corpus-v0.4.0/, and
 #   - Thread F (verdict-smoke framework) is merged to main so the `--smoke-mode constant`
 #     flag + `train.lr_schedule: constant` config field are wired through.
 #
@@ -20,7 +20,7 @@
 # 50K run on rented GPU. Catches:
 #
 #   - Phrase-prior feature plumbing: corpus loader emits the (B, S, 10) feature tensor
-#     in the layout the model expects (see phrase_priors.py for the slot contract).
+#     in the layout the model expects (see phrase_priors.py for the slot interface).
 #   - Top-k inference returns calibrated paths when sanity-checked against the eval set.
 #   - CRF + class_weights + per_token + phrase-prior projection all coexist without
 #     NaN or dtype mismatch under bf16 on gfx1103.
@@ -53,7 +53,7 @@ data:
     usgov-hrsa-fqhc: 2.0
     usgov-imls-pls: 2.0
     usgov-nad: 1.0
-    state-ia-contractors: 2.0
+    state-ia-builders: 2.0
     state-tx-notaries: 1.5
     state-ny-notaries: 2.0
   # Cap rows-per-epoch so the smoke doesn't burn time on a giant per-epoch scan during

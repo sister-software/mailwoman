@@ -5,27 +5,27 @@
  *
  *   One survey area's attributes, its own metadata, and its mapped footprint.
  *
- *   THE FOOTPRINT IS THE SURVEY-AREA OUTLINE, NEVER THE UNION OF THE RATED POLYGONS. `NOTCOM`,
- *   access-denied and `NOTPUB` map units are inside the footprint and carry no rating, so a footprint taken
+ *   the footprint is the survey-area outline, never the union OF the rated polygons. `notcom`,
+ *   access-denied and `notpub` map units are inside the footprint and carry no rating, so a footprint taken
  *   from the rated set would report them as unmapped when the authority has declared exactly what they are.
  *   The archive ships the outline as its own shapefile — `soilsa_a_<areasymbol>.shp`, one feature — which is
  *   why this layer never has to reconstruct it.
  *
- *   THE REFRESH DATE IS NOT THE SURVEY DATE, AND CONFLATING THEM IS THE CURRENCY LIE THIS FILE EXISTS TO
- *   PREVENT. `IA153` carries `saverest` 2025-09-09 and version 28, and the FGDC lineage inside the same
+ *   the refresh date is not the survey date, and conflating them is the currency LIE this file exists TO
+ *   prevent. `IA153` carries `saverest` 2025-09-09 and version 28, and the fgdc lineage inside the same
  *   archive cites `Soil Survey of Polk County, Iowa`, 1:15,840, **1960**. The dataset's own
  *   time-period-of-content runs 1998-09-22 to 2025-09-09, so a consumer reading that as survey currency
  *   reads it wrong by sixty-five years. Both dates are stored, apart, with the title the older one came
  *   from so it is checkable rather than assertible.
  *
- *   TWO SCALES, ALSO DIFFERENT FACTS. `legend.projectscale` is 12,000 for `IA153` — the scale the map units
+ *   two scales, also different facts. `legend.projectscale` is 12,000 for `IA153` — the scale the map units
  *   were digitized at. The 1960 source citation's own `srcscale` is 15,840 — the scale the ground was
  *   walked at. Storing one as the other would answer the enlargement caveat's question wrongly.
  *
- *   THE LICENCE IS CHECKED PER SURVEY AREA, against the `useconst` element of the metadata that area ships.
+ *   the licence is checked PER survey area, against the `useconst` element of the metadata that area ships.
  *   An area whose use constraints no longer say "This is public information" is a licence change, and a
  *   build that absorbed one would ship an artifact under terms nobody checked. The text is boilerplate
- *   repeated across SSURGO, which is why asserting it is cheap and why a change in it is loud.
+ *   repeated across ssurgo, which is why asserting it is cheap and why a change in it is loud.
  */
 
 import { parseJSONStrict, stringifyJSON } from "@mailwoman/core/json"
@@ -226,7 +226,7 @@ export async function readSurveyAreaAttributes(
  * A polygon the authority drew with no soil mapping behind it.
  *
  * Three signals rather than one, because the source encodes the same fact three ways and each on its own has a gap: the
- * symbol (`NOTCOM`, `NOTPUB`), the name (`Area not surveyed, access denied`), and the structural case of a map unit
+ * symbol (`notcom`, `notpub`), the name (`Area not surveyed, access denied`), and the structural case of a map unit
  * carrying no components at all. A map unit with no components has nothing to rate whatever it is called, and reading
  * it as "rated nothing" rather than "no mapping" would put it in `unrated_share` — a claim that the survey looked and
  * declined, when it did not look.
@@ -243,7 +243,7 @@ function isNoMapping(musym: string, muname: string, componentCount: number): boo
  * Refuse a value outside the authority's own declared domain.
  *
  * An unknown code is a source-schema change, which is the event a reader most needs to hear about. coercing it to a
- * nearest neighbour or to NULL converts "the source changed" into "there is nothing here". A BLANK is not a violation:
+ * nearest neighbour or to NULL converts "the source changed" into "there is nothing here". A blank is not a violation:
  * NULL is a real state in every one of these columns and means something specific — for `nirrcapcl` it means the survey
  * did not rate the component, which is not class 8.
  */
@@ -262,7 +262,7 @@ function nullable(value: string | undefined): string | null {
 }
 
 /**
- * The NCCPI v3.0 overall index per component.
+ * The nccpi v3.0 overall index per component.
  *
  * `cointerp` is the largest table in the export — 157,063 rows for `IA153`, read in 0.36 s — and the overall rule is
  * one row per component at {@link COINTERP_OVERALL_RULE_DEPTH}: 369 of 369 components on `IA153`, of which 327 carry a
@@ -296,7 +296,7 @@ async function readNCCPI(
 }
 
 /**
- * What the shipped FGDC metadata says about this survey area's dates and its licence.
+ * What the shipped fgdc metadata says about this survey area's dates and its licence.
  */
 export interface FGDCMetadata {
 	/**
@@ -304,7 +304,7 @@ export interface FGDCMetadata {
 	 */
 	publicationDate: string
 	/**
-	 * The OLDEST source citation date in the lineage, as an ISO date or a bare year.
+	 * The oldest source citation date in the lineage, as an ISO date or a bare year.
 	 */
 	oldestSourceDate: string | null
 	oldestSourceTitle: string | null
@@ -312,13 +312,13 @@ export interface FGDCMetadata {
 }
 
 /**
- * Read the metadata NRCS ships inside the archive.
+ * Read the metadata nrcs ships inside the archive.
  *
  * Targeted extraction rather than a general XML parse, and not for want of a parser — `@mailwoman/core` ships
  * `htmlparser2`. A parser recovers an unclosed element by giving it the rest of the document as its content, and the
  * two values below that throw would then stamp the artifact with that content instead. {@link elementText} answers
  * `undefined` for an element it cannot read, which is what makes the throw reachable. Every value this reader cannot
- * find is reported as `null` EXCEPT the publication date and the licence sentence, which throw — those two decide the
+ * find is reported as `null` except the publication date and the licence sentence, which throw — those two decide the
  * artifact's vintage and whether it may be shipped at all, and neither has a safe default.
  *
  * @throws {Error} When the metadata carries no publication date, or its use constraints no longer carry the
@@ -360,7 +360,7 @@ function readSourceCitations(xml: string): Array<{ date: string; title: string; 
 
 	for (const body of elementBlocks(xml, "srcinfo")) {
 		// `caldate` for a single date, `begdate` for a range. A range's END is when the source stopped being collected.
-		// its BEGINNING is when the ground was first looked at, which is the fact this layer is carrying.
+		// its beginning is when the ground was first looked at, which is the fact this layer is carrying.
 		const date = elementText(body, "caldate") ?? elementText(body, "begdate")
 
 		if (!date) continue
@@ -380,7 +380,7 @@ function readSourceCitations(xml: string): Array<{ date: string; title: string; 
 /**
  * The text of the first `<name>` element, whitespace left alone.
  *
- * INDEX SCANS RATHER THAN A REGEX, AND THAT IS A CORRECTNESS CHOICE RATHER THAN A SPEED ONE. The obvious form — ``new
+ * Index scans rather than A regex, and that is A correctness choice rather than A speed one. The obvious form — ``new
  * RegExp(`<${name}>([\\s\\S]*?)</${name}>`)`` — backtracks polynomially on a document whose opening tag has no closing
  * partner: the lazy run re-scans to the end from every candidate start. The input here is a 43,251-character document
  * that arrived over the network inside a downloaded archive, so "a malformed one cannot happen" is not a claim this
@@ -427,7 +427,7 @@ function elementBlocks(xml: string, name: string): string[] {
 }
 
 /**
- * FGDC dates arrive as `YYYY` or `YYYYMMDD`. Both are kept as they are meant — a bare year is a bare year, and padding
+ * Fgdc dates arrive as `yyyy` or `yyyymmdd`. Both are kept as they are meant — a bare year is a bare year, and padding
  * it to January 1 would invent a precision the citation does not claim.
  */
 function normalizeFGDCDate(value: string): string {

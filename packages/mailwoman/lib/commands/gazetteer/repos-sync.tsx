@@ -6,14 +6,14 @@
  *   `mailwoman gazetteer repos-sync` — what state the WOF repos root is IN, and the one repair `inspect sync` cannot
  *   perform.
  *
- *   THE DIVISION OF LABOUR MATTERS, because two commands touching the same directories otherwise looks like an
+ *   the division OF labour matters, because two commands touching the same directories otherwise looks like an
  *   accident. `gazetteer inspect sync` clones and pulls. it now resolves each repo's origin through
- *   `resolveWOFRepoOrigin`, so a new clone comes from our fork when one exists. What it cannot do is fix an EXISTING
+ *   `resolveWOFRepoOrigin`, so a new clone comes from our fork when one exists. What it cannot do is fix an existing
  *   checkout: `synchronizeRepo` pulls in place and never rewrites a remote, so a directory cloned from upstream before
  *   the fork existed keeps pulling upstream forever, silently, over corrections the build depends on. That repair is
  *   here, and it is opt-in twice (`--apply --repoint`) because it changes what the next build ingests.
  *
- *   REPORT FIRST. Without `--apply` nothing is written: the sweep resolves every origin, reads every checkout and
+ *   report first. Without `--apply` nothing is written: the sweep resolves every origin, reads every checkout and
  *   prints the plan — remote, vintage, shallowness, and whether the tree is safe to touch. A plan nobody saw cannot be
  *   checked, and the vintage half is not available anywhere else: the admin build reads whatever is on disk, so a repo
  *   six months behind produces a plausible artifact and no complaint.
@@ -30,7 +30,7 @@ import { type CommandSpec, CommandTaskResult, type CommandComponent, useCommandT
 import type { RepoSyncPlan } from "#gazetteer-pipeline/repos/sync"
 
 /**
- * Native command-line contract consumed by the filesystem command router.
+ * Native command-line interface consumed by the filesystem command router.
  */
 export const spec = {
 	name: "repos-sync",
@@ -107,7 +107,7 @@ const GazetteerReposSync: CommandComponent<typeof spec> = ({ options }) => {
 						await runFile("git", ["-C", plan.directory, "merge", "--ff-only", "origin/HEAD"])
 						performed.push(`fast-forwarded ${plan.repo}`)
 					} else if (plan.action === SyncAction.RepointRequired && options.repoint) {
-						// The previous remote is KEPT as `upstream`. Losing the address of the repo we fork from would make
+						// The previous remote is kept as `upstream`. Losing the address of the repo we fork from would make
 						// the next upstream sync a guess.
 						await runFile("git", ["-C", plan.directory, "remote", "rename", "origin", "upstream"])
 						await runFile("git", ["-C", plan.directory, "remote", "add", "origin", plan.origin.url])

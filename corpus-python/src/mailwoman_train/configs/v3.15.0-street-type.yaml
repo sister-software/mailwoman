@@ -1,18 +1,18 @@
-# === v3.15.0-street-type — the v3.14 feed recipe + a SEPARATE street-type INPUT channel. ===
-# P-A PROBE (ROAD_TO_MAILWOMAN_V8_1_0 §4 — Option A, retrieval-augmented encoding). Not a ship
-# candidate — a falsifier of the street↔locality EVIDENCE hypothesis.
+# === v3.15.0-street-type — the v3.14 feed recipe + a separate street-type input channel. ===
+# P-A probe (ROAD_TO_MAILWOMAN_V8_1_0 §4 — Option A, retrieval-augmented encoding). Not a ship
+# candidate — a falsifier of the street↔locality evidence hypothesis.
 #
-# HYPOTHESIS. P-C found the open-vocab FR failures are LABELING (street text tagged as locality), not
+# hypothesis. P-C found the open-vocab FR failures are labeling (street text tagged as locality), not
 # mis-segmentation. The P-A diagnostic found why: the model's only surface-derived input features are
-# the gazetteer 5-hot [country, region, po_box, cedex, homograph] + the country 2-hot — NEITHER carries
+# the gazetteer 5-hot [country, region, po_box, cedex, homograph] + the country 2-hot — neither carries
 # any street-type or locality evidence. So the encoder is asked to distinguish "Rue de X" (street) from
 # "X" (locality) with no signal that "Rue" is a street-type word. P-A adds exactly that signal: a
-# SEPARATE additive input channel painting a `street_type` bit from the codex street-type lexicon
+# separate additive input channel painting a `street_type` bit from the codex street-type lexicon
 # (rue/boulevard/street/straße/…), never labels — same computation train + inference. A separate
 # channel (own projection + cue), not a gazetteer slot, so init_from v385 loads bit-clean and no
 # existing feature dim shifts (v385 lacks street_type_* → strict=False leaves only those fresh).
 #
-# THE READ = an ON/OFF contrast on the same retrained model (fully controls for the feed + the retrain):
+# the read = an on/off contrast on the same retrained model (fully controls for the feed + the retrain):
 #   grade the fragment board (ban-fragments-fr) feeding street_type_features, then again feeding zeros.
 #   - street↔locality discrimination improves with the feature on ⇒ the P-C labeling gap is literal
 #     evidence absence. Option A is the axis (input-side evidence rather than head capacity). Signal for the
@@ -20,18 +20,18 @@
 #   - No improvement ⇒ street-type input evidence alone is insufficient. the gap is deeper (the model
 #     already infers street-type from context) — re-scope Option A toward the locality (open-vocab) leg.
 #
-# ONE VARIABLE vs the ON/OFF contrast: the street_type feature toggle. Model+trainer changes: model.py
+# one variable vs the on/off contrast: the street_type feature toggle. Model+trainer changes: model.py
 # street_type channel (projection + cue + merge-in-forward, mirrors the #1104 country channel); config.py
 # use_street_type_anchor + street_type_lexicon_path. train.py carveout adds street_type_* to the hot
-# classifier LR group (the FRESH channel learns to use the signal in the probe window). deploc_head OFF
+# classifier LR group (the fresh channel learns to use the signal in the probe window). deploc_head off
 # (P-A is orthogonal to P-B's head experiment — don't confound).
 #
-# PRE-REGISTERED:
-#   PRIMARY READ (the contrast): on ban-fragments-fr, per-tag street/dependent_locality/locality with
+# PRE-registered:
+#   primary read (the contrast): on ban-fragments-fr, per-tag street/dependent_locality/locality with
 #     street_type on vs off (same checkpoint). Street-F1 (on − off) delta > 0 = hypothesis supported.
-#   SECONDARY (not hard bars — this is a falsifier): golden us/fr within ±0.7pp of v385 (87.6/91.1) with
-#     the feature ON. invariance suite vs v385 (does the input channel introduce a new class?).
-#   VERDICT: 3k reached, contrast graded → A live | A insufficient. One run. no knob iteration.
+#   secondary (not hard bars — this is a falsifier): golden us/fr within ±0.7pp of v385 (87.6/91.1) with
+#     the feature on. invariance suite vs v385 (does the input channel introduce a new class?).
+#   verdict: 3k reached, contrast graded → A live | A insufficient. One run. no knob iteration.
 #
 # Launch: cd corpus-python && modal run -d -m launch.train_remote --config v3.15.0-street-type.yaml --resume none
 #   (--resume none is required: init_from + the fresh channel live in the else branch; --resume auto no-ops it.)
@@ -77,7 +77,7 @@ data:
     usgov-hrsa-fqhc: 2.0
     usgov-imls-pls: 2.0
     usgov-nad: 1.0
-    state-ia-contractors: 2.0
+    state-ia-builders: 2.0
     state-tx-notaries: 1.5
     state-ny-notaries: 2.0
     deepseek-kryptonite: 3.0
@@ -97,19 +97,19 @@ data:
     synth-no-street-led: 0.0
     synth-cz-pcfirst-preposition: 12.0
     synth-nl-postcode: 6.0
-    # PROBE 1: the fragment/autocomplete source (assay weight — moderate precedent).
+    # probe 1: the fragment/autocomplete source (assay weight — moderate precedent).
     synth-fragment: 6.0
     # #727 T2 new — the one variable. 12.0 = the targeted-fix precedent (fr-bare-street,
     # si-bare-village, no-street-led are all 12.0). Streets with no house number + the
     # bare-locality counter.
     synth-fr-fragment: 12.0
-    # Track B — the Norway (NO) house-number-licence change. 12.0 = the targeted-fix tier
+    # Track B — the Norway (no) house-number-licence change. 12.0 = the targeted-fix tier
     # (matches fr-fragment). Bare streets + street+number with no postcode partner, + counters.
     synth-no-fragment: 12.0
     synth-gb: 10.0 # FEED: 6.1% stream × .328 dep-loc (probe-2 had this at 20.2% — the skew culprit)
-    synth-nz: 4.0 # FEED NEW: 2.4% stream × .792 (synth-nz-v2 800k. key also covers the old 2,990-row po-box recipe output — harmless, same country)
-    synth-es-pedania: 5.0 # FEED NEW: 3.0% stream × .303 (post-4b formatter fix)
-    synth-fr-lieudit: 3.0 # FEED NEW: 1.8% stream × 1.00 (BAN nom_ld, 4ce6821a. directly feeds the bare-locality regression class)
+    synth-nz: 4.0 # FEED new: 2.4% stream × .792 (synth-nz-v2 800k. key also covers the old 2,990-row po-box recipe output — harmless, same country)
+    synth-es-pedania: 5.0 # FEED new: 3.0% stream × .303 (post-4b formatter fix)
+    synth-fr-lieudit: 3.0 # FEED new: 1.8% stream × 1.00 (BAN nom_ld, 4ce6821a. directly feeds the bare-locality regression class)
   train_rows_per_epoch: 1000000
   val_rows: 4096
   coarse_filter: true
@@ -153,12 +153,12 @@ model: # Verbatim from v2.4.1.
   use_postcode_anchor: true
   use_gazetteer_anchor: true
   gazetteer_feature_dim: 5
-  # #1104 country channel ON — dedicated 2-dim [country_surface, country_ambiguous] soft feed with its
+  # #1104 country channel on — dedicated 2-dim [country_surface, country_ambiguous] soft feed with its
   # own projection + confidence (must equal the lexicon's feature_dim). Default-False elsewhere, so a
   # resume from a pre-country checkpoint stays byte-identical until this flips.
   use_country_anchor: true
   country_feature_dim: 2
-  # P-A street-type channel ON — a dedicated 1-dim street_type soft feed with its own projection +
+  # P-A street-type channel on — a dedicated 1-dim street_type soft feed with its own projection +
   # confidence (must equal the lexicon's feature_dim=1). Separate from the gazetteer, so init_from v385
   # loads clean (v385 lacks street_type_* → strict=False leaves only those fresh).
   use_street_type_anchor: true

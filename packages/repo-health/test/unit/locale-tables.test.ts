@@ -6,7 +6,7 @@
  *
  *   The defect it was written for is the first case: `release.config.json` gains a locale under `charWeights`, the
  *   Latin-only census table is not touched, and every consumer reads the absence as a country with no weights
- *   package. The case that matters most for the SHAPE is `finds a table nobody registered` — the check discovers
+ *   package. The case that matters most for the shape is `finds a table nobody registered` — the check discovers
  *   its subjects, because a check that names them cannot see the one somebody adds.
  */
 
@@ -142,7 +142,7 @@ describe("localeTablesCheck", () => {
 				["ES", "es-es"],
 			],
 			extra: {
-				// A subset of what ships, which is this table's contract.
+				// A subset of what ships, which is this table's interface.
 				[ROUTING]: objectTable("OVERLAY_LOCALE_BY_COUNTRY", [
 					["ES", "es-ES"],
 					["FR", "fr-FR"],

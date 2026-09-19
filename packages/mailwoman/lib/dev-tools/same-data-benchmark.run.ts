@@ -110,7 +110,7 @@ const BACKEND = values.backend || dataRootPath("wof", "candidate.db").toString()
 const OUT = values.out || repoRootPath("docs", "static", "benchmarks").toString()
 
 /**
- * The panel, named separately from `--out` so a SUCCESSOR construction can read the frozen panel while writing its own
+ * The panel, named separately from `--out` so a successor construction can read the frozen panel while writing its own
  * fixture elsewhere.
  *
  * One path for both would force a successor to overwrite the frozen artifacts to change the withheld-gold rule, which
@@ -285,7 +285,7 @@ const BOOTSTRAP = { resamples: 10_000, seed: 20_260_913 } as const
 const REQUIRED_MARGIN_POINTS = 8
 
 /**
- * What the RECEIPT says about the fixture these results came from, or a stated absence.
+ * What the receipt says about the fixture these results came from, or a stated absence.
  *
  * Read rather than assumed, because the two withheld-gold rules define different strata and their abstention rates are
  * not comparable. The definition alone names neither, so a report headed by the definition would label a successor's
@@ -470,7 +470,7 @@ const KNOB_ARMS: Array<[string, ResolveOpts]> = [
 	["spanRescore off", { spanRescore: false }],
 	["minWinningScore 4 + spanRescore off", { minWinningScore: 4, spanRescore: false }],
 	// The narrower refusal beside the blanket one: span rescore still runs, and a sub-span that drops a word of the
-	// NAME is refused while one that drops a qualifier, a number or a street the parse read is kept.
+	// name is refused while one that drops a qualifier, a number or a street the parse read is kept.
 	["spanRescore context remainder", { spanRescoreRequireContextRemainder: true }],
 ]
 

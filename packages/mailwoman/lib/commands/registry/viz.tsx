@@ -3,9 +3,9 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   `mailwoman registry viz <figure>` — emit one of the record-matcher figures (HTML/SVG). The map
- *   figures (`cross-dataset-map`, `source-provenance-map`) must be SERVED OVER LOCALHOST to render
- *   their basemap (the house tile server CORS-restricts to localhost + the docs domains). PNG
+ *   `mailwoman registry viz <figure>` — emit one of the record-matcher figures (html/SVG). The map
+ *   figures (`cross-dataset-map`, `source-provenance-map`) must be served over localhost to render
+ *   their basemap (the house tile server cors-restricts to localhost + the docs domains). PNG
  *   rendering stays programmatic via `renderPlotlyHTMLToPNG` / `renderServedMapToPNG` in
  *   `@mailwoman/registry/tools` (lazy playwright).
  */
@@ -24,7 +24,7 @@ import {
 const figures = ["cross-dataset-map", "geocode-first-surface", "source-provenance-map", "yardstick-figure"] as const
 
 /**
- * Native command-line contract consumed by the filesystem command router.
+ * Native command-line interface consumed by the filesystem command router.
  */
 export const spec = {
 	name: "viz",

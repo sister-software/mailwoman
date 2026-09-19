@@ -75,6 +75,6 @@ builds on a geocoder ends up writing a shim like this eventually, and it's the k
 maintaining.
 
 That's the gap Mailwoman aims at. We sit under apps like Cartes rather than beside them:
-`@mailwoman/photon` speaks the same `/api` contract their client already calls, from a SQLite file
+`@mailwoman/photon` speaks the same `/api` interface their client already calls, from a SQLite file
 instead of an Elasticsearch cluster, with a parser at the front door — so the address shim stops being
 the app's problem.

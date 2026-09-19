@@ -51,7 +51,7 @@ describe("postcodeVariantsFor (pure)", () => {
 			"with-locality-region-country",
 		])
 
-		// The region carries its POSTAL surface form. WOF names the state in full. a US address writes the USPS code,
+		// The region carries its postal surface form. WOF names the state in full. a US address writes the USPS code,
 		// and the adapter chooses that here so the printed span and the label are the same string.
 		expect(v[3]!.components).toEqual({
 			postcode: "97214",
@@ -108,8 +108,8 @@ describe("wof-postalcode-json adapter against fixture", () => {
 		const rows = await loadRows()
 		const portlandUS = rows.find((r) => /Portland,\s+OR\s+97214/.test(r.raw))
 		expect(portlandUS).toBeDefined()
-		// The region is PRINTED and LABELED. It used to be neither: the engine this replaced substituted its own
-		// `state_code` for the value it was handed, so `raw` said `OR` while the component said `Oregon`, and the
+		// The region is printed and labeled. It used to be neither: the engine this replaced substituted its own
+		// `state_code` for the value it was handed, so `raw` said `or` while the component said `Oregon`, and the
 		// alignment check then dropped the component for not occurring in the string it had just rendered.
 		expect(portlandUS!.components.region).toBe("OR")
 		expect(portlandUS!.components.postcode).toBe("97214")

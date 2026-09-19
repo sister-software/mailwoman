@@ -221,7 +221,7 @@ export interface PairedComparison {
 /**
  * Compare two arms over the rows both scored, paired row by row.
  *
- * The bootstrap resamples ROWS rather than arms: a resample draws row indices with replacement and recomputes both
+ * The bootstrap resamples rows rather than arms: a resample draws row indices with replacement and recomputes both
  * arms' accuracy on the same draw, which is what makes the interval a paired one.
  */
 export function comparePaired(

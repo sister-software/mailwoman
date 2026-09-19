@@ -60,7 +60,7 @@ opts)`, PURE composition (injected evidence), byte-stable fallback for span-less
   `createRuntimePipeline` behind a flag (so the CLI + drop-in servers exercise it) is the next step,
   along with the full CLI promote battery (gauntlet, metamorphic) — the golden guard here is the
   headline check and it passes at 0.000.
-- **FR index rebuild (BAN sdk):** `street-centroids-fr.db` predates the contract fold; rebuilding it
+- **FR index rebuild (BAN sdk):** `street-centroids-fr.db` predates the interface fold; rebuilding it
   with `foldStreetSurface` + a `street_norm` index closes the last few fragment misses (3 breaks) and
   makes the production lookup fast.
 - The rerank changes only the STREET tag, only on atlas-confirmed evidence — the anti-Pelias

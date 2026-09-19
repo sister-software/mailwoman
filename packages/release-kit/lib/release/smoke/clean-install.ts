@@ -22,7 +22,7 @@ import { packWorkspaces } from "#release/workspace-closure"
 
 /**
  * The `mailwoman` CLI's full first-party runtime closure. Every `@mailwoman/*` package the CLI can load at runtime must
- * be packed here — otherwise `npm install` pulls it from the REGISTRY (the published, possibly-stale version), and the
+ * be packed here — otherwise `npm install` pulls it from the registry (the published, possibly-stale version), and the
  * smoke tests new-source-CLI against an old-registry dependency. That exact skew shipped a red main after the v5.0.0
  * acronym rename: `mailwoman` imported the renamed `createWOFResolver`, but `@mailwoman/resolver` wasn't packed, so npm
  * resolved the pre-rename 4.16.2 and the CLI crashed on a missing export. Packing the closure makes the test
@@ -38,7 +38,7 @@ const WORKSPACES: Record<string, string> = {
 	"@mailwoman/resolver": "packages/resolver",
 	// mailwoman's peerDependency (optional) — packed too so `mailwoman`'s gazetteer-pipeline poi builder
 	// (a static `resolver-wof-sqlite/poi-lookup` import, reached eagerly via `--help`'s command-module
-	// load) resolves the LOCAL poi-lookup subpath instead of the registry's stale pre-poi.db 7.1.0
+	// load) resolves the local poi-lookup subpath instead of the registry's stale pre-poi.db 7.1.0
 	// (2026-07-18), which exports no './poi-lookup' at all — resolving there is an
 	// ERR_PACKAGE_PATH_NOT_EXPORTED the instant the CLI loads its command modules.
 	"@mailwoman/resolver-wof-sqlite": "packages/resolver-wof-sqlite",
@@ -62,15 +62,15 @@ const WORKSPACES: Record<string, string> = {
 	"@mailwoman/normalize": "packages/normalize",
 	"@mailwoman/phrase-grouper": "packages/phrase-grouper",
 	"@mailwoman/query-shape": "packages/query-shape",
-	// The tokenizer WASM core (task #26) — a hard dependency of @mailwoman/neural.
+	// The tokenizer wasm core (task #26) — a hard dependency of @mailwoman/neural.
 	"@mailwoman/sentencepiece-wasm": "packages/sentencepiece-wasm",
 	"@mailwoman/neural": "packages/neural",
 	// The weights bundles — data-only, but real deps of photon/nominatim/fastify (all in this
 	// closure), so on a version-bumped release branch npm would otherwise chase the not-yet-published
-	// registry version (the v7.6.0 ETARGET chicken-and-egg). Packing them also makes the smoke test
-	// the ACTUAL weight packaging instead of the registry's previous release — the postcode-de.bin
+	// registry version (the v7.6.0 etarget chicken-and-egg). Packing them also makes the smoke test
+	// the actual weight packaging instead of the registry's previous release — the postcode-de.bin
 	// class (a soft-feed sibling silently missing from a shipped tarball) is only visible this way.
-	// PREREQ: the binaries must be materialized first (test.yml's weights-cache/copy-weights step) —
+	// prereq: the binaries must be materialized first (test.yml's weights-cache/copy-weights step) —
 	// `yarn pack` quietly packs whatever subset of the `files` globs exists.
 	"@mailwoman/neural-weights-en-us": "packages/neural-weights-en-us",
 	"@mailwoman/neural-weights-fr-fr": "packages/neural-weights-fr-fr",
@@ -111,7 +111,7 @@ const WORKSPACES: Record<string, string> = {
 	// type-only (peer) import — so IMPORT_CHECK below loads it without fastify installed.
 	"@mailwoman/fastify": "packages/fastify",
 	// `@mailwoman/mcp`'s bin (`out/cli.js`, the `mailwoman-mcp` entry) connects an stdio transport at module
-	// scope, so IMPORT_CHECK below (which imports the package ENTRYPOINT — `index.ts`, i.e. server.ts +
+	// scope, so IMPORT_CHECK below (which imports the package entrypoint — `index.ts`, i.e. server.ts +
 	// tools.ts only) never exercises cli.ts directly. The bin's own dep closure (its static imports:
 	// `mailwoman/geocode-core`, `mailwoman/poi-overpass`, the SDK's stdio transport) is now covered by the
 	// bin-exec leg (`checkMCPBin`, 2026-07-20) — a real JSON-RPC initialize + tools/list handshake against
@@ -125,18 +125,18 @@ const WORKSPACES: Record<string, string> = {
 	// authority-designation route on the presence of a `flood.db`, and `--help`'s command-module load reaches
 	// `gazetteer build flood`.
 	"@mailwoman/flood": "packages/flood",
-	// The soil layer reader is a declared dependency of `mailwoman`, so npm resolves it at INSTALL time whether or not any
+	// The soil layer reader is a declared dependency of `mailwoman`, so npm resolves it at install time whether or not any
 	// code path reaches it. Its runtime reach is narrower
 	// than flood's above: `gazetteer build soil` imports the SDK inside its task rather than at module scope, so only
 	// `geocode-session`'s dynamic route load reaches the package, and only where a `soil.db` is on disk.
 	"@mailwoman/soil": "packages/soil",
 	// The coastal layer reader is a declared dependency of `mailwoman` on the same terms as soil above: npm resolves it at
-	// INSTALL time whether or not any code path reaches it.
+	// install time whether or not any code path reaches it.
 	// `gazetteer build coastal` imports the SDK inside its task rather than at module scope, so only `geocode-session`'s
 	// dynamic route load reaches the package, and only where a `coastal-england.db` is on disk.
 	"@mailwoman/coastal": "packages/coastal",
 	// The zoning layer reader is a declared dependency of `mailwoman` on the same terms as soil and coastal above: npm
-	// resolves it at INSTALL time whether or not any code path reaches it, and unpacked that is a name which is not yet
+	// resolves it at install time whether or not any code path reaches it, and unpacked that is a name which is not yet
 	// published at all. `gazetteer build zoning` imports the SDK inside its task rather than at module scope, so only
 	// `geocode-session`'s dynamic route load reaches the package, and only where a `zoning-ireland.db` is on disk.
 	"@mailwoman/zoning": "packages/zoning",
@@ -166,7 +166,7 @@ const IMPORT_CHECK = [
  * from the manifests by {@link firstPartyClosure} rather than typed here: a hand list drifts the moment a manifest
  * gains a `workspace:*` dependency, and the drift is invisible on main, where npm resolves the missing tarball from the
  * registry at the current version, and fatal on a release branch, where the bumped version exists nowhere
- * (`@mailwoman/evidence@9.4.0`, ETARGET, the v9.4.0 release PR).
+ * (`@mailwoman/evidence@9.4.0`, etarget, the v9.4.0 release PR).
  */
 const STANDALONE_LEAVES: readonly string[] = ["@mailwoman/core"]
 
@@ -217,9 +217,9 @@ const MCP_EXPECTED_TOOLS = [
 ]
 
 /**
- * Bin-exec leg for `@mailwoman/mcp` (2026-07-20). IMPORT_CHECK imports the package ENTRYPOINT (server.ts + tools.ts);
+ * Bin-exec leg for `@mailwoman/mcp` (2026-07-20). IMPORT_CHECK imports the package entrypoint (server.ts + tools.ts);
  * it never runs `cli.ts`, whose own static imports (`mailwoman/geocode-core`, `mailwoman/poi-overpass`, the SDK's stdio
- * transport) can pull an undeclared dep that only surfaces when the bin actually boots. This spawns the INSTALLED
+ * transport) can pull an undeclared dep that only surfaces when the bin actually boots. This spawns the installed
  * `mailwoman-mcp` bin over stdio, hand-writes the two newline-delimited JSON-RPC frames of the MCP handshake
  * (`initialize` → `notifications/initialized` → `tools/list`; no SDK client needed), asserts exactly five tools, then
  * closes stdin and asserts the process exits cleanly — the whole exchange bounded by `timeoutMs` (~30s). A missing dep,
@@ -235,7 +235,7 @@ async function checkMCPBin(projDir: string, timeoutMs = 30_000): Promise<number>
 		stderr += d.toString()
 	})
 
-	// A never-started child (ENOENT — the bin wasn't shipped) or a dead one produces EPIPE on write. swallow it so
+	// A never-started child (enoent — the bin wasn't shipped) or a dead one produces epipe on write. swallow it so
 	// the real failure surfaces via the `error`/`exit` events below rather than an uncaught stream error.
 	child.stdin.on("error", () => {})
 
@@ -264,8 +264,8 @@ async function checkMCPBin(projDir: string, timeoutMs = 30_000): Promise<number>
 		}
 	})
 
-	// Failure channels the handshake races against, so a missing/crashing bin fails FAST instead of hanging:
-	// `error` (spawn ENOENT — the bin path doesn't exist), `exit` (crashed before answering), the overall timeout.
+	// Failure channels the handshake races against, so a missing/crashing bin fails fast instead of hanging:
+	// `error` (spawn enoent — the bin path doesn't exist), `exit` (crashed before answering), the overall timeout.
 	const exited = new Promise<number | null>((res) => {
 		child.on("exit", (code) => res(code))
 	})
@@ -383,9 +383,9 @@ function run(cmd: string, args: string[], cwd: string): string {
 }
 
 /**
- * Closure-completeness guard: every `workspace:*` @mailwoman dep of a packed workspace must itself be in WORKSPACES. An
- * unpacked one doesn't fail here on main — npm silently resolves the REGISTRY version (the stale-dependency skew this
- * smoke exists to catch) — and hard-fails with ETARGET on a version-bumped release branch (the v7.6.0 chicken-and-egg:
+ * Closure-completeness guard: every `workspace:*` @mailwoman dep of a packed workspace must itself be in workspaces. An
+ * unpacked one doesn't fail here on main — npm silently resolves the registry version (the stale-dependency skew this
+ * smoke exists to catch) — and hard-fails with etarget on a version-bumped release branch (the v7.6.0 chicken-and-egg:
  * neural-weights, then variant-aliases). Fail loud at pack time instead, naming the edge.
  */
 async function assertClosureComplete(repoRoot: string): Promise<void> {
@@ -446,10 +446,10 @@ export async function smokeCleanInstall({ repoRoot, log }: SmokeCleanInstallOpti
 
 		run("npm", ["install", "--no-audit", "--no-fund", "--no-package-lock"], proj)
 
-		// Read the entry from the INSTALLED manifest's `bin` rather than spelling the compiled path here. Spelling it
+		// Read the entry from the installed manifest's `bin` rather than spelling the compiled path here. Spelling it
 		// encodes a layout the published package is free to change: the entry moved from `out/cli.js` to
 		// `out/cli/index.js` and this probe kept invoking a file that no longer ships, so the smoke reported a missing
-		// module instead of a working CLI. The manifest is the consumer's own contract, which is what this probe exists
+		// module instead of a working CLI. The manifest is the consumer's own interface, which is what this probe exists
 		// to exercise, and reading it consults the installed tree rather than the monorepo's graph.
 		const installedRoot = join(proj, "node_modules", "mailwoman")
 

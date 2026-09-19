@@ -3,33 +3,33 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   `intersection` recipe — the REAL-pair intersection training recipe (#487). The model scored
+ *   `intersection` recipe — the real-pair intersection training recipe (#487). The model scored
  *   0.0 on intersection_a/b because the training mix had zero intersection-labeled rows. This is
  *   the missing data. Ported from the root build script it replaced.
  *
- *   STREET PAIRS ARE REAL: the same TIGER 2023 EDGES extraction as the eval builder
- *   (scripts/eval/build-intersection-real.ts) — a node where two road edges (MTFCC S1*) with
+ *   street pairs are real: the same tiger 2023 edges extraction as the eval builder
+ *   (scripts/eval/build-intersection-real.ts) — a node where two road edges (mtfcc S1*) with
  *   distinct FULLNAMEs meet is a real crossing. Real pairs avoid teaching fake street-street
  *   co-occurrences.
  *
- *   LEAKAGE POLICY (mirrors the affix recipe's VT discipline):
+ *   leakage policy (mirrors the affix recipe's VT discipline):
  *
- *   - TRAIN counties: Cook IL (grid city) + Morris NJ (suburb).
- *   - GOLDEN (`--golden`) county: Washington VT (rural) only — the corpus defaultHoldout state.
+ *   - train counties: Cook IL (grid city) + Morris NJ (suburb).
+ *   - golden (`--golden`) county: Washington VT (rural) only — the corpus defaultHoldout state.
  *   - Every crossing in data/eval/external/intersection-real.jsonl is excluded from both modes, by node
  *       id and by order-insensitive name pair (the eval shares all three counties).
  *
- *   RENDERING: junction-format variety — padded/TIGHT `&` and `/`, `and`, `at`, `@`, leading-phrase
+ *   rendering: junction-format variety — padded/tight `&` and `/`, `and`, `at`, `@`, leading-phrase
  *   `corner of` / `intersection of` — crossed with tails (bare / `, ST` / `, ST ZIP` / `, City, ST
- *   [ZIP]`) and case variants. ZIPs are the crossing's own TIGER edge ZIPL (real); the locality
+ *   [ZIP]`) and case variants. ZIPs are the crossing's own tiger edge zipl (real); the locality
  *   tail comes from the OA Cook-county ZIP→city majority map.
  *
- *   AUDIT: every emitted row is label-checked on the RAW SURFACE via the #519 char-offset span
+ *   audit: every emitted row is label-checked on the RAW surface via the #519 char-offset span
  *   triple. Any violation fails the build (throws). A JSON audit report lands next to the output.
  *
  *   External inputs (`--edges-dir`, opts.edgesDir. both already on disk — do not re-download):
  *
- *   - <edges-dir>/tl_2023_{17031,34027,50023}_edges.shp (unzipped TIGER 2023 EDGES. default
+ *   - <edges-dir>/tl_2023_{17031,34027,50023}_edges.shp (unzipped tiger 2023 edges. default
  *       `$MAILWOMAN_DATA_ROOT/census/tiger2023-edges`, where `mailwoman situs interpolation` puts them)
  *   - `$MAILWOMAN_DATA_ROOT/oa-cache/us__il__cook.zip` (ZIP→city tails)
  */
@@ -68,7 +68,7 @@ const GOLDEN_COUNTIES: readonly County[] = [{ fips: "50023", state: "VT", regime
 
 const EVAL_GOLD_PATH = repoRootPath("data", "eval", "external", "intersection-real.jsonl")
 /**
- * Where `mailwoman situs interpolation` unpacks the per-county TIGER EDGES shapefiles — a Census download, so it sits
+ * Where `mailwoman situs interpolation` unpacks the per-county tiger edges shapefiles — a Census download, so it sits
  * beside the other Census vintages under `census/`. `--edges-dir` overrides it.
  */
 const DEFAULT_EDGES_DIR = dataRootPath("census", "tiger2023-edges")
@@ -76,7 +76,7 @@ const DEFAULT_EDGES_DIR = dataRootPath("census", "tiger2023-edges")
 const OA_COOK = { zip: dataRootPath("oa-cache", "us__il__cook.zip"), csv: "us/il/cook.csv" }
 
 /**
- * One real crossing extracted from a county's TIGER EDGES shapefile.
+ * One real crossing extracted from a county's tiger edges shapefile.
  */
 interface Crossing {
 	a: string
@@ -112,7 +112,7 @@ const FORMS: readonly Form[] = [
 /**
  * Tail forms. ~55% bare (the v0.7.2 lesson: an always-present tail taught the model to read post-intersection text as a
  * locality and fumble bare "X & Y"). City tails require a ZIP→city hit (Cook only); ZIP tails require the edge to carry
- * a ZIPL. Misses downgrade to the region tail.
+ * a zipl. Misses downgrade to the region tail.
  */
 interface Tail {
 	id: string
@@ -191,8 +191,8 @@ async function readEvalExclusions(): Promise<{ nodes: Set<number>; pairs: Set<st
 }
 
 /**
- * Extract real crossings from one county's TIGER EDGES shapefile. Same query shape as the eval builder (2 incident
- * distinct S1* FULLNAMEs at a node, both names >=6 chars), plus the edge ZIPL so tails can carry the crossing's own
+ * Extract real crossings from one county's tiger edges shapefile. Same query shape as the eval builder (2 incident
+ * distinct S1* FULLNAMEs at a node, both names >=6 chars), plus the edge zipl so tails can carry the crossing's own
  * ZIP. Hash-ordered for seed-stable determinism.
  */
 async function extractCrossings(
@@ -334,7 +334,7 @@ function renderRow(
 }
 
 /**
- * Label-correctness audit for one aligned row, on the RAW SURFACE via the #519 span triple. Returns a list of
+ * Label-correctness audit for one aligned row, on the RAW surface via the #519 span triple. Returns a list of
  * violations (empty = clean). Re-derives the span checks independent of `alignRow`'s own assertion, so a builder bug
  * can't vouch for itself.
  */

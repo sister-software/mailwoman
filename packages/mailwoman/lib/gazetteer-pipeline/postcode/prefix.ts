@@ -3,7 +3,7 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Build a PFX1 postcode-prefix index (postcode-structure arc, B3-1) from a postcode DATABASE. The
+ *   Build a PFX1 postcode-prefix index (postcode-structure arc, B3-1) from a postcode database. The
  *   format — writer and reader both — lives in `@mailwoman/neural/postcode-prefix-index`; this
  *   module is only the extraction: group a database's unit postcodes by prefix, measure each group's
  *   dispersion, and attach the admin ancestry the prefix asserts.
@@ -16,10 +16,10 @@
  *   hypothetical: the arc's M-2b measurement hit it first. {@link outwardOf} is the one place the
  *   rule lives.
  *
- *   ## Why the coordinate policy is DERIVED rather than passed in
+ *   ## Why the coordinate policy is derived rather than passed in
  *
- *   A prefix centroid is only honest when the database enumerates that prefix's units COMPLETELY.
- *   Over a partial database the centroid and its `radiusP95Km` describe the SAMPLE — and the sample is
+ *   A prefix centroid is only honest when the database enumerates that prefix's units completely.
+ *   Over a partial database the centroid and its `radiusP95Km` describe the sample — and the sample is
  *   whatever a volunteer mapper happened to attest, which is not a random draw from the district.
  *   The receipt is Northern Ireland: `postalcode-ni-osm.db` covers 9.5% of live NI postcodes, and its
  *   thinnest districts land BT68 at 4 observed units with a sampled p95 radius of 0.27 km — a number
@@ -27,7 +27,7 @@
  *
  *   So the builder reads the database's own coverage declaration rather than trusting a flag: a database
  *   that publishes a `coverage_meaning_of_zero` meta key is declaring itself partial (that key is the
- *   repo's marker for "a miss here means NOT ATTESTED"), and a partial database gets the ANCESTRY-ONLY
+ *   repo's marker for "a miss here means not attested"), and a partial database gets the ancestry-only
  *   tier — nodes with ancestors, `unitCount`, and no coordinate at all. `postalcode-gb-codepoint.db`
  *   carries no such key (it is one row per unit postcode, straight off the register), so it gets
  *   centroids. There is deliberately no option to override this either way: the tier is a property of
@@ -36,10 +36,10 @@
  *   ## Ancestry
  *
  *   Neither postcode database carries admin ancestry — `spr.parent_id` is `-1` and the `ancestors` table
- *   holds a self-row only, in both. GB ancestry therefore comes from the Royal Mail AREA→constituent
+ *   holds a self-row only, in both. GB ancestry therefore comes from the Royal Mail area→constituent
  *   country table in `@mailwoman/codex/gb` joined to the WOF admin DB for the IDs. The two areas the
  *   codex documents as majority calls across a national border (TD, SY —
- *   `GB_BORDER_STRADDLING_AREAS`) assert the United Kingdom and nothing finer, because at OUTWARD
+ *   `GB_BORDER_STRADDLING_AREAS`) assert the United Kingdom and nothing finer, because at outward
  *   granularity "mostly Scotland" is not something a node may state as fact.
  *
  *   ## The US arm answers a different question, because it has a different problem
@@ -48,10 +48,10 @@
  *   "complete" from a table that does not exist is the meaning-of-zero error the rule was written to
  *   avoid. The US arm therefore never consults it. Its database is a per-unit enumeration (42,318
  *   distinct names over 42,319 rows), so thin sampling is not the failure mode. contaminated
- *   COORDINATES are, and unlike thin sampling they have a computable signature:
+ *   coordinates are, and unlike thin sampling they have a computable signature:
  *
  *   - 414 units sit on null island;
- *   - 1,662 sit on a PLACEHOLDER — a coordinate shared by units from different prefixes. One point
+ *   - 1,662 sit on a placeholder — a coordinate shared by units from different prefixes. One point
  *       carries 48 codes across 29 unrelated SCFs. Against the ZIP numbering plan as an independent
  *       witness, 65.6% of units whose gazetteer state is contradicted sit on a placeholder, against
  *       4.5% of those that agree: a 14.5× enrichment;
@@ -146,7 +146,7 @@ export interface BuildPostcodePrefixResult {
 	 */
 	partialSource: boolean
 	/**
-	 * Prefixes whose constituent-country ancestry was WITHHELD because their postcode area straddles a national border.
+	 * Prefixes whose constituent-country ancestry was withheld because their postcode area straddles a national border.
 	 */
 	borderStraddlingPrefixes: string[]
 	/**
@@ -254,7 +254,7 @@ function readMeta(db: DatabaseClient<WOFDatabase>): Record<string, string> {
 		db.prepare(`select name from sqlite_master where type = 'table' and name = 'meta'`).get() !== undefined
 
 	// A database with no `meta` table has made no declaration, which is not the same as declaring itself complete. The GB
-	// coverage rule keys off the ABSENCE of one specific key, so it can only be applied to a database that has the table to
+	// coverage rule keys off the absence of one specific key, so it can only be applied to a database that has the table to
 	// be missing a key from; `postalcode-us.db` does not, and the US arm never asks.
 	if (!hasMeta) return {}
 
@@ -497,7 +497,7 @@ function buildUSPostcodePrefixIndex(options: BuildPostcodePrefixOptions): BuildP
 	let skippedShort = 0
 
 	for (const row of rows) {
-		// The shape guard rather than a length check: six rows in the shipped database are PLACE NAMES that reached a postcode
+		// The shape guard rather than a length check: six rows in the shipped database are place names that reached a postcode
 		// table, and one of them ("Lea County-Zip Franklin Memorial Airport") carries a real coordinate.
 		if (!isZipCode(row.name)) {
 			excluded.notAPostcode++

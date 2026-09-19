@@ -4,10 +4,10 @@
  * @author Teffen Ellis, et al.
  *
  *   `mailwoman eval promote` — `promotion-eval.ts` (#479): runs the standard eval battery against a
- *   candidate model, checks every number against an eval spec contract
+ *   candidate model, checks every number against an eval spec interface
  *   (`mailwoman/eval-harness/specs/*.json`), and emits `<out-dir>/verdict.json`. Exit 0 = every
  *   floor met and the mask-regression lock held. exit 1 = any miss. exit 2 = usage / lore-guard
- *   refusal. On `PASS` it prints the pre-filled `eval ledger-append` command (#885). The module
+ *   refusal. On `pass` it prints the pre-filled `eval ledger-append` command (#885). The module
  *   narrates everything (provenance, battery legs, verdict lines) — this wrapper only owns argv +
  *   the exit code.
  */
@@ -17,7 +17,7 @@ import { type CommandSpec, harnessCommand } from "#cli-kit"
 export const description = "Promotion check (#479) — eval battery + check-spec floors → verdict.json"
 
 /**
- * Native command-line contract consumed by the filesystem command router.
+ * Native command-line interface consumed by the filesystem command router.
  */
 export const spec = {
 	name: "check",

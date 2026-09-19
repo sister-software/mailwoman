@@ -10,7 +10,7 @@
 # — should pass. if it fails the source_weights have a data-loader bug worth fixing.
 #
 # Recipe:
-#   v0.3.0 base:    per_sequence CRF NLL × crf_loss_weight=0.05, NO class_weights
+#   v0.3.0 base:    per_sequence CRF NLL × crf_loss_weight=0.05, no class_weights
 #   v0.4.0 added:   §4 source_weights only
 #   LR:             1.5e-4 (v0.3.0-stable)
 
@@ -31,7 +31,7 @@ data:
     usgov-hrsa-fqhc: 2.0
     usgov-imls-pls: 2.0
     usgov-nad: 1.0
-    state-ia-contractors: 2.0
+    state-ia-builders: 2.0
     state-tx-notaries: 1.5
     state-ny-notaries: 2.0
   train_rows_per_epoch: null

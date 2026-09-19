@@ -6,14 +6,14 @@
  *   Where a graded confidence comes from — the surfaces `reliability.ts` curves.
  *
  *   Two are wired, and they are genuinely different measurements rather than one function over two inputs, which the
- *   shared curve can hide. The DECODE surface reads the per-token softmax the parser already computes, folded to the
- *   unit a consumer reads (the assembled component); its truth is an input set's component labels. The COARSE-PLACER
+ *   shared curve can hide. The decode surface reads the per-token softmax the parser already computes, folded to the
+ *   unit a consumer reads (the assembled component); its truth is an input set's component labels. The coarse-placer
  *   surface reads a calibrated classifier's own output probability against a held-out country label. They share a
  *   reliability diagram because a reliability diagram is the same diagram. they share nothing else. A third surface —
  *   the locale head, the kind verdict, an evidence channel — should be added the same way rather than by widening
  *   either of these.
  *
- *   Both report what they COULD NOT grade. A curve over 40 of 558 rows and a curve over 558 are different
+ *   Both report what they could not grade. A curve over 40 of 558 rows and a curve over 558 are different
  *   measurements, and the ECE alone cannot tell them apart.
  */
 
@@ -29,8 +29,8 @@ import type { Observation } from "#reliability/index"
 /**
  * What to do with a produced component the truth row never mentions.
  *
- * `exclude` (default) keeps it out of the curve and counts it separately — correct whenever truth is PARTIAL, which is
- * every corpus wired here. `wrong` grades it as an error, correct only against COMPLETE truth. on a partial corpus it
+ * `exclude` (default) keeps it out of the curve and counts it separately — correct whenever truth is partial, which is
+ * every corpus wired here. `wrong` grades it as an error, correct only against complete truth. on a partial corpus it
  * measures the corpus rather than the model.
  */
 export const UnassertedPolicy = {
@@ -46,8 +46,8 @@ export type UnassertedPolicy = (typeof UnassertedPolicy)[keyof typeof Unasserted
  * `min` is the weakest link — a span is only as trustworthy as its least certain piece — and is the default because
  * that is the reading an eval should use. `mean` exists because it is what `AddressNode.confidence` already reports
  * (`build-tree.ts`), so a caller calibrating the number a tree consumer actually reads can ask for it. The two diverge
- * most on long spans, which is where an eval decision is usually being made, so the choice travels with every result
- * rather than being assumed.
+ * most on long spans. It is where an eval decision is usually being made. Therefore, the choice travels with every
+ * result rather than being assumed.
  */
 export const ComponentAggregate = {
 	Min: "min",
@@ -102,11 +102,11 @@ export interface EngineLike {
 }
 
 /**
- * Reliability of the DECODE distribution, at the unit a consumer reads.
+ * Reliability of the decode distribution, at the unit a consumer reads.
  *
  * The model emits a per-token softmax. a consumer reads an assembled component. So the confidence is folded across the
  * tokens carrying each tag ({@link ComponentAggregate}) and graded against the input set's component labels with the
- * harness's own rule — `componentMatches`, exact case-folded equality, SHARED rather than re-typed, because a local
+ * harness's own rule — `componentMatches`, exact case-folded equality, shared rather than re-typed, because a local
  * copy of the correctness rule is how a calibration number quietly stops describing what the board describes.
  *
  * A produced tag the truth row does not mention is not graded by default. The strict reading — predicting a component
@@ -231,7 +231,7 @@ export async function decodeReliabilitySample(
 /**
  * Reliability of the coarse placer's own output probability against a held-out country label.
  *
- * A DIFFERENT surface from the decode softmax, needing its own curve before anyone fits a correction to it: the two are
+ * A different surface from the decode softmax, needing its own curve before anyone fits a correction to it: the two are
  * separate heads over separate features, and a correction fitted to one does nothing for the other.
  *
  * `abstainBelow: 0` so every row yields a confidence. Production sets that to the threshold under test, which would
@@ -271,7 +271,7 @@ export async function coarsePlacerReliabilitySample(corpusPath: string): Promise
 		observations.push({
 			confidence: prediction.confidence,
 			correct: prediction.country === row.country,
-			// An abstain is a PREDICTION here, named rather than dropped: at abstainBelow 0 the placer still declines on
+			// An abstain is a prediction here, named rather than dropped: at abstainBelow 0 the placer still declines on
 			// an out-of-set input, and dropping those rows would report a precision the eval does not deliver.
 			strata: { expected: row.country, predicted: prediction.country ?? "(abstain)" },
 		})

@@ -12,8 +12,8 @@
  *
  *   **The distinction this module exists to keep:**
  *
- *   - `hit: false, entries: null` — the source does not know the string. ABSENCE.
- *   - `hit: true` with a zero-valued entry — the source knows it and scores it zero. A MEASURED ZERO.
+ *   - `hit: false, entries: null` — the source does not know the string. absence.
+ *   - `hit: true` with a zero-valued entry — the source knows it and scores it zero. A measured zero.
  *   - `hit: true, entries: []` — accepted, but nothing the consumer can act on (for the FST: no BIO-mapped placetype).
  *
  *   `probe-fst-bias.run.ts` already documents the first two for the FST case and this generalizes them. Nothing here
@@ -33,7 +33,7 @@ import type { PathBuilderLike } from "path-ts"
  */
 export const LookupSource = {
 	/**
-	 * The gazetteer FST the emission prior reads. Answers what BIAS the decoder would receive.
+	 * The gazetteer FST the emission prior reads. Answers what bias the decoder would receive.
 	 */
 	FST: "fst",
 	/**
@@ -49,7 +49,7 @@ export const LookupSource = {
 	 */
 	Candidate: "candidate",
 	/**
-	 * The WOF admin + postcode extracts behind the FTS backend. Answers what the SOURCE data holds, including the
+	 * The WOF admin + postcode extracts behind the FTS backend. Answers what the source data holds, including the
 	 * deprecated records the resolver's own query filters out.
 	 */
 	WOF: "wof",
@@ -58,12 +58,12 @@ export const LookupSource = {
 	 */
 	POI: "poi",
 	/**
-	 * `@mailwoman/codex` — the pure postal reference tables. Postcode SHAPES, USPS suffixes, unit designators,
+	 * `@mailwoman/codex` — the pure postal reference tables. Postcode shapes, USPS suffixes, unit designators,
 	 * directionals, US states. No artifact, so it can never be unavailable.
 	 */
 	Codex: "codex",
 	/**
-	 * The postcode→anchor artifact in the resolved weights package — the channel the MODEL is fed rather than a
+	 * The postcode→anchor artifact in the resolved weights package — the channel the model is fed rather than a
 	 * gazetteer.
 	 */
 	Postcode: "postcode",
@@ -105,7 +105,7 @@ export interface LookupResult {
 	/**
 	 * One entry per locale when several were asked for — the same queries against each locale's own artifact.
 	 *
-	 * Present INSTEAD OF `rows` for a sweep. A locale whose artifact is missing carries its own `unavailable_reason` here
+	 * Present instead OF `rows` for a sweep. A locale whose artifact is missing carries its own `unavailable_reason` here
 	 * rather than dropping out of the map: five shipped overlays ship no FST at all, and a locale absent from the result
 	 * reads as a locale that knew nothing.
 	 */
@@ -119,7 +119,7 @@ interface FSTLike {
 }
 
 /**
- * Probe the gazetteer FST, reporting the collapse the DECODER would see rather than the raw entry list.
+ * Probe the gazetteer FST, reporting the collapse the decoder would see rather than the raw entry list.
  *
  * The per-place ranking inside a name is invisible to the emission prior — it takes `max(importance)` per BIO tag, and
  * only four placetypes reach a tag at all. Reporting anything finer would overstate what the gazetteer can do here.
@@ -192,7 +192,7 @@ export function lookupStreetMorphology(fst: FSTLike, queries: string[]): LookupR
 /**
  * Show what Stage 1 actually hands the model.
  *
- * Always a hit: normalization has an answer for every string. The value is the DIFF — a query whose normalized form
+ * Always a hit: normalization has an answer for every string. The value is the diff — a query whose normalized form
  * differs from what was typed is the most common reason a lookup against another source "inexplicably" misses.
  */
 export function lookupNormalize(queries: string[], locale: string): LookupRow[] {
@@ -211,10 +211,10 @@ export function lookupNormalize(queries: string[], locale: string): LookupRow[] 
 }
 
 /**
- * Open a sealed SQLite artifact READ-ONLY, reporting a missing or unopenable file as unavailable rather than as a
+ * Open a sealed SQLite artifact read-only, reporting a missing or unopenable file as unavailable rather than as a
  * source that knows nothing.
  *
- * `readOnly: true` is not a precaution here, it is the contract: every built database in this repo is sealed 0444 and
+ * `readOnly: true` is not a precaution here, it is the interface: every built database in this repo is sealed 0444 and
  * is never modified after creation, so a read-write open would fail on a correctly-sealed artifact and succeed — with a
  * journal file beside it — on one that was not.
  */

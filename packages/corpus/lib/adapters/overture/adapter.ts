@@ -8,21 +8,21 @@
  *   dataset that fixes OpenAddresses' per-country patchiness (OA dropped Spain. OA-DE omits the
  *   Bundesland) — it even re-hosts the OA Spain data the standalone OA bucket no longer serves.
  *
- *   This adapter consumes a per-country LINE-DELIMITED JSON dump of the corpus-relevant fields (`{
+ *   This adapter consumes a per-country line-delimited JSON dump of the corpus-relevant fields (`{
  *   street, number, unit, postcode, locality }`), produced by `scripts/ingest-overture-addresses.ts
  *   --corpus-jsonl` (which does the DuckDB / S3 heavy lifting and flattens `address_levels` → the
- *   municipality locality). The split keeps `@mailwoman/corpus` — a RUNTIME dep of the `mailwoman`
- *   CLI — free of the heavy native `@duckdb/node-api`; the adapter just streams JSONL line-by-line,
+ *   municipality locality). The split keeps `@mailwoman/corpus` — a runtime dep of the `mailwoman`
+ *   CLI — free of the heavy native `@duckdb/node-api`; the adapter just streams jsonl line-by-line,
  *   exactly like `openaddresses`.
  *
- *   The `street` surface carries the locale's street keyword verbatim (`"CALLE JULAN"`, `"VIA
- *   ROMA"`). We map it to `street` whole and let the downstream affix-relabel split `street_prefix`
+ *   The `street` surface carries the locale's street keyword verbatim (`"calle julan"`, `"VIA
+ *   roma"`). We map it to `street` whole and let the downstream affix-relabel split `street_prefix`
  *   — the same path every other source rides. This source exists because the model was
  *   en-us/fr-trained and never saw non-en/fr street formats (the 2026-06-19 EU parse-blocker
  *   measured loc-correct ES 21% / IT 59% / NL 64% vs FR/US ~98%).
  *
- *   `--country` is required (the JSONL is per-country and the rows omit a country field), matching
- *   `openaddresses`. License is Overture's CDLA-Permissive-2.0 (attribution. not share-alike).
+ *   `--country` is required (the jsonl is per-country and the rows omit a country field), matching
+ *   `openaddresses`. License is Overture's cdla-Permissive-2.0 (attribution. not share-alike).
  *
  *   | Field | ComponentTag | | --------- | ---------------------------------------------- | |
  *   `street` | `street` (keyword incl.; affix-relabel splits prefix) | | `number` | `house_number`
@@ -43,7 +43,7 @@ import { AddressRole, type AdapterOptions, type CanonicalRow, type CorpusAdapter
  */
 export const OVERTURE_ADAPTER_ID = "overture"
 /**
- * License carried by this source (CDLA-Permissive-2.0), attached to each row so downstream consumers inherit the terms
+ * License carried by this source (cdla-Permissive-2.0), attached to each row so downstream consumers inherit the terms
  * rather than having to look them up.
  */
 export const OVERTURE_DEFAULT_LICENSE = "CDLA-Permissive-2.0"
@@ -61,12 +61,12 @@ interface OvertureCorpusRow {
 
 /**
  * Whether an Overture `unit` value is a secondary-unit designator — something with a digit in it, or one bare word
- * (`EG`, `Penthouse`) — rather than a name. Overture-SG writes the ESTATE or BUILDING name in this field (91,818 of
- * 142,210 rows carry a multi-word name such as `SERANGOON GARDEN ESTATE`) and the literal `NIL` on 47,407 more, where
+ * (`EG`, `Penthouse`) — rather than a name. Overture-SG writes the estate or building name in this field (91,818 of
+ * 142,210 rows carry a multi-word name such as `serangoon garden estate`) and the literal `NIL` on 47,407 more, where
  * every other country's rows carry a digit-containing unit or nothing (DE 3,084 digit-containing of 40,837 non-empty.
  * NL and ES none name-shaped). A name taught as `unit` teaches that a trailing proper name is one, which is the shape
  * of the `#NNN`-unit defect the corpus exists to fix. Such a value is dropped here. a register recipe that wants the
- * building name as a `venue` reads the JSONL itself.
+ * building name as a `venue` reads the jsonl itself.
  */
 export function unitFieldIsDesignator(value: string): boolean {
 	const trimmed = value.trim()

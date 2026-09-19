@@ -6,22 +6,22 @@
 # (the no-fragment tweak source + punct-drop augmentation v381 shipped with).
 #
 # Why. Night-2 measured the parity accent class (15% of street fails) with RO comma-below (s,/t,) at
-# BYTE-FALLBACK and PT/RO words shattering at fertility 4-7 (Constanta -> Cons tan <0xC8> <0x9B> a).
+# byte-fallback and PT/RO words shattering at fertility 4-7 (Constanta -> Cons tan <0xC8> <0x9B> a).
 # Letter-family splices shipped clean three times (v5.1.0 bsplice CZ/PL, v5.2.0 nsplice Nordic,
-# v5.9.0 fr-nsplice); the v5.9.0 lesson applies — a TRAINING-FREE splice regressed FR streets, so the
+# v5.9.0 fr-nsplice); the v5.9.0 lesson applies — a training-free splice regressed FR streets, so the
 # spliced pieces get gradient via this fine-tune, never shipped mean-init-only. The closed numsplice
 # verdict does not apply: that was the shared numeric manifold. letters are disjoint codepoints.
-# NOTE: RO is not in country_weights (never trained) — the splice gives RO tokenizer coverage. the
+# note: RO is not in country_weights (never trained) — the splice gives RO tokenizer coverage. the
 # model reads RO only via constituent composition + PT/shared-Romance morphology. Pre-registered as such.
 #
-# PRE-REGISTERED READ (2k, package-shaped int8 vs shipped v381 baselines):
-#   PRIMARY — parity PT/RO subset: street-tag surface exactness on the accent-class rows improves
+# PRE-registered read (2k, package-shaped int8 vs shipped v381 baselines):
+#   primary — parity PT/RO subset: street-tag surface exactness on the accent-class rows improves
 #     (fertility is fixed by construction. the question is whether the mean-init'd pieces decode right
 #     at 2k). Falsifier: if PT/RO rows do not move, the pieces need more gradient -> the 8k decides.
-#   GUARD — golden us/fr micro within noise of v381 (F1 comparison across tokenizers is INVALID for
-#     PT/RO rows by design. ENGLISH tokenization is byte-identical so us/fr comparisons hold).
-#   GUARD — boards: Norway digit board bare-street-hn holds ~0.733. FR fragment OVERALL holds ~0.758.
-#   GUARD — 6 demo presets byte-identical. the gauntlet passes on the 8k candidate before any ship.
+#   guard — golden us/fr micro within noise of v381 (F1 comparison across tokenizers is invalid for
+#     PT/RO rows by design. english tokenization is byte-identical so us/fr comparisons hold).
+#   guard — boards: Norway digit board bare-street-hn holds ~0.733. FR fragment overall holds ~0.758.
+#   guard — 6 demo presets byte-identical. the gauntlet passes on the 8k candidate before any ship.
 #   #378 — vocab +3.2%; embedding +2310x384 int8 ~ +0.9MB artifact. Within SLO.
 #
 # Not a ship. A pass justifies the 8k. Promotion is the operator's act (autonomous shift: stage +
@@ -64,7 +64,7 @@ data:
     usgov-hrsa-fqhc: 2.0
     usgov-imls-pls: 2.0
     usgov-nad: 1.0
-    state-ia-contractors: 2.0
+    state-ia-builders: 2.0
     state-tx-notaries: 1.5
     state-ny-notaries: 2.0
     deepseek-kryptonite: 3.0
@@ -84,7 +84,7 @@ data:
     synth-no-street-led: 0.0
     synth-cz-pcfirst-preposition: 12.0
     synth-nl-postcode: 6.0
-    # PROBE 1: the fragment/autocomplete source (assay weight — moderate precedent).
+    # probe 1: the fragment/autocomplete source (assay weight — moderate precedent).
     synth-fragment: 6.0
     # #727 T2 new — the one variable. 12.0 = the targeted-fix precedent (fr-bare-street,
     # si-bare-village, no-street-led are all 12.0). Streets with no house number + the

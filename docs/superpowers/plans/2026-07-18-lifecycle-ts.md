@@ -1,6 +1,6 @@
 # lifecycle-ts Implementation Plan
 
-> **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
+> **For agentic workers:** required sub-skill: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
 **Goal:** Build `lifecycle-ts` — async construction + disposal lifecycle primitives (protocol symbols, lazy `Service<T>` handles, an optional token-based `ServiceRegistry`) — as a standalone package at `/home/lab/Projects/lifecycle-ts`.
 

@@ -3,7 +3,7 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   The four-law selectivity end to end against a SEEDED admin DB — the every-PR layer.
+ *   The four-law selectivity end to end against a seeded admin DB — the every-PR layer.
  *
  *   Same idiom as `resolver-wof-sqlite/candidate-lookup.test.ts`: production DDL, hand-picked rows,
  *   and the real `buildLocalitySurfaceLexicon` driven through `opts.dbPath`. Every surface here is
@@ -142,7 +142,7 @@ afterEach(() => scratch[Symbol.asyncDispose]())
 /**
  * Build against the fixture and return the emitted surface map plus the build's counters.
  *
- * NAMING TRAP, called out because both halves are spelled "entries": `built.entries` is a COUNT (`BuiltLexicon.entries:
+ * Naming trap, called out because both halves are spelled "entries": `built.entries` is a count (`BuiltLexicon.entries:
  * number`) while the lexicon file's `entries` is the surface→bitmask MAP. The map comes back as `surfaces` so the two
  * cannot be confused at a call site.
  */
@@ -153,7 +153,7 @@ async function buildAgainstFixture(
 	placetypes: string[]
 ): Promise<{ built: BuiltLexicon; surfaces: Record<string, number> }> {
 	// A fresh DB per call. Two tests build twice — the sub-phrase one covers both country sets, and
-	// the invariance one runs the same build twice on purpose — and `CREATE TABLE` is not idempotent.
+	// the invariance one runs the same build twice on purpose — and `create table` is not idempotent.
 	const seq = buildSeq++
 	const dbPath = scratch.resolve(`admin-${seq}.db`)
 	const output = scratch.resolve(`lexicon-${seq}.json`)
@@ -199,7 +199,7 @@ describe("locality-surface build — fixture (four laws end to end)", () => {
 		const { built, surfaces } = await buildAgainstFixture(["FR"], ["locality", "localadmin"])
 
 		expect(surfaces.smallville).toBeUndefined()
-		// EXACT, which the full build cannot assert. Two surfaces fail the post-scan prominence pass
+		// exact, which the full build cannot assert. Two surfaces fail the post-scan prominence pass
 		// and only two: `smallville` (0.166, under the 0.25 one-token floor) and `joseph` (0.383 —
 		// over that floor, under the 0.45 person-name tier). If a third ever appears here, a law
 		// changed scope.

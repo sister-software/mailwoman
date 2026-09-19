@@ -41,7 +41,7 @@ const kinds = [
 type Kind = (typeof kinds)[number]
 
 /**
- * Native command-line contract consumed by the filesystem command router.
+ * Native command-line interface consumed by the filesystem command router.
  */
 export const spec = {
 	name: "scorer-eval",

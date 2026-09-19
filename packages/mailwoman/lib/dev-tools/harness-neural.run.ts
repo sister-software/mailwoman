@@ -7,11 +7,11 @@
  *   battery. Reads the 30+ `mailwoman/test/address.*.test.ts` files (and sibling
  *   intersection/venue/compound_street tests), extracts every `assert(input, ...expected)` call via
  *   TS AST, and grades each input's neural parse (`NeuralAddressClassifier`) against the expected
- *   records. `--falsehoods <dir>` adds JSONL row files (the external arena fixtures).
+ *   records. `--falsehoods <dir>` adds jsonl row files (the external arena fixtures).
  *
- *   LINEAGE: ported neural-only from `harness-v0-neural.ts` at the `legacy-rules-final` seal tag.
+ *   lineage: ported neural-only from `harness-v0-neural.ts` at the `legacy-rules-final` seal tag.
  *   The v7 excision (#1151) deleted the rule-based parser, which was that harness's second arm. the
- *   three-bucket v0-vs-neural comparison it existed for closed with the capability map. The NEURAL
+ *   three-bucket v0-vs-neural comparison it existed for closed with the capability map. The neural
  *   arm here is semantically unchanged — same tag fold, same loose any-expected matcher — so neural
  *   pass rates remain comparable with historical arena reports. The `--assembled` arm (#478, grade
  *   `runPipeline` alongside raw neural) also survives. only the v0 arm and its buckets are gone.
@@ -25,7 +25,7 @@
  *   --out-json /tmp/harness.json\
  *   [--model <onnx>] [--tokenizer <spm>] [--model-card <json>]\
  *   [--admin-fst <bin>] [--morphology-fst <bin> | --no-morphology]\
- *   [--falsehoods data/eval/falsehoods] # extra JSONL row files to include
+ *   [--falsehoods data/eval/falsehoods] # extra jsonl row files to include
  */
 
 import type { ComponentTag } from "@mailwoman/codex/component"
@@ -74,7 +74,7 @@ interface Args {
 	postcodeRepair: boolean
 	unitRepair: boolean
 	/**
-	 * #478: also grade the ASSEMBLED runtime pipeline (`createRuntimePipeline` — normalize → kind/ fast-path → grouper →
+	 * #478: also grade the assembled runtime pipeline (`createRuntimePipeline` — normalize → kind/ fast-path → grouper →
 	 * reconcile → classify), not just the raw neural classifier. This is the #566-lesson eval: a pipeline regression
 	 * (e.g. a reconcile/arbitration change) is invisible when the eval grades raw neural. Off by default → the existing
 	 * raw-neural report is byte-stable.
@@ -441,7 +441,7 @@ function expectedMatchesActual(expected: ClassificationRecord, actual: Classific
 			if (normLoose(expectedValues[i]!) !== normLoose(actualValues[i]!)) {
 				// Allow substring containment in either direction — the neural parser sometimes
 				// over- or under-spans (e.g. "5th Avenue" vs "Avenue"). The fixture suite is the
-				// authority on the EXPECTED span. we count a substring match as a partial pass.
+				// authority on the expected span. we count a substring match as a partial pass.
 				const exp = normLoose(expectedValues[i]!)
 				const act = normLoose(actualValues[i]!)
 
@@ -624,7 +624,7 @@ function printReport(results: AssertionResult[]): void {
 	)
 	console.log("")
 
-	// #478 assembled-pipeline arm (only when --assembled): what the ASSEMBLED pipeline (grouper +
+	// #478 assembled-pipeline arm (only when --assembled): what the assembled pipeline (grouper +
 	// reconcile + fast-path) gains or loses against raw neural on the same assertions.
 	const hasAssembled = results.some((r) => r.assembled_pass !== undefined)
 
@@ -785,7 +785,7 @@ async function main(): Promise<void> {
 	} as Parameters<NeuralAddressClassifier["parse"]>[1]
 
 	// #478: the assembled runtime pipeline (reuses the neural classifier + admin FST). No resolver —
-	// the arena grades COMPONENT parses (Stage 3 / grouper / reconcile), not coordinates.
+	// the arena grades component parses (Stage 3 / grouper / reconcile), not coordinates.
 	const pipeline = args.assembled
 		? createRuntimePipeline({ classifier: neural, ...(adminFST ? { fst: adminFST } : {}) })
 		: undefined

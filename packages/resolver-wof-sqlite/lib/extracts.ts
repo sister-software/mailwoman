@@ -7,27 +7,27 @@ import { basename } from "path-ts"
  * @author Teffen Ellis, et al.
  *
  *   Multi-extract support for `WOFSQLitePlaceLookup` — opens multiple WOF SQLite distributions on one
- *   connection via `ATTACH DATABASE`, and routes queries to the right extract based on placetype.
+ *   connection via `attach database`, and routes queries to the right extract based on placetype.
  *
  *   ## The FTS5 syntax rule that drove this design
  *
- *   The naive `SELECT … FROM pc.place_search WHERE pc.place_search MATCH ?` fails — SQLite parses the
- *   schema-qualified table on the left of `MATCH` as "column place_search of table pc". Discovered in
+ *   The naive `select … from pc.place_search where pc.place_search match ?` fails — SQLite parses the
+ *   schema-qualified table on the left of `match` as "column place_search of table pc". Discovered in
  *   the spike at PR review time. documented as `_EXTRACT_RULE.md` should it ever bite again.
  *
- *   The working form: schema-qualified in `FROM`, bare table name in `MATCH`:
+ *   The working form: schema-qualified in `from`, bare table name in `match`:
  *
  *   ```sql
- *   SELECT … FROM pc.place_search WHERE place_search MATCH ?
+ *   select … from pc.place_search where place_search match ?
  * ```
  *
  *   Identical table names across attached extracts (which is what we have — every extract ships its own
- *   `place_search` + `place_bbox`) are fine because the bare-name `MATCH` resolves against `FROM`
+ *   `place_search` + `place_bbox`) are fine because the bare-name `match` resolves against `from`
  *   scope.
  */
 
 /**
- * Derive a SQL-safe schema name from a WOF distribution filename. Used by `ATTACH DATABASE … AS <name>` so each extract
+ * Derive a SQL-safe schema name from a WOF distribution filename. Used by `attach database … AS <name>` so each extract
  * gets a stable, predictable handle.
  *
  * Convention strips the `whosonfirst-data-` prefix and the `-latest.db` (or just `.db`) suffix, then replaces `-` with
@@ -153,7 +153,7 @@ export function resolveExtracts(input: string | ReadonlyArray<string | ExtractCo
  *    use it.
  * 3. Otherwise, fall back to `main`.
  *
- * This deliberately doesn't UNION across extracts — BM25 scores aren't comparable across separately- indexed corpora,
+ * This deliberately doesn't union across extracts — BM25 scores aren't comparable across separately- indexed corpora,
  * and the typical mailwoman query has a single placetype anyway. If a caller needs cross-extract results they can issue
  * two `findPlace` calls.
  */
@@ -196,7 +196,7 @@ export function pickExtractForPlacetype(
 	placetype: string | undefined,
 	opts?: {
 		/**
-		 * #920: the query's country constraint, when the caller has one. With MULTIPLE extracts matching a placetype
+		 * #920: the query's country constraint, when the caller has one. With multiple extracts matching a placetype
 		 * (postalcode-us + postalcode-geonames-tail), first-match routing sent every postcode query to the first extract
 		 * and starved the rest — a FI postcode could never reach the tail extract. When `country` is given and a matching
 		 * extract's probed country set contains it, that extract wins. extracts without the country are skipped. the

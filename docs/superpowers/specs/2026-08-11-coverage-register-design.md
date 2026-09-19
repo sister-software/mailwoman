@@ -34,9 +34,9 @@ and today no layer can say what it holds.**
 
 ## What already exists
 
-The layer contract (`docs/engineering/reference/layer-contract.mdx`) already requires a
+The layer interface (`docs/engineering/reference/layer-interface.mdx`) already requires a
 `layer_coverage` table in every layer database, and the meaning-of-zero rule already states that a
-magnitude never carries its own absence. The contract is right; the FILLINGS are dishonest or
+magnitude never carries its own absence. The interface is right; the FILLINGS are dishonest or
 absent:
 
 - poi.db ships `completeness = 1.0` for every cell (board #26) — the value was defaulted rather than
@@ -46,7 +46,7 @@ absent:
 - The candidate gazetteer has no notion of "this country's locality tier is unsurveyed" — the NZ
   hole is indistinguishable from a fully-covered country with no matching name.
 
-## The register's contract (proposed)
+## The register's interface (proposed)
 
 Phase 1 carries two kinds of coverage, because the two questions a resolver asks arrive with
 different keys (operator correction, 2026-08-11 handoff §4):
@@ -108,7 +108,7 @@ readable through `@mailwoman/core/layers` beside the existing manifest.
 
 ## What it unlocks, in dependency order
 
-1. **Runtime abstention** (#1585's contract half): a locale-hinted query whose scoped fuzzy probe
+1. **Runtime abstention** (#1585's interface half): a locale-hinted query whose scoped fuzzy probe
    targets a namespace whose `layer_scope_coverage` row is not `surveyed_complete` abstains at that
    tier with a named reason, instead of falling through to world-fuzzy — the SCOPE row rather than a cell,
    because the query has no coordinate to key a cell with. This alone converts the NZ failure mode
@@ -137,7 +137,7 @@ exclusion, and any `inferred` result emission. Provenance-in-the-result-shape (`
 
 ## Falsifiers for the register itself (before building)
 
-The five scope-contract proof cases (operator handoff §4 — all five must pass on a prototype
+The five scope-interface proof cases (operator handoff §4 — all five must pass on a prototype
 before the full register is built; receipts in `scratchpad/falsifiers/f4-scope-coverage.mjs`):
 
 1. Query NZ locality coverage without a candidate coordinate — the scope row answers where no cell
@@ -148,7 +148,7 @@ before the full register is built; receipts in `scratchpad/falsifiers/f4-scope-c
    fuzzy/derived tiers only; the exact tier never reads it (the #1585 board's Paris row is the
    standing conditional witness).
 4. Prevent hard negative evidence from a partial namespace — only `surveyed_complete` powers a
-   negative; `surveyed_partial` must be refused at the contract level.
+   negative; `surveyed_partial` must be refused at the interface level.
 5. Reconcile sampled `surveyed_complete` claims against a second source — the disagreement rate is
    the claim's calibration, and the reconciliation query must be expressible over the schema.
 

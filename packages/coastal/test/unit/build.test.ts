@@ -5,14 +5,14 @@
  *
  *   The fixture rung: build a real sealed artifact from hand-built geometry, then read it.
  *
- *   THE MEANING-OF-ZERO INVERSION IS THE POINT OF THIS FILE, and it is checked in three ways rather than
+ *   the meaning-OF-zero inversion is the point OF this file, and it is checked in three ways rather than
  *   asserted once. Every coverage row must fail `supportsExclusion`; a builder handing a stronger basis to
  *   the coverage writer must be refused. and an artifact carrying one must be refused at open time. The
  *   sibling flood layer reports a point inside its footprint and outside every polygon as the authority's
- *   Zone 1 DESIGNATION. This layer must report the same geometry as `unknown` with no designation, because
- *   NCERM publishes no coverage statement and an absent polygon may simply be inland.
+ *   Zone 1 designation. This layer must report the same geometry as `unknown` with no designation, because
+ *   ncerm publishes no coverage statement and an absent polygon may simply be inland.
  *
- *   THE TWELVE SCENARIOS STAYING SEPARABLE IS THE SECOND THING PINNED HERE. The fixture puts two scenarios
+ *   the twelve scenarios staying separable is the second thing pinned here. The fixture puts two scenarios
  *   over the same ground with different distances, so a build that pooled them would answer one point with
  *   two contradictory numbers under one name.
  */
@@ -114,7 +114,7 @@ describe("the sealed artifact", () => {
 		expect(result.scenarioCounts[NFI]).toBe(4)
 		expect(result.scenarioCounts[SMP]).toBe(1)
 
-		// 0o444 — sealed, per the layer contract's build-then-swap discipline.
+		// 0o444 — sealed, per the layer interface's build-then-swap discipline.
 		expect((await statPath(databasePath)).mode & 0o777).toBe(0o444)
 	})
 
@@ -220,8 +220,8 @@ describe("the meaning-of-zero inversion", () => {
 		expect(rows.length).toBeGreaterThan(0)
 		expect(result.coverageBasis).toBe(CoverageBasis.SourcePresent)
 
-		// THE FAILING TEST THE ISSUE ASKS FOR: not one assertion on one row, but the whole table read back and every row
-		// checked through the contract's own predicate. A code path that read `supportsExclusion` as true for this layer
+		// the failing test the issue asks FOR: not one assertion on one row, but the whole table read back and every row
+		// checked through the interface's own predicate. A code path that read `supportsExclusion` as true for this layer
 		// would have to make one of these rows carry a stronger basis, and this fails the moment it does.
 		for (const row of rows) {
 			expect(row.basis).toBe(CoverageBasis.SourcePresent)
@@ -255,7 +255,7 @@ describe("the meaning-of-zero inversion", () => {
 
 		using tampered = new DatabaseClient<CoastalDatabase>(path)
 
-		// Keyed on `h3_cell` rather than on `rowid`, because `layer_coverage` is `WITHOUT ROWID` and has none.
+		// Keyed on `h3_cell` rather than on `rowid`, because `layer_coverage` is `without rowid` and has none.
 		tampered.exec(
 			`UPDATE layer_coverage SET basis = '${CoverageBasis.Designated}' ` +
 				"WHERE h3_cell = (SELECT min(h3_cell) FROM layer_coverage)"

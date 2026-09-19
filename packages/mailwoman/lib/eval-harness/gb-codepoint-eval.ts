@@ -6,7 +6,7 @@
  *   GB postcode-resolution evaluation against OS Code-Point Open — the first UK accuracy measurement this project can
  *   run without licensed data, and the measurement's own limits stated up front:
  *
- *   1. **The truth and the gazetteer share a source.** Our GB postcode tier is built FROM Code-Point Open
+ *   1. **The truth and the gazetteer share a source.** Our GB postcode tier is built from Code-Point Open
  *      (`codepoint-database.ts`), so grading against Code-Point centroids does not measure independent coordinate
  *      accuracy. What it does measure is the pipeline end-to-end: does a messy, real-shaped postcode string come back
  *      as the right unit-postcode point through parse → retrieval → resolution? That is the engine's claim. the
@@ -98,7 +98,7 @@ async function samplePostcodes(csvDir: string, perArea: number, seed: number): P
 		// oxlint-disable-next-line mailwoman/prefer-spliterator -- bounded input, one pass
 		for (const line of (await readLocalTextFile(join(csvDir, file))).split("\n")) {
 			if (!line) continue
-			// Columns: PC,PQ,EA,NO,… — quoted postcode, then numerics. Code-Point carries no embedded
+			// Columns: PC,PQ,EA,no,… — quoted postcode, then numerics. Code-Point carries no embedded
 			// commas inside quotes, so a plain split is faithful to this source.
 			const cols = line.split(",")
 			const pq = Number(cols[1])

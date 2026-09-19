@@ -5,7 +5,7 @@
  *
  *   Autocomplete behaviors ported from mailwoman's `fst-autocomplete` (#587): partial-last-token
  *   completion, the complete-token-must-not-shadow rule, the per-branch cap, dedupe, and the
- *   robustness contract (never throw, [] over garbage). Plus the parts the FST could not answer:
+ *   robustness interface (never throw, [] over garbage). Plus the parts the FST could not answer:
  *   every suggestion's containment chain.
  */
 
@@ -138,7 +138,7 @@ describe("dedupe", () => {
 	})
 })
 
-describe("robustness contract", () => {
+describe("robustness interface", () => {
 	it("empty and whitespace-collapsed queries → no suggestions, depth 0", () => {
 		for (const query of [[], [""], ["", ""]] as string[][]) {
 			const r = autocomplete(CITIES, query)
@@ -178,7 +178,7 @@ describe("the normalizeToken boundary", () => {
 		const trie = Ancestrie.from(builder.seal())
 
 		expect(autocomplete(trie, ["NEW", "YOR"], { normalizeToken: fold }).suggestions.map((s) => s.id)).toEqual([1])
-		// Without the query-side normalizer the cased query misses — the normalization boundary is the caller's contract.
+		// Without the query-side normalizer the cased query misses — the normalization boundary is the caller's interface.
 		expect(autocomplete(trie, ["NEW", "YOR"]).suggestions).toEqual([])
 	})
 })

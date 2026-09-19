@@ -197,7 +197,7 @@ describe("FST autocomplete — char-level + dedupe (synthetic)", () => {
 		expect(r.suggestions[0]?.name).toBe("Gotham")
 	})
 
-	// Robustness contract for the demo typeahead (#190/#585): the box feeds raw, half-typed input on
+	// Robustness interface for the demo typeahead (#190/#585): the box feeds raw, half-typed input on
 	// every keystroke, so the function must never throw and must return [] (not garbage) for input it
 	// can't complete. These lock that in so a future refactor can't reintroduce the "Denver for New
 	// Yor" class of bug.

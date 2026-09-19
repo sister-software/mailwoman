@@ -51,7 +51,7 @@ SEEDS: list[dict[str, Any]] = [
 
 
 def test_a_batch_id_is_stable_for_the_same_seeds_and_script() -> None:
-    """The checkpoint's whole contract: same inputs, same id, so a restart skips what it paid for."""
+    """The checkpoint's whole interface: same inputs, same id, so a restart skips what it paid for."""
     payload = '["seed-us-0001", "seed-fr-0002"]|cyrl'
     assert deterministic_id("translit-cyrl", payload) == deterministic_id("translit-cyrl", payload)
     # The literal rather than a re-derivation: comparing against a second call to the same function would

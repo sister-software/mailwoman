@@ -4,7 +4,7 @@
  * @author Teffen Ellis, et al.
  *
  *   The BAN rooftop extract provider — the injection point the geocode cascade consults for the national
- *   open-register precision tier (#1012), AHEAD of the community OSM tier. Given a data root, it opens
+ *   open-register precision tier (#1012), ahead of the community OSM tier. Given a data root, it opens
  *   `ban/address-points-<cc>.db` with the country's street-normalization locale (so probe-side keying
  *   matches the extract the builder wrote) and caches the open handle per country. Wire its bound `for`
  *   into `GeocodeDeps.nationalExtracts`.
@@ -25,7 +25,7 @@ import { streetLocaleForBANCountry, supportedBANCountries } from "#sdk/street-lo
 export interface BANExtracts {
 	addressPoints?: AddressPointSqliteLookup
 	/**
-	 * The #1042 derived street-centroid tier — a `GROUP BY street` roll-up, for a street-only query (no house number).
+	 * The #1042 derived street-centroid tier — a `group BY street` roll-up, for a street-only query (no house number).
 	 */
 	streetCentroids?: StreetCentroidSqliteLookup
 }

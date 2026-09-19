@@ -3,8 +3,8 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   The standing-board frame the digit and fragment boards share: load a JSONL fixture set, parse every row under the
- *   PRODUCTION configuration, tally per class, and print Wilson-intervalled rates with a miss sample. Each board owns
+ *   The standing-board frame the digit and fragment boards share: load a jsonl fixture set, parse every row under the
+ *   production configuration, tally per class, and print Wilson-intervalled rates with a miss sample. Each board owns
  *   its grading, its header, and its miss rendering — the frame owns everything else, so the two boards cannot drift
  *   on the half that makes their numbers comparable.
  */

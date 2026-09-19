@@ -21,7 +21,7 @@ export interface OARow {
 }
 
 /**
- * Read the eval JSONL, capped at `limit` rows. `Infinity` reads the file whole.
+ * Read the eval jsonl, capped at `limit` rows. `Infinity` reads the file whole.
  */
 export async function readOARows(evalPath: string, limit: number): Promise<OARow[]> {
 	return (

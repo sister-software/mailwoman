@@ -82,7 +82,7 @@ JP_PREFECTURES = frozenset(
 )
 
 # Municipality bucket split (md5 of the NFC space-stripped muni kanji, mod 100). Board
-# municipalities are UNSEEN by train and val — the generalization read the check needs.
+# municipalities are unseen by train and val — the generalization read the check needs.
 BOARD_BUCKET_MIN = 97
 
 

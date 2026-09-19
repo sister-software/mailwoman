@@ -1,11 +1,11 @@
 # PFX1 — mailwoman postcode-prefix index, schema 1 (2026-08-14).
 #
 # Normative binary-layout spec for `postcode-prefix-<scope>.bin`, the retrieval artifact that maps a
-# postcode PREFIX — a partial code that still encodes ancestry — to the admin surfaces it asserts and,
+# postcode prefix — a partial code that still encodes ancestry — to the admin surfaces it asserts and,
 # when the source can honestly support one, a centroid with its own measured dispersion. GB's outward
 # code (`SW1A`), a US sectional center (`941`), an NI district (`BT9`). Written for the outside
 # contributor (or a coding agent with a limited context window) who needs to read or emit the format
-# without the mailwoman tree in their head. The reference implementation owns BOTH ends of the format
+# without the mailwoman tree in their head. The reference implementation owns both ends of the format
 # in one file: `neural/postcode-prefix-index.ts` (`serializePostcodePrefixIndex` /
 # `PostcodePrefixIndexResolver`).
 #
@@ -19,28 +19,28 @@
 #      country        — ISO 3166-1 alpha-2 the index was built for; readers hard-check on it.
 #      scope          — sub-national scope slug, and the filename suffix. Two files may share a
 #                       `country`; this is what tells them apart. `gb-esw` is Code-Point Open (England,
-#                       Scotland, Wales — NO Northern Ireland), `gb-ni` is the BT districts. The split
-#                       is a LICENCE boundary, not a format one: folding an ODbL register into an OGL
+#                       Scotland, Wales — no Northern Ireland), `gb-ni` is the BT districts. The split
+#                       is a licence boundary, not a format one: folding an ODbL register into an OGL
 #                       artifact would put a share-alike obligation on it that nothing downstream
 #                       could see.
-#      schemaVersion  — MUST be exactly 1. Readers refuse both older and newer.
+#      schemaVersion  — must be exactly 1. Readers refuse both older and newer.
 #      levels         — which prefix granularity the node table carries: `["outward"]` for GB,
 #                       `["3"]` for a US sectional-center build.
-#      source         — the NUMBERING AUTHORITY the prefixes came from, NOT the gazetteer they were
+#      source         — the numbering authority the prefixes came from, not the gazetteer they were
 #                       joined to. M-3 is the receipt: 7.9% of US ZIPs disagree with their own
 #                       gazetteer parent's state, because a firm/unique ZIP names an organization's
 #                       mail processor rather than the code's range. An index derived from
 #                       `spr.parent_id` bakes that misattribution in.
 #      sourceMD5s     — md5s of the source artifact(s), the same discipline as PCN1's.
 #      buildDate      — ISO date of the build.
-#      tier           — `shipped` | `build-local`, in the sense `layer-contract.mdx` uses.
+#      tier           — `shipped` | `build-local`, in the sense `layer-interface.mdx` uses.
 #      attribution    — license attribution carried through from the source, so a copied artifact
 #                       still names the terms it travels under.
-#      coverageNote   — MANDATORY meaning-of-zero statement: what a MISS means for THIS file. A prefix
+#      coverageNote   — mandatory meaning-of-zero statement: what a miss means for this file. A prefix
 #                       absent from a complete register does not exist; a prefix absent from a partial
 #                       one may be unattested, and a consumer that cannot tell the two apart
 #                       will read coverage as fact.
-#    Optional (absence-tolerant — no version bump when it appears). ABSENT means the mechanism is OFF,
+#    Optional (absence-tolerant — no version bump when it appears). absent means the mechanism is off,
 #    which is not the same statement as a magnitude of zero:
 #      delta          — soft-prior bias magnitude. Absent until a calibration measures one; a defaulted
 #                       number here would let an uncalibrated bias reach the decoder unnoticed (PCN1's
@@ -50,15 +50,15 @@
 #    byte-deterministic, so the artifact md5 identifies the build.
 #
 # 3. Duplicate prefixes are forbidden. Serializers refuse them rather than last-write-win — a
-#    duplicate means two extractions were merged without SUMMING `unit_count`.
+#    duplicate means two extractions were merged without summing `unit_count`.
 #
 # 4. `prefix` is stored in the sanitized-query token shape (#920): every non-letter/number stripped,
 #    uppercased for the letter-containing systems. A probe with unsanitized text will miss; the
-#    sanitization is not part of this format, it is a contract with the consumer.
+#    sanitization is not part of this format, it is a interface with the consumer.
 #
-# 5. The ancestor DICTIONARY is the anti-repetition device. A country's prefixes assert a handful of
-#    distinct admin surfaces between them — GB's 2,863 outward codes reference FIVE entries — so
-#    per-node inlining would be almost all repetition. Dictionary order is FIRST-SEEN over the SORTED
+# 5. The ancestor dictionary is the anti-repetition device. A country's prefixes assert a handful of
+#    distinct admin surfaces between them — GB's 2,863 outward codes reference five entries — so
+#    per-node inlining would be almost all repetition. Dictionary order is first-seen over the sorted
 #    node list, which is what makes the file deterministic. Identity is the (placetype, wofID, name)
 #    triple, not wofID alone.
 #
@@ -68,17 +68,17 @@
 #    round-tripping to a neighbour. A reader in a language with native integers should read the 8
 #    bytes as a double and convert, checking exactness.
 #
-# 7. `ancestors` may legitimately be EMPTY, and that is a real answer rather than a build failure: a
+# 7. `ancestors` may legitimately be empty, and that is a real answer rather than a build failure: a
 #    GB outward code in one of the two documented border-straddling postcode areas asserts the United
-#    Kingdom and nothing finer. Ancestry is COARSEST-FIRST.
+#    Kingdom and nothing finer. Ancestry is coarsest-first.
 #
-# 8. The coordinate is OPTIONAL and its ABSENCE IS MEANINGFUL — the ancestry-only tier. It is carried
+# 8. The coordinate is optional and its absence is meaningful — the ancestry-only tier. It is carried
 #    in a flags bit, never as a `0,0` sentinel, because a magnitude never carries its own absence.
 #    Northern Ireland is the standing case: 80 BT districts whose only permissively-licensed
-#    coordinate source attests 9.5% of the units, where a centroid would describe the SAMPLE and not
+#    coordinate source attests 9.5% of the units, where a centroid would describe the sample and not
 #    the district.
 #
-# 9. `radius_p95_km` is MANDATORY whenever a coordinate is present and FORBIDDEN without one. The
+# 9. `radius_p95_km` is mandatory whenever a coordinate is present and forbidden without one. The
 #    serializer throws in both directions. A US 1-digit band and a GB outward code are both "a prefix
 #    with a centroid" and they differ by 200× (695.8 km median p95 vs 3.24 km); an artifact that
 #    shipped the coordinate without the radius would invite a consumer to treat them alike. It is a
@@ -91,7 +91,7 @@
 #     measured in kilometres has nothing to gain from a finer grid. Decode is the inverse:
 #     `lat = lat_q × 90 / 32767`.
 #
-# 11. `unit_count` is units OBSERVED under this prefix at build time — the denominator behind
+# 11. `unit_count` is units observed under this prefix at build time — the denominator behind
 #     `radius_p95_km`, and, for a partial source, the number that says how partial. It is an
 #     observation, never a claim about how many units exist.
 

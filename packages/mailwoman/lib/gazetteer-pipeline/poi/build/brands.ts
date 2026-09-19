@@ -4,12 +4,12 @@
  * @author Teffen Ellis, et al.
  *
  *   The POI brand lexicon builder — part 1 of 2 (part 2 wires `lookupPOIBrand` into the runtime
- *   pipeline. no pipeline wiring here). Reads a BUILT `poi.db` (Overture Places, the `poi` table
- *   `build-poi.ts` materializes) READ-ONLY via `node:sqlite` and aggregates its `(brand_wikidata,
+ *   pipeline. no pipeline wiring here). Reads a built `poi.db` (Overture Places, the `poi` table
+ *   `build-poi.ts` materializes) read-only via `node:sqlite` and aggregates its `(brand_wikidata,
  *   name)` pairs into a `@mailwoman/poi-taxonomy` brand table: one row per Wikidata QID, its
  *   most-frequently observed name plus alias spellings that clear a noise floor.
  *
- *   The output (`poi-taxonomy/data/brands.json`) is COMMITTED — a rebuild against the same `poi.db`
+ *   The output (`poi-taxonomy/data/brands.json`) is committed — a rebuild against the same `poi.db`
  *   must be byte-identical. Every ordering decision in {@linkcode aggregateBrands} is an explicit,
  *   deterministic tie-break (rows desc → QID asc for brands. count desc → name asc for the modal
  *   pick. alphabetical for aliases), never left to SQL row order or `Map` iteration order.
@@ -18,7 +18,7 @@
  *   logic is unit-testable without touching sqlite:
  *
  *   1. {@linkcode readBrandNameCounts} / {@linkcode readSourceLayer} — `node:sqlite`, read-only,
- *        the exact `GROUP BY brand_wikidata, name` aggregate plus the source layer's manifest
+ *        the exact `group BY brand_wikidata, name` aggregate plus the source layer's manifest
  *        identity.
  *   2. {@linkcode aggregateBrands} — a pure function over an `Iterable<BrandNameCount>` (real rows
  *        or an injected test fixture) — mirrors `build-poi.ts`'s injected-`rows` injection point
@@ -28,7 +28,7 @@
 import { dataRootPath } from "@mailwoman/core/data-root"
 import { makeDirectories, writeLocalFile } from "@mailwoman/core/fs/writers"
 import { prettyJSON } from "@mailwoman/core/json"
-import { readLayerManifest, type LayerContractDatabase } from "@mailwoman/core/layers"
+import { readLayerManifest, type layerschemadatabase } from "@mailwoman/core/layers"
 import { workspacePathBuilder } from "@mailwoman/core/paths"
 import { allRows } from "@mailwoman/core/utils"
 import type { BrandRecord, POIBrandSourceLayer, POIBrandTable } from "@mailwoman/poi-taxonomy"
@@ -41,7 +41,7 @@ import { DEFAULT_DOMINANCE, DEFAULT_MIN_ROWS } from "#gazetteer-pipeline/poi/def
 export { DEFAULT_DOMINANCE, DEFAULT_MIN_ROWS } from "#gazetteer-pipeline/poi/defaults"
 
 /**
- * The brand TABLE's own schema/data version — bump when the shape or matching semantics change. Independent of
+ * The brand table's own schema/data version — bump when the shape or matching semantics change. Independent of
  * {@link POIBrandSourceLayer.version}, which tracks the source `poi.db`'s own layer-manifest version.
  */
 export const BRAND_TABLE_VERSION = "0.2.0"
@@ -56,7 +56,7 @@ export function defaultPOIDatabasePath(): PathBuilder {
 /**
  * Default commit location: `poi-taxonomy/data/brands.json`. Resolved via `repoRootPath` (source-vs-compiled-tree-aware
  * — see `core/utils/repo.ts`) rather than a hand-rolled relative path off `import.meta.dirname`: this module's
- * directory depth relative to the repo root DIFFERS between source (`mailwoman/gazetteer-pipeline/poi/`) and compiled
+ * directory depth relative to the repo root differs between source (`mailwoman/gazetteer-pipeline/poi/`) and compiled
  * (`mailwoman/out/gazetteer-pipeline/poi/`) trees, so a fixed `../../../` would resolve to the wrong package under
  * `yarn compile`'s output.
  */
@@ -74,8 +74,8 @@ export interface BrandNameCount {
 }
 
 /**
- * Reads the exact aggregate the design calls for: `SELECT brand_wikidata, name, COUNT(*) n FROM poi WHERE
- * brand_wikidata IS NOT NULL AND name IS NOT NULL GROUP BY brand_wikidata, name`. Opens `dbPath` READ-ONLY — this
+ * Reads the exact aggregate the design calls for: `select brand_wikidata, name, count(*) n from poi where
+ * brand_wikidata is not NULL and name is not NULL group BY brand_wikidata, name`. Opens `dbPath` read-only — this
  * builder only ever reads a sealed `poi.db`, never writes one.
  */
 export function readBrandNameCounts(dbPath: PathBuilderLike): BrandNameCount[] {
@@ -95,7 +95,7 @@ export function readBrandNameCounts(dbPath: PathBuilderLike): BrandNameCount[] {
  * Reads `dbPath`'s layer manifest and narrows it to what {@link POIBrandSourceLayer} needs.
  */
 export async function readSourceLayer(dbPath: PathBuilderLike): Promise<POIBrandSourceLayer> {
-	using kdb = new DatabaseClient<LayerContractDatabase>(dbPath, { readOnly: true })
+	using kdb = new DatabaseClient<layerschemadatabase>(dbPath, { readOnly: true })
 
 	const manifest = await readLayerManifest(kdb)
 

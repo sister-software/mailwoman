@@ -4,14 +4,14 @@
  * @author Teffen Ellis, et al.
  *
  *   `mailwoman gazetteer build postcode-ni-osm` — the Northern Ireland `BT` unit-postcode database from
- *   OpenStreetMap. Runs ONE Overpass query, saves the response as the reproducibility artifact, and
- *   writes a sealed database to a NEW DATED path.
+ *   OpenStreetMap. Runs one Overpass query, saves the response as the reproducibility artifact, and
+ *   writes a sealed database to a new dated path.
  *
- *   **BUILD-LOCAL TIER.** OSM is ODbL 1.0 and share-alike binds a Derived Database, so this artifact is
+ *   **build-local tier.** OSM is ODbL 1.0 and share-alike binds a Derived Database, so this artifact is
  *   never published — not to npm rather than to R2 rather than to the demo. It reaches the resolver only because
  *   `DEFAULT_POSTCODE_DATABASES` is `existsSync`-filtered on the machine that built it.
  *
- *   Coverage is PARTIAL by construction — roughly 9.5 % of live NI postcodes — and that is the point of
+ *   Coverage is partial by construction — roughly 9.5 % of live NI postcodes — and that is the point of
  *   shipping it: since #1480 an unknown postcode abstains, so every code the database carries is a new
  *   answer and every code it lacks behaves exactly as it did before.
  *
@@ -26,7 +26,7 @@ import { Box, Text } from "ink"
 import { type CommandSpec, CommandTaskResult, type CommandComponent, phaseReporter, useCommandTask } from "#cli-kit"
 
 /**
- * Native command-line contract consumed by the filesystem command router.
+ * Native command-line interface consumed by the filesystem command router.
  */
 export const spec = {
 	name: "postcode-ni-osm",

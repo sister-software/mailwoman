@@ -14,7 +14,7 @@ import { booleanOption, type CommandSpec, harnessCommand } from "#cli-kit"
 export const description = "OpenAddresses real-point resolver eval — non-circular, neural vs v0 (Pelias)"
 
 /**
- * Native command-line contract consumed by the filesystem command router.
+ * Native command-line interface consumed by the filesystem command router.
  */
 export const spec = {
 	name: "oa-resolver",
@@ -89,7 +89,7 @@ const EvalOAResolver = harnessCommand(spec, async (options) => {
 		noPostcodeConsistency: postcodeConsistencyOff,
 		noPostcodeCountryCoherence: postcodeCountryCoherenceOff,
 		// CLI kebab derivation forces the lowercase-acronym prop above. the harness option keeps
-		// the house spelling, so the rename happens here rather than in the eval's own contract.
+		// the house spelling, so the rename happens here rather than in the eval's own interface.
 		...(adminFst ? { adminFST: adminFst } : {}),
 		// Same derivation, and the same rename — `--postcode-max-move-km` names #2301's cap, whose option spells the
 		// pass it caps. Spreading the derived name instead reaches no field, so the cap is accepted and never applied.

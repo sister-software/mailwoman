@@ -15,7 +15,7 @@ curl -s "http://localhost:8081/parse?query=1600 Pennsylvania Ave NW, Washington 
 
 ## Endpoints
 
-| Endpoint        | libpostal contract                                                    |
+| Endpoint        | libpostal interface                                                   |
 | --------------- | --------------------------------------------------------------------- |
 | `/`             | HTML landing page (endpoint index + example queries)                  |
 | `/parse`        | `parse_address` — ordered `[{label, value}]` components               |

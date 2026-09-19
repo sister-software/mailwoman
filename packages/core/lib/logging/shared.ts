@@ -54,7 +54,7 @@ const LogLevelColors = {
  */
 /**
  * Where diagnostics are written. Under Node, a `Console` whose streams are both stderr: `console.debug`, `console.info`
- * and `console.log` write to stdout there, so a request line from an HTTP client landed in the middle of any command
+ * and `console.log` write to stdout there, so a request line from an http client landed in the middle of any command
  * whose stdout is data (`mailwoman doctor --json` was the case that surfaced it). Diagnostics belong on stderr, the
  * stream a shell keeps apart from the data. In a browser there is one console and this is that console.
  */
@@ -99,7 +99,7 @@ export type IRuntimeLogger = BaseConsoleLogger
 
 /**
  * A logger that writes nothing at every level — for a client whose caller owns stdout, such as a command emitting JSON,
- * where a "[DEBUG] GET …" line on the same stream corrupts the document.
+ * where a "[debug] GET …" line on the same stream corrupts the document.
  */
 export function silentLogger(): BaseConsoleLogger {
 	const logger: Partial<BaseConsoleLogger> = {}

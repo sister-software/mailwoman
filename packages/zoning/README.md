@@ -47,7 +47,7 @@ Those exclusions ride on every reading.
 
 ## The vocabulary decision — the verbatim code, and the crosswalk beside it
 
-This is the layer's distinctive contract, and Ireland is a natural experiment on it: a national authority
+This is the layer's distinctive interface, and Ireland is a natural experiment on it: a national authority
 already built the crosswalk, over one small country, with statutory access to the plans.
 
 Measured over the whole national export:
@@ -164,9 +164,9 @@ zoning at exactly the question this layer exists to answer.
 carries its own `resolution` and a probe walks its own `cellToParent` chain over every resolution the table
 holds. `layer_coverage` stays single-resolution.
 
-## The resolution is a measurement, and not the one the size contract names
+## The resolution is a measurement, and not the one the size interface names
 
-The inherited size contract picks a resolution from the measured `partial` share. **For this subject that
+The inherited size interface picks a resolution from the measured `partial` share. **For this subject that
 statistic carries no signal**, and the reason was measured. Zoning polygons are mostly smaller than a cell:
 
 | percentile |  p1 |  p5 | p10 |   p25 |   **p50** |    p75 |    p90 |    p95 |     p99 |
@@ -309,5 +309,5 @@ file, no route, and the geocode result is byte-identical to a build without the 
 ## See also
 
 - The survey that produced this layer: `docs/superpowers/specs/2026-08-27-zoning-layer-survey.md`
-- The layer contract: `docs/engineering/reference/layer-contract.mdx`
+- The layer interface: `docs/engineering/reference/layer-interface.mdx`
 - The runtime-flag register: `docs/engineering/reference/runtime-flags.mdx`

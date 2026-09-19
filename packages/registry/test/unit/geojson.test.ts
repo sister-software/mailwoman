@@ -24,7 +24,7 @@ test("toGeoJSON: a coordinate becomes a Point with GeoJSON [longitude, latitude]
 	const f = fc.features[0]!
 	expect(f.type).toBe("Feature")
 	expect(f.geometry.type).toBe("Point")
-	// GeoJSON is [lon, lat] — NOT [lat, lon]. This ordering is a classic foot-gun.
+	// GeoJSON is [lon, lat] — not [lat, lon]. This ordering is a classic foot-gun.
 	expect(f.geometry.coordinates).toEqual([-73.9857, 40.7484])
 })
 

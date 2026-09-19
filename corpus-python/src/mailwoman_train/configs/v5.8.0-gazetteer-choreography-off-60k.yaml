@@ -53,7 +53,7 @@
 #      fall — recovering the locality surface must not turn a street before a state code into a
 #      locality.
 #
-#   2. US POSTCODE, the tag this flag was added to guard. The choreography's own receipt is about 3
+#   2. US postcode, the tag this flag was added to guard. The choreography's own receipt is about 3
 #      points of US postcode under v0.9.12. Per-tag US postcode F1 may not regress against v5.7.0. A
 #      loss here is the expected cost of the change and the number that decides whether it ships.
 #
@@ -177,8 +177,8 @@ data:
     NG: 1.0
     NI: 1.0
     NL: 1.0
-    # Quoted, because YAML 1.1 reads a bare `NO` as the boolean false — the key then never matches a
-    # row's `country`, and `synth-no-fragment` (33,203 rows, all NO) becomes unselectable.
+    # Quoted, because YAML 1.1 reads a bare `no` as the boolean false — the key then never matches a
+    # row's `country`, and `synth-no-fragment` (33,203 rows, all no) becomes unselectable.
     "NO": 1.0
     NZ: 1.0
     OM: 1.0
@@ -240,8 +240,8 @@ data:
     # zero rows from either. `_index_by_source` now reads every source in a file, which makes them
     # visible, and `_apply_source_weights` refuses a source the weights never mention. Naming them at
     # zero reproduces the exposure v5.7.0 had. Measured on v0.31.0-region-code-and-unit:
-    # state-ia-contractors 74,587 rows in part-0672, usgov-imls-pls 80,402 rows in the same file.
-    state-ia-contractors: 0.0
+    # state-ia-builders 74,587 rows in part-0672, usgov-imls-pls 80,402 rows in the same file.
+    state-ia-builders: 0.0
     usgov-imls-pls: 0.0
     deepseek-kryptonite: 3.0
     synth-intersection: 1.0
@@ -292,7 +292,7 @@ data:
     # it": the generations dropped before v5.5.0 were named nowhere and cost nothing to omit, which is
     # why nothing failed for five model versions.
     #
-    # Each floor is COUNTED. A reps target of 1.0 is exactly rows/samples of the run (`derive_source_weights`),
+    # Each floor is counted. A reps target of 1.0 is exactly rows/samples of the run (`derive_source_weights`),
     # so 16,000 US rows draw about 2,083 per 1,000,000-row epoch and 500 is a floor a real draw clears
     # four times over. The Canadian source at 4.0 draws about 7,156, and 1,000 clears seven times over.
     # `synth-unit-v30` inherits its predecessor's weight, which the v5.6.0 audit measured at 9,013

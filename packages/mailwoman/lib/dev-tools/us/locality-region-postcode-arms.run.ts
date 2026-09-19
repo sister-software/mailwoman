@@ -4,11 +4,11 @@
  * `Washington, DC 20003` answers a locality far less often than `123 Main St, Washington, DC 20003` does, and the
  * corpus reason is that no US recipe ever put a locality in front of a region code and a postcode without a street
  * ahead of it. This renders one set of real localities four ways and reports the locality-match rate of each, so the
- * three-arm table on the issue and the REVERSE risk are one measurement rather than two.
+ * three-arm table on the issue and the reverse risk are one measurement rather than two.
  *
  * Teaching `«locality», «region» «postcode»` risks the inverse: a genuine street before a region code read as a
  * locality. The reverse arm measures it by putting a street in that position and counting how often it comes back
- * tagged `locality`. A row whose locality is null there is CORRECT.
+ * tagged `locality`. A row whose locality is null there is correct.
  *
  * The panel is derived from the US coordinate set, one row per distinct locality, and the street arm reuses that row's
  * own street so no arm invents an address that does not exist.
@@ -19,7 +19,7 @@
  * literal and says so in place.
  *
  * Each arm's rate ships with a per-name-shape and a per-tail-word table beside it, because one rate hides the split
- * this panel exists to show. Read the per-word table for its ROW COUNTS first: 24 of the 34 tail words carry one or two
+ * this panel exists to show. Read the per-word table for its row counts first: 24 of the 34 tail words carry one or two
  * panel rows, and `park` alone carries 11 of the bare arm's 31 suffix-bucket misses, so a per-word rate here is a
  * pointer to a question rather than an answer. `--out-json` carries every row's outcome for the same reason.
  *
@@ -101,7 +101,7 @@ if (!panel.length) {
 /**
  * The four surfaces, and what a correct answer looks like in each.
  *
- * `street_only` is the reverse arm and is graded INVERTED: the street must not be read as a locality, so a row with no
+ * `street_only` is the reverse arm and is graded inverted: the street must not be read as a locality, so a row with no
  * locality at all is the pass.
  */
 const ARMS = [
@@ -153,7 +153,7 @@ interface RowOutcome {
 }
 
 // A probe written to price a corpus change has to be able to point at the model that change produced. without this it
-// can only ever grade the installed one, which is the arm the change is measured AGAINST.
+// can only ever grade the installed one, which is the arm the change is measured against.
 const deps = await buildGauntletDeps(values["weights-cache"] ? { weightsCacheRoot: values["weights-cache"] } : {})
 const report: Record<string, { matched: number; noLocality: number; total: number; examples: string[] }> = {}
 const outcomes: RowOutcome[] = []
@@ -169,7 +169,7 @@ for (const arm of ARMS) {
 
 	for (const place of rows) {
 		const input = arm.render(place)
-		// The same country the arms were WRITTEN in. A run that renders through the FR layout and then resolves under a
+		// The same country the arms were written in. A run that renders through the FR layout and then resolves under a
 		// hardcoded US scope grades a French surface against American candidates.
 		const result = await deps.geocode(input, { defaultCountry: place.country })
 		const locality = result.locality ?? null

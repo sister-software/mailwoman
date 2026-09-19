@@ -82,7 +82,7 @@ Import the barrel for the whole surface, or a subpath to take one piece without 
 
 `./resolve` · `./admin-winner` · `./decorate-node` · `./plausibility` · `./postcode-prefix` · `./postcode-country-coherence` · `./postcode-shape-coherence` · `./admin-containment` · `./span-rescore` · `./street-evidence` · `./toponym-prior` · `./rerank` · `./remote-resolver` · `./backend-capabilities`
 
-The type contract (`ResolverBackend`, `ResolveOpts`, `ResolvedPlace`) lives in `@mailwoman/core/resolver` so that `core` stays a leaf, and is re-exported here — `@mailwoman/resolver` is the complete surface.
+The type interface (`ResolverBackend`, `ResolveOpts`, `ResolvedPlace`) lives in `@mailwoman/core/resolver` so that `core` stays a leaf, and is re-exported here — `@mailwoman/resolver` is the complete surface.
 
 ## License
 

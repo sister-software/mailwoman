@@ -80,7 +80,7 @@ for (const c of cases) {
 
 /**
  * `spr` rows per country, or null everywhere when no gazetteer is readable. A missing artifact leaves the column
- * UNMEASURED rather than zero — a zero would read as "this country has no places", which is a finding and not what a
+ * unmeasured rather than zero — a zero would read as "this country has no places", which is a finding and not what a
  * missing file says.
  */
 const gazetteerPath = String(args.gazetteer ?? dataRootPath("wof", "admin-global-priority.db"))

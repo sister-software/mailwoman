@@ -47,7 +47,7 @@ describe("readGauntletInputs", () => {
 	})
 
 	it("reaches a board row outside the two-letter country directories", () => {
-		// `generalization/` holds parked passes. The gauntlet LOADER skips it. this register must not, because a
+		// `generalization/` holds parked passes. The gauntlet loader skips it. this register must not, because a
 		// parked row is still an input a recipe would be training on.
 		expect(inputs.has(normalizeGauntletSurface("Praha 100 00, Czechia"))).toBe(true)
 	})

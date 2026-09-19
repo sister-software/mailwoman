@@ -4,7 +4,7 @@
  * @author Teffen Ellis, et al.
  *
  *   `mailwoman eval es-postcode-centroids` — build per-postcode centroid `spr` DBs from a local
- *   Overture addresses parquet (#474. the `--postcodes` inputs RELEASING.md's candidate-gazetteer
+ *   Overture addresses parquet (#474. the `--postcodes` inputs releasing.md's candidate-gazetteer
  *   recipe cites). Despite the historical `es-` name the `--country` flag covers every locale with
  *   adequate Overture postcode fill. use `--pc-len 0` for the Overture-to-Overture / non-numeric
  *   formats. Needs the optional `@duckdb/node-api` peer dep (maintainer-only data command).
@@ -15,7 +15,7 @@ import { type CommandSpec, harnessCommand } from "#cli-kit"
 export const description = "Build Overture-derived postcode-centroid spr DBs (#474)"
 
 /**
- * Native command-line contract consumed by the filesystem command router.
+ * Native command-line interface consumed by the filesystem command router.
  */
 export const spec = {
 	name: "es-postcode-centroids",

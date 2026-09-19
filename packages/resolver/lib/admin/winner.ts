@@ -6,7 +6,7 @@
  *
  *   `postalcode` is the only placetype whose specificity depends on the hit rather than the name. An NL PC6 or a GB unit
  *   postcode covers ~8 and ~15 addresses, categorically tighter than any locality centroid. a US ZIP, a French code
- *   postal or a German PLZ covers a delivery AREA. `PLACETYPE_SPECIFICITY` answers "which placetype covers less ground"
+ *   postal or a German PLZ covers a delivery area. `PLACETYPE_SPECIFICITY` answers "which placetype covers less ground"
  *   and cannot express that split, so a consumer that sorts by it alone promotes every postcode.
  *
  *   Two consumers need the split in two shapes, and both live here so a divergence is a test failure rather than a
@@ -44,7 +44,7 @@ export const ADMIN_LADDER_POSTCODE_FIRST: ReadonlyArray<string> = [
 /**
  * The admin fallback order everywhere else: the locality tiers lead and the postcode sits between them and `region`.
  *
- * This is the #945 epoch convention and the DEFAULT rather than the universal answer — which address systems leave it
+ * This is the #945 epoch convention and the default rather than the universal answer — which address systems leave it
  * is `AREA_POSTCODE_FINER_THAN_LOCALITY`'s question, and that table carries the per-country measurement.
  */
 export const ADMIN_LADDER_LOCALITY_FIRST: ReadonlyArray<string> = [
@@ -60,7 +60,7 @@ export const ADMIN_LADDER_LOCALITY_FIRST: ReadonlyArray<string> = [
 ]
 
 /**
- * The resolved postcode a ladder decision reads: the PARSED span, the resolver's own hit, and the country the resolver
+ * The resolved postcode a ladder decision reads: the parsed span, the resolver's own hit, and the country the resolver
  * placed it in.
  *
  * The first two are needed together because a full unit shape the resolver answered with a coarser stem is area-grade,
@@ -71,7 +71,7 @@ export interface ResolvedPostcodeHit {
 	value: string
 	resolverName: string | undefined
 	/**
-	 * ISO-3166 alpha-2 the RESOLVER placed the postcode in rather than a caller's requested scope. Absent when the
+	 * ISO-3166 alpha-2 the resolver placed the postcode in rather than a caller's requested scope. Absent when the
 	 * postcode did not resolve to a country, which reads as the locality-first default.
 	 */
 	country?: string
@@ -97,7 +97,7 @@ export function adminLadderFor(postcode: ResolvedPostcodeHit | undefined): Reado
  * The ladder for a flat list of resolved nodes — the shape result assembly holds.
  *
  * Which node counts, and which of its fields the decision reads, is part of the ordering rather than the caller's
- * business: `country` is the one the RESOLVER placed the code in, never a caller's requested scope, because the ladder
+ * business: `country` is the one the resolver placed the code in, never a caller's requested scope, because the ladder
  * is asking which address system this code belongs to and a scope is a filter on the answer rather than evidence about
  * it. Getting that wrong at a call site would be invisible.
  */
@@ -116,7 +116,7 @@ export function adminLadderForNodes(nodes: readonly AddressNode[]): ReadonlyArra
 }
 
 /**
- * Where an AREA-grade postal code sits on `PLACETYPE_SPECIFICITY`: below the whole locality tier, above `county` (2).
+ * Where an area-grade postal code sits on `PLACETYPE_SPECIFICITY`: below the whole locality tier, above `county` (2).
  *
  * The tier is `PLACETYPE_FILTER_GROUPS.locality` — `locality` (4), `borough` (5) and `localadmin` (3) — not the
  * `locality` placetype alone, because that is what the resolver's own `locality` tag expands to. New England civil

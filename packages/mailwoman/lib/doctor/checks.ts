@@ -4,13 +4,13 @@
  * @author Teffen Ellis, et al.
  *
  *   Pure decision logic for `mailwoman doctor` — the out-of-box diagnostic. Each `*Check` function
- *   takes a plain OBSERVATION object (facts already gathered from the filesystem/runtime by
+ *   takes a plain observation object (facts already gathered from the filesystem/runtime by
  *   {@link ../doctor/runner.ts}) and returns a {@link DoctorCheck}. Keeping the verdict logic pure —
  *   no IO, no env — is what makes it unit-testable without rendering Ink or standing up
  *   a data root: the runner injects the IO dependencies, this module owns only the ok/missing/degraded call.
  *
- *   Meaning-of-zero discipline (memory: feedback-meaning-of-zero): a missing OPTIONAL layer reports as
- *   `missing`/`degraded` with a fix hint, never as a hard error. Only the CORE checks (weights +
+ *   Meaning-of-zero discipline (memory: feedback-meaning-of-zero): a missing optional layer reports as
+ *   `missing`/`degraded` with a fix hint, never as a hard error. Only the core checks (weights +
  *   runtime) drive the process exit code — parse works without a data root, gazetteer, or POI layer.
  */
 
@@ -50,11 +50,11 @@ export interface DoctorCheck {
 	status: CheckStatus
 	detail: string
 	/**
-	 * What the reader LOSES while this check is not ok, in product terms ("geocode can only place you in the city rather
+	 * What the reader loses while this check is not ok, in product terms ("geocode can only place you in the city rather
 	 * than on the street"), not implementation terms. Present whenever `status !== "ok"` (#1577).
 	 *
 	 * A red line and a fix command say what to type. they never say whether typing it matters to the thing the reader was
-	 * actually trying to do. Every optional layer here is genuinely optional for SOMEONE, so a bare ✗ next to "POI layer"
+	 * actually trying to do. Every optional layer here is genuinely optional for someone, so a bare ✗ next to "POI layer"
 	 * is unreadable without knowing that the POI layer is what makes "coffee near me" resolve at all.
 	 */
 	consequence?: string
@@ -84,7 +84,7 @@ export interface LicensePosture {
 	 */
 	subject: string
 	/**
-	 * The SPDX expression as recorded (a package's `license` field, or a layer manifest's `license` column).
+	 * The spdx expression as recorded (a package's `license` field, or a layer manifest's `license` column).
 	 */
 	expression: string
 	/**
@@ -203,7 +203,7 @@ const WEIGHTS_CONSEQUENCE =
 	"leaves the rest of the address unlabelled."
 
 /**
- * Check #1 — the trained model bundle. CORE: parse cannot run without it.
+ * Check #1 — the trained model bundle. core: parse cannot run without it.
  */
 export function weightsCheck(o: WeightsObservation): DoctorCheck {
 	const base = { id: "weights", label: "Model weights (en-us)", core: true }
@@ -318,7 +318,7 @@ export function dataRootCheck(o: DataRootObservation): DoctorCheck {
 }
 
 /**
- * Facts about the admin gazetteer discovery, mirroring exactly what the TOOLS pick up. `resolveCandidateDBPath` reads
+ * Facts about the admin gazetteer discovery, mirroring exactly what the tools pick up. `resolveCandidateDBPath` reads
  * an explicit option, then `$MAILWOMAN_CANDIDATE_DB`, then the `<data-root>/wof/candidate.db` convention path, and
  * falls back to the WOF FTS databases only when none of the three is on disk.
  */
@@ -448,7 +448,7 @@ export interface NodeRuntimeObservation {
 }
 
 /**
- * Check #6a — the Node version floor. CORE.
+ * Check #6a — the Node version floor. core.
  */
 export function nodeVersionCheck(o: NodeRuntimeObservation): DoctorCheck {
 	const base = { id: "node-version", label: "Node runtime", core: true }
@@ -477,7 +477,7 @@ export interface ONNXRuntimeObservation {
 }
 
 /**
- * Check #6b — onnxruntime-node loadability. CORE: the neural runtime cannot infer without it.
+ * Check #6b — onnxruntime-node loadability. core: the neural runtime cannot infer without it.
  */
 export function onnxRuntimeCheck(o: ONNXRuntimeObservation): DoctorCheck {
 	const base = { id: "onnxruntime", label: "ONNX runtime", core: true }
@@ -638,7 +638,7 @@ export interface LayerLicenseObservation {
 
 /**
  * What one attached layer database's recorded license asks of the operator. The expression comes from the layer's own
- * `layer_manifest`, never from a table in code, so a layer that records `NOASSERTION` or a vendor-suffixed identifier
+ * `layer_manifest`, never from a table in code, so a layer that records `noassertion` or a vendor-suffixed identifier
  * is reported as unrecognized rather than guessed at. Informational, never core.
  */
 export function layerLicenseCheck(o: LayerLicenseObservation): DoctorCheck {
@@ -704,7 +704,7 @@ function describeObligations(obligations: readonly LicenseObligation[], recogniz
 //#region Aggregate
 
 /**
- * Derive the process exit code: `0` when every CORE check is `ok`, else `1`. Optional data-layer checks report their
+ * Derive the process exit code: `0` when every core check is `ok`, else `1`. Optional data-layer checks report their
  * gaps but never fail the process — the meaning-of-zero rule (a missing optional layer is not a hard error).
  */
 export function computeExitCode(checks: readonly DoctorCheck[]): number {

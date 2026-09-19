@@ -7,11 +7,11 @@
  *   each carrying its containment lineage. O(depth × branching) — the trie is the autocomplete
  *   index. Ported and generalized from mailwoman's `fst-autocomplete.ts` (#587 behaviors preserved).
  *
- *   Two query shapes are handled (the trie is over WORD tokens):
+ *   Two query shapes are handled (the trie is over word tokens):
  *
- *   - COMPLETE tokens — `walk` lands on a state. collect its accepting entries + BFS a couple tokens
+ *   - complete tokens — `walk` lands on a state. collect its accepting entries + BFS a couple tokens
  *       past it for nearby completions.
- *   - A PARTIAL last token ("new yor") — `walk` fails (there is no "yor" edge, only "york"). So walk
+ *   - A partial last token ("new yor") — `walk` fails (there is no "yor" edge, only "york"). So walk
  *       the complete prefix, then complete the partial token by prefix-filtering the continuation
  *       edges (`token.startsWith(partial)`). This is what a char-level typeahead needs. without it
  *       "new yor" returns nothing useful. (#587)
@@ -58,7 +58,7 @@ interface BFSItem {
 	tokens: string[]
 
 	/**
-	 * Absolute token depth of the state this item's expansion STARTED from. The two seeding interpretations start one
+	 * Absolute token depth of the state this item's expansion started from. The two seeding interpretations start one
 	 * token apart (the complete-token walk sits at N, the partial-token prefix at N−1), so a shared outer base would
 	 * mislabel one branch's depths.
 	 */
@@ -68,7 +68,7 @@ interface BFSItem {
 /**
  * Autocomplete from the current token prefix. Returns suggestions ranked rank-descending, each with its full token path
  * and its ancestor chain. Takes any {@link AncestrieReaderLike} — a sealed {@link Ancestrie} or a consumer's adapter over
- * its own storage. the order contracts the algorithm relies on are documented on the interface.
+ * its own storage. the order interfaces the algorithm relies on are documented on the interface.
  */
 export function autocomplete<TPayload = Uint8Array | JSONValue>(
 	trie: AncestrieReaderLike<TPayload>,
@@ -102,7 +102,7 @@ export function autocomplete<TPayload = Uint8Array | JSONValue>(
 	const depth = match?.depth ?? complete.length
 
 	if (match) {
-		// COMPLETE-token interpretation: the typed tokens land on a state. Seed its accepting entries
+		// complete-token interpretation: the typed tokens land on a state. Seed its accepting entries
 		// and its continuations.
 		for (const record of trie.entriesAt(match.stateID)) {
 			addSuggestion(trie, seen, record, match.depth, normalized, [])
@@ -114,7 +114,7 @@ export function autocomplete<TPayload = Uint8Array | JSONValue>(
 	}
 
 	if (prefixState !== undefined) {
-		// PARTIAL-token interpretation: complete the last token by prefix-filtering the continuation
+		// partial-token interpretation: complete the last token by prefix-filtering the continuation
 		// edges. The exact edge is skipped — when it exists, the complete-token seeding above already
 		// covered that state.
 		for (const cont of trie.continuations(prefixState)) {

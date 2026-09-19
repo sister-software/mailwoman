@@ -7,17 +7,17 @@
  *   answered by consulting the compiled geographic model, and the assertion that decided it travels beside
  *   the answer as an observation.
  *
- *   WHAT THE ROUTE DOES. It is a {@linkcode POIPhraseLookup} — the same injected-lexicon contract
- *   `@mailwoman/kind-classifier` already consumes — so a phrase it claims is served by the EXISTING
+ *   what the route does. It is a {@linkcode POIPhraseLookup} — the same injected-lexicon interface
+ *   `@mailwoman/kind-classifier` already consumes — so a phrase it claims is served by the existing
  *   executor exactly as if the user had typed the category. Four steps, none of which invents anything:
  *   a declared surface form names an activity concept. the compiled artifact says which entity kinds
  *   assert `affords` against that activity. a committed external mapping translates each of those
  *   concepts into a `@mailwoman/poi-taxonomy` category id. the category id goes back as positive
  *   evidence. No ordering, no weight, no boost, no penalty is authored anywhere along it — the value the
  *   match reports as its `confidence` is the one the committed exact-phrase rung reports for the same
- *   kind of hit, and it decides which query KIND is chosen rather than how any candidate is ordered.
+ *   kind of hit, and it decides which query kind is chosen rather than how any candidate is ordered.
  *
- *   WHERE THE PHRASES COME FROM, AND WHY THEY ARE NOT DATA. The compiled artifact carries concepts,
+ *   where the phrases come from, and why they are not data. The compiled artifact carries concepts,
  *   relations, mappings and provenance. it carries no phrase lexicon, and minting one as though it were
  *   data is what the boundary record's section 5.5 refuses. So the surface forms are a reviewed vocabulary
  *   of their own — `@mailwoman/activity-lexicon`, where every entry names the committed record that attests
@@ -27,19 +27,19 @@
  *   knowledge — which kinds afford the activity, under what modality, on whose authority — comes from the
  *   artifact.
  *
- *   THE PHRASE MUST END THE CANDIDATE. `matchPOISubject` probes the whole input first and then each
+ *   the phrase must END the candidate. `matchPOISubject` probes the whole input first and then each
  *   prefix before an anchor separator, so a rung that matched an activity phrase anywhere in its
  *   argument would claim the whole input — anchor included — and the executor would then have no place
  *   to search. Requiring the declared phrase to end the candidate is what keeps the anchor split intact:
  *   `where can i pick up a prescription near Denver CO` is refused whole and claimed at
  *   `where can i pick up a prescription`, leaving `Denver CO` as the anchor.
  *
- *   THE ROUTE IS NEVER ON BY DEFAULT. Nothing constructs it unless a caller asks; `createRuntimePipeline`
+ *   the route is never on BY default. Nothing constructs it unless a caller asks; `createRuntimePipeline`
  *   consults it only through an optional dependency, and only after the committed category lexicon and
  *   the POI name lookup have both returned nothing. With no route injected the pipeline is the one that
  *   shipped.
  *
- *   EVERY AFFORDED KIND, AND THE RESOLVER RANKS THEM. An activity is afforded by a SET of entity kinds, and
+ *   every afforded kind, and the resolver ranks them. An activity is afforded by a SET of entity kinds, and
  *   every kind the artifact maps is returned — each match flagged
  *   `searchAsSet`, which is what tells `matchPOISubject` to carry the whole set rather than its first
  *   member. The POI branch then searches the union of those categories and the candidate ordering the
@@ -47,10 +47,10 @@
  *   code-point order, which is a stable listing and not a preference, and a reader who takes the first
  *   entry as the best one is reading rank into a sort key.
  *
- *   LOCALE SCOPE IS THE PHRASE'S AND BINDS TO THE CALLER. COUNTRY SCOPE IS THE ASSERTION'S AND BINDS TO
- *   THE PLACE. A phrase's locale scope says who uses that wording, so it is read here against the caller's
+ *   locale scope is the phrase'S and binds TO the caller. country scope is the assertion'S and binds TO
+ *   the place. A phrase's locale scope says who uses that wording, so it is read here against the caller's
  *   locale. A `RelationAssertion`'s country list says where the establishments it describes exist, so it is
- *   judged against the country of the resolved ANCHOR rather than the caller's locale — the locale is the lens the
+ *   judged against the country of the resolved anchor rather than the caller's locale — the locale is the lens the
  *   phrase is read through rather than a definition of where the condition is true. This route therefore returns every
  *   kind the activity reaches and stamps each match with the assertion's `countryScope`;
  *   `createPOIIntentStage` drops the members whose scope excludes the anchor's country once the anchor
@@ -181,7 +181,7 @@ export interface SemanticObservation {
 /**
  * What the route is, stated for a receipt: which artifact and which lexicon it was built from, and what it can reach.
  *
- * A receipt that recorded only an arm LABEL would be unable to tell a run with the route from a run whose route was
+ * A receipt that recorded only an arm label would be unable to tell a run with the route from a run whose route was
  * dropped on the way in, and those produce the same numbers for opposite reasons.
  */
 export interface SemanticRouteIdentity {
@@ -445,7 +445,7 @@ export async function createSemanticObservationRoute(
 				matchedPhrase: declared.entry.phrase,
 				// The confidence the committed exact-phrase rung reports for the same kind of hit: `1` for a phrase used
 				// everywhere or one the locale names outright, and the halved value `@mailwoman/variant-aliases` reports when
-				// only the language agrees. It selects a query KIND. it orders no candidate, and no number here was chosen to
+				// only the language agrees. It selects a query kind. it orders no candidate, and no number here was chosen to
 				// make one win. Every member of a set carries the same value, so the set cannot be ranked by it either.
 				confidence: localeMatch.confidence,
 				// These matches are one afforded set rather than a preference list: the POI branch searches their union.

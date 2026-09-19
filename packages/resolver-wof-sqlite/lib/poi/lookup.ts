@@ -4,7 +4,7 @@
  * @author Teffen Ellis, et al.
  *
  *   Node reader for `poi.db` (spec §3.4) — the res-9 k-ring reader over the clustered `poi`
- *   `WITHOUT ROWID` B-tree `poi-schema.ts` builds. Three search modes share one
+ *   `without rowid` B-tree `poi-schema.ts` builds. Three search modes share one
  *   artifact:
  *
  *   - **Category**: `latLngToCell(center, 9)` → `gridDisk` ring-by-ring expansion, probing each
@@ -16,12 +16,12 @@
  *     indexed fetch on `brand_wikidata` (the partial `poi_brand_wikidata` index) pulls every row for
  *     the QID — category unconstrained — then haversine-sorts from `center` and takes the nearest
  *     `limit`, bounded by a `BRAND_MAX_DISTANCE_KM` sanity radius.
- *   - **Name**: FTS5 `MATCH` against the `poi_search` virtual table, hydrated back to full rows by
+ *   - **Name**: FTS5 `match` against the `poi_search` virtual table, hydrated back to full rows by
  *     `name_key`. No center required. if one is given, hits are still distance-sorted.
  *
  *   `latLngToCell`/`gridDisk` come from `h3-js`; the 48-bit short-cell packing that turns a raw H3
  *   cell into the integer `poi.h3_cell` stores is `@mailwoman/spatial`'s `shortCellToInt` — that math
- *   is never reimplemented here (see AGENTS.md on `@mailwoman/spatial` being the one true home for
+ *   is never reimplemented here (see agents.md on `@mailwoman/spatial` being the one true home for
  *   it).
  */
 
@@ -40,7 +40,7 @@ export const POI_H3_RESOLUTION = 9
  * Ring budget default: 16 res-9 k-rings ≈ ~5.4 km (corner) / ~4.3 km worst-case. Category path only — the brand path
  * ignores rings entirely.
  *
- * Raised from 12 (≈4 km) after nm-04 ("hiking trail near Marseille") exposed a boundary miss for SPARSE categories: the
+ * Raised from 12 (≈4 km) after nm-04 ("hiking trail near Marseille") exposed a boundary miss for sparse categories: the
  * nearest `trail` instance sits at 3.90 km, but the res-9 disk of radius 11 (maxRings 12) reaches only ~3.16 km in its
  * worst direction — the cell holding that trail isn't covered until ring 13 (maxRings 14). Dense categories are
  * unaffected: the loop breaks the ring it accumulates `limit` rows (cafe@Paris fills 20 by ring 2), so this ceiling
@@ -105,7 +105,7 @@ export interface POISearchHit {
 	country: string
 	confidence: number
 	/**
-	 * Overture GERS id — nullable METADATA ONLY, never a key (the #470 rule. see `POITable.gers_id`).
+	 * Overture gers id — nullable metadata only, never a key (the #470 rule. see `POITable.gers_id`).
 	 */
 	gersID: string | null
 	distanceM?: number
@@ -123,7 +123,7 @@ export interface POILookupOpts<DB extends POIDatabase = POIDatabase> {
 }
 
 /**
- * The `poi` columns every search mode hydrates — a typed projection of the SHARED {@link POITable}.
+ * The `poi` columns every search mode hydrates — a typed projection of the shared {@link POITable}.
  */
 type POIRow = Pick<
 	POITable,
@@ -156,12 +156,12 @@ export class POILookup<DB extends POIDatabase = POIDatabase> implements Disposab
 	 */
 	readonly #categoryCellProbe: ReturnType<DatabaseClient["prepare"]>
 	/**
-	 * `brand_wikidata` → ALL of a brand's rows globally (partial-index range-scan); distance-sorted in JS rather than
+	 * `brand_wikidata` → all of a brand's rows globally (partial-index range-scan); distance-sorted in JS rather than
 	 * SQL.
 	 */
 	readonly #brandProbe: ReturnType<DatabaseClient["prepare"]>
 	/**
-	 * FTS5 `MATCH` over `poi_search`, returning candidate `name_key`s to hydrate.
+	 * FTS5 `match` over `poi_search`, returning candidate `name_key`s to hydrate.
 	 */
 	readonly #nameFTSProbe: ReturnType<DatabaseClient["prepare"]>
 
@@ -289,9 +289,9 @@ export class POILookup<DB extends POIDatabase = POIDatabase> implements Disposab
 	}
 
 	/**
-	 * Name path: FTS5 MATCH → hydrate by name_key. No center required. distance-sorts if one is given anyway.
+	 * Name path: FTS5 match → hydrate by name_key. No center required. distance-sorts if one is given anyway.
 	 *
-	 * Hydration is one batched `WHERE name_key IN (...)` query over the FTS hits' unique `name_key`s rather than a
+	 * Hydration is one batched `where name_key IN (...)` query over the FTS hits' unique `name_key`s rather than a
 	 * per-hit probe — with up to `limit` FTS hits, a per-hit probe was up to `limit` full table scans before
 	 * `createPOINameKeyIndex` (poi-schema.ts) + this batching.
 	 */
@@ -340,7 +340,7 @@ export class POILookup<DB extends POIDatabase = POIDatabase> implements Disposab
 	}
 
 	/**
-	 * Batched hydration for the FTS name path: `WHERE name_key IN (?, ?, …)`, one query for the whole batch instead of
+	 * Batched hydration for the FTS name path: `where name_key IN (?, ?, …)`, one query for the whole batch instead of
 	 * one probe per FTS hit. This is a cold path (name search only) with variable arity per call, so the statement is
 	 * prepared fresh each time rather than cached.
 	 */
@@ -386,9 +386,9 @@ function toHit(
 }
 
 /**
- * Sanitize free text into an FTS5-safe `MATCH` query: strip the characters FTS5 would otherwise read as syntax (`"`
+ * Sanitize free text into an FTS5-safe `match` query: strip the characters FTS5 would otherwise read as syntax (`"`
  * phrase delimiters, `*` prefix wildcards, `:` column-filter separators), then phrase-quote each whitespace-separated
- * token (AND-joined).
+ * token (and-joined).
  *
  * `resolver-wof-sqlite` already has this discipline — `lookup.ts`'s `sanitizeFTSQuery` — but that function is
  * module-private there (not re-exported from `fts.ts` or the package's `index.ts`), so this replicates the same

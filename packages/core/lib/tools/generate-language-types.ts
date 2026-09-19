@@ -17,7 +17,7 @@
  *   (`DE: ["de","deu","ger"]`) and 247 real rows carry one, so the union accepts either and both map
  *   to the same label and the same alpha-2.
  *
- *   NAME DEBT, deliberately not paid here: `Alpha3bLanguageCode`, `Alpha3bLabelMap`, `Alpha3bToAlpha2`
+ *   name debt, deliberately not paid here: `Alpha3bLanguageCode`, `Alpha3bLabelMap`, `Alpha3bToAlpha2`
  *   and the CSV's `alpha3-b` header all still say "b" while holding both standards. Renaming them is a
  *   published-API break and belongs in a major.
  *
@@ -90,7 +90,7 @@ export async function generateLanguageTypes(
 		// `new Map([...])`, where the last entry for a key wins — so appending the /T form to
 		// `entryLines` would silently flip `Alpha2ToAlpha3b.get("de")` from `ger` to `deu`. That map is
 		// named for the /B standard and documented as returning it. changing what it answers is a
-		// separate decision from widening what the union ACCEPTS, and it is not this one.
+		// separate decision from widening what the union accepts, and it is not this one.
 		if (alpha3t) {
 			alpha3bEntries.set(alpha3t, labels)
 			alpha3tPairs.push([alpha2, alpha3t])
@@ -208,7 +208,7 @@ export const Alpha2ToAlpha3b: ReadonlyMap<Alpha2LanguageCode, Alpha3bLanguageCod
 export const Alpha3bToAlpha2: ReadonlyMap<Alpha3bLanguageCode, Alpha2LanguageCode> = new Map([
 `)
 
-	// This direction ACCEPTS a code, so it takes both spellings — the keys are distinct, nothing is
+	// This direction accepts a code, so it takes both spellings — the keys are distinct, nothing is
 	// overwritten, and `deu` answers `de` exactly as `ger` does.
 	for (const [alpha2, alpha3] of [...entryLines, ...alpha3tPairs]) {
 		await writeLine(`["${alpha3}", "${alpha2}"],`)

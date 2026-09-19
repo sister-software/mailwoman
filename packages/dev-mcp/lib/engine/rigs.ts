@@ -3,7 +3,7 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   The LOCAL comparison rigs — start them, stop them, ask them a question.
+ *   The local comparison rigs — start them, stop them, ask them a question.
  *
  *   `mwdev_compare`'s external arm grades an already-running engine but deliberately never starts one, so bringing a rig
  *   up was a shell exercise in `$MAILWOMAN_TEMP_ROOT/*-rig/*.sh` that a fresh context has no way to know about, and
@@ -12,12 +12,12 @@
  *   downloads, checksum verification, index extraction and atomic promotion are one-time operations with real disk and
  *   licence consequences, and nothing here will perform them.
  *
- *   Endpoints are PINNED TO LOOPBACK by the registry below and cannot be overridden. That is the same commitment
+ *   Endpoints are pinned TO loopback by the registry below and cannot be overridden. That is the same commitment
  *   `REFUSED_ENDPOINT_HOSTS` makes on the grading path, arrived at from the other side: a tool that can be pointed
  *   anywhere eventually gets pointed at `photon.komoot.io`, and a volunteer endpoint is not ours to spend. A comparison
  *   against some other host is `mwdev_compare`'s external arm, which refuses the shared instances by name.
  *
- *   Queries here are OBSERVATIONS rather than measurements: no grading, no rate, no verdict. `mwdev_compare` is what turns two
+ *   Queries here are observations rather than measurements: no grading, no rate, no verdict. `mwdev_compare` is what turns two
  *   engines into a number.
  */
 
@@ -39,7 +39,7 @@ const RIG_TIMEOUT_MS = 15_000
 
 /**
  * One paced client per rig, built on first use and reused — the house `APIClient` rather than raw `fetch`, so rig
- * traffic gets the same pacing, bounded retry and `ResourceError` mapping as every other HTTP caller in the repo (and
+ * traffic gets the same pacing, bounded retry and `ResourceError` mapping as every other http caller in the repo (and
  * so this tool exercises the client we ship).
  */
 const clients = new Map<EngineRigName, APIClient>()
@@ -58,7 +58,7 @@ function clientFor(name: EngineRigName): APIClient {
 			baseURL: assertScorableEndpoint(rig.endpoint),
 			timeout: RIG_TIMEOUT_MS,
 			headers: { "User-Agent": "mailwoman-dev-mcp" },
-			// A rig that is still warming answers 4xx/5xx. those are STATES here, read from the status field rather than
+			// A rig that is still warming answers 4xx/5xx. those are states here, read from the status field rather than
 			// exceptions to throw. `rigQuery` reports the code per row.
 			validateStatus: () => true,
 		},
@@ -102,7 +102,7 @@ function rigScriptPath(...segments: string[]): string {
 }
 
 /**
- * The rigs this tool can drive. `containers` is in START order. stop reverses it, because Elasticsearch must outlive
+ * The rigs this tool can drive. `containers` is in start order. stop reverses it, because Elasticsearch must outlive
  * the API that queries it.
  */
 export const ENGINE_RIGS = {
@@ -229,7 +229,7 @@ export async function rigStatus(name: EngineRigName): Promise<RigStatus> {
 }
 
 /**
- * Start a rig and wait for it to ANSWER rather than merely to be running — a container that is up while Elasticsearch
+ * Start a rig and wait for it to answer rather than merely to be running — a container that is up while Elasticsearch
  * is still loading serves 500s, and a caller told "started" would read those as the engine's opinion.
  */
 export async function rigStart(name: EngineRigName): Promise<RigStatus & { waitedMs: number }> {

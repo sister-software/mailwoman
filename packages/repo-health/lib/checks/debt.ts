@@ -5,7 +5,7 @@
  * @file Monotonic debt counters for patterns that are too contextual for a blanket lint error.
  *
  *   Existing debt is recorded in `baseline.json` beside this package. the `debt` check reports a counter that grew as an
- *   error and a counter that fell as a warning asking for the baseline to be ratcheted. WRITING the baseline is a
+ *   error and a counter that fell as a warning asking for the baseline to be ratcheted. writing the baseline is a
  *   mutation, so it is not a check: `mwops health baseline debt` calls {@link computeDebtCounters} through
  *   `lib/baseline.ts`, which the registry does not list. Never raise a counter to make a failure disappear.
  */
@@ -62,23 +62,23 @@ export interface DebtCounters {
 	 * Occurrences of the retired vocabulary word — see {@link BANNED_VOCABULARY} for which — in any spelling, anywhere in
 	 * tracked source: identifiers, comments and string literals alike.
 	 *
-	 * THIS SENTENCE DOES NOT NAME THE WORD, deliberately: a case-preserving sweep once rewrote the name to the
-	 * REPLACEMENT and left the doc describing a different word than the pattern counts. One constant holds the term.
+	 * This sentence does not name the word, deliberately: a case-preserving sweep once rewrote the name to the
+	 * replacement and left the doc describing a different word than the pattern counts. One constant holds the term.
 	 * prose points at the constant.
 	 *
-	 * The vocabulary is being removed because the word stood for FOUR different things (corpus recipes, per-country
+	 * The vocabulary is being removed because the word stood for four different things (corpus recipes, per-country
 	 * postcode databases, WOF extracts, and the providers' region databases), so there is no replacement synonym — each
-	 * site takes the noun for the thing it actually names. The target is ZERO, and this counter is the finish line:
+	 * site takes the noun for the thing it actually names. The target is zero, and this counter is the finish line:
 	 * ratcheted down per PR, it can only fall.
 	 *
-	 * COUNTED HERE RATHER THAN WITH `grep` ON PURPOSE. Tracked sources can carry raw NUL bytes, which `grep` treats as
-	 * binary and skips SILENTLY — no error, no count. Measured: 3,481 occurrences with `grep -a` against 3,427 without,
+	 * Counted here rather than with `grep` on purpose. Tracked sources can carry raw NUL bytes, which `grep` treats as
+	 * binary and skips silently — no error, no count. Measured: 3,481 occurrences with `grep -a` against 3,427 without,
 	 * so a `grep`-based ratchet would hide 54 occurrences and could certify zero while they remained. `readLocalTextFile`
 	 * has no such blind spot.
 	 */
 	bannedVocabulary: number
 	/**
-	 * `stack.push(...node.children)` — a hand-rolled LIFO tree walk. The idiom yields siblings in reverse text order, and
+	 * `stack.push(...node.children)` — a hand-rolled lifo tree walk. The idiom yields siblings in reverse text order, and
 	 * a `find` over it picked the second of two same-tag spans (#2156, #2163); `walkNodes` in `@mailwoman/core/decoder`
 	 * is the one walk, in document order. Baseline zero.
 	 */
@@ -184,14 +184,14 @@ const SYNCHRONOUS_FILESYSTEM_CALLS = new Set([
 /**
  * Whether a call reaches the synchronous filesystem directly, bypassing `@mailwoman/core/fs`.
  *
- * The baseline is ZERO. Workspaces that do not depend on `@mailwoman/core` — `api-kit`, `nuts-lookup`,
+ * The baseline is zero. Workspaces that do not depend on `@mailwoman/core` — `api-kit`, `nuts-lookup`,
  * `timezone-lookup`, `un-locode-lookup`, `variant-aliases` — would install core's ~9 MB of data to replace a `mkdir` or
  * a `readFileSync`, and `oxlint.config.ts` exempts those files by name. they collapse the day the fs helpers can be
  * reached without core's tarball.
  *
  * A bare identifier is counted. a property access is counted only when the receiver is spelled `fs`. That receiver rule
  * is what separates this population from two unrelated ones that share a method name: `node:sqlite`'s
- * `DatabaseSync.closeSync()`, and an INJECTED dependency (`deps.existsSync`), which is a parameter a test substitutes
+ * `DatabaseSync.closeSync()`, and an injected dependency (`deps.existsSync`), which is a parameter a test substitutes
  * rather than a filesystem call the module makes.
  */
 function isSynchronousFilesystemCall(node: ts.Node): boolean {
@@ -306,7 +306,7 @@ function visit(
 }
 
 /**
- * Paths whose sources DO NOT count toward repository debt, and why each is excluded.
+ * Paths whose sources do not count toward repository debt, and why each is excluded.
  *
  * The set is every tracked `.ts`/`.tsx` minus what is listed here — the denominator a count is reported against, and a
  * count reported without one says less than it appears to.
@@ -315,7 +315,7 @@ const UNCOUNTED = [
 	// The runtime mirror and the idiom over it call the builtins on purpose. counting them would measure the
 	// implementation rather than its callers.
 	"packages/core/lib/fs/",
-	// THIS FILE COUNTS ITSELF OTHERWISE, and the count could never reach zero: {@link BANNED_VOCABULARY} has to
+	// this file counts itself otherwise, and the count could never reach zero: {@link BANNED_VOCABULARY} has to
 	// spell the word it bans. Excluded for the same reason as the line above — the implementation is not a caller.
 	SELF,
 ]
@@ -329,9 +329,9 @@ const UNCOUNTED = [
  * by allowlist. The last alternation stops before a coreutils flag (` -c`, ` -d`): a shell command in a fenced block is
  * the utility rather than the word.
  *
- * KEEP THE COUNTER'S NAME FREE OF THE WORD. This ratchet is written in the language it polices, so the vocabulary sweep
+ * Keep the counter'S name free OF the word. This ratchet is written in the language it polices, so the vocabulary sweep
  * it exists to drive rewrote it: a case-preserving `shard` → `extract` pass over `scripts/` renamed `shardVocabulary`
- * to `extractVocabulary` AND rewrote this very pattern, so the check began measuring the REPLACEMENT word while still
+ * to `extractVocabulary` and rewrote this very pattern, so the check began measuring the replacement word while still
  * reporting a falling number. It stayed green throughout. A neutral counter name and a single pattern constant are what
  * make that impossible to repeat.
  */
@@ -341,9 +341,9 @@ const BANNED_VOCABULARY =
 /**
  * Where the banned word is allowed to survive, and why each one warrants it.
  *
- * THE COUNT IS OVER EVERY TRACKED TEXT FILE rather than just `.ts`/`.tsx`. The first version of this counter scanned
+ * The count is over every tracked text file rather than just `.ts`/`.tsx`. The first version of this counter scanned
  * only TypeScript, reported zero, and left 125 occurrences standing in prose, config, dictionaries and eval rows —
- * including three sentences in `AGENTS.md` that still told the next agent the old names were current. A vocabulary an
+ * including three sentences in `agents.md` that still told the next agent the old names were current. A vocabulary an
  * agent reads is a vocabulary an agent writes, so prose is in scope.
  */
 const BANNED_VOCABULARY_ALLOWED: ReadonlyArray<readonly [prefix: string, reason: string]> = [
@@ -361,12 +361,12 @@ const BANNED_VOCABULARY_ALLOWED: ReadonlyArray<readonly [prefix: string, reason:
 	["config/vale/fixtures/", "Vale fixtures whose purpose is to keep failing, permanently"],
 	[".claude/output-styles/", "the same refusal list, mirrored for agent replies"],
 	["AGENTS.md", "carries that refusal list, plus the note recording that this family reached zero"],
-	// RECORDS ARE NOT EXEMPT, and that is a deliberate reversal. They were exempt on the reasoning that
-	// rewriting a record falsifies it — but a record names PATHS and IDENTIFIERS rather than measurements, and a
+	// records are not exempt, and that is a deliberate reversal. They were exempt on the reasoning that
+	// rewriting a record falsifies it — but a record names paths and identifiers rather than measurements, and a
 	// retired name in a record is read as a live one by the next agent. Every number, date and verdict is
 	// untouched. only the spelling of things that were renamed moved with them. Operator direction, and the
 	// reason given was the operative one: agents pick the vocabulary back up from prose.
-	// CONTENT rather than vocabulary. `shardza`, `sechshard` and `shykshard` are transliterated place names;
+	// content rather than vocabulary. `shardza`, `sechshard` and `shykshard` are transliterated place names;
 	// `Bosshardt` and `Rashard` are real people's names. the eval rows are dated notes on committed board
 	// cases. Renaming any of them would corrupt data to satisfy a style rule.
 	["packages/core/data/", "libpostal dictionaries — real given names and surnames"],
@@ -452,7 +452,7 @@ export async function computeDebtCounters(context: RepoContext): Promise<DebtCou
 
 		const workspacePackage = workspacePackages.find(({ directory }) => path.startsWith(`${directory}/`))
 
-		// Package tests intentionally import their own package name: that is the contract this repository's
+		// Package tests intentionally import their own package name: that is the interface this repository's
 		// test layout verifies. Self-imports remain debt in production source, where `#imports` avoid cycles/noise.
 		const countSelfPackageImports = !path.includes("/test/") && !/[.]test[.]tsx?$/.test(path)
 
@@ -468,7 +468,7 @@ export async function computeDebtCounters(context: RepoContext): Promise<DebtCou
 		}
 	}
 
-	// The banned vocabulary is counted over EVERY tracked text file rather than the TypeScript-only set above:
+	// The banned vocabulary is counted over every tracked text file rather than the TypeScript-only set above:
 	// prose an agent reads is prose an agent copies. Binary blobs are skipped by the read failing rather than by a list.
 	for (const trackedPath of await trackedSourcePaths(context, { globs: ["*"], existingOnly: true })) {
 		const relativePath = relative(root, trackedPath)

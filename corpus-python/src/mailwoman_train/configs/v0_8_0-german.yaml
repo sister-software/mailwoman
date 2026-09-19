@@ -2,16 +2,16 @@
 #
 # The model is out-of-distribution on German: it truncates `Straußstraße`→`Strau`, absorbs the
 # house number into the street, and mis-tags the native-order house number as a postcode. DE-0
-# confirmed the tokenizer round-trips German orthography cleanly, so this is a COVERAGE gap (ORDER:
-# the model trained US+FR — house-number-FIRST, postcode-AFTER-city — and never saw German order:
-# house-number-AFTER-street, postcode-BEFORE-city).
+# confirmed the tokenizer round-trips German orthography cleanly, so this is a coverage gap (order:
+# the model trained US+FR — house-number-first, postcode-after-city — and never saw German order:
+# house-number-after-street, postcode-before-city).
 #
-# SINGLE VARIABLE vs v0_7_2-intersection-bare.yaml: add `synth-german: 0.2` (real OpenAddresses
+# single variable vs v0_7_2-intersection-bare.yaml: add `synth-german: 0.2` (real OpenAddresses
 # Berlin/Saxony tuples rendered German-order via the OpenCage DE template) + `DE: 1.0` to
 # country_weights (required — the loader rejects rows whose country isn't weighted). Synthesis-as-
 # supplement discipline: weight < 0.25, one-and-done.
 #
-# CONTINUE-TRAIN: same output_dir as v0.7.2 (resume=auto from step-100000) → +40k steps to 140000 at
+# continue-train: same output_dir as v0.7.2 (resume=auto from step-100000) → +40k steps to 140000 at
 # constant LR. v0.7.2's step-100000 is immutable and preserved. the German model is step-140000.
 #
 # Baseline German per-locale F1 (v0.7.2, OOD): street 19.1%, house_number 14.6%, locality 72.5%,
@@ -38,7 +38,7 @@ data:
     usgov-hrsa-fqhc: 2.0
     usgov-imls-pls: 2.0
     usgov-nad: 1.0
-    state-ia-contractors: 2.0
+    state-ia-builders: 2.0
     state-tx-notaries: 1.5
     state-ny-notaries: 2.0
     deepseek-kryptonite: 3.0

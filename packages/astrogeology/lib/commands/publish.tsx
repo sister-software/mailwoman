@@ -7,8 +7,8 @@
  *   under the tile worker's key layout, the search artifact and the manifest under a versioned prefix on the public
  *   bucket, then fetch each public URL and report its status.
  *
- *   THE VERSION IS PART OF THE KEY so a republish never overwrites an artifact a deployed app pins: the manifest's
- *   build date compacted to `YYYYMMDD` plus the first eight hex characters of a SHA-256 over every output's checksum.
+ *   the version is part OF the KEY so a republish never overwrites an artifact a deployed app pins: the manifest's
+ *   build date compacted to `yyyymmdd` plus the first eight hex characters of a SHA-256 over every output's checksum.
  */
 
 import { Spinner } from "@inkjs/ui"
@@ -27,7 +27,7 @@ import { uploadWithWrangler } from "#publish/wrangler"
 import { type PlanetaryBuildManifest, PlanetaryBuildManifestSchema } from "#schema/manifest"
 
 /**
- * The command's contract, in the shape mailwoman's filesystem router reads.
+ * The command's interface, in the shape mailwoman's filesystem router reads.
  */
 export const spec = {
 	name: "publish",

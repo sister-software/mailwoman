@@ -16,7 +16,7 @@
  *   The generic timing-metrics algorithm (percentiles, tier partition, reservoir) also does not
  *   re-port here — `api-kit/metrics.test.ts` already exhaustively covers the identical
  *   `recordTimed`/`metricsSnapshot` logic this engine delegates to. This file only exercises the
- *   `/metrics` HTTP surface reflecting a real wired call (the integration behavior rather than the algorithm).
+ *   `/metrics` http surface reflecting a real wired call (the integration behavior rather than the algorithm).
  *
  *   The engine is built once (`beforeAll`) and reused across every test in this file — unlike
  *   express's per-request lazy `getDeps()`, `createServeEngine()` does the (slow: model + SQLite)
@@ -49,9 +49,9 @@ const describeIfStack = describe.skipIf(!hasStack)
  */
 async function weightsPresent(): Promise<boolean> {
 	try {
-		// ASK THE RESOLVER. This probed `packages/neural-weights-en-us/model.onnx` directly, which is true only
+		// ASK the resolver. This probed `packages/neural-weights-en-us/model.onnx` directly, which is true only
 		// while the dev linker materializes binaries into that package — and a skip-guard that stops matching
-		// does not fail, it SKIPS, so the suite disappears from the run reporting success. The repo has already
+		// does not fail, it skips. Therefore, the suite disappears from the run reporting success. The repo has already
 		// paid for this once: the workspace regroup left this literal behind and both this suite and
 		// `api-engine.test.ts` went quiet until someone counted the skips.
 		return await pathExists((await resolveWeights({ locale: "en-us" })).modelPath)
@@ -217,7 +217,7 @@ describeIfStack("api-engine — success path against real WOF + TX databases", (
 		expect(results[0]!.input).toBe(addresses[0])
 		expect(results[1]!.input).toBe(addresses[1])
 
-		// #485 4a handoff: per-ROW metrics land in the engine rather than just the route's whole-call "batch" tier.
+		// #485 4a handoff: per-row metrics land in the engine rather than just the route's whole-call "batch" tier.
 		const snapshot = metricsSnapshot()
 
 		const perRowTotal = Object.entries(snapshot.timings.tiers)

@@ -82,7 +82,7 @@ CLI #547 merged + demo typeahead #585/#588; address-level follow-up tracked in #
 **Bonus tail (back half + after the operator returned):**
 
 - **#588 — autocomplete edge-case tests.** The typeahead is now user-facing, so 4 synthetic tests lock in
-  the "no throw, no garbage" contract (empty/whitespace → `[]`, a partial matching no continuation → `[]`,
+  the "no throw, no garbage" interface (empty/whitespace → `[]`, a partial matching no continuation → `[]`,
   `maxSuggestions` capping, single-char never throws). 11/11 synthetic green.
 - **#590 — punctuation-stress eval verdict (closes the measurement half of #518).** Ran the 200-row
   paired-delimiter / punctuation-stress dataset (already on `main`) across v0, neural, and neural +

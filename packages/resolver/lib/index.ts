@@ -5,7 +5,7 @@
  *
  *   `@mailwoman/resolver` — the address resolver implementation, lifted out of `@mailwoman/core`
  *   (#215) so it can depend on `@mailwoman/spatial` (haversine) + `@mailwoman/codex` (USPS
- *   directionals) instead of reinventing them. The TYPE contract stays in
+ *   directionals) instead of reinventing them. The type interface stays in
  *   `@mailwoman/core/resolver` (so the `core/pipeline` composes the resolver structurally without a
  *   package cycle); this barrel re-exports it, so `@mailwoman/resolver` is a complete drop-in for
  *   what used to be `@mailwoman/core/resolver`.
@@ -60,7 +60,7 @@ export {
 
 export type { ResolvedPostcodeHit, ResolvedSpecificityInput } from "#admin/winner"
 
-// The type contract + placetype helpers live in core (pure types, keep core a leaf). Re-export so
+// The type interface + placetype helpers live in core (pure types, keep core a leaf). Re-export so
 // consumers get the whole surface from `@mailwoman/resolver`.
 
 export * from "#rerank"

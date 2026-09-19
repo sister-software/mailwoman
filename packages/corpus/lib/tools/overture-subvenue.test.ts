@@ -3,11 +3,11 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Pins the Overture sub-venue reader against a poi.db FIXTURE — a real SQLite file with the three
+ *   Pins the Overture sub-venue reader against a poi.db fixture — a real SQLite file with the three
  *   tables the reader touches, built here rather than mocked.
  *
  *   The fixture is the point. `@mailwoman/corpus` declares poi.db's columns locally (it does not
- *   depend on `@mailwoman/resolver-wof-sqlite`, which owns the full `POIDatabase` interface), so
+ *   depend on `@mailwoman/resolver-wof-sqlite`, which owns the full `POIDatabase` interface). Therefore,
  *   nothing type-checks the projection against the real schema. What stands in for that is a fixture
  *   whose DDL matches the shipped layer's — `h3_cell`, `category_id`, `neg_rank`, `rowid_key` clustered
  *   PK, `name`, `country` — so a rename upstream fails here instead of throwing at runtime against a
@@ -214,7 +214,7 @@ test("a row from the reader satisfies SubVenueHarvestRow with no adaptation", as
 	expect(row).not.toHaveProperty("localizedNames")
 })
 
-test("readOvertureLayerVintage reads the layer-contract manifest", async () => {
+test("readOvertureLayerVintage reads the layer-interface manifest", async () => {
 	await expect(readOvertureLayerVintage(databasePath)).resolves.toBe("2026-05-20.0")
 })
 

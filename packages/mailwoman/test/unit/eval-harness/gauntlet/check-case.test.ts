@@ -7,7 +7,7 @@
  *   2026-08-06 none of it was reachable without the ~9 GB database set — which is how two stored expectation
  *   columns (`expect_place_id`, `expect_place_name`) went the corpus's whole life unread (#1507).
  *
- *   The required case is `grades place identity off the RESOLVED place rather than the echoed query span`: it
+ *   The required case is `grades place identity off the resolved place rather than the echoed query span`: it
  *   pins the exact confusion that would make this whole check decorative.
  */
 
@@ -205,10 +205,10 @@ describe("the place-identity check (#1507)", () => {
 describe("the component check is exact — multi-script truth is a per-row opt-in (#34)", () => {
 	// The 2026-08-10 global relaxation (any dual-script got satisfied a truth freezing one rendering) let a
 	// cross-tag bleed grade as a pass, so review converted it into the `expect_component_renderings` opt-in.
-	// The first two tests pin the reversal. the rest pin the opt-in contract itself.
+	// The first two tests pin the reversal. the rest pin the opt-in interface itself.
 	it("fails a cross-script bleed against a plain expect_components truth — the Manchester case", () => {
 		// The exposure the global relaxation disclosed: a locality that swallowed the CJK venue next door
-		// graded as a pass. With no rendering contract on the row, this must fail again.
+		// graded as a pass. With no rendering interface on the row, this must fail again.
 		const c = storedCase({ expect_components: stringifyJSON({ locality: "Manchester" }) })
 
 		expect(checkCase(c, result({ locality: "四季酒家 Manchester" }))).toEqual([
@@ -222,7 +222,7 @@ describe("the component check is exact — multi-script truth is a per-row opt-i
 		expect(checkCase(c, result({ venue: "Gandantegchinlen Monastery / Гандантэгчинлэн хийд" }))).toHaveLength(1)
 	})
 
-	it("passes a rendering contract when the span carries every listed rendering", () => {
+	it("passes a rendering interface when the span carries every listed rendering", () => {
 		const c = storedCase({
 			expect_component_renderings: stringifyJSON({
 				venue: ["Gandantegchinlen Monastery", "Гандантэгчинлэн хийд"],
@@ -232,7 +232,7 @@ describe("the component check is exact — multi-script truth is a per-row opt-i
 		expect(checkCase(c, result({ venue: "Gandantegchinlen Monastery / Гандантэгчинлэн хийд" }))).toEqual([])
 	})
 
-	it("passes the bleed-shaped got too, once a contract SAYS both elements belong — explicit, not global", () => {
+	it("passes the bleed-shaped got too, once a interface SAYS both elements belong — explicit, not global", () => {
 		const c = storedCase({ expect_component_renderings: stringifyJSON({ locality: ["四季酒家", "Manchester"] }) })
 
 		expect(checkCase(c, result({ locality: "四季酒家 Manchester" }))).toEqual([])
@@ -250,7 +250,7 @@ describe("the component check is exact — multi-script truth is a per-row opt-i
 		])
 	})
 
-	it("folds case inside the contract, exactly as the exact path does", () => {
+	it("folds case inside the interface, exactly as the exact path does", () => {
 		const c = storedCase({
 			expect_component_renderings: stringifyJSON({ locality: ["ulaanbaatar", "улаанбаатар"] }),
 		})
@@ -266,9 +266,9 @@ describe("the component check is exact — multi-script truth is a per-row opt-i
 		expect(checkCase(c, result({ locality: "Улаанбаатар / Ulaanbaatar / ウランバートル" }))).toEqual([])
 	})
 
-	it("lets a contract key supersede the same key in expect_components", () => {
-		// expect_components freezes the Latin half. the contract requires both. The dual span passes (the
-		// superseded exact comparison would have failed it), the frozen half alone fails (the contract owns
+	it("lets a interface key supersede the same key in expect_components", () => {
+		// expect_components freezes the Latin half. the interface requires both. The dual span passes (the
+		// superseded exact comparison would have failed it), the frozen half alone fails (the interface owns
 		// the key), and an unrelated exact key on the same row still grades through expect_components.
 		const c = storedCase({
 			expect_components: stringifyJSON({ venue: "Gandantegchinlen Monastery", postcode: "16040" }),
@@ -301,7 +301,7 @@ describe("the component check is exact — multi-script truth is a per-row opt-i
 		expect(() => checkCase(c, result())).toThrow(/non-empty string array/)
 	})
 
-	it("throws on a non-array contract value for the same reason", () => {
+	it("throws on a non-array interface value for the same reason", () => {
 		const c = storedCase({ expect_component_renderings: stringifyJSON({ venue: "Гандантэгчинлэн хийд" }) })
 
 		expect(() => checkCase(c, result())).toThrow(/non-empty string array/)
@@ -309,7 +309,7 @@ describe("the component check is exact — multi-script truth is a per-row opt-i
 
 	it("leaves a SAME-script concatenation failing — the plus-code row's error must stay visible", () => {
 		// mn-ws-national-university-pluscode-sbd-6-khoroo: a model that types the Open Location Code as
-		// `postcode` emits two postcode spans next to the real 14200. No contract lists them, so the exact
+		// `postcode` emits two postcode spans next to the real 14200. No interface lists them, so the exact
 		// comparison keeps failing (that visibility is the row's point).
 		const c = storedCase({ expect_components: stringifyJSON({ postcode: "14200" }) })
 
@@ -335,9 +335,9 @@ describe("scriptRenderings", () => {
 		expect(scriptRenderings("ХУД - 15 хороо, Ulaanbaatar")).toEqual(["ХУД - 15 хороо", "Ulaanbaatar"])
 	})
 
-	it("returns a single rendering for a mono-script value — nothing for a two-rendering contract to accept", () => {
-		// A rendering starts and ends at a LETTER, so the trailing digits fall off — harmless, because a
-		// mono-script value can never contain the two renderings a dual-script contract requires.
+	it("returns a single rendering for a mono-script value — nothing for a two-rendering interface to accept", () => {
+		// A rendering starts and ends at a letter, so the trailing digits fall off — harmless, because a
+		// mono-script value can never contain the two renderings a dual-script interface requires.
 		expect(scriptRenderings("WWF9+6H6 14200")).toEqual(["WWF9+6H"])
 		expect(scriptRenderings("Springfield Chicago")).toEqual(["Springfield Chicago"])
 	})

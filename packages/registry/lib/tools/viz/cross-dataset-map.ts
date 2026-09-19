@@ -29,7 +29,7 @@ export interface CrossDatasetMapOptions {
 	 */
 	in?: string
 	/**
-	 * Output HTML path. Default `/tmp/cross-dataset-map.html`.
+	 * Output html path. Default `/tmp/cross-dataset-map.html`.
 	 */
 	outHTML?: string
 	/**
@@ -50,7 +50,7 @@ const label = (s: string) => SOURCE_LABELS[s] ?? s
 /**
  * Which agency each source belongs to. The two FCC datasets (RHC posted-services + commitments) are one agency — so an
  * NPPES↔FCC or FCC↔TX link is cross-agency, but an RHC↔commitments link is not. `--cross-agency-only` keeps just the
- * entities whose sources span >1 agency: the harder, more striking "no shared key ACROSS agencies" subset (most of the
+ * entities whose sources span >1 agency: the harder, more striking "no shared key across agencies" subset (most of the
  * raw links are FCC-internal).
  */
 const SOURCE_AGENCY: Record<string, string> = {
@@ -66,7 +66,7 @@ const sourcesOf = (f: GeoFeature<PointLiteral, MapFeatureData>): string[] =>
 	Array.isArray(f.properties?.sources) ? f.properties.sources : []
 
 /**
- * Render the cross-dataset-links GeoJSON to a bucket-colored MapLibre HTML page.
+ * Render the cross-dataset-links GeoJSON to a bucket-colored MapLibre html page.
  */
 export async function crossDatasetMap(
 	options: CrossDatasetMapOptions = {},
@@ -85,7 +85,7 @@ export async function crossDatasetMap(
 		: parsed
 
 	// Synthesize a `bucket` per entity = its sorted source-combination, so toMapHTML colors by the link
-	// TYPE (two-source vs the rarer all-three-source spans) rather than the binary cross/single status.
+	// type (two-source vs the rarer all-three-source spans) rather than the binary cross/single status.
 	let triple = 0
 	const comboCounts = new Map<string, number>()
 

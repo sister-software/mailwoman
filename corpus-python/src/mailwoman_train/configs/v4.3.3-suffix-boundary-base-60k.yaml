@@ -1,21 +1,21 @@
 # === v4.3.3-suffix-boundary-base-60k — #1569 corrected-feed base trajectory ===
 #
-# HYPOTHESIS: terminal-only street names must be present while the encoder learns its boundary
+# hypothesis: terminal-only street names must be present while the encoder learns its boundary
 # representation. Three same-vocabulary fine-tunes and an EWC-off plasticity probe barely moved B1;
 # v4.3.2, the first run with fully correct load-time target labels, reached only 10/128 final and
-# 12/128 raw argmax. This run trains the same v4.2.0 geometry FROM SCRATCH on the corrected feed.
+# 12/128 raw argmax. This run trains the same v4.2.0 geometry from scratch on the corrected feed.
 #
-# EFFECTIVE DATA DELTA vs v4.2.0-base-anchor-v2: the v0.18.1 overlay adds one 30k-row
+# effective data delta vs v4.2.0-base-anchor-v2: the v0.18.1 overlay adds one 30k-row
 # synth-suffix-boundary source at weight 12.0 and the idempotent relabel pass preserves its authored
 # street → street_suffix boundaries. The exact 250k selectable-feed audit found 16,143/16,143
 # correct target-stratum carriers and unchanged contrast (5,405/5,505). Two absent positive source
 # weights are omitted because they never affected v4.2.0's sampled stream.
 #
-# TRAINING SEMANTICS vs v4.2.0: verbatim base schedule — no init_from, no EWC, LR 5e-4, warmup
+# training semantics vs v4.2.0: verbatim base schedule — no init_from, no EWC, LR 5e-4, warmup
 # 1,000, 60k cosine, bf16, Fisher capture over the final 2k steps. This is one fresh seed-42 run.
 # Multilingual street-type and mixed-script data remain out of scope.
 #
-# CHECKS (fp32):
+# checks (fp32):
 #   B1 terminal-only >=116/128
 #   B2 terminal-contrast >=34/48
 #   B4 locality-token retention >=3/7 (exact locality is an upside watch)

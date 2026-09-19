@@ -7,7 +7,7 @@
  *   coverage-qualified absence each become a `QueryIntentMarker` on the ordinary result, and neither gets a
  *   private path of its own.
  *
- *   THE MARKER CONTRACT IS THE WHOLE REASON THIS IS THE CARRIER, and it is inviolable here. A marker is
+ *   the marker interface is the whole reason this is the carrier, and it is inviolable here. A marker is
  *   additive, attributed, and always accompanied by the ordinary answer. it never changes which answer wins.
  *   That is exactly what an observation is — the authority behind an answer the pipeline had already
  *   reached — so nothing in this module reads or returns a candidate, a coordinate, or an ordering. The
@@ -15,13 +15,13 @@
  *   the assertion, the mapping and every provenance record, so a reader can check the claim rather than
  *   take it.
  *
- *   THE PIPELINE STILL LEARNS NOTHING. `createRuntimePipeline` takes the semantic route as a plain
+ *   the pipeline still learns nothing. `createRuntimePipeline` takes the semantic route as a plain
  *   `POIPhraseLookup` and is told nothing about where the evidence came from — the property that keeps the
- *   integration point one optional argument instead of a branch. So the conversion happens at the CALLER,
- *   which is the side that built the route and therefore already holds it: run the query, drain the route,
- *   convert, attach. A pipeline that attached these itself would have to know the difference.
+ *   integration point one optional argument instead of a branch. So the conversion happens at the caller.
+ *   The caller built the route and already holds it: run the query, drain the route, convert, attach. A pipeline
+ *   that attached these itself would have to know the difference.
  *
- *   A MARKER MUST NAME A KIND THE VERDICT CARRIES. `QueryIntentMarker.kind` is documented as a kind present
+ *   A marker must name A kind the verdict carries. `QueryIntentMarker.kind` is documented as a kind present
  *   in the result as either the top kind or an alternative, and a marker naming one that is in neither is a
  *   producer bug. So the conversion is handed the verdict and finds the POI kind in it. a verdict carrying
  *   none yields no marker rather than an invented one. That silence is a real reading — the observation was
@@ -67,13 +67,13 @@ export const SEMANTIC_ABSENCE_MECHANISM = "semantic:absence"
 /**
  * `family:rule` for a designation read out of the EA flood-zone layer.
  *
- * The RULE half names the layer rather than the shape of the claim, so a reader meeting two designation markers on one
+ * The rule half names the layer rather than the shape of the claim, so a reader meeting two designation markers on one
  * answer can tell which authority spoke. A later overlay writes its own rule under the same `layer` family.
  */
 export const FLOOD_ZONE_DESIGNATION_MECHANISM = "layer:flood_zone"
 
 /**
- * `family:rule` for a reading out of the NRCS SSURGO soil-capability layer — the second rule under the `layer` family.
+ * `family:rule` for a reading out of the nrcs ssurgo soil-capability layer — the second rule under the `layer` family.
  */
 export const SOIL_CAPABILITY_DESIGNATION_MECHANISM = "layer:soil_capability"
 
@@ -210,14 +210,14 @@ export function absenceObservationMarker(
 /**
  * Turn one authority designation into a marker on a geocode verdict.
  *
- * THE KIND IS THE VERDICT'S OWN TOP KIND, and that is the settled answer to the survey's open question rather than an
- * omission. `QueryIntentMarker.kind` is contractually a kind the verdict carries. a designation is not raised by intent
+ * The kind is the verdict'S own TOP kind, and that is the settled answer to the survey's open question rather than an
+ * omission. `QueryIntentMarker.kind` is by agreement a kind the verdict carries. a designation is not raised by intent
  * at all — nothing about "10 Downing Street" asks for a flood zone — so there is no kind of its own to name and naming
- * the top kind satisfies the contract literally. `declared_ambiguity` is the precedent for a marker raised at resolve
+ * the top kind satisfies the interface literally. `declared_ambiguity` is the precedent for a marker raised at resolve
  * time rather than by the classifier. this one goes one step further and names no kind of its own, which is why the
- * distinction is written down here and in the layer contract instead of being inferred from the code.
+ * distinction is written down here and in the layer interface instead of being inferred from the code.
  *
- * The message reports WHAT THE AUTHORITY'S MAP ASSIGNS, never whether the location will flood. The authority itself
+ * The message reports what the authority'S MAP assigns, never whether the location will flood. The authority itself
  * declines the second statement, and a wording that blurred them would be this program's invention rather than the
  * authority's.
  */
@@ -263,15 +263,15 @@ export function authorityDesignationMarker(
 /**
  * Turn one soil-capability reading into a marker on a geocode verdict.
  *
- * SAME CODE, SAME FAMILY, DIFFERENT RULE. It shares `authority_designation` and the `layer` mechanism family with the
+ * Same code, same family, different rule. It shares `authority_designation` and the `layer` mechanism family with the
  * flood marker, because both report what an authority designates at a resolved coordinate. the rule half names the
  * layer, so a reader meeting two designation markers on one answer can tell which authority spoke.
  *
- * THE CLASS NEVER TRAVELS WITHOUT THE SHARE IT RESTS ON. NRCS's own map-unit aggregation ships its dominant-condition
+ * The class never travels without the share IT rests on. nrcs's own map-unit aggregation ships its dominant-condition
  * class beside the share that class covers, with an observed minimum of 2%, and this marker reproduces that pairing at
  * cell grain. A message carrying "class 2" alone would manufacture certainty from a plurality.
  *
- * The message reports WHAT THE SURVEY ASSIGNS TO THE MAP UNIT covering the location, never whether the land can be
+ * The message reports what the survey assigns TO the MAP unit covering the location, never whether the land can be
  * farmed. The authority itself declines the second statement — its data are "intended for planning purposes only" — and
  * a wording that blurred them would be this program's invention rather than the authority's.
  */
@@ -317,21 +317,21 @@ export function soilCapabilityMarker(
 /**
  * Turn one coastal-erosion reading into a marker on a geocode verdict.
  *
- * SAME CODE, SAME FAMILY, DIFFERENT RULE — the third under the `layer` family, sharing `authority_designation` with the
+ * Same code, same family, different rule — the third under the `layer` family, sharing `authority_designation` with the
  * flood and soil markers because all three report what an authority designates at a resolved coordinate. The rule half
  * names the layer, so a reader meeting several designation markers on one answer can tell which authority spoke.
  *
- * THE SCENARIO TRAVELS IN THE MESSAGE rather than ONLY IN THE EVIDENCE. NCERM publishes twelve erosion-zone layers and
+ * The scenario travels IN the message rather than only IN the evidence. ncerm publishes twelve erosion-zone layers and
  * they answer twelve different questions. a message reading "at erosion risk" without naming which one would let a 2105
  * projection under a 95th-percentile sea-level-rise allowance be read as a present-day designation. So the scenario key
  * and its plain-language label are in the sentence itself.
  *
  * The message also records the coverage limit, because this layer's silence is not a reassurance. The Environment
- * Agency publishes no coverage statement for NCERM, so an absent designation says nothing — and the marker only ever
+ * Agency publishes no coverage statement for ncerm, so an absent designation says nothing — and the marker only ever
  * fires on a present one, which is why the limit rides on the evidence rather than being implied by the marker's
  * absence.
  *
- * The message reports WHAT THE AUTHORITY'S MAPPING ASSIGNS at a location, never whether a property will erode. The
+ * The message reports what the authority'S mapping assigns at a location, never whether a property will erode. The
  * authority itself declines the second statement — its data "cannot provide details for individual properties" — and a
  * wording that blurred them would be this program's invention rather than the authority's.
  */
@@ -377,23 +377,23 @@ export function coastalErosionMarker(
 /**
  * Turn one zoning reading into a marker on a geocode verdict.
  *
- * SAME CODE, SAME FAMILY, DIFFERENT RULE — the fourth under the `layer` family, sharing `authority_designation` with
+ * Same code, same family, different rule — the fourth under the `layer` family, sharing `authority_designation` with
  * the flood, soil and coastal markers because all four report what an authority designates at a resolved coordinate.
  * The rule half names the layer, so a reader meeting several designation markers on one answer can tell which authority
  * spoke.
  *
- * THE AUTHORITY'S OWN CODE IS IN THE SENTENCE, VERBATIM, AND THE GENERIC TYPE RIDES BESIDE IT. That ordering is the
+ * The authority'S own code is IN the sentence, verbatim, and the generic type rides beside IT. That ordering is the
  * whole vocabulary decision expressed in one string: the publisher's national scheme "complements (rather than
  * replaces) the existing statutory zoning used for each individual plan", in its own words, and a message that led with
  * the generic type would report the summary as the designation. The local code is also the half that cannot be
  * reconstructed — 52 of 795 (authority, local code) pairs take more than one generic type, so the mapping runs one way
  * only.
  *
- * AND THE PLAN IS IN THE SENTENCE TOO. A zone exists inside a named plan with a stated window, and a designation
+ * And the plan is IN the sentence too. A zone exists inside a named plan with a stated window, and a designation
  * without one would be a fact about nothing. `currentPlan = 1` means "not superseded" rather than "in force today", so
  * the window travels on the evidence and the comparison against a date is the reader's.
  *
- * The message reports WHAT A PLAN ASSIGNS at a location, never what may be built there. The publisher itself declines
+ * The message reports what A plan assigns at a location, never what may be built there. The publisher itself declines
  * the second statement — its data are "not published here as legal definitions of the current actuality" — and a
  * wording that blurred them would be this program's invention rather than the authority's.
  */
@@ -438,41 +438,41 @@ export function zoningDesignationMarker(
 /**
  * The attached spatial layers a caller may hand to a geocode, as one named bundle.
  *
- * ONE TYPE RATHER THAN THREE FIELDS ON THE CONSUMER, because {@link layerDesignationMarkers} already reads all of them
+ * One type rather than three fields on the consumer, because {@link layerDesignationMarkers} already reads all of them
  * together and the consumer reads none of them. `GeocodeDeps` extends this, so a fourth layer is one edit here — the
  * route type, its field, its docstring and its entry in the marker list — and none at the call site.
  *
- * EVERY FIELD IS OPTIONAL AND PRESENCE IS THE SWITCH. A boolean would make the consumer resolve a data-root path and
+ * Every field is optional and presence is the switch. A boolean would make the consumer resolve a data-root path and
  * open a sealed database on the default construction path. what arrives here instead is a route the caller already
  * built, so the consumer never learns where the artifact lives. Absent — the default everywhere — leaves the geocode
  * result byte-identical to a run without the field existing: the layer is never opened, the coordinate is never
  * re-asked, and no marker appears.
  *
- * EVERY ROUTE RUNS AFTER THE OPEN RESULT IS ASSEMBLED, over the coordinate that result reached, and its answer is
+ * Every route runs after the open result is assembled, over the coordinate that result reached, and its answer is
  * carried as one additive marker. Nothing above the marker assembly reads any of them.
  */
 export interface LayerDesignationRoutes {
 	/**
 	 * The EA Flood Map for Planning route (#1989) — the first of these, and the one whose absence reading is a
-	 * DESIGNATION: inside England a location with no flood polygon is Flood Zone 1 by the Planning Practice Guidance's
+	 * designation: inside England a location with no flood polygon is Flood Zone 1 by the Planning Practice Guidance's
 	 * own definition.
 	 */
 	authorityDesignationRoute?: AuthorityDesignationRoute
 	/**
-	 * The NRCS SSURGO soil-capability route (#1991) — a second layer under the same marker code and `layer` mechanism
+	 * The nrcs ssurgo soil-capability route (#1991) — a second layer under the same marker code and `layer` mechanism
 	 * family, with a rule of its own. A separate field rather than a widened first one: the two carry different
 	 * observations — a zone code and a containment path against a class distribution, five shares and two dates — and
 	 * share only the code.
 	 */
 	soilCapabilityRoute?: SoilCapabilityRoute
 	/**
-	 * The EA coastal-erosion route (#1993) — a third layer, and the one whose absence reading is nothing. NCERM publishes
+	 * The EA coastal-erosion route (#1993) — a third layer, and the one whose absence reading is nothing. ncerm publishes
 	 * no coverage statement, so this route fires on a designation and stays silent otherwise, which is the opposite of
 	 * the flood route above. One field across both would put one rule over two opposite meanings of an empty answer.
 	 */
 	coastalErosionRoute?: CoastalErosionRoute
 	/**
-	 * The Irish zoning route (#1995) — a fourth layer, and the first whose observation is a VOCABULARY rather than a code
+	 * The Irish zoning route (#1995) — a fourth layer, and the first whose observation is a vocabulary rather than a code
 	 * from a closed domain. It carries the authority's own zone code verbatim beside the publisher's own generic
 	 * classification, because 52 of 795 (authority, local code) pairs take more than one generic type and the mapping
 	 * therefore runs one way only. Its absence reading is nothing, on the same terms as the coastal route above and for a
@@ -485,7 +485,7 @@ export interface LayerDesignationRoutes {
 /**
  * Every attached layer's designation for one resolved coordinate, in one call.
  *
- * A LIST RATHER THAN A CALL PER LAYER, so a third layer is one edit here and none at the call site. Each route is
+ * A list rather than A call PER layer, so a third layer is one edit here and none at the call site. Each route is
  * independently optional and each contributes zero markers when absent, which is what makes an unconfigured session
  * produce the identical marker list — the property the byte-stability tests pin.
  *

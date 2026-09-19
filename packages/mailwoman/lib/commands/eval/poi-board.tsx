@@ -5,12 +5,12 @@
  *
  *   `mailwoman eval poi-board` — the curated POI query board (spec §3.6, exotic-POI arc). Runs the
  *   real `createRuntimePipeline({ poiQueryKind: { poiDatabasePath } })` surface against every
- *   committed fixture and grades the ASSEMBLED answer (matched category + coordinate), not label F1.
+ *   committed fixture and grades the assembled answer (matched category + coordinate), not label F1.
  *
  *   Floors (spec §3.6, set off the v1 baseline): `overall ≥ 90%`, `abstain = 100%`, `address = 100%`.
  *   They are graded and printed on every run. Pass `--enforce` to turn a breach into a non-zero exit
  *   (the CI-check mode). Without `--enforce` the command stays report-only — it exits 0 on case
- *   failures, and a non-zero exit means the HARNESS broke (missing fixtures, missing db, a pipeline
+ *   failures, and a non-zero exit means the harness broke (missing fixtures, missing db, a pipeline
  *   construction error), never a graded case failing.
  *
  *   `--semantic-observation` injects `mailwoman/observations`' semantic route as an additional phrase
@@ -24,7 +24,7 @@ import { type CommandSpec, harnessCommand } from "#cli-kit"
 export const description = "POI query board (spec §3.6) — graded on the assembled answer, v1 report-only"
 
 /**
- * Native command-line contract consumed by the filesystem command router.
+ * Native command-line interface consumed by the filesystem command router.
  */
 export const spec = {
 	name: "poi-board",

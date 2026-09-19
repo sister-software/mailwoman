@@ -11,12 +11,12 @@
  *   caller, because a billed third-party geocoder quietly becoming an answer key is the exact failure the package was
  *   made private to prevent.
  *
- *   TWO PROVIDERS, TWO POSTURES (spec §7.3).
+ *   two providers, two postures (spec §7.3).
  *
  *   `census` is free, unauthenticated and US-only. It is allowed with no ceremony.
  *
- *   `google` is BILLED, and the opt-in deliberately does not live on the tool argument. A tool argument is set by
- *   whoever is driving the agent, which for a spend decision is the wrong signature — so it is read from the daemon's
+ *   `google` is billed, and the opt-in deliberately does not live on the tool argument. A tool argument is set by
+ *   whoever is driving the agent. It for a spend decision is the wrong signature. Therefore, it is read from the daemon's
  *   config file plus a per-lifetime call cap that the result reports as it consumes. An agent cannot talk its way into
  *   spending money. the operator has to have written it down first.
  */
@@ -192,7 +192,7 @@ export class OracleMeter {
 /**
  * The grade an oracle arm forces, regardless of what the caller asked for.
  *
- * Not a default — a REFUSAL to grade, and it holds for every input set rather than per set. Two reasons, and the second
+ * Not a default — a refusal to grade, and it holds for every input set rather than per set. Two reasons, and the second
  * is why there is no carve-out for the sets it does not apply to:
  *
  * 1. The board's `expectLat`/`expectLon` are pinned by hand by whoever fixed the bug, with these same two geocoders open
@@ -225,7 +225,7 @@ export interface OracleGeocoderLike extends AsyncDisposable {
 /**
  * Build the real client for a provider.
  *
- * NO PER-ARM NORMALIZATION. Google accepts a `country` hint and the input sets carry one, and it is deliberately not
+ * No PER-ARM normalization. Google accepts a `country` hint and the input sets carry one, and it is deliberately not
  * passed: the pre-registered protocol sends the same raw query string to every arm, and a hint given to one side is the
  * per-arm rewriting that protocol exists to forbid. It would also flatter the oracle on exactly the bare-locality rows
  * where mailwoman's country scope is what is under examination.
@@ -249,7 +249,7 @@ export function createOracleClient(provider: OracleProviderName): OracleGeocoder
 }
 
 /**
- * HTTP status both clients raise for "this provider holds no match for that address".
+ * Http status both clients raise for "this provider holds no match for that address".
  */
 const HTTP_NOT_FOUND = 404
 

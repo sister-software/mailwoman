@@ -5,10 +5,10 @@
  *
  *   `mailwoman gazetteer postcode-intl` — build a postcode → point database from GeoNames postal data,
  *   for countries WhosOnFirst does not cover (#193). The existing pipeline
- *   (`scripts/backfill-postcode-centroids.ts`) treats GeoNames as a COORDINATE source keyed by
+ *   (`scripts/backfill-postcode-centroids.ts`) treats GeoNames as a coordinate source keyed by
  *   string onto WOF-sourced postcode _records_. That works wherever WOF ships the postcode entities
  *   (US/NL/FR/DE/IT/ES…). For PL/CZ/PT/AU and the rest of the #193 gap, WOF has zero postcode
- *   records — there's nothing to backfill onto — so GeoNames must supply the RECORD too rather than just
+ *   records — there's nothing to backfill onto — so GeoNames must supply the record too rather than just
  *   the coordinate.
  *
  *   This emits a standalone `spr` database in the exact schema `build-candidate`'s `--postcodes` pass
@@ -16,7 +16,7 @@
  *   alongside `postalcode-intl.db` with no other change.
  *
  *   Provenance: GeoNames postal is CC-BY 4.0 — any DB shipping these coordinates must attribute
- *   "GeoNames (CC-BY 4.0)". These records carry NO WOF id, so they get synthetic ids in a high
+ *   "GeoNames (CC-BY 4.0)". These records carry no WOF id, so they get synthetic ids in a high
  *   range (`SYNTH_ID_BASE`, well above WOF's ~907M ceiling) that can never be mistaken for — or
  *   collide with — a WOF entity id.
  *
@@ -24,14 +24,14 @@
  *   matches whichever form the parse emits — PL writes "26-300" (hyphen), CZ writes "58001" (no
  *   space) though GeoNames stores "580 01".
  *
- *   Optionally folds the database straight into a COPY of an existing candidate gazetteer (`--fold-into
+ *   Optionally folds the database straight into a copy of an existing candidate gazetteer (`--fold-into
  *   <src> --fold-out <dst>`), mirroring `build-candidate` pass-4's row construction, so a
  *   demo-ready DB falls out without a full rebuild. The database itself is the durable artifact for
  *   the canonical rebuild. the fold is the fast path to verify + stage.
  *
  *   Progress streams to stderr. the final summary is on stdout.
  *
- *   NOTE: the database `--out` DB is written DIRECTLY (the table is dropped + recreated in place on
+ *   note: the database `--out` DB is written directly (the table is dropped + recreated in place on
  *   re-run), and `--fold-out` is a build-on-copy of `--fold-into` — neither uses an atomic
  *   temp-swap. This preserves the original `scripts/build-geonames-postcode-database.ts` behavior
  *   verbatim.
@@ -49,7 +49,7 @@ import type { PathBuilderLike } from "path-ts"
 import { type CommandSpec, CommandTaskResult, type CommandComponent, splitCountryCodes, useCommandTask } from "#cli-kit"
 
 /**
- * Native command-line contract consumed by the filesystem command router.
+ * Native command-line interface consumed by the filesystem command router.
  */
 export const spec = {
 	name: "postcode-intl",
@@ -262,7 +262,7 @@ async function buildDatabase(
 }
 
 /**
- * Fold the freshly-built database into a COPY of an existing candidate gazetteer, mirroring `build-candidate` pass-4's
+ * Fold the freshly-built database into a copy of an existing candidate gazetteer, mirroring `build-candidate` pass-4's
  * row construction (placetype_id=9, region_id=0, neg_rank=0, is_primary=1, bbox falls back to the centroid). The fast
  * path to a demo-ready DB without a full rebuild.
  */
@@ -352,7 +352,7 @@ async function foldIntoCandidate(
 	}
 
 	out.exec("COMMIT")
-	// Re-cluster the WITHOUT ROWID B-tree contiguously after the mid-tree inserts.
+	// Re-cluster the without rowid B-tree contiguously after the mid-tree inserts.
 	out.exec("VACUUM")
 
 	return n

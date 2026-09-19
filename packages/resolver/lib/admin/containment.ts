@@ -4,10 +4,10 @@
  * @author Teffen Ellis, et al.
  *
  *   The admin-containment partition (#1717 stage 2) — the one ordering function both deciding sites
- *   call, per the #861 rule (shared constants prove nothing. the #861 parity contract diverged at
+ *   call, per the #861 rule (shared constants prove nothing. the #861 parity interface diverged at
  *   exactly the points a constant cannot express). The candidate backend partitions its row set
  *   before the limit window (so a contained candidate can reach the walk at all), and the resolver
- *   walk partitions AGAIN after its fame/anchor re-ranks (so `rankByImportance` cannot hand the top
+ *   walk partitions again after its fame/anchor re-ranks (so `rankByImportance` cannot hand the top
  *   slot back to a more-famous uncontained namesake — Richmond VA outscores Richmond, North
  *   Yorkshire on importance, and without the second partition the change loses exactly where fame
  *   disagrees with the qualifier). Two call sites, one function, one ordering.
@@ -17,7 +17,7 @@ import { firstNodeWhere, type AddressNode } from "@mailwoman/core/decoder"
 
 /**
  * Find the first non-empty region-tagged span anywhere in a tree — the qualifier the walk threads onto locality
- * lookups. Deliberately the same node the admin-coherence VERDICTS read (the first `region` node), so the change's
+ * lookups. Deliberately the same node the admin-coherence verdicts read (the first `region` node), so the change's
  * firing population and the flag's `contradicted` population are the same rows. A `region` slot can hold a country name
  * the parser mislabeled ("Moscow, Russia" parses region="Russia") — the backend's qualifier probe answers that too,
  * because containment is containment whatever tier the container sits at.

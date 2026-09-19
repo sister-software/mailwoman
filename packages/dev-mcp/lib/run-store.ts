@@ -9,12 +9,12 @@
  *   as running it the first time, and on a 420-row panel with an external arm it also costs the external service 420
  *   requests it has already answered. A stored run makes the second comparison free.
  *
- *   **It is a CACHE rather than a record.** `evals/scores-by-version.json` and `docs/records/evals/` are the record, written by
+ *   **It is a cache rather than a record.** `evals/scores-by-version.json` and `docs/records/evals/` are the record, written by
  *   humans and by `eval ledger-append`. Nothing here is authoritative, nothing here is committed, and a pruned run is
  *   not a lost result — it is a result that has to be re-measured, which is the correct cost for something nobody wrote
  *   down. Storing it under the data root rather than the repo is what keeps that distinction physical.
  *
- *   RETENTION, which spec §9.8 left open. Two rules, both cheap to reason about:
+ *   retention, which spec §9.8 left open. Two rules, both cheap to reason about:
  *
  *   1. **Age.** Runs older than {@link RETENTION_DAYS} are pruned. A stored run is only meaningful against the tree that
  *      produced it, and after a fortnight of commits it is describing a system that no longer exists.

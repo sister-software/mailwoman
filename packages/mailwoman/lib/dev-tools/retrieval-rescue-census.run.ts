@@ -44,7 +44,7 @@ for (const c of cases) {
 
 	const markers = result.intent_markers.map((m) => m.code)
 
-	// Unconditional: ask the entity layer whenever the fork marker rode, INCLUDING when the incumbent
+	// Unconditional: ask the entity layer whenever the fork marker rode, including when the incumbent
 	// resolved — measuring what check 1 currently silences is the census's purpose.
 	const hit =
 		markers.includes("declared_fork") && probe.deps.poiLookup && probe.deps.isStreetGeneric

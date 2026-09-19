@@ -49,13 +49,13 @@ export class GeocoderFixture {
 	}
 
 	/**
-	 * Wait for the cold-load (~39 MB ONNX + map style + sqlite-wasm) to complete. The options are the THIRD argument:
+	 * Wait for the cold-load (~39 MB ONNX + map style + sqlite-wasm) to complete. The options are the third argument:
 	 * `waitForFunction` reads its second as the function's argument, and an options object passed there leaves the wait
 	 * on the 30 s action budget. Polling is on an interval rather than on animation frames: a page the browser treats as
 	 * hidden fires no frames, and the default polling then never re-evaluates an already-true predicate. A load error the
 	 * page reports ends the wait at once, with that text, instead of running out the budget.
 	 *
-	 * Readiness is the ADDRESS FIELD being enabled, because `GeocoderControls` binds that field's `disabled` to
+	 * Readiness is the address field being enabled, because `GeocoderControls` binds that field's `disabled` to
 	 * `runtime.ready` — the same state the search pill's submit button used to carry before the pill dropped it (a
 	 * `type="search"` field submits on Enter and brings its own clear control). Waiting on an element that the chrome is
 	 * free to restyle away turns "the classifier loaded" into "never true" with no error to report, which is how this

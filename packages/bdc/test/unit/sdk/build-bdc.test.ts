@@ -5,11 +5,11 @@
  *
  *   Tests for {@linkcode buildBDCDatabase} — the stage/materialize/seal build of `bdc.db`.
  *   Feeds the loader a synthetic row source directly (an injected `Iterable<BDCAvailabilityRow>`), so
- *   the suite exercises the whole build without touching the filesystem CSV path or a real TIGER
+ *   the suite exercises the whole build without touching the filesystem CSV path or a real tiger
  *   database — matches `build-poi.test.ts`'s injected-row convention.
  *
  *   Fixture: 5 raw rows over 3 known geoids (San Francisco, Los Angeles, New York — far enough apart
- *   to land in distinct res-9 AND res-6 H3 cells) plus 1 unknown geoid absent from the
+ *   to land in distinct res-9 and res-6 H3 cells) plus 1 unknown geoid absent from the
  *   `blockCentroids` fixture map. Row 2 is an exact duplicate of row 1 on the natural key
  *   `(geoid, provider_id, technology_code, location_id)`.
  */
@@ -22,7 +22,7 @@ import { pathExists, statPath, readLocalBuffer, isFile } from "@mailwoman/core/f
 import { temporaryDirectory, type TemporaryDirectory } from "@mailwoman/core/fs/temporary"
 import { stringifyJSON } from "@mailwoman/core/json"
 import { readLayerCoverage, readLayerManifest } from "@mailwoman/core/layers"
-import type { LayerContractDatabase } from "@mailwoman/core/layers"
+import type { layerschemadatabase } from "@mailwoman/core/layers"
 import { resolvePackagePath } from "@mailwoman/core/module/resolvers"
 import {
 	createFilerAttributeTable,
@@ -59,7 +59,7 @@ function blockCentroids(geoid: string): { lat: number; lon: number } | undefined
 
 /**
  * 5 raw rows: row 1 + its exact duplicate (row 2) share the natural key `(geoid, provider_id, technology_code,
- * location_id)`; row 5's geoid is deliberately absent from {@link CENTROIDS}.
+ * location_id)`; row 5's geoid is deliberately absent from {@link centroids}.
  */
 function fixtureRows(): BDCAvailabilityRow[] {
 	return [
@@ -209,7 +209,7 @@ describe("buildBDCDatabase", () => {
 	})
 
 	it("(e) writes a manifest whose sourceVintage equals asOfDate", async () => {
-		using kdb = new DatabaseClient<LayerContractDatabase>(out, { readOnly: true })
+		using kdb = new DatabaseClient<layerschemadatabase>(out, { readOnly: true })
 		const manifest = await readLayerManifest(kdb)
 
 		expect(manifest).toMatchObject({
@@ -229,14 +229,14 @@ describe("buildBDCDatabase", () => {
 	})
 
 	it("coverage rows carry completeness 1 and a positive observed_rows total", async () => {
-		using kdb = new DatabaseClient<LayerContractDatabase>(out, { readOnly: true })
+		using kdb = new DatabaseClient<layerschemadatabase>(out, { readOnly: true })
 		const coverageRows = await kdb.selectFrom("layer_coverage").selectAll().execute()
 
 		expect(coverageRows).toHaveLength(result.coverageCells)
 		expect(coverageRows.every((c) => c.observed_rows > 0 && c.completeness === 1)).toBe(true)
 		const totalObserved = coverageRows.reduce((sum, c) => sum + c.observed_rows, 0)
 		expect(totalObserved).toBe(result.rows)
-		// Meaning-of-zero: an unsurveyed cell is UNKNOWN, never present with completeness 0.
+		// Meaning-of-zero: an unsurveyed cell is unknown, never present with completeness 0.
 		expect(await readLayerCoverage(kdb, 999_999_999)).toBeUndefined()
 	})
 
@@ -308,7 +308,7 @@ describe("buildBDCDatabase", () => {
 		expect(second.rows).toBe(3)
 		expect(await pathExists(`${out}.prev`)).toBe(false)
 
-		using kdb = new DatabaseClient<LayerContractDatabase>(out, { readOnly: true })
+		using kdb = new DatabaseClient<layerschemadatabase>(out, { readOnly: true })
 		const manifest = await readLayerManifest(kdb)
 		expect(manifest.sourceVintage).toBe("2026-07-01")
 	})
@@ -402,7 +402,7 @@ describe("buildBDCDatabase — bdc_provider population (3a decision 6)", () => {
 	}
 
 	/**
-	 * `provider_id` 700001 carries TWO FRN edges — the decision 6 cardinality `bdc_provider` cannot express. FRN_LATE's
+	 * `provider_id` 700001 carries two FRN edges — the decision 6 cardinality `bdc_provider` cannot express. FRN_LATE's
 	 * own most recent form-499 filing (2026-05-20) postdates FRN_EARLY's (2026-01-15), so FRN_LATE must win the
 	 * primary-FRN pick. `provider_id` 700002 carries exactly one FRN (FRN_SOLO) — no filer.db query is needed to resolve
 	 * its primary FRN. Also seeds `provider_id` 700001's two conflicting `holding_company_name` edges — the same
@@ -465,7 +465,7 @@ describe("buildBDCDatabase — bdc_provider population (3a decision 6)", () => {
 		await db
 			.insertInto("filer_edge")
 			.values([
-				// The provider_id carries TWO FRN edges — decision 6's cardinality `bdc_provider` cannot express.
+				// The provider_id carries two FRN edges — decision 6's cardinality `bdc_provider` cannot express.
 				{
 					from_node_id: PROVIDER_NODE,
 					to_node_id: FRN_EARLY_NODE,
@@ -516,7 +516,7 @@ describe("buildBDCDatabase — bdc_provider population (3a decision 6)", () => {
 					match_score: null,
 					evidence: null,
 				},
-				// Each FRN's own most recent form-499 filing — FRN_LATE's is the LATER filing date.
+				// Each FRN's own most recent form-499 filing — FRN_LATE's is the later filing date.
 				{
 					from_node_id: FRN_EARLY_NODE,
 					to_node_id: FORM_EARLY,
@@ -551,7 +551,7 @@ describe("buildBDCDatabase — bdc_provider population (3a decision 6)", () => {
 			{ providerID: 700_001, frn: FRN_LATE, holdingCompany: "Alpha Holdco Renamed" },
 			{ providerID: 700_002, frn: FRN_SOLO, holdingCompany: "Solo Broadband" },
 			// Two rows, same frn and same holding_company — proves the single-distinct-value shortcut looks at the
-			// DISTINCT set across every row rather than just "there happened to be one row" (700002's trivial case above).
+			// distinct set across every row rather than just "there happened to be one row" (700002's trivial case above).
 			{ providerID: 700_004, frn: FRN_SOLO, holdingCompany: "Repeat Holdco" },
 			{ providerID: 700_004, frn: FRN_SOLO, holdingCompany: "Repeat Holdco" },
 		]
@@ -583,8 +583,8 @@ describe("buildBDCDatabase — bdc_provider population (3a decision 6)", () => {
 			.where("provider_id", "=", 700_001)
 			.executeTakeFirstOrThrow()
 
-		// The LOSSY pick: bdc_provider can only hold one FRN, and decision 6 says the later-filed one wins. Its two
-		// holding_company values genuinely CONFLICT ("Alpha Holdco" vs "Alpha Holdco Renamed") — no rule resolves that
+		// The lossy pick: bdc_provider can only hold one FRN, and decision 6 says the later-filed one wins. Its two
+		// holding_company values genuinely conflict ("Alpha Holdco" vs "Alpha Holdco Renamed") — no rule resolves that
 		//, so it stays NULL, same as brand_name.
 		expect(multiFRNProvider.frn).toBe(FRN_LATE)
 		expect(multiFRNProvider.brand_name).toBeNull()
@@ -608,14 +608,14 @@ describe("buildBDCDatabase — bdc_provider population (3a decision 6)", () => {
 			.where("provider_id", "=", 700_004)
 			.executeTakeFirstOrThrow()
 
-		// Two rows, but the same holding_company on both — one DISTINCT value rather than two rows worth of ambiguity —
+		// Two rows, but the same holding_company on both — one distinct value rather than two rows worth of ambiguity —
 		// still populates. Proves the shortcut compares the distinct SET rather than just "was there only one row".
 		expect(repeatValueProvider.frn).toBe(FRN_SOLO)
 		expect(repeatValueProvider.holding_company).toBe("Repeat Holdco")
 
-		// The DISCARDED FRN (FRN_EARLY) is not lost — decision 6's whole premise is that filer.db, untouched by this
+		// The discarded FRN (FRN_EARLY) is not lost — decision 6's whole premise is that filer.db, untouched by this
 		// build, still retains every edge. Recover it back out through the public reader, `filerLookup`. Same for the
-		// two CONFLICTING holding_company values `bdc_provider` couldn't keep either.
+		// two conflicting holding_company values `bdc_provider` couldn't keep either.
 		const crosswalk = await filerLookup(filerDB, { bdcProviderID: 700_001, asOf: "2026-12-31" })
 
 		const frnValues = crosswalk.identifiers
@@ -738,10 +738,10 @@ describe("peekProviderID", () => {
 
 describe("buildBDCDatabase — malformed provider_id via csvPaths (the production ingest path)", () => {
 	// `peekProviderID` needs a finiteness guard rather than a bare `Number.parseInt(...) as ProviderID`. A
-	// non-numeric provider_id field parses to NaN, which binds to `bdc_stage.provider_id` (INTEGER NOT NULL) as
-	// SQLite NULL — `INSERT OR IGNORE` then silently drops every row of the file, miscounted as ordinary `deduped`
+	// non-numeric provider_id field parses to NaN, which binds to `bdc_stage.provider_id` (integer not NULL) as
+	// SQLite NULL — `insert or ignore` then silently drops every row of the file, miscounted as ordinary `deduped`
 	// rows rather than surfaced as the malformed-file error it actually is. This test goes through `csvPaths` (the
-	// real filesystem-reading production path `readAvailabilityRowsFromCSVPaths` uses), not the `rows:` TEST INJECTION POINT,
+	// real filesystem-reading production path `readAvailabilityRowsFromCSVPaths` uses), not the `rows:` test injection point,
 	// so the test checks that malformed CSV input is rejected from disk onward.
 	it("rejects the whole build, naming the malformed CSV, instead of silently absorbing its rows as deduped", async () => {
 		const malformedCSVPath = resolvePackagePath(
@@ -813,9 +813,9 @@ describe("geometryCentroid", () => {
 
 		const centroid = geometryCentroid(multiPolygon)
 		expect(centroid).toBeDefined()
-		// Area-weighted (shoelace): the square's TRUE geometric center, immune to the repeated closing
+		// Area-weighted (shoelace): the square's true geometric center, immune to the repeated closing
 		// vertex that dragged the retired vertex-average to (0.8, 0.8) — the tradeoff the 118k-block
-		// TIGER measurement falsified (#1375).
+		// tiger measurement falsified (#1375).
 		expect(centroid!.lon).toBeCloseTo(1, 5)
 		expect(centroid!.lat).toBeCloseTo(1, 5)
 	})

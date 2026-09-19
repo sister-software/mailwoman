@@ -7,7 +7,7 @@
  *   take in order until the target is reached, and report what was dropped and why.
  *
  *   Shared by every stratified benchmark here, because the part that must not vary between them is the part a
- *   second copy would get subtly wrong — the draw ORDER decides which rows a frozen panel contains, and a
+ *   second copy would get subtly wrong — the draw order decides which rows a frozen panel contains, and a
  *   stratum that counted its own drops differently would report a coverage hole as a panel choice.
  *
  *   A stratum decides for itself whether a row is gradeable, because the gold is not always the row being
@@ -75,7 +75,7 @@ export function fillStratum<Item, Row>(
 	let droppedUngradeableGold = 0
 	let droppedUnbuildable = 0
 
-	// A copy, so the caller's array is untouched. The ORDER this walk produces is what selects the rows a frozen panel
+	// A copy, so the caller's array is untouched. The order this walk produces is what selects the rows a frozen panel
 	// contains, and a published record names that panel's digest — so the generator is `SeededRandom`'s, seeded the way
 	// `SeededRandom` seeds it, rather than a normalisation re-typed here.
 	const shuffled = [...eligible]
@@ -138,7 +138,7 @@ export interface PanelSubject {
 }
 
 /**
- * Rows grouped by their lowercased ASCII name, which is how both builders ask whether a name is borne once.
+ * Rows grouped by their lowercased ascii name, which is how both builders ask whether a name is borne once.
  *
  * Built once per build and passed down: the question is asked per candidate row, and re-deriving the grouping for each
  * would walk the whole register every time.
@@ -160,7 +160,7 @@ export function groupByFoldedName<Subject extends PanelSubject>(subjects: readon
 /**
  * Rows whose name is borne exactly once and which no earlier stratum has taken, in geonameid order.
  *
- * The ORDER matters and is why this is shared rather than re-typed: `fillStratum` shuffles what it is handed, so two
+ * The order matters and is why this is shared rather than re-typed: `fillStratum` shuffles what it is handed, so two
  * builders sorting differently would draw different rows from the same seed. `extra` is the caller's own rule — a
  * population floor, a band — applied before the sort.
  */

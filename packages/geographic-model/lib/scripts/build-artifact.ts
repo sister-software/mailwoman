@@ -12,9 +12,9 @@
  *
  *   **A committed artifact is these bytes run through `oxfmt`.** The repository formatter also formats
  *   committed JSON, and it inlines short arrays, which `JSON.stringify` cannot reproduce. So the
- *   freshness check in `test/unit/pharmacy-slice.test.ts` compares the PARSED artifact against a fresh
+ *   freshness check in `test/unit/pharmacy-slice.test.ts` compares the parsed artifact against a fresh
  *   compile, and byte equality is asserted between two compiles instead. The same convention holds
- *   `taxonomy.json` in `@mailwoman/poi-taxonomy`; its `data/PROVENANCE.md` states it for that table.
+ *   `taxonomy.json` in `@mailwoman/poi-taxonomy`; its `data/provenance.md` states it for that table.
  *
  *   Nothing here reaches `@mailwoman/core`: the package's build project declares no reference to it in
  *   either direction, and a generator is not the reason to reverse that. `import.meta.main` is what

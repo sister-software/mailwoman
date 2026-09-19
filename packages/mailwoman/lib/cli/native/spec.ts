@@ -23,7 +23,7 @@ interface OptionSpecBase {
 	/**
 	 * The flag this option used to be spelled as. It keeps working, with a notice on stderr, and never appears in help.
 	 *
-	 * A CLI flag is a contract with whatever scripts already call it, so a rename that removes the old spelling breaks
+	 * A CLI flag is a interface with whatever scripts already call it, so a rename that removes the old spelling breaks
 	 * them at the moment of the rename with no way to find out first. The notice is what turns that into a warning the
 	 * caller can act on before the alias goes.
 	 *
@@ -115,7 +115,7 @@ type AlwaysPresentFlag<Options> = {
 }[keyof Options]
 
 /**
- * A command's options object, DERIVED from its own `spec`.
+ * A command's options object, derived from its own `spec`.
  *
  * The router writes each flag's value to the property `optionPropertyName` derives from it, so a property spelled any
  * other way is never written to and the flag parses, validates, and does nothing. A restated `interface Options` can
@@ -366,7 +366,7 @@ function optionLabel(name: string, option: OptionSpec): string {
 }
 
 /**
- * Render detailed help. This is the only parser path that imports CLIUI.
+ * Render detailed help. This is the only parser path that imports cliui.
  */
 export async function renderCommandHelp(spec: CommandSpec): Promise<string> {
 	const { cliui } = await import("@isaacs/cliui/min")

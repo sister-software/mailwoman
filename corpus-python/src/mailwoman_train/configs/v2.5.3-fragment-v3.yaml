@@ -1,8 +1,8 @@
-# v2.5.3-fragment-v3 — fragment recipe v3 iteration: one variable off v2.5.2 (the recipe output gains 11k GLOBAL
+# v2.5.3-fragment-v3 — fragment recipe v3 iteration: one variable off v2.5.2 (the recipe output gains 11k global
 # bare-locality twins from corpus locality spans across 11 countries — the gauntlet
 # global-dublin-bare regression: famous cities outside the recipe output's 16 OA locales lost their locality
 # reading as fragment street-mass grew). Check bars: v252 non-regression (street >= .5433, pc passes
-# at .9861, hn >= .7597) + gauntlet regression layer GREEN (the Dublin pin) + fragment-dev.
+# at .9861, hn >= .7597) + gauntlet regression layer green (the Dublin pin) + fragment-dev.
 data:
   corpus_dir: /data/corpus/versioned/v0.10.4-fragment-v3/corpus-v0.10.4-fragment-v3
   tokenizer_dir: /data/models/tokenizer/v0.9.0-multisplice
@@ -40,7 +40,7 @@ data:
     usgov-hrsa-fqhc: 2.0
     usgov-imls-pls: 2.0
     usgov-nad: 1.0
-    state-ia-contractors: 2.0
+    state-ia-builders: 2.0
     state-tx-notaries: 1.5
     state-ny-notaries: 2.0
     deepseek-kryptonite: 3.0
@@ -60,7 +60,7 @@ data:
     synth-no-street-led: 12.0
     synth-cz-pcfirst-preposition: 12.0
     synth-nl-postcode: 6.0
-    # PROBE 1: the fragment/autocomplete source (assay weight — moderate precedent).
+    # probe 1: the fragment/autocomplete source (assay weight — moderate precedent).
     synth-fragment: 6.0
   train_rows_per_epoch: 1000000
   val_rows: 4096

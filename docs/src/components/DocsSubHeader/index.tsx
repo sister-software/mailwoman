@@ -34,7 +34,7 @@ interface SectionLinkProps {
 /**
  * One section tab. Its own hook (`useLayoutDocsSidebar`) resolves the destination from the _target_ sidebar's entry
  * link — so cross-section links work even though only the active sidebar's items are in context. One hook per instance
- * keeps the rules-of-hooks contract clean across the fixed `DOCS_SECTIONS` list.
+ * keeps the rules-of-hooks interface clean across the fixed `DOCS_SECTIONS` list.
  */
 const SectionLink: FC<SectionLinkProps> = ({ section, active }) => {
 	const href = useLayoutDocsSidebar(section.id).link?.path

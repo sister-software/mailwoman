@@ -8,8 +8,8 @@
  *   against {@linkcode ParquetRow}, which is the property that keeps the writer, the reader and the manifest's
  *   `schema` key from drifting apart.
  *
- *   Compression is `SNAPPY` throughout. The Phase 1.5 plan specified `zstd`; parquet-wasm supports SNAPPY, which is
- *   also PyArrow's default and the standard ML-corpus codec, so a reader outside this repository opens the files
+ *   Compression is `snappy` throughout. The Phase 1.5 plan specified `zstd`; parquet-wasm supports snappy, which is
+ *   also PyArrow's default and the standard ML-corpus codec. Therefore, a reader outside this repository opens the files
  *   without configuration.
  */
 
@@ -80,7 +80,7 @@ export const PARQUET_COLUMNS = [
 
 /**
  * The DuckDB type each column is read and written as. Paired with {@linkcode PARQUET_COLUMNS} so a `read_json` column
- * map and a `COPY` select list are built from one list rather than two that can disagree.
+ * map and a `copy` select list are built from one list rather than two that can disagree.
  */
 export const PARQUET_COLUMN_TYPES: Record<(typeof PARQUET_COLUMNS)[number], string> = {
 	raw: "VARCHAR",
@@ -104,7 +104,7 @@ export const PARQUET_COLUMN_TYPES: Record<(typeof PARQUET_COLUMNS)[number], stri
 
 /**
  * Parquet schema for `LabeledRow` per #18 §4. Optional fields use `optional: true`; repeated UTF8 columns capture
- * tokens/labels arrays. Compression is per-column SNAPPY.
+ * tokens/labels arrays. Compression is per-column snappy.
  */
 export const LABELED_ROW_SCHEMA: ParquetSchemaDefinition<ParquetRow> = {
 	raw: { type: "UTF8", compression: PARQUET_COMPRESSION },

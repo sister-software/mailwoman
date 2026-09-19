@@ -7,17 +7,17 @@
  *   instrument `docs/records/evals/2026-08-05-en-gb-anchor-off.md` used so the numbers are directly
  *   comparable to that record's.
  *
- *   THE INSTRUMENT, verbatim from that record: the production runtime pipeline
+ *   the instrument, verbatim from that record: the production runtime pipeline
  *   (`createRuntimePipeline` with the classifier only — what `mailwoman parse` builds with no
  *   `--resolve` and no `MAILWOMAN_WOF_DB`), three registers per row (as-written / lowercase /
- *   UPPERCASE), graded as exact match on the tag's concatenated span folded to uppercase with
+ *   uppercase), graded as exact match on the tag's concatenated span folded to uppercase with
  *   whitespace stripped.
  *
  *   Boards:
  *
  *   - `gb` — `mailwoman/eval-harness/fixtures/gb-golden.jsonl` (120 rows. 106 carry a postcode, 69 carry
  *       a `dependent_locality`). Reports the postcode board (318 = 106 × 3), the `dependent_locality`
- *       board (207 = 69 × 3), and the same `dependent_locality` board with the input's commas STRIPPED
+ *       board (207 = 69 × 3), and the same `dependent_locality` board with the input's commas stripped
  *       — the third leg that record tracked as the cost of the anchor-off mitigation.
  *   - `us` / `fr` — the 100 US / 46 FR rows of `mailwoman/eval-harness/fixtures/parity-corpus.jsonl`,
  *       three registers each. Per-gold-tag exact match plus the sha256 of the full span serialization
@@ -65,9 +65,9 @@ const { values } = parseArguments({
 		 */
 		"dump-spans": { type: "string" },
 		/**
-		 * Pin `normalizeCase: false` (#690/#829 OFF) — the register in which the shaped anchor keyer was measured DEAD:
+		 * Pin `normalizeCase: false` (#690/#829 off) — the register in which the shaped anchor keyer was measured dead:
 		 * 0/120 gb-golden rows yield a shaped span on raw lowercase (#1512). With normalization on (the default) the
-		 * lowercase leg is rescued before the keyer ever sees it, so this flag is the only way to grade the KEYER's
+		 * lowercase leg is rescued before the keyer ever sees it, so this flag is the only way to grade the keyer's
 		 * register-sensitivity rather than `normalizeInputCase`'s.
 		 */
 		"raw-case": { type: "boolean", default: false },
@@ -191,7 +191,7 @@ if (board === "gb") {
 			for (const [tag, gold] of Object.entries(row.expect ?? {})) {
 				if (!gold.length) continue
 
-				// The gold `street` is the whole street NAME. the model emits it as a family
+				// The gold `street` is the whole street name. the model emits it as a family
 				// (prefix/name/particle/suffix). `parity-corpus.ts`'s floor compares the assembled family, so a
 				// bare tag-vs-tag read of `street` scores a correct parse as a miss. Assemble the same family.
 				const emitted =

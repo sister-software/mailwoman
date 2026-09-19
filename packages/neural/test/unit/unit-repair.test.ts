@@ -5,7 +5,7 @@
  *
  *   Tests for the secondary-unit regex repair pass (parser-improvement backlog). Each case builds a
  *   char-aligned DecoderToken sequence (offsets must match the raw text) and asserts the repaired
- *   unit span. Covers ADD (model missed the unit), SNAP (model truncated it), single-letter idents
+ *   unit span. Covers ADD (model missed the unit), snap (model truncated it), single-letter idents
  *   ("STE D"), bare hash, smear-clip, and the precision guards (no-add-over-structural, no false
  *   match on "United"/"Box"/bare prose).
  */

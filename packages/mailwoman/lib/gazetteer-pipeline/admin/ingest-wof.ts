@@ -39,7 +39,7 @@ const BBOX_2D_LENGTH = 4
  *
  * They are ingested without being reachable by name. No `PLACETYPE_FILTER_GROUPS` entry lists either, and placetypes
  * absent from that table pass through unfiltered, so a `locality` query expands to exactly `[locality, borough,
- * localadmin]`. Those rows answer only an UNFILTERED query, which ranks population-first and sorts a hood carrying no
+ * localadmin]`. Those rows answer only an unfiltered query, which ranks population-first and sorts a hood carrying no
  * population last.
  *
  * `campus` is deliberately not here despite being commoner than macrohood in the same sample (1,368). It is a venue
@@ -125,7 +125,7 @@ async function parseFeature(
 	let lon = hasLbl ? props["lbl:longitude"]! : hasGeom ? props["geom:longitude"]! : 0
 	let pointChoice: PointChoice | undefined
 
-	// Settlement records only: a GeoNames LOCALITY anchor marks the urban seat, but its records for
+	// Settlement records only: a GeoNames locality anchor marks the urban seat, but its records for
 	// regions/counties are centroids, so consulting them there re-imports the very defect class this
 	// exists to fix (measured: the anchor moved the Texas region 172 km off its label placement).
 	// The census the rule is sized against is locality-scoped. so is the check.
@@ -168,7 +168,7 @@ async function parseFeature(
 		if (!match || !value) continue
 		const lang = match[1]!
 		const privateuse = match[2]!
-		// #936: only PREFERRED forms in an official language are official names — x_variant rows
+		// #936: only preferred forms in an official language are official names — x_variant rows
 		// tagged with an official language are abbreviations/codes ("MSP", "Frisco"), and marking
 		// them official scored 13× the collision count in the risk probe.
 		const official = privateuse === "preferred" && isOfficialLanguage(country, lang) ? 1 : 0
@@ -239,7 +239,7 @@ export interface IngestWOFResult {
 	placesIngested: number
 	skipped: number
 	/**
-	 * Records whose stored point is the GEOMETRIC centroid because the GeoNames anchor overrode the label preference
+	 * Records whose stored point is the geometric centroid because the GeoNames anchor overrode the label preference
 	 * (`choice === "geom-by-anchor"`). Zero with no anchor lookup configured. a build that expected the adjudicator to
 	 * run reads this instead of assuming.
 	 */

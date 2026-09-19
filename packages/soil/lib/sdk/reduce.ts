@@ -5,33 +5,33 @@
  *
  *   The reduction: the containment index, read once, into one per-cell distribution both consumers share.
  *
- *   A DISTRIBUTION, NEVER A WINNER, AND THAT IS FORCED BY MEASUREMENT. 84.0% of the 339,191 national map
+ *   A distribution, never A winner, and that is forced BY measurement. 84.0% of the 339,191 national map
  *   units hold two or more components. in 16.8% the largest component covers under half the map unit. and
  *   85.4% of `IA153`'s delineations are smaller than one resolution-9 cell. No affordable cell size removes
  *   the mixture — it is a property of the survey, whose own `mukind` says so: 128,499 map units (38.0%) are
- *   complexes, associations or undifferentiated groups, which is NRCS stating that the soils are
+ *   complexes, associations or undifferentiated groups, which is nrcs stating that the soils are
  *   intermingled and cannot be separated at the mapping scale. A winner class would satisfy the result-level
  *   consumer and starve the signal consumer, which needs a magnitude to vary over.
  *
- *   THE WEIGHT IS A UNIFORM-AREA LATTICE OVER THE CELL, AND THE GRAIN IS CHOSEN AGAINST THE AUTHORITY'S OWN.
+ *   the weight is A uniform-area lattice over the cell, and the grain is chosen against the authority'S own.
  *   A cell's children at {@link WEIGHT_LATTICE_DEPTH} levels finer have equal area by construction, so
  *   counting which delineation covers each child centre estimates covered area without a polygon clip. At
- *   depth 2 that is 49 children — 2.04% per child, which is the finest share NRCS's own
+ *   depth 2 that is 49 children — 2.04% per child, which is the finest share nrcs's own
  *   `muaggatt.niccdcdpct` ever reports (observed minimum: 2%). Resolving finer than the authority publishes
  *   would be precision this layer cannot source.
  *
- *   A WHOLE CELL SKIPS THE LATTICE ENTIRELY, and that is exact rather than an optimization: a cell lying
+ *   A whole cell skips the lattice entirely, and that is exact rather than an optimization: a cell lying
  *   wholly inside one delineation is covered by that delineation and by nothing else, so its distribution is
  *   that map unit's component split and its `mapped_share` is 1.
  *
- *   `mapped_share` EXISTS BECAUSE A SURVEY-AREA EDGE CELL IS PARTLY OUTSIDE EVERY DELINEATION. Without it,
+ *   `mapped_share` exists because A survey-area edge cell is partly outside every delineation. Without it,
  *   the unmapped remainder would silently deflate every class share — an absence represented as a small
  *   number, which is the one thing this schema exists to prevent. The five shares are normalized over the
  *   mapped part, so they sum to 1 exactly, and `mapped_share` says how much of the cell that was.
  *
- *   CLASS 8 IS A CLASS SHARE rather than AN ABSENCE. It is a determination — the survey looked and rated the land
+ *   class 8 is A class share rather than an absence. It is a determination — the survey looked and rated the land
  *   as precluding commercial plant production, and 67,547 national components carry it. Folding it in with
- *   `NOTCOM`, a water body and an unrated series would produce a well-formed wrong answer, and separating
+ *   `notcom`, a water body and an unrated series would produce a well-formed wrong answer, and separating
  *   the four absences from the one positive negative is the whole reason this table has five columns rather
  *   than one.
  */

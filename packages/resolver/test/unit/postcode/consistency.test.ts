@@ -81,7 +81,7 @@ const postcodeNode = () => node({ tag: "postcode", value: "75001", start: 0, end
 
 describe("resolveTree + postcodeConsistency (Change A)", () => {
 	it("re-picks the same-named locality nearest the postcode (the wrong instance was the top match)", async () => {
-		// Backend returns the FAR Saint-Pierre first → top is wrong. the NEAR one is an alternative.
+		// Backend returns the FAR Saint-Pierre first → top is wrong. the near one is an alternative.
 		const resolver = createWOFResolver(await makeBackend([PC, SP_FAR, SP_NEAR]))
 
 		const out = await resolver.resolveTree(tree([postcodeNode(), localityNode()]), {
@@ -171,7 +171,7 @@ describe("resolveTree + postcodeConsistency (Change A)", () => {
 	})
 
 	it("a cap never blocks the re-pick, which moves to a same-named instance rather than the postcode", async () => {
-		// Step 2 chooses among the locality's own alternatives, so it cannot produce an id/coordinate disagreement
+		// Step 2 chooses among the locality's own alternatives. Therefore, it cannot produce an id/coordinate disagreement
 		// and the cap has no business refusing it.
 		const resolver = createWOFResolver(await makeBackend([PC, SP_FAR, SP_NEAR]))
 
@@ -187,7 +187,7 @@ describe("resolveTree + postcodeConsistency (Change A)", () => {
 	})
 
 	it("leaves a locality already consistent with the postcode untouched", async () => {
-		// NEAR is the only/top candidate and it's within the radius → no change.
+		// near is the only/top candidate and it's within the radius → no change.
 		const resolver = createWOFResolver(await makeBackend([PC, SP_NEAR]))
 
 		const out = await resolver.resolveTree(tree([postcodeNode(), localityNode()]), {

@@ -3,14 +3,14 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   The browser loader must resolve evidence-lexicon FILENAMES from the model-card's
+ *   The browser loader must resolve evidence-lexicon filenames from the model-card's
  *   `requires.<channel>.lexicon` declarations, exactly as the Node resolver does — the sibling
- *   defaults are a legacy fallback for bundles that predate the declarations rather than the contract.
+ *   defaults are a legacy fallback for bundles that predate the declarations rather than the interface.
  *
  *   The incident this pins: the en-us bundle moved to `locality-surface-lexicon-v7.json`
  *   (2026-08-05) and the card declared it, but the web loader kept deriving the legacy `-v6`
  *   sibling name. The tolerant fetch turned the 404 into a silently-unfed locality channel — the
- *   demo ran a locality_surface-REQUIRED model with the channel off for six days, the same OOD
+ *   demo ran a locality_surface-required model with the channel off for six days, the same OOD
  *   class the #718 soft-feed exists to prevent, with no error anywhere.
  *
  *   Mock strategy mirrors `web-loader.tolerance.test.ts`: ORT + tokenizer + classifier stubbed,
@@ -70,8 +70,8 @@ function makeRecordingFetch(card: object | null, requested: string[]): typeof fe
 			return new Response(stringifyJSON(card), { headers: { "content-type": "application/json" } })
 		}
 
-		// Every other JSON asset 404s: the loader fetches lexicons TOLERANTLY, and the assertion
-		// surface is which URL was DERIVED (recorded above), not what its body decoded to.
+		// Every other JSON asset 404s: the loader fetches lexicons tolerantly, and the assertion
+		// surface is which URL was derived (recorded above), not what its body decoded to.
 		if (url.endsWith(".json")) {
 			return new Response(null, { status: 404, statusText: "Not Found" })
 		}

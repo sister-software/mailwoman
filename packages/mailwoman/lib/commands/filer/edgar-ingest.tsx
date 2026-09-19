@@ -3,8 +3,8 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   `mailwoman filer edgar-ingest` — run the EDGAR chain against live SEC filings and write
- *   `EdgarSubsidiaryRow`s to JSONL. Reads company names from a file (one per line) and a CIK lookup index
+ *   `mailwoman filer edgar-ingest` — run the edgar chain against live SEC filings and write
+ *   `EdgarSubsidiaryRow`s to jsonl. Reads company names from a file (one per line) and a CIK lookup index
  *   (`cik-lookup-data.txt`); requires `SEC_EDGAR_USER_AGENT` set in the environment. Paced at 9 req/s.
  */
 
@@ -14,7 +14,7 @@ import { Text } from "ink"
 import { type CommandSpec, CommandTaskResult, type CommandComponent, useCommandTask } from "#cli-kit"
 
 /**
- * Native command-line contract consumed by the filesystem command router.
+ * Native command-line interface consumed by the filesystem command router.
  */
 export const spec = {
 	name: "edgar-ingest",

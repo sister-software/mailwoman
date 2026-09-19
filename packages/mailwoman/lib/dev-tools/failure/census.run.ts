@@ -49,7 +49,7 @@ function put(map: Map<Bucket, { count: number; samples: string[] }>, bucket: Buc
 }
 
 /**
- * Does `got` equal `gold` with 1-2 chars DELETED mid-string (the mangle signature)?
+ * Does `got` equal `gold` with 1-2 chars deleted mid-string (the mangle signature)?
  */
 function looksMangled(gold: string, got: string): boolean {
 	if (!got.length || got.length >= gold.length) return false
@@ -70,7 +70,7 @@ for await (const fixture of JSONSpliterator.fromAsync<ParityFixture>(PARITY_FIXT
 
 	const byTag = groupTuplesByTag(await classifier.parse(fixture.input, { postcodeRepair: true }))
 
-	// STREET
+	// street
 	const goldStreet = fixture.expect!.street
 
 	if (goldStreet?.length) {
@@ -100,7 +100,7 @@ for await (const fixture of JSONSpliterator.fromAsync<ParityFixture>(PARITY_FIXT
 		}
 	}
 
-	// HOUSE NUMBER
+	// house number
 	const goldHn = fixture.expect!.house_number
 
 	if (goldHn?.length) {

@@ -3,12 +3,12 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   The `timezone.db` read contract. Declared beside the reader and the builder that writes it, so a column added to
+ *   The `timezone.db` read interface. Declared beside the reader and the builder that writes it, so a column added to
  *   one is a compile error against the other.
  */
 
 /**
- * One timezone polygon: its IANA identifier, bounding box, and encoded geometry.
+ * One timezone polygon: its iana identifier, bounding box, and encoded geometry.
  */
 export interface TimezonePolygonTable {
 	tzid: string

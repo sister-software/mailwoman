@@ -32,7 +32,7 @@ gesturing at the brand:
 3. The free channel requires **registration with a key**, which is how we learn who is embedding
    the thing and how we get a name to email.
 4. The free channel requires **attribution**. The paid channel does not (beyond whatever the
-   upstream data's own license demands, which no contract of ours can waive).
+   upstream data's own license demands, which no interface of ours can waive).
 
 ## 2. Delay rather than degradation
 
@@ -172,7 +172,7 @@ waives this one, because this one is in fact ours to waive.
 
 > **PENDING COUNSEL — L3.** Whether we can attach an attribution condition to a compiled
 > artifact whose upstream inputs are public domain or CC0, and if so on what basis (database
-> compilation right in the EU vs. contract in the US — likely a different answer per
+> compilation right in the EU vs. interface in the US — likely a different answer per
 > jurisdiction). The working assumption is that the condition rides the **download agreement**,
 > not a claim of copyright over the facts. That assumption is exactly what needs checking, and
 > it is the required one for the entire Lite line.
@@ -224,7 +224,7 @@ Two caveats that are not optional:
 | Artifact                              | Why                                                                                                                                   |
 | ------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------- |
 | OSM rooftop extracts (`osm/`)         | ODbL. Already publish-blocked pending counsel; a paid channel would be the wrong direction of travel.                                 |
-| OSM-derived POI/infrastructure layers | ODbL. The layer contract already puts these at `build-local`: we ship the builder, the user builds on their own disk.                 |
+| OSM-derived POI/infrastructure layers | ODbL. The layer interface already puts these at `build-local`: we ship the builder, the user builds on their own disk.                |
 | Overture `base`-theme derivatives     | ODbL. Overture does not launder OSM's license.                                                                                        |
 | `timezone.db`                         | timezone-boundary-builder is ODbL; attribution and share-alike apply to the built database. The builder ships; the database does not. |
 
@@ -313,7 +313,7 @@ for doing 1–4 first regardless of when counsel appears.
 - [Pricing](../../records/site-2026-08/licensing/pricing.mdx) — the published tiers and the OEM band.
 - [Data licensing & provenance](../../records/site-2026-08/licensing/data-provenance.md) — the per-source
   license table and the ODbL boundary this document's §5 rule is derived from.
-- [Spatial-layer contract](../../engineering/reference/layer-contract.mdx) — the
+- [Spatial-layer interface](../../engineering/reference/layer-interface.mdx) — the
   shipped/build-local/private tiers.
 - `docs/superpowers/plans/counsel-dossier.md` — where every PENDING COUNSEL marker above is
   filed.

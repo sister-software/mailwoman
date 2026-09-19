@@ -57,7 +57,7 @@ async function collectReachableExternals(entryPoint: string): Promise<Array<{ fi
 		const source = await readLocalTextFile(filePath)
 
 		// Runtime specifiers only: type-only imports are erased by Node's type stripping (see ts-ast.ts).
-		// The shared walk reads string-literal-LIKE specifiers, so a no-substitution template literal counts too.
+		// The shared walk reads string-literal-like specifiers, so a no-substitution template literal counts too.
 		for (const specifier of moduleSpecifiers(ts.createSourceFile(filePath, source, ts.ScriptTarget.Latest, true))) {
 			if (!specifier.startsWith(".")) {
 				externals.push({ file: relative(REPO_ROOT, filePath), specifier })

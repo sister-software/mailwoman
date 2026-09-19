@@ -34,7 +34,7 @@ const DERIVATIONS: ReadonlyArray<ActivityPhraseDerivation> = ["plural", "nominal
 export const ACTIVITY_LEXICON_PATH: string = await resolvePackagedDataPath(moduleDir, "activity-lexicon.json")
 
 /**
- * Normalize a phrase for comparison: NFKC, trimmed, whitespace collapsed, lowercased.
+ * Normalize a phrase for comparison: nfkc, trimmed, whitespace collapsed, lowercased.
  *
  * Uses locale-independent lowercasing. locale scope is resolved separately.
  */

@@ -8,7 +8,7 @@
  *   2026-06-25 (`7c6eaf34e`, the dotted-acronym branch reading `name` instead of `normalizedName`) that upstream did not
  *   carry for eleven weeks.
  *
- *   THIS PINS THE AGREEMENT rather than the constants, which is the only thing that catches a divergence: the two are
+ *   this pins the agreement rather than the constants, which is the only thing that catches a divergence: the two are
  *   separately maintained, and a reader comparing them by eye finds them identical every time.
  *
  *   Neither copy can simply be deleted. `@mailwoman/core`'s carries four helpers spliterator does not — `pyIsUpper`,

@@ -48,7 +48,7 @@ export interface PlacetypeGraph {
  * exponentially for roots like `planet` (~165 MB for the full hierarchy). The graph shape stays O(nodes + edges)
  * regardless.
  *
- * Output is well-suited for d3-force, react-flow, cytoscape, and any other HTML graph viewer.
+ * Output is well-suited for d3-force, react-flow, cytoscape, and any other html graph viewer.
  */
 export function generatePlacetypeGraph(placetype: Placetype, roles?: Iterable<PlacetypeRole> | null): PlacetypeGraph {
 	const roleSet = roles ? new Set(roles) : null

@@ -8,7 +8,7 @@
  *
  *   This is not a promotion eval. `promotion-eval.ts` asks "is this model good enough to ship";
  *   this asks "is this harness measuring what it thinks it is". An eval spec's floors are one-sided
- *   (higher is better, fail below); a baseline is TWO-SIDED — a metric 40% ABOVE its registered
+ *   (higher is better, fail below); a baseline is two-sided — a metric 40% above its registered
  *   value is as loud a signal as 40% below, because the usual cause is that the number changed
  *   meaning rather than that the model got better. That two-sidedness is the whole point. a one-sided
  *   check would have passed both incidents below.
@@ -21,7 +21,7 @@
  *       ("5thAve"). The number was reported before the cause was found.
  *   - Phase 4a measured a resolver rerank while the resolver reached street tier 0/267 times —
  *       no street databases were wired. The instrument was dark and the report read as a finding.
- *       The verdict was VOID. see `2026-07-16-phase4a-rerank-invalid-measurement.md`.
+ *       The verdict was void. see `2026-07-16-phase4a-rerank-invalid-measurement.md`.
  *
  *   A registered baseline covers both shapes, because instrument-health preconditions register the
  *   same way headline metrics do — `paris.resolver.street_evidence_rate@ban-street-centroids` is a
@@ -38,13 +38,13 @@
  *   // …or simply: await guardReport([...]) — which throws on your behalf.
  *   ```
  *
- *   A harness with several readings should use a PROFILE instead (`assertProfile("v264", {…})`),
+ *   A harness with several readings should use a profile instead (`assertProfile("v264", {…})`),
  *   which maps its own metric keys to ids in one declared place — see `baselines.json`.
  *
  *   Registering a baseline is a deliberate act: `baselines.json` demands a commit, a command, and
  *   a note saying what the number means. A baseline you can't reproduce from its own row isn't a
  *   baseline, it's a rumor. When a number legitimately moves (new fixture, new tokenizer, a real
- *   model change), RE-REGISTER it with a fresh row and a reason — never widen the tolerance to make
+ *   model change), RE-register it with a fresh row and a reason — never widen the tolerance to make
  *   a deviation quiet. That's the silent-check-drift failure wearing a different hat.
  */
 

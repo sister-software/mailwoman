@@ -5,11 +5,11 @@
  *
  *   `mailwoman gazetteer country-plan <cc>` — what moving a country between admin sources would involve.
  *
- *   READ-ONLY, by construction and not by flag. It clones nothing, edits nothing and builds nothing. the
+ *   read-only, by construction and not by flag. It clones nothing, edits nothing and builds nothing. the
  *   `--apply` half is a separate command precisely because the steps it would take are a clone measured in
  *   hundreds of megabytes and an edit to a file that is reviewed like code.
  *
- *   Everything it reports is computed from the ARTIFACT rather than the lists. `defaults.ts` is a
+ *   Everything it reports is computed from the artifact rather than the lists. `defaults.ts` is a
  *   declaration and the WOF leg is presence-driven, so only the built database has the two reconciled —
  *   and reading a declaration to decide what to change is how #1015 happened.
  *
@@ -45,7 +45,7 @@ export const description =
 	"Read-only: clones nothing, edits nothing, builds nothing."
 
 /**
- * Native command-line contract consumed by the filesystem command router.
+ * Native command-line interface consumed by the filesystem command router.
  */
 export const spec = {
 	name: "country-plan",
@@ -64,7 +64,7 @@ export const spec = {
 
 /**
  * The repositories a WOF move would clone. Names only — `--plan` never reaches the network, so their existence and size
- * are reported as UNKNOWN rather than guessed.
+ * are reported as unknown rather than guessed.
  */
 function wofRepoNames(country: string): string[] {
 	const cc = country.toLowerCase()
@@ -83,7 +83,7 @@ const CountryPlanCommand: CommandComponent<typeof spec, [string?]> = ({ options,
 				geonamesCountries: DEFAULT_GEONAMES_COUNTRIES as readonly string[],
 			}
 
-			// The repos root is checked against the DECLARED wof list rather than substituted for it. The WOF leg
+			// The repos root is checked against the declared wof list rather than substituted for it. The WOF leg
 			// is presence-driven, so a clone nobody declared becomes coverage on the next build and a declaration
 			// nobody cloned silently does not — and only comparing the two can tell those apart.
 			const reposRoot = String(resolvePath(mailwomanDataRoot(), "wof", "repos"))

@@ -6,14 +6,14 @@
  *   The zone-keyed cell index: one accumulator per flood zone code, and the measurement the index
  *   resolution is chosen from.
  *
- *   THE CLASSIFIER ITSELF LIVES IN `@mailwoman/spatial`, re-exported below so this package's call sites and
+ *   the classifier itself lives IN `@mailwoman/spatial`, re-exported below so this package's call sites and
  *   its `@mailwoman/flood/sdk/cells` subpath keep reading the same. `classifyFeatureCells` and the
  *   allocator-avoiding shortcuts around it are properties of h3-js rather than of this product — the layer
- *   contract's polygon-builder section states them as requirements on every polygon builder — and a second
+ *   interface's polygon-builder section states them as requirements on every polygon builder — and a second
  *   copy of the zero-cell guard is a second place for it to stop guarding.
  *
- *   WHAT STAYS HERE IS WHAT IS ZONE-SHAPED. {@link FloodCellIndex} accumulates per zone code, because the
- *   question a reader asks of this layer is about the ZONE: a cell wholly inside any FZ3 polygon answers
+ *   what stays here is what is zone-shaped. {@link FloodCellIndex} accumulates per zone code, because the
+ *   question a reader asks of this layer is about the zone: a cell wholly inside any FZ3 polygon answers
  *   FZ3 whichever polygon that was. A soil layer accumulates per delineation and weights by covered area
  *   instead, so the accumulator is where the two layers genuinely differ and the classifier is where they
  *   do not.
@@ -74,7 +74,7 @@ export interface CellIndexMeasurement {
 /**
  * Accumulate one resolution's cell index over a stream of features.
  *
- * Held as short-cell STRINGS rather than the integers the tables store, because `compactCells` and `cellToParent` are
+ * Held as short-cell strings rather than the integers the tables store, because `compactCells` and `cellToParent` are
  * h3-js functions over full indexes and round-tripping through the integer form at every step would cost more than the
  * strings do.
  */
@@ -134,7 +134,7 @@ export class FloodCellIndex {
 	/**
 	 * Compact the whole-cell sets, prune the candidate lists, and report the rows plus the measurement.
 	 *
-	 * Compaction is where the size contract is paid: a zone's uniform interior collapses parent-ward into a handful of
+	 * Compaction is where the size interface is paid: a zone's uniform interior collapses parent-ward into a handful of
 	 * coarse cells and only the fringe stays fine, which is hierarchy-respecting run-length encoding. It is applied to
 	 * the whole set only — a partial cell's parent is not partial in any useful sense, and compacting it would claim the
 	 * fringe covers ground it does not.

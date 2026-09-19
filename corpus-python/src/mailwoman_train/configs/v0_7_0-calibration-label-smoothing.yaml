@@ -1,12 +1,12 @@
 # v0.7.0 calibration experiment — label smoothing on the v0.6.0 base recipe.
 #
 # Task #31 (v0.7 P0). The v0.6.x retrospective traced the cycle's failures to
-# OVERCONFIDENCE: the model emits high-probability hallucinations (locality/
+# overconfidence: the model emits high-probability hallucinations (locality/
 # dep_locality) that survive decoding. The 2026-05-29 postcode diagnostic and
 # the harness-vs-per-tag divergence both point at calibration rather than corpus recipe,
 # as the binding constraint.
 #
-# SINGLE-VARIABLE CHANGE vs v0_6_0-stage3.yaml:
+# single-variable change vs v0_6_0-stage3.yaml:
 #
 #     model.label_smoothing: 0.0 → **0.1**
 #
@@ -16,16 +16,16 @@
 # against the v0.6.0 baseline (model-v060-step-100000) a clean attribution: any
 # delta is the label-smoothing effect, nothing else.
 #
-# HYPOTHESIS / EXPECTED OUTCOME:
+# hypothesis / expected outcome:
 #   - Overconfidence (share of >0.9-confidence predictions) drops markedly
 #     (plan target: ~81% → ~50%).
-#   - Harness pass rate (PRIMARY release metric) improves as overconfident
+#   - Harness pass rate (primary release metric) improves as overconfident
 #     hallucinations soften and lose decode arguments.
-#   - Per-tag recall on the held-out TEST split stays within 2pp of v0.6.0
+#   - Per-tag recall on the held-out test split stays within 2pp of v0.6.0
 #     (calibration should not cost recall. label smoothing is a regularizer,
 #     not a capacity change).
 #
-# EARLY-KILL CHECK (NaN protocol / budget stewardship): checkpoints land every
+# early-kill check (NaN protocol / budget stewardship): checkpoints land every
 # 2K steps. Inspect step-20000 (~20 min). If overconfidence has not dropped and
 # harness has not improved by 20K, kill — calibration is not the change and v0.7
 # pivots to structural (#41 char-level + larger model). This is recipe-tuning
@@ -37,7 +37,7 @@
 # Launch:
 #   cd corpus-python && modal run -d -m launch.train_remote --config v0_7_0-calibration-label-smoothing.yaml --resume none
 #
-# Authoritative eval is run LOCALLY post-training on data/eval/golden/v0.1.2/test
+# Authoritative eval is run locally post-training on data/eval/golden/v0.1.2/test
 # (the held-out split from task #34), read exactly once — see the v0.7 plan.
 
 data:
@@ -56,7 +56,7 @@ data:
     usgov-hrsa-fqhc: 2.0
     usgov-imls-pls: 2.0
     usgov-nad: 1.0
-    state-ia-contractors: 2.0
+    state-ia-builders: 2.0
     state-tx-notaries: 1.5
     state-ny-notaries: 2.0
     deepseek-kryptonite: 3.0
@@ -82,12 +82,12 @@ model:
   hidden_dropout_prob: 0.1
   attention_probs_dropout_prob: 0.1
   use_crf: true
-  # === THE SINGLE VARIABLE: 0.0 → 0.1 ===
+  # === the single variable: 0.0 → 0.1 ===
   label_smoothing: 0.1
   crf_normalization: per_sequence
   # CE-only per NaN protocol (matches v0.6.0 baseline exactly — see v0_6_0-stage3.yaml
-  # for the three CRF divergence attempts). CRF still ACTIVE at inference (Viterbi +
-  # structural mask); only the learned-transition LOSS is disabled.
+  # for the three CRF divergence attempts). CRF still active at inference (Viterbi +
+  # structural mask); only the learned-transition loss is disabled.
   crf_loss_weight: 0.0
   class_weights:
     O: 0.5

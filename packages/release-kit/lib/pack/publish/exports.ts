@@ -10,7 +10,7 @@
  */
 
 /**
- * True for TypeScript SOURCE (`.ts`/`.tsx`) — declaration files (`.d.ts`) are legitimate publish targets.
+ * True for TypeScript source (`.ts`/`.tsx`) — declaration files (`.d.ts`) are legitimate publish targets.
  */
 function isTypeScriptSource(path: string): boolean {
 	return /\.tsx?$/.test(path) && !path.endsWith(".d.ts")
@@ -42,7 +42,7 @@ function emittedTargetFor(target: string): string {
  * `publishConfig.exports`. The conditions themselves are kept: a Node target and a browser target may be different
  * files.
  *
- * The rewrite is keyed on the TARGET being TypeScript source rather than on the condition name — a condition-name rule
+ * The rewrite is keyed on the target being TypeScript source rather than on the condition name — a condition-name rule
  * only covers the conditions someone thought of. {@link assertNoSourceTargets} refuses whatever this misses.
  */
 export function transformExportsForPublish(exports: unknown): unknown {

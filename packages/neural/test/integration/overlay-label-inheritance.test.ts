@@ -3,11 +3,11 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Every weights package must decode with its MODEL's label vocabulary.
+ *   Every weights package must decode with its model's label vocabulary.
  *
  *   A carrier overlay (`mailwoman.baseWeights` set) ships no model of its own — it shares the base's — so its card
  *   describes the overlay while the vocabulary belongs to the base. An overlay card that omits `labels` is therefore
- *   CORRECT, and the resolver has to fall back rather than the author having to copy 33 strings into every carrier,
+ *   correct, and the resolver has to fall back rather than the author having to copy 33 strings into every carrier,
  *   which is a duplicate that goes stale on the first retrain.
  *
  *   The failure this pins is silent and total. `NeuralAddressClassifier` falls back to `STAGE2_BIO_LABELS` (21) when no

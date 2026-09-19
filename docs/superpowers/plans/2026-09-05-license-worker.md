@@ -1,6 +1,6 @@
 # License Worker Implementation Plan
 
-> **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:executing-plans to implement this plan task-by-task, inline in one session. Steps use checkbox (`- [ ]`) syntax for tracking.
+> **For agentic workers:** required sub-skill: Use superpowers:executing-plans to implement this plan task-by-task, inline in one session. Steps use checkbox (`- [ ]`) syntax for tracking.
 
 **Goal:** A private Cloudflare Worker, `packages/license-worker/`, that verifies Stripe webhooks, mints a signed license token on every paid invoice, keeps the ledger in D1, and answers the claim, refresh, and status routes, with every path covered by tests that run under the Workers runtime.
 
@@ -830,7 +830,7 @@ CREATE TABLE stripe_events (
 );
 ```
 
-D1 migrations are SQL files by Wrangler's contract; that is the "raw on purpose" category AGENTS.md lists. The typed access below goes through Kysely.
+D1 migrations are SQL files by Wrangler's interface; that is the "raw on purpose" category AGENTS.md lists. The typed access below goes through Kysely.
 
 - [x] **Step 4: Write the schema, client, and access module**
 

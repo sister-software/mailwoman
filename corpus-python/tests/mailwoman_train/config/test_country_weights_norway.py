@@ -8,7 +8,7 @@ YAML 1.1 resolves the bare token ``NO`` to the boolean ``false``. Every config i
 which produced ``{False: 1.0}``. ``DataConfig.country_weights`` is annotated ``dict[str, float]``
 and Python enforces nothing, so the loader's
 
-    weight = country_weights.get(country)   # .get("NO") -> None
+    weight = country_weights.get(country)   # .get("no") -> None
     if weight is None or weight <= 0: continue
 
 dropped every Norwegian row. Silently, in 44 configs, from v1.9.0-multilocale through the shipped

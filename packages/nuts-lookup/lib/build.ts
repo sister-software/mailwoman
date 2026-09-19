@@ -3,7 +3,7 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Build the NUTS polygon DB from a Eurostat GISCO NUTS GeoJSON (`NUTS_RG_*_4326.geojson`: features
+ *   Build the nuts polygon DB from a Eurostat gisco nuts GeoJSON (`NUTS_RG_*_4326.geojson`: features
  *   of `{ properties: { NUTS_ID, LEVL_CODE }, geometry: Polygon|MultiPolygon }`). One row per
  *   region, with its level and bounding box for the lookup's prefilter.
  */
@@ -24,7 +24,7 @@ interface NUTSProperties {
 export type NUTSFeature = GeoFeature<PolygonLiteral | MultiPolygonLiteral, NUTSProperties>
 
 /**
- * Read the NUTS GeoJSON at `geojsonPath` and write the polygon DB to `dbPath`.
+ * Read the nuts GeoJSON at `geojsonPath` and write the polygon DB to `dbPath`.
  */
 export async function buildNUTSDB(geojsonPath: string, dbPath: string): Promise<{ regions: number }> {
 	const data = await readLocalJSONFile<InferGeoFeatureCollection<NUTSFeature>>(geojsonPath)
@@ -33,8 +33,8 @@ export async function buildNUTSDB(geojsonPath: string, dbPath: string): Promise<
 
 	db.exec("DROP TABLE IF EXISTS nuts_regions")
 
-	// `nutsId` is a string contract with every shipped nuts.db — the acronym-casing convention applies
-	// to TS identifiers rather than DB columns (readers alias it: `SELECT nutsId AS nutsID`).
+	// `nutsId` is a string interface with every shipped nuts.db — the acronym-casing convention applies
+	// to TS identifiers rather than DB columns (readers alias it: `select nutsId AS nutsID`).
 	db.exec(
 		"CREATE TABLE nuts_regions (nutsId TEXT NOT NULL, level INTEGER, minLat REAL, maxLat REAL, minLon REAL, maxLon REAL, geom TEXT NOT NULL)"
 	)

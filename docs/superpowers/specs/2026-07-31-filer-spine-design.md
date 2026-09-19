@@ -118,7 +118,7 @@ Two rollups, always distinguishable, never merged silently.
 ### 4.2 The artifact
 
 New workspace **`@mailwoman/filer`** (mirrors `ban`/`osm`/`bdc`: `filer/sdk` acquisition + schema +
-readers) producing **`filer.db`**, a layer-contract sealed artifact (`versioned-refresh`, public
+readers) producing **`filer.db`**, a layer-interface sealed artifact (`versioned-refresh`, public
 domain), spine-keyed on h3 res-9 for anything with coordinates (ASR structures) plus the identifier
 tables. Row grain: one row per identifier node, one per edge, one per family membership.
 
@@ -165,7 +165,7 @@ any synthetic corpus.
   - Exhibit 21 ingestion for public parents; family rollup; the held-out record-linkage eval of §5
     published as a scorecard.
 - **3c — physical nexus (~4).** ASR bulk ingest (structures + coordinates + owner FRN) as a
-  layer-contract table on the h3 spine; **ULS Part 101 only** (decision D2); the
+  layer-interface table on the h3 spine; **ULS Part 101 only** (decision D2); the
   point-at-a-structure query; joins to 2b's infra layer and `bdc.db`.
 - **3d — analytical surface + private CRM (~3).** `competition(area)` with the family collapse; the
   private CRM layer and `reconcile` buckets inherited from 2c; plausibility discounted by nexus

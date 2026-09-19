@@ -1,6 +1,6 @@
 """The v8 CJK char path: ``encode_row_units`` + the loader's ``char_mode`` branch (D1–D6).
 
-Pins the contract the JP probe trains under (docs/superpowers/plans/2026-07-18-v8-jp-char-encoder-
+Pins the interface the JP probe trains under (docs/superpowers/plans/2026-07-18-v8-jp-char-encoder-
 design.md): ``char_ids (S, W)`` with S = label units / W = positional composition window. char mode
 is one unit per character with per-char B/I used as-is. word mode is one unit per whitespace token
 with B/I re-flipped per unit. the loader's char branch skips SentencePiece, requires span-schema
@@ -104,7 +104,7 @@ def test_word_mode_bi_comes_straight_from_the_span_array() -> None:
         LABEL_TO_ID["I-street"],
         LABEL_TO_ID["B-locality"],
     ]
-    # Two ADJACENT street spans (distinct entities): each keeps its own B — the boundary a
+    # Two adjacent street spans (distinct entities): each keeps its own B — the boundary a
     # contiguous-family re-flip would have destroyed.
     labels = char_label_array_from_spans(raw, [0, 5, 8], [4, 7, 15], ["street", "street", "locality"])
     enc = encode_row_units(raw, spans, labels, vocab, max_units=4, max_unit_width=8, ctx_chars=0)

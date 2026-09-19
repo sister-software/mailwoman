@@ -1,9 +1,9 @@
-# v5.0.0 — FROM-SCRATCH BASE, every tail convention at once (#1748 / #1821)
+# v5.0.0 — from-scratch base, every tail convention at once (#1748 / #1821)
 #
 # This is v4.4.0's own base recipe — the one that produced the shipped model — pointed at a corpus
 # that contains the trailing tails, and admitting 134 countries instead of 25. No init_from, no EWC.
 #
-# WHY FROM SCRATCH, measured rather than preferred. Eight fine-tunes of the v4.4.0 base were graded
+# why from scratch, measured rather than preferred. Eight fine-tunes of the v4.4.0 base were graded
 # against it on the 649-row board. Every change an additive fine-tune has was isolated:
 #
 #   run       change                                  net    regressed
@@ -24,11 +24,11 @@
 # candidate path and graded against itself gave 0 of 649 rows differing, upper bound 0.5%. The
 # regressions are real.
 #
-# So the surface has to be LEARNED rather than grafted, which means a base that sees every tail at
+# So the surface has to be learned rather than grafted, which means a base that sees every tail at
 # once. That is this run.
 #
 # What changes from v4.4.0's base recipe, and nothing else:
-#   corpus_dir       v0.19.0 -> v0.27.0 (adds house-venue INTL: 18,000 IN/PT/MX rows, real postcodes,
+#   corpus_dir       v0.19.0 -> v0.27.0 (adds house-venue intl: 18,000 IN/PT/MX rows, real postcodes,
 #                    venue 100% / street 100% / house_number 100%, under the existing
 #                    synth-house-venue source at its established weight 2.0)
 #   country_weights  25 -> 134 (the shipped 25 + IN + every gauntlet-board country + KR/TW). Measured
@@ -43,7 +43,7 @@
 #   2. FR, GB and DE show no regression anywhere (D-rule, iron rule 6);
 #   3. the venue-led rows the fine-tunes broke must hold — gb-venue-ye-three-lords,
 #      gb-lex-cafe-st-marys, gb-op2-four-seasons-cjk;
-#   4. IMPROVEMENT metric rather than check: the 4 ve_city_postcode_trailing_state rows and in_structured.
+#   4. improvement metric rather than check: the 4 ve_city_postcode_trailing_state rows and in_structured.
 #
 # A from-scratch run is not guaranteed to beat a tuned production model, and this one has one seed and
 # no hyperparameter search. If it grades negative, the finding is that the recipe needs work the

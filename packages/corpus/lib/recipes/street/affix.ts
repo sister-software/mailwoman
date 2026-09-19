@@ -5,25 +5,25 @@
  *
  *   `street-affix` recipe — the US street-affix coverage recipe (the v0-parity `street_prefix` /
  *   `street_suffix` gap — both ~0% F1 in the #15 assessment, collapsed into `street`). Raises
- *   PREVALENCE of affix-split streets with format diversity so the model learns to split "N Main
+ *   prevalence of affix-split streets with format diversity so the model learns to split "N Main
  *   St" → street_prefix="N" + street="Main" + street_suffix="St", and (negative space) sharpens
  *   `street` itself. Ported from the root build script it replaced.
  *
- *   Reads REAL US OpenAddresses tuples and SPLITS the OA `street` field via the codex:
+ *   Reads real US OpenAddresses tuples and splits the OA `street` field via the codex:
  *   `matchLeadingDirectional` (USPS Pub-28 C1) for the prefix, `matchTrailingSuffix` (Pub-28 C2
  *   street suffixes) for the suffix. OA streets nearly all carry a suffix. only ~10-20% carry a
- *   directional, so we INJECT a directional prefix onto a fraction of prefix-less streets to give
+ *   directional, so we inject a directional prefix onto a fraction of prefix-less streets to give
  *   `street_prefix` real signal. Each row varies surface form per affix — abbreviated ("N", "St")
  *   vs expanded ("North", "Street") — and varies the layout (full address / bare / street-only /
  *   venue-prefixed).
  *
- *   LEAKAGE-SAFE EVAL (`--golden`): held-out eval uses the VERMONT source only (the corpus
+ *   leakage-safe eval (`--golden`): held-out eval uses the vermont source only (the corpus
  *   defaultHoldout), a different seed, and emits {raw, components} for per-locale-f1. Train uses
  *   every NON-Vermont US source.
  *
- *   Multi-locale BALANCE (`--multilocale-count`, opts.multilocaleCount > 0): appends no-affix
+ *   Multi-locale balance (`--multilocale-count`, opts.multilocaleCount > 0): appends no-affix
  *   native-order rows (FR/DE/IT/NL) after the US affix rows, riding the same source weight, purely
- *   to keep the postcode-ORDER distribution multi-locale so a US-heavy affix output doesn't dilute
+ *   to keep the postcode-order distribution multi-locale so a US-heavy affix output doesn't dilute
  *   FR/DE postcode (the v0.9.8 blemish).
  */
 
@@ -73,8 +73,8 @@ const EVAL_SOURCE: USSource = {
 	region: "VT",
 }
 
-// Multi-locale BALANCE sources (--multilocale-count > 0). These rows carry no affix split — they exist
-// only to keep the postcode-ORDER distribution multi-locale. Native-order rendering mirrors the
+// Multi-locale balance sources (--multilocale-count > 0). These rows carry no affix split — they exist
+// only to keep the postcode-order distribution multi-locale. Native-order rendering mirrors the
 // `country-balanced` recipe: FR = number-street, postcode-city. DE/IT/NL = street-number,
 // postcode-city. `order` drives the body.
 interface BalanceSource {
@@ -142,7 +142,7 @@ interface USTuple {
 }
 
 /**
- * A non-US BALANCE tuple (carries a postcode + native order).
+ * A non-US balance tuple (carries a postcode + native order).
  */
 interface BalanceTuple {
 	house_number: string
@@ -293,7 +293,7 @@ function renderStreet(
 }
 
 /**
- * Synthetic recipient/venue prefixes — the arena's "JOHN DOE, ACME INC, …" pattern.
+ * Synthetic recipient/venue prefixes — the arena's "john DOE, acme INC, …" pattern.
  */
 const VENUES = ["John Doe", "Jane Smith", "Acme Inc", "Wayne Enterprises", "Maria Garcia", "Riverside Clinic"]
 
@@ -301,7 +301,7 @@ const VENUES = ["John Doe", "Jane Smith", "Acme Inc", "Wayne Enterprises", "Mari
  * Real-venue pool for the suffix-boundary v2 venue shell (corpus 0.19.0). The 2026-08-10 recipe review found the
  * v0.18.x recipe output's venue-led rows detectable as templates (six fixed venue strings), and the frozen B1 board's
  * failures concentrate in exactly that shell (rich rows 5/43 vs bare 53/65 at v4.3.3 step-40k). HRSA's health-center
- * site file supplies thousands of REAL US facility names ('Alburg Health Center'-register), US-government public
+ * site file supplies thousands of real US facility names ('Alburg Health Center'-register), US-government public
  * domain, already a corpus source (`usgov-hrsa-fqhc`). Kept verbatim (including the ~11% all-caps names — real register
  * diversity); comma-carrying names are dropped because the venue layout uses commas as its field delimiter.
  */
@@ -321,7 +321,7 @@ async function readVenuePool(csvPath: PathBuilderLike): Promise<string[]> {
 	const pool: string[] = []
 
 	for await (const record of readCSVRecords(csvPath)) {
-		// One key, where the source's `Site Name` and `SITE NAME` both used to need naming: the reader snake-cases and
+		// One key, where the source's `Site Name` and `site name` both used to need naming: the reader snake-cases and
 		// lower-cases a header, so either spelling arrives here as `site_name`.
 		const name = (record.site_name ?? "").trim().replaceAll(/\s+/gu, " ")
 
@@ -356,7 +356,7 @@ interface RenderRowOpts {
 }
 
 /**
- * Embed the rendered street in a RANDOM layout so the model recognizes affixes wherever the street sits: full address,
+ * Embed the rendered street in a random layout so the model recognizes affixes wherever the street sits: full address,
  * bare house+street, street-only (pure affix parse), or venue-prefixed.
  */
 export function renderRow(
@@ -398,9 +398,9 @@ export function renderRow(
 }
 
 /**
- * Capped reader for the multi-locale BALANCE sources. The FR/IT/NL countrywide extracts are GB-scale, so this reads
+ * Capped reader for the multi-locale balance sources. The FR/IT/NL countrywide extracts are GB-scale, so this reads
  * only as far as `limit` distinct tuples — the `break` closes the reader and releases the archive. Only keeps tuples
- * that carry a POSTCODE.
+ * that carry a postcode.
  */
 async function readBalanceTuples(source: BalanceSource, limit: number): Promise<BalanceTuple[]> {
 	return readOATuples(source, {
@@ -416,7 +416,7 @@ async function readBalanceTuples(source: BalanceSource, limit: number): Promise<
 }
 
 /**
- * Render a non-US BALANCE row in native order — no affix split, no country token. `street` is the OA value verbatim.
+ * Render a non-US balance row in native order — no affix split, no country token. `street` is the OA value verbatim.
  * The sole job is to put a postcode in its native position so the recipe output doesn't pull the model US-ward.
  */
 function renderBalanceRow(t: BalanceTuple): { raw: string; components: Partial<Record<ComponentTag, string>> } {
@@ -639,7 +639,7 @@ const TERMINAL_ONLY_SHARE = 0.8
 
 /**
  * #1569 root-fix recipe. Both classes come from real non-Vermont OA streets and use the affix recipe's existing layout
- * diversity. v4.3.1 makes terminal-only 80% of the mix: the first 40/60 run moved a 100-row TRAIN sample only 4→11
+ * diversity. v4.3.1 makes terminal-only 80% of the mix: the first 40/60 run moved a 100-row train sample only 4→11
  * while contrast was already 95/100 before training (93/100 after). Post-run audit found that the global affix relabel
  * pass corrupts many already-decomposed target rows into double suffixes. do not retrain this recipe until relabel is
  * idempotent over a decomposed street family. The 20% contrast leg remains explicit, additive to the already-strong
@@ -647,7 +647,7 @@ const TERMINAL_ONLY_SHARE = 0.8
  *
  * V2 (corpus 0.19.0, 2026-08-10 recipe review): the v4.3.3 board split (rich venue-led rows 5/43 vs bare 53/65) showed
  * the model separating template rows from real ones, and the venue shell was the giveaway — six fixed venue strings. v2
- * draws the venue shell from thousands of REAL HRSA facility names and raises its share (venue 30%, full 35%, bare 20%,
+ * draws the venue shell from thousands of real HRSA facility names and raises its share (venue 30%, full 35%, bare 20%,
  * street-only 15%). Reps policy moved to the recipe's config side: weight ≤4 effective passes per run (Muennighoff
  * 2023's repetition knee) and the source is excluded from the augmentation pool — see the v4.4.0 config.
  */

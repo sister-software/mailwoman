@@ -1,24 +1,24 @@
-# === v3.16.0-evidence-bundle — the Option-A BUNDLE probe: street-type + locality-surface channels
-# UNDER the anti-over-trust curriculum. (ROAD_TO_MAILWOMAN_V8_1_0 §8 build arc. operator go 2026-07-27.)
+# === v3.16.0-evidence-bundle — the Option-A bundle probe: street-type + locality-surface channels
+# under the anti-over-trust curriculum. (ROAD_TO_MAILWOMAN_V8_1_0 §8 build arc. operator go 2026-07-27.)
 #
-# HYPOTHESIS. P-A confirmed a lone street-type input channel moves the P-C target classes but drifts
+# hypothesis. P-A confirmed a lone street-type input channel moves the P-C target classes but drifts
 # into over-trust (house-number classes −0.070/−0.045 by 3k). The Option-A doctrine says the fix is
-# structural: (1) a BUNDLE of correlated channels — street-type [1-dim] + locality-surface
+# structural: (1) a bundle of correlated channels — street-type [1-dim] + locality-surface
 # [locality, locality_homograph] — weighed against each other in context, and (2) retrieval-ablation
 # training (train.evidence_curriculum: the ramped per-row zero-out on both channels, independent
 # draws) so the model keeps competence with and without evidence.
 #
-# PRE-REGISTERED (graded via grade_evidence_bundle at 1500 + 3000, ON/OFF contrast on the same ckpt):
-#   1. P-C target classes (admin-street-homonym / bare-street / date-name) ON−OFF ≥ the street-type-
+# PRE-registered (graded via grade_evidence_bundle at 1500 + 3000, on/off contrast on the same ckpt):
+#   1. P-C target classes (admin-street-homonym / bare-street / date-name) on−off ≥ the street-type-
 #      alone showing (+0.058/+0.035/+0.055 at 3k).
-#   2. No house-number decay at 3k: alnum-housenumber + street-housenumber ON−OFF ≥ −0.010 (P-A
+#   2. No house-number decay at 3k: alnum-housenumber + street-housenumber on−off ≥ −0.010 (P-A
 #      naked-channel read −0.070/−0.045 — the decay the curriculum must kill).
-#   3. ABLATION CHECK: the all-evidence-zeroed column ≈ v385's P0 fixture numbers (homonym 159,
+#   3. ablation check: the all-evidence-zeroed column ≈ v385's P0 fixture numbers (homonym 159,
 #      bare-street 241, particle 301, …) — base competence must survive the retrain.
-#   VERDICT: all three ⇒ the bundle architecture is confirmed buildable (the Track-2 brief says
+#   verdict: all three ⇒ the bundle architecture is confirmed buildable (the Track-2 brief says
 #   "build it"); any miss ⇒ the specific failing leg scopes the curriculum research. One run.
 #
-# NEW ARTIFACT: /data/gazetteer/locality-surface-lexicon-v1.json (648,432 entries, US+FR
+# new artifact: /data/gazetteer/locality-surface-lexicon-v1.json (648,432 entries, US+FR
 # locality/localadmin, curated with the shipped degenerate-surface policy, homograph bit from the
 # global cross-country ambiguity scan). Everything else = v3.15.0 verbatim (same feed, same
 # init_from v385, same hot carveout — which covers both fresh channels).
@@ -66,7 +66,7 @@ data:
     usgov-hrsa-fqhc: 2.0
     usgov-imls-pls: 2.0
     usgov-nad: 1.0
-    state-ia-contractors: 2.0
+    state-ia-builders: 2.0
     state-tx-notaries: 1.5
     state-ny-notaries: 2.0
     deepseek-kryptonite: 3.0
@@ -86,9 +86,9 @@ data:
     synth-no-street-led: 0.0
     synth-cz-pcfirst-preposition: 12.0
     synth-nl-postcode: 6.0
-    # PROBE 1: the fragment/autocomplete source (assay weight — moderate precedent).
+    # probe 1: the fragment/autocomplete source (assay weight — moderate precedent).
     synth-fragment: 6.0
-    # #727 T2 NEW — the one variable. 12.0 = the targeted-fix precedent (fr-bare-street,
+    # #727 T2 new — the one variable. 12.0 = the targeted-fix precedent (fr-bare-street,
     # si-bare-village, no-street-led are all 12.0). Streets with no house number + the
     # bare-locality counter.
     synth-fr-fragment: 12.0
@@ -96,9 +96,9 @@ data:
     # (matches fr-fragment). Bare streets + street+number with no postcode partner, + counters.
     synth-no-fragment: 12.0
     synth-gb: 10.0 # FEED: 6.1% stream × .328 dep-loc (probe-2 had this at 20.2% — the skew culprit)
-    synth-nz: 4.0 # FEED NEW: 2.4% stream × .792 (synth-nz-v2 800k. key also covers the old 2,990-row po-box recipe output — harmless, same country)
-    synth-es-pedania: 5.0 # FEED NEW: 3.0% stream × .303 (post-4b formatter fix)
-    synth-fr-lieudit: 3.0 # FEED NEW: 1.8% stream × 1.00 (BAN nom_ld, 4ce6821a. directly feeds the bare-locality regression class)
+    synth-nz: 4.0 # FEED new: 2.4% stream × .792 (synth-nz-v2 800k. key also covers the old 2,990-row po-box recipe output — harmless, same country)
+    synth-es-pedania: 5.0 # FEED new: 3.0% stream × .303 (post-4b formatter fix)
+    synth-fr-lieudit: 3.0 # FEED new: 1.8% stream × 1.00 (BAN nom_ld, 4ce6821a. directly feeds the bare-locality regression class)
   train_rows_per_epoch: 1000000
   val_rows: 4096
   coarse_filter: true
@@ -144,12 +144,12 @@ model: # Verbatim from v2.4.1.
   use_postcode_anchor: true
   use_gazetteer_anchor: true
   gazetteer_feature_dim: 5
-  # #1104 country channel ON — dedicated 2-dim [country_surface, country_ambiguous] soft feed with its
+  # #1104 country channel on — dedicated 2-dim [country_surface, country_ambiguous] soft feed with its
   # own projection + confidence (must equal the lexicon's feature_dim). Default-False elsewhere, so a
   # resume from a pre-country checkpoint stays byte-identical until this flips.
   use_country_anchor: true
   country_feature_dim: 2
-  # P-A street-type channel ON — a dedicated 1-dim street_type soft feed with its own projection +
+  # P-A street-type channel on — a dedicated 1-dim street_type soft feed with its own projection +
   # confidence (must equal the lexicon's feature_dim=1). Separate from the gazetteer, so init_from v385
   # loads clean (v385 lacks street_type_* → strict=False leaves only those fresh).
   use_street_type_anchor: true
@@ -157,7 +157,7 @@ model: # Verbatim from v2.4.1.
   # v3.16.0 — the locality-surface channel is on (the bundle).
   use_locality_surface_anchor: true
   locality_surface_feature_dim: 2
-  # #1104 homograph-guard SOFTENER — the one variable vs v263. Scales the country_ambiguous dim by 0.5
+  # #1104 homograph-guard softener — the one variable vs v263. Scales the country_ambiguous dim by 0.5
   # before the country_projection (bakes into the exported ONNX. no lexicon/inference change). v263's
   # hard guard (scale 1.0) over-suppressed homograph countries Georgia/Jordan (country-homograph F1
   # 89.8->82.6); softening should recover homograph recall without giving back the country F1 the

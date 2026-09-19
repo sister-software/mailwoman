@@ -4,11 +4,11 @@
  * @author Teffen Ellis, et al.
  *
  *   `anchor-absorption` recipe (#220/#723, Probe A1) — self-generates `--count` rows from
- *   {@link synthesizeAnchorAbsorptionRow}'s six-template mix (CASE-H / CASE-P-us-rural / CASE-P-de /
- *   anchor-fp / locale-ambig / standard), aligns each to BIO, and emits a labeled JSONL. The
- *   LEADING 5-digit on CASE-H/anchor-fp/locale-ambig is sampled from the REAL US ZIPs in the
+ *   {@link synthesizeAnchorAbsorptionRow}'s six-template mix (case-H / case-P-us-rural / case-P-de /
+ *   anchor-fp / locale-ambig / standard), aligns each to BIO, and emits a labeled jsonl. The
+ *   leading 5-digit on case-H/anchor-fp/locale-ambig is sampled from the real US ZIPs in the
  *   postcode-anchor lookup, so the shaped-painted anchor fires on it exactly as inference does —
- *   teaching the model to OVERRIDE a present anchor from context. Ported from the root build
+ *   teaching the model to override a present anchor from context. Ported from the root build
  *   script it replaced.
  */
 
@@ -53,7 +53,7 @@ export const anchorAbsorptionRecipe: CorpusRecipe = {
 	description: "Anchor-absorption counter-augmentation (#220/#723): six-template mix → synthesizeAnchorAbsorptionRow",
 	mode: "generate",
 	async run(opts, write) {
-		// Emit PRNG: the root build script this recipe replaced seeded an LCG (lcg(opts.seed)).
+		// Emit prng: the root build script this recipe replaced seeded an LCG (lcg(opts.seed)).
 		const random = makeLcg(opts.seed)
 		const source = opts.sourceName ?? "synth-anchor-absorption"
 		const count = opts.count ?? 50_000

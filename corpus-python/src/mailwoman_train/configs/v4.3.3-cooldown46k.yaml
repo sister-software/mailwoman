@@ -1,31 +1,31 @@
 # === v4.3.3-cooldown46k — WSD-style decay branch of the v4.3.3 step-040000 checkpoint ===
 #
-# HYPOTHESIS (2026-08-10 recipe review, change 11): every graded v4.3.3 checkpoint sat mid-cosine
+# hypothesis (2026-08-10 recipe review, change 11): every graded v4.3.3 checkpoint sat mid-cosine
 # at 26-93% of peak LR. the schedule literature (Chinchilla schedule-matching. Hagele 2024
 # arXiv:2405.18392. MiniCPM arXiv:2404.06395) says such reads understate the finished model, and
 # that decaying a mid-run checkpoint's LR to zero over a short branch recovers approximately the
 # matched-schedule endpoint. This branch reads out the 40k checkpoint's finished-schedule score.
 #
-# MECHANICS: resume /data/output-v433-suffix-boundary-base-s42/checkpoints/step-040000 (model +
+# mechanics: resume /data/output-v433-suffix-boundary-base-s42/checkpoints/step-040000 (model +
 # optimizer + scheduler) under this config: learning_rate = the parent's exact 40k tail LR
 # (5e-4 x 0.5 x (1+cos(pi x 39000/59000)) = 1.288623e-4), lr_schedule linear_cooldown holding
 # multiplier 1.0 at the branch point then decaying linearly to zero at 46k. The schedule-aware
 # LR restamp (2026-08-09 substrate repair) makes the first branch step continue the parent
 # exactly — no spike in either direction.
 #
-# EVERYTHING ELSE IS v4.3.3 VERBATIM — same corpus (v0.18.1), same v1 affix lexicon (the label
-# contradiction is deliberately retained: this branch isolates the SCHEDULE variable. the
+# everything else is v4.3.3 verbatim — same corpus (v0.18.1), same v1 affix lexicon (the label
+# contradiction is deliberately retained: this branch isolates the schedule variable. the
 # corrected v2-lexicon feed belongs to the next fresh base rather than here). The loader is the
 # repaired substrate (stationary sampler, clean val) — noted, unavoidable, and strictly
 # better-defined than the parent's non-stationary epochs.
 #
-# LAUNCH exactly once:
+# launch exactly once:
 #   cd corpus-python && modal run -d -m launch.train_remote \
 #     --config v4.3.3-cooldown46k.yaml \
 #     --resume /data/output-v433-suffix-boundary-base-s42/checkpoints/step-040000
 #
-# CHECKS (fp32, unchanged): B1 >=116/128, B2 >=34/48, B4 tokens >=3/7. B3 only after all three.
-# Grade the FINAL 46k checkpoint (decay complete); 42k/44k saves are curve receipts only.
+# checks (fp32, unchanged): B1 >=116/128, B2 >=34/48, B4 tokens >=3/7. B3 only after all three.
+# Grade the final 46k checkpoint (decay complete); 42k/44k saves are curve receipts only.
 # If 46k still sits in the 72-85 B1 band, the plateau was not a schedule artifact and the
 # data-contradiction fix carries the full weight. No recipe iteration on this branch.
 

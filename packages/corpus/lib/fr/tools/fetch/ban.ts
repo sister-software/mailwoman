@@ -10,8 +10,8 @@
  *   Licence: Licence Ouverte 2.0 (attribution required — Tier B).
  *
  *   Files already present with matching sha256 are skipped (re-runnable). Downloads `.csv.gz`,
- *   decompresses to `.csv`, deletes the `.gz` artifact. One shared `MANIFEST.json` at
- *   `<outRoot>/ban/MANIFEST.json` covers all codes.
+ *   decompresses to `.csv`, deletes the `.gz` artifact. One shared `manifest.json` at
+ *   `<outRoot>/ban/manifest.json` covers all codes.
  *
  *   Invoke via `mailwoman corpus fetch ban --out-root <path>`. Built-in `fetch` with gzip/brotli
  *   decompression replaces curl. native `node:zlib` gunzip replaces the `gunzip` subprocess. no
@@ -268,7 +268,7 @@ export async function fetchBan(options: FetchBanOptions, report?: (line: string)
 		await sleep(200)
 	}
 
-	// Write the consolidated MANIFEST.json (entries sorted by dept_code, codepoint order).
+	// Write the consolidated manifest.json (entries sorted by dept_code, codepoint order).
 	const sorted = [...entries.values()].toSorted((a, b) =>
 		a.dept_code < b.dept_code ? -1 : a.dept_code > b.dept_code ? 1 : 0
 	)

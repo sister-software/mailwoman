@@ -20,7 +20,7 @@
  *      that pass rather than for "the pin under test". Pin a different pin and the log carries no evidence it
  *      participated. the `unparsed` note says so rather than letting the coherence number stand in for it.
  *
- *   Every field is EXTRACTED, so every field can be absent. A pattern that does not match yields `null` and a note
+ *   Every field is extracted, so every field can be absent. A pattern that does not match yields `null` and a note
  *   saying the line was not found. it never yields a plausible default. A parser that invented a `0` here would be
  *   manufacturing exactly the kind of number this repo's meaning-of-zero rule exists to forbid.
  */
@@ -34,8 +34,8 @@ interface GauntletLayerReport {
 
 export interface GauntletReport {
 	/**
-	 * `PASS` / `FAIL` as the run printed it, or `null` when no verdict line appeared — a crash, or a run killed before it
-	 * finished. Never defaulted to `FAIL`: "did not finish" and "finished and failed" are different facts.
+	 * `pass` / `fail` as the run printed it, or `null` when no verdict line appeared — a crash, or a run killed before it
+	 * finished. Never defaulted to `fail`: "did not finish" and "finished and failed" are different facts.
 	 */
 	verdict: string | null
 	layers: GauntletLayerReport[]
@@ -44,7 +44,7 @@ export interface GauntletReport {
 	 */
 	pins: string | null
 	/**
-	 * `{ n, of }` for the POSTCODE-COUNTRY COHERENCE pass specifically, or `null` when the log carried no firing line.
+	 * `{ n, of }` for the postcode-country coherence pass specifically, or `null` when the log carried no firing line.
 	 *
 	 * Named for the mechanism it measures rather than for "the pin under test", because those are usually not the same
 	 * thing: pin `gazetteerPrior` and this still reports coherence, which is the only pass that prints a firing count.
@@ -70,7 +70,7 @@ export interface GauntletReport {
  *
  * The lines this file recognises by shape rather than by regex — the pins line, the promote line — are matched with
  * `startsWith` / `indexOf` instead. Both wanted an ambiguous quantifier to express (`(.*pins.*|.*=.*)$` and
- * `(.*?)\s+now PASSES`), which backtracks quadratically on a long non-matching line and which CodeQL flags as
+ * `(.*?)\s+now passes`), which backtracks quadratically on a long non-matching line and which CodeQL flags as
  * polynomial ReDoS. A gauntlet log is our own output rather than hostile input, so the practical exposure was small —
  * but the string version is both shorter and unconditionally linear, so there was nothing to trade away.
  */

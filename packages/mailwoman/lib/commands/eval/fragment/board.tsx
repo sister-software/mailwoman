@@ -17,7 +17,7 @@ import { type CommandSpec, harnessCommand } from "#cli-kit"
 export const description = "FR fragment board — bare-street / particle / homonym / date-name classes with CIs (#727)"
 
 /**
- * Native command-line contract consumed by the filesystem command router.
+ * Native command-line interface consumed by the filesystem command router.
  */
 export const spec = {
 	name: "fragment-board",

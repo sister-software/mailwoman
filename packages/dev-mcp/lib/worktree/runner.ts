@@ -27,7 +27,7 @@ import { runWorktreeArm } from "#worktree/arm"
  *
  * The config is resolved by {@linkcode resolveConfig}, the same function the in-process arm uses, and handed to the
  * child whole. A change added there reaches this arm without being copied into it — the alternative, a hand-written
- * option list inside the runner script, is exactly the shared-constants drift this comparison exists to DETECT rather
+ * option list inside the runner script, is exactly the shared-constants drift this comparison exists to detect rather
  * than to commit.
  */
 export async function worktreeArmRunner(

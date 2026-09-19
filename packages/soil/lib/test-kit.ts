@@ -4,15 +4,15 @@
  * @author Teffen Ellis, et al.
  *
  *   Hand-built survey areas for the fixture rung: geometry, attributes and an outline, with no network and
- *   no GDAL in the loop.
+ *   no gdal in the loop.
  *
- *   A FIXTURE RUNG THAT COULD ONLY RUN THROUGH ogr2ogr WOULD TEST THE CONVERSION ON THE MACHINES THAT HAVE
- *   IT AND NOTHING AT ALL ON THE ONES THAT DO NOT. What these fixtures exercise is the whole database half —
+ *   A fixture rung that could only RUN through ogr2ogr would test the conversion on the machines that have
+ *   IT and nothing AT all on the ones that do not. What these fixtures exercise is the whole database half —
  *   the declared-domain check, the cell classification, the area-weighted reduction, the four absence
  *   shares, the coverage rows, the manifest and the seal.
  *
- *   THE ABSENCE CASES ARE THE POINT, AND IOWA HAS NONE OF THEM. Every Iowa survey area is fully digitized,
- *   so `NOTCOM`, `NOTPUB` and access-denied map units never appear in the live build — which means the only
+ *   the absence cases are the point, and iowa has none OF them. Every Iowa survey area is fully digitized,
+ *   so `notcom`, `notpub` and access-denied map units never appear in the live build — which means the only
  *   place `nodata_share` can be exercised is here. The same is true of a component whose rating is NULL for
  *   the not-rateable reason and of a class-8 rating: both exist in Iowa but sparsely, and a fixture pins the
  *   behaviour rather than hoping a county contains one.
@@ -124,9 +124,9 @@ export function fixtureComponents(): SoilComponentTable[] {
 		component("co-mixed-2", "mu-mixed", 35, "Series", "3", "e"),
 		component("co-mixed-3", "mu-mixed", 20, "Series", "6", "s"),
 		component("co-class8", "mu-class8", 100, "Series", "8", "s"),
-		// A miscellaneous area with no rating: NOT RATEABLE, which is not the same as unrated and not the same as class 8.
+		// A miscellaneous area with no rating: not rateable, which is not the same as unrated and not the same as class 8.
 		component("co-water", "mu-water", 100, "Miscellaneous area", null, null),
-		// A named soil the survey did not rate: UNRATED.
+		// A named soil the survey did not rate: unrated.
 		component("co-unrated", "mu-unrated", 100, "Series", null, null),
 		// A minority component small enough to fall under the truncation floor once the lattice splits it.
 		component("co-tail", "mu-mixed", 1, "Series", "7", "e"),
@@ -178,7 +178,7 @@ export function fixtureDomains(): SurveyAreaAttributes["domains"] {
 }
 
 /**
- * The fixture delineations: a mixed square, a class-8 square, a water square, an unrated square, and a `NOTCOM` square,
+ * The fixture delineations: a mixed square, a class-8 square, a water square, an unrated square, and a `notcom` square,
  * laid out left to right so each occupies its own ground.
  */
 export function fixtureDelineations(areaSymbol = "XX001"): SoilDelineation[] {
@@ -196,7 +196,7 @@ export function fixtureDelineations(areaSymbol = "XX001"): SoilDelineation[] {
 /**
  * The outline covering every fixture delineation, with margin — the survey area's own footprint.
  *
- * The margin is nearly a degree because the coverage test is CONSERVATIVE: `interiorCoverageCellSet` keeps only cells
+ * The margin is nearly a degree because the coverage test is conservative: `interiorCoverageCellSet` keeps only cells
  * lying wholly inside the outline, and a resolution-6 cell is about 36 km across. An outline the size of the fixture
  * squares yields zero interior cells and the build refuses — correctly, since an artifact with no coverage rows answers
  * unknown everywhere while reporting success.
@@ -233,7 +233,7 @@ export function fixtureSource(delineations: SoilDelineation[], areaSymbol = "XX0
 /**
  * One fixture survey area's attributes.
  *
- * `areaAcres` is left NULL on purpose: the area cross-check compares against what the AUTHORITY publishes, and a
+ * `areaAcres` is left NULL on purpose: the area cross-check compares against what the authority publishes, and a
  * fixture that invented an acreage would be checking this package's arithmetic against itself.
  */
 export function fixtureAttributes(areaSymbol = "XX001"): SurveyAreaAttributes {

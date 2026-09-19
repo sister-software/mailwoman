@@ -55,7 +55,7 @@ def test_raw_load_state_dict_clobbers_a_changed_classifier_lr(tmp_path):
 
     optim2.load_state_dict(torch.load(opt_state_path, weights_only=False))
 
-    # The trap: post-load, the group is back at the CHECKPOINT's old LR rather than the live config's.
+    # The trap: post-load, the group is back at the checkpoint's old LR rather than the live config's.
     # Both groups have 2 params (weight+bias) — disambiguate by numel (classifier: 33*4+33).
     classifier_group = next(g for g in optim2.param_groups if sum(p.numel() for p in g["params"]) == 33 * 4 + 33)
     assert classifier_group["lr"] == 1e-3  # old value won — silently
@@ -172,7 +172,7 @@ def test_build_optimizer_three_group_labels_attribute_to_the_right_group(tmp_pat
     assert len(optim1.param_groups) == 3
     assert labels1 == ["base", "span_head_learning_rate", "classifier_learning_rate"]
 
-    # Attribution check: each label's group must hold that override's PARAMS rather than just its LR
+    # Attribution check: each label's group must hold that override's params rather than just its LR
     # (a positional-only check could pass by coincidence if two overrides shared an LR value).
     expected_params_by_label = {
         "base": {id(p) for n, p in m1.named_parameters() if n.startswith("encoder.")},
@@ -199,7 +199,7 @@ def test_build_optimizer_three_group_labels_attribute_to_the_right_group(tmp_pat
         span_head_learning_rate=1e-4,
         classifier_learning_rate=1e-3,
     )
-    # Reorder-proofing: `labels2` is READ from build_optimizer's return, never re-derived by
+    # Reorder-proofing: `labels2` is read from build_optimizer's return, never re-derived by
     # this test — the same discipline the fixed call site in train.py now follows. If
     # build_optimizer's internal carve-out order ever changes, this assignment (and the
     # zip below) tracks it automatically. nothing here hard-codes group index -> label.

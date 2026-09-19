@@ -31,7 +31,7 @@ The decoder consults the gazetteer _as it parses_: candidate word-spans of the i
 7. **Schema is tag-typed**: (child, parent, placetype_tag, count). `count` is UNUSED v1 (presence-only) — reserved as the future confidence-scaling change; do not "finish the job" mid-implementation.
 8. **GB-only this train; NZ held** (Kimi #6): the v385 control proves index-without-resurrected-weights is inert, and the base package serves non-resurrected weights — an NZ index there is dead payload. NZ rung-3 stands as the schema-generalization proof.
 9. **Artifact header**: δ_country, source snapshot md5s, build date, fold-version, schema-version; the runtime flag names its minimum understood schema version. Sealed-artifact discipline.
-10. **Surface audit** (Kimi #2 note): priors ride the Viterbi path only; `parseWithLogits` exposes raw pre-prior logits by contract. Enumerate which user-facing surfaces take which path so flag-ON cannot silently no-op.
+10. **Surface audit** (Kimi #2 note): priors ride the Viterbi path only; `parseWithLogits` exposes raw pre-prior logits by interface. Enumerate which user-facing surfaces take which path so flag-ON cannot silently no-op.
 
 ## Resolved questions (were open in rev 1)
 

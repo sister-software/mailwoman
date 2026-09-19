@@ -8,7 +8,7 @@
  *   with the country's street-normalization locale (so probe-side keying matches the extract the builder
  *   wrote) and caches the open handle per country. Wire its bound `for` into `GeocodeDeps.osmExtracts`.
  *
- *   ⚠ The extracts it opens are ODbL OpenStreetMap Derived Databases — see `osm/README.md` for the
+ *   ⚠ The extracts it opens are ODbL OpenStreetMap Derived Databases — see `osm/readme.md` for the
  *   distribution boundary and the counsel sign-off required before shipping any of them.
  */
 

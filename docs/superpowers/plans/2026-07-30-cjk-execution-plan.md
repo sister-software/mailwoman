@@ -12,7 +12,7 @@ substance lives in two documents this memo does not duplicate:
   (the JP seven exist in `COMPONENT_TAGS`, 33→47 head), the phased build, and the alignment risk
   analysis. _(To be moved under `docs/superpowers/plans/` with this memo — scratchpad is
   gitignored and this is now committed work.)_
-- `scratchpad/fable-v8-jp-char-encoder-design.md` — the input-contract design (D1–D6 register:
+- `scratchpad/fable-v8-jp-char-encoder-design.md` — the input-interface design (D1–D6 register:
   `char_ids (B,S,W)` with S=label units / W=composition window; sealed char vocab; one-char CJK
   units at ctx=3/W=7; compact `2-3-16` as whole-span house_number) and the full Leg-1 probe spec.
 
@@ -42,7 +42,7 @@ that convert the design into a verdict were never launched. That is what changes
 - **Leg 2 (unification bake-off, checks v9's shape rather than v8):** the same bare char model on the
   Latin corpus vs bare SP on the Latin coord boards. Run in the same session; record the delta.
 - Plumbing owed before launch (the one real code item): the `data_loader.py` char path
-  (`char_mode` config, `encode_row_units`, char-vocab build) per the contract note's D1/D6.
+  (`char_mode` config, `encode_row_units`, char-vocab build) per the interface note's D1/D6.
 
 **Step 2 — on a Leg-1 PASS: Phases 2–5 as written** (schema activation 33→47 with the
 own-param-group-LR rule; the full JP extract; train with channels re-aligned per-unit; ship JP-only

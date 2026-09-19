@@ -12,7 +12,7 @@ You have a spreadsheet — ten thousand addresses, a CSV a colleague dropped in 
 
 ## The endpoint
 
-`POST /v1/batch` takes a JSON body of `{ addresses: string[] }` and returns `{ results }` in the **same order you sent them** — see the [API reference](../api.mdx#drop-in-server-specifications-openapi-31) for the full OpenAPI contract. Run against a `mailwoman serve` instance:
+`POST /v1/batch` takes a JSON body of `{ addresses: string[] }` and returns `{ results }` in the **same order you sent them** — see the [API reference](../api.mdx#drop-in-server-specifications-openapi-31) for the full OpenAPI interface. Run against a `mailwoman serve` instance:
 
 ```bash
 curl -s localhost:3000/v1/batch \
@@ -109,7 +109,7 @@ curl -s localhost:3000/v1/batch \
 }
 ```
 
-Order is the contract that makes the bulk path usable: zip the `results` array straight back onto your input rows by index, no join key required. The second row's `hierarchy`/`candidates` carry both "Vienna" and "Wien": the German endonym is a distinct WOF place record for the same city, and the candidate list surfaces it as a runner-up.
+Order is the interface that makes the bulk path usable: zip the `results` array straight back onto your input rows by index, no join key required. The second row's `hierarchy`/`candidates` carry both "Vienna" and "Wien": the German endonym is a distinct WOF place record for the same city, and the candidate list surfaces it as a runner-up.
 
 ## Rows fail independently
 

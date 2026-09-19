@@ -7,11 +7,11 @@
  *   Materialize the fr-fr overlay's dev artifacts. The steps live in
  *   `@mailwoman/resolver-wof-sqlite/weights-overlay-linker`; this file is the manifest.
  *
- *   #1179 OVERLAY FORM: fr-fr declares `mailwoman.baseWeights: "@mailwoman/neural-weights-en-us"`, so
+ *   #1179 overlay form: fr-fr declares `mailwoman.baseWeights: "@mailwoman/neural-weights-en-us"`, so
  *   `resolveWeights` falls through to the en-us package for `model.onnx` / `tokenizer.model` / the card. This overlay
- *   therefore links no model or tokenizer — it REMOVES any leftover local pair so the base fallback engages. (An
+ *   therefore links no model or tokenizer — it removes any leftover local pair so the base fallback engages. (An
  *   earlier version re-symlinked a pinned v241-fr-nsplice model on every `yarn test`; once the overlay form landed
- *   that local file SHADOWED the base fallback, silently running the stale model for every dev fr-fr parse, and its
+ *   that local file shadowed the base fallback, silently running the stale model for every dev fr-fr parse, and its
  *   #397 md5 guard could never pass against the en-us card. One model, one pin — en-us's manifest owns it.)
  *
  *   What fr-fr owns locally (`resolveFromPackageDir` resolves these from the overlay dir with no base fallback):
@@ -20,15 +20,15 @@
  *   - `street-type-lexicon-v*.json` / `locality-surface-lexicon-v*.json` — the evidence lexicons, by the generation
  *       the card names under `requires.<channel>.lexicon`, the same pair the `files` array ships.
  *   - `postcode-fr.bin` — derived from the WOF intl postcode extract (`softFeed.postcodeDBByCountry.fr` =
- *       postalcode-intl.db), built skip-if-present. Without it a fresh worktree parses anchor-OFF.
+ *       postalcode-intl.db), built skip-if-present. Without it a fresh worktree parses anchor-off.
  *   - `pair-index-fr.bin` (hierarchy campaign R6) — built from the raw BAN dump through the shared
  *       `buildPairIndexOverlay`. The FR source is BAN's `nom_ld` (lieu-dit), read through `ban/sdk`'s `cleanLieuDit`
- *       — NOT WOF (WOF's French neighbourhood records are Paris quartiers, which never appear in a postal address).
+ *       — not WOF (WOF's French neighbourhood records are Paris quartiers, which never appear in a postal address).
  *       BAN is a directory of 101 département files, so the guard md5s nothing (hashing all of them costs more than
  *       it saves. a BAN refresh is a deliberate act — delete the artifact after one) and instead refuses an
- *       implausibly SMALL artifact: the BAN-derived index is ~6 MB, while a pair index built here from the WRONG
+ *       implausibly small artifact: the BAN-derived index is ~6 MB, while a pair index built here from the wrong
  *       source (the admin-DB borough recipe) is ~1.9 kB with matching magnitudes. The calibrated magnitudes are the
- *       R6 bars' (board 0/80 → 76/80, 0/60 confound FPs); the parent-bias δ=5 leg is the one that CAUGHT the
+ *       R6 bars' (board 0/80 → 76/80, 0/60 confound FPs); the parent-bias δ=5 leg is the one that caught the
  *       whole-edge mechanism's real defect — see `docs/records/evals/2026-08-04-pix1-whole-edge-verdict.md`.
  */
 
@@ -42,7 +42,7 @@ import {
 } from "@mailwoman/resolver-wof-sqlite/weights-overlay-linker"
 
 /**
- * Raw BAN dump the lieu-dit pairs are extracted from — a DIRECTORY, so it rides `inputs` (existence only), not
+ * Raw BAN dump the lieu-dit pairs are extracted from — a directory, so it rides `inputs` (existence only), not
  * `sources` (md5).
  */
 const BAN_DIR = String(dataRootPath("corpus", "sources", "ban"))

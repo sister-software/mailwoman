@@ -280,7 +280,7 @@ postcode-anchor channel already ships, `postalcode` is allowlisted out of the ad
 own build path, and folding it into a depth ladder would make "bottoms out at" incoherent.
 
 `poi.db` already carries `layer_manifest` + `layer_coverage`, so the venue rung reads through the
-existing layer contract rather than new plumbing.
+existing layer interface rather than new plumbing.
 
 ### The derived headline column
 

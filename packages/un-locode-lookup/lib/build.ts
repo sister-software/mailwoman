@@ -3,9 +3,9 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Build the UN/LOCODE lookup DB from the UNECE code list CSV (datasets/un-locode `code-list.csv`:
+ *   Build the UN/locode lookup DB from the unece code list CSV (datasets/un-locode `code-list.csv`:
  *   columns Change, Country, Location, Name, NameWoDiacritics, Subdivision, Status, Function, Date,
- *   IATA, Coordinates, Remarks). One row per assigned location. coordinates parsed where present.
+ *   iata, Coordinates, Remarks). One row per assigned location. coordinates parsed where present.
  */
 
 import { DatabaseClient } from "@mailwoman/sqlite/client"
@@ -26,7 +26,7 @@ interface CSVRow {
  * Read the code-list CSV at `csvPath` and write the lookup DB to `dbPath`.
  */
 export async function buildUNLocodeDB(csvPath: string, dbPath: string): Promise<{ rows: number; withCoords: number }> {
-	// `normalizeKeys: false` keeps the UNECE header casing the row shape above is written against
+	// `normalizeKeys: false` keeps the unece header casing the row shape above is written against
 	// (`NameWoDiacritics`, not `name_wo_diacritics`).
 	const records = CSVSpliterator.fromAsync<CSVRow>(csvPath, {
 		normalizeKeys: false,

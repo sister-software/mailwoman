@@ -5,10 +5,10 @@
  *
  *   #1509 — the two defects `mailwoman gazetteer postcode-binary` shipped, pinned as tests.
  *
- *   1. The GB outward derivation split `name` on a SPACE, so the licence-clean Code-Point Open database
+ *   1. The GB outward derivation split `name` on a space, so the licence-clean Code-Point Open database
  *      (`postalcode-gb-codepoint.db`, names stored space-stripped as `AB101AB`) yielded null on every
  *      one of its 1,746,976 rows.
- *   2. The command wrote the resulting ZERO-key binary and exited 0 — a valid, empty, silently-fed
+ *   2. The command wrote the resulting zero-key binary and exited 0 — a valid, empty, silently-fed
  *      channel, which is the #1467 defect class again.
  */
 
@@ -65,7 +65,7 @@ describe("buildPostcodeBinaryEntries", () => {
 		expect(skipped).toBe(1) // NOTAPOSTCODE
 		expect(entries.map((e) => e.postcode).toSorted()).toEqual(["AB10", "AB101AB", "AB101AF", "SW1A", "SW1A2AA"])
 
-		// The outward centroid is the MEAN of its PLACED units, matching `anchor-lookup.ts::addGBOutwardKeys`.
+		// The outward centroid is the mean of its placed units, matching `anchor-lookup.ts::addGBOutwardKeys`.
 		const ab10 = entries.find((e) => e.postcode === "AB10")!
 		expect(ab10.lat).toBeCloseTo((57.1 + 57.2) / 2, 10)
 		expect(ab10.lon).toBeCloseTo((-2.1 + -2.3) / 2, 10)

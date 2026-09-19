@@ -5,7 +5,7 @@
  *
  *   The freshness check against the well-known register on mailwoman.ai: the one network call the license posture
  *   makes, kept apart from the offline verification in `configured.ts` so that a caller which only needs the offline
- *   answer — the CLI launcher's notice on every invocation — never loads the HTTP client behind this one.
+ *   answer — the CLI launcher's notice on every invocation — never loads the http client behind this one.
  */
 
 import { APIClient, type APIClientConfig } from "#api/APIClient"
@@ -51,7 +51,7 @@ function siteAnsweredWithout(error: unknown): boolean {
 }
 
 /**
- * A register, by shape. Anything else the site hands back at the path (a soft 404 page, a redirect's HTML) is not one,
+ * A register, by shape. Anything else the site hands back at the path (a soft 404 page, a redirect's html) is not one,
  * whatever status it came with.
  */
 function isRegister(document: unknown): document is Pick<PublishedLicenseKeys, "keys"> {

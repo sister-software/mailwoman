@@ -4,7 +4,7 @@
  * @author Teffen Ellis, et al.
  * @file Whether a GeoNames fold output predates the admin database it was folded from.
  *
- *   A fold output (`<admin>-geonames.db`) is a COPY of the admin database with the alias fold applied, and a candidate
+ *   A fold output (`<admin>-geonames.db`) is a copy of the admin database with the alias fold applied, and a candidate
  *   table built from it inherits every coordinate the copy carried. When the admin database is later rebuilt or
  *   adjudicated in place (the #1905 label-point pass moved 222 localities), the standing fold keeps the old points, and
  *   a build that reads the fold directly reproduces them — silently, because the fold is a valid admin database. A

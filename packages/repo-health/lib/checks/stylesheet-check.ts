@@ -4,8 +4,8 @@
  * @author Teffen Ellis, et al.
  * @file The stylesheet invariants the map apps' chrome depends on.
  *
- *   Every rule here was earned by a defect that reached production, and each one is either an INVARIANT the design
- *   system states once (a reset that makes a class of bug impossible) or a DETECTOR for a shape no invariant can
+ *   Every rule here was earned by a defect that reached production, and each one is either an invariant the design
+ *   system states once (a reset that makes a class of bug impossible) or a detector for a shape no invariant can
  *   express. There is no CSS linter in this repository. these are the specific things that broke.
  *
  *   `docs/` is out of scope. It is a Docusaurus site on Infima's own system, and its stylesheets answer to that.
@@ -44,7 +44,7 @@ interface StyleRule {
 /**
  * Split a stylesheet into rules, carrying the at-rule nesting each one sits in.
  *
- * Comments are BLANKED rather than deleted, so every reported line number still matches the file on disk and a
+ * Comments are blanked rather than deleted, so every reported line number still matches the file on disk and a
  * declaration quoted in prose is not read as one.
  */
 function styleRules(css: string): StyleRule[] {
@@ -125,7 +125,7 @@ function declares(body: string, property: string): boolean {
 }
 
 /**
- * Whether the selector names a STATE of something styled elsewhere — `:hover`, `:disabled`, a `--active` modifier.
+ * Whether the selector names a state of something styled elsewhere — `:hover`, `:disabled`, a `--active` modifier.
  *
  * A state rule states only what changes, and takes the rest from the rule it varies, so asking it to repeat a color
  * would be asking for the copy this file exists to prevent.
@@ -275,10 +275,10 @@ export function stylesheetDiagnostics(file: string, css: string): Diagnostic[] {
 
 /**
  * The check the chrome arc ends on: the invariants that make two of these defects impossible, and detectors for the two
- * no invariant expresses. Registered in `#registry` and run by `mwops health stylesheet-contract`.
+ * no invariant expresses. Registered in `#registry` and run by `mwops health stylesheet-interface`.
  */
-export const stylesheetContractCheck: RepoCheck = {
-	id: "stylesheet-contract",
+export const stylesheetCheck: RepoCheck = {
+	id: "stylesheet-interface",
 	description:
 		"The app stylesheets carry the box-sizing reset and the button color default, put a standard property after its vendor-prefixed twin, state a color wherever they paint an interactive background, take their radii from the scale rather than raw pixels, and repeat a material's selector list exactly in each of its fallbacks.",
 	async run(context) {

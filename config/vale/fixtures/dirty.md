@@ -7,6 +7,8 @@ import ObviouslyBrokenComponent from "@site/src/components/ObviouslyBrokenCompon
 
 # Dirty fixture
 
+The loader reads each row, which validates the fields and records the result, so the report can compare runs.
+
 This file exists to trip every Mailwoman Vale rule on purpose. It also carries an
 import line, a JSX tag, a code fence, and a `<details>` block that each contain
 banned words — none of those four should be flagged, because they are ignored by
@@ -75,7 +77,7 @@ carried entirely by the 4-5 digit pieces and 3-digit is the reduce; take this to
 
 The guard held, the unit win survived, the result stands, the finding survived, and the gain held.
 The probe validated the guard, the experiment proved the result, and the report established the finding.
-The contract holds, MessageBus DELIVERS confirming the contract holds, the regression was carried by postcode
+The interface holds, MessageBus DELIVERS confirming the interface holds, the regression was carried by postcode
 tokens, and the loss landed on the 4-5 digit pieces.
 
 The parser is RESTRICTED to one locale, the row is ABSENT. NOT a ship. The prior is ON
@@ -84,7 +86,7 @@ by default, and the run was a PURE WIN.
 Three negative assertions for AmbiguousShorthand live below, and each must stay quiet:
 `promotion-eval.ts`, `packages/corpus/lib/extract-recipes/` and `mailwoman eval promote` are
 backticked, so the markdown parser hands none of them to the rule — that is how a
-contract-tied name survives the ban without being renamed.
+interface-tied name survives the ban without being renamed.
 
 Two negative assertions for Spelling.yml live on the next line, and both must stay
 quiet: the placetype identifier `neighbourhood` and the Nominatim field `licence` are

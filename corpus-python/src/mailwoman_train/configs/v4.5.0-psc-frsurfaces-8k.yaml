@@ -1,4 +1,4 @@
-# === v4.5.0-psc-frsurfaces-8k — #1639 FULL run (B1 probe PASSED: macro +0.0014, street_prefix +0.0142, worst tag -0.0017) ===
+# === v4.5.0-psc-frsurfaces-8k — #1639 full run (B1 probe passed: macro +0.0014, street_prefix +0.0142, worst tag -0.0017) ===
 # B11 fine-tune template on the v4.4.0 base (init_from step-060000, fresh optimizer, EWC lambda=1.0e4
 # with the base's own fisher-diag-v1). One data variable vs v4.4.0: corpus v0.19.0 -> v0.20.0, which
 # is the same base overlaid with the two regenerated surface sources, old vintages zeroed:

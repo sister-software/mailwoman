@@ -3,9 +3,9 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   TIGER SQLite schema, as a string so it loads in both `tsx` source mode and the compiled CLI
- *   (`tsc` doesn't copy `.sql` assets into `out/`). Geometry is GeoJSON text — NOT SpatiaLite. The
- *   prior SpatiaLite path (`load_extension` of a hardcoded macOS dylib + WKB `GEOM` columns) never
+ *   tiger SQLite schema, as a string so it loads in both `tsx` source mode and the compiled CLI
+ *   (`tsc` doesn't copy `.sql` assets into `out/`). Geometry is GeoJSON text — not SpatiaLite. The
+ *   prior SpatiaLite path (`load_extension` of a hardcoded macOS dylib + WKB `geom` columns) never
  *   loaded on Linux. plain text keeps the build dependency-free and `node:sqlite`-native (read it
  *   back with `JSON.parse`).
  */
@@ -32,7 +32,7 @@ export interface TIGERBlockTable {
 
 /**
  * Kysely row type for `pl_block` — Census 2020 P.L. 94-171 table P2 (Hispanic-or-Latino by race), one row per
- * tabulation block, keyed on the same 15-char `GEOID` as {@link TIGERBlockTable}. The eight category columns partition
+ * tabulation block, keyed on the same 15-char `geoid` as {@link TIGERBlockTable}. The eight category columns partition
  * `pop_total`.
  */
 export interface PLBlockTable {
@@ -61,7 +61,7 @@ export interface PLBlockTable {
 }
 
 /**
- * Kysely row type for `tiger_streets` (ADDRFEAT — named street segments + ZIPs, per county).
+ * Kysely row type for `tiger_streets` (addrfeat — named street segments + ZIPs, per county).
  */
 export interface TIGERStreetTable {
 	linearid: string
@@ -72,7 +72,7 @@ export interface TIGERStreetTable {
 }
 
 /**
- * Kysely row type for `tiger_places` (PLACE — incorporated/census places, per state).
+ * Kysely row type for `tiger_places` (place — incorporated/census places, per state).
  */
 export interface TIGERPlaceTable {
 	geoid: string
@@ -84,7 +84,7 @@ export interface TIGERPlaceTable {
 }
 
 /**
- * The TIGER database schema, for `new DatabaseClient<TIGERDatabase>(...)`.
+ * The tiger database schema, for `new DatabaseClient<TIGERDatabase>(...)`.
  */
 export interface TIGERDatabase {
 	tabblock20: TIGERBlockTable
@@ -99,7 +99,7 @@ export interface TIGERDatabase {
 
 /**
  * Build-tuning PRAGMAs, run raw before any table is created (`page_size`/`auto_vacuum` only take effect on an empty DB,
- * and PRAGMA has no Kysely builder). The consumer execs this, then calls {@link initializeTIGERSchema} for the tables +
+ * and pragma has no Kysely builder). The consumer execs this, then calls {@link initializeTIGERSchema} for the tables +
  * indexes.
  */
 export const TIGER_PRAGMAS = /* sql */ `
@@ -110,12 +110,12 @@ PRAGMA journal_mode = WAL;
 `
 
 /**
- * Create the TIGER tables + indexes via the Kysely schema-builder (the house idiom). Idempotent (`IF NOT EXISTS`). Pass
- * a {@link DatabaseClient} (or any `Kysely`) over the TIGER DB. run {@link TIGER_PRAGMAS} first. `us_state`/`tract`
+ * Create the tiger tables + indexes via the Kysely schema-builder (the house idiom). Idempotent (`if not exists`). Pass
+ * a {@link DatabaseClient} (or any `Kysely`) over the tiger DB. run {@link TIGER_PRAGMAS} first. `us_state`/`tract`
  * aren't in {@link TIGERDatabase} (created here but not queried via Kysely) — `createTable` takes any table name, so
  * that's fine.
  *
- * The `text(N)` length hints in the prior raw DDL were documentary only (SQLite uses TEXT affinity regardless); the
+ * The `text(N)` length hints in the prior raw DDL were documentary only (SQLite uses text affinity regardless); the
  * lengths live on the {@link TIGERBlockTable} interface instead.
  */
 /**
@@ -175,7 +175,7 @@ export async function initializeTIGERSchema(db: Kysely<TIGERDatabase>): Promise<
 		.addColumn("geometry", "text", (c) => c.notNull())
 		.execute()
 
-	// No index on GEOID alone — it's the PRIMARY KEY, which already carries a unique index. The prior
+	// No index on geoid alone — it's the primary KEY, which already carries a unique index. The prior
 	// schema's idx_tabblock20_geoid duplicated that for nothing (double insert cost, double footprint).
 	await db.schema.createIndex("idx_tabblock20_state_code").ifNotExists().on("tabblock20").column("state_code").execute()
 
@@ -211,8 +211,8 @@ export async function initializeTIGERSchema(db: Kysely<TIGERDatabase>): Promise<
 		.addColumn("housing_units", "integer", (c) => c.notNull())
 		.addColumn("occupied", "integer", (c) => c.notNull())
 		.addColumn("vacant", "integer", (c) => c.notNull())
-		// pl_block is small (no geometry) and always probed by its GEOID PK (1:1 join to tabblock20), so
-		// cluster it WITHOUT ROWID — one B-tree probe per join, no separate rowid + PK-index pair.
+		// pl_block is small (no geometry) and always probed by its geoid PK (1:1 join to tabblock20), so
+		// cluster it without rowid — one B-tree probe per join, no separate rowid + PK-index pair.
 		.modifyEnd(sql`without rowid`)
 		.execute()
 

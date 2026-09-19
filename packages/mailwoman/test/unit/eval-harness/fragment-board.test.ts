@@ -3,7 +3,7 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Tests for the fragment board's interval math and fixture contract (#727 stage-2, Tier 1c).
+ *   Tests for the fragment board's interval math and fixture interface (#727 stage-2, Tier 1c).
  *
  *   The interval is the whole reason this board exists — it is what turns "3/15" into "somewhere
  *   between 4% and 48%, so stop quoting it". If the math is wrong the board is worse than no board,
@@ -38,7 +38,7 @@ describe("wilson", () => {
 	})
 
 	it("stays inside [0,1] at the extremes, where the normal approximation breaks", () => {
-		// 0/400: the normal approximation gives a NEGATIVE lower bound and zero width.
+		// 0/400: the normal approximation gives a negative lower bound and zero width.
 		const zero = wilson(0, 400)
 
 		expect(zero.low).toBe(0)

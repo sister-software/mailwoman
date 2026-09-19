@@ -6,11 +6,11 @@
  *   `mailwoman gnaf assemble --standard-dir <G-NAF/.../Standard> --out <assembled-au.jsonl>`
  *
  *   Assemble a sampled, component-labeled Australian address set from the G-NAF (Geocoded National
- *   Address File) relational PSV distribution — joining ADDRESS_DETAIL → STREET_LOCALITY → LOCALITY
+ *   Address File) relational PSV distribution — joining ADDRESS_DETAIL → STREET_LOCALITY → locality
  *   and reservoir-sampling across states. Streams via the house `PSVSpliterator`; memory stays
  *   bounded (the two lookup tables as Maps, the 16.9M address rows sampled in one pass).
  *
- *   The output JSONL is the input to the `gnaf` corpus adapter (`mailwoman corpus build`), which
+ *   The output jsonl is the input to the `gnaf` corpus adapter (`mailwoman corpus build`), which
  *   renders each tuple in multiple word orders to teach the model AU's postcode-first layout
  *   (#208). `--holdout` excludes the benchmark addresses by (street, locality, postcode) so the
  *   training database never overlaps the eval. Open G-NAF licence — attribute "Geoscape Australia".
@@ -22,7 +22,7 @@ import { useState } from "react"
 import { type CommandSpec, CommandTaskResult, type CommandComponent, useCommandTask } from "#cli-kit"
 
 /**
- * Native command-line contract consumed by the filesystem command router.
+ * Native command-line interface consumed by the filesystem command router.
  */
 export const spec = {
 	name: "assemble",

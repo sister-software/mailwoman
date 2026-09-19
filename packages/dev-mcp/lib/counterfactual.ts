@@ -12,10 +12,10 @@
  *
  *   The setting space is fixed and enumerated here rather than derived from `EngineConfig`. Every setting in that
  *   interface is flippable in principle. these five are the ones whose flip is cheap (no second gazetteer, no second
- *   model) and whose meaning is stateable in one sentence. A setting that cannot apply to a row is reported as SKIPPED
+ *   model) and whose meaning is stateable in one sentence. A setting that cannot apply to a row is reported as skipped
  *   with its reason, never omitted — an absent setting and a setting that changed nothing are different facts.
  *
- *   Runs are ENGINE-MAJOR: every row needing one flip is measured before the next flip's engine is built. The
+ *   Runs are engine-major: every row needing one flip is measured before the next flip's engine is built. The
  *   registry holds two engines at a time (`EngineRegistry`'s cap, set by the measured throughput ceiling on a shared
  *   WOF SQLite), so a row-major loop would evict and rebuild a multi-second engine on nearly every iteration.
  */
@@ -42,7 +42,7 @@ export type CounterfactualSetting = (typeof COUNTERFACTUAL_SETTINGS)[number]
  *
  * The finest of the pre-registered distance thresholds, borrowed rather than chosen: a flip that moves the answer less
  * than the tightest threshold anything here grades at cannot change a verdict, so reporting it would fill the result
- * with coordinate jitter. A flip that changes ABSTENTION is reported at any distance — there is no distance to measure,
+ * with coordinate jitter. A flip that changes abstention is reported at any distance — there is no distance to measure,
  * which is the point.
  */
 export const COUNTERFACTUAL_MOVED_KM = DISTANCE_THRESHOLDS_KM[0]
@@ -70,7 +70,7 @@ let overlayLocaleCache: Map<string, string> | null = null
 /**
  * Country (ISO alpha-2, upper) → the canonical locale tag of the weights overlay that scopes it.
  *
- * Derived from each overlay's own REGION SUBTAG, which is what makes this a derivation rather than a second table:
+ * Derived from each overlay's own region subtag, which is what makes this a derivation rather than a second table:
  * `en-gb` scopes GB because that is what the tag says. A country with two overlays would keep the first listed. none
  * exists today, and the manifest is the place that would have to decide.
  */
@@ -120,7 +120,7 @@ export interface SettingSkip {
 /**
  * The single-setting flips available for one row.
  *
- * `effective` is the RESOLVED session options — the production defaults already filled in — because the flip has to be
+ * `effective` is the resolved session options — the production defaults already filled in — because the flip has to be
  * stated against what the engine will actually do rather than against what the caller happened to type. An unset
  * setting in a caller's `EngineConfig` means the production default, so reading the caller's object would report every
  * unset setting as absent and flip it in the wrong direction.
@@ -170,7 +170,7 @@ export async function enumerateFlips(
  * The locale flip, or the reason there is none.
  *
  * Two directions, never one: a row running under the base weights flips TO its country's overlay, and a row already
- * running under its country's overlay flips BACK to the base. The second direction is what prices the overlay — "the
+ * running under its country's overlay flips back to the base. The second direction is what prices the overlay — "the
  * overlay is required here" is a claim only its removal can support.
  */
 async function localeCounterfactual(

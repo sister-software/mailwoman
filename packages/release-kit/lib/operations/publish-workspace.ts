@@ -4,7 +4,7 @@
  * @author Teffen Ellis, et al.
  *
  *   The one npm write. Plan → execute: `--plan <file>` names a plan `release.plan --json` wrote, and the operation
- *   refuses when HEAD is dirty, HEAD moved, or the recomputed digest differs. release-it's per-workspace
+ *   refuses when head is dirty, head moved, or the recomputed digest differs. release-it's per-workspace
  *   `publishCommand` hook has no plan to hand over, so `--allow-unplanned` keeps that path runnable — loudly.
  */
 
@@ -16,8 +16,8 @@ import { publishWorkspace, releaseItWorkspaceEnvironment } from "#pack/publish/w
 import { assertPlanHolds } from "#release/plan"
 
 /**
- * `release.publish-workspace` — writes to an external system and is reachable only through the plan → execute contract.
- * Listed in `registry.ts`; the description on the operation is what `mwops` prints.
+ * `release.publish-workspace` — writes to an external system and is reachable only through the plan → execute
+ * interface. Listed in `registry.ts`; the description on the operation is what `mwops` prints.
  */
 export const publishWorkspaceOperation = defineOperation({
 	id: "release.publish-workspace",

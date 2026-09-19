@@ -288,7 +288,7 @@ def test_verify_rejects_an_all_o_row() -> None:
 
 
 def test_every_significant_character_carries_a_label() -> None:
-    # The JSON-hides-gaps read: counted on the label ARRAY the loader builds rather than on the triple.
+    # The JSON-hides-gaps read: counted on the label array the loader builds rather than on the triple.
     records = [render(URBAN, register) for register in REGISTER_WEIGHTS]
     records.append(render_row(**URBAN, register="native", postcode="7600017", spaced=True, country=True))
     stats = coverage_stats(records)

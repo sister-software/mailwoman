@@ -3,11 +3,11 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Score the HARD-CASE BOARD (ROAD_TO_V9 §3) across the three FST arms and report whether they
- *   SEPARATE. This is the board's own acceptance test: "an unmeasurable change is an unshippable
+ *   Score the hard-case board (ROAD_TO_V9 §3) across the three FST arms and report whether they
+ *   separate. This is the board's own acceptance test: "an unmeasurable change is an unshippable
  *   change" (§2 R3), so the first thing this runner has to establish is that the instrument moves at all.
  *
- *   THE ARMS. All three share one model, one resolver, one board — the only variable is the gazetteer
+ *   the arms. All three share one model, one resolver, one board — the only variable is the gazetteer
  *   binary feeding `neural/fst-prior.ts`:
  *
  *   - `none` — `fst: false`, which suppresses both an explicit matcher and the pipeline's auto-load.
@@ -19,7 +19,7 @@
  *       `admin-global-priority-importance.db`, `importanceMatches` 1,543,753, which is exactly that DB's
  *       `place_importance` row count. So this arm carries the real Wikipedia-joined score.
  *   - `ref` — `wof/fst-staging-2026-08-06-two-score-split/` — the same source database as `imp`, rebuilt
- *       at FST format v5 under the ratified §2 policy: the bias reads the REFERENTIAL score
+ *       at FST format v5 under the ratified §2 policy: the bias reads the referential score
  *       (population-anchored) and the encyclopedic score rides along in its own slot, unread by the
  *       decoder. `imp` vs `ref` is therefore the policy ablation with the source database held fixed —
  *       the single-variable comparison that says what ranking referentially costs or buys. `pop` vs `ref`
@@ -30,16 +30,16 @@
  *   (236,257), `nameInsertions` (274,245), same exclusion policy. The trie is the same trie. only the
  *   importance floats differ. That is what makes this a single-variable ablation rather than a build diff.
  *
- *   WHY THIS RUNNER EXISTS AT ALL — the FST's reach is narrower than it looks. `eval oa-resolver`
+ *   why this runner exists AT all — the FST's reach is narrower than it looks. `eval oa-resolver`
  *   without `--assembled`, and `eval gauntlet` in every mode, grade through `geocode-core.ts`'s
  *   `parseForGeocode`, which calls `classifier.parse` with no `fst` key. The gazetteer prior is
  *   therefore not merely weak on those paths — it is never constructed. `createRuntimePipeline` is the
  *   only entry point that wires `opts.fst`, so this runner drives the pipeline directly. A board scored
  *   through `geocodeAddress` would tie across all three arms no matter what the board contained.
  *
- *   GRADING. Per row, both halves are reported because they fail differently:
+ *   grading. Per row, both halves are reported because they fail differently:
  *
- *   1. `coord` — the resolved most-specific point within the row's DECLARED tolerance. A row with no
+ *   1. `coord` — the resolved most-specific point within the row's declared tolerance. A row with no
  *        coordinate is not graded here and is not counted as a miss. absence is absence.
  *   2. `place` — `expectPlaceID` / `expectPlaceName` when asserted. ROAD_TO_V9 §6 I2 records that the
  *        gauntlet stores these and never checks them. this board checks them, so a right-coordinate /
@@ -167,7 +167,7 @@ interface Outcome {
 	pass: boolean
 }
 
-// NFKD + mark-strip on purpose — NOT `@mailwoman/normalize`'s `stripCombiningMarks` (NFD, no case fold):
+// nfkd + mark-strip on purpose — not `@mailwoman/normalize`'s `stripCombiningMarks` (NFD, no case fold):
 // this fold also folds compatibility forms, matching the board's frozen grading.
 const norm = (s: string): string =>
 	s

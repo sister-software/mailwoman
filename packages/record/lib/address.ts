@@ -14,7 +14,7 @@
  *   on purpose: that is the location signal the Fellegi-Sunter scorer weights its distance evidence
  *   by — two records sharing a `address_point` coordinate is strong agreement. sharing an
  *   `interpolated` centroid is weak. a PO-box / multi-unit coordinate is barely location agreement
- *   at all (the NAACCR precedent, see the geocode-first record-matching concept doc).
+ *   at all (the naaccr precedent, see the geocode-first record-matching concept doc).
  */
 
 import { type ComponentDict, type FormatAddressOptions, formatAddress } from "@mailwoman/codex/address-format"

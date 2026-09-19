@@ -4,7 +4,7 @@
  * @author Teffen Ellis, et al.
  * @file Planning a module move: which specifiers stop naming what they named, and what each becomes.
  *
- *   A specifier is claimed by RESOLUTION, never by its text. Two files can spell one module three ways — `#recipes/x`,
+ *   A specifier is claimed by resolution, never by its text. Two files can spell one module three ways — `#recipes/x`,
  *   `@mailwoman/corpus/recipes/x`, `./x.ts` — and a text sweep finds whichever spelling it was told to look for. So
  *   every candidate replacement is resolved against a filesystem where the move has already happened, and it is
  *   written only if it lands on the moved file. A specifier with no candidate that lands there is reported unresolved,
@@ -168,7 +168,7 @@ export async function planModuleMoves(context: RepoContext, moves: readonly Modu
 		)
 	}
 
-	// Candidates are derived from the maps the plan LEAVES rather than the ones it found: a target that has moved would
+	// Candidates are derived from the maps the plan leaves rather than the ones it found: a target that has moved would
 	// otherwise offer a replacement naming the old path, or none at all.
 	const planned = manifests.map((manifest) => {
 		const text = rewrittenManifests.get(`${manifest.dir}/package.json`)

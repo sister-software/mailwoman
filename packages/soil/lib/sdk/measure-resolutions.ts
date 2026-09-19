@@ -3,16 +3,16 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   The index resolution is a MEASUREMENT this layer takes rather than a number argued to.
+ *   The index resolution is a measurement this layer takes rather than a number argued to.
  *
- *   ONE STREAM, EVERY RESOLUTION. Re-reading a survey area's shapefile per candidate adds nothing — the
+ *   one stream, every resolution. Re-reading a survey area's shapefile per candidate adds nothing — the
  *   classification is per delineation, so every candidate index folds the same delineation in turn. The cost
  *   is memory: each resolution holds its own cell sets, and the finest candidate dominates.
  *
- *   THIS INSTRUMENT REPORTS THE FIRST OF THE TWO NUMBERS §4.7 NAMES — the `partial` cell share, plus the mean
+ *   this instrument reports the first OF the two numbers §4.7 names — the `partial` cell share, plus the mean
  *   delineations per cell that drives it. The second number, the share of cells whose top class holds less
  *   than half the cell, is not measurable here: it needs the attribute join and the area weighting, which
- *   are the build. So it comes off the SHIPPING ARTIFACT instead — {@linkcode buildSoilDatabase} counts it
+ *   are the build. So it comes off the shipping artifact instead — {@linkcode buildSoilDatabase} counts it
  *   while it writes the rows, and the build receipt reports it. That is the flood layer's lesson applied:
  *   the number that describes the artifact is the one taken from the artifact.
  */

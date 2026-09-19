@@ -1,47 +1,47 @@
-# === v3.20.0-bundle-v5-8k — PRODUCTION BUNDLE CANDIDATE, INCREMENT 2 (Option-A Phase 3). ===
+# === v3.20.0-bundle-v5-8k — production bundle candidate, increment 2 (Option-A Phase 3). ===
 # (Claude-owned. operator go 2026-07-28 "fix the lexicon families and pre-register the next increment".)
 #
 # What v3.19.0 taught (full record: .superpowers/sdd/progress.md 2026-07-28): G1-G4 passed at
 # step-6000, then G5 (golden us/fr, the first promotion-instrument read of the deploc lineage)
-# FAILED with a US collapse that the ablation control traced to the FED evidence channels, and the
-# flip census traced to LEXICON COLLISION FAMILIES (F1 street-code∩state-abbrev. F2 state-name
-# locality surfaces teaching an evidence→REGION rotation. F2b directionals/generic words admitted
+# failed with a US collapse that the ablation control traced to the FED evidence channels, and the
+# flip census traced to lexicon collision families (F1 street-code∩state-abbrev. F2 state-name
+# locality surfaces teaching an evidence→region rotation. F2b directionals/generic words admitted
 # by the v4 parent-prominence fold. F3 street-word evidence on locality tokens. F4 piece-boundary
 # truncation under evidence). fp32 ≈ int8 — quantization exonerated. Inference-side v5/v2 relexicon
 # on the v3.19 checkpoint recovered ~65% of the flips (region 274→82) without retraining. the
 # residual is trained-in over-trust (v4-painted training taught the rotation) — hence this run:
-# the same recipe with the curated lexicons in TRAINING painting.
+# the same recipe with the curated lexicons in training painting.
 #
-# TWO NAMED DELTAS vs v3.19.0:
+# two named deltas vs v3.19.0:
 #   1. Lexicons: locality-surface v5 (four-law: +directional closure via libpostal directionals.txt,
 #      +US region-vocabulary exclusion, +alt-subphrase hygiene, +supplemental degenerate
 #      {school,state} w/ WOF-noise receipts) + street-type v2 (CT/KY/MT/PR/WY codes withheld).
 #      Training and inference painting — one computation, no skew.
 #   2. Feed: synth-po-box-cedex 1.5→1.75 (share parity vs v385. the bundle-less feed control read
-#      fr.cedex 79.8 / us.street 77.4 — BOTH deploc-feed deficits, independent of the bundle).
-#   HELD BACK (pre-registered next change rather than in this run): evidence-noise curriculum (paint false
+#      fr.cedex 79.8 / us.street 77.4 — both deploc-feed deficits, independent of the bundle).
+#   held back (pre-registered next change rather than in this run): evidence-noise curriculum (paint false
 #   evidence at rate p to teach discounting) — deployed only if the fed-vs-ablated golden gap
 #   survives the v5 retrain.
 #
-# PRE-REGISTERED CHECKS (P0 grid at every save 2k/4k/6k/8k via grade_evidence_bundle
+# PRE-registered checks (P0 grid at every save 2k/4k/6k/8k via grade_evidence_bundle
 # --lexicon locality-surface-lexicon-v5.json --street-lexicon street-type-lexicon-v2.json;
-# PLUS per-save export → LOCAL golden instruments — the v3.19 lesson: the probe track alone is
+# plus per-save export → local golden instruments — the v3.19 lesson: the probe track alone is
 # blind to the promotion register):
-#   G1 bundle bars (unchanged): homonym ON−OFF ≥ +0.050 (asis) and ≥ +0.25 (lower+heal);
-#      house-number classes ON−OFF ≥ −0.020 each (asis, raw); lowercase-heal ALL ≥ +0.015.
-#   G2 ABLATION: the evidence-off column vs the RECORDED dual references (v385 same-grader +
-#      v3.13 feed control, progress.md 2026-07-28) — degradation beyond ±0.015 vs BOTH ⇒ miss.
-#   G3 INVARIANCE (exported int8, --baseline v385): zero new violation classes.
-#   G4 GAUNTLET ×3 PASS (weights-cache with v5/v2).
-#   G5 GOLDEN (int8, v6.0.0-shipped-baseline, FED weights-cache): all floors — the D-rule bar.
+#   G1 bundle bars (unchanged): homonym on−off ≥ +0.050 (asis) and ≥ +0.25 (lower+heal);
+#      house-number classes on−off ≥ −0.020 each (asis, raw); lowercase-heal all ≥ +0.015.
+#   G2 ablation: the evidence-off column vs the recorded dual references (v385 same-grader +
+#      v3.13 feed control, progress.md 2026-07-28) — degradation beyond ±0.015 vs both ⇒ miss.
+#   G3 invariance (exported int8, --baseline v385): zero new violation classes.
+#   G4 gauntlet ×3 pass (weights-cache with v5/v2).
+#   G5 golden (int8, v6.0.0-shipped-baseline, FED weights-cache): all floors — the D-rule bar.
 #      Named watch: fr.cedex_real (delta-2 adjudicates) and us.street (feed deficit −1.2 on the
 #      control. if either still misses while the ablated column passes everything else, the verdict
-#      is NO-SHIP with a named FEED problem — not a bundle problem — and the feed work unbundles.)
-#   G6 CANARY (NEW): data/eval/external/evidence-collision-canary.jsonl (20 census/operator rows)
+#      is no-ship with a named feed problem — not a bundle problem — and the feed work unbundles.)
+#   G6 canary (new): data/eval/external/evidence-collision-canary.jsonl (20 census/operator rows)
 #      — fed-vs-ablated flip count on region/locality/street/house_number must be zero at the
 #      candidate save. any flip names its family and blocks ship.
-#   VERDICT: all six ⇒ promotion battery. Earlier-save fallback allowed for G1/G2/G5/G6 (the
-#   over-trust watch); G3 new-class ⇒ STOP, operator decides. No knob iteration inside the run.
+#   verdict: all six ⇒ promotion battery. Earlier-save fallback allowed for G1/G2/G5/G6 (the
+#   over-trust watch); G3 new-class ⇒ stop, operator decides. No knob iteration inside the run.
 #
 # Launch: cd corpus-python && modal run -d -m launch.train_remote --config v3.20.0-bundle-v5-8k.yaml --resume none
 #
@@ -86,7 +86,7 @@ data:
     usgov-hrsa-fqhc: 2.0
     usgov-imls-pls: 2.0
     usgov-nad: 1.0
-    state-ia-contractors: 2.0
+    state-ia-builders: 2.0
     state-tx-notaries: 1.5
     state-ny-notaries: 2.0
     deepseek-kryptonite: 3.0
@@ -106,9 +106,9 @@ data:
     synth-no-street-led: 0.0
     synth-cz-pcfirst-preposition: 12.0
     synth-nl-postcode: 6.0
-    # PROBE 1: the fragment/autocomplete source (assay weight — moderate precedent).
+    # probe 1: the fragment/autocomplete source (assay weight — moderate precedent).
     synth-fragment: 6.0
-    # #727 T2 NEW — the one variable. 12.0 = the targeted-fix precedent (fr-bare-street,
+    # #727 T2 new — the one variable. 12.0 = the targeted-fix precedent (fr-bare-street,
     # si-bare-village, no-street-led are all 12.0). Streets with no house number + the
     # bare-locality counter.
     synth-fr-fragment: 12.0
@@ -116,9 +116,9 @@ data:
     # (matches fr-fragment). Bare streets + street+number with no postcode partner, + counters.
     synth-no-fragment: 12.0
     synth-gb: 10.0 # FEED: 6.1% stream × .328 dep-loc (probe-2 had this at 20.2% — the skew culprit)
-    synth-nz: 4.0 # FEED NEW: 2.4% stream × .792 (synth-nz-v2 800k. key also covers the old 2,990-row po-box recipe output — harmless, same country)
-    synth-es-pedania: 5.0 # FEED NEW: 3.0% stream × .303 (post-4b formatter fix)
-    synth-fr-lieudit: 3.0 # FEED NEW: 1.8% stream × 1.00 (BAN nom_ld, 4ce6821a. directly feeds the bare-locality regression class)
+    synth-nz: 4.0 # FEED new: 2.4% stream × .792 (synth-nz-v2 800k. key also covers the old 2,990-row po-box recipe output — harmless, same country)
+    synth-es-pedania: 5.0 # FEED new: 3.0% stream × .303 (post-4b formatter fix)
+    synth-fr-lieudit: 3.0 # FEED new: 1.8% stream × 1.00 (BAN nom_ld, 4ce6821a. directly feeds the bare-locality regression class)
   train_rows_per_epoch: 1000000
   val_rows: 4096
   coarse_filter: true
@@ -164,12 +164,12 @@ model: # Verbatim from v2.4.1.
   use_postcode_anchor: true
   use_gazetteer_anchor: true
   gazetteer_feature_dim: 5
-  # #1104 country channel ON — dedicated 2-dim [country_surface, country_ambiguous] soft feed with its
+  # #1104 country channel on — dedicated 2-dim [country_surface, country_ambiguous] soft feed with its
   # own projection + confidence (must equal the lexicon's feature_dim). Default-False elsewhere, so a
   # resume from a pre-country checkpoint stays byte-identical until this flips.
   use_country_anchor: true
   country_feature_dim: 2
-  # P-A street-type channel ON — a dedicated 1-dim street_type soft feed with its own projection +
+  # P-A street-type channel on — a dedicated 1-dim street_type soft feed with its own projection +
   # confidence (must equal the lexicon's feature_dim=1). Separate from the gazetteer, so init_from v385
   # loads clean (v385 lacks street_type_* → strict=False leaves only those fresh).
   use_street_type_anchor: true
@@ -177,7 +177,7 @@ model: # Verbatim from v2.4.1.
   # v3.16.0 — the locality-surface channel is on (the bundle).
   use_locality_surface_anchor: true
   locality_surface_feature_dim: 2
-  # #1104 homograph-guard SOFTENER — the one variable vs v263. Scales the country_ambiguous dim by 0.5
+  # #1104 homograph-guard softener — the one variable vs v263. Scales the country_ambiguous dim by 0.5
   # before the country_projection (bakes into the exported ONNX. no lexicon/inference change). v263's
   # hard guard (scale 1.0) over-suppressed homograph countries Georgia/Jordan (country-homograph F1
   # 89.8->82.6); softening should recover homograph recall without giving back the country F1 the

@@ -54,7 +54,7 @@ export interface BuildStreetMorphologyFSTOpts {
 	 * Minimum length (in characters, post-normalization) of variant surface forms to insert into the trie. Defaults to 3.
 	 *
 	 * Rationale: libpostal's street_types dictionaries contain 1-2 character abbreviations (`a`, `b`, `av`, `bd`, `br`,
-	 * ...) that collide with non-affix tokens at parse time — notably US state abbreviations (`OR`, `CA`, `ND`, `NY`),
+	 * ...) that collide with non-affix tokens at parse time — notably US state abbreviations (`or`, `CA`, `ND`, `NY`),
 	 * single-letter unit designators, and arbitrary short tokens. Empirically these collisions push the morphology prior
 	 * to mis-tag state abbreviations as `street_suffix`. A minimum length of 3 retains useful forms (`ave`, `blvd`,
 	 * `rue`, `str`) while filtering out the noise.

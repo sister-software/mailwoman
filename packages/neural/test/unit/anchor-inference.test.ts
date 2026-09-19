@@ -82,7 +82,7 @@ describe("buildAnchorFeatures — alignment onto SP pieces", () => {
 /**
  * The 2026-08-05 train-parity fix (`docs/records/evals/2026-08-05-en-gb-anchor-off.md`). Two obligations:
  *
- * 1. The DEFAULT stays byte-identical to the pre-fix scan — graded against a verbatim copy of it rather than against a
+ * 1. The default stays byte-identical to the pre-fix scan — graded against a verbatim copy of it rather than against a
  *    hash, so the oracle is readable.
  * 2. `spanMode: "shaped"` keys a span exactly the way `mailwoman_train/tokenizer.py::_paint_anchor_chars` does
  *    (`raw[begin:end].replace(" ", "").upper()`) and paints the span's full extent.
@@ -151,7 +151,7 @@ describe("buildAnchorFeatures — span modes", () => {
 	}
 
 	/**
-	 * A v2-shaped lookup: the five-digit pilot keys PLUS the letter-containing ones only a widened build produces.
+	 * A v2-shaped lookup: the five-digit pilot keys plus the letter-containing ones only a widened build produces.
 	 */
 	const V2: AnchorLookup = new Map<string, AnchorEntry>([
 		["10115", { posterior: { DE: 0.5, US: 0.5 }, lat: 52.5323, lon: 13.3846 }],
@@ -310,7 +310,7 @@ describe("buildAnchorFeatures — shaped mode case-folds before shape detection 
 
 	it("the fold is LENGTH-PRESERVING, so a `ß` upstream cannot shift the painted span", () => {
 		// `"ß".toUpperCase()` is "SS" — a naive uppercase here would slide every later offset by one and
-		// paint the wrong pieces. ASCII-only folding cannot.
+		// paint the wrong pieces. ascii-only folding cannot.
 		const text = "straße 1, amsterdam 1012 lg"
 		const pieces = piecesFor(text)
 		const { confidence } = buildAnchorFeatures(text, pieces, V2, { spanMode: "shaped" })
@@ -335,7 +335,7 @@ describe("buildAnchorFeatures — shaped mode case-folds before shape detection 
 })
 
 /**
- * A2 of ROAD_TO_V9 §1 — the SHIP OBLIGATION check. A lookup carrying keys only the shaped keyer can reach, next to a
+ * A2 of ROAD_TO_V9 §1 — the ship obligation check. A lookup carrying keys only the shaped keyer can reach, next to a
  * card that does not declare `span_mode: "shaped"`, is a channel that loads clean and feeds zeros on every row it
  * exists for.
  */

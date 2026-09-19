@@ -61,13 +61,13 @@ test("submit drives the result panel + a map marker over the fake runtime", asyn
 	await userEvent.click(container.querySelector("#mw-pipeline-input") as HTMLInputElement)
 	await userEvent.keyboard("{Enter}")
 
-	// HARD: the result panel is plain DOM in the floating control panel — no WebGL needed.
+	// hard: the result panel is plain DOM in the floating control panel — no WebGL needed.
 	await vi.waitFor(() => expect(container.textContent).toContain("Parsed components"))
 	expect(container.textContent).toContain("house_number")
 	expect(container.textContent).toContain("Resolved place")
 	expect(container.textContent).toContain("New York")
 
-	// BEST-EFFORT: the resolved-place marker mounts as a react-map-gl child once the map exists (SwiftShader GL).
+	// best-effort: the resolved-place marker mounts as a react-map-gl child once the map exists (SwiftShader GL).
 	const marker = await settle(() => container.querySelector(".maplibregl-marker"))
 
 	if (marker) {

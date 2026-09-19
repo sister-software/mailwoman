@@ -7,7 +7,7 @@ iterator exhausts it DELETES the source and renormalizes the remaining mixture. 
 ~7,812-step epoch and silent afterwards. The v4.3.3 B1 board oscillated in lockstep with
 those exposure windows.
 
-Contract pinned here (the repair): the realized source mixture must be STATIONARY across
+Interface pinned here (the repair): the realized source mixture must be STATIONARY across
 the whole epoch. A source that exhausts before the epoch ends cycles (fresh shuffled pass —
 weighted sampling with replacement at the pass level); the epoch ends once every source has
 completed at least one full pass, so the largest source is seen exactly once and no source
@@ -91,7 +91,7 @@ def test_small_source_keeps_appearing_after_its_first_pass_exhausts(tmp_path: Pa
 
 
 def test_epoch_covers_the_large_source_once_and_cycles_the_small_one(tmp_path: Path) -> None:
-    """Epoch semantics under the stationary contract: the largest source completes exactly
+    """Epoch semantics under the stationary interface: the largest source completes exactly
     one full pass (every row exactly once, no loss, no duplication); the small source cycles
     to hold its weighted share, so it emits more rows than it contains."""
     big_rows = _rows("big", 120)
@@ -126,7 +126,7 @@ def test_realized_share_is_stable_between_stream_halves(tmp_path: Path) -> None:
 def test_positive_weight_source_with_zero_selectable_rows_raises(tmp_path: Path) -> None:
     """A cycling sampler must never spin on a source whose filters admit nothing. A source
     whose full pass yields zero selectable rows (here: every row filtered by country) is a
-    recipe/corpus contract violation — fail loudly naming the source, never silently drop it
+    recipe/corpus interface violation — fail loudly naming the source, never silently drop it
     (the same discipline as the unreachable-positive-weight guard)."""
     corpus = _write_corpus(
         tmp_path,

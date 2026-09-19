@@ -7,7 +7,7 @@
  *   "/data/wof/admin.db", "wof-postalcode": "/data/wof/post.db" }'`
  *
  *   End-to-end corpus build. Drives every registered adapter (or the filtered subset) per `--inputs`,
- *   runs synthesis + alignment, computes the locality-holdout split, and writes the final JSONL
+ *   runs synthesis + alignment, computes the locality-holdout split, and writes the final jsonl
  *   parquet files + per-stage manifests under `<out>/corpus-v<version>/`.
  *
  *   Adapters whose id is missing from `--inputs` are skipped (and noted in the manifest); this is how

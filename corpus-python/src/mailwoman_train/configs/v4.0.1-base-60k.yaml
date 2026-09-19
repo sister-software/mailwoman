@@ -1,8 +1,8 @@
-# === v4.0.1-base-60k — RUN 2 OF THE ENVELOPE (the venue contingency. ROAD_TO §10 item 1). ===
-# ONE NAMED DELTA vs v4.0.0-base-60k: the `synth-house-venue` source folded into the feed —
-# corpus v0.15.0-venue (v0.13.0-latam + 116,244 house-venue rows, FR-ORDER AWARE: the FR tail
-# "VENUE, 20 Rue de la Huchette, 75005 Paris" is the v4.0.0 gauntlet's exact failure family) +
-# source_weights synth-house-venue: 2.0. Everything else BYTE-IDENTICAL to v4.0.0 incl.
+# === v4.0.1-base-60k — RUN 2 OF the envelope (the venue contingency. ROAD_TO §10 item 1). ===
+# one named delta vs v4.0.0-base-60k: the `synth-house-venue` source folded into the feed —
+# corpus v0.15.0-venue (v0.13.0-latam + 116,244 house-venue rows, FR-order aware: the FR tail
+# "venue, 20 Rue de la Huchette, 75005 Paris" is the v4.0.0 gauntlet's exact failure family) +
+# source_weights synth-house-venue: 2.0. Everything else byte-identical to v4.0.0 incl.
 # fisher_capture (the run-2 artifact supersedes run-1's).
 #
 # Why (the run-1 verdict): gauntlet regression layer failed 3 fixtures, all one family — FR
@@ -11,15 +11,15 @@
 # drops unlisted sources. synth-house-venue existed as a recipe but was in no corpus) — the
 # shipped model's venue competence was lineage inheritance, which from-scratch X-rayed away.
 #
-# PRE-REGISTERED CHECKS: the v4.0.0 sheet verbatim (G1-G8 + Fisher sanity as written there), plus:
+# PRE-registered checks: the v4.0.0 sheet verbatim (G1-G8 + Fisher sanity as written there), plus:
 #   - The 3 venue fixtures (mr-mrs-crab / jjan-chatelet / american-bar-le-marais) must clear.
-#   - The 2 now-PASS tracked cases (chat-qui-peche, venue-delta) must stay passing (promote their
+#   - The 2 now-pass tracked cases (chat-qui-peche, venue-delta) must stay passing (promote their
 #     status in the same reduce).
-#   - us.street_prefix graded against the SUPPORT-AWARE recut floor (the recorded disposition:
+#   - us.street_prefix graded against the support-aware recut floor (the recorded disposition:
 #     the 96.0 floor used the 2.0pp fallback margin on an n=25 metric. the spec-rule floor ≈ 86).
 #   - No other class may drop below its run-1 reading by more than noise (the delta is one source
 #     at ~1.4% mass. a wider movement means the delta did more than its name).
-#   STOP RULE: this is the envelope's last run. Any miss => operator conversation, no third launch.
+#   stop rule: this is the envelope's last run. Any miss => operator conversation, no third launch.
 #
 # Launch checklist: the v0.15.0-venue overlay synced (R2 corpus/v0.15.0-venue/ -> /data/corpus/
 # versioned/v0.15.0-venue/; base parquet files resolve into v0.13.0-latam which persists on the volume).
@@ -66,7 +66,7 @@ data:
     usgov-hrsa-fqhc: 2.0
     usgov-imls-pls: 2.0
     usgov-nad: 1.0
-    state-ia-contractors: 2.0
+    state-ia-builders: 2.0
     state-tx-notaries: 1.5
     state-ny-notaries: 2.0
     deepseek-kryptonite: 3.0

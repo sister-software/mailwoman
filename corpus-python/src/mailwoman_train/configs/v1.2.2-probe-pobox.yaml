@@ -1,9 +1,9 @@
 # === v1.2.2-probe-pobox (po_box/cedex solo probe) ===============================================
-# SINGLE-VARIABLE vs the shipped v1.1.0: corpus v0.4.12 -> v0.4.14-pobox (the codex-sourced
+# single-variable vs the shipped v1.1.0: corpus v0.4.12 -> v0.4.14-pobox (the codex-sourced
 # po_box/cedex coverage recipe output, PR #516, 50K rows verbatim-overlaid) + source weight
 # synth-po-box-cedex 1.5 (the unit-playbook precedent). The old fixed-layout synth-po-box stays
 # at 1.5 for this probe (single variable); its retire/down-weight decision is the consolidation
-# run's, stated there. Resume v1.1.0 step-040000, +4k. PRE-REGISTERED READ: po_box >= 85 /
+# run's, stated there. Resume v1.1.0 step-040000, +4k. PRE-registered read: po_box >= 85 /
 # cedex >= 80 on the recipe output's val (data/.../po-box val.jsonl) and FR postcode >= 99.5 (cedex puts
 # trailing digits after the locality — the adjacent surface to the digit-split class) and golden
 # po_box rows no-regression. Fail -> layout audit before any re-probe.
@@ -25,7 +25,7 @@ data:
     usgov-hrsa-fqhc: 2.0
     usgov-imls-pls: 2.0
     usgov-nad: 1.0
-    state-ia-contractors: 2.0
+    state-ia-builders: 2.0
     state-tx-notaries: 1.5
     state-ny-notaries: 2.0
     deepseek-kryptonite: 3.0
@@ -48,7 +48,7 @@ data:
   # The v0.9.12 US-postcode fix (#468): zero the gazetteer clue on tokens adjacent to a postcode-anchor
   # hit, at train time (paired with classifier.suppressGazetteerNearPostcode at inference). First trained here.
   gazetteer_choreography: true
-  # THE #511 change: end the base-vs-recipe affix label contradiction (probe-validated v1.0.6).
+  # the #511 change: end the base-vs-recipe affix label contradiction (probe-validated v1.0.6).
   affix_relabel_lexicon_path: /data/gazetteer/affix-relabel-lexicon-v1.json
 
 model:

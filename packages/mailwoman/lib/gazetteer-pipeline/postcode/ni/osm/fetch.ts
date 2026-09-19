@@ -15,14 +15,14 @@
  *   ## Why one query, saved verbatim
  *
  *   Overpass is a volunteer-run public endpoint with a published fair-use policy. The acquisition is a
- *   SINGLE request whose response is written to a dated directory and never re-fetched. every later
+ *   single request whose response is written to a dated directory and never re-fetched. every later
  *   build reads that file. So the reproducibility artifact is the response rather than the query — a rebuilt
  *   database from the same `response.json` is byte-comparable, while a re-query against a live OSM would
  *   not be (OSM changes hourly, and that is a feature of the source rather than a defect of the build).
  *
  *   ## Why not `@mailwoman/poi-taxonomy`'s emitter
  *
- *   `emitOverpassQL` renders a query from a POI INTENT (a category/brand/name subject plus an anchor).
+ *   `emitOverpassQL` renders a query from a POI intent (a category/brand/name subject plus an anchor).
  *   This query has no subject — it is a bounding box plus a tag regex — so the emitter has nothing to
  *   emit from. The query text is a constant here, which is also what makes it hashable into provenance.
  *
@@ -46,10 +46,10 @@ import { join } from "path-ts"
 export const OVERPASS_ENDPOINT = "https://overpass-api.de/api/interpreter"
 
 /**
- * The Kumi Systems mirror, recorded as a CHECKED NEGATIVE rather than as a fallback.
+ * The Kumi Systems mirror, recorded as a checked negative rather than as a fallback.
  *
  * It is the mirror the OSM wiki points at for heavy queries, so it is the obvious thing to reach for when the main
- * instance 504s — and on 2026-08-05 it was the wrong move. Three of three attempts returned HTTP 504: the whole-NI area
+ * instance 504s — and on 2026-08-05 it was the wrong move. Three of three attempts returned http 504: the whole-NI area
  * query at 97 s, the whole-NI bbox query at 115 s, and — decisively — a two-tenths-of-a-degree probe bbox at 95 s that
  * `overpass-api.de` answered 200 in 8 s from the same machine minutes later. A mirror that cannot serve an 8-second
  * query is an unhealthy host rather than a capacity answer. Pass it via {@link AcquireNIPostcodesOptions.endpoint} if it
@@ -61,17 +61,17 @@ export const OVERPASS_ENDPOINT_KUMI = "https://overpass.kumi.systems/api/interpr
  * The one query. Verbatim, because its md5 goes into the database's provenance and a reader must be able to re-run
  * exactly this text.
  *
- * ## The spatial filter is a BBOX rather than `area["ISO3166-2"="GB-NIR"]`
+ * ## The spatial filter is a bbox rather than `area["ISO3166-2"="GB-NIR"]`
  *
  * The area form — `area["ISO3166-2"="GB-NIR"]->.ni. nwr(area.ni)["addr:postcode"~"^BT"].` — is the obvious way to write
- * this, and both attempts at it on 2026-08-05 ended in an HTTP 504 from `overpass-api.de`'s gateway. An `(area)` filter
+ * this, and both attempts at it on 2026-08-05 ended in an http 504 from `overpass-api.de`'s gateway. An `(area)` filter
  * has no index to ride: Overpass enumerates the region's elements and tests each, so the whole of Northern Ireland is a
  * full scan. The bbox rides the spatial index instead, and the same instance answered this query 200 with 6,681,108
  * bytes in 36 s.
  *
  * Be careful how much that proves. Over the same fifteen-minute window `overpass-api.de` returned 504 for the bbox form
  * too (once, at 7 s) while answering an identical curl seconds earlier, and later returned 429 — the instance was
- * flapping, so the area form is not PROVEN too expensive, only observed to fail twice. The bbox form is preferred on
+ * flapping, so the area form is not proven too expensive, only observed to fail twice. The bbox form is preferred on
  * two independent grounds regardless: it is index-backed, and re-issuing a whole-region scan against a flaking
  * volunteer endpoint is the wrong kind of retry.
  *
@@ -86,7 +86,7 @@ export const OVERPASS_ENDPOINT_KUMI = "https://overpass.kumi.systems/api/interpr
  * building polygons alike; `out center;` collapses each way/relation to its centroid so every element arrives as one
  * point.
  *
- * The tag filter is `~"^BT"` — CASE-SENSITIVE, which is Overpass's default for `~`. A lowercase `bt3 9qq` in OSM is
+ * The tag filter is `~"^BT"` — case-sensitive, which is Overpass's default for `~`. A lowercase `bt3 9qq` in OSM is
  * therefore invisible to this query. That is deliberate: it is the filter the 2026-08-05 census was taken with, so the
  * build's numbers reconcile against that census rather than against a different population.
  */
@@ -108,14 +108,14 @@ export const OSM_LICENSE_URL = "https://opendatacommons.org/licenses/odbl/1-0/"
 
 /**
  * The attribution OSM requires of anyone redistributing its data or a work produced from it. Not optional, and not
- * satisfied by a link in a README — it rides in the artifact.
+ * satisfied by a link in a readme — it rides in the artifact.
  */
 export const OSM_ATTRIBUTION =
 	"© OpenStreetMap contributors. Data licensed under the Open Database License (ODbL) 1.0 " +
 	"(https://opendatacommons.org/licenses/odbl/1-0/); see https://www.openstreetmap.org/copyright."
 
 /**
- * Why this database is BUILD-LOCAL, in one sentence plus the receipts.
+ * Why this database is build-local, in one sentence plus the receipts.
  *
  * ODbL §4.4 makes a Derived Database share-alike: publish one and you must publish it under ODbL. Mailwoman's shipped
  * gazetteer is assembled from permissive sources (WOF, Overture, OpenAddresses, GeoNames, Code-Point Open) precisely so
@@ -155,7 +155,7 @@ export interface OverpassElement {
 }
 
 /**
- * The Overpass JSON envelope. `osm3s.timestamp_osm_base` is the DATA extract this response reflects — a far more useful
+ * The Overpass JSON envelope. `osm3s.timestamp_osm_base` is the data extract this response reflects — a far more useful
  * provenance stamp than the wall clock at retrieval, and it is why the response is kept whole rather than reduced.
  */
 export interface OverpassResponse {
@@ -172,7 +172,7 @@ export interface OverpassResponse {
 /**
  * Build the Overpass client.
  *
- * `APIClient` per `AGENTS.md`: this is a small-body API request against a rate-limited volunteer host — the exact
+ * `APIClient` per `agents.md`: this is a small-body API request against a rate-limited volunteer host — the exact
  * population the rule binds. `minRequestIntervalMs` is set even though the acquisition issues one request, because an
  * unpaced client is a trap for the next caller who loops it. Retry is deliberately off (the `APIClient` default): an
  * Overpass 429/504 means the server is shedding load, and the correct response to that is to come back later by hand
@@ -197,11 +197,11 @@ export function createOverpassClient(): APIClient {
 export interface AcquireNIPostcodesOptions {
 	/**
 	 * Directory the response lands in. The convention is a new dated directory per acquisition
-	 * (`$MAILWOMAN_DATA_ROOT/osm-ni-postcodes/<YYYY-MM-DD>/`), so an acquisition never overwrites an earlier one.
+	 * (`$MAILWOMAN_DATA_ROOT/osm-ni-postcodes/<yyyy-MM-DD>/`), so an acquisition never overwrites an earlier one.
 	 */
 	destDir: string
 	/**
-	 * Reuse an existing `response.json` instead of re-querying. The DEFAULT and the point: Overpass is a volunteer
+	 * Reuse an existing `response.json` instead of re-querying. The default and the point: Overpass is a volunteer
 	 * endpoint and the saved response is the reproducibility artifact. Set `false` only to take a deliberate new extract
 	 * into a new dated directory.
 	 */

@@ -2,7 +2,7 @@
 # apps (Earth, Moon, Mars). One deployer per Worker, from here, on every push to main. the Workers Builds projects
 # that used to deploy the two workers are retired so nothing races this workflow.
 #
-# WHICH WORKERS A PUSH DEPLOYS is not a path list in this file. The `targets` job runs
+# which workers A push deploys is not a path list in this file. The `targets` job runs
 # `mwops release deploy-targets`, which diffs the push against its parent, maps each changed file to its workspace,
 # and deploys a Worker when a changed workspace lies in that Worker's dependency closure (walked from the manifests)
 # or a root build file changed. The Worker table — build command, wrangler environment, receipt URL — lives in

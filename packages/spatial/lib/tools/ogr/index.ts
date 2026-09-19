@@ -6,7 +6,7 @@
  *   What an OGR-readable source declares about itself, read before any feature is — the identity check every
  *   polygon-layer ingest opens with.
  *
- *   OGR IS BUILD TOOLING, NEVER A SERVE DEPENDENCY (SCOPE invariant 6). The check refuses a source whose
+ *   OGR is build tooling, never A serve dependency (scope invariant 6). The check refuses a source whose
  *   declared authority code is not the one the ingest was written for, because reading one projection's
  *   coordinates as another's is silent — and it runs the datum-transformation guard even where no shift is
  *   needed, because skipping it on the reasoning that a source needs no shift makes the guard fire on the day
@@ -46,7 +46,7 @@ export interface ReadOGRLayerIdentityOptions {
 	 */
 	layer?: string
 	/**
-	 * The EPSG code the source must declare. A source declaring anything else is a product change rather than a variation
+	 * The epsg code the source must declare. A source declaring anything else is a product change rather than a variation
 	 * to absorb.
 	 */
 	expectEPSG: number
@@ -71,11 +71,11 @@ export interface ReadOGRLayerIdentityOptions {
 	 */
 	messages?: {
 		/**
-		 * After `declares no EPSG authority code — `.
+		 * After `declares no epsg authority code — `.
 		 */
 		noAuthorityCode?: string
 		/**
-		 * After `expected EPSG:<code> — `.
+		 * After `expected epsg:<code> — `.
 		 */
 		epsgMismatch?: string
 		/**
@@ -99,7 +99,7 @@ const EXTENT_ORDINATES = 4
 /**
  * Read what the source declares about itself, and refuse a projection the calling ingest was not written for.
  *
- * @throws {Error} When the layer is missing, declares no EPSG authority code, declares one other than `expectEPSG`,
+ * @throws {Error} When the layer is missing, declares no epsg authority code, declares one other than `expectEPSG`,
  *   reports no feature count, or fails a `requireExtent`/`requireFields` condition.
  */
 export async function readOGRLayerIdentity(options: ReadOGRLayerIdentityOptions): Promise<OGRLayerIdentity> {

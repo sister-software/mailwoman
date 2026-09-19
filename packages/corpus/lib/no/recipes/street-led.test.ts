@@ -6,10 +6,10 @@
  *   Tests for the `no-street-led` recipe's board split (#901 family / Track B, 2026-07-16).
  *
  *   This recipe existed for a year before it could train on anything — the YAML Norway problem
- *   (`NO:` -> boolean false) dropped every Norwegian row (#1145). Now that it can train, it must not
+ *   (`no:` -> boolean false) dropped every Norwegian row (#1145). Now that it can train, it must not
  *   train on its own eval set. The one invariant that is not "nice to have":
  *
- *   THE DIACRITIC SPLIT. The Norwegian digit board keeps diacritics in its surface key (`tømmerlien`).
+ *   the diacritic split. The Norwegian digit board keeps diacritics in its surface key (`tømmerlien`).
  *   fr-fragment's normalizer strips them. If this recipe had reused fr-fragment's `norm`, the recipe
  *   would fold `Tømmerlien` -> `tommerlien`, never match the board's reserved `tømmerlien`, and leak
  *   the surface into training while every check reported success. That failure is invisible
@@ -58,7 +58,7 @@ describe("no-street-led board split", () => {
 	})
 
 	it("skips a reserved surface — KEEPING diacritics (the whole hazard)", async () => {
-		// The board writes lowercased-NFC surfaces. `tømmerlien` with the ø INTACT.
+		// The board writes lowercased-NFC surfaces. `tømmerlien` with the ø intact.
 		const { stats, rows } = await run(TUPLES, ["tømmerlien"])
 
 		expect(stats.contaminated).toBe(1)

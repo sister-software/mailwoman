@@ -5,7 +5,7 @@
  *
  *   The default read-time WOF reverse geocoder for POI ancestry — the poiQueryKind register row's second
  *   debt payment (runtime-flags.mdx): `createRuntimePipeline({ poiQueryKind: { poiDatabasePath } })`
- *   lazily loads this once per process and wires a SYNCHRONOUS adapter into `createPOIExecutor`'s
+ *   lazily loads this once per process and wires a synchronous adapter into `createPOIExecutor`'s
  *   `reverseGeocode` dep (the executor's return type carries no `Promise` — see `poi-intent.ts`'s
  *   `deps.execute`, called synchronously). `WOFReverseGeocoder.reverseGeocodeSync` (added alongside this
  *   feature) is the real synchronous core the async `reverseGeocode` already wrapped — see
@@ -14,7 +14,7 @@
  *   `@mailwoman/resolver-wof-sqlite` is an optional peer dep and the admin gazetteer (with its
  *   `place_bbox` R*Tree, `mailwoman gazetteer build fts`) is a multi-GB build artifact that may not be on
  *   disk — either gap yields `null` and POI results simply carry no `ancestry` key at all (house
- *   meaning-of-zero: absence, never an empty array). The polygon sidecar (`wof-polygons.db`) is OPTIONAL
+ *   meaning-of-zero: absence, never an empty array). The polygon sidecar (`wof-polygons.db`) is optional
  *   too. without it every ancestry chain still resolves, just `containment: "approximate"`
  *   (`WOFReverseGeocoder`'s own centroid-descent fallback).
  *

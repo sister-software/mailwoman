@@ -2,7 +2,7 @@
 # the docs plugin, the blog (research/), and the glossary plugin.
 # Each tag listed here can be used in frontmatter as `tags: [key]` and in
 # glossary entries as `"tags": ["key"]` (first tag = primary category).
-# Tags not listed here FAIL THE BUILD: docs + blog via `onInlineTags: "throw"`
+# Tags not listed here fail the build: docs + blog via `onInlineTags: "throw"`
 # (docusaurus.config.ts), glossary via plugins/glossary/plugin.ts.
 
 #region Category
@@ -188,7 +188,7 @@ motivation:
 #region Glossary
 
 # Added with the +34-term glossary expansion (#1359) — the training/eval vocabulary the
-# v8.2.0–v8.3.0 arcs made routine. Registered here because unregistered tags FAIL THE BUILD.
+# v8.2.0–v8.3.0 arcs made routine. Registered here because unregistered tags fail the build.
 
 model:
   label: Model
@@ -224,11 +224,11 @@ runtime:
 
 api:
   label: API surface
-  description: The HTTP/library contract — endpoints, options, and the annotation boundaries.
+  description: The HTTP/library interface — endpoints, options, and the annotation boundaries.
 
 schema:
   label: Schema
-  description: The ComponentTag union, label sets, and the contracts that define what the parser emits.
+  description: The ComponentTag union, label sets, and the interfaces that define what the parser emits.
 
 locale:
   label: Locale mechanics

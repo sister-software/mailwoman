@@ -1,6 +1,6 @@
 # Gazetteer CLI PR D: zero mutators — the sealed postcode-extract command + drawer classification
 
-> **For agentic workers:** REQUIRED SUB-SKILL: superpowers:executing-plans (inline). Checkbox steps.
+> **For agentic workers:** required sub-skill: superpowers:executing-plans (inline). Checkbox steps.
 
 **Goal:** Eliminate the last two DB mutators (`fill-zcta-centroids`, `backfill-postcode-centroids`) by folding their fills into a sealed `gazetteer build postcode-extract` command; classify every remaining drawer resident (audit → eval, codegen renamed, remaining builders seal-retrofitted); file PR E for the pure ports.
 

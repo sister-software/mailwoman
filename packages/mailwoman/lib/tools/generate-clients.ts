@@ -5,7 +5,7 @@
  *
  *   The client-generation pipeline behind `mailwoman clients generate`: emit all four surfaces'
  *   OpenAPI documents (both flavors), generate a Python package and a Rust crate from them, then
- *   VERIFY both actually build. Everything is one-directional and local — nothing generated here is
+ *   verify both actually build. Everything is one-directional and local — nothing generated here is
  *   committed; `clients-build/` is gitignored. This is the local proof the conditional CI job (Phase 5 Task
  *   4) replays on dispatch.
  *
@@ -18,7 +18,7 @@
  *   `mailwoman-{photon,nominatim,libpostal} openapi`) rather than a checked-in `openapi.yaml`; the Rust
  *   vendor step reads the emitter's own `--flavor 3.0` diet instead of the old `downgrade-spec.py`
  *   down-convert (openapiv3, which progenitor depends on, only understands 3.0.x); and the client
- *   version syncs to `mailwoman/package.json` (the salvaged `PUBLISHING.md` versioned the clients
+ *   version syncs to `mailwoman/package.json` (the salvaged `publishing.md` versioned the clients
  *   independently of the npm workspaces — this pipeline ties them together instead, since all four
  *   `@mailwoman/*` surface packages already release in lockstep at the same version).
  *
@@ -51,7 +51,7 @@ import { readMailwomanVersion } from "#cli/kit/metadata"
 import { runProcessOrFail } from "#cli/kit/shared"
 
 /**
- * The four surfaces every emitter + generated client covers. Order matches the salvaged README's table, mailwoman last
+ * The four surfaces every emitter + generated client covers. Order matches the salvaged readme's table, mailwoman last
  * (the new fourth module).
  */
 export const CLIENT_SURFACES = ["photon", "nominatim", "libpostal", "mailwoman"] as const
@@ -93,8 +93,8 @@ export async function emitterCLIPath(surface: ClientSurface): Promise<string> {
 
 /**
  * The two repo-root license files (verified present: `LICENSE.md` — AGPL-3.0-only + a Commercial-License pointer — and
- * `COMMERCIAL-LICENSE.md` — the full commercial agreement text) that every generated package's SPDX expression
- * (`AGPL-3.0-only OR LicenseRef-Commercial`) references. Both artifacts must carry both files verbatim: an AGPL
+ * `commercial-LICENSE.md` — the full commercial agreement text) that every generated package's spdx expression
+ * (`AGPL-3.0-only or LicenseRef-Commercial`) references. Both artifacts must carry both files verbatim: an agpl
  * conveyance requires the license text to travel with the source, and `LicenseRef-Commercial` is meaningless without
  * the referenced text alongside it.
  */
@@ -214,7 +214,7 @@ async function emitSpecs(specsDir: string, phase: (p: string, d?: string) => voi
 
 /**
  * Run `openapi-python-client generate` once per surface, into `mailwoman_client/<surface>/` — the sibling-subpackage
- * layout the salvaged README documented (fully relative imports, so the four compose under one distributable with no
+ * layout the salvaged readme documented (fully relative imports, so the four compose under one distributable with no
  * post-processing).
  */
 async function generatePythonModules(
@@ -241,7 +241,7 @@ async function generatePythonModules(
 		])
 	}
 
-	// The generator drops a .ruff_cache under each output dir (salvaged README precedent) — remove it.
+	// The generator drops a .ruff_cache under each output dir (salvaged readme precedent) — remove it.
 	for (const surface of CLIENT_SURFACES) {
 		await removePathIfPresent(join(packageDir, surface, ".ruff_cache"))
 	}
@@ -253,10 +253,10 @@ name = "mailwoman-client"
 version = "${version}"
 description = "Typed Python clients for Mailwoman's Photon / Nominatim / libpostal drop-in geocoding APIs and native /v1/* surface, generated from their OpenAPI specs."
 readme = "README.md"
-# A plain SPDX expression string rather than the { text = "…" } table — setuptools >= 77 deprecates the
+# A plain spdx expression string rather than the { text = "…" } table — setuptools >= 77 deprecates the
 # table form (a build-time warning that would otherwise show up in every receipt).
 license = "AGPL-3.0-only OR LicenseRef-Commercial"
-# Explicit PEP 639 \`license-files\` (setuptools' default \`LICEN[CS]E*\` glob only catches LICENSE.md rather than COMMERCIAL-LICENSE.md — the "LicenseRef-Commercial" half of the SPDX expression above would ship
+# Explicit PEP 639 \`license-files\` (setuptools' default \`licen[CS]E*\` glob only catches LICENSE.md rather than commercial-LICENSE.md — the "LicenseRef-Commercial" half of the spdx expression above would ship
 # unreferenced without this). Both files are copied into this package root by copyLicenseFiles() during
 # assembly; setuptools stages them under the wheel's dist-info/licenses/ and the sdist root.
 license-files = ["LICENSE.md", "COMMERCIAL-LICENSE.md"]
@@ -271,9 +271,9 @@ dependencies = ["httpx>=0.23,<0.29", "attrs>=22.2.0"]
 classifiers = [
 	"Development Status :: 4 - Beta",
 	"Intended Audience :: Developers",
-	# No "License :: OSI Approved :: …" classifier alongside the SPDX \`license\` expression above —
+	# No "License :: OSI Approved :: …" classifier alongside the spdx \`license\` expression above —
 	# setuptools >= 77 hard-errors on that combination (PEP 639: license classifiers are superseded
-	# by license expressions). The SPDX string is the single source of truth.
+	# by license expressions). The spdx string is the single source of truth.
 	"Operating System :: OS Independent",
 	"Programming Language :: Python :: 3",
 	"Programming Language :: Python :: 3.10",
@@ -295,8 +295,8 @@ Issues = "https://github.com/sister-software/mailwoman/issues"
 dev = ["pytest>=7.0", "ruff==0.15.20"]
 
 [build-system]
-# >=77: the first release with PEP 639 \`license-files\` + the plain-string SPDX \`license\` expression
-# above stabilized (pre-77 either ignores license-files or warns on the SPDX string form).
+# >=77: the first release with PEP 639 \`license-files\` + the plain-string spdx \`license\` expression
+# above stabilized (pre-77 either ignores license-files or warns on the spdx string form).
 requires = ["setuptools>=77", "wheel"]
 build-backend = "setuptools.build_meta"
 
@@ -312,7 +312,7 @@ mailwoman_client = ["py.typed"]
 line-length = 120
 target-version = "py310"
 src = ["mailwoman_client"]
-# The four drop-in subpackages are GENERATED verbatim by openapi-python-client (which runs its own
+# The four drop-in subpackages are generated verbatim by openapi-python-client (which runs its own
 # ruff pass) and are overwritten on regen — don't lint/format them as hand-maintained code.
 extend-exclude = [
 	"mailwoman_client/photon",
@@ -509,10 +509,10 @@ function pythonReadme(): string {
 }
 
 /**
- * Write the pyproject.toml + README.md + `mailwoman_client/__init__.py` + `py.typed` + license texts — the salvaged
+ * Write the pyproject.toml + readme.md + `mailwoman_client/__init__.py` + `py.typed` + license texts — the salvaged
  * layout, adapted for the fourth `mailwoman` module. No `examples/` dir: the salvaged `search_berlin.py` example wasn't
- * wired into either `[tool.setuptools.packages.find]` (wheel) or a MANIFEST.in (sdist), so it was silently dropped from
- * both built artifacts. The README's own "Usage" section already carries the same snippet inline, so it isn't lost —
+ * wired into either `[tool.setuptools.packages.find]` (wheel) or a manifest.in (sdist), so it was silently dropped from
+ * both built artifacts. The readme's own "Usage" section already carries the same snippet inline, so it isn't lost —
  * just not duplicated as a file that never shipped.
  */
 async function assemblePythonPackage(
@@ -525,7 +525,7 @@ async function assemblePythonPackage(
 	await writeLocalFile(pythonReadme(), join(pythonDir, "README.md"))
 	await writeLocalFile(pythonInitPy(), join(pythonDir, "mailwoman_client", "__init__.py"))
 	await writeLocalTextFile("", join(pythonDir, "mailwoman_client", "py.typed"))
-	// AGPL conveyance + the LicenseRef-Commercial target (see license-files above): copied into the package root rather than the mailwoman_client/ subpackage, matching where setuptools looks relative to pyproject.toml.
+	// agpl conveyance + the LicenseRef-Commercial target (see license-files above): copied into the package root rather than the mailwoman_client/ subpackage, matching where setuptools looks relative to pyproject.toml.
 	await copyLicenseFiles(pythonDir)
 }
 
@@ -590,7 +590,7 @@ readme = "README.md"
 keywords = ["geocoding", "photon", "nominatim", "libpostal", "openapi"]
 categories = ["api-bindings", "science::geo"]
 # The vendored specs + the src are all that ship; nothing else is needed to build. LICENSE.md +
-# COMMERCIAL-LICENSE.md are copied into the crate root by copyLicenseFiles() during assembly — Cargo's
+# commercial-LICENSE.md are copied into the crate root by copyLicenseFiles() during assembly — Cargo's
 # packager only ships files this list names, so both must be listed explicitly (the \`license\` field
 # above is metadata only; it doesn't embed the referenced text).
 include = ["src/**/*", "openapi/*.json", "examples/**/*", "README.md", "LICENSE.md", "COMMERCIAL-LICENSE.md"]
@@ -599,7 +599,7 @@ include = ["src/**/*", "openapi/*.json", "examples/**/*", "README.md", "LICENSE.
 # progenitor's generate_api! proc-macro synthesizes the client at compile time from the vendored
 # spec (the 3.0.3 "diet" flavor — openapiv3 only understands 3.0.x); the generated code calls into
 # progenitor::progenitor_client (re-exported by progenitor, so no separate progenitor-client dep).
-# reqwest MUST match the version progenitor 0.14 uses (0.13) — a second reqwest in the graph makes
+# reqwest must match the version progenitor 0.14 uses (0.13) — a second reqwest in the graph makes
 # the generated client fail to typecheck.
 progenitor = "0.14"
 # rustls (not native-tls) so the crate builds without a system OpenSSL / pkg-config — portable for
@@ -802,7 +802,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 }
 
 /**
- * Vendor the 3.0 specs + write Cargo.toml/src/lib.rs/README.md/examples/basic.rs + the license texts — the salvaged
+ * Vendor the 3.0 specs + write Cargo.toml/src/lib.rs/readme.md/examples/basic.rs + the license texts — the salvaged
  * crate pattern, adapted for the fourth `mailwoman` module.
  */
 async function assembleRustCrate(
@@ -825,13 +825,13 @@ async function assembleRustCrate(
 	await writeLocalFile(rustLibRs(), join(rustDir, "src", "lib.rs"))
 	await writeLocalFile(rustReadme(), join(rustDir, "README.md"))
 	await writeLocalFile(rustExample(), join(rustDir, "examples", "basic.rs"))
-	// AGPL conveyance + the LicenseRef-Commercial target (see the Cargo.toml `include` list above).
+	// agpl conveyance + the LicenseRef-Commercial target (see the Cargo.toml `include` list above).
 	await copyLicenseFiles(rustDir)
 }
 
 /**
  * `cargo check --examples` — stronger than a bare `cargo check` (which skips example targets by default) so
- * `examples/basic.rs` is verified against the CURRENT vendored spec on every run. See the module docstring for why this
+ * `examples/basic.rs` is verified against the current vendored spec on every run. See the module docstring for why this
  * matters: the salvaged example had already drifted once.
  */
 function verifyRust(rustDir: string, phase: (p: string, d?: string) => void): void {

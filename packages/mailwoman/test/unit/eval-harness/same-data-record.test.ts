@@ -3,7 +3,7 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   What the recorder WITHHOLDS, which is what the withheld-gold stratum means.
+ *   What the recorder withholds, which is what the withheld-gold stratum means.
  *
  *   `same-data-resolver-v1` withholds the ids the `gn:id` concordance linked. That leaves the gazetteer's
  *   second row for the same settlement answerable — 285,478 of 2,689,326 populated localities share a

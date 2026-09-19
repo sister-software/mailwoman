@@ -113,8 +113,8 @@ export class WOFWasmPlaceLookup implements PlaceLookup {
 
 		const limit = Math.max(1, query.limit ?? 10)
 
-		// FTS5 MATCH on place_search joined to spr. Placetype + country filters are pushed into the
-		// WHERE clause because they reduce candidate count cheaply.
+		// FTS5 match on place_search joined to spr. Placetype + country filters are pushed into the
+		// where clause because they reduce candidate count cheaply.
 		const conditions: string[] = ["place_search MATCH ?", "spr.is_current != 0", "spr.is_deprecated = 0"]
 		const params: Array<string | number> = [ftsQuery]
 
@@ -145,7 +145,7 @@ export class WOFWasmPlaceLookup implements PlaceLookup {
 		// Over-fetch a pool ordered by raw BM25, then re-rank in JS (exact-name tier, then
 		// population-weighted bm25). The over-fetch is essential: a famous place can sit a few rows
 		// below a tiny same-name town on raw BM25 ("New York" loses to "West New York" by a hair), so a
-		// tight LIMIT on bm25 alone would truncate it before the re-rank could pull it up. This mirrors
+		// tight limit on bm25 alone would truncate it before the re-rank could pull it up. This mirrors
 		// the post-scoring tier + population boost in resolver-wof-sqlite/lookup.ts. (v1 issued pure
 		// bm25, which is why the demo targeted West New York for "New York, NY".)
 		const hasPop = this.#hasPopulation()
@@ -201,7 +201,7 @@ export class WOFWasmPlaceLookup implements PlaceLookup {
 			.map((row) => {
 				// Alias tier: `alt_names` is the FTS row's alias bag (the slim DB's only surviving alias
 				// source), aliases joined on the boundary-preserving ALIAS_SEPARATOR (#523). The shared
-				// parser does a true per-alias equality check, unrestricted. on a LEGACY bag (pre-#523 slim
+				// parser does a true per-alias equality check, unrestricted. on a legacy bag (pre-#523 slim
 				// artifact, boundaries lost) it falls back to padded containment conditioned on "no strictly
 				// exact candidate" so interior fragments ("York" inside "New York City") can't be
 				// false-promoted. Mirrors the Node resolver's alias tier
@@ -238,7 +238,7 @@ export class WOFWasmPlaceLookup implements PlaceLookup {
 								maxLon: row.max_longitude,
 							}
 						: undefined,
-				// Flip sign so higher = better (PlaceLookup contract). The adjusted, population-aware
+				// Flip sign so higher = better (PlaceLookup interface). The adjusted, population-aware
 				// score is what we sorted by, so callers see the same ordering they're shown.
 				score: -adjScore,
 			}))

@@ -8,8 +8,8 @@ description: Root-cause diagnosis by successive why questions, with judgment jar
 ## Why this exists
 
 The repo already treats Five Whys as diagnostic doctrine: the invariance mini-suite is the #886 five-whys
-follow-up, and the suffix-boundary contract change records its #1569 five-whys root cause. What the method
-never had here is a language contract. Diagnoses kept shipping judgment words where facts belonged:
+follow-up, and the suffix-boundary interface change records its #1569 five-whys root cause. What the method
+never had here is a language interface. Diagnoses kept shipping judgment words where facts belonged:
 
 > The negative twin was mis-constructed — with Lyon in the raw text the register never hits, so nothing is
 > deleted.
@@ -23,7 +23,7 @@ conclusion and the mechanism stays in the author's head. Five Whys forces the me
 chain is only as strong as its weakest word — a link written as a judgment cannot survive the next why.
 
 This skill operationalizes the house style's "Find the cause before proposing the fix" section, whose
-contract lives at `.claude/output-styles/mailwoman-development.md` — the output style the harness loads,
+interface lives at `.claude/output-styles/mailwoman-development.md` — the output style the harness loads,
 and the one authority for agent prose. It is a reasoning discipline rather than a
 writing style: published docs pages are governed by `docs/engineering/writing-system.md` and its Vale
 rules, and this skill governs diagnostic prose Vale never sees — chat messages, status reports, handoffs,
@@ -57,10 +57,10 @@ the fix:
 2. Why did that stage choose the wrong value?
 3. Why did its input or rule permit that choice?
 4. Why did the test or pipeline fail to catch the condition?
-5. Why does the system contract allow the condition?
+5. Why does the system interface allow the condition?
 
 Do not force exactly five levels. Use fewer when the cause is direct, more when evidence supports the
-longer chain. Stop the chain at an **actionable cause** — a named stage, rule, input, or contract clause a
+longer chain. Stop the chain at an **actionable cause** — a named stage, rule, input, or interface clause a
 change can touch — or at an **unverified assumption**, where the current evidence cannot answer the next
 why. An unverified assumption is the chain's end and the next action's start: the probe that would answer
 it is the next step.
@@ -86,12 +86,12 @@ asking the operator.
 - **Rung 3** — which input or constraint permitted it: `mwdev_minimal_pairs` (which token), `mwdev_lookup`
   (does the source know the string), `mwdev_constraints` (what a constraint cost).
 - **Rung 4** — why the test did not catch it: read the test; `mwdev_census` (does the mechanism fire at
-  all), `mwdev_contract` (does the tree obey its contract).
-- **Rung 5** — why the contract allows it: read the contract, then the issue.
+  all), `mwdev_interface` (does the tree obey its interface).
+- **Rung 5** — why the interface allows it: read the interface, then the issue.
 - **Assumption checks** — `mwdev_provenance` (which artifacts the engine is really reading),
   `mwdev_coverage`, `mwdev_sources`.
 
-## The language contract
+## The language interface
 
 Jargon in a diagnosis is a judgment word or an undefined mechanism doing the work of a fact. The rows
 below convert each into its fact. Every row is a sentence that shipped, with its correction.
@@ -142,7 +142,7 @@ The rules the rows encode:
 10. **A conclusion word appears after its evidence rather than instead of it.** "Decisive" survives only in its
     defined gauntlet sense (see `packages/mailwoman/lib/eval-harness/gauntlet/ablation-expectation.md`); as
     praise it is deleted and the evidence stands alone.
-11. **A decision is specified.** "One judgment call needs your eyes" → the contract being changed, both
+11. **A decision is specified.** "One judgment call needs your eyes" → the interface being changed, both
     options, and what each costs. "Needs your eyes" is a handoff heading rather than a description: the item
     under it states the decision.
 12. **Stock forms are banned.** The full list lives in `.claude/output-styles/mailwoman-development.md`
@@ -156,15 +156,15 @@ Written (shipped on #1814):
 
 > One judgment call needs your eyes
 >
-> #1814 changes a tested contract. geocode-core-place-country.test.ts pinned #1738's "a disagreeing bearer
+> #1814 changes a tested interface. geocode-core-place-country.test.ts pinned #1738's "a disagreeing bearer
 > keeps the posterior soft"; the fix withholds it. My argument is that at w = 1 the soft anchor overturns a
 > 0.88 prominence lead by 0.04 — a prior that decides is not a prior — and Montréal's outcome is unchanged
 > either way. The alternative (keep it at a reduced weight) needs a measured weight and has no population
 > to measure on. That's flagged on the PR.
 
-The same report, written against this skill's contract:
+The same report, written against this skill's interface:
 
-> #1814 changes a tested contract. When someone types `Queen Street, Bristol`, the resolver picks between
+> #1814 changes a tested interface. When someone types `Queen Street, Bristol`, the resolver picks between
 > the two Bristols by adding two numbers: prominence (how big and well-known the place is) and a country
 > guess — a small model that reads the whole input and outputs a probability per country.
 >

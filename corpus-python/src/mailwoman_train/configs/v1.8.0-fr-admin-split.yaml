@@ -1,22 +1,22 @@
 # === v1.8.0-fr-admin-split (surpass-v1.5.0, the international admin-split run) ====================
-# Clone of v1.5.0-fr-order (the production default, model-card 4.6.0) with EXACTLY ONE added change:
-# the synth-fr-admin-split source. It teaches the model to SPLIT the département out of the locality on
+# Clone of v1.5.0-fr-order (the production default, model-card 4.6.0) with exactly one added change:
+# the synth-fr-admin-split source. It teaches the model to split the département out of the locality on
 # bare/space/comma French place rows ("Thauron, Creuse" -> locality=Thauron, region=Creuse. not the
 # merged/dropped failure). The model's admin-split detector is overfit to the US "City, ST ZIP"
 # template. non-US formats fuse the trailing admin token into the locality. Unlike US (situs-cascade
 # shielded), the FR coordinate is the admin centroid, so this split moves the shipped coordinate.
 #
-# WHY IT WON'T WASH (v0.9.2 / v1.7.0 traps): (1) anchor-ON by construction — real BAN postcodes (99.9%
-# land the anchor); FR postcode is TRAILING like the US, so the anchor REINFORCES the split (the v0.9.2
+# why IT WON'T wash (v0.9.2 / v1.7.0 traps): (1) anchor-on by construction — real BAN postcodes (99.9%
+# land the anchor); FR postcode is trailing like the US, so the anchor reinforces the split (the v0.9.2
 # German wash was positional, leading-PLZ — scar is conditional rather than universal). (2) Pre-GPU self-
-# validation PASSED: splitting the département reduces collision-commune coordinate error -61%, merge
+# validation passed: splitting the département reduces collision-commune coordinate error -61%, merge
 # resolves 0% (docs/articles/evals/2026-06-19-fr-admin-split-prevalidation.md). use_conventions_loss_mask
 # stays off (absent here. would -inf the FR street_prefix the corpus carries -> loss explosion).
 #
-# GOAL / CHECK: grade the ASSEMBLED anchor-ON coordinate rather than label-F1. Live check: FR centroid-shift vs
+# goal / check: grade the assembled anchor-on coordinate rather than label-F1. Live check: FR centroid-shift vs
 # v1.5.0 on the held-out commune set (mean <= 0.95x + significant) and US guardrail (mean regress <=1%
 # rel, p90 <=0.1km) and #727 diacritic (Lozère -> region rather than "ère"). Not promoted without operator GO.
-# CORPUS: corpus-v0.5.0 (690 parquet files verbatim) + synth-fr-admin-split (60k BAN rows) overlay -> R2 -> sync_v080.
+# corpus: corpus-v0.5.0 (690 parquet files verbatim) + synth-fr-admin-split (60k BAN rows) overlay -> R2 -> sync_v080.
 # Launch: cd corpus-python && modal run -d -m launch.train_remote --config v1.8.0-fr-admin-split.yaml --resume none
 data:
   corpus_dir: /data/corpus/versioned/v0.8.0-fr-admin-split/corpus-v0.8.0-fr-admin-split
@@ -35,13 +35,13 @@ data:
     usgov-hrsa-fqhc: 2.0
     usgov-imls-pls: 2.0
     usgov-nad: 1.0
-    state-ia-contractors: 2.0
+    state-ia-builders: 2.0
     state-tx-notaries: 1.5
     state-ny-notaries: 2.0
     deepseek-kryptonite: 3.0
     synth-intersection: 1.0
     synth-german: 6.0
-    # THE #560 recovery change: reversed-order (postcode-first) FR — teaches the post-postcode
+    # the #560 recovery change: reversed-order (postcode-first) FR — teaches the post-postcode
     # house_number the canonical-only BAN training never showed. First-pass weight 3.0 (moderate. the
     # recipe output carries both orders via --reversed-fraction, so it won't over-skew canonical FR). Bump if
     # the step-2000 eval shows insufficient reversed-FR signal.

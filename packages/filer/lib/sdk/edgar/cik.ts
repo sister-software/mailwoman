@@ -9,7 +9,7 @@ import { canonicalizeOrganizationName } from "@mailwoman/record"
 import type { Tagged } from "type-fest"
 
 /**
- * SEC EDGAR's Central Index Key: always a zero-padded 10-digit string. Branded over `string`, mirroring
+ * SEC edgar's Central Index Key: always a zero-padded 10-digit string. Branded over `string`, mirroring
  * {@linkcode FRN}'s (`frn.ts`) identical rationale — a bare, unpadded numeric CIK would collide with itself under a
  * naive string comparison once padding is inconsistently applied.
  */
@@ -18,7 +18,7 @@ export type CIK = Tagged<string, "CIK">
 const CIK_PATTERN = /^\d{10}$/
 
 /**
- * Predicate for a valid {@link CIK}: exactly 10 ASCII digits, zero-padded.
+ * Predicate for a valid {@link CIK}: exactly 10 ascii digits, zero-padded.
  */
 export function isCIK(value: unknown): value is CIK {
 	return typeof value === "string" && CIK_PATTERN.test(value)
@@ -117,16 +117,16 @@ export async function fetchCompanyTickers(client: SECGetClient): Promise<Company
 }
 
 /**
- * EDGAR's `cik-lookup-data.txt` — the full registrant index, including entities without a ticker. The format is one
+ * Edgar's `cik-lookup-data.txt` — the full registrant index, including entities without a ticker. The format is one
  * entry per line, colon-delimited:
  *
- *     COMPANY NAME:0001234567:
+ *     company name:0001234567:
  *
  * There is no ticker column (the empty third field is always blank). ~1,054,085 entries covering 40 MB. read the file
  * once and keep the result rather than reparsing it per query.
  *
  * An entry whose CIK won't parse is skipped without throwing — this is a flat file rather than SEC's documented API
- * shape, and a malformed line is the rule rather than the exception. A CIK that rounds to zero (EDGAR pads to 10
+ * shape, and a malformed line is the rule rather than the exception. A CIK that rounds to zero (edgar pads to 10
  * digits) is also skipped.
  *
  * **1,054,085 entries → one `resolveCIKCandidates` call scores all of them.** The function does a single O(n) pass with
@@ -217,7 +217,7 @@ function canonicalOf(name: string): string {
 /**
  * Score every `tickers` entry against `companyName` (both sides reduced through
  * {@linkcode canonicalizeOrganizationName} before comparison) and return every candidate at or above `minScore`,
- * highest score first — NEVER a single pick. See the module docstring for the false-identity-link rationale.
+ * highest score first — never a single pick. See the module docstring for the false-identity-link rationale.
  *
  * **The tie rule is the actual enforcement mechanism rather than the docstring alone.** Sorting by score and reporting
  * `score` per candidate is necessary but not sufficient — a caller that also passes `limit: 1` (the natural thing to do
@@ -225,10 +225,10 @@ function canonicalOf(name: string): string {
  * tie for the TOP score is reported in full regardless of `limit`: querying `"American Broadband"` against a ticker
  * file naming both `"American Broadband LLC"` and `"American Broadband, Inc."` (disjoint CIKs, identical canonical
  * form) with `limit: 1` still returns both, each at score `1` — the exact 3a lesson this module exists to not repeat.
- * `limit` only ever trims the tail STRICTLY BELOW the top score.
+ * `limit` only ever trims the tail strictly below the top score.
  *
  * **Candidates are collapsed to one row per CIK before any of that runs, and the tie rule depends on it.**
- * `company_tickers.json` carries one row per TICKER, so a registrant filed under several share classes appears several
+ * `company_tickers.json` carries one row per ticker, so a registrant filed under several share classes appears several
  * times under a single CIK — resolving `"Liberty Broadband Corporation"` on 2026-08-03 returned CIK `0001611983` four
  * times, each scoring 1.0, and the same phantom tie appeared for Comcast, AT&T, T-Mobile and Telephone and Data
  * Systems. Left uncollapsed those duplicates trip the tie rule, which then suppresses `limit` and hands a caller the

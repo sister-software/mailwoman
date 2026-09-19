@@ -142,7 +142,7 @@ New core helpers follow the acronym-casing convention (`readJSONL` rather than `
 - Both `./sdk/cli` and `./sdk/test` are published subpath exports (5.x) — they become **deprecated re-export shims** pointing at the new modules, removed at the next major (bundle with the #875 batch). New subpaths `./cli-kit`, `./test-kit` added to **both** exports maps (dev `node→.ts` and `publishConfig.exports`).
 - `sdk` submodule meaning is restored: data acquisition only. Add one line to AGENTS.md saying so.
 
-Commands remain TSX (compiled); tool modules in owning workspaces remain plain `.ts` (run directly under node during dev). A tool module's contract: `export async function run(options: X, report?: (line: string) => void): Promise<Result>` — no argv access, no `process.exit`, throw on failure. The command owns argv (zod), rendering, and exit codes. This is the isolation boundary that makes tools testable without Ink.
+Commands remain TSX (compiled); tool modules in owning workspaces remain plain `.ts` (run directly under node during dev). A tool module's interface: `export async function run(options: X, report?: (line: string) => void): Promise<Result>` — no argv access, no `process.exit`, throw on failure. The command owns argv (zod), rendering, and exit codes. This is the isolation boundary that makes tools testable without Ink.
 
 ## 5. Phasing (one PR each, sequenced)
 
@@ -157,9 +157,9 @@ Commands remain TSX (compiled); tool modules in owning workspaces remain plain `
 
 Phase 5 last because the checks guard releases — nothing else may wobble while they move. Phases 1/2/4 are independent after 0.
 
-## 6. Risks + contracts
+## 6. Risks + interfaces
 
-- **Check parity is the hard contract:** `eval promote`/`eval gauntlet` must reproduce the old scripts' exit codes, stdout verdict lines consumed by the operator, and artifact paths (ledger append command printed on pass). Run both on the same model before deleting.
+- **Check parity is the hard interface:** `eval promote`/`eval gauntlet` must reproduce the old scripts' exit codes, stdout verdict lines consumed by the operator, and artifact paths (ledger append command printed on pass). Run both on the same model before deleting.
 - **Reference repoints** (enumerated during each phase's plan): RELEASING.md, `.agents/skills/{mailwoman-release,wof-build,night-shift,eval-model}`, `.pi/prompts/release-check.md`, root `package.json` scripts (`ci:smoke` untouched), workflows.
 - **Published-surface changes:** resolver-wof-sqlite loses 4 bins (breaking, accepted); `mailwoman` `./sdk/*` shimmed not removed; `mailwoman` gains `@mailwoman/tiger` (+ possibly resolver-wof-sqlite) deps — check publish weight impact is nil (deps already in the workspace tree).
 - **Pastel flag-prop caveat** (AGENTS.md): kebab flags bind lowercase-acronym props (`--resolve-db` → `resolveDB`) — schema keys must match Pastel's derivation; keep the existing exception note.

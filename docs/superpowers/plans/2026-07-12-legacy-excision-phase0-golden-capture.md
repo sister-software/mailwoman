@@ -1,6 +1,6 @@
 # Legacy Excision Phase 0 — Golden Capture & Archive Probe Implementation Plan
 
-> **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
+> **For agentic workers:** required sub-skill: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
 **Goal:** Capture the four golden-evidence artifacts (spec §Evidence capture) and prove the npm archive works, before any swap or deletion of the v1 rules parser lands.
 
@@ -564,7 +564,7 @@ git commit -m "feat(phase0): capture /v1/parse rules-engine goldens + rare-label
  * @author Teffen Ellis, et al.
  *
  *   Phase-0: golden `/parse` wire responses from the CURRENT (rules-backed) libpostal drop-in,
- *   captured in-process via Hono's `app.request()` — exact bytes of the compatibility contract.
+ *   captured in-process via Hono's `app.request()` — exact bytes of the compatibility interface.
  *   The engine below mirrors `cli.ts`'s `serve()` wiring verbatim. Run from the repo root:
  *   `node libpostal/dev-tools/capture-parse-golden.run.ts`
  */

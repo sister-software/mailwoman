@@ -52,7 +52,7 @@ Use runtime schemas at external data boundaries rather than as a general-purpose
 
 - Keep `@hono/zod-openapi` where schemas both validate HTTP requests and generate OpenAPI.
 - Validate environment variables before deriving typed configuration.
-- Keep MCP tool input schemas while the SDK consumes Zod contracts.
+- Keep MCP tool input schemas while the SDK consumes Zod interfaces.
 - Validate decoded eval and corpus records when malformed persisted data would otherwise enter the runtime.
 - Validate structured values embedded in CLI arguments after `CommandSpec` has parsed the argument itself.
 - Test native command validation through `CLIUsageError` rather than through a schema library's error class.

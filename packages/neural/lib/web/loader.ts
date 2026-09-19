@@ -7,7 +7,7 @@
  *   already browser-safe — it doesn't touch Node fs) with a fresh `WebONNXRunner`, and returns a
  *   ready-to-use `NeuralAddressClassifier`.
  *
- *   V1 strategy: fetch both `model.onnx` and `tokenizer.model` over HTTP from caller-provided URLs
+ *   V1 strategy: fetch both `model.onnx` and `tokenizer.model` over http from caller-provided URLs
  *   (typically pointing at the same static-asset bundle that ships the resolver's slim WOF DB). The
  *   neural weights package `@mailwoman/neural-weights-en-us` is the canonical source of those two
  *   files. for a static deploy, copy them into the public bundle and pass the resulting URLs.
@@ -34,13 +34,13 @@ export { detectPairIndexCountry, resolvePairIndexCountry, resolvePairIndexForTex
 /**
  * One fetched PIX1 placetype-pair index (placetype-pair-prior arc, #1278 browser wiring) as the loader retained it.
  *
- * Phase 2 (#1278 locale-hint wiring) changed the load contract: because locale-hint detects the country PER PARSE from
+ * Phase 2 (#1278 locale-hint wiring) changed the load interface: because locale-hint detects the country PER parse from
  * the input text (a US and a GB address in the same session need different indexes), the loader can no longer pick one
  * live resolver at load time. So every successfully-fetched index is now constructed into a live
  * {@link PairIndexResolver} and retained here, tagged by its header country — the per-parse selection (see
  * {@link LoadResult.selectPairIndexForText}) chooses among them at decode time. (#1300's load-time country restriction —
  * construct only the one matching index — is superseded. the `country` load-option survives as an optional
- * CONFIG-DEFAULT posture pin, see {@link LoadFromURLsOptions.country}.)
+ * config-default posture pin, see {@link LoadFromURLsOptions.country}.)
  */
 /**
  * Absent asset — a soft-feed sibling that was never published rather than a failure.
@@ -69,7 +69,7 @@ export interface LoadResult {
 	/**
 	 * Give the model's native memory back.
 	 *
-	 * The ONNX session keeps its weights and arenas in the WASM heap (or on the GPU), outside anything the JavaScript
+	 * The ONNX session keeps its weights and arenas in the wasm heap (or on the GPU), outside anything the JavaScript
 	 * garbage collector owns, so dropping this result frees the wrapper and leaves the model resident. A host that loads
 	 * more than one bundle over a page's life — a version switch, a backend-force toggle, compare mode — has to call this
 	 * on the bundle it is replacing, or each load adds a model that never comes back.
@@ -94,7 +94,7 @@ export interface LoadResult {
 	pairIndexes: readonly LoadedPairIndex[]
 	/**
 	 * Per-parse placetype-pair selection (#1278 phase 2) — the primary path. Runs `@mailwoman/query-shape` +
-	 * `@mailwoman/locale-hint` over `text` to derive a country subtag from its STRUCTURAL shape (postcode format /
+	 * `@mailwoman/locale-hint` over `text` to derive a country subtag from its structural shape (postcode format /
 	 * script. never place-name dictionaries — bitter-lesson-safe), then returns the {@link LoadedPairIndex} resolver
 	 * whose header country matches, wrapped as a ready-to-spread `placetypePair` option. No matching index (or no indexes
 	 * loaded) → `undefined`, which a caller spreads as `placetypePair: undefined` → the classifier's `opts?.placetypePair
@@ -138,7 +138,7 @@ export interface LoadFromURLsOptions {
 	 */
 	modelCardURL?: string
 	/**
-	 * Runner options (WebGPU toggle, fixed sequence length, WASM path override).
+	 * Runner options (WebGPU toggle, fixed sequence length, wasm path override).
 	 */
 	runner?: WebONNXRunnerOpts
 	/**
@@ -150,8 +150,8 @@ export interface LoadFromURLsOptions {
 	postcodeBinaryURLs?: readonly string[]
 	/**
 	 * URLs to one or more PIX1 placetype-pair indexes (`pair-index-<cc>.bin`, placetype-pair-prior arc — the GB
-	 * dependent_locality retrieval channel, #1278). Each binary is OPTIONAL and fetched TOLERANTLY (the
-	 * `postcodeBinaryURLs` contract): a 404/network failure/corrupt file is skipped with a loud `console.warn` and never
+	 * dependent_locality retrieval channel, #1278). Each binary is optional and fetched tolerantly (the
+	 * `postcodeBinaryURLs` interface): a 404/network failure/corrupt file is skipped with a loud `console.warn` and never
 	 * blocks the classifier load — older HF release versions ship no pair indexes at all.
 	 *
 	 * **Phase 2 (#1278 locale-hint wiring) — load all, select per parse.** Every fetched index is constructed into a live
@@ -164,7 +164,7 @@ export interface LoadFromURLsOptions {
 	 */
 	pairIndexURLs?: readonly string[]
 	/**
-	 * OPTIONAL default posture for the placetype-pair prior — a locale ("en-gb") or bare ISO country code ("gb"),
+	 * Optional default posture for the placetype-pair prior — a locale ("en-gb") or bare ISO country code ("gb"),
 	 * case-insensitive (reduced to its country subtag via {@link resolvePairIndexCountry}, the node `localeCountry`
 	 * derivation). When provided and a fetched index carries a matching header country, that index becomes the
 	 * classifier's config-level `placetypePair` default — the posture a parse falls back to when the per-parse
@@ -176,14 +176,14 @@ export interface LoadFromURLsOptions {
 	 * behavior change from #1300: omission no longer defaults to `"us"` or restricts loading — it means "detect per
 	 * parse."
 	 *
-	 * There is still no browser-side AUTO-detection at LOAD time (nothing here knows a locale before any text arrives);
+	 * There is still no browser-side auto-detection at load time (nothing here knows a locale before any text arrives);
 	 * detection happens per parse, on the actual input, in {@link LoadResult.selectPairIndexForText}.
 	 */
 	country?: string
 	/**
 	 * URL to the gazetteer-anchor lexicon JSON (`anchor-lexicon-v1.json`, #464 — the in-repo source is
 	 * `data/gazetteer/anchor-lexicon-v1.json`). Gazetteer-trained models (v4.2.0+, whose ONNX declares the
-	 * `gazetteer_features`/`gazetteer_confidence` inputs) REQUIRE this clue at inference: running them on the zero-filled
+	 * `gazetteer_features`/`gazetteer_confidence` inputs) require this clue at inference: running them on the zero-filled
 	 * fallback is the measured train/inference mismatch that wrecks segmentation ("the zero-fill trap",
 	 * CONTRIBUTING_MODEL_WORK.mdx eval invariants).
 	 *
@@ -196,7 +196,7 @@ export interface LoadFromURLsOptions {
 	/**
 	 * URL to the country-surface lexicon JSON (`country-surface-lexicon-v1.json`, #1104 — the in-repo source is
 	 * `data/gazetteer/country-surface-lexicon-v1.json`). Country-channel models (v6.2.0+, whose ONNX declares the
-	 * `country_features`/`country_confidence` inputs) REQUIRE this clue at inference — same zero-fill trap as the
+	 * `country_features`/`country_confidence` inputs) require this clue at inference — same zero-fill trap as the
 	 * gazetteer. Defaults to `country-surface-lexicon-v1.json` next to `modelURL`; a fetch miss does not throw, but a
 	 * country-trained model with no lexicon runs country-off (loud `console.error`, structurally valid). Pass `null` to
 	 * skip.
@@ -211,12 +211,12 @@ export interface LoadFromURLsOptions {
 	streetTypeLexiconURL?: string | null
 	/**
 	 * URL to the locality-surface evidence lexicon (`locality-surface-lexicon-v6.json`, Option-A bundle — a data-root
-	 * artifact, ~7 MB. ships as a weights-package sibling). Same contract as {@link streetTypeLexiconURL}.
+	 * artifact, ~7 MB. ships as a weights-package sibling). Same interface as {@link streetTypeLexiconURL}.
 	 */
 	localitySurfaceLexiconURL?: string | null
 	/**
 	 * Channel choreography (#464, v0.9.13 postcode fix): zero the gazetteer clue on pieces adjacent to a postcode-anchor
-	 * hit. Defaults to TRUE — it pairs with the train-time half on every gazetteer-trained bundle (v4.2.0+) and is inert
+	 * hit. Defaults to true — it pairs with the train-time half on every gazetteer-trained bundle (v4.2.0+) and is inert
 	 * when either channel is absent.
 	 */
 	suppressGazetteerNearPostcode?: boolean
@@ -227,7 +227,7 @@ export interface LoadFromURLsOptions {
 	addressSystemConventions?: NeuralAddressClassifierConfig["addressSystemConventions"] | null
 	/**
 	 * Span bridge (v4.4.0 declared behavior): merge same-tag spans split at intra-token punctuation ("P.O. Box").
-	 * Defaults to TRUE per the v4.4.0 ship config (model-card.json: po_box 60.4 without, 89.1 with). Pass false to
+	 * Defaults to true per the v4.4.0 ship config (model-card.json: po_box 60.4 without, 89.1 with). Pass false to
 	 * disable for pre-bridge bundles where parity of that restriction matters.
 	 */
 	bridgePunctuationGaps?: boolean
@@ -238,7 +238,7 @@ export interface LoadFromURLsOptions {
 }
 
 /**
- * Fetch + decode the postcode anchor binaries TOLERANTLY, then merge the ones that loaded.
+ * Fetch + decode the postcode anchor binaries tolerantly, then merge the ones that loaded.
  *
  * Each `postcode-<cc>.bin` is optional: the postcode anchor is a soft ranking channel rather than a required model
  * input, so a single missing/404 binary must never reject the whole classifier load. This is the fix for the 2026-07
@@ -247,10 +247,10 @@ export interface LoadFromURLsOptions {
  * `loadNeuralClassifierFromURLs` → `runtime.ready` never fired → the demo input stayed permanently disabled even though
  * the model, tokenizer, and the other two postcode binaries were all fine.
  *
- * Behavior: fetch each binary independently. SKIP any that fail (404 or network) with a loud `console.warn` naming the
+ * Behavior: fetch each binary independently. skip any that fail (404 or network) with a loud `console.warn` naming the
  * URL + the failure. merge the successes via {@link mergeAnchorLookups}. If all fail, return `undefined` — identical to
  * the no-`postcodeBinaryURLs`-configured path, so the classifier still loads (anchor-off identity, ranking degrades
- * slightly but nothing blocks). A PRESENT-but-corrupt binary (bad magic) throws inside `PostcodeBinaryResolver`; that
+ * slightly but nothing blocks). A present-but-corrupt binary (bad magic) throws inside `PostcodeBinaryResolver`; that
  * is caught here too and treated as a skip — a garbage optional asset should degrade rather than brick the demo.
  */
 async function loadPostcodeAnchorLookup(
@@ -314,7 +314,7 @@ function defaultStreetTypeLexiconURL(modelURL: string, declaredName?: string): s
 
 /**
  * Default location of the locality-surface evidence lexicon: a sibling of the model file, under the card-declared
- * generation when the card names one. The bare name is the LEGACY fallback for pre-declaration bundles — deriving it
+ * generation when the card names one. The bare name is the legacy fallback for pre-declaration bundles — deriving it
  * for a card-containing bundle is how the demo ran a locality_surface-required model with the channel silently unfed
  * (the tolerant fetch turns a wrong generation into a 404 into channel-off, with no error anywhere).
  */
@@ -323,7 +323,7 @@ function defaultLocalitySurfaceLexiconURL(modelURL: string, declaredName?: strin
 }
 
 /**
- * The card-declared lexicon FILENAME for an evidence channel (`requires.<channel>.lexicon`) — the browser analogue of
+ * The card-declared lexicon filename for an evidence channel (`requires.<channel>.lexicon`) — the browser analogue of
  * the Node resolver's declared-artifact families. `undefined` when the card is absent or silent for the channel.
  */
 function declaredLexiconName(card: Record<string, unknown> | null, channel: string): string | undefined {
@@ -472,7 +472,7 @@ export async function loadNeuralClassifierFromURLs(opts: LoadFromURLsOptions): P
 
 /**
  * Loud degrade (#464): the warmup `infer([0])` above forced session creation, so the graph's declared inputs are now
- * known. A gazetteer/anchor-TRAINED model running on the zero-filled fallback is a measured failure mode
+ * known. A gazetteer/anchor-trained model running on the zero-filled fallback is a measured failure mode
  * (train/inference mismatch — "the zero-fill trap"), not a quality-neutral default. without this check the only symptom
  * would be silently degraded parses. (Pre-fix, the symptom was worse still: ORT's cryptic `input 'gazetteer_features'
  * is missing in 'feeds'`.) The loader still returns a working classifier — structural fallback, loud console.
@@ -583,8 +583,8 @@ function warnOnUnfedTrainedChannels(
 }
 
 /**
- * Fetch + parse an optional JSON asset TOLERANTLY: a missing file (404, any non-OK status, or a network failure)
- * returns null — the caller decides whether that matters. A PRESENT-but-malformed payload throws loudly via `parse` —
+ * Fetch + parse an optional JSON asset tolerantly: a missing file (404, any non-OK status, or a network failure)
+ * returns null — the caller decides whether that matters. A present-but-malformed payload throws loudly via `parse` —
  * never silently zero-fill off bad data.
  */
 async function fetchTolerantJSON<T>(
@@ -616,7 +616,7 @@ async function fetchGazetteerLexicon(url: string, fetchImpl: typeof fetch): Prom
 }
 
 /**
- * Fetch + parse `country-surface-lexicon-v1.json` (#1104) — same contract as `fetchGazetteerLexicon`.
+ * Fetch + parse `country-surface-lexicon-v1.json` (#1104) — same interface as `fetchGazetteerLexicon`.
  */
 async function fetchCountryLexicon(url: string, fetchImpl: typeof fetch): Promise<CountryLexicon | null> {
 	return fetchTolerantJSON(url, fetchImpl, (raw) =>
@@ -640,8 +640,8 @@ async function fetchModelCardJSON(url: string, fetchImpl: typeof fetch): Promise
 }
 
 /**
- * Browser-side analogue of `weights.readLabelsFromModelCard`. Same shape contract: returns the `labels` array only when
- * the card has a non-empty string array, throws on a present-but-malformed field, returns `null` when the field is
+ * Browser-side analogue of `weights.readLabelsFromModelCard`. Same shape interface: returns the `labels` array only
+ * when the card has a non-empty string array, throws on a present-but-malformed field, returns `null` when the field is
  * simply absent (legacy pre-v0.4.0 card).
  */
 function labelsFromModelCard(card: Record<string, unknown>, url: string): readonly string[] | null {
@@ -683,7 +683,7 @@ function toBase64(bytes: Uint8Array): string {
 /**
  * The char-path branch of {@link loadNeuralClassifierFromURLs} (#2164): fetch the graph and the sealed character
  * vocabulary, no tokenizer, no lexicons, no postcode binaries and no pair index — the char path is channel-free by
- * contract, and a `WebONNXRunner` already carries `inferChars`.
+ * interface, and a `WebONNXRunner` already carries `inferChars`.
  */
 async function loadCharClassifierFromURLs(
 	opts: LoadFromURLsOptions,
@@ -709,7 +709,7 @@ async function loadCharClassifierFromURLs(
 	const classifier = new NeuralAddressClassifier({
 		charEncoder: {
 			vocabulary: parseCharVocabulary(vocabularyJSON, charVocabURL),
-			contract: { maxUnits: encoder.maxUnits, maxUnitWidth: encoder.maxUnitWidth, ctxChars: encoder.ctxChars },
+			interface: { maxUnits: encoder.maxUnits, maxUnitWidth: encoder.maxUnitWidth, ctxChars: encoder.ctxChars },
 		},
 		runner,
 		...(labels ? { labels } : {}),

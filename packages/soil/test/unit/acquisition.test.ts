@@ -6,8 +6,8 @@
  *   The acquisition side: the failure body Soil Data Access actually returns, the metadata that decides an
  *   artifact's vintage and its licence, and the farmland scope that decides whether two rows are comparable.
  *
- *   THE EXCEPTION FIXTURE IS THE LIVE SERVICE'S OWN BODY, captured from a query with a bad column name. Its
- *   twin — a query that exceeds the server's own timeout — returns the same document shape on an HTTP 200,
+ *   the exception fixture is the live service'S own body, captured from a query with a bad column name. Its
+ *   twin — a query that exceeds the server's own timeout — returns the same document shape on an http 200,
  *   which is why the detection is on the body rather than on the status.
  */
 
@@ -17,7 +17,7 @@ import { FarmlandScope, farmlandScope, soilLayerName } from "@mailwoman/soil/voc
 import { describe, expect, it } from "vitest"
 
 /**
- * The live service's answer to `SELECT nosuchcolumn FROM sacatalog`, verbatim, HTTP 400.
+ * The live service's answer to `select nosuchcolumn from sacatalog`, verbatim, http 400.
  */
 const INVALID_COLUMN = `<?xml version='1.0' encoding="UTF-8" standalone="no" ?>
 <ServiceExceptionReport xmlns="http://www.opengis.net/ogc" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.opengis.net/ogc http://schemas.opengis.net/wms/1.1.1/OGC-exception.xsd">
@@ -27,7 +27,7 @@ Invalid query: Invalid column name &#39;nosuchcolumn&#39;.</ServiceException>
 `
 
 /**
- * The same document a server-side timeout returns — on an HTTP 200, which is the whole trap.
+ * The same document a server-side timeout returns — on an http 200, which is the whole trap.
  */
 const TIMED_OUT = `<?xml version='1.0' encoding="UTF-8" standalone="no" ?>
 <ServiceExceptionReport xmlns="http://www.opengis.net/ogc">
@@ -70,7 +70,7 @@ describe("readServiceException", () => {
 })
 
 /**
- * The shape of the FGDC document NRCS ships inside every survey-area archive, trimmed to the elements this layer reads.
+ * The shape of the fgdc document nrcs ships inside every survey-area archive, trimmed to the elements this layer reads.
  * The dates and the scale are `IA153`'s real ones.
  */
 const FGDC = `<metadata><idinfo><citation><citeinfo><origin>

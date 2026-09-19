@@ -6,14 +6,14 @@
  *   Hierarchy campaign R4c — build the PCN1 placetype census from the shipped WOF admin DB. Two
  *   pieces live here: {@link PLACETYPE_PROJECTION}, the executable form of the projection table in
  *   plan/reference/placetype-evidence.mdx ("no placetype gets its own tag. every placetype gets a
- *   projection"), and {@link buildPlacetypeCensus}, which counts each parent's children THROUGH that
+ *   projection"), and {@link buildPlacetypeCensus}, which counts each parent's children through that
  *   projection.
  *
  *   The census counts what the source can actually answer. `admin-global-priority.db` carries nine
  *   placetypes (locality, localadmin, neighbourhood, borough, county, macrocounty, region,
  *   macroregion, country) because `ADMIN_PLACETYPES` in `admin/ingest-wof.ts` allowlists exactly
  *   those. the projection table maps all 34 in the WOF vocabulary. The other 25 are absent from the
- *   artifact by BUILD RECIPE rather than by WOF's contents — which is COVERAGE rather than fact (the
+ *   artifact by build recipe rather than by WOF's contents — which is coverage rather than fact (the
  *   meaning-of-zero rule), and why the artifact ships positive counts only and the reader treats a
  *   missing node as neutral. `mailwoman gazetteer granularity` measures the difference.
  *
@@ -36,7 +36,7 @@ import { DatabaseClient } from "@mailwoman/sqlite/client"
  * build into a throw at the worst moment. Sorted to keep the diff readable when WOF grows the vocabulary.
  *
  * Pinned to `WhosOnFirstPlacetype` (`@mailwoman/core/resources/whosonfirst`) with `satisfies`, the same discipline
- * `WOF_VENUE_STRUCTURE_PLACETYPES` uses: this list stops COMPILING if it names something outside the vocabulary. The
+ * `WOF_VENUE_STRUCTURE_PLACETYPES` uses: this list stops compiling if it names something outside the vocabulary. The
  * type is the authority on membership. this array exists because a type union cannot be enumerated at runtime, which is
  * what the completeness test needs. A hand-maintained copy drifted once already — it was missing `custom`.
  */
@@ -108,7 +108,7 @@ export const PLACETYPE_PROJECTION: Readonly<Record<string, ComponentTag | null>>
 	disputed: "country",
 	postalcode: "postcode",
 	venue: "venue",
-	// Venue sub-structure. A WOF `building`/`campus` place carries a venue NAME ("Empire State Building", "MIT
+	// Venue sub-structure. A WOF `building`/`campus` place carries a venue name ("Empire State Building", "MIT
 	// Campus"); the interior subdivisions carry a unit designator ("Concourse B", "Terminal 4", "West Wing"). The
 	// admin build stocks none of these today — that is the ingest allowlist (`ADMIN_PLACETYPES`), not the source, and
 	// measuring the difference is what `mailwoman gazetteer granularity` exists for.
@@ -141,7 +141,7 @@ export const PLACETYPE_PROJECTION: Readonly<Record<string, ComponentTag | null>>
 }
 
 /**
- * The projection every census parent is keyed by — a census node describes the children of a PLACE, and the placetypes
+ * The projection every census parent is keyed by — a census node describes the children of a place, and the placetypes
  * that host address-containing children are the locality-class ones.
  */
 const PARENT_PLACETYPES = ["locality", "localadmin"] as const

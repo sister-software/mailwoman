@@ -5,7 +5,7 @@
  *
  *   Integration tests for `WOFSQLitePlaceLookup` against a real Who's On First SQLite distribution.
  *
- *   These are conditioned on the WOF DB being present on disk — the suite SKIPS (with a clear stderr
+ *   These are conditioned on the WOF DB being present on disk — the suite skips (with a clear stderr
  *   message) if the path doesn't exist. CI runs against the fixture-only suites. operators with the
  *   real DB locally get an extra layer of validation.
  *
@@ -13,7 +13,7 @@
  *
  *   1. `MAILWOMAN_WOF_DB` env var (explicit operator override).
  *   2. `$MAILWOMAN_DATA_ROOT/wof/whosonfirst-data-admin-us-latest.db` (the canonical lab location
- *        documented in the README + handover doc).
+ *        documented in the readme + handover doc).
  *
  *   Assumes the `place_search` FTS5 table is already built (run `mailwoman gazetteer build fts` ahead of
  *   time). The resolver throws a clear error if missing — that's a sufficient signal.

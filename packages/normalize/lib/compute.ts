@@ -30,7 +30,7 @@ export function normalize(raw: string, opts?: NormalizeOpts): NormalizedInput {
 	}
 
 	// 1.5 CJK normalization — strip the postal mark 〒 (byte-fallback OOV that poisons the postcode
-	// parse) and fold full-width ASCII + the ideographic space. Runs after NFC so it sees composed
+	// parse) and fold full-width ascii + the ideographic space. Runs after NFC so it sees composed
 	// forms, before punctuation/whitespace so any gap left by 〒 is then collapsed. No-op off-script.
 	{
 		const r = applyCjkNormalization(text, opts?.postalMark ? { postalMark: opts.postalMark } : {})
@@ -70,7 +70,7 @@ export function normalize(raw: string, opts?: NormalizeOpts): NormalizedInput {
 	{
 		const r = collapseWhitespace(text)
 
-		// Compare the TEXT rather than its length: folding a lone tab to a space is length-preserving, and a
+		// Compare the text rather than its length: folding a lone tab to a space is length-preserving, and a
 		// length test reads that edit as no edit at all.
 		if (r.text !== text) {
 			text = r.text
@@ -100,7 +100,7 @@ export function normalize(raw: string, opts?: NormalizeOpts): NormalizedInput {
 
 		if (lc !== text) {
 			text = lc
-			// Case-fold is identity-length for ASCII + most Latin. map unchanged.
+			// Case-fold is identity-length for ascii + most Latin. map unchanged.
 			transforms.push({ kind: "case_fold", locale: opts.locale ?? "und" })
 		}
 	}

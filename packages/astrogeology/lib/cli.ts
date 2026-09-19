@@ -15,7 +15,7 @@ import { type CommandSpec, renderInkCommand, runNativeCommand } from "mailwoman/
 import { type ComponentType, createElement } from "react"
 
 /**
- * What a command module exports, in the shape mailwoman's filesystem router reads: the contract and the component.
+ * What a command module exports, in the shape mailwoman's filesystem router reads: the interface and the component.
  */
 interface CommandModule {
 	spec: CommandSpec
@@ -23,7 +23,7 @@ interface CommandModule {
 }
 
 /**
- * The COMPILED command modules. The commands are TSX, which Node cannot load from source, so the bin reads
+ * The compiled command modules. The commands are TSX. It Node cannot load from source. Therefore, the bin reads
  * `out/commands/` even when it runs from `lib/`; `lib/` and `out/` are siblings, so one spelling serves both trees.
  */
 const COMMANDS_ROOT = new URL("../out/commands/", import.meta.url)

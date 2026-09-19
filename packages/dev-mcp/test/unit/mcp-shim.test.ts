@@ -4,7 +4,7 @@
  * @author Teffen Ellis, et al.
  *
  *   End-to-end proof of the shim/worker split: a real MCP client spawns the real bin, calls a real tool through the
- *   forked worker, restarts the worker MID-SESSION, and keeps working — the property the split exists for. No stubs
+ *   forked worker, restarts the worker MID-session, and keeps working — the property the split exists for. No stubs
  *   anywhere: a stubbed worker would prove the test's own idea of the IPC protocol, and protocol drift between shim
  *   and worker is precisely the failure this file must catch.
  */
@@ -95,7 +95,7 @@ describe("the never-stale shim", () => {
 
 			expect(report.previous_pid).toBe(beforeStatus.pid)
 			expect(report.new_pid).not.toBe(beforeStatus.pid)
-			// A restart is not a source change: the same tree yields the same TOOL SET.
+			// A restart is not a source change: the same tree yields the same tool SET.
 			//
 			// Deliberately not `new_boot_fingerprint === previous_boot_fingerprint`. That digest covers the newest
 			// source mtime and `git status --porcelain` (`tree-fingerprint.ts`), so it moves whenever anything writes

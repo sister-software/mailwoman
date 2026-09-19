@@ -502,7 +502,7 @@ describe("alignRow — boundary-aligned match preference (the v0.5.0 pilot's Uma
 describe("alignRow — combining-mark / non-Latin name variants (#555)", () => {
 	it("aligns a Bengali country variant instead of quarantining (NFC over-run guard)", () => {
 		// দক্ষিণ কোরিয়া (South Korea, name:ben variant — the row that crashed the v0.5.0 build). The
-		// precomposed য় (U+09DF) is a Bengali nukta combination EXCLUDED from NFC composition, so NFC
+		// precomposed য় (U+09DF) is a Bengali nukta combination excluded from NFC composition, so NFC
 		// *decomposes* it — the source's 13-code-unit form becomes 14. alignRow NFC-normalizes `raw`
 		// before locating spans (#519) and stores the NFC raw, so the country span stays in-bounds vs
 		// the stored raw and the row aligns rather than quarantining as `span-out-of-bounds` (the

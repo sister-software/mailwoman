@@ -362,7 +362,7 @@ node mailwoman/dev-tools/postcode-coherence-coverage.run.ts candidate
 ```
 
 The gauntlet runs behind this record used a private data-root overlay (every entry of `$MAILWOMAN_DATA_ROOT` symlinked
-except `gauntlet/`, which was a real directory) so the shared `regression.db` was never written. Anyone reproducing
+except `gauntlet/`, which was a real directory). Therefore, the shared `regression.db` was never written. Anyone reproducing
 this in the primary checkout rebuilds the artifact in place instead.
 
 ---

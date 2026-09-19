@@ -6,7 +6,7 @@
  *   PIP-containment metric (coordinate-first plan, #273).
  *
  *   Reads the `--out-resolved` dump from oa-resolver-eval.ts (per row: gold OA lat/lon + the
- *   neural-resolved locality's WOF id + the old name-match flag) and tests the NON-GAMEABLE truth:
+ *   neural-resolved locality's WOF id + the old name-match flag) and tests the NON-gameable truth:
  *   does the gold point lie inside the polygon of the resolved WOF locality? This is
  *   name-surface-independent — it rewards a geographically-correct resolve even when WOF's
  *   canonical name ("Plauen") differs from OA's gold ("Plauen Vogtl"). Compares
@@ -16,7 +16,7 @@
  *   numpy).
  *
  *   Usage: node packages/mailwoman/lib/dev-tools/pip-containment.run.ts <resolved.json> [--label
- *   NAME] [--json OUT]
+ *   name] [--json OUT]
  */
 
 import { dataRootPath } from "@mailwoman/core/data-root"

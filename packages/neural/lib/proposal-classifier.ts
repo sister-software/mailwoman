@@ -4,7 +4,7 @@
  * @author Teffen Ellis, et al.
  *
  *   `NeuralProposalClassifier` — adapter that exposes a `NeuralAddressClassifier` as a
- *   `ProposalClassifier` (the `@mailwoman/core/types` contract that the policy registry consumes).
+ *   `ProposalClassifier` (the `@mailwoman/core/types` interface that the policy registry consumes).
  *
  *   Implementation: for each section, run the neural classifier on `section.body`, walk the resulting
  *   `AddressTree`, and emit one `ClassificationProposal` per node whose tag is in the `emits` list.

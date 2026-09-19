@@ -7,13 +7,13 @@
  *   theme has no rows for Pakistan, Bangladesh or Vietnam (the three parquets are 532-byte headers), and the Latin
  *   model has never seen their formats: the Islamabad sector line, the Dhaka trailing postcode, the `Đường`-led street.
  *
- *   This adapter consumes the per-country JSONL `@mailwoman/osm`'s `emit-corpus-jsonl` script writes from a Geofabrik
+ *   This adapter consumes the per-country jsonl `@mailwoman/osm`'s `emit-corpus-jsonl` script writes from a Geofabrik
  *   extract (`{ street, number, postcode?, suburb?, city?, unit?, place?, subdistrict?, district?, province?, lat, lon
- *   }`), the same split the `overture` adapter rides so the corpus package never meets GDAL or a PBF.
+ *   }`), the same split the `overture` adapter rides so the corpus package never meets gdal or a PBF.
  *
  *   ⚠ ODbL. Every row carries `license: "ODbL-1.0"`, which `SHARE_ALIKE_PATTERN` matches: a proprietary-weights build
- *   passes `--exclude-share-alike` and drops these rows at ingest, so they reach the open weights only. That is the
- *   whole licensing contract of this adapter, and the reason `defaultLicense` is not an option.
+ *   passes `--exclude-share-alike` and drops these rows at ingest. Therefore, they reach the open weights only. That is the
+ *   whole licensing interface of this adapter, and the reason `defaultLicense` is not an option.
  *
  *   The mapping keeps to what a person types on the envelope. Mappers put free text in `addr:housenumber` (`House 34,
  *   Road 4, Sector 9`, `Near Askari Towers 2`) and in `addr:street`; a house number is kept only in a designator shape,
@@ -22,9 +22,9 @@
  *   locality, and the head enters the dependent-locality chain last, behind `suburb`, `subdistrict`, `district` and
  *   `place`. `addr:district` is not mapped on its
  *   own: for Vietnam it is the quận below the city, which the country template renders only when no city is present,
- *   so a mapped district with a city would be a component with no span to align to and the row would quarantine.
+ *. Therefore, a mapped district with a city would be a component with no span to align to and the row would quarantine.
  *
- *   | JSONL field                                | ComponentTag                                              |
+ *   | jsonl field                                | ComponentTag                                              |
  *   | ------------------------------------------ | --------------------------------------------------------- |
  *   | `number`                                   | `house_number` when designator-shaped (`12`, `14/E`, `B-77`) |
  *   | `street`                                   | `street` (keyword included. affix-relabel splits it)      |
@@ -138,7 +138,7 @@ function parseLine(line: string): OSMCorpusRow | null {
 }
 
 /**
- * Map one JSONL row onto the components the corpus asserts, or null when the row has no usable street.
+ * Map one jsonl row onto the components the corpus asserts, or null when the row has no usable street.
  */
 export function componentsForOSMRow(row: OSMCorpusRow): CanonicalRow["components"] | null {
 	const street = clean(row.street)

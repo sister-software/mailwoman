@@ -3,7 +3,7 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Generator for `data/taxonomy.json` — merges the FULL Overture Places category taxonomy snapshot
+ *   Generator for `data/taxonomy.json` — merges the full Overture Places category taxonomy snapshot
  *   with mailwoman's hand-maintained curated overlay. Two committed inputs, one committed output.
  *   the merge is a pure, deterministic function so a regenerate against the same inputs is
  *   byte-identical (the {@link buildTaxonomyTable} → {@link prettyJSON} pair is what the
@@ -16,15 +16,15 @@
  *   Fetched: 2026-07-20 (row count 2117 category rows, excluding the header)
  *   Format : semicolon-delimited, BOM-prefixed — `<category code>; [<hierarchy,path,leaf>]`, where the
  *            path's last element is always the code itself (asserted at parse time).
- *   The old Overture `categories` PROPERTY on the Places feature is retired in Overture's Sept 2026
+ *   The old Overture `categories` property on the Places feature is retired in Overture's Sept 2026
  *   release. this snapshot is the new `taxonomy` property's category vocabulary, pinned as committed
- *   data so the runtime never reaches the network. See `data/PROVENANCE.md`.
+ *   data so the runtime never reaches the network. See `data/provenance.md`.
  *
  *   ── Merge rules ─────────────────────────────────────────────────────────────────────────────────
  *   • Curated records (the 26 in `curated-overlay.json`) are preserved verbatim and win id collisions
  *     with the snapshot (a curated `bank`/`school`/`cafe` keeps its curated hierarchy, `osmTag`, and
  *     `overtureCategories` — the snapshot's same-id row is dropped).
- *   • Overture leaves a curated record already ABSORBS via its `overtureCategories` (e.g. `coffee_shop`
+ *   • Overture leaves a curated record already absorbs via its `overtureCategories` (e.g. `coffee_shop`
  *     → `cafe`, `grocery_store` → `supermarket`, `hiking_trail` → `trail`) are not emitted as
  *     standalone snapshot records. Those leaves belong to their curated canonical id — emitting them
  *     twice would let a snapshot id-phrase (`coffee shop`) shadow the curated synonym (`coffee shop` →
@@ -40,7 +40,7 @@
  *   (reads the committed CSV. the oxfmt pass is the repo law — committed JSON is oxfmt-clean, which raw
  *   `JSON.stringify` can't reproduce). Pass `--fetch` to refresh the CSV snapshot from the source URL
  *   above first (records nothing new about provenance automatically — update this header +
- *   `PROVENANCE.md` by hand when you do). The generator itself is byte-deterministic. oxfmt is too, so
+ *   `provenance.md` by hand when you do). The generator itself is byte-deterministic. oxfmt is too, so
  *   the committed artifact is reproducible, and the merge's data is content-identical to a fresh run
  *   (asserted by `lookup.test.ts`).
  */
@@ -94,8 +94,8 @@ export interface CuratedOverlay {
 /**
  * Parse the Overture categories CSV. Accepts its leading BOM, skips the header row, and splits each `code; [a,b,c]`
  * line. A handful of Overture rows (4 as of the v1.17.0 snapshot — `aircraft_repair`, `ev_charging_station`,
- * `custom_t_shirt_store`, `community_services_non_profits`) carry a display path whose LEAF label differs from the
- * category code the db actually stores. for those the code is APPENDED as the true leaf so the invariant `lookup.ts`'s
+ * `custom_t_shirt_store`, `community_services_non_profits`) carry a display path whose leaf label differs from the
+ * category code the db actually stores. for those the code is appended as the true leaf so the invariant `lookup.ts`'s
  * integrity test relies on (`hierarchy.at(-1) === id`) holds while the display ancestry is preserved. Throws only on a
  * structurally broken row (no code / empty path) or a repeated code.
  */

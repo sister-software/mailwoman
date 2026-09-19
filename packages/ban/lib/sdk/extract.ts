@@ -10,7 +10,7 @@
  *   community tag soup. We stream line-by-line (the national set is 26M rows / ~5 GB uncompressed);
  *   `.csv.gz` inputs are transparently gunzipped.
  *
- *   The columns are located BY NAME off the header row (never by fixed position) so a future BAN
+ *   The columns are located BY name off the header row (never by fixed position) so a future BAN
  *   schema addition can't silently shift the tuple. Values contain no embedded `;` (the dumps are
  *   uniform-arity — verified 23 fields across every département), so a plain split is both correct and
  *   fast. a literal `"` inside a field (rare) is kept verbatim, never treated as a CSV quote wrapper.
@@ -58,7 +58,7 @@ export interface BANAddrRecord {
 	lon: number
 	lat: number
 	/**
-	 * `code_insee` — the commune's stable INSEE key (`nom_commune` is a display name).
+	 * `code_insee` — the commune's stable insee key (`nom_commune` is a display name).
 	 */
 	codeInsee: string | null
 	/**
@@ -174,7 +174,7 @@ export async function* extractBANAddrPoints(csvPath: string): AsyncGenerator<BAN
 
 		if (!numero || !street) continue
 		// Guard the empty-string trap: `Number("")` is 0 (finite), which would write a bogus (0,0) point —
-		// so require a non-empty coord string before parsing, then the finite check catches garbage.
+		//. Therefore, require a non-empty coord string before parsing, then the finite check catches garbage.
 		const lonStr = row.lon?.trim()
 		const latStr = row.lat?.trim()
 

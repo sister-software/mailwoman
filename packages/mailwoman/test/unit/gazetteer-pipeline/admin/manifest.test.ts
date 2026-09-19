@@ -8,7 +8,7 @@
  *   A manifest is only worth its accuracy — `data inventory` already found three shipped artifacts whose
  *   `build_cmd` names a path the workspace regroup moved, and one naming a gitignored scratchpad script.
  *   Those pass every "has a manifest" check and document nothing. So what is asserted here is not that the
- *   fields are populated but that each one is TRUE of the build that produced it.
+ *   fields are populated but that each one is true of the build that produced it.
  */
 
 import { LayerFreshnessPolicy, LayerTier } from "@mailwoman/core/layers"
@@ -19,7 +19,7 @@ const BASE = { buildSHA: "abc1234", createdAt: "2026-08-17T00:00:00.000Z", versi
 
 describe("adminLayerManifest — source is derived from the run", () => {
 	it("names only the folds that actually ingested rows", () => {
-		// The #1015 lesson at its narrowest: the manifest that lagged recorded an INTENTION. A build that read
+		// The #1015 lesson at its narrowest: the manifest that lagged recorded an intention. A build that read
 		// no Overture rows must not claim Overture, whatever the recipe lists.
 		const manifest = adminLayerManifest({ ...BASE, counts: { wof: 100, overture: 0, geonames: 0 } })
 

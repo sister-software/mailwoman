@@ -3,7 +3,7 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Reading an HTML fragment as text, on `htmlparser2` — one rule, read two ways.
+ *   Reading an html fragment as text, on `htmlparser2` — one rule, read two ways.
  *
  *   `stripHTMLToText` (`@mailwoman/core/trust-policies`) answers almost all of this already, and
  *   correctly: it decodes entities, survives a `<` inside an attribute value, and leaves source
@@ -24,7 +24,7 @@ import { normalizeWhitespace } from "#strings/format"
 const NON_PROSE_ELEMENTS = new Set(["script", "style", "template"])
 
 /**
- * Element names whose boundaries end a LINE rather than separating two words — pass to {@linkcode htmlToLayoutText} when
+ * Element names whose boundaries end a line rather than separating two words — pass to {@linkcode htmlToLayoutText} when
  * reading one logical entry per line. A minified document with no literal newline anywhere in it still separates one
  * entry per line this way.
  */
@@ -63,7 +63,7 @@ export const BLOCK_ELEMENTS: ReadonlySet<string> = new Set([
 ])
 
 /**
- * The text of an HTML fragment with SOURCE WHITESPACE RUNS INTACT — the reading for a document that states its columns
+ * The text of an html fragment with source whitespace runs intact — the reading for a document that states its columns
  * as runs of spaces. Entities are decoded, and every whitespace character the document states survives as itself: a
  * caller splitting on a run must include U+00A0 in its own character class, since `&nbsp;` and `&#160;` are the same
  * character and `[ \t]` matches neither.
@@ -115,7 +115,7 @@ export function htmlToLayoutText(html: string, lineBreakElements?: ReadonlySet<s
 }
 
 /**
- * The prose text of an HTML fragment: the same reading, whitespace collapsed to single spaces and trimmed. This is the
+ * The prose text of an html fragment: the same reading, whitespace collapsed to single spaces and trimmed. This is the
  * reading for a value compared or stored as text — one table cell, a service `licenseInfo` block, a tile attribution.
  */
 export function htmlToText(html: string): string {

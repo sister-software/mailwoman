@@ -44,7 +44,7 @@ v2 refinement once a real engagement asks for it.
   alongside. A check failure at the calibrated λ is a _finding about the customer data_, surfaced
   before delivery — which is the product working rather than failing.
 
-## Contract + provenance
+## Interface + provenance
 
 - `fisher-diag-v1` joins the weights-bundle artifact family: versioned filename, md5 in the
   model card's `files_md5` (HF-staged; npm optional per above), captured-at metadata (run id,

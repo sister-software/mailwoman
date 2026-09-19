@@ -2,10 +2,10 @@
 #
 # Version parity is not functional parity: a deployment can serve the right model version while its gazetteer,
 # FST or street tier answers nothing, and every one of those failures produces zero console errors. This runs
-# the `@smoke` browser spec against the DEPLOYED app (`MAILWOMAN_EARTH_URL`) and grades the RESULTS (the
+# the `@smoke` browser spec against the deployed app (`MAILWOMAN_EARTH_URL`) and grades the results (the
 # address_point tier, the WOF cascade, the markers), so a functional regression is visible the day it ships.
 #
-# The same spec also runs against the local preview on every app change. this workflow is the SCHEDULED
+# The same spec also runs against the local preview on every app change. this workflow is the scheduled
 # production half.
 name: Earth smoke
 

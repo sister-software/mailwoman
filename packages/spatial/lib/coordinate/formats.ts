@@ -4,7 +4,7 @@
  * @author Teffen Ellis, et al.
  *
  *   Coordinate-format conversions — the pure-math annotators OpenCage exposes (DMS, geohash,
- *   Maidenhead, MGRS, Web Mercator, qibla direction, sun times). No data, no I/O. each is a
+ *   Maidenhead, mgrs, Web Mercator, qibla direction, sun times). No data, no I/O. each is a
  *   deterministic function of a `{lat, lon}`. {@link coordinateFormatAnnotator} packages them as an
  *   `@mailwoman/annotations` `Annotator`.
  */
@@ -19,12 +19,12 @@ import { MERCATOR_LATITUDE_MAX, MERCATOR_LATITUDE_MIN } from "#coordinate/bounds
 const GEOHASH_BITS_PER_CHAR = 5
 
 /**
- * Southern limit of the MGRS lettered bands. Below it MGRS is undefined and the UPS grid applies instead.
+ * Southern limit of the mgrs lettered bands. Below it mgrs is undefined and the UPS grid applies instead.
  */
 const MGRS_LAT_MIN = -80
 
 /**
- * Northern limit of the MGRS lettered bands. Band X is extended to 84°, so there is no 84–90° band.
+ * Northern limit of the mgrs lettered bands. Band X is extended to 84°, so there is no 84–90° band.
  */
 const MGRS_LAT_MAX = 84
 
@@ -66,7 +66,7 @@ export function toDMS(lat: number, lon: number): { lat: string; lon: string } {
 const WEB_MERCATOR_R = 6_378_137
 
 /**
- * Web Mercator (EPSG:3857) projection of a coordinate.
+ * Web Mercator (epsg:3857) projection of a coordinate.
  */
 export function toMercator(lat: number, lon: number): { x: number; y: number } {
 	const clampedLat = Math.max(MERCATOR_LATITUDE_MIN, Math.min(MERCATOR_LATITUDE_MAX, lat))
@@ -200,7 +200,7 @@ export function sunTimes(
 }
 
 /**
- * MGRS / UTM (WGS84). The forward Transverse Mercator series + the military grid lettering.
+ * Mgrs / UTM (WGS84). The forward Transverse Mercator series + the military grid lettering.
  */
 const UTM_A = 6_378_137
 const UTM_F = 1 / 298.257223563
@@ -249,7 +249,7 @@ const MGRS_COL_SETS = ["ABCDEFGH", "JKLMNPQR", "STUVWXYZ"]
 const MGRS_ROW_LETTERS = "ABCDEFGHJKLMNPQRSTUV"
 
 /**
- * Military Grid Reference System for a coordinate (`"18SUJ2340806479"`); `""` outside MGRS bands (±80°/84°).
+ * Military Grid Reference System for a coordinate (`"18SUJ2340806479"`); `""` outside mgrs bands (±80°/84°).
  */
 export function toMGRS(lat: number, lon: number): string {
 	if (lat < MGRS_LAT_MIN || lat > MGRS_LAT_MAX) return ""

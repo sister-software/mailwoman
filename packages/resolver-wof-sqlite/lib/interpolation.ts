@@ -4,21 +4,21 @@
  * @author Teffen Ellis, et al.
  *
  *   House-number interpolation (#483): when the exact address-point tier (#476, `address-point.ts`)
- *   misses, estimate the coordinate from TIGER street-segment ranges — parity-aware range match,
+ *   misses, estimate the coordinate from tiger street-segment ranges — parity-aware range match,
  *   then linear interpolation along the segment polyline. Design:
  *   `docs/articles/plan/2026-06-11-interpolation-design.md`.
  *
  *   Reads the per-state extract built by `scripts/build-interpolation-extract.ts` (`street_segment`: one
- *   row per TIGER edge SIDE — independent left/right ranges, ZIPs, parity). Query-side
+ *   row per tiger edge side — independent left/right ranges, ZIPs, parity). Query-side
  *   normalization is the shared normalizer (`street-normalize.ts`) — identical to build-side, by
  *   construction.
  *
  *   Every answer is honest about being an estimate: `interpolated: true`, `parityMatched` (false when
  *   only the opposite side's range contained the number — usually the right block, wrong side of
  *   the street), and `uncertaintyM` (half the matched segment's length — the #483 issue's honest
- *   default). Scoping is postcode-first (a given ZIP that scopes to nothing is a MISS — the
+ *   default). Scoping is postcode-first (a given ZIP that scopes to nothing is a miss — the
  *   statewide retry was measured and rejected, see `find()`); without a postcode the statewide name
- *   match must agree on a single postcode or the lookup ABSTAINS (a common street name spanning
+ *   match must agree on a single postcode or the lookup abstains (a common street name spanning
  *   towns is ambiguity rather than an answer).
  *
  *   Standalone for now — core tier wiring (`resolution_tier: "interpolated"` after the
@@ -39,8 +39,8 @@ import type { StreetSegmentDatabase } from "#street/segment-schema"
  * How an interpolated answer was computed (#483 Method 2):
  *
  * - `address_point` — bracketed/extrapolated between real neighbor points from the #476 extract
- *   (`AddressPointInterpolator`), replacing TIGER's uniform-spacing assumption with occupancy.
- * - `tiger_range` — linear position within a TIGER segment's theoretical house-number range (`StreetInterpolator`), the
+ *   (`AddressPointInterpolator`), replacing tiger's uniform-spacing assumption with occupancy.
+ * - `tiger_range` — linear position within a tiger segment's theoretical house-number range (`StreetInterpolator`), the
  *   fallback for streets too sparse to bracket.
  */
 export type InterpolationMethod = "address_point" | "tiger_range"
@@ -208,10 +208,10 @@ export class StreetInterpolator<
 			)
 		}
 
-		// #374 doctrine: the conformal radius multiplier is a property of the calibration set the ARTIFACT was
+		// #374 doctrine: the conformal radius multiplier is a property of the calibration set the artifact was
 		// built against, so it ships in the extract's `interp_calibration` metadata table (street-segment-schema.ts)
 		// and is read here, once, at open time — sync raw `.prepare()` per the sync-by-interface doctrine
-		// (AGENTS.md). Extracts predating the table (the pre-2026-07 fleet) yield `undefined`; callers then fall
+		// (agents.md). Extracts predating the table (the pre-2026-07 fleet) yield `undefined`; callers then fall
 		// back to their in-code table, byte-identically.
 		if (hasTable(this.#db, "interp_calibration")) {
 			const row = this.#db.prepare("SELECT radius_multiplier FROM interp_calibration LIMIT 1").get() as
@@ -246,13 +246,13 @@ export class StreetInterpolator<
 
 		// Key-variant ladder (see `streetKeyVariants`): the literal key first, then the doubled-type
 		// collapse and the saint↔st register swap. A variant advances the ladder when it produces no
-		// ANSWER rather than merely no rows — a wrong-register key can cover the number in far-away towns and
+		// answer rather than merely no rows — a wrong-register key can cover the number in far-away towns and
 		// then fail the ambiguity check ("saint pauls place" reaches Nassau's rows. the Brooklyn answer
 		// lives under "st pauls place"), and stopping at rows would eclipse the right variant.
 		for (const variant of streetKeyVariants(query.street)) {
 			const streetNorm = canonicalizeRouteKey(variant)
 
-			// A given ZIP that scopes to nothing is a MISS rather than a statewide guess: the retry was
+			// A given ZIP that scopes to nothing is a miss rather than a statewide guess: the retry was
 			// measured (2026-06-11 VT eval) at +2.3pp coverage for a poisoned tail (p99 1.0 → 20.8
 			// km, max 204 km — a unique name statewide can live in a far-away town).
 			const rows = query.postcode
@@ -284,7 +284,7 @@ export class StreetInterpolator<
 		const parityMatched = preferred.length > 0
 
 		// No scope given: the covering ranges must agree on one postcode or the lookup abstains — a
-		// name spanning towns is ambiguity rather than an answer. Counted over the PARITY pool rather than all
+		// name spanning towns is ambiguity rather than an answer. Counted over the parity pool rather than all
 		// rows: a section-line boundary road carries a different ZIP per side ("east 13 mile road"
 		// is Fraser 48026 odd / Roseville 48066 even), and the opposite side can never hold the
 		// number it would otherwise veto. When several postcodes survive parity, the caller's

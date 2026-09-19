@@ -7,7 +7,7 @@ Stage 2.7 of the v0.5.0 pipeline (the phrase grouper, Thread E) emits ``PhrasePr
 
 This module defines:
 
-- ``PHRASE_KINDS``: the 7-kind taxonomy mirrored from the TS contract
+- ``PHRASE_KINDS``: the 7-kind taxonomy mirrored from the TS interface
   (``core/pipeline/types.ts``'s ``PhraseKind`` union). The Python-side enum is a tuple
   in declaration order. the order must match the TS union — the i-th kind in this tuple
   is the same kind as the i-th branch of ``PhraseKind`` in TS, because that's the same
@@ -34,7 +34,7 @@ from dataclasses import dataclass
 from typing import Final
 
 # Mirror of the TS-side ``PhraseKind`` union (see core/pipeline/types.ts in Thread E).
-# Order is the encoding contract. never reorder, only append.
+# Order is the encoding interface. never reorder, only append.
 PHRASE_KINDS: Final[tuple[str, ...]] = (
     "NUMERIC",
     "STREET_PHRASE",

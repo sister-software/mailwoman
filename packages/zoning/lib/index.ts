@@ -6,12 +6,12 @@
  *   The `zoning-ireland.db` reader — what a local authority's adopted plan assigns at a coordinate, in that
  *   authority's own vocabulary, and on what basis.
  *
- *   TWO READINGS, AND THE ONE THAT IS MISSING IS THE POINT.
+ *   two readings, and the one that is missing is the point.
  *
  *   1. `designated` — an adopted plan places the location inside a zoning polygon, and the polygon is the
  *      answer: the authority's own code, its own description, the plan it belongs to and that plan's stated
- *      window, with the Department's national generic type BESIDE the local code rather than instead of it.
- *   2. `unknown` — no polygon contains the point. THAT IS NOT AN ABSENCE READING, and this layer has none.
+ *      window, with the Department's national generic type beside the local code rather than instead of it.
+ *   2. `unknown` — no polygon contains the point. that is not an absence reading, and this layer has none.
  *
  *   There is no `designated_absence` here, and zoning is the hardest case of the rule. For flood zones the
  *   Environment Agency states England-wide coverage and the Planning Practice Guidance defines Zone 1 as the
@@ -19,33 +19,33 @@
  *   anywhere for zoning: a location with no zoning polygon is outside any adopted plan area, or inside one on
  *   land the plan does not zone, or in a jurisdiction that has never adopted zoning, or in a jurisdiction
  *   whose records nobody has published — and no product distinguishes them. The source itself proves the
- *   asymmetry: it states `UNZ - Unzoned` as a POSITIVE value on 4 of 85,330 rows, so where the authority
+ *   asymmetry: it states `UNZ - Unzoned` as a positive value on 4 of 85,330 rows, so where the authority
  *   means unzoned it says so, and every other absence is a row that is not there.
  *
- *   SO THE CONSTRUCTOR REFUSES A COVERAGE ROW THAT WOULD SUPPORT AN EXCLUSION. Every row must read
+ *   SO the constructor refuses A coverage row that would support an exclusion. Every row must read
  *   `source_present`; `supportsExclusion` must be false for all of them. That is not a convention this reader
  *   follows — it is a condition it checks at open time, so the day someone writes a stronger basis without
  *   settling the footprint question, the layer refuses to open rather than answering confidently.
  *
- *   NEITHER READING IS A STATEMENT ABOUT WHAT MAY BE BUILT. The layer reports what a plan assigns at a
+ *   neither reading is A statement about what may be built. The layer reports what a plan assigns at a
  *   location, which is a fact about the plan. The Department states that its data are "not published here as
  *   legal definitions of the current actuality with regard to Local Authority zoning or their geographic
  *   extents" and that "Original data should be sourced directly from the relevant Local Authority" — and
  *   `limits` carries the authority's own exclusions on every answer.
  *
- *   THE PLAN IS PART OF THE CLAIM, NEVER A PARAMETER OF IT. A zone exists inside a named Development Plan or
+ *   the plan is part OF the claim, never A parameter OF IT. A zone exists inside a named Development Plan or
  *   Local Area Plan with a stated validity window. a reading that dropped the plan would answer a question no
  *   authority asked. And `currentPlan = 1` means "not superseded", not "in force today": 2,363 of 85,330 rows
  *   carry a `validTo` already in the past, so the window travels on every reading and the comparison against a
  *   date is the caller's, made against a clock this reader does not own.
  *
- *   THE PROBE IS STRUCTURE FIRST, GEOMETRY LAST. `cellToParent` up the compacted whole-cell chain answers an
+ *   the probe is structure first, geometry last. `cellToParent` up the compacted whole-cell chain answers an
  *   interior point with primary-key probes alone. only a cell a boundary crosses reaches the ray cast, and
  *   then only against the polygons `zoning_cell` already named for that cell.
  *
- *   THE READER IS SYNCHRONOUS AND USES RAW PREPARED STATEMENTS, for the same reason the sibling layer readers
+ *   the reader is synchronous and uses RAW prepared statements, for the same reason the sibling layer readers
  *   are: it answers one point per geocode with a bounded number of primary-key probes plus a bounded geometry
- *   read, and the ray cast it wraps is synchronous anyway. The DDL that created these tables IS Kysely — see
+ *   read, and the ray cast it wraps is synchronous anyway. The DDL that created these tables is Kysely — see
  *   `schema.ts`.
  */
 
@@ -143,7 +143,7 @@ export interface ZoningPlan {
 	validFrom: string | null
 	validTo: string | null
 	/**
-	 * The publisher's `CURRENT_PLAN` flag, carried as published. `1` means NOT SUPERSEDED — not "in force today".
+	 * The publisher's `CURRENT_PLAN` flag, carried as published. `1` means not superseded — not "in force today".
 	 */
 	currentPlan: number
 }
@@ -190,7 +190,7 @@ export interface ZoningDesignation {
 	jurisdiction: ZoningJurisdiction
 	plan: ZoningPlan
 	/**
-	 * The authority states unzoned land POSITIVELY on a handful of rows. `true` here is the authority saying so. an
+	 * The authority states unzoned land positively on a handful of rows. `true` here is the authority saying so. an
 	 * absent designation says nothing at all, which is the distinction this layer exists to keep.
 	 */
 	unzoned: boolean
@@ -210,7 +210,7 @@ export interface ZoningReading {
 	containment: ZoningContainmentPath
 	/**
 	 * The coverage row for the location, when the product has data in that cell. Its basis is always `source_present`, so
-	 * it licenses PRESENCE and nothing else — an absent coverage row and a present one are both compatible with "no
+	 * it licenses presence and nothing else — an absent coverage row and a present one are both compatible with "no
 	 * zoning polygon here", and neither says the location is unrestricted.
 	 */
 	coverage?: CoverageCell & { h3CellIndex: string; resolution: number }
@@ -298,7 +298,7 @@ interface PlanRow {
 /**
  * Read a sealed `zoning-ireland.db`.
  *
- * Everything that would make the reader answer a well-formed wrong thing is refused at CONSTRUCTION rather than at
+ * Everything that would make the reader answer a well-formed wrong thing is refused at construction rather than at
  * query time: a manifest naming a different layer, a coverage table with no rows, a coverage row whose basis would
  * support an exclusion, an empty jurisdiction table. Each of those would otherwise present as a reader that quietly
  * always answers `unknown` — or, in the exclusion case, as a reader that confidently reports unzoned-and-unmapped land
@@ -329,7 +329,7 @@ export class ZoningLookup implements Disposable {
 
 		this.#selectCell = this.#database.prepare("SELECT area_id, containment FROM zoning_cell WHERE h3_cell = ?")
 
-		// TWO STATEMENTS, AND THE SPLIT IS THE POINT. The attributes and the bbox are read without the blob, because the
+		// two statements, and the split is the point. The attributes and the bbox are read without the blob, because the
 		// bbox is the ray cast's prefilter: pulling hundreds of thousands of vertices off disk only to reject the polygon on
 		// a rectangle would make the prefilter cost more than the test it replaces. A `whole` cell never reads the blob at
 		// all.
@@ -506,7 +506,7 @@ export class ZoningLookup implements Disposable {
 }
 
 /**
- * The publisher's crosswalk domain, by code — its label and whether the publisher DECLARED it.
+ * The publisher's crosswalk domain, by code — its label and whether the publisher declared it.
  */
 function readCrosswalkTerms(
 	database: DatabaseClient<ZoningDatabase>
@@ -534,10 +534,10 @@ function readIdentity(database: DatabaseClient<ZoningDatabase>, databasePath: st
 		throw new Error(`zoning reader: ${databasePath} declares no h3 spine key`)
 	}
 
-	// THE EXCLUSION CHECK, AND IT IS A CONDITION RATHER THAN A CONVENTION. The Department publishes its coverage detail
+	// the exclusion check, and IT is A condition rather than A convention. The Department publishes its coverage detail
 	// only inside a map viewer, so no row of this layer may license a claim that a location is unrestricted. A stronger
 	// basis reaching a caller would let an absent polygon be read as a designation of freedom to build over most of the
-	// map. The check itself is the contract's rather than this product's. the SENTENCE saying why is this product's.
+	// map. The check itself is the interface's rather than this product's. the sentence saying why is this product's.
 	assertCoverageLicensesNoExclusion(
 		(database.prepare("SELECT DISTINCT basis FROM layer_coverage").all() as Array<{ basis: string | null }>).map(
 			(coverageRow) => coverageRow.basis
@@ -576,7 +576,7 @@ function readIdentity(database: DatabaseClient<ZoningDatabase>, databasePath: st
 			.all() as Array<{ crosswalk_scheme: string }>
 	).map((entry) => entry.crosswalk_scheme)
 
-	// THE COVERAGE RESOLUTION IS RECOVERED FROM THE CELLS rather than DECLARED. The manifest's spine key names the INDEX
+	// the coverage resolution is recovered from the cells rather than declared. The manifest's spine key names the index
 	// resolution; `layer_coverage` is keyed at a coarser one, and this layer has no footprint row to carry it. Recovering
 	// it is exact rather than approximate — a short cell expands to a valid index at exactly one resolution — and the
 	// shared helper throws on a table that mixes them.

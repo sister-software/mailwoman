@@ -96,7 +96,7 @@ export function provenanceFor(
 /**
  * One hand-picked input, with or without a truth point.
  *
- * The coordinate is an ASSERTION by the caller — nothing here verifies it, and an invented pin looks identical to a
+ * The coordinate is an assertion by the caller — nothing here verifies it, and an invented pin looks identical to a
  * surveyed one in the output. That is why the set's `why` is required, and why this describes where a point should come
  * from rather than merely accepting a number.
  *
@@ -196,7 +196,7 @@ export const INPUT_SET_SCHEMA = z
 /**
  * Every construction- and call-time pin, in the CLI's own vocabulary.
  *
- * Unset means the PRODUCTION DEFAULT, never "off" — the rule `GauntletResolverPins` states in `harness.ts`: "the
+ * Unset means the production default, never "off" — the rule `GauntletResolverPins` states in `harness.ts`: "the
  * library defaults are the thing under test". A schema that coerced undefined to false would grade a configuration
  * nobody ships.
  */
@@ -263,7 +263,7 @@ export function componentsOf(run: GeocodeRun): Record<string, string> {
  * The parse trace without its matrices. The full `NeuralParseTrace` ships per-token logit and emission rows (33 floats
  * × tokens, twice) plus per-channel feature matrices — thousands of numbers that no reader consumes inline and that
  * crowd a context window the rendered rows already serve. The slim form keeps everything discrete and diagnostic
- * (pieces, tokens with labels + confidences, the viterbi path, priors, locale head, repairs, per-channel CONFIDENCE
+ * (pieces, tokens with labels + confidences, the viterbi path, priors, locale head, repairs, per-channel confidence
  * vectors) and states what it dropped; `full_parse_trace: true` returns the raw object for the rare numeric dig.
  */
 export function slimParseTrace(parse: NonNullable<GeocodeRun["trace"]>["parse"]): Record<string, unknown> {
@@ -290,7 +290,7 @@ export function slimParseTrace(parse: NonNullable<GeocodeRun["trace"]>["parse"])
  * The #1649 intent check's verdict, when it fired.
  *
  * A refusal is not a parse failure, and everything downstream of it looks exactly like one: the eval discards a
- * COMPLETED tree and hands back `roots: []`, so `decodeAsJSON` answers `{}` and the resolver-interior records are
+ * completed tree and hands back `roots: []`, so `decodeAsJSON` answers `{}` and the resolver-interior records are
  * empty. Rendered without this line, `Cafe at St Mary's, Oxford` reads as an input the parser could make nothing of,
  * when in fact it parsed to `locality=Oxford › dependent_locality=St Mary's › street=Cafe` and was refused as a
  * thing-query. Reporting the refusal is what separates "we could not" from "we would not".
@@ -314,7 +314,7 @@ function refusalRow(run: GeocodeRun): string[] {
 
 	if (!markers?.length) return []
 
-	// `evidence` is the marker's MEASUREMENT (`Record<string, unknown>`), so it is serialized rather than interpolated.
+	// `evidence` is the marker's measurement (`Record<string, unknown>`), so it is serialized rather than interpolated.
 	// a template literal renders it `[object Object]` and the line then names a refusal it cannot justify. `mechanism`
 	// is the `family:rule` that fired and is what a reader acts on — the kind alone does not say which rule refused.
 	const named = markers
@@ -422,11 +422,11 @@ function resolverRows(trace: NonNullable<GeocodeRun["trace"]>): string[] {
 }
 
 /**
- * Firing signals a {@link GauntletResult} carries for free — a mechanism reporting that it SPOKE, separately from
+ * Firing signals a {@link GauntletResult} carries for free — a mechanism reporting that it spoke, separately from
  * whether the outcome moved.
  *
  * `postcode_country_scope` is the worked example and the harness's own reason for carrying it (`harness.ts`): it is
- * "the FIRING COUNT, so a pinned run can say how many rows the mechanism actually spoke on rather than leaving an
+ * "the firing count, so a pinned run can say how many rows the mechanism actually spoke on rather than leaving an
  * unchanged verdict to mean either 'harmless' or 'never ran'."
  */
 export function firingSignals(rows: ComparedRow[]): Record<string, { a: number; b: number }> {
@@ -472,13 +472,13 @@ export interface ComparedRow {
 	issues_a: string[]
 	issues_b: string[]
 	/**
-	 * Whether the two arms' place-identity chains differ — PRESENT only when both arms stated one (see
-	 * `ExternalAnswer.place_ids`). Deliberately outside `differed`: the coordinate-level zero-diff contract batteries pin
-	 * on is unchanged, and identity is its own claim.
+	 * Whether the two arms' place-identity chains differ — present only when both arms stated one (see
+	 * `ExternalAnswer.place_ids`). Deliberately outside `differed`: the coordinate-level zero-diff interface batteries
+	 * pin on is unchanged, and identity is its own claim.
 	 */
 	identity_differed?: boolean
 	/**
-	 * Whether the two arms answered with different result tiers — PRESENT only when both arms answered and stated one.
+	 * Whether the two arms answered with different result tiers — present only when both arms answered and stated one.
 	 * Outside `differed` for the same reason as identity: a tier is a claim about the answer rather than its coordinate.
 	 */
 	tier_differed?: boolean
@@ -496,7 +496,7 @@ export type StratumKey = "country" | "address_kind" | "status" | "truth_toleranc
 /**
  * Every legal stratum, for a runtime check the type cannot give a caller that reached the handler directly.
  *
- * An unrecognised key used to bucket every row as `unknown` and report a single stratum — a table that LOOKS like a
+ * An unrecognised key used to bucket every row as `unknown` and report a single stratum — a table that looks like a
  * stratified result and is not one. Measured 2026-08-16: `stratify_by: "truth_type"` against a 60-row FR panel returned
  * `{"unknown": {n: 60}}` rather than saying the key did not exist.
  */
@@ -560,8 +560,8 @@ export function stratify(rows: ComparedRow[], by: StratumKey): Record<string, un
 
 /**
  * One sentence for a job, whichever kind it is. A still-running check gets no partial reading: its numbers live in
- * `verdict.json`, which the assembler writes at the END, so anything read before then is not a partial answer — it is
- * no answer.
+ * `verdict.json`. It the assembler writes at the END. Therefore, anything read before then is not a partial answer — it
+ * is no answer.
  */
 export function summarizeJob(
 	state: string,

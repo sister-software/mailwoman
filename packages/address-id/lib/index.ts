@@ -3,10 +3,10 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   `@mailwoman/address-id` — turn a canonicalized + geocoded address into a STABLE, parseable
+ *   `@mailwoman/address-id` — turn a canonicalized + geocoded address into a stable, parseable
  *   primary key: `<state>.<H3-cell>.<hash>`. The deterministic, exact-match complement to the fuzzy
  *   matcher (`@mailwoman/match`): where the matcher decides whether two messy records are probably
- *   the same entity, the address-id is a content-addressed key you can GROUP BY / JOIN ON without
+ *   the same entity, the address-id is a content-addressed key you can group BY / join on without
  *   running the matcher at all — for the common "same canonical address" case.
  *
  *   The three parts (see {@link createPostalAddressID}):
@@ -17,7 +17,7 @@
  *       `latLngToCell` at {@link ADDRESS_H3_RESOLUTION}). Coarse on purpose: two geocodes of the
  *       same place a few metres apart land in the same cell.
  *   - **hash** — a content hash of the address canonicalized by {@link @mailwoman/normalize} (so `123
- *       Main St` and `123 MAIN STREET` hash identically). This is the identity. the cell + state
+ *       Main St` and `123 main street` hash identically). This is the identity. the cell + state
  *       localize and partition it.
  *
  *   Lineage: the isp-nexus `createPostalAddressID` / `parsePostalAddressID`. `@mailwoman/normalize`
@@ -42,8 +42,8 @@ export interface LatLng {
 /**
  * H3 resolution for the locality cell — coarse on purpose (~edge 174 m). The same place geocoded a few metres apart
  * (situs vs interpolation, geocode jitter) lands in the same cell, so the key is stable. the address hash carries the
- * precise identity. Self-contained here (not via `@mailwoman/spatial`, which isn't a published package) so this stays
- * cleanly publishable.
+ * precise identity. Self-contained here (not via `@mailwoman/spatial`. It isn't a published package). Therefore, this
+ * stays cleanly publishable.
  */
 export const ADDRESS_H3_RESOLUTION = 9
 

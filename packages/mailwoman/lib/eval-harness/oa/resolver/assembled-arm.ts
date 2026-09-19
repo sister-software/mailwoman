@@ -20,7 +20,7 @@ type SharedRig = Pick<Awaited<ReturnType<typeof buildParseRig>>, "neural" | "res
 
 /**
  * Wire the assembled arm. `assembledPipeline` is `null` when the run does not grade it, which is the default: the arm
- * is opt-in so an ordinary run stays byte-identical to the bare neural one.
+ * is opt-in. Therefore, an ordinary run stays byte-identical to the bare neural one.
  */
 export async function buildAssembledArm(
 	options: OAResolverEvalOptions,
@@ -29,7 +29,7 @@ export async function buildAssembledArm(
 ) {
 	const { neural, resolver } = rig
 
-	// #478 inc 3 leg 2 — the ASSEMBLED arms. Route each row through `createRuntimePipeline` using the
+	// #478 inc 3 leg 2 — the assembled arms. Route each row through `createRuntimePipeline` using the
 	// same neural classifier (postcodeRepair on, for comparability with the neural arm) and the same
 	// resolver — without (`assembled`) and with (`assembled+arb`) per-component arbitration. The
 	// street+house_number precondition (the thing #566 broke) is counted per arm so a regression is
@@ -46,7 +46,7 @@ export async function buildAssembledArm(
 	// (empty→unresolved) — the change for the low-pop EU tail the soft prior can't move. Production-
 	// representative: conditional by the built-in coverage safelist (only well-covered countries hard-filter).
 	// `--place-country-hard-all` measures unrestricted (every confident country hard-filters, via a safelist
-	// override of the full in-map set) — how per-country hard-resolve-rates are measured to GROW the
+	// override of the full in-map set) — how per-country hard-resolve-rates are measured to grow the
 	// safelist. Both imply the placer is loaded.
 	const useHardCountryAll = options.placeCountryHardAll ?? false
 	const useHardCountry = (options.placeCountryHard ?? false) || useHardCountryAll
@@ -61,7 +61,7 @@ export async function buildAssembledArm(
 		? createRuntimePipeline({
 				classifier: {
 					parse: (text: string, o?: object) => neural.parse(text, { ...o, postcodeRepair: true }),
-					// `autoLoadWeightsFST` (runtime-pipeline.ts) reads `fstPath` OFF THE CLASSIFIER, so this
+					// `autoLoadWeightsFST` (runtime-pipeline.ts) reads `fstPath` off the classifier, so this
 					// shim — which exists only to force `postcodeRepair: true` — silently dropped the
 					// gazetteer prior for every assembled run before #1497. A bare `{ parse }` literal has no
 					// `fstPath` key, `"fstPath" in classifier` is false, and the pipeline degrades to the

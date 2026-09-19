@@ -1,7 +1,7 @@
-# v5.2.0 — SEED-VARIANCE RUN. One variable against v5.0.0: seed 42 -> 43. Same corpus, same 134
+# v5.2.0 — seed-variance RUN. One variable against v5.0.0: seed 42 -> 43. Same corpus, same 134
 # country admission, same 60k cosine schedule, no init_from, no EWC.
 #
-# WHY. v5.0.0 vs v5.1.0 — two seed-42 runs where v5.1.0 removes 15,212,584 training rows from four
+# why. v5.0.0 vs v5.1.0 — two seed-42 runs where v5.1.0 removes 15,212,584 training rows from four
 # of v5.0.0's 134 admitted countries, or 2.23% of its admitted training-row pool — changed the
 # regression outcome for 40 of 649 board rows (16 regress only under v5.0.0. 24 only under v5.1.0.
 # 16 + 24 = 40). That comparison cannot separate the admission change from training nondeterminism.
@@ -9,7 +9,7 @@
 # row-level disagreement. One pair is an estimate rather than a general variance floor. report the changed
 # rows and the 649-row denominator without using it to excuse a candidate regression.
 #
-# READ THE RESULT AS A MEASUREMENT rather than A CANDIDATE. This model is not for promotion. it measures
+# read the result AS A measurement rather than A candidate. This model is not for promotion. it measures
 # how much row-level disagreement one fixed-config seed pair produces. The D-condition is absolute
 # comparison against the shipped model and this measurement cannot authorize a regression.
 data:

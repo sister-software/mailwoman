@@ -3,17 +3,17 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   The POI QUERY BOARD (spec §3.6, exotic-POI arc) — a curated, committed panel of ~45 POI-shaped
- *   queries graded on the ASSEMBLED answer (a matched category id + a coordinate near the expected
+ *   The POI query board (spec §3.6, exotic-POI arc) — a curated, committed panel of ~45 POI-shaped
+ *   queries graded on the assembled answer (a matched category id + a coordinate near the expected
  *   place), not on label F1. Runs the real `createRuntimePipeline({ poiQueryKind: { poiDatabasePath
  *   } })` surface end-to-end: subject match → anchor parse → anchor resolve → poi.db search, the same
  *   construction `mailwoman poi` uses.
  *
- *   FLOORS (spec §3.6, set off the v1 baseline): `overall ≥ 90%`, `abstain = 100%`, `address = 100%`
+ *   floors (spec §3.6, set off the v1 baseline): `overall ≥ 90%`, `abstain = 100%`, `address = 100%`
  *   (`POI_BOARD_FLOORS` / `evaluateFloors`, pre-registered in
  *   `docs/articles/evals/2026-07-19-poi-query-board-v1-baseline.md`). Floors are graded and printed on
  *   every run. a breach only turns into a non-zero exit under `--enforce`. Without `--enforce` the
- *   command stays report-only (exit 0 on case failures. a non-zero exit then means the HARNESS broke —
+ *   command stays report-only (exit 0 on case failures. a non-zero exit then means the harness broke —
  *   missing fixtures, missing db, a pipeline construction error — not a graded case failing).
  *
  *   Composition (`fixtures/poi-board.jsonl`, committed): ~22 category+anchor cases spanning all four
@@ -26,14 +26,14 @@
  *   4-row activity-phrased family promoted from the semantic-utility pre-registration, and one further
  *   activity-phrased row committed for the US drugstore recall gap the wave-1 semantics address.
  *
- *   THE ACTIVITY FAMILY NEEDS THE `--semantic-observation` ARM. Its five subjects reach no committed
+ *   the activity family needs the `--semantic-observation` ARM. Its five subjects reach no committed
  *   lexicon entry, so with the opt-in rung absent the query takes no POI branch at all and every one of
  *   them reads as `path=full`. They are tracked for that reason, and the floors are registered against
- *   the arm-OFF construction — the one that ships. Turning the arm on measures the capability. it does
+ *   the arm-off construction — the one that ships. Turning the arm on measures the capability. it does
  *   not move the floors, and a row that would move them is a row being counted.
  *
- *   TRACKED ROWS. A fixture may carry `status` + `bugRef`, the conformance layer's own convention
- *   ({@linkcode POI_BOARD_STATUSES}). A tracked row is run and REPORTED and its grade never reaches the
+ *   tracked rows. A fixture may carry `status` + `bugRef`, the conformance layer's own convention
+ *   ({@linkcode POI_BOARD_STATUSES}). A tracked row is run and reported and its grade never reaches the
  *   floors, so a failure class can live on the surface every candidate is graded on before the work that
  *   answers it exists. Two rules keep the tracked list from becoming a place rows go to be forgotten: a
  *   tracked row must name a live issue, and a tracked row that starts passing is printed as a promotion
@@ -41,12 +41,12 @@
  *   expectation either — a row rewritten to assert the current wrong answer would fail the moment the
  *   defect is repaired.
  *
- *   Only REACHABLE behavior is scored — no brand/name-subject cases. that detection doesn't exist yet
+ *   Only reachable behavior is scored — no brand/name-subject cases. that detection doesn't exist yet
  *   (spec §3.1 Phase 2). A `results` expectation's `maxNearestKm` is deliberately city-scale (25 km):
- *   this board grades whether the ANCHOR resolved to roughly the right place and the SUBJECT matched
+ *   this board grades whether the anchor resolved to roughly the right place and the subject matched
  *   the right category rather than sub-block precision.
  *
- *   GRADING (pure, unit-testable without a db — see `poi-board.test.ts`): `gradeCase` takes a fixture
+ *   grading (pure, unit-testable without a db — see `poi-board.test.ts`): `gradeCase` takes a fixture
  *   and the pipeline's own outcome shape (`path` + optional `poiIntent`), never the pipeline itself,
  *   so the interval/distance math is tested against synthetic outcomes.
  */
@@ -84,7 +84,7 @@ export const POI_BOARD_FIXTURES = "packages/mailwoman/lib/eval-harness/fixtures/
  * and must not import a law schema to say so.
  *
  * - `pass` — the default, and the only status the floors read. A `pass` row that fails lowers the floor rates.
- * - `known_fail` — the row fails because of a live DEFECT: the default path answers, and the answer is wrong.
+ * - `known_fail` — the row fails because of a live defect: the default path answers, and the answer is wrong.
  * - `improvement_target` — the row fails because a capability it needs is not on the default path at all.
  *
  * The difference between the two tracked statuses is what would move the row: a repair for `known_fail`, a capability
@@ -212,7 +212,7 @@ export interface CaseGrade {
 	pass: boolean
 	detail: string
 	/**
-	 * Distance (km) from the fixture's `anchorGold` to the NEAREST returned result — `results` cases only.
+	 * Distance (km) from the fixture's `anchorGold` to the nearest returned result — `results` cases only.
 	 */
 	nearestKm?: number
 	resultCount?: number
@@ -427,7 +427,7 @@ export interface QuantileStats {
  * Pre-registered pass-rate floors for the board (spec §3.6). Set in the follow-up PR after the v1 baseline
  * (`docs/articles/evals/2026-07-19-poi-query-board-v1-baseline.md`) established numbers to hold against.
  *
- * RE-REGISTERED when the activity-phrased family was promoted (#1960), and the three numbers are the whole argument.
+ * RE-registered when the activity-phrased family was promoted (#1960), and the three numbers are the whole argument.
  * Before: 51 rows, 49 pass, 96.1% against a 0.90 floor. After, with the four promoted activity rows tracked: the floors
  * read 51 rows, 49 pass, 96.1% — the same denominator, the same numerator, the same comparison. The counterfactual is
  * why the tracked convention is what carries them: had the four counted, 49/55 = 89.1% would sit below the 0.90 floor,
@@ -436,7 +436,7 @@ export interface QuantileStats {
  *
  * That is also why a later tracked row needs no re-registration and must not get one: it moves the committed total and
  * leaves the counted set the floors read exactly where it was. A row that would move these numbers is a row being
- * COUNTED, and that is the change to argue for.
+ * counted, and that is the change to argue for.
  *
  * - `overall` ≥ 0.90 — the assembled-answer pass rate over the rows the floors read. A soft floor: coverage gaps in
  *   poi.db (the `trail`/`supermarket` holdouts) are allowed to cost a few points without failing the board.
@@ -500,7 +500,7 @@ export interface FloorInput {
 /**
  * Grade a report against {@link POI_BOARD_FLOORS}. Pure — no I/O, no pipeline — so breach detection is unit-tested
  * against synthetic reports (`poi-board.test.ts`) without a live board run. A category floor over an absent kind (zero
- * cases of it) is treated as UNMET rather than vacuously met.
+ * cases of it) is treated as unmet rather than vacuously met.
  */
 export function evaluateFloors(report: FloorInput): FloorEvaluation {
 	const categoryLine = (key: "abstain" | "address", label: string): FloorLine => {
@@ -547,7 +547,7 @@ export interface POIBoardReport {
 	 */
 	trackedCases: number
 	/**
-	 * Per-expect-kind strata over the COUNTED rows only, which is what the floors read.
+	 * Per-expect-kind strata over the counted rows only, which is what the floors read.
 	 */
 	byExpectKind: Record<string, { total: number; pass: number; rate: number }>
 	/**
@@ -804,7 +804,7 @@ function printReport(report: POIBoardReport): void {
 }
 
 /**
- * The failing COUNTED rows — the ones a floor breach is made of. Tracked failures print in their own block above, so a
+ * The failing counted rows — the ones a floor breach is made of. Tracked failures print in their own block above, so a
  * reader never has to subtract one list from the other to see what actually moved.
  */
 function printFailures(failures: readonly CaseGrade[]): void {

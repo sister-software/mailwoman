@@ -20,8 +20,8 @@
  *   - **`bulk`** mode requires a pre-signed S3 URL (Akamai blocks scripted curl on the DOT page). Pass
  *       `--nad-url <presigned>` from a browser visit to
  *       [https://www.transportation.gov/gis/national-address-database](https://www.transportation.gov/gis/national-address-database).
- *   - **`featureserver`** mode (default) pages the live FeatureService via OBJECTID ranges, writing
- *       NDJSON chunks into `<outRoot>/usgov-nad/featureserver/`.
+ *   - **`featureserver`** mode (default) pages the live FeatureService via objectid ranges, writing
+ *       ndjson chunks into `<outRoot>/usgov-nad/featureserver/`.
  *
  *   ## Usage
  *
@@ -65,7 +65,7 @@ export interface FetchNADOptions extends BaseFetchOptions {
 	 */
 	chunkSize?: number
 	/**
-	 * Records per HTTP request. Default `5000`.
+	 * Records per http request. Default `5000`.
 	 */
 	pageSize?: number
 	/**
@@ -73,7 +73,7 @@ export interface FetchNADOptions extends BaseFetchOptions {
 	 */
 	concurrency?: number
 	/**
-	 * Start OBJECTID. Default `1`.
+	 * Start objectid. Default `1`.
 	 */
 	startOID?: number
 	/**
@@ -95,7 +95,7 @@ interface ChunkManifest {
 }
 
 /**
- * ArcGIS paged reads. Retry is ON: the loop walks OBJECTID ranges to completion, so one throttled page previously ended
+ * ArcGIS paged reads. Retry is on: the loop walks objectid ranges to completion, so one throttled page previously ended
  * a multi-hour national download. No rate budget — pages are requested one at a time and each assembles thousands of
  * records server-side.
  */
@@ -143,7 +143,7 @@ async function discoverTotalCount(): Promise<number> {
  * Fetch a single chunk by paging through its OID range with bounded concurrency. Returns the count of records written
  * and the count of pages that errored. The caller decides whether to mark the chunk complete based on errors === 0.
  *
- * NOTE(phase1): this is a JSON API pager rather than a file download — the shared `downloadToFile` doesn't apply here.
+ * Note(phase1): this is a JSON API pager rather than a file download — the shared `downloadToFile` doesn't apply here.
  */
 async function fetchChunk(
 	chunkPath: string,
@@ -185,7 +185,7 @@ async function fetchChunk(
 
 	await Promise.all(workers)
 
-	// Single-writer phase — write all pages in OID order to keep NDJSON deterministic.
+	// Single-writer phase — write all pages in OID order to keep ndjson deterministic.
 	const lines: string[] = []
 	let errors = 0
 

@@ -2,7 +2,7 @@
  * @copyright Sister Software
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
- * @file `scope.config.json` and `SCOPE.mdx`'s tier table name the same countries, and every shipping locale is placed.
+ * @file `scope.config.json` and `scope.mdx`'s tier table name the same countries, and every shipping locale is placed.
  *
  *   The defect this was written for is a hand-written list drifting from the table it claims to encode.
  *   `D_RULE_COUNTRIES` read `["FR", "GB", "DE"]` under a docstring saying iron rule 6 guarded those locales
@@ -11,11 +11,11 @@
  *   consumer reads that as an absence rather than an error. The list is now derived from the register, and this check
  *   is what keeps the register and the declaration from becoming two lists again.
  *
- *   IT CHECKS MEMBERSHIP rather than EVIDENCE. The table's third column is prose with citations — coordinate panels, n, issue
+ *   IT checks membership rather than evidence. The table's third column is prose with citations — coordinate panels, n, issue
  *   links — and generating that from JSON would move paragraphs into a config to satisfy a parser. The doc owns the
  *   evidence. the register owns which countries each tier holds. this refuses a disagreement in either direction.
  *
- *   THE SECOND INVARIANT IS THE ONE THE FIRST CANNOT SEE. Two registers can agree with each other and both omit a
+ *   the second invariant is the one the first cannot SEE. Two registers can agree with each other and both omit a
  *   country that ships. GB, IN and NZ are in that state today: three published weights packages, no tier between them,
  *   because the table was declared on 2026-07-02 and the overlays shipped after it. So a shipping locale must be
  *   tiered or named in `untieredShippingLocales` with a reason someone can read — the same posture
@@ -50,7 +50,7 @@ const TIER_ROW = /^\|\s*\*\*(\d)\s/
 const COUNTRY_CODE = /^[A-Z]{2}$/
 
 /**
- * Tier number → the countries `SCOPE.mdx` places in it.
+ * Tier number → the countries `scope.mdx` places in it.
  *
  * Membership is multi-valued by design — CZ and PL hold a tier-2 and a tier-4 entry at once, because tiers 4 and 5 name
  * a delivery mechanism rather than a stronger claim — so this answers per tier and never inverts to country → tier.

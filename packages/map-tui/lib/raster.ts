@@ -5,9 +5,9 @@
  */
 
 /**
- * RGBA pixel rasterizer for map-tui's debug view.
+ * Rgba pixel rasterizer for map-tui's debug view.
  *
- * Rasterizes vector geometry (polylines, filled polygons, circles) onto a plain RGBA byte grid — the shape asciify's
+ * Rasterizes vector geometry (polylines, filled polygons, circles) onto a plain rgba byte grid — the shape asciify's
  * rasterize step consumes. Every draw call clips through {@link RGBAGrid.setPixel}, so callers never need to
  * bounds-check geometry themselves. The polyline and circle primitives floor their coordinates to integers on entry;
  * {@link fillPolygon} does not — its scanline edge math keeps ring vertices as given, see its own docstring.
@@ -16,14 +16,14 @@
 import type { RGB } from "#style"
 
 /**
- * A row-major RGBA pixel buffer. Alpha starts at 0 (unlit/transparent) everywhere. drawing a pixel sets it to 255,
+ * A row-major rgba pixel buffer. Alpha starts at 0 (unlit/transparent) everywhere. drawing a pixel sets it to 255,
  * which is how callers (including this module's own tests) distinguish "lit" from "background".
  */
 export class RGBAGrid {
 	readonly width: number
 	readonly height: number
 	/**
-	 * RGBA, row-major, width * height * 4 bytes — the shape asciify's rasterize consumes.
+	 * Rgba, row-major, width * height * 4 bytes — the shape asciify's rasterize consumes.
 	 */
 	readonly data: Uint8ClampedArray
 

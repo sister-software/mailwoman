@@ -94,10 +94,10 @@ def detect_channels(model: nn.Module) -> Channels:
         # self-conditioning head, export its pooled posterior as a second output ("locale_logits",
         # shape [batch, num_locales], labels.LOCALE_COUNTRIES order). Consumers fetch outputs by
         # name, so this is backward-compatible. without it the model's address-system detection is
-        # trained but UNREADABLE at inference — the gap the 2026-06-10 FR digit-split regression
+        # trained but unreadable at inference — the gap the 2026-06-10 FR digit-split regression
         # exposed.
         locale=getattr(model, "locale_head", None) is not None,
-        # #727 stage-2: export the span scorer's (B, S, L, T) scores as a NAMED output. Appending is
+        # #727 stage-2: export the span scorer's (B, S, L, T) scores as a named output. Appending is
         # backward-compatible — a runtime that never asks for `span_scores` pays nothing (ORT prunes
         # the unfetched branch). The Phase-3 JS decoder + the semi-crf-transitions.json sidecar
         # (package_weights.export_semi_crf_transitions) consume it.
@@ -109,7 +109,7 @@ def check_exportable(channels: Channels) -> None:
     """Refuse a combination whose graph would drop a trained channel."""
     # The country channel ships on top of anchor+gaz (the production ship-config). Exporting it in any
     # other combination is unsupported — a country-trained model whose ONNX lacked the country inputs
-    # would silently run country-OFF (the #566/#685 OOD trap), so fail loud instead.
+    # would silently run country-off (the #566/#685 OOD trap), so fail loud instead.
     if channels.country and not (channels.anchor and channels.gazetteer):
         raise NotImplementedError(
             "use_country_anchor is only exportable alongside the anchor + gazetteer channels "

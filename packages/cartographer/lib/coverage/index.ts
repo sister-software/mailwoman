@@ -3,9 +3,9 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   The "fog of war" address-COVERAGE overlay. An H3 hexbin tileset (built by `mailwoman coverage
+ *   The "fog of war" address-coverage overlay. An H3 hexbin tileset (built by `mailwoman coverage
  *   build`) shading "where do we need data" at a glance. Two layers in one tileset: the US rooftop
- *   fine map (address-point density, street/block detail) and a GLOBAL "work to do" layer — populated
+ *   fine map (address-point density, street/block detail) and a global "work to do" layer — populated
  *   places (WOF, importance-weighted) we can't geocode yet show as gray-fog holes, and postcode/rooftop
  *   coverage clears them. Covered → clear (basemap shows through), uncovered civilization → gray fog.
  *

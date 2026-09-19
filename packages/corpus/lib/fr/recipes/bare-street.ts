@@ -4,10 +4,10 @@
  * @author Teffen Ellis, et al.
  *
  *   `fr-bare-street` recipe (#251) — the postcode-anchoring-imbalance change. BAN (and every
- *   other comprehensive FR source) is postcode-COMPLETE, so the model learned the French
+ *   other comprehensive FR source) is postcode-complete, so the model learned the French
  *   street→locality boundary as "the token after the 5-digit postcode," never as "comma + city." Strip
  *   the postcode and it leaks the street's proper-noun tokens into the following locality ("Rue René
- *   Cassin, Paris" → street="Rue Ren", locality="Cassin"). This recipe mints the MISSING distribution:
+ *   Cassin, Paris" → street="Rue Ren", locality="Cassin"). This recipe mints the missing distribution:
  *   the bare comma form, no postcode, real `(street, number, city)` tuples from BAN (Licence Ouverte —
  *   permissive. the model stays clean of ODbL, unlike the opt-in OSM rooftop sources).
  *
@@ -15,7 +15,7 @@
  *   ({@link decomposeFrStreet}: "Rue" → street_prefix, the rest → street). Tuples whose street carries
  *   no recognized FR type word are skipped — the failing class is precisely the prefix-led street.
  *
- *   ⚠ Convention loss-mask: this recipe TEACHES FR `street_prefix`. The conventions loss-mask forbids it
+ *   ⚠ Convention loss-mask: this recipe teaches FR `street_prefix`. The conventions loss-mask forbids it
  *   for FR and will `-inf` these gold labels (the v1.6.0 ~7M-loss blow-up). Disable that mask for any
  *   run including this recipe's output.
  */
@@ -35,7 +35,7 @@ const FR_VOIE_ABBREV: Record<string, string> = Object.fromEntries(
 )
 
 /**
- * The order-cycle slot for the BARE-STREET-ONLY form (`«voie» «name»`, no number, no locality) — the absence
+ * The order-cycle slot for the bare-street-only form (`«voie» «name»`, no number, no locality) — the absence
  * counterweight to the locality-terminated comma-free forms (see the cycle comment).
  */
 const BARE_STREET_ONLY_FORM = 3
@@ -115,7 +115,7 @@ export const frBareStreetRecipe: CorpusRecipe = {
 			// without it, every delimiter-free surface in the mix ends in a locality, the model learns
 			// "trailing span = locality" as categorical, and bare street names across locales flip to
 			// locality wholesale (the v4.5.0 no-promote's measured erosion: 'Calle de Alcalá',
-			// 'Madison Square West', and COMER's fork all fell to that prior). Tags are identical
+			// 'Madison Square West', and comer's fork all fell to that prior). Tags are identical
 			// where present. each component value is the span as written (BIO alignment binds value
 			// to surface); the bare form carries no number and no locality because the surface has
 			// neither.
@@ -128,7 +128,7 @@ export const frBareStreetRecipe: CorpusRecipe = {
 					: { house_number: number, street_prefix: prefixSurface, street, locality }
 
 			// When the tuple carries a WOF-attested neighbourhood, the comma slot renders the
-			// THREE-slot middle surface — the dependent-locality counterweight (the v4.5.1 erosion's
+			// three-slot middle surface — the dependent-locality counterweight (the v4.5.1 erosion's
 			// untouched half: the two-slot comma-free endings squeezed the middle tag out).
 			const hood = String(t.neighbourhood ?? "").trim()
 

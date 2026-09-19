@@ -8,11 +8,11 @@
  *   Runs each row of `data/eval/external/demo-cascade-smoke.jsonl` through the full stack exactly the
  *   way the demo (and any real consumer) composes it: neural parse with the ship config (gazetteer
  *   lexicon + postcode anchor + conventions mask + span bridge + FST) → `runPipeline` + grouper
- *   audit → the demo's `runCascade` (#861: the SHARED `resolveTree` — greedy walk + admin/
+ *   audit → the demo's `runCascade` (#861: the shared `resolveTree` — greedy walk + admin/
  *   explicit-country coherence + span-rescore — over the lookup, with the demo's pin extraction)
- *   against the slim `wof-hot.db` the demo serves. Each row asserts the RESOLVED WOF PLACE ID of
- *   the top hit — not parse components. See the row README
- *   (`data/eval/external/demo-cascade-smoke.README.md`) for the convention.
+ *   against the slim `wof-hot.db` the demo serves. Each row asserts the resolved WOF place ID of
+ *   the top hit — not parse components. See the row readme
+ *   (`data/eval/external/demo-cascade-smoke.readme.md`) for the convention.
  *
  *   Why: on 2026-06-11 three production bugs (#520/#521/#522) shipped through green checks because
  *   every check lens is per-layer. Two of the three would have been caught by exactly this pass.
@@ -78,7 +78,7 @@ export interface DemoCascadeSmokeOptions {
 	 */
 	gazetteerLexicon?: string
 	/**
-	 * Smoke rows JSONL. Default `data/eval/external/demo-cascade-smoke.jsonl`.
+	 * Smoke rows jsonl. Default `data/eval/external/demo-cascade-smoke.jsonl`.
 	 */
 	file?: string
 	/**
@@ -116,7 +116,7 @@ interface RowResult {
 
 /**
  * Run every smoke row through the full stack — neural parse (ship config) → `runPipeline` + grouper audit → the demo's
- * `runCascade` over the slim hot DB — and assert the RESOLVED WOF PLACE ID of the top hit.
+ * `runCascade` over the slim hot DB — and assert the resolved WOF place ID of the top hit.
  *
  * The table goes to `report` (the runner captures it into `cascade-smoke.md`); preflight refusals and `explain`
  * narration go to `reportError`, which is where the child's stderr went — captured and dropped. A preflight refusal
@@ -128,7 +128,7 @@ export async function demoCascadeSmoke(
 	report: (line: string) => void = console.log,
 	reportError: (line: string) => void = console.error
 ): Promise<DemoCascadeSmokeResult> {
-	// LAZY, deliberately: `mailwoman` does not depend on `@mailwoman/resolver-wof-wasm`, and the CLI's
+	// lazy, deliberately: `mailwoman` does not depend on `@mailwoman/resolver-wof-wasm`, and the CLI's
 	// module walk (`mailwoman --help`) loads this file in every clean install — a top-level import
 	// here failed the ci:smoke clean-install leg the day it was added (2026-08-06). The cascade leg
 	// is dev-only (it needs a local wof-hot.db), so the dependency loads only when the leg actually
@@ -147,7 +147,7 @@ export async function demoCascadeSmoke(
 
 	const refused: DemoCascadeSmokeResult = { exitCode: 2, total: 0, pass: 0, passRatePct: 0 }
 
-	// ── Preflight: every artifact loud-missing, never a vague ENOENT mid-run ────────────────────────
+	// ── Preflight: every artifact loud-missing, never a vague enoent mid-run ────────────────────────
 	const artifacts = Object.entries({
 		db: DB,
 		model: MODEL,
@@ -249,7 +249,7 @@ export async function demoCascadeSmoke(
 
 		const postcodeNode = nodes.find((n) => n.tag === "postcode")
 
-		// #861: runCascade now takes the TREE and runs the shared resolveTree (greedy walk + coherence
+		// #861: runCascade now takes the tree and runs the shared resolveTree (greedy walk + coherence
 		// passes + span-rescore) over the lookup, exactly as the browser composes it. The node
 		// extraction above stays for the explain output + the anchor-centroid fallback below.
 		const hits = await runCascade(lookup as Parameters<typeof runCascade>[0], tree, row.input)

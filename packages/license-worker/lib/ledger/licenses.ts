@@ -101,7 +101,7 @@ export async function setLicenseState(
 
 /**
  * Read and clear the plaintext refresh secret so it is answered to exactly one claim. A read then a clear conditioned
- * on the value read: two claims racing both read it, but only the one whose clear lands a row answers it. (`RETURNING`
+ * on the value read: two claims racing both read it, but only the one whose clear lands a row answers it. (`returning`
  * on the update alone would answer the cleared column, which is null.)
  */
 export async function takePendingRefreshSecret(ledger: Ledger, lid: string): Promise<string | undefined> {

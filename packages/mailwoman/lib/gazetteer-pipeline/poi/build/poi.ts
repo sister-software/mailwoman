@@ -6,27 +6,27 @@
  *   The `poi.db` builder (spec §3.4) — the Overture Places ingest + the clustered res-9 `poi` table
  *   `poi-schema.ts` defines, queried by {@link POILookup}.
  *
- *   Two phases, split so the load/materialize/seal phase is testable WITHOUT DuckDB or network:
+ *   Two phases, split so the load/materialize/seal phase is testable without DuckDB or network:
  *
  *   1. {@linkcode ingestPlaces} — DuckDB (lazy-imported, the `overture-ingest.tsx` convention) over
  *        the Overture places theme on S3, per-country predicate pushdown into local Parquet. The
  *        Places schema's category/brand columns are STRUCTs whose shape has churned across releases
  *        (the `taxonomy` property is newer than `categories`); {@linkcode chooseCategoryColumn} +
- *        {@linkcode hasBrandColumn} are pure functions over a `DESCRIBE` result, so the column-choice
+ *        {@linkcode hasBrandColumn} are pure functions over a `describe` result, so the column-choice
  *        logic is unit-testable without touching the network (see `overture-places-schema.test.ts`).
  *   2. {@linkcode buildPOIDatabase} — stream rows (from the ingested Parquet by default, or an
  *        injected `Iterable`/`AsyncIterable<POISourceRow>` for tests) into a `poi_stage` staging
  *        table, dictionary-encode categories (insert-on-first-sight, 0 = uncategorized), pack each
  *        row's res-9 H3 cell via `@mailwoman/spatial`'s `shortCellToInt` (never reimplemented — see
- *        AGENTS.md), materialize the clustered `WITHOUT ROWID` `poi` table pre-sorted by
+ *        agents.md), materialize the clustered `without rowid` `poi` table pre-sorted by
  *        `(h3_cell, category_id, neg_rank, rowid_key)`, build the name-key index + FTS5 name search,
- *        write the layer-contract manifest + per-res-6-cell coverage, then seal.
+ *        write the layer-interface manifest + per-res-6-cell coverage, then seal.
  *
  *   Build-on-copy: `build-candidate.ts` (the closer anchor for "dictionaries + clustered
- *   materialize") writes DIRECTLY to its output path (removing any
+ *   materialize") writes directly to its output path (removing any
  *   stale file first) and lets the caller `sealDatabase` once the connection closes — no
  *   `<out>.building`-suffix temp-swap. This builder mirrors that precedent rather than the
- *   `admin/index.ts` staging-suffix + `VACUUM INTO` dance (which exists there for a much longer,
+ *   `admin/index.ts` staging-suffix + `vacuum into` dance (which exists there for a much longer,
  *   multi-source, resumable build where a mid-build crash mustn't corrupt a promoted artifact); a
  *   single-pass POI build has no such intermediate-promotion concern, and `sealDatabase` itself
  *   already refuses to run against a live writer. Deviation from the task brief's literal
@@ -80,7 +80,7 @@ export { DEFAULT_RELEASE } from "#gazetteer-pipeline/poi/defaults"
  */
 const COVERAGE_H3_RESOLUTION = 6
 /**
- * Rows committed per `BEGIN`/`COMMIT` batch during the staging load (the candidate-builder discipline).
+ * Rows committed per `begin`/`commit` batch during the staging load (the candidate-builder discipline).
  */
 const STAGE_BATCH_SIZE = 10_000
 
@@ -111,7 +111,7 @@ async function* streamPOIRows(parquetPaths: readonly string[]): AsyncIterable<PO
 
 	try {
 		for (const parquetPath of parquetPaths) {
-			// STREAM the parquet scan in DuckDB DataChunks (~2048 rows each) rather than materialising
+			// stream the parquet scan in DuckDB DataChunks (~2048 rows each) rather than materialising
 			// the whole result — a full four-country build (millions of US rows) blew the ~4GB V8 heap
 			// that way (OOM 2026-07-18, `DuckDBNodeAddon::get_data_from_pointer` → `napi_create_buffer_copy`).
 			// stream()+fetchChunk() keeps JS memory bounded to one chunk at a time, matching the
@@ -167,13 +167,13 @@ export interface BBox {
 }
 
 /**
- * Extract-bbox coverage polyfill (decision 5): every res-6 H3 cell whose CENTER falls inside `bbox` gets a coverage
+ * Extract-bbox coverage polyfill (decision 5): every res-6 H3 cell whose center falls inside `bbox` gets a coverage
  * entry, paired with how many `rows` actually landed in it (0 permitted). This is the `--source osm` build branch's
  * coverage strategy, used in place of the default Overture path's "a cell gets a row only if a POI fell in it" — an OSM
- * telecom-infrastructure extract is sparse BY CATEGORY, so most of a well-surveyed region would otherwise report as
+ * telecom-infrastructure extract is sparse BY category, so most of a well-surveyed region would otherwise report as
  * unsurveyed (missing from `layer_coverage`) even though the whole extract region was in fact covered by the source. An
  * explicit `observedRows: 0` cell carries the meaning "surveyed, nothing found here" — never conflate it with a cell
- * absent from `layer_coverage` entirely (unsurveyed/unknown, the contract's meaning-of-zero rule).
+ * absent from `layer_coverage` entirely (unsurveyed/unknown, the interface's meaning-of-zero rule).
  *
  * Rows whose H3 cell falls outside the bbox's own polyfilled cell set are not represented in the returned coverage
  * (their observed count is silently uncounted) — acceptable because `bbox` is expected to describe the same extract
@@ -196,7 +196,7 @@ export function bboxCoverageCells(
 		// coverage path below (~:592) and every reader (`res9ShortCellToRes6Parent` in
 		// bdc/sdk/filing-landscape.ts, plausibility.ts, nearest-infrastructure.ts). H3's cell hierarchy is not
 		// geometrically exact, so the direct derivation disagrees with the hierarchy-parent one for a real
-		// fraction of points (~6.56% measured over 20k CONUS points) — the identical builder/reader divergence
+		// fraction of points (~6.56% measured over 20k conus points) — the identical builder/reader divergence
 		// class fixed in bdc 2a fix-round-1 (see filing-landscape.ts's module docstring). Getting this wrong
 		// means a row's observed count lands on a neighbouring cell, or is silently dropped when its
 		// direct-res-6 cell isn't a member of the bbox polyfill below.
@@ -254,7 +254,7 @@ export interface BuildPOIOptions {
 	 */
 	release: string
 	/**
-	 * `git rev-parse --short HEAD` — passed in by the command rather than read from the repo here.
+	 * `git rev-parse --short head` — passed in by the command rather than read from the repo here.
 	 */
 	buildSHA: string
 	/**
@@ -272,15 +272,15 @@ export interface BuildPOIOptions {
 	source?: "overture-places" | "osm"
 	/**
 	 * Manifest distribution tier. Default {@link LayerTier.Shipped}. The `--source osm` build branch passes
-	 * {@link LayerTier.BuildLocal} (ODbL share-alike. see `osm/README.md`).
+	 * {@link LayerTier.BuildLocal} (ODbL share-alike. see `osm/readme.md`).
 	 */
 	tier?: LayerTier
 	/**
-	 * Decision 5: when given, REPLACES the rows-derived res-6 coverage with this pre-computed set (typically
+	 * Decision 5: when given, replaces the rows-derived res-6 coverage with this pre-computed set (typically
 	 * {@link bboxCoverageCells} over the extract's bbox), `observedRows` taken as-is (0 permitted). Default: undefined,
 	 * meaning "coverage = the cells a row actually fell into".
 	 *
-	 * `completeness` and `basis` are per-cell and OPTIONAL, defaulting to the `1` / `source_present` pair the rest of
+	 * `completeness` and `basis` are per-cell and optional, defaulting to the `1` / `source_present` pair the rest of
 	 * this pipeline writes. A cell only reaches an exclusion-grade basis ({@link CoverageBasis.Surveyed} or
 	 * {@link CoverageBasis.Designated}) by naming one here, alongside the completeness that basis measured — the default
 	 * is the weakest reading precisely so that a builder which has not measured anything cannot claim otherwise.
@@ -320,7 +320,7 @@ export interface BuildPOIResult {
 
 /**
  * Build `poi.db`: stage → dictionary-encode → materialize the clustered table → FTS → layer manifest/coverage →
- * ANALYZE/VACUUM → seal. See the module docstring for the two-phase split and the build-on-copy deviation from the task
+ * analyze/vacuum → seal. See the module docstring for the two-phase split and the build-on-copy deviation from the task
  * brief.
  */
 export async function buildPOIDatabase(opts: BuildPOIOptions): Promise<BuildPOIResult> {
@@ -347,7 +347,7 @@ export async function buildPOIDatabase(opts: BuildPOIOptions): Promise<BuildPOIR
 
 	{
 		using kdb = new DatabaseClient<POIDatabase>(opts.out)
-		// Build-tuning pragmas (raw — Kysely doesn't model PRAGMA), matching build-candidate.ts's discipline.
+		// Build-tuning pragmas (raw — Kysely doesn't model pragma), matching build-candidate.ts's discipline.
 		kdb.exec("PRAGMA page_size=8192; PRAGMA journal_mode=OFF; PRAGMA synchronous=OFF; PRAGMA cache_size=-2000000;")
 
 		progress("stage", "creating staging + dictionary tables")
@@ -488,7 +488,7 @@ export async function buildPOIDatabase(opts: BuildPOIOptions): Promise<BuildPOIR
 		// from `layer_coverage` means no rows were observed there at all — the meaning-of-zero rule
 		// (missing = unknown, never `{completeness: 0}`).
 		//
-		// `coverageCellsOverride` (decision 5, the `--source osm` branch) REPLACES this rows-derived set
+		// `coverageCellsOverride` (decision 5, the `--source osm` branch) replaces this rows-derived set
 		// entirely with a pre-computed one (typically `bboxCoverageCells` over the extract's bbox) — see
 		// `BuildPOIOptions.coverageCellsOverride`'s docstring. Default path (no override) is unchanged.
 		// `basis: source_present` states in the artifact what the paragraph above states in prose: the 1.0 is
@@ -516,8 +516,8 @@ export async function buildPOIDatabase(opts: BuildPOIOptions): Promise<BuildPOIR
 
 		progress("finalize", "ANALYZE + VACUUM")
 		kdb.exec("ANALYZE")
-		// page_size must be set right before VACUUM (node:sqlite initializes the file at the 4096 default
-		// on `new DatabaseSync`, so the earlier pragma is a no-op until a VACUUM rebuilds at the new size)
+		// page_size must be set right before vacuum (node:sqlite initializes the file at the 4096 default
+		// on `new DatabaseSync`, so the earlier pragma is a no-op until a vacuum rebuilds at the new size)
 		// — the same discipline build-candidate.ts uses.
 		kdb.exec("PRAGMA page_size=8192")
 		kdb.exec("VACUUM")

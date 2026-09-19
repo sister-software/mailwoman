@@ -1,36 +1,36 @@
-# === v3.5.3-numsplice23-probe — B4c RANGE REFINEMENT: 2+3-digit vocab splice (10-999). 2k PROBE. ===
+# === v3.5.3-numsplice23-probe — B4c range refinement: 2+3-digit vocab splice (10-999). 2k probe. ===
 #
-# THE ONE VARIABLE vs v3.5.2-numsplice3-probe: the splice RANGE adds the 2-digit pieces. v0.11.2-
+# the one variable vs v3.5.2-numsplice3-probe: the splice range adds the 2-digit pieces. v0.11.2-
 # numsplice23 adds word-start 10-999 (+988) vs numsplice3's 100-999 (+900). So `11` -> `▁11` (the
 # 2-digit day of an FR date-name street, which the 100-999 range leaves multi-piece) and `178` ->
 # `▁178`, while `1945`/`6000`/`90210` stay multi-piece (`▁194,5` / `▁600,0` / `▁902,1,0`). English
 # letters byte-identical.
 #
-# WHY. The 3-digit probe (v352) showed that keeping 4-5 digit numbers multi-piece prevents the
+# why. The 3-digit probe (v352) showed that keeping 4-5 digit numbers multi-piece prevents the
 # postcode regression: parity postcode held at 0.986 (0 regressions) against the full range's 0.889
 # (-9.7pp), so the 4-5 digit pieces account for the whole postcode drop. But the 100-999 range
 # delivers only half of the full range's FR date-name rise (0.367 vs 0.682), because date streets
 # carry 2-digit days (`11 Novembre`) and 4-digit years, and 100-999 splices neither. A 2-digit piece
 # (10-99) cannot collide with a 4-5 digit postcode, so adding the 2-digit pieces should recover the
 # day half of the date-name rise while parity postcode stays at 0.986. This probe tests whether
-# 10-999 STRICTLY DOMINATES 100-999. (scratchpad/deepparse-cmp/NUMSPLICE3-verdict.md has the full
+# 10-999 strictly dominates 100-999. (scratchpad/deepparse-cmp/NUMSPLICE3-verdict.md has the full
 # v352 read.)
 #
 # init_from /data/models/numsplice23-expanded (v310 step-008000, token_embeddings FVT mean-init'd to
 # 74,131 — each 10-999 row = mean of its digit constituents. encoder/heads byte-identical).
 #
-# PRE-REGISTERED READ:
-#   PRIMARY (must at least match v352) — board 3 bare-street-hn near v352's 0.787; `aleja Wojska
+# PRE-registered read:
+#   primary (must at least match v352) — board 3 bare-street-hn near v352's 0.787; `aleja Wojska
 #     Polskiego 178` -> house_number. contextful classes hold at v352's recovered levels.
-#   THE 2-DIGIT QUESTION (the reason to prefer 10-999) — FR date-name rises above v352's 0.367 toward
+#   the 2-digit question (the reason to prefer 10-999) — FR date-name rises above v352's 0.367 toward
 #     the full range's 0.682. If it does not, the 2-digit pieces add nothing and the 100-999 range is
 #     the one to keep.
-#   POSTCODE (must not drop) — parity postcode holds at ~0.986 (as v352 did). board 3 bare-pc holds. the 6
+#   postcode (must not drop) — parity postcode holds at ~0.986 (as v352 did). board 3 bare-pc holds. the 6
 #     demo presets hold. If parity postcode drops, a 2-digit piece is colliding, which is unexpected,
 #     and the 100-999 range is the one to keep.
-#   DO-NO-HARM — FR fragment OVERALL + global parity hold.
+#   do-no-harm — FR fragment overall + global parity hold.
 #
-# DECISION TABLE:
+# decision table:
 #   Parity postcode holds at ~0.986 and FR date-name rises above 0.367 -> 10-999 dominates. train this
 #     config to 8k, then promote.
 #   Parity postcode holds and FR date-name stays at 0.367 -> the 2-digit pieces add nothing. train
@@ -77,7 +77,7 @@ data:
     usgov-hrsa-fqhc: 2.0
     usgov-imls-pls: 2.0
     usgov-nad: 1.0
-    state-ia-contractors: 2.0
+    state-ia-builders: 2.0
     state-tx-notaries: 1.5
     state-ny-notaries: 2.0
     deepseek-kryptonite: 3.0

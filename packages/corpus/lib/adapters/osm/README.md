@@ -9,7 +9,7 @@ seen their formats.
 OpenStreetMap is **ODbL-1.0**, share-alike. Every row this adapter emits carries that license string, and
 `SHARE_ALIKE_PATTERN` in `utils/license.ts` matches it. A proprietary-weights build passes
 `--exclude-share-alike` and drops the rows at ingest; the open weights are the only ones that learn from
-them. The adapter has no license option: the value is the contract.
+them. The adapter has no license option: the value is the interface.
 
 ## Input
 

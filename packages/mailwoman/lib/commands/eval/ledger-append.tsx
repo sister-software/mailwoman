@@ -5,7 +5,7 @@
  *
  *   `mailwoman eval ledger-append` — turn a promotion-eval out-dir into one row of
  *   `evals/scores-by-version.json` (#885). `eval promote` prints this command pre-filled on every
- *   `PASS`. Refuses duplicates without `--replace` and refuses un-excepted `FAIL` verdicts. exit codes
+ *   `pass`. Refuses duplicates without `--replace` and refuses un-excepted `fail` verdicts. exit codes
  *   mirror the retired script (0 appended, 1 refused, 2 usage).
  */
 
@@ -14,7 +14,7 @@ import { type CommandSpec, harnessCommand } from "#cli-kit"
 export const description = "Append a promotion-eval run to evals/scores-by-version.json (#885)"
 
 /**
- * Native command-line contract consumed by the filesystem command router.
+ * Native command-line interface consumed by the filesystem command router.
  */
 export const spec = {
 	name: "ledger-append",

@@ -59,7 +59,7 @@ export function LiveModelVisualizer({
 		try {
 			setTrace(await traceParse(text))
 		} catch (caught) {
-			// ORT's WASM backend can throw non-Errors (abort codes as numbers or strings); String() keeps the failure
+			// ORT's wasm backend can throw non-Errors (abort codes as numbers or strings); String() keeps the failure
 			// visible instead of storing undefined and rendering nothing.
 			setError(caught instanceof Error ? caught.message : String(caught))
 		} finally {

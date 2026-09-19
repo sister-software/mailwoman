@@ -4,8 +4,8 @@
  * @author Teffen Ellis, et al.
  *
  *   `mailwoman corpus slice translit` — build per-script parquet files from the DeepSeek-generated
- *   transliteration JSONL (one file per `deepseek-translit-<slug>` source) and emit the combined
- *   corpus MANIFEST. Sibling of `corpus slice kryptonite`; also canonicalizes the base corpus's
+ *   transliteration jsonl (one file per `deepseek-translit-<slug>` source) and emit the combined
+ *   corpus manifest. Sibling of `corpus slice kryptonite`; also canonicalizes the base corpus's
  *   legacy parquet paths (`$MAILWOMAN_DATA_ROOT/…` → `/data/…`).
  */
 
@@ -14,7 +14,7 @@ import { Text } from "ink"
 import { type CommandSpec, CommandTaskResult, type CommandComponent, useCommandTask } from "#cli-kit"
 
 /**
- * Native command-line contract consumed by the filesystem command router.
+ * Native command-line interface consumed by the filesystem command router.
  */
 export const spec = {
 	name: "translit",

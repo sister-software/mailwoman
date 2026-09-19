@@ -5,7 +5,7 @@
  *
  *   Does a pinned Overture release still exist?
  *
- *   Overture DELETES releases from the bucket on roughly a monthly window — a 2026-08-19 listing held two. Every build
+ *   Overture deletes releases from the bucket on roughly a monthly window — a 2026-08-19 listing held two. Every build
  *   that reads Overture carries its own pin (divisions for admin, places for POI, addresses for the corpus ingest.
  *   independent on purpose, because bumping one is a new-vintage decision for that artifact alone), and each pin dies
  *   silently when its release is pruned.
@@ -15,7 +15,7 @@
  *   the pattern` — a message that reads like a network fault rather than an expired pin. The bucket listing answers in
  *   one request.
  *
- *   Anonymous HTTP against the public bucket rather than the S3 SDK or DuckDB: this must be answerable before any heavy
+ *   Anonymous http against the public bucket rather than the S3 SDK or DuckDB: this must be answerable before any heavy
  *   optional dependency loads and the same listing a human would check.
  */
 
@@ -28,7 +28,7 @@ const BUCKET_URL = "https://overturemaps-us-west-2.s3.amazonaws.com"
  * Releases currently in the bucket, oldest first.
  */
 /**
- * What this function needs from an HTTP client: one `fetch`. Narrower than {@link APIClient} on purpose — a parameter
+ * What this function needs from an http client: one `fetch`. Narrower than {@link APIClient} on purpose — a parameter
  * shaped like the whole client makes a test double an assertion rather than an object, and the assertion then survives
  * a signature change that the double does not.
  */
@@ -43,7 +43,7 @@ export interface OvertureListingClient {
 /**
  * S3 returns at most 1,000 keys per `ListObjectsV2` response and reports the truncation in `IsTruncated`. A reader that
  * only matches `<Prefix>` cannot see that field, so a truncated first page reads as the whole bucket — and every
- * release past the truncation reads as PRUNED, which is the one answer this module exists to give correctly.
+ * release past the truncation reads as pruned, which is the one answer this module exists to give correctly.
  */
 const LISTING_PAGE_LIMIT = 100
 
@@ -116,7 +116,7 @@ export interface ReleaseCheck {
  * Check one pin against the bucket.
  *
  * A failed listing reports `reachable: false` and `present: true` — deliberately permissive. This is a pre-flight whose
- * only job is to turn a 30-minute failure into an immediate one. letting it BLOCK a build on its own network trouble
+ * only job is to turn a 30-minute failure into an immediate one. letting it block a build on its own network trouble
  * would trade a slow failure for a spurious one.
  */
 export async function checkOvertureRelease(release: string, client?: OvertureListingClient): Promise<ReleaseCheck> {

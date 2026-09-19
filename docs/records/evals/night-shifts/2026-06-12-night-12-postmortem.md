@@ -72,13 +72,13 @@ itcost more than a clean smoke would have.
 
 ## What went well
 
-- The contract+self-eval+worktree delegation pattern held: all 6 agents returned PR-ready work with direct self-reports; the checks (#517 punctuation, #483 bands) did their job.
+- The interface+self-eval+worktree delegation pattern held: all 6 agents returned PR-ready work with direct self-reports; the checks (#517 punctuation, #483 bands) did their job.
 - The per-adapter smoke check paid off again — caught the imls subregion class before the 22h commit (its actual purpose).
 - btrfs compression analysis avoided a needless 398G deletion of the operator's scratch.
 
 ## What could have gone better (friction — named)
 
-- **Agent worktree isolation leaked twice.** The Task 7 agent operated on the _primary_ checkout (left it on `chore/vitest-exclude-docs-lag` with an uncommitted vitest.config), which broke my `git pull` until I restored it. The Task 2 agent's commits touched ~8 unrelated files (span-proposer/classifier/country/docs/publish scripts) beyond its codex contract — likely a stray format/lint pass. Mitigation used: push branch refs explicitly (not worktree HEAD), and cherry-pick only the in-contract files onto a fresh branch. **Lesson:** verify each agent branch's merge-base diff scope before trusting it; never assume the worktree HEAD == the intended branch.
+- **Agent worktree isolation leaked twice.** The Task 7 agent operated on the _primary_ checkout (left it on `chore/vitest-exclude-docs-lag` with an uncommitted vitest.config), which broke my `git pull` until I restored it. The Task 2 agent's commits touched ~8 unrelated files (span-proposer/classifier/country/docs/publish scripts) beyond its codex interface — likely a stray format/lint pass. Mitigation used: push branch refs explicitly (not worktree HEAD), and cherry-pick only the in-interface files onto a fresh branch. **Lesson:** verify each agent branch's merge-base diff scope before trusting it; never assume the worktree HEAD == the intended branch.
 - **A compound shell command with `sleep` aborted the first build launch** (foreground sleep is blocked in this harness). Re-ran without sleeps. **Lesson:** no `sleep` in foreground Bash; use background waiters / Monitor.
 - The shared smoke `quarantine.jsonl` (all smokes → one `--output`) overwrote per-adapter reasons; had to re-run the imls smoke to a dedicated dir to recover them.
 

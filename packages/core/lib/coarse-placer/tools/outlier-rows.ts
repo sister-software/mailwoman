@@ -5,7 +5,7 @@
  *
  *   Shared plumbing for the Latin off-map outlier builders (`build-outlier-latin.ts` — Overture,
  *   `build-outlier-oa.ts` — OpenAddresses): the address-string assembler and its shape variants,
- *   the dedup/cap loop, and the OTHER-row JSONL encoding. The builders differ only in where the
+ *   the dedup/cap loop, and the other-row jsonl encoding. The builders differ only in where the
  *   locality comes from and in OA's PO-box guard, so both are parameters here.
  */
 
@@ -81,7 +81,7 @@ export function collectOutlierRows(candidates: Iterable<string | null>, cap = In
 }
 
 /**
- * Encode rows as `{raw, country: "OTHER"}` JSONL (trailing newline included).
+ * Encode rows as `{raw, country: "other"}` jsonl (trailing newline included).
  */
 export function otherRowsJSONL(rows: string[]): string {
 	return toLinesText(rows.map((raw) => stringifyJSON({ raw, country: "OTHER" })))

@@ -3,7 +3,7 @@
  * under sustained load roughly every 1-2h. This wrapper restarts the training process when it exits non-zero, resuming
  * from the latest step-* checkpoint.
  *
- * Run from the `corpus-python/` directory so the relative `$CONFIG` path resolves against cwd:
+ * Run from the `corpus-python/` directory so the relative `$config` path resolves against cwd:
  *
  * HSA_OVERRIDE_GFX_VERSION=11.0.0 node scripts/train_with_resume.ts [extra args passed to python -m mailwoman_train
  * train]
@@ -11,7 +11,7 @@
  * Stops when:
  *
  * - Python exits 0 (training reached max_steps)
- * - Signal trap caught (SIGINT/SIGTERM)
+ * - Signal trap caught (sigint/sigterm)
  * - Max-attempts reached (default 50, override via $MAX_ATTEMPTS)
  */
 
@@ -45,7 +45,7 @@ const logFd = await open(LOG, "a")
 // zx prints the command to stderr by default. the bash wrapper kept python output in $LOG only, so stay quiet.
 $.verbose = false
 
-// Match the bash trap: on SIGINT/SIGTERM, log a line and exit 130.
+// Match the bash trap: on sigint/sigterm, log a line and exit 130.
 function onSignal(): void {
 	console.log("[wrapper] received signal, exiting")
 

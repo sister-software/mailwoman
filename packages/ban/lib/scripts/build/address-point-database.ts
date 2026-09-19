@@ -3,8 +3,8 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Build the national FR ROOFTOP address-point extract from the BAN `adresses-<dept>.csv` dumps
- *   (adresse.data.gouv.fr), on the SHARED situs schema (`@mailwoman/resolver-wof-sqlite/address-point-schema`)
+ *   Build the national FR rooftop address-point extract from the BAN `adresses-<dept>.csv` dumps
+ *   (adresse.data.gouv.fr), on the shared situs schema (`@mailwoman/resolver-wof-sqlite/address-point-schema`)
  *   so the existing `AddressPointSqliteLookup` reads it with zero changes (#1012). BAN is a structured
  *   government register — every row carries `numero`/`nom_voie`/`code_postal`/`nom_commune`/`lon`/`lat`,
  *   so there is no OSM-style association gap: we write the exact source coordinate for every valid row.
@@ -14,8 +14,8 @@
  *   shared FR normalizer (`normalizeStreetForKeyLocale(street, "fr")`) — the identical function the
  *   lookup tier applies at query time, so build-side and probe-side can't drift.
  *
- *   Build discipline (house rules): stream → positional prepared INSERT (batched) → indexes → ANALYZE →
- *   atomic swap into place → SEAL 0444 → record md5 + provenance in `ban/ATTRIBUTION.json`. The output
+ *   Build discipline (house rules): stream → positional prepared insert (batched) → indexes → analyze →
+ *   atomic swap into place → seal 0444 → record md5 + provenance in `ban/attribution.json`. The output
  *   is a new, purely-additive artifact (`ban/address-points-fr.db`); it never touches the OSM extract.
  *
  *   BAN is published under the Licence Ouverte / Etalab 2.0 (attribution, no share-alike), so the built

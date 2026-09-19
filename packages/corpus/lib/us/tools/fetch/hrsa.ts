@@ -7,7 +7,7 @@
  *   adapter. US Public Domain.
  *
  *   Uses Node's built-in fetch (gzip/brotli) and streaming sha256 instead of curl + sha256sum, and
- *   writes the same sibling `MANIFEST.json` (origin URL + fetch timestamp + byte count + sha256) so
+ *   writes the same sibling `manifest.json` (origin URL + fetch timestamp + byte count + sha256) so
  *   downstream adapters can verify provenance.
  *
  *   Invoke via `mailwoman corpus fetch hrsa --out-root <path>`.

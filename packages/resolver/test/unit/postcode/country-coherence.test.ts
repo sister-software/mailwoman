@@ -15,12 +15,12 @@
  *
  *   The safety properties under test, in the order they matter:
  *
- *   1. A COHERENT default country always wins (no override, no metadata, byte-stable walk).
- *   2. Zero coherent countries abstains. TWO OR MORE coherent countries abstains.
+ *   1. A coherent default country always wins (no override, no metadata, byte-stable walk).
+ *   2. Zero coherent countries abstains. two or more coherent countries abstains.
  *   3. The pass is inert without a postcode, without a locality, without a default country, and
  *      whenever the flag is explicitly `false`.
  *
- *   The flag is DEFAULT-ON as of the 2026-08-05 promotion, so every "off" leg below sets `false`
+ *   The flag is default-on as of the 2026-08-05 promotion, so every "off" leg below sets `false`
  *   explicitly. Omitting the option no longer means off, and a leg that relied on omission would
  *   quietly stop testing what its name says.
  */
@@ -268,7 +268,7 @@ const TREBON_CZ: ResolvedPlace = {
 	exactMatch: true,
 }
 
-// `Biskupcova 1843/3, 13000 Praha 3` — the POSTCODE-ONLY case. `13000` is held in exactly one country
+// `Biskupcova 1843/3, 13000 Praha 3` — the postcode-only case. `13000` is held in exactly one country
 // and `Praha 3` (a municipal district) is not a gazetteer name anywhere, so the pair test can never fire.
 const PC_13000_CZ: ResolvedPlace = {
 	id: 900_110,
@@ -281,7 +281,7 @@ const PC_13000_CZ: ResolvedPlace = {
 	exactMatch: true,
 }
 
-// `Bahnhofplatz 1, 6060 Sarnen` — the LOCALITY-ONLY case. The gazetteer holds no CH postcodes at all, so
+// `Bahnhofplatz 1, 6060 Sarnen` — the locality-only case. The gazetteer holds no CH postcodes at all, so
 // `6060` resolves in NL/AT and never in CH; `Sarnen` exists in exactly one country.
 const PC_6060_NL: ResolvedPlace = {
 	id: 900_120,
@@ -414,7 +414,7 @@ describe("findPostcodeCountryScope", () => {
 
 		tree.roots.push(node({ tag: "country", value: "Portugal" }))
 
-		// A hard abstention on the PRESENCE of the token rather than a test of whether it agrees. Re-deciding
+		// A hard abstention on the presence of the token rather than a test of whether it agrees. Re-deciding
 		// between the token and the pair would be the same inference wearing a tie-break, and whether the
 		// named country is spelled correctly is the walk's own country lookup to answer.
 		expect(await findPostcodeCountryScope(tree.roots, backend, { postcode: "75001", defaultCountry: "US" })).toBeNull()
@@ -466,7 +466,7 @@ describe("findPostcodeCountryScope", () => {
 	})
 
 	it("abstains when TWO candidate countries are both coherent (a genuine geographic tie)", async () => {
-		// A synthetic tie: the same code resolves near a same-named locality in BOTH DE and FR.
+		// A synthetic tie: the same code resolves near a same-named locality in both DE and FR.
 		const twinFR: ResolvedPlace = { ...PC_75001_FR, name: "99999" }
 		const twinDE: ResolvedPlace = { ...PC_75001_DE, name: "99999" }
 		const cityFR: ResolvedPlace = { ...PARIS_FR, name: "Twinsville", id: 1 }
@@ -542,7 +542,7 @@ describe("findPostcodeCountryScope", () => {
 		expect(scope).toBeNull()
 	})
 
-	// Until #24 this asserted the opposite — that PL was UNREACHABLE, because the candidate set came from
+	// Until #24 this asserted the opposite — that PL was unreachable, because the candidate set came from
 	// `candidateSystemsForPostcode` and there is no `pl` codex address system. That was a corollary of the
 	// source, never a safety property: the pair is coherent in exactly one country and the pass exists to say
 	// so. The gazetteer's own postcode membership is now the candidate source, so the 8 codex address systems
@@ -624,7 +624,7 @@ describe("findPostcodeCountryScope", () => {
 /**
  * The single-sided rungs (#24). The pair test can only speak when both halves are in the gazetteer, and on the
  * 2026-08-09 eu-mixed panel that condition failed 10 times for two opposite reasons — a municipal district the
- * gazetteer does not name (`Praha 3`), and a country whose postcodes the gazetteer does not carry at all (CH, BE). Each
+ * gazetteer does not name (`Praha 3`), and a country whose postcodes the gazetteer does not carry at all (CH, be). Each
  * rung fires only when the default country corroborates neither half, and only when its own half names exactly one
  * country.
  */
@@ -868,9 +868,9 @@ describe("findPostcodeCountryScope — multi-value locality fallthrough", () => 
 
 	it("a DOMESTIC value neutralizes itself, not its siblings — Green Point/Cape Town → ZA (rung 4a)", async () => {
 		// `14 Long St, Green Point, Cape Town, 8001` under the inferred US default. "Green Point" has pop-0
-		// US namesakes (domestic corroboration for that VALUE only); "Cape Town" names exactly one country
+		// US namesakes (domestic corroboration for that value only); "Cape Town" names exactly one country
 		// in the whole gazetteer. Any-value-kills abstained the pass and the hard US filter answered Green
-		// Point, Pennsylvania — 12,748 km off. The live 8001 rows are NO/AU/SI: no US row, no ZA row.
+		// Point, Pennsylvania — 12,748 km off. The live 8001 rows are no/AU/SI: no US row, no ZA row.
 		const greenPointPA: ResolvedPlace = {
 			id: 900_220,
 			name: "Green Point",
@@ -941,7 +941,7 @@ describe("findPostcodeCountryScope — multi-value locality fallthrough", () => 
 
 	it("a TIE on a later value is a hard abstention, never a fall-through to the single-sided rungs", async () => {
 		// First value `Zzv` names exactly one country in the locality band, so a buggy fall-through past the
-		// tie would let rung 4a scope to NO. Second value `Mirakol` is pair-coherent in BOTH HR and RS.
+		// tie would let rung 4a scope to no. Second value `Mirakol` is pair-coherent in both HR and RS.
 		const zzvNO: ResolvedPlace = {
 			id: 900_210,
 			name: "Zzv",
@@ -1064,8 +1064,8 @@ describe("resolveTree + postcode-country coherence", () => {
 	it("resolves '12 Rue de Rivoli, 75001 Paris' to Paris TEXAS with the flag OFF (the reported bug)", async () => {
 		const resolver = createWOFResolver(await makeBackend(RIVOLI_POOL))
 
-		// The explicit `false` is the whole point of this row now: since the 2026-08-05 promotion an UNSET flag
-		// means ON, so an options object that just omits it no longer reproduces the bug.
+		// The explicit `false` is the whole point of this row now: since the 2026-08-05 promotion an unset flag
+		// means on, so an options object that just omits it no longer reproduces the bug.
 		const out = await resolver.resolveTree(addressTree("75001", "Paris"), {
 			defaultCountry: "US",
 			postcodeCountryCoherence: false,
@@ -1074,7 +1074,7 @@ describe("resolveTree + postcode-country coherence", () => {
 		const locality = nodeByTag(out, "locality")
 
 		expect(locality?.metadata?.["resolver_country"]).toBe("US")
-		// applyPostcodeConsistency (default-ON) then drags it onto ZIP 75001, Addison TX — the worse-than-wrong case.
+		// applyPostcodeConsistency (default-on) then drags it onto ZIP 75001, Addison TX — the worse-than-wrong case.
 		expect(locality?.lat).toBeCloseTo(PC_75001_US.lat, 3)
 		expect(locality?.lon).toBeCloseTo(PC_75001_US.lon, 3)
 		expect(locality?.metadata?.["postcode_city_mismatch"]).toBe(true)
@@ -1166,8 +1166,8 @@ describe("resolveTree + postcode-country coherence", () => {
 	})
 
 	it("fires WITHOUT a default country when exactly one country makes the pair coherent (the browser-cascade arm)", async () => {
-		// The 2026-08-11 contract flip (the staged-repoint e2e): with no default in force there is
-		// nothing to override, but the pair rung still CONSTRAINS — (75001, Paris) is coherent in FR
+		// The 2026-08-11 interface flip (the staged-repoint e2e): with no default in force there is
+		// nothing to override, but the pair rung still constrains — (75001, Paris) is coherent in FR
 		// alone (Paris TX sits ~150 km from the Addison ZIP), so the walk scopes to FR instead of
 		// resolving population-first. Only the pair rung runs on this arm. the single-sided rungs
 		// keep needing the default as their domestic-plausibility guard.

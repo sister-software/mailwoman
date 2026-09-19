@@ -71,9 +71,9 @@ export function evidenceCensus(parse: NeuralParseTrace): EvidenceCensus {
 /**
  * Which decode-time priors moved the emissions on this parse.
  *
- * `applied` is each prior record's own contract — "whether this prior moved anything" — so this is an L1 signal per
+ * `applied` is each prior record's own interface — "whether this prior moved anything" — so this is an L1 signal per
  * prior rather than merely "the stage ran". `emissions_moved` is the cross-check over the whole matrix: true when the
- * decoded emissions differ anywhere from the raw logits, i.e. when SOME prior wrote something. `applied` kinds with
+ * decoded emissions differ anywhere from the raw logits, i.e. when some prior wrote something. `applied` kinds with
  * `emissions_moved: false` (or vice versa) would mean a prior's own bookkeeping disagrees with the matrix it claims to
  * have written — worth surfacing, never worth papering over.
  */

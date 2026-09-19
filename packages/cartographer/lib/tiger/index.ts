@@ -18,7 +18,7 @@ export const TIGERTractsTileSetID = TileSetSourceID("tiger-tracts")
 export const TIGERBlocksTileSetID = TileSetSourceID("tiger-blocks")
 
 /**
- * Layer definitions drawing the TIGER tract and block tile sets.
+ * Layer definitions drawing the tiger tract and block tile sets.
  */
 export const TIGERLayers: LayerSpecificationListInput[] = [
 	{

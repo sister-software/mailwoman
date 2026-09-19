@@ -1,19 +1,19 @@
-# v8 JP char-path — input-contract design + Leg-1 probe (Fable, 2026-07-18)
+# v8 JP char-path — input-interface design + Leg-1 probe (Fable, 2026-07-18)
 
 Refines `scratchpad/v8-cjk-architecture-plan.md`. Grounded in model.py (CharCNNEmbedding 133–192, forward fusion 563–660), char_tokenizer.py, data_loader.py, tokenizer.py (char-label implementation 113–257), labels.py, SCHEMA.mdx JP block, Phase-0 derisk.
 
 ## Decision register (4 irreversible)
 
-| #   | Decision                                                                                                                                        | Reversibility                                                                      |
-| --- | ----------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------- |
-| D1  | Tensor contract `char_ids (B,S,W)` where **S = label units, W = char composition window** — ONE contract for Latin char-word AND CJK char-level | **IRREVERSIBLE** (ONNX signature; neural/ + neural-web/ reimplement byte-for-byte) |
-| D2  | Char vocab = sealed codepoint-sorted JSON, built from train split, shipped in weights pkg                                                       | **IRREVERSIBLE** per model (tokenizer-mismatch scar)                               |
-| D3  | CJK unit = **one character** (not morpheme-grouped); per-char BIO                                                                               | **IRREVERSIBLE** (codifies TS decoder JP span reconstruction)                      |
-| D4  | JP compact `2-3-16` = **one house_number span**; JP-seven fine tags reserved for kanji-designator forms only                                    | IRREVERSIBLE-ish (extract rebuild to change)                                       |
-| D5  | Leg-1 probe trains on universal STAGE3 subset (region/locality/street/house_number/postcode) rather than JP-seven                               | Reversible (probe-scoped)                                                          |
-| D6  | Context window `ctx_chars=3` for CJK (W=7), `ctx_chars=0` for Latin char-word                                                                   | Config knob, ablatable                                                             |
+| #   | Decision                                                                                                                                          | Reversibility                                                                      |
+| --- | ------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------- |
+| D1  | Tensor interface `char_ids (B,S,W)` where **S = label units, W = char composition window** — ONE interface for Latin char-word AND CJK char-level | **IRREVERSIBLE** (ONNX signature; neural/ + neural-web/ reimplement byte-for-byte) |
+| D2  | Char vocab = sealed codepoint-sorted JSON, built from train split, shipped in weights pkg                                                         | **IRREVERSIBLE** per model (tokenizer-mismatch scar)                               |
+| D3  | CJK unit = **one character** (not morpheme-grouped); per-char BIO                                                                                 | **IRREVERSIBLE** (codifies TS decoder JP span reconstruction)                      |
+| D4  | JP compact `2-3-16` = **one house_number span**; JP-seven fine tags reserved for kanji-designator forms only                                      | IRREVERSIBLE-ish (extract rebuild to change)                                       |
+| D5  | Leg-1 probe trains on universal STAGE3 subset (region/locality/street/house_number/postcode) rather than JP-seven                                 | Reversible (probe-scoped)                                                          |
+| D6  | Context window `ctx_chars=3` for CJK (W=7), `ctx_chars=0` for Latin char-word                                                                     | Config knob, ablatable                                                             |
 
-## (a) Contract
+## (a) Interface
 
 Unifying observation: `CharCNNEmbedding.forward` consumes `char_ids (B,S,W)→(B,S,hidden)`, never asks what a "position" is. **S = label units** (things carrying one BIO label), **W = chars describing that unit**. Latin char-word: unit=whitespace token, W=token chars (ctx=0). CJK char-level: unit=one char, W=char ±3 neighbors (W=7). W=1 degenerates the multi-width CNN (kernels 3/4/5 see 1 char + pad); W=7 gives it local n-gram detection (丁目/番地/号 as units) at negligible cost. Window-composition replaces word-composition.
 

@@ -110,7 +110,7 @@ export function pyTitle(input: string): string {
 }
 
 /**
- * Titlecase a SHOUTED string, leave anything else alone — the shape source dumps use when a field arrives ALL CAPS.
+ * Titlecase a shouted string, leave anything else alone — the shape source dumps use when a field arrives all caps.
  */
 export function titlecaseIfUpper(input: string): string {
 	return pyIsUpper(input) ? pyTitle(input) : input

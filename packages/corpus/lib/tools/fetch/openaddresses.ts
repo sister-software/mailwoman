@@ -7,8 +7,8 @@ import { APIClient, isSuccessStatus } from "@mailwoman/core/api"
  *   Fetch an OpenAddresses country collection from batch.openaddresses.io.
  *
  *   Source: https://batch.openaddresses.io
- *   License: MIXED — OpenAddresses aggregates hundreds of upstream sources with per-source licenses
- *   (CC-BY, CC0, PDDL, ODbL, CC-BY-SA, and proprietary attribution-only). The per-row LICENSE filter
+ *   License: mixed — OpenAddresses aggregates hundreds of upstream sources with per-source licenses
+ *   (CC-BY, CC0, pddl, ODbL, CC-BY-SA, and proprietary attribution-only). The per-row LICENSE filter
  *   in the openaddresses adapter is essential for proprietary-weights training: Tier-C rows (ODbL,
  *   CC-BY-SA, CC-SA) are dropped at ingest by default. This module downloads the raw collection. the
  *   adapter does the license filtering.
@@ -29,7 +29,7 @@ import { APIClient, isSuccessStatus } from "@mailwoman/core/api"
  *
  *   The collection URL pattern (verified 2026-05-18):
  *
- *   - `POST /api/login {username, password}` → `{token}`
+ *   - `post /api/login {username, password}` → `{token}`
  *   - `GET  /api/job/{job_id}/output/source.geojson.gz?token={token}`
  *
  *   Collections are downloaded as a combined GeoJSON.gz via:
@@ -180,14 +180,14 @@ The Canada collection (ca) is ~2 GiB compressed / ~7 GiB uncompressed
 	if (collectionID === undefined) {
 		report?.(`Unknown country code '${country}'. Fetching collection list to find ID...`)
 
-		// The collections API only. The COLLECTION ARCHIVES stay on raw `fetch` — they stream multi-gigabyte
+		// The collections API only. The collection archives stay on raw `fetch` — they stream multi-gigabyte
 		// bodies straight to disk, where response caching is nonsense and axios would buffer them in memory.
 		const res = await new APIClient({
 			displayName: "openaddresses-api",
 			retry: true,
 			axios: { headers: { Authorization: `Bearer ${token}`, "Accept-Encoding": "gzip, br" } },
 		})
-			// `validateStatus` keeps a non-2xx as a RESPONSE rather than a throw: the caller reports the status and
+			// `validateStatus` keeps a non-2xx as a response rather than a throw: the caller reports the status and
 			// returns `fail(country)`, a graceful path this must not turn into an exception.
 			.fetch<OaCollection[]>({
 				url: `${OA_BASE}/api/collections`,
@@ -287,7 +287,7 @@ URL tried: ${OA_BASE}/api/collections/${collectionID}/download
 		report?.(`  WARNING: Downloaded file type is '${fileMagic.trim()}' — may need manual decompression.`)
 	}
 
-	// MARK: Verify + write MANIFEST
+	// MARK: Verify + write manifest
 
 	if (!(await pathExists(outputFile))) {
 		report?.(`ERROR: Output file not found at ${outputFile} after download.`)

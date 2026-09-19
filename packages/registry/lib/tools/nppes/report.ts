@@ -148,7 +148,7 @@ export function renderNPPESDedupReport(input: NPPESReportInput): string {
 		"",
 		`**Headline — org-name truth (the honest grain):** the shipped ` +
 			`matcher resolves these records at **F1 ${pct(gbtOrg.f1)}%** against org-name entity-truth — not the NPI-level ` +
-			`${pct(gbtNPI.f1)}%, which mostly measures NPI over-segmentation (one organization holds many subpart NPIs, so ` +
+			`${pct(gbtNPI.f1)}%. It mostly measures NPI over-segmentation (one organization holds many subpart NPIs. Therefore, ` +
 			`correct co-located merges are scored as errors). Same clusters, three rulers: ` +
 			`**NPI ${pct(gbtNPI.f1)}% → site ${pct(gbtEntity.f1)}% → org-name ${pct(gbtOrg.f1)}%** ` +
 			`(${keptNpis} NPI → ${entityCount} site → ${orgCount} org-name classes); the climb is the yardstick getting honest, ` +

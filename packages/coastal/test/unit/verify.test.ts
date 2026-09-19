@@ -5,13 +5,13 @@
  *
  *   The two-path comparison's own logic, against a scripted service reader.
  *
- *   THE VALUE OF THE CHECK IS WHICH OF THREE OUTCOMES A POINT GETS, and that decision is what a live run can
- *   only be watched making. Expressed against a function rather than an HTTP client, it can be pinned: a
- *   point the service also places inside AGREES, a point far from any service edge DISAGREES, and a point a
+ *   the value OF the check is which OF three outcomes A point gets, and that decision is what a live run can
+ *   only be watched making. Expressed against a function rather than an http client, it can be pinned: a
+ *   point the service also places inside agrees, a point far from any service edge disagrees, and a point a
  *   few centimetres from an edge is `boundary_tolerance` — because the two channels publish six and nine
  *   decimals and render the same edge differently.
  *
- *   THE NEGATIVE HALF IS PINNED HERE TOO. Inland English points must read `unknown` with no designation, and
+ *   the negative half is pinned here too. Inland English points must read `unknown` with no designation, and
  *   this is the check that would have caught a builder generalizing the flood layer's Zone-1-by-absence rule.
  */
 
@@ -137,7 +137,7 @@ describe("the positive half", () => {
 
 	it("tolerates a point a few centimetres outside the service's own edge", async () => {
 		// About 5 cm north of the band's northern edge — inside the artifact's rendering is false and the service's is
-		// false too, so this specific point agrees. the case that matters is the DISTANCE being carried, which is what
+		// false too, so this specific point agrees. the case that matters is the distance being carried, which is what
 		// separates a rendering difference from a conversion defect on a receipt.
 		const nearEdge = {
 			label: "just outside band A's north edge",
@@ -155,7 +155,7 @@ describe("the positive half", () => {
 
 		const row = result.agreement[0]!
 
-		// The distance rides on every row rather than only the tolerated ones — measured to the EDGE, which for a point beside a
+		// The distance rides on every row rather than only the tolerated ones — measured to the edge, which for a point beside a
 		// long edge is orders of magnitude smaller than the distance to the nearest vertex.
 		expect(row.nearestEdgeMetres).toBeDefined()
 		expect(row.nearestEdgeMetres!).toBeLessThan(BOUNDARY_TOLERANCE_METRES)

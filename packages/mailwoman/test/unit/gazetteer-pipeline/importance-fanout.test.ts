@@ -43,7 +43,7 @@ const Q1794 = [
 ]
 
 /**
- * Q340 — Montréal, CANADA, attached to two French communes 182 km apart, neither with a population row. No evidence to
+ * Q340 — Montréal, canada, attached to two French communes 182 km apart, neither with a population row. No evidence to
  * pick between them and both are wrong, so the id is dropped whole.
  */
 const Q340 = [

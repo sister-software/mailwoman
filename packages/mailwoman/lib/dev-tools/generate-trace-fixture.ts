@@ -9,7 +9,7 @@
  *
  *       mailwoman dev generate trace-fixture ["custom address"]
  *
- *   NOTE: on machines without the anchor lookup ($MAILWOMAN_DATA_ROOT), loadFromWeights warns
+ *   note: on machines without the anchor lookup ($MAILWOMAN_DATA_ROOT), loadFromWeights warns
  *   and the trace's `anchor` channel is absent — the component's "channel not fed" state. The
  *   deployed demo feeds anchor from postcode-<cc>.bin, so regenerate on a lab box for a
  *   fully-fed fixture when that state matters.

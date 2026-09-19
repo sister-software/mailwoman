@@ -3,17 +3,17 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Stream the address-containing features of a Geofabrik `.osm.pbf` extract to the per-country corpus JSONL the
- *   `@mailwoman/corpus` `osm` adapter reads. The split is the same one the Overture adapter rides: GDAL and the PBF
- *   stay here, and the corpus package, a runtime dependency of the `mailwoman` CLI, streams a light JSONL.
+ *   Stream the address-containing features of a Geofabrik `.osm.pbf` extract to the per-country corpus jsonl the
+ *   `@mailwoman/corpus` `osm` adapter reads. The split is the same one the Overture adapter rides: gdal and the PBF
+ *   stay here, and the corpus package, a runtime dependency of the `mailwoman` CLI, streams a light jsonl.
  *
  *   One row per `addr:housenumber` feature that also carries an `addr:street`. A point with no street is counted rather
  *   than written: a parser corpus row without a street teaches nothing the `wof-admin` rows do not already teach, and
  *   the rooftop builder sizes the same gap for the resolver. Every tag the extract projects rides along, absent ones
  *   omitted, plus the representative coordinate so a board can be drawn from the same file.
  *
- *   ⚠ ODbL: the OUTPUT is derived from OpenStreetMap and carries the share-alike obligation. The adapter stamps every
- *   row `ODbL-1.0`, which `SHARE_ALIKE_PATTERN` matches, so a proprietary-weights build passing `--exclude-share-alike`
+ *   ⚠ ODbL: the output is derived from OpenStreetMap and carries the share-alike obligation. The adapter stamps every
+ *   row `ODbL-1.0`. It `SHARE_ALIKE_PATTERN` matches. Therefore, a proprietary-weights build passing `--exclude-share-alike`
  *   drops these rows at ingest and only the open weights learn from them.
  */
 
@@ -25,7 +25,7 @@ import { createNewlineWriter } from "spliterator"
 import { extractAddrPoints, type OSMAddrRecord } from "#sdk/extract"
 
 /**
- * The corpus JSONL row: the extract's record with the house number under the `number` key the Overture rows use, so an
+ * The corpus jsonl row: the extract's record with the house number under the `number` key the Overture rows use, so an
  * adapter reading either file meets the same shape.
  */
 export interface OSMCorpusRow {
@@ -78,7 +78,7 @@ export function toCorpusRow(record: OSMAddrRecord): OSMCorpusRow | null {
 }
 
 /**
- * Write the corpus JSONL for one extract. The output directory is created. an existing file is replaced.
+ * Write the corpus jsonl for one extract. The output directory is created. an existing file is replaced.
  */
 export async function writeOSMCorpusJSONL(pbfPath: string, outPath: PathBuilderLike): Promise<OSMCorpusJSONLStats> {
 	await makeDirectories(dirname(outPath))

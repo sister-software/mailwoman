@@ -3,7 +3,7 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   The compare handler's contract, driven through a stub registry so no weights load and no gazetteer opens.
+ *   The compare handler's interface, driven through a stub registry so no weights load and no gazetteer opens.
  */
 
 import { JobRegistry } from "@mailwoman/dev-mcp/jobs"
@@ -66,12 +66,12 @@ async function tableWith(engines: Array<ReturnType<typeof stubEngine>>): Promise
 const LITERAL = {
 	kind: "literal" as const,
 	inputs: ["one", "two", "three"],
-	why: "a fixed three-input set for the handler contract",
+	why: "a fixed three-input set for the handler interface",
 }
 
 describe("mwdev_job", () => {
 	/**
-	 * A child that prints a gauntlet-shaped log and exits 1 — what a completed run grading `FAIL` looks like.
+	 * A child that prints a gauntlet-shaped log and exits 1 — what a completed run grading `fail` looks like.
 	 */
 	const FAIL_SCRIPT =
 		'console.log("=== Gauntlet · regression (350/354 counted cases pass, 203 tracked) ===");' +
@@ -103,7 +103,7 @@ describe("mwdev_job", () => {
 	}
 
 	it("distinguishes a graded FAIL from a crash", async () => {
-		// The gauntlet exits 1 on a `FAIL` verdict, so `state: "failed"` is what a healthy failing run looks like. Those
+		// The gauntlet exits 1 on a `fail` verdict, so `state: "failed"` is what a healthy failing run looks like. Those
 		// need different responses from a reader, so the difference is stated rather than inferred from an exit code.
 		const result = await runToCompletion(FAIL_SCRIPT, 1)
 

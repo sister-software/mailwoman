@@ -3,9 +3,9 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Promotion eval runner (#479) — ONE command that runs the standard eval battery against a
- *   candidate model, checks every number against an eval spec CONTRACT, and emits a single
- *   machine-readable verdict. Exists so promotion evals are ENFORCED rather than night-shift discipline,
+ *   Promotion eval runner (#479) — one command that runs the standard eval battery against a
+ *   candidate model, checks every number against an eval spec interface, and emits a single
+ *   machine-readable verdict. Exists so promotion evals are enforced rather than night-shift discipline,
  *   and so "why did this model ship?" has a one-file answer.
  *
  *   Usage: mailwoman eval promote\
@@ -18,7 +18,7 @@
  *   The --model dual grades raw artifacts: its fp32↔int8 deltas are valid, but its absolute floors
  *   are not for any channel-trained model — the package channel siblings (anchor, gazetteer,
  *   country) never load on that path. Package-shaped grading (--weights-cache) is the only
- *   in-distribution floor read, and a PAIR of caches (#47) grades floors and the delta cap together
+ *   in-distribution floor read, and a pair of caches (#47) grades floors and the delta cap together
  *   in one run — the release path.
  *
  *   Behavior:
@@ -32,7 +32,7 @@
  *   - Mask-regression check (#718): when the spec declares requires_conventions, re-runs the ship
  *       artifact mask-off vs mask-on and fails the eval if any tag drops >2pp under the mask — the
  *       "second lock" beside createScorer's load-time capability delta check.
- *   - Collects headline numbers into <out-dir>/verdict.json with per-floor PASS/FAIL.
+ *   - Collects headline numbers into <out-dir>/verdict.json with per-floor pass/fail.
  *   - Exit 0 = every floor met and the mask-regression lock held. exit 1 = any miss.
  *
  *   Every leg runs in-process. The check spawned eight children (`per-locale-f1`, `score-affix` ×6,
@@ -45,7 +45,7 @@
  *
  *   Error semantics are preserved leg-for-leg, because they are not uniform and the differences are
  *   deliberate. `nothrow` became try/catch-and-continue. a bare `$` (which threw on non-zero) became
- *   a call whose throw propagates. a leg whose non-zero exit ABORTED the run (arena, fr-recall)
+ *   a call whose throw propagates. a leg whose non-zero exit aborted the run (arena, fr-recall)
  *   still returns 1. the two legs that merged `${stdout}${stderr}` into one `.md` keep two sinks and
  *   concatenate them in that order. `promotion-eval-sinks.test.ts` pins the table.
  *
@@ -97,7 +97,7 @@ import { resolveWOFHotDB } from "#eval-harness/wof-hot-db"
  *
  * This is the whole migration's required assumption in one line. `console.log(x)` writes `x` then a newline, and zx
  * handed the concatenation of those writes back as `.stdout`; a sink that records one entry per `console.log` call
- * therefore reproduces the same bytes — INCLUDING a multi-line argument (one call, embedded newlines, one trailing
+ * therefore reproduces the same bytes — including a multi-line argument (one call, embedded newlines, one trailing
  * newline) and a bare `console.log()` (the empty string, one newline). Exported for `promotion-eval-sinks.test.ts`.
  */
 export function renderLines(lines: readonly string[]): string {
@@ -110,11 +110,11 @@ interface ThresholdSpec {
 	requires_conventions?: string
 	requires_bridge?: boolean
 	/**
-	 * The ANSWER KEY the per-locale battery grades against, e.g. `data/eval/golden/v0.1.3/dev`. Spec-declared for the
+	 * The answer KEY the per-locale battery grades against, e.g. `data/eval/golden/v0.1.3/dev`. Spec-declared for the
 	 * same reason the conventions mask is: two eval specs that name different golden versions are not comparable, and a
 	 * default buried in a scorer makes that invisible. Omitted = per-locale-f1's own default (v0.1.2/dev).
 	 *
-	 * Answer-key versions are never comparable ACROSS conventions — v0.1.2 folds US street spans, v0.1.3 splits them — so
+	 * Answer-key versions are never comparable across conventions — v0.1.2 folds US street spans, v0.1.3 splits them — so
 	 * a spec that moves this field must re-anchor its floors on a fresh reading, never carry the old numbers over.
 	 */
 	golden_dir?: string
@@ -172,7 +172,7 @@ export interface PromotionEvalOptions {
 	 */
 	outDir?: PathBuilderLike
 	/**
-	 * Write a per-leg wall-time ledger here. PROFILING ONLY, and the path must name somewhere OUTSIDE
+	 * Write a per-leg wall-time ledger here. profiling only, and the path must name somewhere outside
 	 * {@linkcode PromotionEvalOptions.outDir}: the receipt comparator reads every file under that directory byte-for-byte,
 	 * and a wall time differs between two runs of the same artifact. Omitted, nothing is written.
 	 */
@@ -188,10 +188,10 @@ export interface PromotionEvalOptions {
  *
  * The `.json` suffix is optional, because the help has always advertised "a spec name" and a spec name is what people
  * type. Before that was true, `--spec v5.3.0-family` fell through to `readFileSync("v5.3.0-family")` and died on a bare
- * ENOENT naming a file nobody asked for — which is how it read on 2026-07-16.
+ * enoent naming a file nobody asked for — which is how it read on 2026-07-16.
  */
 /**
- * The eval specs, beside this module in the SOURCE tree — tsc emits no `.json`, so the directory is named from the
+ * The eval specs, beside this module in the source tree — tsc emits no `.json`, so the directory is named from the
  * package root.
  */
 const SPECS_DIR = resolvePackagePath("mailwoman", "lib", "eval-harness", "specs")
@@ -227,7 +227,7 @@ export async function listEvalSpecs(): Promise<string[]> {
  * not be stale, and every graded artifact's md5 + dynamic-quant fingerprint is recorded to `provenance.txt`. Returns an
  * exit code to propagate, or `null` when the run may proceed.
  *
- * A FAIL is only trustworthy if you know which bytes were graded. v1.9.2's first eval run false-FAILed (us.postcode
+ * A fail is only trustworthy if you know which bytes were graded. v1.9.2's first eval run false-FAILed (us.postcode
  * 86.9) because it graded a stale/mislabeled artifact — the real model scored 97.5 under every config.
  */
 async function runLoreGuards(env: {
@@ -279,16 +279,16 @@ async function runLoreGuards(env: {
 	}
 
 	// Record the exact artifact provenance used for this evaluation.
-	// A FAIL is only trustworthy if you know which bytes were graded. v1.9.2's first eval run
+	// A fail is only trustworthy if you know which bytes were graded. v1.9.2's first eval run
 	// false-FAILed (us.postcode 86.9) because it graded a stale/mislabeled artifact — the real model
 	// scored 97.5 under every config. Record md5 + the dynamic-quant fingerprint (count of
 	// DynamicQuantizeLinear nodes. 0 = fp32, >0 = int8) of every graded artifact, and hard-assert the
 	// obvious mislabels: --model must be fp32, --int8 must actually be quantized and differ from --model.
 	//
-	// Was `grep -c -a DynamicQuantizeLinear <path>`. grep -c counts MATCHING LINES rather than occurrences, and
+	// Was `grep -c -a DynamicQuantizeLinear <path>`. grep -c counts matching lines rather than occurrences, and
 	// an ONNX file has no meaningful lines — so the number was only ever read as zero-vs-nonzero, and the
 	// scan below reproduces that reading (it counts newline-delimited chunks carrying the needle, over the
-	// raw bytes, exactly as `grep -a` treated the binary as text). Kept as a STRING because it is
+	// raw bytes, exactly as `grep -a` treated the binary as text). Kept as a string because it is
 	// interpolated verbatim into provenance.txt and compared against the literal "0".
 	const dql = async (p: string): Promise<string> => {
 		const needle = Buffer.from("DynamicQuantizeLinear", "latin1")
@@ -304,7 +304,7 @@ async function runLoreGuards(env: {
 
 			if (hit === -1) break
 
-			// One count per matching LINE: charge this line, then resume past its newline so a second
+			// One count per matching line: charge this line, then resume past its newline so a second
 			// occurrence on the same line cannot be counted twice.
 			count++
 			const lineEnd = buffer.indexOf(NEWLINE, hit)
@@ -320,7 +320,7 @@ async function runLoreGuards(env: {
 
 	// --weights-cache alone: one artifact (typically the shipped package int8) graded in the primary
 	// slot — log its provenance, skip the dual-artifact assertions (there is no pair to cross-check).
-	// A PAIR (#47) restores them: the primary arm is the fp32 by contract, so the same three mislabel
+	// A pair (#47) restores them: the primary arm is the fp32 by interface, so the same three mislabel
 	// assertions the --model flow carries apply, against the package-resolved bytes.
 	if (WC) {
 		const wcDql = await dql(WC_MODEL)
@@ -480,22 +480,22 @@ export async function runPromotionEval(options: PromotionEvalOptions): Promise<n
 	const LK = dataRootPath("anchor", "pilot-anchor-lookup.json")
 	await using profile = new LegProfile(options.profileJSON ?? "")
 
-	// Every leg takes the library thread resolution, and two ways of raising it were measured and REJECTED.
+	// Every leg takes the library thread resolution, and two ways of raising it were measured and rejected.
 	//
-	// A UNIFORM raise is eaten by de-order's own variance. Over one battery per `MAILWOMAN_INTRA_OP_THREADS` setting the
+	// A uniform raise is eaten by de-order's own variance. Over one battery per `MAILWOMAN_INTRA_OP_THREADS` setting the
 	// four parse-only legs scale monotonically — 279.2 s at 1 thread, 168.9 at 2, 136.1 at 4, 106.1 at 8 — but de-order
 	// does not, and its int8 arm alone spanned 191.5-315.2 s across seven runs, wider than the 22.7 s the whole battery
 	// gains going 2 -> 8. The library default of 2 stands until a repeated measurement separates the two.
 	//
-	// Raising the PARSE-ONLY legs alone is worse than either. It does speed them up (per-locale fp32 79.8 s -> 51.5, the
+	// Raising the parse-only legs alone is worse than either. It does speed them up (per-locale fp32 79.8 s -> 51.5, the
 	// PO-box probe 37.8 -> 23.8, about 55 s across the four), but de-order, which passes no thread option and resolves
 	// half its rows through SQLite, went 191.5 s -> 311.7 and 315.2 in two runs, and the battery total 437.7 s -> 548.3
 	// and 532.9. A leg's classifier is never disposed, so its thread pool outlives it and the later legs contend with
 	// what the earlier ones left running.
 
-	// PACKAGE-SHAPED (#718-safe): when --weights-cache is set, the graded artifact + its tokenizer/card
+	// package-shaped (#718-safe): when --weights-cache is set, the graded artifact + its tokenizer/card
 	// are the cache's own siblings. The metric probes load it via loadFromWeights (feeding anchor +
-	// gazetteer + COUNTRY — the only in-distribution grade for a country-channel model); the
+	// gazetteer + country — the only in-distribution grade for a country-channel model); the
 	// country-orthogonal downstream legs (preset / cascade / arena / fr-recall / mask) stay on the
 	// explicit --model path against these EFF_TOK/EFF_CARD siblings.
 	//
@@ -506,9 +506,9 @@ export async function runPromotionEval(options: PromotionEvalOptions): Promise<n
 	//
 	// Not `resolveWeights({cacheRoot: WC})`, deliberately: its cache rung is a fallback. A staged
 	// bundle missing its binaries falls through to rung 1 (the installed/workspace package), which in
-	// this repo always resolves — so a mis-staged candidate would be graded as the shipped model,
+	// this repo always resolves . Therefore, a mis-staged candidate would be graded as the shipped model,
 	// silently, and the verdict would carry production's numbers under the candidate's label. Naming
-	// the directory keeps the failure an ENOENT in the provenance guard's md5 read, three lines down.
+	// the directory keeps the failure an enoent in the provenance guard's md5 read, three lines down.
 	const WC = options.weightsCache ?? ""
 	const WC_PACKAGE = WC ? weightsCachePackageDir(WC, "en-us") : ""
 	const WC_MODEL = WC ? resolvePath(WC_PACKAGE, "model.onnx") : ""
@@ -539,8 +539,8 @@ export async function runPromotionEval(options: PromotionEvalOptions): Promise<n
 	}
 
 	const check = await readLocalJSONFile<ThresholdSpec>(CHECK)
-	// A label-less spec must not crash the `PASS` path (the post-verdict ledger hint interpolates
-	// LABEL — bit on the first v7.0.0-base run, whose spec omitted the field).
+	// A label-less spec must not crash the `pass` path (the post-verdict ledger hint interpolates
+	// label — bit on the first v7.0.0-base run, whose spec omitted the field).
 	const LABEL = check.label ?? basename(CHECK).replace(/\.json$/, "")
 	const hhmm = String(new Date().getUTCHours()).padStart(2, "0") + String(new Date().getUTCMinutes()).padStart(2, "0")
 
@@ -557,7 +557,7 @@ export async function runPromotionEval(options: PromotionEvalOptions): Promise<n
 
 	// The spec-declared channel config every scorer shares. Was an argv fragment (`GAZ_ARGS`) spliced
 	// into eight command lines. it is now one typed object spread into eight calls, which is the same
-	// contract with the stringly-typed step removed.
+	// interface with the stringly-typed step removed.
 	const channelOptions: Pick<
 		ScoreAffixOptions,
 		"gazetteerLexicon" | "suppressGazNearPostcode" | "conventions" | "bridgeGaps"
@@ -570,7 +570,7 @@ export async function runPromotionEval(options: PromotionEvalOptions): Promise<n
 
 	// Conventions channel (#511 Tier A): when the eval spec declares requires_conventions, every scorer
 	// parses with the address-system conventions mask in the declared mode ("auto" = locale-head
-	// detection). Same contract discipline as the gaz flags — the spec is the ship config.
+	// detection). Same interface discipline as the gaz flags — the spec is the ship config.
 	const CONV_MODE = check.requires_conventions ?? ""
 
 	if (CONV_MODE) {
@@ -598,14 +598,14 @@ export async function runPromotionEval(options: PromotionEvalOptions): Promise<n
 	const runBattery = async (m: string, tag: string, wc: string = WC): Promise<void> => {
 		console.log(`== battery [${tag}] ${m} ==`)
 
-		// The fp32 arm of a PAIRED run is the one an int8 arm follows, and int8 is what ships. Unpaired, the single arm
+		// The fp32 arm of a paired run is the one an int8 arm follows, and int8 is what ships. Unpaired, the single arm
 		// carries the shipped package whatever its tag reads, so it keeps every de-order run.
 		const pairedNonShipArm = tag === "fp32" && Boolean(WC8 || INT8)
 
 		// Package-shaped (#718): the metric probes (which support weightsCache) load all channels —
 		// anchor + gazetteer + country — from the package. The country-orthogonal de-order watch lens
 		// stays on the explicit path against the cache siblings (EFF_TOK/EFF_CARD); m = the arm's own
-		// model when package-shaped. `wc` is the PER-BATTERY cache root so a paired int8 arm (#47)
+		// model when package-shaped. `wc` is the PER-battery cache root so a paired int8 arm (#47)
 		// loads its own package rather than the fp32 arm's.
 		const plOptions = wc
 			? { weightsCache: wc }
@@ -620,7 +620,7 @@ export async function runPromotionEval(options: PromotionEvalOptions): Promise<n
 		const armCard = wc ? resolvePath(armPackage, "model-card.json") : EFF_CARD
 
 		// Each leg below captured a child's stdout into one `.md`. In-process the sink collects the same
-		// lines and `renderLines` re-adds the newline console.log would have. A bare `$` THREW on a
+		// lines and `renderLines` re-adds the newline console.log would have. A bare `$` threw on a
 		// non-zero exit, aborting the run — these calls throw the same way, so the abort behavior for
 		// the metric probes is unchanged.
 		const perLocaleLines: string[] = []
@@ -682,7 +682,7 @@ export async function runPromotionEval(options: PromotionEvalOptions): Promise<n
 
 		await writeLocalFile(renderLines(countryLines), `${OUT_DIR}/${tag}-country.md`)
 
-		// v4.4.0 floors: po_box/cedex (the coverage-database val) + intersections (real TIGER crossings).
+		// v4.4.0 floors: po_box/cedex (the coverage-database val) + intersections (real tiger crossings).
 		await runAffix(`${tag}-pobox.md`, {
 			file: "data/eval/external/po-box-cedex-val.jsonl",
 			json: `${OUT_DIR}/${tag}-pobox.json`,
@@ -718,8 +718,8 @@ export async function runPromotionEval(options: PromotionEvalOptions): Promise<n
 						// sealed, so a query is a pure function of its arguments. the memo shares hit objects between
 						// callers, so a caller that mutated one would change this leg's report.
 						lookupMemo: true,
-						// Five of the six runs feed no floor: the verdict reads one cell, the `native DE` anchor-ON
-						// locality, which is also in the fp32↔int8 delta cap and so runs on both arms. The other five
+						// Five of the six runs feed no floor: the verdict reads one cell, the `native DE` anchor-on
+						// locality. It is also in the fp32↔int8 delta cap. Therefore, runs on both arms. The other five
 						// are a record, and a record wants one reading per promotion rather than two. They run on the
 						// arm that ships — the second one when the battery is paired, the only one when it is not.
 						...(pairedNonShipArm ? { runs: ["de-native-on" as const] } : {}),
@@ -788,7 +788,7 @@ export async function runPromotionEval(options: PromotionEvalOptions): Promise<n
 
 	// Arena leg (v4.4.0+: arena.perturb is a floor when the spec declares it) — heavy, ship artifact only.
 	if ("arena.perturb" in (check.floors ?? {})) {
-		// (Historical note: the compiled v0 arena parser used to ENOENT on libpostal dicts because
+		// (Historical note: the compiled v0 arena parser used to enoent on libpostal dicts because
 		// repo.ts's __isCompiledTree detection landed CorePackageAbsolutePath at core/out, so dict reads
 		// went to core/out/data/... while the data lives at core/data/.... A local core/out/data symlink
 		// bridged the gap. #481 fixed the detection — the compiled tree now reads core/data directly — so
@@ -831,7 +831,7 @@ export async function runPromotionEval(options: PromotionEvalOptions): Promise<n
 	}
 
 	// FR bare-street floor (#949) — the class v5.2.0 silently regressed (34/40 → 16/40) because no
-	// standing leg measured FR street parsing without a postcode anchor. Reads a FROZEN 40-row OSM
+	// standing leg measured FR street parsing without a postcode anchor. Reads a frozen 40-row OSM
 	// sample (committed fixture, no live database needed), parses each bare + anchored, and fails if the
 	// bare-intact rate drops below the spec floor. The leg self-reports its verdict + exits non-zero.
 	const bareStreetFloor = (check.floors ?? {})["fr.bare_street_intact"]
@@ -852,7 +852,7 @@ export async function runPromotionEval(options: PromotionEvalOptions): Promise<n
 						modelCard: EFF_CARD,
 						// The leg's anchor + lexicon siblings must come from the arm being graded rather than from whatever the
 						// checkout happens to have linked. Without this it read the tracked workspace, which is bare on a dev
-						// checkout, and the ENOENT surfaced as a bare-street floor FAILURE.
+						// checkout, and the enoent surfaced as a bare-street floor failure.
 						...(WC ? { weightsCache: WC } : {}),
 						floor: String(bareStreetFloor),
 						json: `${OUT_DIR}/fr-bare-street.json`,
@@ -883,9 +883,9 @@ export async function runPromotionEval(options: PromotionEvalOptions): Promise<n
 	// Run the mask-regression check that forms the second promotion lock.
 	// Re-runs the ship artifact mask-off vs the declared conventions mode and fails if any tag's unfolded
 	// F1 drops >2pp under the mask — a finer net than createScorer's load-time 5pp delta check (it catches
-	// INDIRECT mask harms, e.g. forbidding street_suffix depressing street). Weight-dependent, so it lives
+	// indirect mask harms, e.g. forbidding street_suffix depressing street). Weight-dependent, so it lives
 	// on the release path here rather than Test CI (#582). Only meaningful when the spec declares a conventions
-	// mask. skipped = PASS otherwise. Its status folds into the final verdict below. In-process since the
+	// mask. skipped = pass otherwise. Its status folds into the final verdict below. In-process since the
 	// eval-harness migration. the report lines land in mask-regression.md as the child capture did, and a
 	// throw is recorded there like the old child's stderr stack.
 	let MASK_CHECK_STATUS = 0

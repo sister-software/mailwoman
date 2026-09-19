@@ -71,7 +71,7 @@ export function streamRows(
 ): AsyncSequence<Record<string, string>> {
 	return CSVSpliterator.fromAsync<Record<string, string>>(source, {
 		columnDelimiter: COLUMN_DELIMITERS[opts.delimiter ?? delimiterFor(source)],
-		// A {@linkcode ColumnMapping} names columns in the PUBLISHER's spelling — `Facility Name`, not
+		// A {@linkcode ColumnMapping} names columns in the publisher's spelling — `Facility Name`, not
 		// `facility_name` — so the keys must arrive as the file writes them. The reader's default normalizes.
 		normalizeKeys: false,
 	})
@@ -176,7 +176,7 @@ export interface IngestOptions {
 	 */
 	geocodeAddress?: GeocodeAddress
 	/**
-	 * Separator for joining a multi-column ADDRESS mapping (name/org always join with a space). Default `" "`. Pass `",
+	 * Separator for joining a multi-column address mapping (name/org always join with a space). Default `" "`. Pass `",
 	 * "` to give the parser delimited input (`"214 Main St, Austin, TX 78701"`) instead of a concatenated run (`"214 Main
 	 * St Austin TX 78701"`) — the latter strips the parser's segmentation boundaries and is partly OOD (it also breaks
 	 * all-caps case-normalization; #694). **Default `", "` (#694 flip, validated).** Comma-join is the correct shape for

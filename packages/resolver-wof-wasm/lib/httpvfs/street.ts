@@ -9,7 +9,7 @@
  *   classes, just async over the Comlink-proxied worker's `db.exec` (the demo resolves async on the
  *   main thread. see the architecture spec, 2026-06-14-client-side-geocoder-demo-spec.md). The
  *   parity preference and range scoping in `HTTPVFSInterpolator` still mirror `StreetInterpolator`
- *   by hand — KEEP THOSE IN LOCKSTEP (the same contract the WOF resolvers hold). The polyline
+ *   by hand — keep those IN lockstep (the same interface the WOF resolvers hold). The polyline
  *   geometry no longer needs it: both now call `pointAlong` from `@mailwoman/spatial`.
  *
  *   These power the demo's street tier against byte-ranged per-state situs/interp databases: a lookup
@@ -61,7 +61,7 @@ export class HTTPVFSAddressPointLookup {
 	#locale: StreetLocale
 
 	/**
-	 * `streetLocale` must match the extract's build locale (the node class's contract) — default "us".
+	 * `streetLocale` must match the extract's build locale (the node class's interface) — default "us".
 	 */
 	constructor(worker: HTTPVFSDB, opts: { streetLocale?: StreetLocale } = {}) {
 		this.#worker = worker
@@ -131,7 +131,7 @@ export interface StreetInterpHit {
 }
 
 /**
- * TIGER-range interpolation — async twin of `StreetInterpolator`. Postcode-scoped. abstains on cross-ZIP ambiguity.
+ * Tiger-range interpolation — async twin of `StreetInterpolator`. Postcode-scoped. abstains on cross-ZIP ambiguity.
  */
 export class HTTPVFSInterpolator {
 	#worker: HTTPVFSDB
@@ -247,7 +247,7 @@ interface InterpLike {
 }
 
 /**
- * Street tier: exact situs point first (10 m floor), then TIGER interpolation (honest calibrated radius), else null so
+ * Street tier: exact situs point first (10 m floor), then tiger interpolation (honest calibrated radius), else null so
  * the caller falls back to the admin cascade ({@link runCascade}). Mirrors the node `geocode-core` tier order
  * (address_point > interpolated > admin) — but async, on the main thread, over the demo's httpvfs handles.
  * `interpRadiusCalibration` is the per-region conformal factor (#374 / data/calibration/interp-radius-conformal.json);

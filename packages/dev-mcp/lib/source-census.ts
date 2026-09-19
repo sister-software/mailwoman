@@ -3,7 +3,7 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   WHAT DATA DO WE ACTUALLY HOLD, per country, per artifact.
+ *   what data do WE actually hold, per country, per artifact.
  *
  *   `lookup-sources.ts` answers "does this source know this string". This answers the question that comes before it —
  *   is there anything here for this country at all, in which file, and can it be joined to anything. Every locale
@@ -21,7 +21,7 @@
  *   - **`bytes` / `tables`** — a zero-byte or table-less extract is a real on-disk state (see #1791), and it looks
  *     identical to "this country has no data" from a row count.
  *
- *   ABSENCE IS REPORTED rather than OMITTED. A country asked for and not found gets a row saying so, because "the query
+ *   absence is reported rather than omitted. A country asked for and not found gets a row saying so, because "the query
  *   returned nothing" and "we never looked there" are the two facts this file exists to keep apart.
  */
 
@@ -33,7 +33,7 @@ import { join, type PathBuilderLike } from "path-ts"
 import { Globerator } from "spliterator/node/fs"
 
 /**
- * What a extract can be joined THROUGH, which decides what a corpus builder can extract from it.
+ * What a extract can be joined through, which decides what a corpus builder can extract from it.
  *
  * `ancestry` does not promise the chain reaches a locality — only that the table exists. The header records why that
  * distinction cost a measurement.
@@ -128,7 +128,7 @@ export async function censusArtifact(path: string, countries?: readonly string[]
 			counts[code] = row.n
 		}
 
-		// Asked for and absent is a REPORTED zero, never a missing key — the caller is deciding whether to acquire data.
+		// Asked for and absent is a reported zero, never a missing key — the caller is deciding whether to acquire data.
 		if (countries) {
 			for (const code of countries) {
 				counts[code] ??= 0

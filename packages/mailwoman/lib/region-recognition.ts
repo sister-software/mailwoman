@@ -8,11 +8,11 @@
  *   mis-tags the state — it labels "Texas" a `locality` ("Dublin, Texas" → two localities), or
  *   merges the whole string into one locality ("Dublin, TX" / "Athens, Texas"). With no `region`
  *   node, the resolver can't scope the locality to its state, so "Dublin, Texas" resolves to the
- *   more-populous Dublin, OHIO (the #619 admin-tier >1000 km tail).
+ *   more-populous Dublin, ohio (the #619 admin-tier >1000 km tail).
  *
- *   This is a legitimate atlas/conventions correction: the US states are a CLOSED, known gazetteer,
+ *   This is a legitimate atlas/conventions correction: the US states are a closed, known gazetteer,
  *   so we can confidently re-tag a state token the grammar missed. It restructures the affected
- *   nodes into `region → locality` NESTING, which the resolver's existing parent-scoping then
+ *   nodes into `region → locality` nesting, which the resolver's existing parent-scoping then
  *   constrains correctly (no resolver change). Two shapes are handled:
  *
  *   - A `locality` whose whole value is a US state → it becomes a `region`, and sibling `locality`
@@ -28,7 +28,7 @@ import type { AddressNode, AddressTree } from "@mailwoman/core/decoder"
 import { walkNodes } from "@mailwoman/core/decoder"
 
 /**
- * Canonical 2-letter slug for a US state/territory NAME or 2-letter abbreviation, else null.
+ * Canonical 2-letter slug for a US state/territory name or 2-letter abbreviation, else null.
  */
 const STATE_NAME_TO_SLUG: Record<string, string> = {
 	alabama: "al",
@@ -157,7 +157,7 @@ function correctSiblings(siblings: AddressNode[]): AddressNode[] {
 		}
 	}
 
-	// Only convert when there's a sibling city to nest — the unambiguous "City, State" shape. A LONE
+	// Only convert when there's a sibling city to nest — the unambiguous "City, State" shape. A lone
 	// state-name locality ("Washington", "Florida") is genuinely a city in this context as often as a
 	// state, so leave it untouched rather than risk a mis-fire.
 	if (!region.children.length) return afterSplit
@@ -208,14 +208,14 @@ function correctNode(node: AddressNode): AddressNode {
 }
 
 /**
- * Stamp `country_hint: "US"` on a region node whose value is a 2-letter US state ABBREVIATION (the ones the parser
+ * Stamp `country_hint: "US"` on a region node whose value is a 2-letter US state abbreviation (the ones the parser
  * produced directly — "Augusta, ME" → region(ME) — as well as the ones we re-tagged). The forward
  * address-system→country linkage: the resolver constrains a hinted region's lookup to US, so a two-consistent-pairs
  * collision ("Augusta" under both Maine and Messina) resolves the US state.
  *
- * ABBREVIATIONS ONLY, deliberately. A 2-letter "ME"/"OR"/"GA" in `City, ST` position is unambiguously the US state
+ * Abbreviations only, deliberately. A 2-letter "ME"/"or"/"GA" in `City, ST` position is unambiguously the US state
  * (foreign collisions like Messina/Ourense lose in US-format context, and Georgia-the-country is "GE", not "GA"). A
- * full NAME is genuinely ambiguous — "Tbilisi, Georgia" is the country, "Atlanta, Georgia" the state — so full names
+ * full name is genuinely ambiguous — "Tbilisi, Georgia" is the country, "Atlanta, Georgia" the state — so full names
  * are left to resolve on their own name-match evidence, never pinned.
  */
 function annotateUSRegions(roots: readonly AddressNode[]): void {

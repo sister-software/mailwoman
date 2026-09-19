@@ -9,7 +9,7 @@
  *   {@linkcode renderAddress}: {@linkcode formatAddress} is the join, and {@linkcode formatAddressRow} is the join plus
  *   the tags the layout printed, which is what every corpus adapter actually wants.
  *
- *   IT USED TO WRAP A THIRD-PARTY ENGINE, and 229 of this file's 438 lines existed to work around templates written
+ *   IT used TO wrap A third-party engine, and 229 of this file's 438 lines existed to work around templates written
  *   against OpenStreetMap's tag vocabulary rather than this project's: a pass that parsed 295 mustache templates at
  *   module load to discover which of them could render a sub-locality, a second that spliced a missing line back in
  *   afterwards, a third that removed a connector the template wrote between two slots when one was empty, and a
@@ -39,7 +39,7 @@ export interface FormatAddressOptions {
 	separator?: string
 
 	/**
-	 * Join the lines the way the COUNTRY does, for the single-line form a query or a corpus row takes — `", "` for most,
+	 * Join the lines the way the country does, for the single-line form a query or a corpus row takes — `", "` for most,
 	 * `" "` for Japan and Korea, and nothing at all for the Chinese-script systems, whose admin run is unseparated.
 	 *
 	 * It is an option rather than each caller's literal because the literal is wrong outside the anglophone systems:
@@ -51,7 +51,7 @@ export interface FormatAddressOptions {
 	/**
 	 * Which of the country's two orders to render in, or unset to read it off the components themselves.
 	 *
-	 * Eight countries write an address two ways, and which one a dict wants is a property of the VALUES rather than of
+	 * Eight countries write an address two ways, and which one a dict wants is a property of the values rather than of
 	 * the country: `21 Jordan Road, Jordan, Kowloon` is the English register and `九龍佐敦佐敦道21號` is the Chinese one, both
 	 * Hong Kong. Rendering either through one country-keyed layout prints one of them in an order nobody writes.
 	 *
@@ -93,9 +93,9 @@ function carriesNonLatinLetter(value: string): boolean {
  * The script `components` are written in, read off the first witness that carries a letter.
  *
  * A dict whose witnesses are all digits or absent answers `undefined`, which leaves the country's own default in force
- * rather than guessing — the meaning-of-zero rule: no letters is not evidence of Latin.
+ * rather than guessing. The meaning-of-zero rule applies: no letters is not evidence of Latin.
  */
-// repo-health-ignore export-name-affix -- core's `scriptOf` takes a CODEPOINT and answers its ISO 15924 script. this
+// repo-health-ignore export-name-affix -- core's `scriptOf` takes a codepoint and answers its ISO 15924 script. this
 // takes a dict and answers which of a country's two orders it is written for. Importing it is also impossible: this
 // package carries no runtime dependency, and core is 11 MB of shipped data.
 export function scriptOfComponents(components: ComponentDict): AddressScript | undefined {
@@ -113,7 +113,7 @@ export function scriptOfComponents(components: ComponentDict): AddressScript | u
 /**
  * A dict naming every tag once, used to enumerate the slots a layout actually has.
  *
- * The enumeration is a RENDER rather than a walk of the layout structure, because a layout's alternatives and
+ * The enumeration is a render rather than a walk of the layout structure, because a layout's alternatives and
  * connectors decide which slots are reachable and only the renderer resolves them.
  */
 const EVERY_TAG: ComponentDict = Object.fromEntries(COMPONENT_TAGS.map((tag) => [tag, tag]))
@@ -173,12 +173,12 @@ export interface AddressRow {
 	 */
 	readonly raw: string
 	/**
-	 * The subset of the input dict the layout PRINTED, with the caller's original values. This is the half a corpus row
+	 * The subset of the input dict the layout printed, with the caller's original values. This is the half a corpus row
 	 * needs: a label whose text is not in `raw` cannot be aligned against it.
 	 */
 	readonly components: ComponentDict
 	/**
-	 * Tags the dict carried a value for that the layout has no slot for, NAMED rather than silently dropped. France
+	 * Tags the dict carried a value for that the layout has no slot for, named rather than silently dropped. France
 	 * absorbing a region into its postcode line is the common case.
 	 */
 	readonly unplaced: readonly ComponentTag[]
@@ -241,7 +241,7 @@ export function formatAddressRow(
  * Which of `components` occur verbatim in `raw`, case- and whitespace-insensitively.
  *
  * This is a question about a string somebody else built — a committed golden fixture, a source's own address line — and
- * it is the WEAKER of the two reconciliations: a substring test cannot tell a component the renderer dropped from one
+ * it is the weaker of the two reconciliations: a substring test cannot tell a component the renderer dropped from one
  * whose value happens to sit inside another. Anything rendered through a layout should read
  * {@linkcode formatAddressRow}'s `components` instead, which the render knows rather than infers.
  */

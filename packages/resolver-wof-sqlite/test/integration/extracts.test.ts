@@ -131,7 +131,7 @@ describe("pickExtractForPlacetype", () => {
 		expect(pickExtractForPlacetype(odd, "region").schemaName).toBe("main")
 	})
 
-	// #920 — country-aware routing across MULTIPLE placetype-matching extracts: first-match starved
+	// #920 — country-aware routing across multiple placetype-matching extracts: first-match starved
 	// the second postcode extract (a FI postcode could never reach postalcode-geonames-tail behind
 	// postalcode-us). With the query country + probed country sets, the claiming extract wins. the
 	// original first-match order stays the tiebreak when no extract claims the country.

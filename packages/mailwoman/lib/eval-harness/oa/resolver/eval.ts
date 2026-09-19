@@ -24,10 +24,10 @@
  *   The gap is not always small. Measured on 604 bare `«city», «ST» «ZIP»` rows (#2303), this eval reads 33.9%
  *   locality-match against the production path's 54.3%, and calls `Chicago, IL 60639` a miss where production answers
  *   `locality: Chicago`. The classifier tags the city `street` on both. the pipeline recovers some of them. So an
- *   absolute number from here is a statement about the MODEL, and a claim about what a caller receives needs
+ *   absolute number from here is a statement about the model, and a claim about what a caller receives needs
  *   `buildGauntletDeps` or the board.
  *
- *   `--admin-fst` does not close it: the FST is fed to the ASSEMBLED arms only, and the `neural` arm above is
+ *   `--admin-fst` does not close it: the FST is fed to the assembled arms only, and the `neural` arm above is
  *   byte-identical with and without the flag on those same 604 rows.
  *
  *   Self-reporting (eval-integrity safeguard): pass `outMd` and the runner writes its own markdown
@@ -35,15 +35,15 @@
  *   them here and include/commit the output verbatim.
  *
  *   Two-tier metric (per the DeepSeek resolver consult — a sub-10km coord bar is impossible for
- *   ADMIN-CENTROID resolution, since a city centroid is legitimately tens of km from edge
+ *   admin-centroid resolution, since a city centroid is legitimately tens of km from edge
  *   addresses):
  *
  *   1. Admin-match Acc@1 — did we resolve to the expected locality (and/or region), by name? This is the
  *        granularity-independent resolver-quality number.
  *   2. Coord error p50/p90 — reported separately as the admin-centroid tier. the street-level tier
- *        (TIGER) will own the sub-km bar later.
+ *        (tiger) will own the sub-km bar later.
  *
- *   `postcodeAnchor` adds a `neural+anchor` row: neural's admin match, but the COORDINATE taken
+ *   `postcodeAnchor` adds a `neural+anchor` row: neural's admin match, but the coordinate taken
  *   from the postcode anchor's own centroid (`@mailwoman/neural/postcode-anchor` over the
  *   postalcode databases, `postcodeDatabases`). On German this drops coord p50 9.9 km → 1.2 km (p99
  *   318 → 11 km) with admin match unchanged — the postcode tier between admin-centroid and
@@ -60,11 +60,11 @@
  *   Pass `--wof <admin.db>` alone for the admin-only baseline, or append a postcode database
  *   (postalcode-*.db) to also resolve the postcode node.
  *
- *   `--anchor-off` (#887) ablates the model's postcode-anchor INPUT channel — the sanctioned,
+ *   `--anchor-off` (#887) ablates the model's postcode-anchor input channel — the sanctioned,
  *   declared ablation (`overrides.anchor=false` through createScorer, warn-not-throw per the #718
- *   fail-closed check). de-order-eval.ts uses it for the 2x2 anchor-OFF column. the old
+ *   fail-closed check). de-order-eval.ts uses it for the 2x2 anchor-off column. the old
  *   empty-anchor.json idiom (a lookup that parses to size 0) is refused by the check. Distinct from
- *   `--postcode-anchor`, which swaps the resolved COORDINATE rather than the model input.
+ *   `--postcode-anchor`, which swaps the resolved coordinate rather than the model input.
  */
 
 import { dataRootPath } from "@mailwoman/core/data-root"
@@ -215,7 +215,7 @@ export async function oaResolverEval(
 		}
 
 		// onnxruntime-node accumulates native tensor memory across runs faster than JS GC reclaims it
-		// (~380-parse SIGKILL on the lab box — it crashed the promotion-eval's de-order step tonight).
+		// (~380-parse sigkill on the lab box — it crashed the promotion-eval's de-order step tonight).
 		// Periodic forced GC reclaims it. run with `node --expose-gc`. No-op without the flag. (#787 pattern.)
 		if (i % 50 === 0) {
 			;(globalThis as { gc?: () => void }).gc?.()
@@ -286,7 +286,7 @@ export async function oaResolverEval(
 		}
 
 		// neural + interpolation (#483): the full street-level cascade — exact point if present, else the
-		// interpolated estimate, else the admin centroid. Same admin flags. only the COORDINATE changes.
+		// interpolated estimate, else the admin centroid. Same admin flags. only the coordinate changes.
 		if (runInterp) {
 			const exact = nDecorated ? findAddressPointHit(nDecorated) : null
 			const interp = nDecorated ? findInterpolatedHit(nDecorated) : null
@@ -332,7 +332,7 @@ export async function oaResolverEval(
 			outRows.push({
 				input: row.input,
 				expected: row.expected,
-				// `resolvedLoc` is what separates a PARSE miss from a RESOLVE miss on a failing row: absent means no span
+				// `resolvedLoc` is what separates a parse miss from a resolve miss on a failing row: absent means no span
 				// reached the locality tier at all, a different name means the walk picked another place. Without it a
 				// dump can say a row failed and not which half of the pipeline to look in.
 				neural: {

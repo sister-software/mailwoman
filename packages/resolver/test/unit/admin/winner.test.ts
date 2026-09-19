@@ -4,7 +4,7 @@
  * @author Teffen Ellis, et al.
  * @file The two shapes of one ordering must agree.
  *
- *   Result assembly walks a TAG ladder. the eval harnesses sort resolved nodes by PLACETYPE. Both are expressing the
+ *   Result assembly walks a TAG ladder. the eval harnesses sort resolved nodes by placetype. Both are expressing the
  *   same claim about where a postcode sits, and #1773 is what it cost when they drifted: each harness froze one arm of
  *   a conditional as a constant, so every grader was right on one half of the data and wrong on the other,
  *   unconditionally. The binding assertions below are the ones a constant cannot satisfy.
@@ -30,7 +30,7 @@ import { describe, expect, it } from "vitest"
  */
 const GB_UNIT = { value: "N7 0BT", resolverName: "n70bt" }
 /**
- * The same span, coarsened by the resolver to the outward district — AREA-class.
+ * The same span, coarsened by the resolver to the outward district — area-class.
  */
 const GB_OUTWARD = { value: "N7 0BT", resolverName: "n7" }
 /**
@@ -42,7 +42,7 @@ const US_ZIP = { value: "62701", resolverName: "62701" }
  */
 const NL_PC6 = { value: "1012 LG", resolverName: "1012LG" }
 /**
- * A German PLZ: an ordinary 5-digit code, unit-grade by no shape test, whose SYSTEM warrants the lead.
+ * A German PLZ: an ordinary 5-digit code, unit-grade by no shape test, whose system warrants the lead.
  */
 const DE_PLZ = { value: "12623", resolverName: "12623" }
 
@@ -79,7 +79,7 @@ describe("adminLadderFor", () => {
 		}
 	})
 
-	// #1780. The second route to postcode-first: the CODE is ordinary, the address SYSTEM is not.
+	// #1780. The second route to postcode-first: the code is ordinary, the address system is not.
 	it("leads with an area-grade postcode for a country whose codes outrank its localities", () => {
 		expect(adminLadderFor({ ...DE_PLZ, country: "DE" })).toBe(ADMIN_LADDER_POSTCODE_FIRST)
 		expect(adminLadderFor({ ...DE_PLZ, country: "de" })).toBe(ADMIN_LADDER_POSTCODE_FIRST)
@@ -94,7 +94,7 @@ describe("adminLadderFor", () => {
 		expect(adminLadderFor(DE_PLZ)).toBe(ADMIN_LADDER_LOCALITY_FIRST)
 	})
 
-	// The membership table is a MEASURED claim, so a silent addition is the thing to catch — a new entry has to arrive
+	// The membership table is a measured claim, so a silent addition is the thing to catch — a new entry has to arrive
 	// with its panel, the way DE did.
 	it("holds exactly the countries a full-panel measurement has admitted", () => {
 		expect([...AREA_POSTCODE_FINER_THAN_LOCALITY].toSorted()).toEqual(["DE", "JP", "SG"])
@@ -146,7 +146,7 @@ describe("resolvedSpecificity", () => {
 		expect(rank("postalcode", NL_PC6)).toBeGreaterThan(rank("locality"))
 	})
 
-	// The tier is the resolver's own `locality` GROUP rather than the `locality` placetype: a New England civil town resolves
+	// The tier is the resolver's own `locality` group rather than the `locality` placetype: a New England civil town resolves
 	// as `localadmin`, and ranking a ZIP above it puts the postcode point back on exactly those rows.
 	it("ranks an AREA-grade postcode below every member of the locality tier", () => {
 		const tier = PLACETYPE_FILTER_GROUPS["locality"] ?? []

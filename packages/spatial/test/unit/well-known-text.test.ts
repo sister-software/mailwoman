@@ -75,7 +75,7 @@ test("wellKnownGeometryToGeoJSON: parses a WKT MULTIPOLYGON into two distinct po
 })
 
 test("wellKnownGeometryToGeoJSON: parses an EWKB buffer back into the source geometry", () => {
-	// Produce a known EWKB buffer, then round-trip it through the parser.
+	// Produce a known ewkb buffer, then round-trip it through the parser.
 	const ewkb = wkx.Geometry.parseGeoJSON(POINT).toEwkb()
 	const geo = wellKnownGeometryToGeoJSON<GeometryLiteral>(ewkb)
 	expect(geo).toEqual(POINT)
@@ -110,7 +110,7 @@ test("geometryToWKB: round-trips through the parser back to source GeoJSON", () 
 })
 
 test("geometryToEWKB: tags the geometry with the SRID-flag the plain WKB lacks", () => {
-	// EWKB sets the 0x20000000 SRID flag on the type word, so the hex differs from plain WKB.
+	// ewkb sets the 0x20000000 srid flag on the type word, so the hex differs from plain WKB.
 	const ewkb = geometryToEWKB(POINT)
 	expect(ewkb.toString("hex")).toBe("0101000020e61000000000000000003e400000000000002440")
 	// Distinct from plain WKB.

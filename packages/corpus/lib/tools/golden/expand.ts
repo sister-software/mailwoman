@@ -18,7 +18,7 @@
  *        labels
  *        are pipeline-verified.
  *   2. **LLM only varies the surface form** — case, abbreviations, reordering, dropped components. The
- *        component VALUES (locality string, postcode digits, etc.) are preserved verbatim.
+ *        component values (locality string, postcode digits, etc.) are preserved verbatim.
  *   3. **Programmatic validator drops hallucinations** — every component value must appear as a
  *        substring (case-insensitive, whitespace-normalized) of the variant's raw. Failures dropped
  *        silently. cost is wasted tokens, never bad-labeled golden entries.
@@ -121,7 +121,7 @@ export interface ExpandGoldenOptions {
 	 */
 	variants?: number
 	/**
-	 * JSONL output path. Default `data/eval/golden/candidates/expand-<ts>.jsonl`.
+	 * Jsonl output path. Default `data/eval/golden/candidates/expand-<ts>.jsonl`.
 	 */
 	output?: string
 	/**

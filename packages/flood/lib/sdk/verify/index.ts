@@ -5,27 +5,27 @@
  *
  *   The two-path agreement check, and its negative half.
  *
- *   POSITIVE HALF. A sample of points is answered from the sealed artifact and then re-asked of the EA's
+ *   positive half. A sample of points is answered from the sealed artifact and then re-asked of the EA's
  *   OGC API Features service — the same authority, a different distribution channel, and geometry this
  *   package has never touched. The point test is run again on the service's own rings, so what is compared
  *   is a verdict against a verdict rather than a file against itself. That is what makes it a check on OUR
- *   CONVERSION rather than on the authority.
+ *   conversion rather than on the authority.
  *
- *   NEGATIVE HALF, AND IT MATTERS AS MUCH. A sample of points in Wales and Scotland must come back
+ *   negative half, and IT matters AS much. A sample of points in Wales and Scotland must come back
  *   `unknown` — no coverage row at all — and never Zone 1. Wales is a different authority under a
  *   four-zone TAN15 scheme that is not interchangeable with England's, and Scotland is a third. reporting
  *   either as the EA's low-probability zone would be the exact defect this layer was built to make
  *   impossible. The positive half alone would pass on an artifact that answered Zone 1 for the whole
  *   planet.
  *
- *   THE CHANNELS DIFFER IN COORDINATE PRECISION AND THAT IS WHY A BOUNDARY POINT IS NOT A FAILURE. The
+ *   the channels differ IN coordinate precision and that is why A boundary point is not A failure. The
  *   geodatabase publishes nine decimals through this package's ingest. the OGC service publishes six. Six
  *   decimals is about 10 cm, so a point within roughly a metre of a zone boundary can land on opposite
  *   sides of two renderings of the same edge. Those are reported as `boundary_tolerance` rather than as
  *   disagreements, with their distance to the nearest edge, and the count is part of the receipt.
  *
- *   THIS CHECK HAS ALREADY EARNED ITS KEEP, and what it caught is the reason to keep running it. A missing
- *   PROJ datum grid put the whole layer 3.4 m from where the authority puts it — coordinates that pass
+ *   this check has already earned its keep, and what it caught is the reason to keep running it. A missing
+ *   proj datum grid put the whole layer 3.4 m from where the authority puts it — coordinates that pass
  *   every structural check there is, because they are ordinary WGS84 numbers inside the declared extent.
  *   It showed up here and nowhere else, as eight disagreements out of 59, each a point that had fallen
  *   into a neighbouring sliver. With the grid installed the same sample reads 59/59. See
@@ -62,7 +62,7 @@ export interface AgreementRow {
 	service: string | null
 	outcome: "agree" | "disagree" | "boundary_tolerance" | "service_unlabelled"
 	/**
-	 * Metres from the point to the nearest EDGE of any polygon the service returned nearby.
+	 * Metres from the point to the nearest edge of any polygon the service returned nearby.
 	 *
 	 * To the edge rather than to the nearest vertex: a polygon's edges are long compared to this product's slivers, so a
 	 * point can sit a centimetre from an edge and metres from every vertex of it. Measuring vertices makes the boundary
@@ -192,7 +192,7 @@ export async function verifyFloodDatabase(options: VerifyFloodOptions): Promise<
 }
 
 /**
- * What zone the SERVICE's own geometry assigns at a point, decided here with the same even-odd rule the artifact's
+ * What zone the service's own geometry assigns at a point, decided here with the same even-odd rule the artifact's
  * reader uses — so what is compared is a verdict against a verdict. `zone` is `null` only when no returned polygon
  * contains the point. a containing polygon with no `flood_zone` sets `insideUnlabelled` instead, so the two readings
  * never share a value.

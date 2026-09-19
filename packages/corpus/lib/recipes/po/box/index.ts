@@ -5,7 +5,7 @@
  *
  *   `po-box` recipe — synthetic PO box rows: tuples → {@link synthesizePoBoxRow} → aligned
  *   LabeledRow, plus optional self-contained US military/diplomatic rows (#517) at
- *   `--military-ratio`. Region is required EXCEPT region-less locales (NZ). Ported from the root
+ *   `--military-ratio`. Region is required except region-less locales (NZ). Ported from the root
  *   build script it replaced.
  */
 
@@ -47,7 +47,7 @@ export const poBoxRecipe: CorpusRecipe = {
 
 		for await (const tuple of readTuples(opts.input)) {
 			read++
-			// Region required EXCEPT region-less locales (NZ: "Private Bag 12, Auckland 1010", #517).
+			// Region required except region-less locales (NZ: "Private Bag 12, Auckland 1010", #517).
 			const regionOptional = ["NZ", "NZL", "NEW ZEALAND"].includes(String(tuple.country || "").toUpperCase())
 
 			if (!tuple.locality || !tuple.postcode || !tuple.country || (!tuple.region && !regionOptional)) {

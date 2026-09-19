@@ -3,7 +3,7 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   `no-street` recipe — synthetic NO-street counter-example rows: tuples →
+ *   `no-street` recipe — synthetic no-street counter-example rows: tuples →
  *   {@link synthesizeNoStreetRow} → aligned LabeledRow. The corpus-side counterweight to the
  *   synth-street source that drove v0.6.1's `dependent_locality` regression — venue+admin and
  *   admin-only rows with explicit absence of any street-side component. Ported from the root build

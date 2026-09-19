@@ -14,7 +14,7 @@ The FCC's Broadband Data Collection program publishes the Broadband
 Serviceable Location (BSL) Fabric — ~120M US addresses with their
 NTIA-conformant fields. Compared to the WOF / TIGER / BAN baseline:
 
-- **Address chaos**: rural routes (`RR 2 Box 67`), highway contracts
+- **Address chaos**: rural routes (`RR 2 Box 67`), highway interfaces
   (`HC 1 Box 5`), military PSC numbering, mailing-only PO boxes,
   hand-entered apartment numbering that drifted from postal canon. Every
   major US edge case appears at scale.

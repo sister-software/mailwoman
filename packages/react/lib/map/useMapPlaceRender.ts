@@ -5,7 +5,7 @@
  *
  *   `useMapPlaceRender` — the thin React memo wrapper over the pure {@link computeMapPlaceRenderSpec}. It
  *   recomputes the render spec only when the resolved place changes, so the declarative overlays render a
- *   stable spec object. The MATH lives in `place-render.ts` (pure, node-tested); this file adds nothing
+ *   stable spec object. The math lives in `place-render.ts` (pure, node-tested); this file adds nothing
  *   but memoization, so it stays trivially correct. A `null` place (no result yet, or a result with no
  *   candidate) yields `null` — the overlays render nothing.
  */

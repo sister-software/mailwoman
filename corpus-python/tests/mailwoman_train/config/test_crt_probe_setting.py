@@ -59,7 +59,7 @@ def test_trainable_only_prefixes_defaults_empty():
 def test_v3120_crt_probe_config_loads_the_one_variable():
     cfg = load_config(CONFIG_DIR / "v3.12.0-crt-probe.yaml")
     assert cfg.train.trainable_only_prefixes == ["classifier."]
-    # UNCHANGED-from-parent settings (same stream, same resurrection settings, same 8k) — the one
+    # unchanged-from-parent settings (same stream, same resurrection settings, same 8k) — the one
     # variable claim is only true if these actually match v3.11.0-deploc-feed.yaml.
     parent = load_config(CONFIG_DIR / "v3.11.0-deploc-feed.yaml")
     assert cfg.data == parent.data

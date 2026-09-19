@@ -6,8 +6,8 @@
  *   Tests for `promotion-eval.ts`'s spec resolution.
  *
  *   The `--spec` help has always said "a path, or a spec name resolved against eval-harness/specs/".
- *   The resolver never appended `.json`, so `--spec v5.3.0-family` — the spec NAME, exactly as
- *   advertised — fell through to `readFileSync("v5.3.0-family")` and died on a bare ENOENT naming a
+ *   The resolver never appended `.json`, so `--spec v5.3.0-family` — the spec name, exactly as
+ *   advertised — fell through to `readFileSync("v5.3.0-family")` and died on a bare enoent naming a
  *   file nobody asked for. Cost: one confused re-run on 2026-07-16, mid eval battery.
  */
 
@@ -173,7 +173,7 @@ describe("paired weights-caches (#47)", () => {
 	 * Lay out a fake package-shaped weights cache with a model.onnx whose bytes do (int8) or don't (fp32) carry the
 	 * DynamicQuantizeLinear needle the provenance guard scans for, plus the tokenizer + card the pre-battery reads touch.
 	 * The package dir comes from `weightsCachePackageDir` — the resolver's own layout function, so the fixture cannot
-	 * drift from what the check resolves. Every guard under test returns exit 2 BEFORE any battery, so no real ONNX is
+	 * drift from what the check resolves. Every guard under test returns exit 2 before any battery, so no real ONNX is
 	 * ever loaded.
 	 */
 	async function stageFakeCache(kind: "fp32" | "int8", salt: string): Promise<string> {

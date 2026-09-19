@@ -46,7 +46,7 @@ const summarize = (p: PhraseProposal) => ({
 })
 
 /**
- * Span/kind shape without the confidence (which accumulates IEEE-754 rounding from the additive bonus chain — assert it
+ * Span/kind shape without the confidence (which accumulates ieee-754 rounding from the additive bonus chain — assert it
  * separately with `toBeCloseTo`).
  */
 const spanShape = (p: PhraseProposal) => ({
@@ -86,7 +86,7 @@ test("scoreNumeric: 1-4 digit runs are confident house numbers; 5+ drop to the n
 
 	expect(out.map(summarize)).toEqual([
 		{ body: "350", start: 0, end: 3, kind: "NUMERIC", confidence: 0.95 },
-		// 5 digits → ambiguous with POSTCODE → NEUTRAL_PROPOSAL_CONFIDENCE (0.55), still emitted.
+		// 5 digits → ambiguous with postcode → NEUTRAL_PROPOSAL_CONFIDENCE (0.55), still emitted.
 		{ body: "12345", start: 4, end: 9, kind: "NUMERIC", confidence: 0.55 },
 	])
 })
@@ -152,8 +152,8 @@ test("scoreRegionAbbreviation: non-tail region in a non-last segment gets the ne
 })
 
 test("scoreRegionAbbreviation: a region-shaped HEAD of a multi-word place name is suppressed", () => {
-	// "SAN NAZARIO" — "SAN" is region-shaped but is followed by capitalized place-name content that is
-	// neither a region abbreviation nor a street suffix → it is the HEAD of a place name rather than a region.
+	// "SAN nazario" — "SAN" is region-shaped but is followed by capitalized place-name content that is
+	// neither a region abbreviation nor a street suffix → it is the head of a place name rather than a region.
 	const text = "SAN Nazario"
 	const out = scoreRegionAbbreviation(tokens(text), text, true)
 	// "SAN" suppressed. "Nazario" is not 2-3 uppercase letters → never region-shaped. → no proposals.

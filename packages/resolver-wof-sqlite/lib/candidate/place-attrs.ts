@@ -6,7 +6,7 @@
  *
  *   Pass 1 reduces each current `spr` row to one {@link PlaceAttrs}; every later pass (alias bags,
  *   region abbreviations, country display names, the currency backfill, the extract folds) discovers
- *   ADDITIONAL name keys for a place already in that map and stages a row against the same record.
+ *   additional name keys for a place already in that map and stages a row against the same record.
  *   That is what keeps each candidate row denormalized without re-reading the source, and it is why
  *   a pass needs exactly four things to stage: the key it found, the place, the id the row hangs on,
  *   and whether the key is the place's canonical name.
@@ -35,7 +35,7 @@ export interface PlaceAttrs {
 	pkey: string
 	/**
 	 * The place's toponym-fame score, or null when the score source has no measurement for it (#28). A property of the
-	 * PLACE, so it rides {@link StageRow} onto the alias and abbrev rows too — that is how a bare `Moscow` reaches
+	 * place, so it rides {@link StageRow} onto the alias and abbrev rows too — that is how a bare `Moscow` reaches
 	 * Москва's score through the alias row that carries the key.
 	 */
 	imp: number | null

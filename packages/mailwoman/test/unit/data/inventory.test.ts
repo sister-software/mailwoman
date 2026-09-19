@@ -13,7 +13,7 @@
 
 import { temporaryDirectory } from "@mailwoman/core/fs/temporary"
 import { createSymbolicLink, makeDirectories, writeLocalTextFile } from "@mailwoman/core/fs/writers"
-import type { LayerContractDatabase } from "@mailwoman/core/layers/schema"
+import type { layerschemadatabase } from "@mailwoman/core/layers/schema"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
 import {
 	buildCommandGaps,
@@ -43,7 +43,7 @@ async function dataRoot(): Promise<string> {
 async function manifested(path: string, name: string, buildCmd: string): Promise<void> {
 	await makeDirectories(join(path, ".."))
 
-	using db = new DatabaseClient<LayerContractDatabase>(path)
+	using db = new DatabaseClient<layerschemadatabase>(path)
 
 	db.exec(`CREATE TABLE layer_manifest (
 		name TEXT PRIMARY KEY, version TEXT NOT NULL, schema_version INTEGER NOT NULL, tier TEXT NOT NULL,
@@ -60,7 +60,7 @@ async function manifested(path: string, name: string, buildCmd: string): Promise
  * A built database with no manifest — the ordinary state of most of the data root.
  */
 function bare(path: string): void {
-	using db = new DatabaseClient<LayerContractDatabase>(path)
+	using db = new DatabaseClient<layerschemadatabase>(path)
 
 	db.exec("CREATE TABLE rows (id INTEGER PRIMARY KEY)")
 }

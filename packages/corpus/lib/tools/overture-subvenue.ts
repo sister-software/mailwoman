@@ -7,13 +7,13 @@
  *   category subsets of `poi.db` (spatial layer #1, `$MAILWOMAN_DATA_ROOT/poi/poi.db`) and yield
  *   {@link SubVenueHarvestRow}s the lexicon builder consumes exactly like an OSM extract.
  *
- *   ── WHY OVERTURE AT ALL, when the OSM extractor already exists ────────────────────────────────────
+ *   ── why overture AT all, when the OSM extractor already exists ────────────────────────────────────
  *   Wave 1 measured `concourse` at 21 real Overture rows against 4 in the whole Great Britain OSM
- *   extract, 3 of which are a street called CONCOURSE WAY. Overture's `airport_terminal` category is
+ *   extract, 3 of which are a street called concourse WAY. Overture's `airport_terminal` category is
  *   curated venue-interior naming. OSM's `aeroway=terminal` is a building footprint that usually
- *   carries the AIRPORT's name. The two sources fail differently, so both are read.
+ *   carries the airport's name. The two sources fail differently, so both are read.
  *
- *   ── THE CATEGORY SET IS MEASURED rather than GUESSED ────────────────────────────────────────────────────
+ *   ── the category SET is measured rather than guessed ────────────────────────────────────────────────────
  *   A full scan of all 13,681,698 rows (2026-08-05, poi.db vintage 2026-05-20.0) counted, per
  *   category, how many named rows carry a designator token. The ranking is not what a category name
  *   predicts — `gas_station` leads the whole table with 12,996 hits, every one of them the token
@@ -22,14 +22,14 @@
  *   categories whose hits survived reading the distribution. the rejects are listed below it so nobody
  *   re-proposes them.
  *
- *   ── poi.db IS FOUR COUNTRIES ─────────────────────────────────────────────────────────────────────
+ *   ── poi.db is four countries ─────────────────────────────────────────────────────────────────────
  *   Measured the same day: US 11,521,612 / CA 794,418 / FR 721,352 / MX 644,316, and nothing else. The
  *   shipped layer is not a world gazetteer, so Overture can attest en-US, en-CA, fr-FR and es-MX
- *   surfaces and NOTHING ELSE. Every non-Latin designator the corpus task asks for — `ターミナル`,
+ *   surfaces and nothing else. Every non-Latin designator the corpus task asks for — `ターミナル`,
  *   `Halle`, `Flügel` — has to come from the OSM leg. Do not read a zero count here as evidence of
  *   absence in the world. it is evidence of absence in four countries.
  *
- *   ── The row shape fits. the PROVENANCE STAMP did not ─────────────────────────────────────────────
+ *   ── The row shape fits. the provenance stamp did not ─────────────────────────────────────────────
  *   Wave 1's `OSMSubVenueRow` was written to accept a non-OSM row, and it does: an Overture row is
  *   `{ designatorID, name }` with no `ref` and no `localizedNames`. What did not fit is
  *   `extractAttestedPhrases`, which hardcoded `osm:name` as the surface's `source`. Feeding Overture
@@ -48,14 +48,14 @@ import type { SubVenueHarvestRow } from "#tools/sub/venue/lexicon"
  * Each entry carries the 2026-08-05 full-scan measurement in a comment: `rows` is the category's total, `hits` is how
  * many of its named rows contain any designator token, and the token list is the top of that distribution.
  *
- * REJECTED, with the number that rejected them — do not re-add without a fresh census:
+ * Rejected, with the number that rejected them — do not re-add without a fresh census:
  *
  * - `gas_station` (12,996 hits) — all `station` inside a brand name (Holiday Station, Chevron Station Seward).
  * - `fire_station` (10,377) — same, plus 330 `hall` from fire halls, which are venues rather than sub-venues.
  * - `town_hall` (5,528) — `City Hall` is a whole building, the `venue` tier rather than interior structure.
  * - `building_supply_store` (4,030) — `building` inside "Allied Building Products".
  * - `jehovahs_witness_place_of_worship` (2,334) — every hit is "Kingdom Hall of Jehovah's Witnesses".
- * - `shoe_store` (909, of which 708 `wing`) — Red Wing. This one is a CONFOUND BOARD entry rather than a source.
+ * - `shoe_store` (909, of which 708 `wing`) — Red Wing. This one is a confound board entry rather than a source.
  * - `college_university` (3,697) — 2,082 `campus`, but the row names the whole institution; `campus_building` is the
  *   interior subset and is kept instead.
  * - `airport` (6,000 rows, 4,302 hits) — 4,071 of them are the token `airport` in the aerodrome's own name. Venue tier,
@@ -80,7 +80,7 @@ export const OVERTURE_SUBVENUE_CATEGORIES: Readonly<Record<string, string>> = {
 }
 
 /**
- * The `poi` and `poi_category_codes` columns this reader touches, declared LOCALLY.
+ * The `poi` and `poi_category_codes` columns this reader touches, declared locally.
  *
  * `@mailwoman/resolver-wof-sqlite` owns the full `POIDatabase` interface, and `@mailwoman/corpus` does not depend on it
  * — the same dependency-direction call `sub-venue-lexicon.ts` makes for `@mailwoman/osm`'s row type. This is a
@@ -108,8 +108,8 @@ interface POIReadDatabase {
  * `sources[]`.
  *
  * Read off the database rather than passed in, because a vintage a caller types is a vintage that goes stale silently.
- * The layer-contract tables are part of every layer database by construction — see `docs/engineering/reference/
- * layer-contract.mdx` — so there is no version of poi.db where this is absent.
+ * The layer-interface tables are part of every layer database by construction — see `docs/engineering/reference/
+ * layer-interface.mdx` — so there is no version of poi.db where this is absent.
  */
 export async function readOvertureLayerVintage(databasePath: string): Promise<string> {
 	using kdb = new DatabaseClient<POIReadDatabase>(databasePath, { readOnly: true })

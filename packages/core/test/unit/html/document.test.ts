@@ -34,7 +34,7 @@ describe("elementTexts", () => {
 		expect(elementTexts(xml, "Prefix", { xml: true })).toEqual(["release/a/", "release/b/"])
 	})
 
-	it("ignores a namespace prefix, which is the publisher's alias rather than the contract", () => {
+	it("ignores a namespace prefix, which is the publisher's alias rather than the interface", () => {
 		expect(
 			elementTexts("<r><gco:CharacterString>x</gco:CharacterString></r>", "CharacterString", { xml: true })
 		).toEqual(["x"])

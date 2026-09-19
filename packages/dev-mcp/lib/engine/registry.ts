@@ -22,7 +22,7 @@
  *   already lives as long as the agent that spawned it, so warmth spans every tool call in a session — the dominant
  *   win — while the socket, the supervisor and the fork protocol are deferred. The costs are paid
  *   explicitly: eviction returns less RSS than killing a worker would, and there is no in-process module reload, which
- *   is why {@link EngineRegistry.acquire} REFUSES on a source edit rather than pretending to reload (see
+ *   is why {@link EngineRegistry.acquire} refuses on a source edit rather than pretending to reload (see
  *   `tree-fingerprint.ts`). Building the supervisor is the right next step if warmth across agent restarts proves to
  *   matter. it is not needed to test whether a warm engine changes which panel gets measured.
  */
@@ -42,7 +42,7 @@ import { computeTreeFingerprint, staleEngineMessage, type TreeFingerprint } from
 /**
  * Every change a caller can set, in the CLI's own vocabulary.
  *
- * `undefined` means the PRODUCTION DEFAULT, never "off" — the rule `GauntletResolverChanges` states in `harness.ts:69`:
+ * `undefined` means the production default, never "off" — the rule `GauntletResolverChanges` states in `harness.ts:69`:
  * "the library defaults are the thing under test". A tool that coerced undefined to false would grade a configuration
  * nobody ships.
  */
@@ -55,7 +55,7 @@ export interface EngineConfig {
 	resolve_db?: string
 	data_root?: string
 	/**
-	 * Grade a CANDIDATE weights bundle rather than the installed one — the change that turns a model question into a
+	 * Grade a candidate weights bundle rather than the installed one — the change that turns a model question into a
 	 * comparison. Unset means whatever the resolution ladder finds, which is what production loads.
 	 *
 	 * Guarded by {@link assertWeightsCacheStaged} at {@link EngineRegistry.acquire} because the ladder's fall-through is
@@ -104,7 +104,7 @@ export interface EngineConfig {
 /**
  * The session options a config resolves to, with every default made explicit.
  *
- * Resolving before recording is what makes a confound check possible at all. Two arms whose STATED configs differ in
+ * Resolving before recording is what makes a confound check possible at all. Two arms whose stated configs differ in
  * one field can differ in three effective ones — `--country-scope auto` means "scope on FTS, no scope on candidate"
  * (`docs/engineering/reference/resolver-backends.mdx`), so switching backend also switches country scoping. A
  * comparison that reads stated configs cannot see that. one that reads effective configs can.
@@ -114,7 +114,7 @@ export interface EngineConfig {
  *
  * The two vocabularies differ by design — a caller writes the CLI's snake_case, a session reads camelCase — and
  * {@link resolveConfig} performs the translation inline, where it is invisible to anyone else who needs it. This map is
- * the same translation, named, because `confound.ts` compares a caller's DECLARED keys against the keys that actually
+ * the same translation, named, because `confound.ts` compares a caller's declared keys against the keys that actually
  * differ between two resolved configs. Without it, declaring `["place_country"]` and having `placeCountry` move reads
  * as two separate facts — one change declared and unmoved, one moved and undeclared — and every correctly-declared
  * comparison grades itself ambiguous.
@@ -162,7 +162,7 @@ export function effectiveKeyFor(declared: string): string {
  * {@link GeocodeSessionOptions} in a form a JSON record accepts.
  *
  * Structurally the same type, field for field. It exists because TypeScript withholds an implicit index signature from
- * an INTERFACE — declaration merging could add a member later — so an interface value is not assignable to
+ * an interface — declaration merging could add a member later — so an interface value is not assignable to
  * `Record<string, unknown>` however it is one. The mapping is checked property by property and keeps each field's own
  * type, which a cast through `unknown` would discard.
  */
@@ -263,7 +263,7 @@ export interface EngineSummary {
 	 * The model this engine actually loaded, and the ladder rung that produced it.
 	 *
 	 * Reported beside the config rather than derived from it, because the two can disagree in the one direction that
-	 * matters: `weights_cache` names what was ASKED FOR, and only this says what answered.
+	 * matters: `weights_cache` names what was asked FOR, and only this says what answered.
 	 */
 	weights: { model_path: string; source: string } | null
 }
@@ -272,7 +272,7 @@ export interface EngineSummary {
  * Resident engines, evicted least-recently-used first.
  *
  * The cap is small on purpose. `geocode-stream.ts:23-28` records the measurement that sets it: on a shared multi-GB WOF
- * SQLite, throughput peaked at 2 workers (~1.4×) and DEGRADED beyond — memory bandwidth and the shared database are the
+ * SQLite, throughput peaked at 2 workers (~1.4×) and degraded beyond — memory bandwidth and the shared database are the
  * ceiling rather than core count. Two resident candidate gazetteers are already several GB before the ONNX sessions, so
  * holding more engines adds nothing and can cost the box.
  */
@@ -295,7 +295,7 @@ export interface EngineRegistryLike {
 	 */
 	sourceMoved(): Promise<boolean>
 	/**
-	 * The working tree's fingerprint RIGHT NOW — recomputed on every call, never cached.
+	 * The working tree's fingerprint right now — recomputed on every call, never cached.
 	 */
 	fingerprint(): Promise<TreeFingerprint>
 	acquire(config: EngineConfig): Promise<Engine>
@@ -311,7 +311,7 @@ export class EngineRegistry implements EngineRegistryLike {
 	readonly #bootFingerprint: TreeFingerprint
 
 	/**
-	 * Compute the boot fingerprint, then construct. The boot fingerprint is the tree the PROCESS imported — not the tree
+	 * Compute the boot fingerprint, then construct. The boot fingerprint is the tree the process imported — not the tree
 	 * any individual engine was built from. Those differ after a reload, and the difference is required: a registry with
 	 * no resident engine has nothing stale to compare against, so without this the first call after a reload builds and
 	 * stamps the new fingerprint onto answers produced by the old modules.
@@ -371,7 +371,7 @@ export class EngineRegistry implements EngineRegistryLike {
 			return existing
 		}
 
-		// Refuse against the BOOT fingerprint rather than merely against whatever is resident. A resident engine under a
+		// Refuse against the boot fingerprint rather than merely against whatever is resident. A resident engine under a
 		// different digest is one symptom of a moved tree. an empty registry under a moved tree is the other, and it
 		// is the dangerous one, because there is nothing stale left to notice. Both are the same fact — this process
 		// cannot import the new source — so both refuse here.

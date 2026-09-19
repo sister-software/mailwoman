@@ -279,7 +279,7 @@ meaning less, which is the thing `test.yml`'s header explicitly refuses.
 keep independent loads for the tests that are _about_ load behaviour — `resolveWeights` auto-resolve,
 the tolerant-loader paths, the error cases.
 
-The file contains no `vi.mock`, so the `isolate: false` reset contract documented in the root config
+The file contains no `vi.mock`, so the `isolate: false` reset interface documented in the root config
 does not bind here.
 
 Target **96.6s → ~45s** (estimate) rather than lower — some of those loads are the assertion.

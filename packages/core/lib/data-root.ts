@@ -123,8 +123,8 @@ export function cacheRootPath(...segments: string[]): string {
  * {@link mailwomanDataRoot}. callers thread a `--data-root` option through). A fresh array each call. callers filter
  * with `existsSync`, so a deployment missing any of them degrades to whatever is present.
  *
- * This list is DELIBERATELY SMALLER than `DEFAULT_POSTCODE_EXTRACTS` (`mailwoman/gazetteer-pipeline/index.ts`), which
- * is the set the candidate gazetteer is BUILT from — twenty-odd extracts including the 876 MB Code-Point Open GB one.
+ * This list is deliberately smaller than `DEFAULT_POSTCODE_EXTRACTS` (`mailwoman/gazetteer-pipeline/index.ts`), which
+ * is the set the candidate gazetteer is built from — twenty-odd extracts including the 876 MB Code-Point Open GB one.
  * These are attached live per query, so the cost of a member is paid at every boot rather than once at build time.
  * membership here is earned by a extract the runtime cannot resolve its locales without.
  *
@@ -132,7 +132,7 @@ export function cacheRootPath(...segments: string[]): string {
  *
  * - The tail extract's own contents moved on 2026-08-05. It carried GB (1,839,678 of 1,895,753 rows, ~946 MB) until
  *   Code-Point Open replaced those rows under a clean licence. it is now the nine-country namesake set
- *   FI/CZ/SK/SI/DK/NO/HR/PL/SE at 26 MB. Rebuild: `mailwoman gazetteer build postcode-geonames`.
+ *   FI/CZ/SK/SI/DK/no/HR/PL/SE at 26 MB. Rebuild: `mailwoman gazetteer build postcode-geonames`.
  * - `postalcode-ni-osm.db` is **build-local**: OSM `addr:postcode` under ODbL, never published, so on any machine that
  *   did not build it the `existsSync` filter simply drops it and GB postcode queries behave as they did before. It is
  *   listed rather than special-cased because that filter is the tier's enforcement. It is also the only GB-claiming
@@ -155,7 +155,7 @@ export interface WOFExtractPaths {
 	 */
 	postalcodeUS: string
 	/**
-	 * The nine-country namesake set FI/CZ/SK/SI/DK/NO/HR/PL/SE (see {@link wofExtractPaths}).
+	 * The nine-country namesake set FI/CZ/SK/SI/DK/no/HR/PL/SE (see {@link wofExtractPaths}).
 	 */
 	postalcodeGeonamesTail: string
 	/**
@@ -163,13 +163,13 @@ export interface WOFExtractPaths {
 	 */
 	postalcodeIntl: string
 	/**
-	 * The NL PC6 full-postcode extract (CBS via PDOK; `scripts/build-postalcode-nl-pc6.ts`) — the data the lookup's NL
+	 * The NL PC6 full-postcode extract (CBS via pdok; `scripts/build-postalcode-nl-pc6.ts`) — the data the lookup's NL
 	 * PC6 ladder ("1012 LG" → joined "1012LG" → 4-digit stem) resolves against (#977).
 	 */
 	postalcodeNLPC6: string
 	/**
 	 * Northern Ireland (BT) from OpenStreetMap — 4,757 of 50,032 live NI postcodes (9.5 %), the only coverage that exists
-	 * for the hole Code-Point Open leaves. ODbL, build-local, 2.5 MB. A miss on a BT code means NOT ATTESTED IN OSM. an
+	 * for the hole Code-Point Open leaves. ODbL, build-local, 2.5 MB. A miss on a BT code means not attested IN OSM. an
 	 * unknown postcode abstains (#1480), so the extract is strictly additive. Rebuild: `mailwoman gazetteer build
 	 * postcode-ni-osm`.
 	 */

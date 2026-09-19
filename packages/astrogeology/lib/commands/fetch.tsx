@@ -17,7 +17,7 @@ import { downloadPinned } from "#sdk/fetch"
 import { type PlanetarySourceKind, sourceFor } from "#sdk/sources"
 
 /**
- * The command's contract, in the shape mailwoman's filesystem router reads.
+ * The command's interface, in the shape mailwoman's filesystem router reads.
  */
 export const spec = {
 	name: "fetch",

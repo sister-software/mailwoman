@@ -7,7 +7,7 @@
  *
  *   Recomputing a path is the wrong operation. TypeScript's `getEditsForFileRename` recomputes, and on a corpus
  *   recipe move it answered `#lib/recipes/fr-fragment` for a test file that had written
- *   `@mailwoman/corpus/recipes/fr/fragment`: it changed the specifier's FAMILY — a public export subpath for a
+ *   `@mailwoman/corpus/recipes/fr/fragment`: it changed the specifier's family — a public export subpath for a
  *   package-private `#` import — and the `#` form it minted resolves to `packages/corpus/lib/lib/recipes/…`, since
  *   the `#*` pattern already carries the `lib` segment. Both halves of that edit are refused here by construction. A
  *   mapped specifier is re-derived by running the same pattern that produced it, so a form the maps cannot express is
@@ -45,7 +45,7 @@ export interface PackageSpecifiers {
 
 /**
  * The three ways a specifier can name a module here. The family decides who may write it — a `#` import is
- * package-private, a bare specifier is the public contract, a relative path is internal to a directory — so a
+ * package-private, a bare specifier is the public interface, a relative path is internal to a directory — so a
  * replacement never crosses from one to another.
  */
 export const SpecifierFamily = {

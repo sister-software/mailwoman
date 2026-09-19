@@ -120,7 +120,7 @@ the coordinated bump (the freeze lifted exactly when designed), no new workstrea
    nobody re-measured.
 
 4. **Introspection as a product surface.** #941's parse-trace + visualizer turns the decode path
-   into something a visitor can watch. Its review hardened the trace's _contract_ (per-piece
+   into something a visitor can watch. Its review hardened the trace's _interface_ (per-piece
    repair alignment through token merges, effect-semantics for priors, a self-describing
    locale axis) — the kind of precision that matters precisely because the tool's job is to be
    believed.
@@ -206,7 +206,7 @@ had been silently degraded since July 1** — three stacked failures, each maski
 
 The repair kept the house naming and migrated the wire (operator direction): one tolerant
 boundary (`normalizeReleasesManifest`), the publisher on house keys, the R2 manifest migrated
-after the tolerant reader deployed, and contract tests pinning all of it. Verified live via
+after the tolerant reader deployed, and interface tests pinning all of it. Verified live via
 Playwright: an address-point rooftop hit and an SI village through the browser cascade, markers
 on both — all three tiers working together in production **for the first time since July 1**.
 

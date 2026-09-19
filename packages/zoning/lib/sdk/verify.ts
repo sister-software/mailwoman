@@ -5,30 +5,30 @@
  *
  *   The two-path agreement check, and its negative half.
  *
- *   POSITIVE HALF. A sample of points is answered from the sealed artifact and then re-asked of the
+ *   positive half. A sample of points is answered from the sealed artifact and then re-asked of the
  *   Department's own feature service — the same authority, a different distribution channel, and geometry
  *   this package has never touched. The point test is run again on the service's own rings, so what is
  *   compared is a verdict against a verdict rather than a file against itself. That is what makes it a check
- *   on OUR CONVERSION rather than on the authority.
+ *   on OUR conversion rather than on the authority.
  *
- *   AND THE SERVICE ANSWERS IN THE PUBLISHER'S OWN RING CONVENTION, so the comparison exercises the hole
+ *   and the service answers IN the publisher'S own ring convention, so the comparison exercises the hole
  *   handling twice over. `outSR=4326` on the query path returns the same clockwise-exterior rings the bulk
  *   export carries, so this side re-derives the roles the same way the ingest did — and a point inside a hole
  *   comes back outside on both paths or on neither.
  *
- *   NEGATIVE HALF, AND IT MATTERS MORE HERE THAN FOR ANY SIBLING LAYER. Donegal is the one local authority of
+ *   negative half, and IT matters more here than FOR any sibling layer. Donegal is the one local authority of
  *   31 the Department does not publish, and Northern Ireland is outside the product entirely — so points in
  *   both must come back `unknown` with no designation. A positive-only check would pass on an artifact that
  *   reported the whole island as zoned, and this layer's entire coverage posture exists because an absent
  *   polygon is not a statement.
  *
- *   THE CHANNELS DIFFER IN COORDINATE PRECISION AND THAT IS WHY A BOUNDARY POINT IS NOT A FAILURE. The
+ *   the channels differ IN coordinate precision and that is why A boundary point is not A failure. The
  *   archive publishes nine decimals through this package's ingest. the service's own JSON rounds. A point
  *   within roughly a metre of a zone boundary can land on opposite sides of two renderings of the same edge.
  *   Those are reported as `boundary_tolerance` with their distance to the nearest edge, and the count is part
  *   of the receipt.
  *
- *   THE DISTANCE IS TO THE EDGE rather than TO THE NEAREST VERTEX. A point a centimetre from a long edge can be
+ *   the distance is TO the edge rather than TO the nearest vertex. A point a centimetre from a long edge can be
  *   metres from every vertex of it — a sibling layer's one near-miss read 1.58 m to vertices and 0.009 m to
  *   edges, an overstatement of 175-fold — so measuring vertices makes the boundary tolerance far stricter than
  *   it reads, which is how a rendering difference gets reported as a conversion defect.
@@ -66,14 +66,14 @@ export interface AgreementRow {
 	 */
 	serviceInside: boolean
 	/**
-	 * The local code the SERVICE reports at the point, where it reports one. Compared verbatim against the artifact's,
+	 * The local code the service reports at the point, where it reports one. Compared verbatim against the artifact's,
 	 * because carrying the code verbatim is what this layer is for: two paths that agree on containment and disagree on
 	 * the code would be a silent vocabulary defect.
 	 */
 	serviceLocalCode?: string
 	outcome: "agree" | "disagree" | "boundary_tolerance"
 	/**
-	 * Metres from the point to the nearest EDGE of any polygon the service returned nearby.
+	 * Metres from the point to the nearest edge of any polygon the service returned nearby.
 	 *
 	 * Carried on every row rather than only the tolerated ones, because it is what separates a real defect from the two
 	 * channels rendering the same edge differently — and a receipt that omits it forces a re-run. `undefined` means the
@@ -114,7 +114,7 @@ export interface VerifyZoningResult {
  * Points this product's publication does not reach, named. Each is a place rather than a bare pair of numbers: a
  * coordinate a reader cannot name is a coordinate nobody can check.
  *
- * TWO POPULATIONS, AND BOTH ARE required. The Donegal points are the case this layer's coverage posture exists for —
+ * Two populations, and both are required. The Donegal points are the case this layer's coverage posture exists for —
  * the Department has not published that authority's zoning, and a builder that read absence as "unrestricted" would
  * answer them confidently. The Northern Irish points confirm the artifact is clipped to the Republic rather than to the
  * island: zoning there is a different jurisdiction's instrument under a different planning act.
@@ -156,7 +156,7 @@ export interface ServiceFeature {
  * The one call the verification makes against the service: the features it publishes near a point.
  *
  * A function rather than the client, and that is what makes the check's own logic testable. The comparison's value is
- * that it decides which of three outcomes a point gets. expressed against an HTTP client it could only ever be watched
+ * that it decides which of three outcomes a point gets. expressed against an http client it could only ever be watched
  * on a live run, and a scripted reader lets those decisions be pinned. {@link createServiceReader} builds the real
  * one.
  */
@@ -249,7 +249,7 @@ export async function verifyZoningDatabase(options: VerifyZoningOptions): Promis
 }
 
 /**
- * Whether the SERVICE's own geometry contains the point, decided here with the same ring-role resolution and the same
+ * Whether the service's own geometry contains the point, decided here with the same ring-role resolution and the same
  * even-odd rule the artifact's reader uses — so what is compared is a verdict against a verdict.
  */
 async function readServiceContainment(
@@ -279,12 +279,12 @@ async function readServiceContainment(
 			nearest = distance
 		}
 
-		// THE SERVICE'S RINGS GET THE SAME ROLE RESOLUTION THE INGEST GAVE THE ARCHIVE'S. The publisher uses one convention on
+		// the service'S rings GET the same role resolution the ingest gave the archive'S. The publisher uses one convention on
 		// both channels, so reading this side as nested GeoJSON would answer "inside" for a point in a hole and report the
 		// artifact as wrong at exactly the locations the hole handling exists for.
 		const resolved = resolveRingRoles(raw, `service feature near ${latitude},${longitude}`)
 
-		// ENCODED AND RE-READ RATHER THAN RAY-CAST DIRECTLY, deliberately: the artifact answers through
+		// encoded and RE-read rather than RAY-cast directly, deliberately: the artifact answers through
 		// `pointInEncodedRings`, and running the service's geometry through a different predicate would compare two answers
 		// that were never asked the same question.
 		if (pointInEncodedRings(encodeRings(resolved.polygons), longitude, latitude)) {
@@ -309,7 +309,7 @@ async function readServiceContainment(
  * Draw a reproducible sample of points from the artifact — interior points of stored polygons, spread across
  * authorities.
  *
- * SPREAD ACROSS AUTHORITIES RATHER THAN DRAWN FROM ONE, because 30 local authorities publish 581 distinct local codes
+ * Spread across authorities rather than drawn from one, because 30 local authorities publish 581 distinct local codes
  * between them and a sample from one would verify one authority's conversion while reporting on all of them. The stride
  * discipline — keys chosen before any geometry is read, deterministic rather than random — is
  * `strideSampleInteriorPoints`'s.
@@ -321,7 +321,7 @@ export function sampleAgreementPoints(
 	const count = options.count ?? 48
 	using database = new DatabaseClient<ZoningDatabase>(databasePath, { readOnly: true })
 
-	// ORDERED BY THE AUTHORITY FIRST, so a stride walks across the 30 of them rather than down one. A stride over
+	// ordered BY the authority first, so a stride walks across the 30 of them rather than down one. A stride over
 	// `area_id` alone would follow the publisher's own feature numbering, which is grouped by authority — and would draw
 	// every sample from whichever authorities happen to sit on the stride.
 	const areaIDs = (

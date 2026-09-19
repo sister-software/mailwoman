@@ -26,7 +26,7 @@ const HIERARCHY_ORDER: readonly ComponentTag[] = [
 
 /**
  * Render an admin-hierarchy variant: the components it carries, in hierarchy order, joined the way the country joins a
- * line. This is a gazetteer QUERY rather than a postal address, which is why it does not go through a layout — a
+ * line. This is a gazetteer query rather than a postal address, which is why it does not go through a layout — a
  * country whose postal layout drops the region would collapse `Paris, Île-de-France` back into `Paris`.
  */
 function renderHierarchy(
@@ -78,7 +78,7 @@ export interface WOFVariantSpec {
 	suffix: string
 	components: Partial<Record<ComponentTag, string>>
 	/**
-	 * Render this variant as an ADMIN HIERARCHY rather than as a postal address.
+	 * Render this variant as an admin hierarchy rather than as a postal address.
 	 *
 	 * A hierarchy variant is a query — `Paris`, then `Paris, Île-de-France`, then `Paris, Île-de-France, France` — and
 	 * several of its steps are not addresses at all. France's postal layout carries no region, so rendering `{ locality,

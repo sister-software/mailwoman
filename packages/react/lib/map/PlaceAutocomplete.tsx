@@ -9,7 +9,7 @@
  *   is nothing to suggest, so the row only appears when useful. Wire the ids from the hook so the input's
  *   `aria-controls` / `aria-activedescendant` match this listbox.
  *
- *   NODE-SAFE: pure React, no maplibre.
+ *   node-safe: pure React, no maplibre.
  */
 
 import type { ReactNode } from "react"

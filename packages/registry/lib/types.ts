@@ -94,7 +94,7 @@ export interface EntityGeoData {
 
 /**
  * Feature properties the map renderer consumes — {@link EntityGeoData} with every field optional, plus an unconstrained
- * `bucket`. The renderer assigns a color per DISTINCT bucket value in first-seen order and builds its legend from that
+ * `bucket`. The renderer assigns a color per distinct bucket value in first-seen order and builds its legend from that
  * set, so a bucket is any categorical label rather than only a {@link ReconciliationBucket}; and a collection assembled
  * from something other than resolved entities (raw address points, links read back from a file) carries no entity id or
  * display name.

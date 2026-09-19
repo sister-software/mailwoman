@@ -102,7 +102,7 @@ The same steps with `-c wrangler.sandbox.toml` stand up the sandbox on a key pai
 `/health` reads `signing: ok`, and a Payment Link in Stripe test mode runs the whole path: checkout, webhook, claim,
 email, refresh. Verify a sandbox token with `verifyLicenseKey` against the sandbox public key; no release trusts it.
 
-The renewal path needs a customer on a Stripe test clock, which a Payment Link cannot create, so the rehearsal builds
+The renewal path needs a customer on a Stripe test clock, which a Payment Link cannot create. Therefore, the rehearsal builds
 the Checkout Session itself with the same collection the Link carries (`checkoutCollection` in `lib/shop/catalog.ts`):
 
 ```bash
@@ -133,8 +133,7 @@ only; one item's failure is recorded against it and never stops the sweep for th
 
 What it recovers: every license in the ledger is read whole each pass, and its subscription's latest paid invoice is
 minted if no token holds it, however old. A subscription the ledger has never seen (its `checkout.session.completed`
-lost and its success page never visited) is found only through Stripe's invoice list, which filters by creation time,
-so it is recovered while its first invoice was created within the last week; past that, resend the invoice's
+lost and its success page never visited) is found only through Stripe's invoice list, which filters by creation time. Therefore, it is recovered while its first invoice was created within the last week; past that, resend the invoice's
 `invoice.paid` from the Stripe dashboard. A resend through Cloudflare's binding can deliver twice when the ledger fails
 to record an accepted send; Resend deduplicates on the invoice id.
 

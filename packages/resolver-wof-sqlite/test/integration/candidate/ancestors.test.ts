@@ -158,7 +158,7 @@ describe("the candidate ancestors sidecar", () => {
 		expect(rows.map((r) => r.parent_spr_id)).toEqual([WEIMARER_LAND, THURINGEN, GERMANY])
 		expect(rows.map((r) => r.placetype)).toEqual(["county", "region", "country"])
 		expect(rows.map((r) => r.depth)).toEqual([1, 2, 3])
-		// Denormalized display name + the SHARED normalizeLocalityForKey fold — the same fold the
+		// Denormalized display name + the shared normalizeLocalityForKey fold — the same fold the
 		// candidate keys and the coherence check use, agreeing by construction.
 		expect(rows[1]!.parent_name).toBe("Thüringen")
 		expect(rows[1]!.parent_name_key).toBe(normalizeLocalityForKey("Thüringen"))
@@ -296,7 +296,7 @@ describe("the candidate ancestors sidecar", () => {
 		const texas = intervalOf(db, TEXAS)!
 		const louisiana = intervalOf(db, LOUISIANA)!
 
-		// The interval verdict is "contained along the CANONICAL hierarchy": true under Texas, false
+		// The interval verdict is "contained along the canonical hierarchy": true under Texas, false
 		// under Louisiana even though the closure rows attest the Louisiana edge. A consumer needing
 		// the non-canonical hierarchy consults the closure rows — that is the recorded division of
 		// labor rather than a defect.

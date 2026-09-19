@@ -1,7 +1,7 @@
 # v2.6.2-span-boundary-w15 — #727 stage-1 weight sweep. One variable vs v2.6.0: span_boundary_loss_weight
 # 0.5 -> 1.5. v2.6.0 (2k) and v2.6.1 (8k) both plateaued at flips 5->2 / street flat @ weight 0.5 — the
 # head fixes 3/5 boundary cases then saturates on training duration. This tests whether the plateau is
-# WEIGHT-limited: does stronger boundary pressure fix the remaining 2 (VT 05068, ND 58852) and/or lift
+# weight-limited: does stronger boundary pressure fix the remaining 2 (VT 05068, ND 58852) and/or lift
 # aggregate street? If yes -> the simple head has more to give (sweep higher). If flat -> the residual is
 # a different sub-mechanism -> stage 2 (FSemi-CRF head). init_from stable v257, 2k diagnostic.
 data:
@@ -41,7 +41,7 @@ data:
     usgov-hrsa-fqhc: 2.0
     usgov-imls-pls: 2.0
     usgov-nad: 1.0
-    state-ia-contractors: 2.0
+    state-ia-builders: 2.0
     state-tx-notaries: 1.5
     state-ny-notaries: 2.0
     deepseek-kryptonite: 3.0
@@ -61,7 +61,7 @@ data:
     synth-no-street-led: 12.0
     synth-cz-pcfirst-preposition: 12.0
     synth-nl-postcode: 6.0
-    # PROBE 1: the fragment/autocomplete source (assay weight — moderate precedent).
+    # probe 1: the fragment/autocomplete source (assay weight — moderate precedent).
     synth-fragment: 6.0
   train_rows_per_epoch: 1000000
   val_rows: 4096

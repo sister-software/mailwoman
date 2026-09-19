@@ -126,7 +126,7 @@ def iter_rows(
     """
     if not country_weights:
         raise ValueError("country_weights must be non-empty")
-    # TRAIN-ONLY policy stays out of held-out streams (2026-08-09 P0). See `TrainOnlyPolicy`.
+    # train-only policy stays out of held-out streams (2026-08-09 P0). See `TrainOnlyPolicy`.
     policy = neutralized_for(
         split,
         TrainOnlyPolicy(

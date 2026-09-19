@@ -11,7 +11,7 @@
  *   compiled concept's own description. Those are checked here, where all three artifacts are held.
  *
  *   An attestation nobody can check is indistinguishable from an invented one, which is the whole reason the
- *   lexicon replaced a table whose provenance read `AUTHORED FOR ONE EXPERIMENT`.
+ *   lexicon replaced a table whose provenance read `authored FOR one experiment`.
  */
 
 import { readActivityLexicon } from "@mailwoman/activity-lexicon"

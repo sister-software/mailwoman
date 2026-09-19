@@ -99,7 +99,7 @@ describe("decideArc", () => {
 	})
 
 	it("carries the REASON a country is protected into the block", () => {
-		// "D-RULE: regressions on GB (1)" leaves a reader no way to audit why GB is on the list, which is how a
+		// "D-rule: regressions on GB (1)" leaves a reader no way to audit why GB is on the list, which is how a
 		// hand-written list survives four months of drift unread.
 		const arc = decideArc(
 			leg("control", 0, 0, { differed: 0 }),
@@ -127,7 +127,7 @@ describe("decideArc", () => {
 
 	it("holds a candidate that beats shipped but not the null", () => {
 		// The trap the arc walked into from the other side: -3 looks like a small regression and is actually an
-		// IMPROVEMENT over a -5 null. This one is the reverse — positive against shipped, negative against the placebo.
+		// improvement over a -5 null. This one is the reverse — positive against shipped, negative against the placebo.
 		const arc = decideArc(
 			leg("control", 0, 0, { differed: 0 }),
 			leg("null", 12, 2),
@@ -217,7 +217,7 @@ describe("decideArc", () => {
 describe("protectedCountries", () => {
 	it("protects both tier-1 locales, which the list it replaced did not", async () => {
 		// The defect in one assertion: `["FR", "GB", "DE"]` stood under a docstring reading "locales that iron rule 6
-		// guards unconditionally" while SCOPE's tier 1 read US and FR.
+		// guards unconditionally" while scope's tier 1 read US and FR.
 		const countries = (await protectedCountries()).map((entry) => entry.country)
 
 		expect(countries).toContain("US")

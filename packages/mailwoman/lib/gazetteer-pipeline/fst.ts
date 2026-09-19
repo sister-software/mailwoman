@@ -6,7 +6,7 @@
  *   Per-locale FST gazetteer build (`mailwoman gazetteer build fst`) — the decode-bias FST shipped as
  *   `fst-<locale>.bin` in the weights packages (#1318), rebuilt with degenerate-surface curation.
  *
- *   THE CURATION (the "serialize runtime decisions into static indexes" doctrine): a name whose whole
+ *   the curation (the "serialize runtime decisions into static indexes" doctrine): a name whose whole
  *   normalized surface is a bare function word ("la" — the case-folded Los Angeles alias colliding
  *   with the French article), a bare street-type word ("boulevard", "lane" — real US places that are
  *   street vocabulary everywhere else), or a composition of nothing but function words ("de la") is
@@ -24,7 +24,7 @@
  *
  *   Provenance (policy string + excluded-insertion count) is recorded in the artifact trailer.
  *   Artifacts are written to --output (default: a `fst-per-locale-curated/` sibling of the shipped
- *   `fst-per-locale/` dir) — staged BESIDE, never overwriting. the swap into the shipped path is
+ *   `fst-per-locale/` dir) — staged beside, never overwriting. the swap into the shipped path is
  *   operator-approved after the battery.
  */
 
@@ -47,7 +47,7 @@ import { join, resolvePath, type PathBuilderLike } from "path-ts"
 import { TextSpliterator } from "spliterator"
 
 /**
- * The served Latin-script language tiers (see SCOPE.mdx) — uniform curation set for every locale FST.
+ * The served Latin-script language tiers (see scope.mdx) — uniform curation set for every locale FST.
  */
 export const CURATION_LANGUAGES = [
 	"en",
@@ -77,7 +77,7 @@ export const EXCLUSION_POLICY_ID =
 	"degenerate-surface-exclusion v1.1 (libpostal stopwords+street_types, 17 langs, + supplemental)"
 
 /**
- * Function-word surfaces the libpostal dictionaries MISS. Each entry carries its justification — this list is curated
+ * Function-word surfaces the libpostal dictionaries miss. Each entry carries its justification — this list is curated
  * rather than a dumping ground. a candidate belongs here only when it is a common function word in a served language
  * whose libpostal stopword file lacks the bare form.
  */
@@ -103,7 +103,7 @@ export const FST_LOCALES: ReadonlyMap<string, string[]> = new Map([
 	["es-es", ["ES"]],
 	["it-it", ["IT"]],
 	// The CJK three (#1493): the autocomplete tier's place FST per locale, built from the same admin DB. The char-path
-	// model reads no FST prior (channel-free by contract); these serve `mailwoman eval autocomplete`'s `fst` arm and
+	// model reads no FST prior (channel-free by interface); these serve `mailwoman eval autocomplete`'s `fst` arm and
 	// the Photon drop-in's type-ahead.
 	["ja-jp", ["JP"]],
 	["zh-cn", ["CN"]],
@@ -118,7 +118,7 @@ export const FST_LOCALES: ReadonlyMap<string, string[]> = new Map([
  * The CJK three are here despite having no entry in {@link FST_LOCALES} — they were built by the pre-#1318 flow,
  * nothing can rebuild them today, and they stay frozen pending the CJK arc's importance-source and WOF-geometry
  * questions. that is a fact the check should surface rather than hide. `fst-global-priority.bin` (317 MB, retired
- * 2026-08-06 — see RELEASING.md) is deliberately gone from this list: a retired artifact must not keep generating
+ * 2026-08-06 — see releasing.md) is deliberately gone from this list: a retired artifact must not keep generating
  * freshness rows that read as a rebuild obligation. The public HF object outlives the template on purpose. removing it
  * is a separate, operator-approved step (#1493).
  */
@@ -151,7 +151,7 @@ export interface FSTFreshnessRow {
 /**
  * Check every admin-derived FST against `dbPath`, for the `gazetteer verify` freshness section.
  *
- * WHY IT REPORTS RATHER THAN FAILS. `gazetteer verify` checks a DATABASE, and a stale FST says nothing about whether
+ * Why IT reports rather than fails. `gazetteer verify` checks a database, and a stale FST says nothing about whether
  * that database is sound — the arrow runs the other way. The artifacts also cannot be rebuilt as a side effect of a
  * verify: a locale FST build is minutes, its output is staged, and the swap is operator-approved because an FST changes
  * decoder behaviour. So the section exists to make the drift visible at the moment the operator is already looking at
@@ -224,11 +224,11 @@ export async function loadDegenerateSurfaces(
 	stopwordTokens: Set<string>
 }> {
 	// Memoized like loadPersonNameSurfaces: static dictionaries, so process-lifetime with no
-	// invalidation key. Keyed by fold IDENTITY then language set — the FST and painter worlds fold
+	// invalidation key. Keyed by fold identity then language set — the FST and painter worlds fold
 	// differently by design and must not share an entry. Without this the fixture-layer test paid
 	// ~1s of dictionary parsing per build (10 builds, 11.2s); with it the file runs in ~1s.
 	//
-	// ⚠ The returned sets are SHARED and `buildLocalitySurfaceLexicon` MUTATES its copy (it unions
+	// ⚠ The returned sets are shared and `buildLocalitySurfaceLexicon` mutates its copy (it unions
 	// the directionals and the evidence supplemental set into `degenerate`). So this hands back a
 	// fresh shallow copy per call and caches only the parse.
 	let byLanguages = degenerateSurfacesMemo.get(fold)
@@ -331,10 +331,10 @@ export async function computeSurfaceCountryCounts(dbPath: string): Promise<Map<s
  * per country set. The FR and US passes in one process paid it twice. measured 2026-08-02 that pair was 236.9s of a
  * 253s CI leg.
  *
- * Not keyed on path alone. The WOF admin DB is a sealed readonly artifact that a rebuild REPLACES, so a path-only memo
+ * Not keyed on path alone. The WOF admin DB is a sealed readonly artifact that a rebuild replaces, so a path-only memo
  * would serve a stale scan against a new file for the life of the process.
  *
- * The returned map is SHARED with every caller. Both consumers treat it as read-only — the FST builder's
+ * The returned map is shared with every caller. Both consumers treat it as read-only — the FST builder's
  * `FSTBuildOpts.surfaceCountryCounts` is typed `ReadonlyMap`, and the locality-surface builder only probes it — so no
  * copy is made. A future caller that mutates must copy first.
  */

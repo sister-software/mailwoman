@@ -26,7 +26,7 @@ export interface DiscoveredRepo {
 	name: string
 	url: string
 	/**
-	 * GitHub's reported size. It UNDER-states the checkout by roughly 7×: GitHub reports the packed size, and these repos
+	 * GitHub's reported size. It under-states the checkout by roughly 7×: GitHub reports the packed size, and these repos
 	 * unpack to millions of small GeoJSON files. Measured on a `--countries tr` sync: three repositories reported as 83.4
 	 * MB occupied 633 MB once cloned.
 	 */
@@ -34,7 +34,7 @@ export interface DiscoveredRepo {
 }
 
 /**
- * A repository NAME, as opposed to a path that happens to contain one.
+ * A repository name, as opposed to a path that happens to contain one.
  *
  * `whosonfirst-data` alone is excluded: that is the owner directory this command writes into rather than a repository.
  */

@@ -11,7 +11,7 @@
  *   a population floor of 10,000 — admits every correct answer it contains by construction. A panel whose
  *   gold all clears a floor cannot measure that floor, whatever the rate says.
  *
- *   So the population BAND is the unit here, and the decision is stated per band rather than pooled: pooling
+ *   So the population band is the unit here, and the decision is stated per band rather than pooled: pooling
  *   is the operation that hid the confound the first time. A floor that wins pooled while losing a band fails
  *   this claim.
  */

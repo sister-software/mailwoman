@@ -9,7 +9,7 @@
  *   optionally carries a mailing address in free-form text (often multi-line with embedded
  *   city/state/zip). Address fill rate is ~5-10%.
  *
- *   The adapter parses the embedded `Address` field for city/state/zip using a trailing `"CITY, ST
+ *   The adapter parses the embedded `Address` field for city/state/zip using a trailing `"city, ST
  *   ZIP"` pattern.
  *
  *   License: stamped `"Public Domain"` per Texas state government open-data terms.
@@ -35,7 +35,7 @@ export const STATE_TX_NOTARIES_ADAPTER_ID = "state-tx-notaries"
 export const STATE_TX_NOTARIES_DEFAULT_LICENSE = "Public Domain"
 
 /**
- * Match trailing "CITY, ST ZIP" or "CITY, ST" at the end of an address line.
+ * Match trailing "city, ST ZIP" or "city, ST" at the end of an address line.
  */
 const CITY_STATE_ZIP_SUFFIX = /[,]?\s*([^,]+),\s*([A-Z]{2})\s*(\d{5}(?:-\d{4})?)?\s*$/i
 
@@ -79,7 +79,7 @@ export function createStateTxNotariesAdapter(): CorpusAdapter {
 				const notaryID = (record["Notary ID"] ?? "").trim()
 
 				// Parse embedded city/state/zip from the trailing portion of the address.
-				// Addresses look like: "1215 MCMILLAN DR\nCEDAR HILL, TX 75104"
+				// Addresses look like: "1215 mcmillan DR\nCEDAR hill, TX 75104"
 				const addrSingleLine = rawAddress.replaceAll("\n", ", ")
 				const cszMatch = CITY_STATE_ZIP_SUFFIX.exec(addrSingleLine)
 

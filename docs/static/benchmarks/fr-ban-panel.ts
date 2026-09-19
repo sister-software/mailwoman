@@ -3,18 +3,18 @@
 // fr-ban-panel — a 100-address French panel drawn from the Base Adresse Nationale, graded against
 // BAN's own rooftop coordinate, in two surface forms.
 //
-// WHAT THIS MEASURES, AND WHAT IT DOES NOT
+// what this measures, and what IT does not
 //
 // The French rooftop tier is the Base Adresse Nationale. `mailwoman data pull fr` downloads a extract
 // built from BAN, and this panel grades Mailwoman's answer against the same register the answer was
 // looked up in. That is circular, and it is stated on the published page beside every number it
-// touches. What survives the circularity is still worth measuring: whether the pipeline PARSES the
+// touches. What survives the circularity is still worth measuring: whether the pipeline parses the
 // address into the spans the rooftop probe needs, whether it scopes the probe to the right commune,
 // and whether it does both when the surface form is rearranged. A miss here is a parse or a routing
 // failure, never a coordinate-accuracy failure. So read this panel as "does the address find its own
 // row", not as "how accurate is the coordinate".
 //
-// TWO ARMS
+// two arms
 //
 //   clean      "28 Avenue de l'Opéra, 75002 Paris"      — the canonical French order.
 //   reordered  "75002 Paris, 28 Avenue de l'Opéra"      — postcode and commune moved to the front.
@@ -22,7 +22,7 @@
 // The second arm is the surface-form robustness test. Nothing about the target changed. only the
 // order of the same tokens did.
 //
-// DETERMINISM
+// determinism
 //
 // The panel is a committed file (`fr-ban-sample.json`), not a fresh draw, so two runs on two machines
 // grade the same 100 rows. `--resample` regenerates it from a local BAN extract using the seed below.
@@ -30,7 +30,7 @@
 // same panel byte for byte. A different BAN release renumbers the rows and will produce a different
 // panel — which is why the sample is committed rather than drawn at run time.
 //
-// USAGE
+// usage
 //
 //   npm install mailwoman @mailwoman/neural @mailwoman/neural-weights-fr-fr \
 //               @mailwoman/resolver @mailwoman/resolver-wof-sqlite @mailwoman/ban \
@@ -114,7 +114,7 @@ const { values: flags } = parseArguments({
 	},
 })
 
-// This file is served at /benchmarks/fr-ban-panel.mjs and runs in a READER's project, where
+// This file is served at /benchmarks/fr-ban-panel.mjs and runs in a reader's project, where
 // `@mailwoman/core/env` — the blessed env helper inside this repo — is not a dependency.
 // oxlint-disable-next-line sister-software/no-process-globals -- shipped doc asset. runs outside this repo
 const dataRoot = flags["data-root"] ?? process.env.MAILWOMAN_DATA_ROOT
@@ -309,8 +309,8 @@ async function versionStamp() {
 function summarize(records: GradedRecord[]) {
 	const distances = records.flatMap((r) => (r.km === null ? [] : [r.km]))
 	const within = (km: number): number => records.filter((r) => r.km !== null && r.km <= km).length
-	// Bucketed on the tier that ANSWERED, which is `none` for a row that returned no coordinate:
-	// `resolution_tier` reports where the cascade ended rather than whether it produced anything, so it still
+	// Bucketed on the tier that answered, which is `none` for a row that returned no coordinate:
+	// `resolution_tier` reports where the cascade ended rather than whether it produced anything. Therefore, it still
 	// reads "admin" on a row that answered nothing. Every row on this panel resolved, so the two
 	// bucketings agree here — the guard is in place so they cannot silently disagree on a future run.
 	const tiers: Record<string, number> = {}
@@ -364,7 +364,7 @@ async function run() {
 					resolver,
 					nationalDatabases: banExtracts.for,
 					// Pinned: this panel is a French dataset run through a French pipeline, so it measures
-					// resolution INSIDE France and makes no claim about country disambiguation.
+					// resolution inside France and makes no claim about country disambiguation.
 					defaultCountry: "FR",
 				})
 			} catch (error) {

@@ -5,9 +5,9 @@
  *
  *   `mailwoman corpus slice <recipe>` — run a registered corpus recipe and write its output, the
  *   durable replacement for the sixteen one-off build scripts that preceded the recipe registry.
- *   `--list` prints the registry. Recipes are `tuples` (read `--input` JSONL of
+ *   `--list` prints the registry. Recipes are `tuples` (read `--input` jsonl of
  *   (locality,region,postcode,country) tuples) or `generate` (self-generate `--count` rows). Output
- *   is aligned LabeledRow JSONL ready for the parquet step (`mailwoman corpus build`). The registry
+ *   is aligned LabeledRow jsonl ready for the parquet step (`mailwoman corpus build`). The registry
  *   lives in `packages/corpus/lib/recipes/`.
  */
 
@@ -31,7 +31,7 @@ import {
 export const isDefault = true
 
 /**
- * Native command-line contract consumed by the filesystem command router.
+ * Native command-line interface consumed by the filesystem command router.
  */
 export const spec = {
 	name: "slice",

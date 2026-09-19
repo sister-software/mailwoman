@@ -110,7 +110,7 @@ export function classifyKindSync(input: NormalizedInputLite, shape: QueryShapeLi
 }
 
 /**
- * Async variant matching the runtime-pipeline's `classifyKind` contract.
+ * Async variant matching the runtime-pipeline's `classifyKind` interface.
  *
  * The locale parameter is accepted for future locale-aware rules (Japanese honorifics, etc.) but not currently used.
  */

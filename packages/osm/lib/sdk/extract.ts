@@ -3,13 +3,13 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Stream rooftop address records out of a Geofabrik `.osm.pbf` extract via GDAL/ogr2ogr — the same
- *   external-geo-CLI pattern `@mailwoman/tiger` uses for shapefiles. GDAL's OSM driver resolves node
+ *   Stream rooftop address records out of a Geofabrik `.osm.pbf` extract via gdal/ogr2ogr — the same
+ *   external-geo-CLI pattern `@mailwoman/tiger` uses for shapefiles. gdal's OSM driver resolves node
  *   and way/polygon geometries for us, so a building tagged with `addr:housenumber` (the dominant DE
  *   shape) becomes a point via its centroid — we don't hit the pure-JS "ways need a node-location
  *   cache" wall.
  *
- *   Address tags live in the driver's `other_tags` hstore. we pull them with OGRSQL `hstore_get_value`
+ *   Address tags live in the driver's `other_tags` hstore. we pull them with ogrsql `hstore_get_value`
  *   over the `points` (nodes) and `multipolygons` (building ways/relations) layers. `addr:interpolation`
  *   ways are intentionally not read here — the rooftop tier is point-first. explicit interpolation is a
  *   separate, confidence-restricted tier (never synthesize a number line from scattered points).
@@ -61,7 +61,7 @@ export interface OSMAddrRecord {
 
 /**
  * The `addr:*` tags the extract projects, in the order the record names them. The rooftop builder reads the first five.
- * the corpus JSONL carries them all.
+ * the corpus jsonl carries them all.
  */
 const ADDR_TAGS = [
 	"housenumber",
@@ -91,7 +91,7 @@ function tagValue(properties: Record<string, unknown>, tag: string): string | nu
 const ADDR_LAYERS = ["points", "multipolygons"] as const
 
 /**
- * OGRSQL projecting the `addr:*` tags out of the `other_tags` hstore, filtered to rows that have a house number.
+ * Ogrsql projecting the `addr:*` tags out of the `other_tags` hstore, filtered to rows that have a house number.
  */
 function addrSQL(layer: string): string {
 	const projection = ADDR_TAGS.map((tag) => `hstore_get_value(other_tags,'addr:${tag}') AS ${tag}`).join(", ")
@@ -147,7 +147,7 @@ async function* runLayer(pbfPath: string, layer: string): AsyncGenerator<OSMAddr
 
 /**
  * Stream every `features with `addr:housenumber` from a PBF extract (nodes + building polygons), geometry reduced to a
- * representative coordinate. Records with no `addr:street` are still yielded (street === null) so the caller can COUNT
+ * representative coordinate. Records with no `addr:street` are still yielded (street === null) so the caller can count
  * the association gap before deciding to write them.
  */
 export async function* extractAddrPoints(pbfPath: string): AsyncGenerator<OSMAddrRecord> {

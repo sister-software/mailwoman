@@ -3,7 +3,7 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Does the comma-free register still find the locality? A RATE rather than an anecdote.
+ *   Does the comma-free register still find the locality? A rate rather than an anecdote.
  *
  *   Built for the v4.2.0-base-anchor-v2 (Run B) triage. The invariance suite reported one new comma-drop
  *   loss (`fr-montmartre`, `street: "Montmartre" -> "Montmartre Paris"`), while the metamorphic layer

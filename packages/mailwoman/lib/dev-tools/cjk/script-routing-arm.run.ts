@@ -1,21 +1,21 @@
 /**
  * What a script-reading router does to the regression board's CJK-containing rows (#2282, #2305).
  *
- * `scriptFamilyForText` once routed on the FOLDED character class alone, so only an input that was CJK end to end
- * reached the character model and every mixed input went to the Latin one — which is how `逊克二分场四队, HEILONGJIANG, CHINA`
+ * `scriptFamilyForText` once routed on the folded character class alone, so only an input that was CJK end to end
+ * reached the character model and every mixed input went to the Latin one — which is how `逊克二分场四队, heilongjiang, china`
  * came back as a single locality holding the whole Han unit. The question was never whether reading the per-span script
  * helps the Chinese rows. it is what it does to a Latin address that happens to carry a Han venue name.
  *
  * Two candidate rules are measured against the same rows, beside what the shipped router does today (`routedToday`):
  *
  * - `presence` — any CJK script anywhere in the input names the family. This is the rule the issue proposed.
- * - `segment` — a comma SEGMENT written wholly in a CJK script names it. A Han name inside a Latin line does not, because
+ * - `segment` — a comma segment written wholly in a CJK script names it. A Han name inside a Latin line does not, because
  *   the line it sits in is not written in that script. This is the rule the router ships (`carriesFamilySegment`), so
  *   the rows it lists as newly routed are the ones a whole-input fold would still send to the Latin model.
  *
- * WHAT THIS MEASURES IS THE CLASSIFIER rather than THE PIPELINE. Each arm calls `parse` directly, so normalization, the
+ * What this measures is the classifier rather than the pipeline. Each arm calls `parse` directly, so normalization, the
  * phrase grouper and the resolver are all absent and the absolute scores here are not the board's. Both arms run
- * through the identical harness, so the COMPARISON is sound and the direction is what the probe reports.
+ * through the identical harness, so the comparison is sound and the direction is what the probe reports.
  *
  * Run:
  *

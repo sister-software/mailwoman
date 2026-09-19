@@ -4,7 +4,7 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   `mailwoman-timezone` — build the polygon DB, or look up a coordinate's IANA timezone.
+ *   `mailwoman-timezone` — build the polygon DB, or look up a coordinate's iana timezone.
  *
  *   ```sh
  *   mailwoman-timezone build --geojson combined-with-oceans.json --out timezone.db

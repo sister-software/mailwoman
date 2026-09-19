@@ -8,8 +8,8 @@
  *   `--version` must stay inside the small launcher/router graph. Command implementations and their UI, model, database,
  *   and data-pipeline dependencies are selected only after dispatch.
  *
- *   The counter is `module.registerHooks()`, which sees ESM and CJS alike, injected as a `data:` URL so the guard
- *   needs no committed helper. It runs against the COMPILED CLI (`out/cli.js`) because that is what ships and what
+ *   The counter is `module.registerHooks()`, which sees ESM and CJS alike, injected as a `data:` URL. Therefore, the guard
+ *   needs no committed helper. It runs against the compiled CLI (`out/cli.js`) because that is what ships and what
  *   the bin points at. the suite skips when the tree has not been built.
  */
 
@@ -26,7 +26,7 @@ const cliBin = await mailwomanCLIPath()
  * Current whole-process module count for `mailwoman --version`. The license notice the launcher prints after every
  * command verifies the configured key offline, and reading `MAILWOMAN_LICENSE_KEY` goes through the typed env boundary:
  * zod is 94 of these modules, and the key payload schema shares it. Two things are not on this path and each once was:
- * `@mailwoman/core/license/publication` carries the HTTP client and sits outside the `license` barrel (321 with it
+ * `@mailwoman/core/license/publication` carries the http client and sits outside the `license` barrel (321 with it
  * inside), and `spliterator` left when the JSON helpers moved to `core/json` (164 with it).
  */
 const MEASURED_MODULE_COUNT = 136

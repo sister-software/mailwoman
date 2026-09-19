@@ -17,7 +17,7 @@ export interface OGRProcess {
 	/**
 	 * Resolves on a clean exit. rejects with the exit code and the stderr tail otherwise. A truncated stream reads as a
 	 * short but well-formed feature list, which is exactly the partial result that must throw rather than be reported as
-	 * a smaller extract — so consume the stream fully, then await this.
+	 * a smaller extract . Therefore, consume the stream fully, then await this.
 	 */
 	settled: Promise<void>
 	/**
@@ -71,7 +71,7 @@ export function spawnOGR2OGR(args: readonly string[], context: string): OGRProce
 /**
  * Stream a GeoJSONSeq extraction as parsed features.
  *
- * Strips the RFC-8142 record separator (U+001E) GDAL MAY prefix records with — `.trim()` does not remove it (not
+ * Strips the RFC-8142 record separator (U+001E) gdal may prefix records with — `.trim()` does not remove it (not
  * whitespace), so an RS-framed record would fail to parse and be silently skipped, all of them, and an empty extract
  * would read as a real absence. A malformed record is tolerated (skipped) rather than thrown. a non-zero exit throws
  * after the stream drains.

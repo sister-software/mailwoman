@@ -21,7 +21,7 @@ export interface PPDExtractStats {
 const quote = (value: string): string => (value ? `"${value.replaceAll('"', '""')}"` : "")
 
 /**
- * Convert PPD rows (`id,price,date,postcode,type,new,tenure,PAON,SAON,street,locality,town,district,county,cat,status`
+ * Convert PPD rows (`id,price,date,postcode,type,new,tenure,paon,saon,street,locality,town,district,county,cat,status`
  * — headerless) into OA-shaped tuple lines via `write`, applying the skip rules + title-casing. Accepts a plain array
  * of rows (tests) or a streamed async source (the real 31M-row extraction).
  */

@@ -5,7 +5,7 @@
  * @file Tests for {@linkcode parseExhibit21}/{@linkcode fetchExhibit21} (§7-3b decision 6, criterion 3).
  *
  *   Criterion 3 first (TDD order): the mangled fixture's zero-subsidiaries/non-zero-unparseable/no-throw
- *   contract is the required test in this file. The other three fixtures (clean table, nested list,
+ *   interface is the required test in this file. The other three fixtures (clean table, nested list,
  *   plain text) each pin a correct extraction for their own shape.
  *
  *   Six document shapes are known to tempt an extractor into emitting a subsidiary name that appears
@@ -169,7 +169,7 @@ describe("parseExhibit21 — clean HTML table", () => {
 
 describe("parseExhibit21 — header-mapped columns and the indented corporate tree", () => {
 	/**
-	 * Telephone and Data Systems indents each subsidiary one column to the RIGHT of its parent, and 132 of its 183
+	 * Telephone and Data Systems indents each subsidiary one column to the right of its parent, and 132 of its 183
 	 * subsidiaries sit on such a row. The name is not in doubt on those rows — the header says the jurisdiction is to its
 	 * right, so the only non-blank column between the two is the name — and the nesting depth is discarded, since an
 	 * Exhibit 21 row is a registrant→subsidiary edge either way. TDS's own filing is 176 KB and is not vendored. this is
@@ -327,7 +327,7 @@ const FIXTURE_FILES = [
 ]
 
 /**
- * The six C1-C4/I1/I2 findings above are all CONCATENATION/mis-segmentation bugs — merging two real fragments, or
+ * The six C1-C4/I1/I2 findings above are all concatenation/mis-segmentation bugs — merging two real fragments, or
  * truncating at the wrong boundary. Every fragment they fabricate remains, structurally, a literal substring of the
  * same normalized whole document (it's built from real source text via the identical strip/decode/collapse pipeline the
  * invariant check itself uses) — so the substring check alone does not independently catch any of those six. the

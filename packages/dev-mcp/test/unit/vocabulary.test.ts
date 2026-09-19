@@ -7,7 +7,7 @@
  *
  *   Stubbed on purpose: loading the real 9 MB SentencePiece model to assert that a `<0x..>` piece is counted as a
  *   fallback would test SentencePiece rather than this. What is worth pinning is the arithmetic a reader will quote — the
- *   share's denominator is PIECES and not characters, and the per-character verdict is taken from the character ALONE
+ *   share's denominator is pieces and not characters, and the per-character verdict is taken from the character alone
  *   rather than from its behaviour inside a word.
  */
 
@@ -32,7 +32,7 @@ const stub = (absent: string) => ({
 
 describe("measureLine", () => {
 	it("counts a fallback per BYTE, which is why a shattered word costs more pieces than characters", () => {
-		// "ư" is 2 UTF-8 bytes, so one absent character becomes two pieces.
+		// "ư" is 2 UTF-8 bytes. Therefore, one absent character becomes two pieces.
 		const line = measureLine(stub("ư"), "Đư", false)
 
 		expect(line.characters).toBe(2)

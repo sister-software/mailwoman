@@ -3,7 +3,7 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Tests for the POI query board's grading core (`gradeCase`), the committed fixture contract, and the
+ *   Tests for the POI query board's grading core (`gradeCase`), the committed fixture interface, and the
  *   tracked-row convention that lets a known failure class sit on the board without reaching the floors.
  *   No db, no classifier, no resolver — `gradeCase` is graded against synthetic `POIBoardOutcome`
  *   fakes, matching the "no db needed" discipline `fragment-board.test.ts` set for the interval math.
@@ -294,7 +294,7 @@ describe("gradeCase — address expectation", () => {
 })
 
 describe("the committed poi-board fixture set", () => {
-	// The composition register. Exact rather than a range, because the floors were re-registered against the COUNTED
+	// The composition register. Exact rather than a range, because the floors were re-registered against the counted
 	// number (#1960) and that is the one that must not move without an argument: 51 counted rows. The committed total
 	// and the tracked count move whenever a failure class is committed to the surface every candidate is graded on,
 	// which is what the tracked convention is for. A row added or a status flipped without this test moving is a floor

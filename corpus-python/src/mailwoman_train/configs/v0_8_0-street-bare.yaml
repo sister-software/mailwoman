@@ -1,10 +1,10 @@
 # v0.8.0 candidate — bare-street harness change.
 #
-# SINGLE VARIABLE vs v0_7_2-intersection-bare.yaml: add the `synth-street-bare` source (weight 0.2).
+# single variable vs v0_7_2-intersection-bare.yaml: add the `synth-street-bare` source (weight 0.2).
 # The harness functional.test.ts cluster (32/34 fail on v0.7.2) is bare street names ("10th Ave",
 # "Main St", "1 Main Pl") mislabeled as `locality` — because synthesizeStreetRow only ever emitted
 # streets with a ", City, ST ZIP" tail. The new recipe output (the bare-street recipe, `packages/corpus/lib/recipes/street/bare.ts`; ~65% bare)
-# teaches bare streets → street, the bare-format analogue of the intersection-bare fix. SAFE: US,
+# teaches bare streets → street, the bare-format analogue of the intersection-bare fix. safe: US,
 # in-distribution, no German-collapse risk (does not touch multi-locale).
 #
 # Expectation: harness functional + some usa/intersection up (potentially +5-8pp toward the 25% bar);
@@ -29,7 +29,7 @@ data:
     usgov-hrsa-fqhc: 2.0
     usgov-imls-pls: 2.0
     usgov-nad: 1.0
-    state-ia-contractors: 2.0
+    state-ia-builders: 2.0
     state-tx-notaries: 1.5
     state-ny-notaries: 2.0
     deepseek-kryptonite: 3.0

@@ -15,7 +15,7 @@
  *   This guard is the cheap post-resolve check for that tail: a resolved tree whose finest resolved
  *   place is only a `country` centroid is implausible for a structured address. It reads only the
  *   decorated tree — no gazetteer, no extra query — so it is free to run on every resolve. It is
- *   deliberately DIRECTION-AGNOSTIC about what the caller does with the signal: serve the result with
+ *   deliberately direction-agnostic about what the caller does with the signal: serve the result with
  *   a low-confidence marker, prefer a sibling parse hypothesis (the #727 k-best rerank), or decline to
  *   emit a coordinate. It is not a rules-fallback trigger — the v7 excision deletes the rules parser
  *   outright (operator ruling 2026-07-15), so no consumer may route through legacy rules on a trip.
@@ -31,7 +31,7 @@ import type { CountryBBoxFact } from "@mailwoman/core/resolver"
 
 /**
  * Resolution granularity, coarse → fine. A resolved node's {@link AddressNode.tag} places it on this ladder. the
- * geocode a caller serves comes from the FINEST resolved node. Tags absent here (unit, po_box, intersection halves, …)
+ * geocode a caller serves comes from the finest resolved node. Tags absent here (unit, po_box, intersection halves, …)
  * are treated as street-tier specificity when resolved.
  */
 const RESOLUTION_TIER: Partial<Record<ComponentTag, number>> = {
@@ -62,7 +62,7 @@ export interface ResolvedCoordinate {
 }
 
 /**
- * Walk a resolved {@link AddressTree} and return the FINEST resolved place — the node carrying a resolver-supplied
+ * Walk a resolved {@link AddressTree} and return the finest resolved place — the node carrying a resolver-supplied
  * coordinate at the deepest granularity tier. Returns `null` when nothing resolved (no node carries a `lat`/`lon`).
  * Ties break toward the first node in document order.
  */
@@ -98,9 +98,9 @@ export function finestResolvedCoordinate(tree: AddressTree): ResolvedCoordinate 
  * 2026-07-15 coordinate-parity receipt harness measured with (`scratchpad/coord-parity.mjs`). The US box spans Alaska →
  * the mainland east coast. continental FR only. etc. A country absent here simply never trips the guard (fail-open).
  *
- * FALLBACK ROLE (survey candidate #2): these boxes are also baked into the candidate gazetteer's `country_bbox`
+ * Fallback role (survey candidate #2): these boxes are also baked into the candidate gazetteer's `country_bbox`
  * manifest table at build time (`mailwoman/gazetteer-pipeline/coverage-manifest.ts` owns the measured record). When a
- * caller supplies artifact-declared boxes ({@link PlausibilityOpts.countryBBoxes}), those REPLACE this table wholesale
+ * caller supplies artifact-declared boxes ({@link PlausibilityOpts.countryBBoxes}), those replace this table wholesale
  * — the artifact speaks for itself, and a country absent from the artifact's table fails open exactly like an absent
  * key here. This constant is the fallback for artifacts predating the manifest. grow the manifest record rather than
  * this.
@@ -140,7 +140,7 @@ export const COUNTRY_BBOX: Readonly<Record<string, readonly [number, number, num
 /**
  * True when the coordinate lies outside `countryCode`'s coarse bbox. Unknown country codes are fail-open (false).
  *
- * When `bboxes` (artifact-declared boxes, {@link GazetteerArtifactCoverage.countryBBoxes}) is supplied it REPLACES the
+ * When `bboxes` (artifact-declared boxes, {@link GazetteerArtifactCoverage.countryBBoxes}) is supplied it replaces the
  * built-in {@link COUNTRY_BBOX} table wholesale — absence from the artifact's table fails open, same semantic as an
  * absent constant key. Omitted → the constant, byte-identical to the pre-manifest behavior.
  */
@@ -185,7 +185,7 @@ export interface PlausibilityVerdict {
 
 export interface PlausibilityOpts {
 	/**
-	 * ISO-2 country the resolution is EXPECTED to land in, when the caller knows it (a locale hint, a parsed country, a
+	 * ISO-2 country the resolution is expected to land in, when the caller knows it (a locale hint, a parsed country, a
 	 * fixture's gold country). Enables guard B: a coordinate outside this country's coarse bbox is implausible — the
 	 * cross-country-jump class guard A structurally cannot catch (`1210a IA 10 W IA` → a coordinate ~10,000 km from the
 	 * US was country-centroid-free and sailed through until guard B landed here, 2026-07-17. previously the check lived

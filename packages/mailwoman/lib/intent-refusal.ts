@@ -3,20 +3,20 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   The #1649 FIRST-REFUSAL check: a lexicon-aware kind classifier, when the caller injects one, gets
+ *   The #1649 first-refusal check: a lexicon-aware kind classifier, when the caller injects one, gets
  *   first look at the query. A top-slot `poi_query` / `poi_category` / `near_me` verdict means the
- *   string asks for a THING rather than an address — the address lanes can only manufacture confident
+ *   string asks for a thing rather than an address — the address lanes can only manufacture confident
  *   nonsense from it ("Statue of Liberty" resolved Of, Trabzon through a fuzzy locality; "Restaurants
- *   in London" resolved London, Kentucky). The geocode ABSTAINS with the verdict's intent markers
+ *   in London" resolved London, Kentucky). The geocode abstains with the verdict's intent markers
  *   attached. POI-lane answering lives in the runtime pipeline's poiIntent stage. The refusal is a
- *   VERDICT rather than a miss — {@link thingQueryRefusalMarkers} lets the register-flip retry stand down (a retry
+ *   verdict rather than a miss — {@link thingQueryRefusalMarkers} lets the register-flip retry stand down (a retry
  *   with a pinned register would skip this check and resolve the refused nonsense. measured on the
  *   harness's "Pharmacy near me" → a Hungarian namesake).
  *
  *   Checks: injected classifier only (absent → byte-identical geocoding), no explicit register pin —
  *   a caller-supplied tree does not skip it (the CLI session pre-parses every query as an
  *   optimization. a pre-parse of "train station" is still a thing-query). The kind-intent invariance
- *   receipt proves the top slot never flips on an ADDRESS-shaped corpus row under the wired lexicon.
+ *   receipt proves the top slot never flips on an address-shaped corpus row under the wired lexicon.
  *
  *   Pure over its arguments — no geocode-core import, so no module cycle: the caller assembles the
  *   abstention result and attaches the markers this module returns.
@@ -46,7 +46,7 @@ export async function thingQueryRefusalMarkers(
 
 	const markers = [...(verdict.intentMarkers ?? [])]
 
-	// `poi_query` is a structural kind with no marker of its own (the runtime pipeline EXECUTES it) —
+	// `poi_query` is a structural kind with no marker of its own (the runtime pipeline executes it) —
 	// on this path the abstention must still say why, so synthesize one.
 	if (!markers.length) {
 		markers.push({

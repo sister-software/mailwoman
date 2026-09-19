@@ -7,7 +7,7 @@ gold country has a conventions row, the forbidden label columns are masked out o
 exist" instead of merely being decode-blocked. The v0.9.13 choreography lesson says the pairing is
 essential. this is the same discipline applied to grammar.
 
-MIRROR CONTRACT: the table below mirrors ``codex/address-system-conventions.ts`` (the provenance-
+MIRROR INTERFACE: the table below mirrors ``codex/address-system-conventions.ts`` (the provenance-
 carrying source of truth). Rows are added there first, with evidence. this mirror follows. Same
 never-drift discipline as ``LOCALE_COUNTRIES`` (labels.py) — the locale-id indexing depends on it.
 """
@@ -19,9 +19,9 @@ import torch
 from ..labels import LOCALE_COUNTRIES
 
 # ISO-2 country → component tags that are ungrammatical in that address system.
-# fr: street types are LEADING particles (NF Z 10-011) — and the corpus labels those particles as
+# fr: street types are leading particles (NF Z 10-011) — and the corpus labels those particles as
 # street_PREFIX ("Rue"/"Avenue"/"Boulevard" → street_prefix 98-100% of the time, 28.6% of the FR street
-# family). So FR DOES use street_prefix. only street_SUFFIX has no French counterpart (0.00% in the base).
+# family). So FR does use street_prefix. only street_SUFFIX has no French counterpart (0.00% in the base).
 # The old ("street_prefix", "street_suffix") forbid broke the v1.6.0 run: with use_conventions_loss_mask
 # on, it -inf'd the boundary source's gold FR street_prefix ("Rue" → street_prefix) and exploded
 # train_loss to ~7M (killed at step 2000). Verified against the v0.5.0 FR/ban parquet files, 2026-06-18.

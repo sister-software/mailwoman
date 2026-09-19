@@ -4,7 +4,7 @@
  * @author Teffen Ellis, et al.
  *
  *   #1901: the authoritative-provider boundary, exercised through `geocodeAddress` with mock
- *   classifier/resolver deps and the shipped fixture provider. The suite pins the contract's four
+ *   classifier/resolver deps and the shipped fixture provider. The suite pins the interface's four
  *   distinctions — matched, ambiguous-not-collapsed, refused-is-not-a-miss, transport-error-is-not-
  *   silence — plus the two invariants that make the boundary safe to configure: the open result is
  *   byte-identical without a provider, and provider assertions never rewrite Mailwoman's own answer.

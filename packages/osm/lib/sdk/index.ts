@@ -3,11 +3,11 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   `@mailwoman/osm` SDK — the OpenStreetMap rooftop ingestion surface. PERMISSIVE CODE ONLY: this
+ *   `@mailwoman/osm` SDK — the OpenStreetMap rooftop ingestion surface. permissive code only: this
  *   workspace contains no OSM data bytes. It reads a Geofabrik `.osm.pbf` extract (the ODbL source)
- *   and writes a per-country rooftop address-point extract on the SHARED situs schema
- *   (`@mailwoman/resolver-wof-sqlite/address-point-schema`). The ODbL obligation rides on the BUILT
- *   extract (a Derived Database), never on this code. See `osm/README.md` for the licensing boundary.
+ *   and writes a per-country rooftop address-point extract on the shared situs schema
+ *   (`@mailwoman/resolver-wof-sqlite/address-point-schema`). The ODbL obligation rides on the built
+ *   extract (a Derived Database), never on this code. See `osm/readme.md` for the licensing boundary.
  */
 
 export * from "#sdk/fetch"

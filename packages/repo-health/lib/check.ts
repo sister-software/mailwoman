@@ -44,7 +44,7 @@ export interface RepoContext {
 
 export interface RepoCheck {
 	/**
-	 * Stable, and the name an adapter exposes: `exports`, `version-sync`, `test-contract`.
+	 * Stable, and the name an adapter exposes: `exports`, `version-sync`, `test-interface`.
 	 */
 	id: string
 	description: string

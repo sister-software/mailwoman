@@ -1,17 +1,17 @@
 # v0.8.0 — supervised fine-tune from the MLM-pretrained encoder (arm A of the decisive A/B).
 #
 # Phase 2 of pretrain -> fine-tune. Loads the MLM-pretrained encoder
-# (output-v080-mlm-pretrain/checkpoints/step-020000) via init_from (ENCODER WEIGHTS ONLY — no
+# (output-v080-mlm-pretrain/checkpoints/step-020000) via init_from (encoder weights only — no
 # optimizer/scheduler/step), then trains the supervised BIO task on top. The only difference vs the
 # scratch arm (v0_8_0-finetune-scratch.yaml) is this `init_from`. DeepSeek-signed recipe
 # (2026-05-31, session-notes-2026-05-31-mlm-finetune.md).
 #
-# RECIPE NOTES (differs from shipped v0.7.2 on purpose — both arms here are internally consistent):
+# recipe notes (differs from shipped v0.7.2 on purpose — both arms here are internally consistent):
 #   - lr 5e-5 cosine->0 over 40k, 2k warmup: 3x lower than v0.7.2's constant 1.5e-4 to avoid washing
 #     out the pretrained features (catastrophic forgetting); shorter (40k vs 100k) because a
 #     pretrained encoder adapts fast.
 #   - label_smoothing 0.1: shared calibration change on both arms.
-#   - CRF OFF (crf_loss_weight 0.0): matches what trained stably. avoids the CRF-under-bf16 NaN.
+#   - CRF off (crf_loss_weight 0.0): matches what trained stably. avoids the CRF-under-bf16 NaN.
 #   - corpus v0.4.0 + source_weights + augmentation: the v0.7.2 supervised recipe (the labeled task),
 #     so the comparison reflects the parser the product actually uses.
 #
@@ -36,7 +36,7 @@ data:
     usgov-hrsa-fqhc: 2.0
     usgov-imls-pls: 2.0
     usgov-nad: 1.0
-    state-ia-contractors: 2.0
+    state-ia-builders: 2.0
     state-tx-notaries: 1.5
     state-ny-notaries: 2.0
     deepseek-kryptonite: 3.0
@@ -63,7 +63,7 @@ model:
   hidden_dropout_prob: 0.1
   attention_probs_dropout_prob: 0.1
   use_crf: true
-  # CRF OFF via zero weight — the head exists (geometry parity with the pretrained ckpt) but does not
+  # CRF off via zero weight — the head exists (geometry parity with the pretrained ckpt) but does not
   # contribute to the loss. Avoids the CRF-under-bf16 NaN that disabled it in v0.7.2.
   crf_loss_weight: 0.0
   crf_normalization: per_sequence

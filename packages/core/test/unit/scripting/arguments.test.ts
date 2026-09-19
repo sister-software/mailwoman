@@ -22,7 +22,7 @@ describe("@mailwoman/core/scripting/utils", () => {
 	})
 
 	it("hands back the argument vector as strings", () => {
-		// The verbatim passthrough is spread into a child-process command line, so the element type is the contract.
+		// The verbatim passthrough is spread into a child-process command line, so the element type is the interface.
 		for (const argument of scriptingUtils.passThroughCLIArguments()) {
 			expect(typeof argument).toBe("string")
 		}

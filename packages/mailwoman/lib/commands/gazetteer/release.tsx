@@ -26,7 +26,7 @@ import {
 import { DEFAULT_FOLD_COUNTRIES } from "#gazetteer-pipeline/defaults"
 
 /**
- * Native command-line contract consumed by the filesystem command router.
+ * Native command-line interface consumed by the filesystem command router.
  */
 export const spec = {
 	name: "release",

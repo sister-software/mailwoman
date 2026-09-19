@@ -1,6 +1,6 @@
 # v8-jp-full 24k: the JP char model clears its pre-registered check
 
-**Date:** 2026-08-05 · **Run:** `v8-jp-full` seed 42, 24,000 steps on Modal (app `ap-sQNIbzfiHx5OgmG8iG8Xa8`) · **Arc:** CJK Phase 3/4 (#1176) · **Status:** CHECK PASS
+**Date:** 2026-08-05 · **Run:** `v8-jp-full` seed 42, 24,000 steps on Modal (app `ap-sQNIbzfiHx5OgmG8iG8Xa8`) · **Arc:** CJK Phase 3/4 (#1176) · **Status:** check pass
 
 The scorer and bar were pre-registered on #1176 (2026-07-29, scorer pinned at `34c7b6c2`): blended
 coordinate-acceptability ≥ 0.70 at 15 km on the held-out 20,000-row board, scored with

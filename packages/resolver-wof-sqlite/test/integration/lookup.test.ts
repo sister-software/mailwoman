@@ -369,8 +369,8 @@ describe("WOFSQLitePlaceLookup against an inline WOF fixture", () => {
 	})
 
 	test("length penalty: short name beats long name for short query", async () => {
-		// Compare the ALIAS-FREE pair (Paris,US vs Paris-l'Hôpital,FR — both have empty alt_names
-		// bags) so this guards the NAME-column length penalty in isolation. Paris,FR is no longer a
+		// Compare the alias-free pair (Paris,US vs Paris-l'Hôpital,FR — both have empty alt_names
+		// bags) so this guards the name-column length penalty in isolation. Paris,FR is no longer a
 		// clean subject: its four aliases now carry four ALIAS_SEPARATOR tokens (#523), and that
 		// alias-doc length inflation drags its raw BM25 below the alias-free l'Hôpital row — the
 		// known shared-length-stats problem (#189), not the name-length penalty under test.
@@ -429,7 +429,7 @@ describe("WOFSQLitePlaceLookup against an inline WOF fixture", () => {
 	})
 
 	test("alias-bag boundary: a query straddling two aliases is never exact on a names-less DB (#523)", async () => {
-		// "York New" straddles the bag "Old York <sep> New City": its tokens AND-match the row, but
+		// "York New" straddles the bag "Old York <sep> New City": its tokens and-match the row, but
 		// the exact tier must not promote it. Pre-#523 the bag was space-joined and the padded
 		// containment check (' old york new city ' ⊇ ' york new ') false-promoted exactly this shape.
 		const db = buildFixtureDB()
@@ -481,7 +481,7 @@ describe("WOFSQLitePlaceLookup ctor", () => {
 	})
 
 	test("SMOKE: a sealed 0444 on-disk extract opens and still answers FTS queries end-to-end", async () => {
-		// SMOKE test rather than the regression guard: SQLite silently downgrades a write-mode open to read-only on
+		// smoke test rather than the regression guard: SQLite silently downgrades a write-mode open to read-only on
 		// an owned 0444 file, so this passes under the old `readOnly: false` too — it does not distinguish old
 		// from new code. It proves a genuinely sealed file resolves end-to-end. The real invariant (the open
 		// mode chosen per `buildFTS` — read-only on every query path, read-write only for the FTS build) is
@@ -490,7 +490,7 @@ describe("WOFSQLitePlaceLookup ctor", () => {
 		const dir = dirDirectory.path
 		const dbPath = join(dir, "admin-fixture.db")
 
-		// Build the fixture ON DISK with its FTS index, then seal the file 0444 to mimic a shipped extract.
+		// Build the fixture on disk with its FTS index, then seal the file 0444 to mimic a shipped extract.
 		{
 			await using disk = buildFixtureDB(dbPath)
 			const builder = new WOFSQLitePlaceLookup({ database: disk, buildFTS: true })

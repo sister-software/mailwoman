@@ -5,7 +5,7 @@ Every v4.3.3 checkpoint was graded mid-cosine at 26–93% of peak LR. the schedu
 understate the finished model, and that decaying a mid-run checkpoint's LR to zero over a
 short branch recovers approximately the matched-schedule endpoint.
 
-Contract pinned here: ``lr_schedule: linear_cooldown`` with ``cooldown_start_step`` holds
+Interface pinned here: ``lr_schedule: linear_cooldown`` with ``cooldown_start_step`` holds
 multiplier 1.0 through the resume point and decays linearly to zero at ``max_steps``. The
 config's ``learning_rate`` is set to the parent checkpoint's CURRENT (tail) LR, so with the
 schedule-aware restamp the first resumed optimizer step continues exactly where the parent

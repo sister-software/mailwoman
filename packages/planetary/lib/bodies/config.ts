@@ -57,7 +57,7 @@ export interface PlanetaryMapConfig {
 	}
 	artifacts: {
 		/**
-		 * The pipeline's build version, `YYYYMMDD-<digest>`, as `astrogeology publish` printed it.
+		 * The pipeline's build version, `yyyymmdd-<digest>`, as `astrogeology publish` printed it.
 		 */
 		version: string
 		searchIndexURL: string

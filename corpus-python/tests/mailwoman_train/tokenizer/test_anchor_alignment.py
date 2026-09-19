@@ -43,7 +43,7 @@ def test_anchor_lands_on_exactly_the_postcode_pieces():
     feats, confs = realign_anchor_to_pieces(RAW, TOKENS, LABELS, PIECES, LOOKUP)
     # Confidence 1.0 on the two postcode pieces (idx 2, 3), 0 everywhere else.
     assert confs == [0.0, 0.0, 1.0, 1.0, 0.0]
-    # Both postcode pieces carry the SAME DE feature vector. non-postcode pieces are all-zero.
+    # Both postcode pieces carry the same DE feature vector. non-postcode pieces are all-zero.
     de_vec = anchor_feature_vector({"DE": 1.0}, 52.53, 13.40)
     assert feats[2] == de_vec and feats[3] == de_vec
     assert feats[0] == [0.0] * ANCHOR_FEATURE_DIM

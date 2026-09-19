@@ -13,7 +13,7 @@ import { type CommandSpec, harnessCommand } from "#cli-kit"
 export const description = "Compare the 6 demo presets between the shipped baseline and a candidate"
 
 /**
- * Native command-line contract consumed by the filesystem command router.
+ * Native command-line interface consumed by the filesystem command router.
  */
 export const spec = {
 	name: "preset-compare",

@@ -30,7 +30,7 @@ const AT_BBOX = { minLat: 46.4, maxLat: 49, minLon: 9.5, maxLon: 17.2 }
 
 /**
  * A candidate-table-shaped stub: exact normalized-name match (candidate rows are always `exactMatch`), score-ordered
- * (population-first), honoring country/bbox/placetype filters and IGNORING parentID (the table has none — the adapter
+ * (population-first), honoring country/bbox/placetype filters and ignoring parentID (the table has none — the adapter
  * must translate).
  */
 function stubLookup(places: StubPlace[]): MailwomanLookupLike {
@@ -110,7 +110,7 @@ describe("runCascade (shared resolveTree over the candidate lookup)", () => {
 			{ id: 12, name: "Austria", placetype: "country", country: "AT", lat: 47.6, lon: 14.1, score: 2, bbox: AT_BBOX },
 		])
 
-		// The country token is the locality's admin CONTEXT — the parse tree nests it above the
+		// The country token is the locality's admin context — the parse tree nests it above the
 		// locality (same shape the phrase-grouper emits), which is what arms the pass.
 		const hits = await runCascade(
 			lookup,

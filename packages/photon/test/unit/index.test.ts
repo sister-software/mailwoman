@@ -34,7 +34,7 @@ const reverseEngine: PhotonEngine = {
 	reverse: async () => ({ type: "FeatureCollection", features: [] }),
 }
 
-// #1014 — forward /api must decorate properties from the RESOLVED gazetteer place (proper-cased
+// #1014 — forward /api must decorate properties from the resolved gazetteer place (proper-cased
 // names + ancestry + country), not the parsed input span, and carry osm_key/osm_value/type so
 // Photon client libs (leaflet-control-geocoder, @openrunner/photon-geocoder) don't TypeError.
 
@@ -106,7 +106,7 @@ test("forward: a street-primary result names the street and types as street", ()
 	expect(props.type).toBe("street")
 })
 
-// #1041 — a rooftop / interpolated result must render HOUSE-GRADE. Upstream komoot/photon labels a bare
+// #1041 — a rooftop / interpolated result must render house-grade. Upstream komoot/photon labels a bare
 // residential address point `{osm_key:"place", osm_value:"house", type:"house", housenumber, street}` with no
 // `name` (verified against photon.komoot.io). Without this a rooftop inherits the admin ancestry's `type:city`
 // and a client zooms to city scale on a doorstep match.
@@ -231,7 +231,7 @@ test("photonOSMTags: every /reverse descent tier has a projection (#1041 close-o
 	expect(photonOSMTags("microhood")).toEqual({ osm_key: "place", osm_value: "neighbourhood", type: "district" })
 })
 
-test("contract: /api and /reverse derive the same osm tags for a place (#1014 checkbox 4)", () => {
+test("interface: /api and /reverse derive the same osm tags for a place (#1014 checkbox 4)", () => {
 	// The forward projection (primary=locality) and the /reverse path (deepest.placetype=locality) both go through
 	// photonOSMTags, so they can't drift.
 	const fwd = photonForwardProperties({ lat: 0, lon: 0, places: [{ tag: "locality", name: "X" }] })
@@ -390,7 +390,7 @@ test("root: GET / serves a friendly HTML banner, not a bare 404 (#1022)", async 
 	expect(body).toContain("what-mailwoman-is") // docs pointer
 })
 
-// Pinning tests — the `legacyQuery` adapter's express-shaped observable contract.
+// Pinning tests — the `legacyQuery` adapter's express-shaped observable interface.
 
 test("repeated q answers the legacy 400 envelope (express array shape preserved)", async () => {
 	const app = createPhotonApp(searchEngine)

@@ -3,11 +3,11 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   The #1717 path, end to end on the CANDIDATE backend: a fixture candidate.db (built through the
+ *   The #1717 path, end to end on the candidate backend: a fixture candidate.db (built through the
  *   real {@link buildCandidateTable}, ancestors sidecar included) behind the real resolver walk,
  *   with the admin-coherence verdicts read off the resolved tree the way `extractGeocodeResult`
  *   reads them. This is the flip the sidecar exists for — the Weimar-class winner's `region`
- *   verdict moves from `unverifiable` (no ancestry to check) to a DECIDED verdict, while the
+ *   verdict moves from `unverifiable` (no ancestry to check) to a decided verdict, while the
  *   ranking itself stays untouched (flag-only: the wrong winner still wins. the verdict now says
  *   so).
  */
@@ -30,7 +30,7 @@ const TEXAS = 201
 const WEIMAR_US = 202
 
 /**
- * The Weimar defect in miniature: the DE original and a MORE-POPULOUS US namesake, each chained to its own region +
+ * The Weimar defect in miniature: the DE original and a more-populous US namesake, each chained to its own region +
  * country, so a bare population-first "Weimar" answers Texas.
  */
 function buildFixtureAdmin(path: string): void {
@@ -109,7 +109,7 @@ afterEach(async () => {
 
 /**
  * Resolve the Weimar tree and read the verdicts the way the geocode assembly does. `adminCoherence: false` pins the
- * #263 re-pick out of the way — this test is about the STAMP and the VERDICT rather than about any mechanism that might
+ * #263 re-pick out of the way — this test is about the stamp and the verdict rather than about any mechanism that might
  * one day fix the pick.
  */
 async function verdictFor(regionValue: string, includeAncestors: boolean) {
@@ -136,7 +136,7 @@ describe("admin coherence over the candidate backend's ancestors sidecar", () =>
 
 		expect(stamped.lat).toBeCloseTo(29.7, 1)
 
-		// But the winner now CARRIES its containment lineage, stamped from the sidecar…
+		// But the winner now carries its containment lineage, stamped from the sidecar…
 		expect(stamped.metadata?.["ancestors"]).toEqual([
 			{ id: TEXAS, placetype: "region", name: "Texas" },
 			{ id: USA, placetype: "country", name: "United States" },

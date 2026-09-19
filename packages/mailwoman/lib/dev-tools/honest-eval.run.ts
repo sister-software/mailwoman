@@ -6,10 +6,10 @@
  *   Honest-eval harness (#371 leakage-free geographic split + #373 PIP-containment).
  *
  *   The yardstick the rest of the roadmap is graded on. Random OA evaluation flatters us: the model
- *   trains on a corpus that COVERS the same streets OA tests, and the legacy locality NAME-match
- *   metric is blind to picking the right name in the WRONG place. This harness measures only the
- *   LEAKAGE-FREE held-out set (OA rows in corpus-held-out geography the model never trained on) and
- *   reports the NON-GAMEABLE coordinate truth: region-match, coordinate error (p50/p90), and
+ *   trains on a corpus that covers the same streets OA tests, and the legacy locality name-match
+ *   metric is blind to picking the right name in the wrong place. This harness measures only the
+ *   leakage-free held-out set (OA rows in corpus-held-out geography the model never trained on) and
+ *   reports the NON-gameable coordinate truth: region-match, coordinate error (p50/p90), and
  *   PIP-containment (gold OA point inside the resolved WOF polygon) — the last reported with a
  *   polygon-coverage denominator, since WOF point-geometry localities can never PIP-contain and
  *   would otherwise count as silent failures.
@@ -21,7 +21,7 @@
  *   Held-out sets (corpus SPLIT_MANIFEST defaultHoldouts): US = VT/WY/ND, FR = Corse/
  *   Lozère/Creuse. Only US/VT clears the 1000-row trust floor in the current samples (FR held-out
  *   départements = 16 rows. DE has no manifest holdout). Abort/de-risk per the plan: a held-out
- *   set below 1000 rows is reported as UNTRUSTED rather than scored.
+ *   set below 1000 rows is reported as untrusted rather than scored.
  *
  *   Usage: node packages/mailwoman/lib/dev-tools/honest-eval.run.ts\
  *   [--model neural-weights-en-us/model.onnx] [--card neural-weights-en-us/model-card.json]\
@@ -41,7 +41,7 @@ import { $ } from "zx"
 import { oaResolverEval } from "#eval-harness/oa/resolver/eval"
 
 /**
- * The PIP-containment metric runs as a child so its own `--json` sidecar contract is exercised unchanged.
+ * The PIP-containment metric runs as a child so its own `--json` sidecar interface is exercised unchanged.
  */
 const PIP_CONTAINMENT_PATH = resolvePackagePath("mailwoman", "lib", "dev-tools", "pip-containment.run.ts")
 

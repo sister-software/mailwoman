@@ -1,9 +1,9 @@
-# v4.14.0 — house-venue INTL at 1,000 STEPS (#1748 / #1821)
+# v4.14.0 — house-venue intl at 1,000 steps (#1748 / #1821)
 #
-# ONE VARIABLE against v4.11.0: max_steps 4000 -> 1000. Same corpus (v0.27.0), source, weight, brake,
+# one variable against v4.11.0: max_steps 4000 -> 1000. Same corpus (v0.27.0), source, weight, brake,
 # seed. The null control is what suggests it.
 #
-# v4.13.0 fine-tuned the BASE corpus with no added source for 4,000 steps and still graded 5 improved /
+# v4.13.0 fine-tuned the base corpus with no added source for 4,000 steps and still graded 5 improved /
 # 10 regressed. Ten rows are the price of the fine-tune itself, charged before any added source is read, and
 # they recur in every treated arm:
 #
@@ -18,7 +18,7 @@
 # 8,000 steps.
 #
 # The check is unchanged and it is against the shipped model, because that is what publishing costs a
-# user. The null run is the right baseline for ATTRIBUTING a regression. it is not a licence to ship
+# user. The null run is the right baseline for attributing a regression. it is not a licence to ship
 # one.
 #   1. net improved-minus-regressed >= 0 on the 649-row board;
 #   2. FR, GB and DE show no regression anywhere (D-rule, iron rule 6);
@@ -169,7 +169,7 @@ data:
     VU: 1.0
     ZA: 1.0
   source_weights:
-    # REPS-FIRST (#1677): weight = target_reps x rows x total / (samples - target_reps x rows).
+    # reps-first (#1677): weight = target_reps x rows x total / (samples - target_reps x rows).
     # 6 reps/row x 17,908 rows against 155.0 total over 8,000 x 128 = 1,024,000 samples -> 18.17,
     # a 10.5% share. Parity with the bare trailing-region sources, measured at 7.7 and 5.2 reps/row.
     # For contrast, the weight that collapsed v4.6.0 was 1.0 and bought 165 reps/row.

@@ -10,7 +10,7 @@ import type { LegalStatisticalAreaDescription } from "#legal-statistical-area"
 import type { AdminLevel1Code } from "#state"
 
 /**
- * @title TIGER Block Group
+ * @title tiger Block Group
  * @public
  */
 export interface TIGERBlockGroup {
@@ -37,17 +37,17 @@ export interface TIGERBlockGroup {
 	COUSUBFP: string
 
 	/**
-	 * @title County Subdivision GNIS Code
+	 * @title County Subdivision gnis Code
 	 *
 	 * @minLength 8
 	 * @maxLength 8
 	 * @pattern ^\d{8}$
-	 * @see {@link https://www.usgs.gov/us-board-on-geographic-names/domestic-names | USGS: Domestic Names}
+	 * @see {@link https://www.usgs.gov/us-board-on-geographic-names/domestic-names | usgs: Domestic Names}
 	 */
 	COUSUBNS: string
 
 	/**
-	 * @title Block Group GEOID
+	 * @title Block Group geoid
 	 *
 	 * @minLength 10
 	 * @maxLength 10
@@ -56,7 +56,7 @@ export interface TIGERBlockGroup {
 	GEOID: string
 
 	/**
-	 * Fully Qualified GEOID as used in CEDSCI and other systems.
+	 * Fully Qualified geoid as used in cedsci and other systems.
 	 *
 	 * @title Fully Qualified Geographic Identifier
 	 * @minLength 19
@@ -89,9 +89,9 @@ export interface TIGERBlockGroup {
 	CLASSFP: TIGERClassCode
 
 	/**
-	 * MAF/TIGER Feature Class Code.
+	 * MAF/tiger Feature Class Code.
 	 *
-	 * @title MAF/TIGER Feature Class Code
+	 * @title MAF/tiger Feature Class Code
 	 *
 	 * @minLength 5
 	 * @maxLength 5

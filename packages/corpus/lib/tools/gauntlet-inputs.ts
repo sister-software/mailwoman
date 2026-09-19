@@ -2,14 +2,14 @@
  * @copyright Sister Software
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
- * @file Every surface that appears as an INPUT on a gauntlet board, so a recipe can refuse to train on one.
+ * @file Every surface that appears as an input on a gauntlet board, so a recipe can refuse to train on one.
  *
  *   A recipe's own reserve list holds the strings its author knew about. The boards are a separate instrument with a
  *   separate history — `cz/bare-postcode.jsonl` was authored months before the recipe that trains on Czech postcodes —
  *   so neither register knows the other exists, and a board row that reaches the corpus stops measuring a capability
  *   and starts measuring recall of one string.
  *
- *   READ FROM DISK rather than IMPORTED. `mailwoman` depends on `@mailwoman/corpus`, so this package cannot import the
+ *   read from disk rather than imported. `mailwoman` depends on `@mailwoman/corpus`, so this package cannot import the
  *   gauntlet loader without a cycle. A recipe is a build tool reading the repository it is built in, which is a file
  *   read rather than a dependency. the shipped package never calls this.
  */
@@ -44,7 +44,7 @@ export function normalizeGauntletSurface(surface: string): string {
 /**
  * Every board row's `input`, normalized.
  *
- * Reads the whole corpus once. callers retain the output. A row that does not parse is SKIPPED rather than thrown on:
+ * Reads the whole corpus once. callers retain the output. A row that does not parse is skipped rather than thrown on:
  * the gauntlet loader is what validates the corpus, and a recipe that refused to build over a malformed board row would
  * turn one bad line into a stopped build for a check that is advisory to it.
  */

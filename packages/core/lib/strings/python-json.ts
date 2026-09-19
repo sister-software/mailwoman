@@ -6,20 +6,20 @@ import { stringifyJSON } from "#json"
  * @author Teffen Ellis, et al.
  *
  *   A faithful reimplementation of Python's `json.dumps` single-line serialization, used by the
- *   ported `scripts/eval/*.ts` golden/eval builders so their JSONL output is byte-identical to the
+ *   ported `scripts/eval/*.ts` golden/eval builders so their jsonl output is byte-identical to the
  *   Python originals (the committed `data/eval/**` files were written by `json.dumps`).
  *
  *   Two things `JSON.stringify` gets "wrong" relative to Python and that this fixes:
  *
  *   1. **Separators.** Python's default is `(", ", ": ")` — a space after every comma and colon.
  *        `JSON.stringify` is compact (`","` / `":"`). The committed files are spaced, so we match.
- *   2. **`ensure_ascii`.** Python defaults to escaping every non-ASCII codepoint as `\uXXXX` (surrogate
+ *   2. **`ensure_ascii`.** Python defaults to escaping every non-ascii codepoint as `\uXXXX` (surrogate
  *        pairs for astral chars). `JSON.stringify` emits raw UTF-8. We replicate Python's default
  *        (`ensureASCII: true`) and allow `ensure_ascii=False` (`ensureASCII: false`).
  *
- *   String escaping of ASCII (quote, backslash, `\n`/`\t`/`\r`/`\b`/`\f`, other control -> `\u00xx`)
+ *   String escaping of ascii (quote, backslash, `\n`/`\t`/`\r`/`\b`/`\f`, other control -> `\u00xx`)
  *   is identical between `JSON.stringify` and Python's json, so we delegate per-string base
- *   escaping to `JSON.stringify` and only post-escape the non-ASCII range when `ensureASCII` is
+ *   escaping to `JSON.stringify` and only post-escape the non-ascii range when `ensureASCII` is
  *   on.
  *
  *   Caveat: JS has a single number type, so a whole-valued float (e.g. an exact `5.0` coordinate)

@@ -167,7 +167,7 @@ describe("a lookup returning several hits", () => {
 		expect(m?.remainder).toBe("")
 	})
 
-	// `match` is the hit the subject SCORES under, and it is always the head of `matches` — two names for one value, so
+	// `match` is the hit the subject scores under, and it is always the head of `matches` — two names for one value, so
 	// a scorer reading the kind and a branch reading the set can never disagree about which subject was matched.
 	it("scores under the head of the set", () => {
 		const m = matchPOISubject("prescription near Denver CO", "en-US", affordedSet)

@@ -3,7 +3,7 @@
 **Date:** 2026-08-09
 **Status:** direction approved; implementation plan pending
 **Related:** [issue #1577](https://github.com/sister-software/mailwoman/issues/1577),
-[spatial-layer contract](../../engineering/reference/layer-contract.mdx),
+[spatial-layer interface](../../engineering/reference/layer-interface.mdx),
 [WOF granularity scorecard](./2026-08-02-wof-granularity-scorecard-design.md),
 [inferential resolution](../plans/2026-08-08-inferential-resolution.md)
 
@@ -99,7 +99,7 @@ core can still bound a query to a country or region. Each additional layer narro
 space when its coverage permits that claim.
 
 Every result continues to report `resolution_tier`, uncertainty, and provenance. Layer absence and
-source absence remain different states. The `layer_coverage` contract decides whether zero means
+source absence remain different states. The `layer_coverage` interface decides whether zero means
 "observed absent" or "unknown."
 
 ## Replace the monolithic candidate projection
@@ -243,7 +243,7 @@ leaves the prior installation usable.
 Dependencies are explicit. An address extract may depend on a global identity version and a street
 schema version without requiring every other address extract from the same country.
 
-## CLI contract from issue #1577
+## CLI interface from issue #1577
 
 Issue #1577 supplies the consumer acceptance surface for this design:
 
@@ -280,7 +280,7 @@ coverage.
 The `mw` alias and `man mailwoman` are packaging/documentation work around the same commands; they do
 not introduce alternate behavior.
 
-## Filesystem contract
+## Filesystem interface
 
 `env-paths` supplies platform-native defaults. Existing deployments retain
 `MAILWOMAN_DATA_ROOT` as the complete durable-data override.
@@ -316,7 +316,7 @@ Mailwoman directories.
 
 ## Licensing tiers keep the same runtime shape
 
-The layer contract's three tiers remain:
+The layer interface's three tiers remain:
 
 - `shipped`: permissive/public-domain artifacts distributed by Mailwoman;
 - `build-local`: ODbL or other restricted inputs built on the consumer's machine;

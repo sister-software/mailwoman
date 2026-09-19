@@ -91,7 +91,7 @@ const ORDINALS = [
 
 const SUFFIXES = ["St", "Ave", "Blvd", "Rd", "Dr", "Ln", "Way", "Pl", "Ct", "Pkwy", "Ter", "Cir"] as const
 
-// Vocabulary compile-checked against the codex. the ORDER stays this literal's. `Object.values(DirectionalAbbreviation)`
+// Vocabulary compile-checked against the codex. the order stays this literal's. `Object.values(DirectionalAbbreviation)`
 // runs N,E,S,W,… — deriving the array from it would re-map every sample() draw and change shipped recipe-output bytes.
 const DIRECTIONALS = ["N", "S", "E", "W", "NE", "NW", "SE", "SW"] as const satisfies readonly DirectionalAbbreviation[]
 
@@ -169,7 +169,7 @@ export function synthesizeIntersectionRow(
 
 	const components: CanonicalRow["components"] = { intersection_a: a, intersection_b: b }
 
-	// v0.7.2: ~60% BARE (no locality tail). v0.7.1 always appended ", City, ST", so the model learned
+	// v0.7.2: ~60% bare (no locality tail). v0.7.1 always appended ", City, ST", so the model learned
 	// to read post-intersection text as a locality and fumbled the harness's bare "X & Y" cases
 	// (mislabeling the second street as a locality). Match the eval distribution.
 	const bare = random() < 0.6

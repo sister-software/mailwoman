@@ -5,9 +5,9 @@
  *
  *   Unit tests for the national open-register rooftop tier wiring in `geocodeAddress` (#1012, BAN-FR).
  *   Fakes the classifier + resolver so the test captures the `ResolveOpts` the cascade hands the
- *   resolver — no WOF / weights / databases / 7 GB BAN db needed. Pins the tier contract:
+ *   resolver — no WOF / weights / databases / 7 GB BAN db needed. Pins the tier interface:
  *
- *   - a non-US parse consults `nationalDatabases` (BAN) AHEAD of `osmDatabases` — BAN wins where it covers;
+ *   - a non-US parse consults `nationalDatabases` (BAN) ahead of `osmDatabases` — BAN wins where it covers;
  *   - BAN carries its own postcode + commune, so it sets no bbox fall-through (unlike the OSM tier);
  *   - when no national register covers the country, the cascade falls through to the OSM tier;
  *   - a US parse never consults BAN (the US situs path owns address points);
@@ -68,7 +68,7 @@ describe("geocodeAddress — national (BAN) rooftop tier wiring (#1012)", () => 
 
 		expect(seen[0]?.addressPoints).toBe(banLookup)
 		// Bbox fall-through is enabled for the national tier (2026-07-10): the register's rows carry
-		// postcode + commune, but the query often doesn't — and BAN communes are INSEE-arrondissement-
+		// postcode + commune, but the query often doesn't — and BAN communes are insee-arrondissement-
 		// granular, so a city-level locality probe ("paris") misses "paris 13e arrondissement". The
 		// resolved locality's box scopes the (street, number) probe instead (fr-chevaleret-bare).
 		expect(seen[0]?.addressPointBboxFallback).toBe(true)
@@ -119,7 +119,7 @@ describe("geocodeAddress — national (BAN) rooftop tier wiring (#1012)", () => 
 			nationalDatabases: (c) => (c === "fr" ? { streetCentroids: streetLookup } : {}),
 		})
 
-		// A country-keyed PROVIDER (not a bare lookup): resolves the FR database, undefined for a country BAN lacks.
+		// A country-keyed provider (not a bare lookup): resolves the FR database, undefined for a country BAN lacks.
 		expect(typeof seen[0]?.streetCentroids).toBe("function")
 		expect(seen[0]?.streetCentroids?.("fr")).toBe(streetLookup)
 		expect(seen[0]?.streetCentroids?.("de")).toBeUndefined()

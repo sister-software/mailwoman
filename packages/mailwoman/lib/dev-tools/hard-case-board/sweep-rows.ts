@@ -3,12 +3,12 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   The hard-case board's SWEEP-DERIVED rows — the half that is lifted rather than authored.
+ *   The hard-case board's sweep-derived rows — the half that is lifted rather than authored.
  *
  *   Separate from `rows/index.ts` because the editorial responsibility is different. Those rows are
- *   written. these are CITATIONS. Each entry names a case id in `gauntlet/cases/<cc>/regression.jsonl`
+ *   written. these are citations. Each entry names a case id in `gauntlet/cases/<cc>/regression.jsonl`
  *   and the builder copies that row's input, coordinate and tolerance verbatim, so the board and the
- *   corpus cannot disagree about a row they share. The only things curated here are the CLASS the row
+ *   corpus cannot disagree about a row they share. The only things curated here are the class the row
  *   belongs to and the surface worth probing. changing an input means changing the corpus row rather than this
  *   file.
  *
@@ -16,7 +16,7 @@
  *
  *   - `country_structure` — the 2026-08-05 sweep's highest-hit class (13/31 = 42%): the addressing
  *       structures nothing in the corpus had ever exercised.
- *   - `fst_out_of_reach` — family-C namesake rows whose ANSWER no FST covers, though their QUERY surface
+ *   - `fst_out_of_reach` — family-C namesake rows whose answer no FST covers, though their query surface
  *       is usually in the en-us gazetteer. See `eval-harness/hard-case-board.ts` on why that is the interesting part.
  */
 

@@ -15,7 +15,7 @@ import { describe, expect, test } from "vitest"
 
 const fixture = {
 	name: "probe",
-	description: "Exercise the native CLI contract.",
+	description: "Exercise the native CLI interface.",
 	positionals: [{ name: "input", description: "Probe input." }],
 	options: {
 		feature: { type: "boolean", default: true, description: "Feature switch." },
@@ -118,7 +118,7 @@ describe("native CLI spec", () => {
 describe("a renamed option keeps its old spelling working", () => {
 	const renamed = {
 		name: "probe",
-		description: "Exercise the deprecated-alias contract.",
+		description: "Exercise the deprecated-alias interface.",
 		options: {
 			out: { type: "string", description: "Destination.", deprecatedName: "output" },
 			mode: { type: "string", default: "fast", description: "Mode.", deprecatedName: "style" },

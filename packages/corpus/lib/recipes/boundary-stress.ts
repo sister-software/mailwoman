@@ -5,7 +5,7 @@
  *
  *   `boundary-stress` recipe (#375) — the boundary-instability augmentation. Self-generates
  *   `--count` rows from {@link synthesizeBoundaryStressRow}'s weighted template mix (the v1.7.0,
- *   DeepSeek-tuned 2026-06-18 composition), aligns each to BIO, and emits a labeled JSONL. The
+ *   DeepSeek-tuned 2026-06-18 composition), aligns each to BIO, and emits a labeled jsonl. The
  *   change for the taxonomy's #1 parser family (the boundary-wobble class). Ported from the root
  *   build script it replaced.
  *
@@ -21,8 +21,8 @@ import { alignRow } from "#utils"
 
 /**
  * Revised composition (v1.7.0, DeepSeek-tuned 2026-06-18): `bare-locality` ~11% (recover the 84% locality drop on bare
- * "City, STATE" rows without becoming a locality-first majority), and house-number-before:after = 7:3 (FR's dominant
- * order is number-BEFORE. 30% after breaks the order-bias shortcut without risking FR hn-before accuracy). The three
+ * "City, state" rows without becoming a locality-first majority), and house-number-before:after = 7:3 (FR's dominant
+ * order is number-before. 30% after breaks the order-bias shortcut without risking FR hn-before accuracy). The three
  * original non-number shapes keep the bulk. Weights sum to 1.0. Key order is required — it drives the cumulative
  * thresholds below.
  */
@@ -60,7 +60,7 @@ export const boundaryStressRecipe: CorpusRecipe = {
 	description: "Boundary-instability rows (#375): weighted template mix → synthesizeBoundaryStressRow → aligned BIO",
 	mode: "generate",
 	async run(opts, write) {
-		// Emit PRNG: the root build script this recipe replaced seeded mulberry32(opts.seed).
+		// Emit prng: the root build script this recipe replaced seeded mulberry32(opts.seed).
 		const random = makeMulberry32(opts.seed)
 		const count = opts.count ?? 20_000
 		let emitted = 0

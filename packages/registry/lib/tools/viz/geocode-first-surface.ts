@@ -4,7 +4,7 @@
  * @author Teffen Ellis, et al.
  *
  *   Plot string-only and string-plus-distance match probabilities using the record matcher's
- *   Fellegi-Sunter weights. The supplied prior is illustrative and the output is self-contained HTML.
+ *   Fellegi-Sunter weights. The supplied prior is illustrative and the output is self-contained html.
  */
 
 import { tempRootPath } from "@mailwoman/core/data-root"
@@ -22,7 +22,7 @@ export interface GeocodeFirstSurfaceOptions {
 	 */
 	lambda?: number
 	/**
-	 * Output HTML path. Default `/tmp/geocode-first-surface.html`.
+	 * Output html path. Default `/tmp/geocode-first-surface.html`.
 	 */
 	outHTML?: string
 }
@@ -81,7 +81,7 @@ function distanceWeight(km: number): number {
 }
 
 /**
- * Emit the geocode-first decision-surface Plotly HTML — see the module doc.
+ * Emit the geocode-first decision-surface Plotly html — see the module doc.
  */
 export async function geocodeFirstSurface(
 	options: GeocodeFirstSurfaceOptions = {},
@@ -160,7 +160,7 @@ export async function geocodeFirstSurface(
 		geoP: pGeocodeFirst(t.sim, t.km),
 	}))
 
-	// ── HTML. ───────────────────────────────────────────────────────────────────────────────────────
+	// ── html. ───────────────────────────────────────────────────────────────────────────────────────
 
 	const data = {
 		simAxis,
@@ -172,7 +172,7 @@ export async function geocodeFirstSurface(
 		prior: PRIOR,
 	}
 
-	// Every `<`, not only `</script>`: `<!--` also leaves script-data state in the HTML tokenizer, after which a
+	// Every `<`, not only `</script>`: `<!--` also leaves script-data state in the html tokenizer, after which a
 	// later `</script>` no longer ends the element. `\u003c` is the same string to a JSON reader.
 	const safe = stringifyJSON(data).replaceAll("<", "\\u003c")
 

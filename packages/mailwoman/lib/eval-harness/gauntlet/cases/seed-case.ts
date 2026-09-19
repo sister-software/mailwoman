@@ -3,16 +3,16 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   The per-case contract for the curated regression corpus — the TS interface, the zod schema the JSONL
+ *   The per-case interface for the curated regression corpus — the TS interface, the zod schema the jsonl
  *   rows are validated against on load, and the compile-time bridge that keeps the two from drifting.
  *
- *   `SeedCase` is the SOURCE OF TRUTH; {@linkcode SeedCaseSchema} is its runtime shadow. The three `satisfies`
+ *   `SeedCase` is the source OF truth; {@linkcode SeedCaseSchema} is its runtime shadow. The three `satisfies`
  *   bridges at the bottom fail `tsc` if a field reaches one and not the other, or never reaches
- *   {@linkcode SEED_CASE_KEY_ORDER}. That is the Database-interface/`createTable` idiom from AGENTS.md applied
+ *   {@linkcode SEED_CASE_KEY_ORDER}. That is the Database-interface/`createTable` idiom from agents.md applied
  *   to a file format instead of a table — and, as `SameShape`'s docstring records, the obvious one-line version
  *   of it does not work.
  *
- *   The schema is STRICT: an unknown key in a JSONL row is an error rather than ignored. A typo'd `expectLon` that
+ *   The schema is strict: an unknown key in a jsonl row is an error rather than ignored. A typo'd `expectLon` that
  *   parsed as "coordinate not asserted" is exactly the input-tail defect this file exists to make loud.
  */
 
@@ -25,7 +25,7 @@ import type { MutuallyAssignable, SameShape } from "#eval-harness/shape-assertio
 /**
  * One row of the curated regression corpus, as committed under `cases/<cc>/*.jsonl`.
  *
- * The field ORDER here is required twice over: {@linkcode SEED_CASE_KEY_ORDER} mirrors it (so every emitted JSONL row
+ * The field order here is required twice over: {@linkcode SEED_CASE_KEY_ORDER} mirrors it (so every emitted jsonl row
  * keys identically and a diff shows content changes, never a re-shuffle), and the migration that produced the corpus
  * keyed its rows by it.
  */
@@ -42,9 +42,9 @@ export interface SeedCase {
 	defaultCountry?: string
 	/**
 	 * The CLI locale this row runs under (`en-NZ`); the runner derives the weights overlay from its region subtag,
-	 * mirroring production's locale-hint routing. A LOCALE HINT, never a country constraint — `country` above stays the
-	 * TRUTH's country, which for a locale row can differ (`Paris` under `en-US` is an FR row run with the US overlay).
-	 * See #1585's contract.
+	 * mirroring production's locale-hint routing. A locale hint, never a country constraint — `country` above stays the
+	 * truth's country, which for a locale row can differ (`Paris` under `en-US` is an FR row run with the US overlay).
+	 * See #1585's interface.
 	 */
 	locale?: string
 	/**
@@ -52,10 +52,10 @@ export interface SeedCase {
 	 */
 	expectComponents?: Record<string, string>
 	/**
-	 * OPT-IN multi-script rendering contract, per component key — `{ venue: ["Gandantegchinlen Monastery",
+	 * OPT-IN multi-script rendering interface, per component key — `{ venue: ["Gandantegchinlen Monastery",
 	 * "Гандантэгчинлэн хийд"] }`. For a listed key the grader asserts that `scriptRenderings(got)` contains every listed
 	 * rendering (case-folded), and the same key in {@linkcode expectComponents} is superseded — see `check-case.ts`'s
-	 * component check. Only for a row whose INPUT genuinely carries a span in two or more scripts. every list must be
+	 * component check. Only for a row whose input genuinely carries a span in two or more scripts. every list must be
 	 * non-empty (the schema refuses an empty one).
 	 */
 	expectComponentRenderings?: Record<string, string[]>
@@ -71,7 +71,7 @@ export interface SeedCase {
 	/**
 	 * True = the expected outcome is no coordinate: the resolver abstains rather than answering, and any resolved
 	 * coordinate fails the row. Mutually exclusive with `expectLat`/`expectLon` (the schema refuses the combination). The
-	 * #1585 fuzzy-scope contract: a scoped-empty typo correction abstains instead of falling through world-fuzzy. such a
+	 * #1585 fuzzy-scope interface: a scoped-empty typo correction abstains instead of falling through world-fuzzy. such a
 	 * row is re-pinned to real coordinates once coverage arrives (its note names the artifact).
 	 */
 	expectAbstain?: boolean
@@ -79,16 +79,16 @@ export interface SeedCase {
 	bugRef?: string
 	note?: string
 	/**
-	 * ABLATION ONLY: hand-pin the graceful-degradation rung this row's deletions should reach, per deleted component — `{
+	 * Ablation only: hand-pin the graceful-degradation rung this row's deletions should reach, per deleted component — `{
 	 * country: "region" }`, `{ region: "abstain" }`. Values are `abstain`, `base`, or a WOF placetype. Absent = the
-	 * ablation layer's DERIVED ladder decides, which is the default and should stay the common case. See `schema.ts`'s
+	 * ablation layer's derived ladder decides, which is the default and should stay the common case. See `schema.ts`'s
 	 * `ablation_expect` for the two classes (territories, dual-role places) this exists for.
 	 */
 	ablationExpect?: Record<string, string>
 }
 
 /**
- * The canonical key order for an emitted JSONL row — {@linkcode SeedCase}'s declaration order.
+ * The canonical key order for an emitted jsonl row — {@linkcode SeedCase}'s declaration order.
  *
  * Emission re-keys through this rather than trusting object literal order, because the corpus was authored by hand over
  * ~40 batches and the literals are not consistently ordered. Re-keying makes a `git diff` of the corpus mean
@@ -119,7 +119,7 @@ export const SEED_CASE_KEY_ORDER = [
 ] as const satisfies readonly (keyof SeedCase)[]
 
 /**
- * The runtime shadow of {@linkcode SeedCase}, applied per JSONL row on load.
+ * The runtime shadow of {@linkcode SeedCase}, applied per jsonl row on load.
  *
  * `strictObject`, not `object` — see the file header.
  */
@@ -172,7 +172,7 @@ export const KEY_ORDER_IS_EXHAUSTIVE = true satisfies MutuallyAssignable<
 /**
  * Re-key a case into {@linkcode SEED_CASE_KEY_ORDER}, dropping absent optionals.
  *
- * Used by the emitter and by the corpus content hash, so the hash is a function of CONTENT and not of how a given
+ * Used by the emitter and by the corpus content hash, so the hash is a function of content and not of how a given
  * authoring session happened to order its literals.
  */
 export function canonicalizeSeedCase(c: SeedCase): SeedCase {

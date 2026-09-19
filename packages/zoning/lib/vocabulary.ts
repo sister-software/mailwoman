@@ -9,27 +9,27 @@ import { stringifyJSON } from "@mailwoman/core/json"
  *   the plan vocabulary, the exclusions it states, and the licence posture that holds this layer at
  *   `build-local`.
  *
- *   THE LOCAL CODE IS CARRIED VERBATIM AND THE CROSSWALK SITS BESIDE IT, NEVER INSTEAD OF IT. The Department
+ *   the local code is carried verbatim and the crosswalk sits beside IT, never instead OF IT. The Department
  *   publishes a national generic type over 30 local authorities' own zone codes and says in its own item
  *   description that the scheme "complements (rather than replaces) the existing statutory zoning used for
  *   each individual plan". So a row carries both: `local_code` as the authority spelled it, and
  *   `crosswalk_code` under {@link GZT_CROSSWALK_SCHEME} with its own provenance. Measured over the whole
- *   national set, 52 of 795 (authority, local code) pairs take MORE THAN ONE generic type, so the mapping is
+ *   national set, 52 of 795 (authority, local code) pairs take more than one generic type, so the mapping is
  *   not a function of the pair and no code table can carry it — which is why `zoning_crosswalk_edge` ships
  *   empty and the mapping lives per polygon.
  *
- *   THE DECLARED DOMAIN IS CLOSED AND THE SOURCE ALREADY BREAKS IT. The service declares 54 generic types in
+ *   the declared domain is closed and the source already breaks IT. The service declares 54 generic types in
  *   its own coded-value domain. the data uses 55. `N/A` appears on 4 rows and in no domain. So the ingest
- *   carries the declared domain PLUS the values observed in the data and records the difference
+ *   carries the declared domain plus the values observed in the data and records the difference
  *   (`zoning_vocabulary.declared`) rather than coercing an undeclared value to a neighbour or to null —
  *   either of which turns "the source changed" into "there is nothing here".
  *
- *   `CURRENT_PLAN = 1` DOES NOT MEAN "IN FORCE TODAY". All 85,330 rows in the Current layer carry it, and the
+ *   `CURRENT_PLAN = 1` does not mean "IN force today". All 85,330 rows in the Current layer carry it, and the
  *   domain defines it as `Current plan` against `Expired and not replaced` and `Expired and replaced`. It
  *   means "not superseded". The plan's own `PLAN_FROM`/`PLAN_TO` window is a separate fact a consumer must
  *   read, and it is carried on `zoning_plan` for that reason.
  *
- *   `LA_CODE` IS DIRTY AND IS NEVER REPAIRED. Fingal's code is `Fl` with a lowercase second letter against
+ *   `LA_CODE` is dirty and is never repaired. Fingal's code is `Fl` with a lowercase second letter against
  *   `CL`, `CO`, `DU` and the rest. It is the publisher's key. repairing it would put this package's spelling
  *   into an artifact that claims to repeat the authority's.
  */
@@ -68,7 +68,7 @@ export const GZT_MAP_VIEWER_URL = "https://www.myplan.ie/zoning-map-viewer/"
 /**
  * The attribution the item's `accessInformation` field carries, plus the licensor its `licenseInfo` names.
  *
- * BOTH HALVES RIDE, because the second is the half that holds this layer at `build-local`. The Department's own credit
+ * Both halves ride, because the second is the half that holds this layer at `build-local`. The Department's own credit
  * line is the first. the all-rights-reserved clause naming Tailte Éireann as an upstream licensor is the second, and a
  * re-user who saw only the first would not know it exists.
  */
@@ -79,11 +79,11 @@ export const GZT_ATTRIBUTION =
 /**
  * The licence expression written into `layer_manifest.license`.
  *
- * `NOASSERTION` IS THE HONEST VALUE AND IT IS NOT A PLACEHOLDER. Three published statements disagree about the grant —
+ * `noassertion` is the honest value and IT is not A placeholder. Three published statements disagree about the grant —
  * see {@link GZT_LICENSE_CONTRADICTION} — and the manifest column is a string a consumer reads as the terms it may rely
  * on. Writing `CC-BY-4.0` there while an all-rights-reserved clause names a licensor would be this program asserting a
- * grant nobody made. leaving the column empty would read as a layer whose licence nobody looked at. `NOASSERTION` is
- * SPDX's own token for a determination that has not been made, which is exactly the state.
+ * grant nobody made. leaving the column empty would read as a layer whose licence nobody looked at. `noassertion` is
+ * spdx's own token for a determination that has not been made, which is exactly the state.
  *
  * {@linkcode assertTierMatchesLicense} refuses a `shipped` build while this holds, so moving the tier takes a
  * deliberate edit at a guard that names the reason rather than a manifest field nobody notices.
@@ -133,7 +133,7 @@ export const GZT_CROSSWALK_SCHEME = "IE-GZT"
 /**
  * The Department's second, coarser national code (`SZO`, Standardised Zoning Objective).
  *
- * Carried as published rather than derived. Measured over the whole national set it is a STRICT COARSENING of the
+ * Carried as published rather than derived. Measured over the whole national set it is a strict coarsening of the
  * generic type — no generic type maps to more than one `SZO` — but the roll-up is the Department's to change, so
  * re-deriving it here would replace a published fact with this package's arithmetic.
  */
@@ -142,7 +142,7 @@ export const GZT_ROLLUP_SCHEME = "IE-SZO"
 /**
  * The vocabulary scheme one local authority's own zone codes belong to.
  *
- * PER AUTHORITY RATHER THAN ONE POOLED LOCAL SCHEME, because the codes collide: `Residential` means one thing in Cork
+ * PER authority rather than one pooled local scheme, because the codes collide: `Residential` means one thing in Cork
  * County Council's plan and another in Westmeath's, and pooling them would assert an equivalence no authority stated.
  */
 export function localSchemeFor(authorityCode: string): string {
@@ -163,7 +163,7 @@ export interface ZoningTermDefinition {
 /**
  * The Department's declared generic-type domain, verbatim from the service's own `GZT Code` coded-value domain.
  *
- * FIFTY-FOUR DECLARED AGAINST FIFTY-FIVE USED. `N/A` appears on 4 of 85,330 rows and in no domain, so the ingest
+ * Fifty-four declared against fifty-five used. `N/A` appears on 4 of 85,330 rows and in no domain, so the ingest
  * records it as observed-but-undeclared rather than adding it here — a declaration this package wrote would be
  * indistinguishable from one the Department made.
  */
@@ -261,7 +261,7 @@ export const GZT_CURRENT_PLAN_VALUES: ReadonlyMap<number, string> = new Map([
  * observation, a community mapping project or a research assembly: OpenStreetMap `landuse` is inferred, and so is
  * Overture's `base/land_use`, because it is the same data.
  *
- * NEITHER GRADE IS BETTER. THEY ANSWER DIFFERENT QUESTIONS. The rule is that a query answered from an `inferred` row
+ * Neither grade is better. they answer different questions. The rule is that a query answered from an `inferred` row
  * may never be presented as the authority's designation. Measured in one jurisdiction on one day: of 1,652
  * OpenStreetMap `landuse=residential` polygons in South Dublin, only 558 — 33.8% — sit on land the authority zones
  * residential, and the two largest wrong answers are agriculture (23.4%) and conservation (19.6%).
@@ -302,7 +302,7 @@ export const GZT_PRODUCT_LIMITS: ReadonlyArray<string> = [
 /**
  * Why this layer's coverage licenses no negative claim, in one sentence a receipt can carry.
  *
- * THE MEANING-OF-ZERO RULE UNDER ITS HARDEST CASE. For flood zones the Environment Agency states England-wide coverage
+ * The meaning-OF-zero rule under its hardest case. For flood zones the Environment Agency states England-wide coverage
  * and the Planning Practice Guidance defines Zone 1 as the absence, so a location with no polygon is a designation. No
  * such definition exists anywhere for zoning. A location with no zoning polygon is one of at least four different
  * things: outside any adopted plan area, inside a plan area on land the plan does not zone, in a jurisdiction that has
@@ -317,7 +317,7 @@ export const GZT_COVERAGE_LIMIT =
 	"not yet published — and the product cannot tell those apart, so nothing here supports a claim that no restriction applies."
 
 /**
- * The one local code that states unzoned land POSITIVELY, and the reason the coverage rule above is grounded rather
+ * The one local code that states unzoned land positively, and the reason the coverage rule above is grounded rather
  * than asserted: where the authority means "unzoned" it says so on a row, so every other absence is a row that is not
  * there.
  */
@@ -326,7 +326,7 @@ export const GZT_UNZONED_LOCAL_CODE = "UNZ - Unzoned"
 /**
  * Refuse a manifest that would ship this layer under a licence nobody resolved.
  *
- * A GUARD RATHER THAN A CONVENTION, for the same reason the coverage basis is one: the tier is a field, and a field can
+ * A guard rather than A convention, for the same reason the coverage basis is one: the tier is a field, and a field can
  * be edited without anyone reading the three statements that disagree. Moving this layer to `shipped` has to go through
  * a line that names what is unresolved.
  *

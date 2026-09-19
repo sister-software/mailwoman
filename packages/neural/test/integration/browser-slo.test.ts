@@ -3,7 +3,7 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   #378 browser SLO runner — the DECOMPOSED cold path, measured in a real browser against the local
+ *   #378 browser SLO runner — the decomposed cold path, measured in a real browser against the local
  *   artifacts.
  *
  *   The end-to-end probe this replaces reported one number per stage ("warm parse+resolve 3.3 s"),
@@ -12,17 +12,17 @@
  *   against its own named budget, with the arm (backend) that produced it in the test name — a
  *   timing number is meaningless without the arm, and two arms never share an assertion.
  *
- *   WHAT IS UNDER MEASUREMENT: the neural browser runtime as a client bundles it —
- *   `@mailwoman/neural/web-onnx-runner` (onnxruntime-web, WASM + optional WebGPU) plus
+ *   what is under measurement: the neural browser runtime as a client bundles it —
+ *   `@mailwoman/neural/web-onnx-runner` (onnxruntime-web, wasm + optional WebGPU) plus
  *   `@mailwoman/neural/tokenizer` (the SentencePiece core), reached through the package's compiled
  *   `out/` tree, which is what an npm consumer and the docs demo both bundle. Run `yarn compile`
  *   first: a stale `out/` measures stale code and nothing here can tell.
  *
- *   WHAT IS NOT: `@mailwoman/neural/web-loader` composes those two into a `NeuralAddressClassifier`,
+ *   what is not: `@mailwoman/neural/web-loader` composes those two into a `NeuralAddressClassifier`,
  *   which reaches `@mailwoman/core`. That the whole graph bundles under the `browser` condition is
  *   what the `bundle-graph` health check proves. this harness keeps the reduced graph because its
  *   subject is timing. The two node imports the reduced graph does meet (`node:fs/promises` in the
- *   tokenizer's `loadFromFile`, `node:module` in the emscripten preamble) are DYNAMIC and
+ *   tokenizer's `loadFromFile`, `node:module` in the emscripten preamble) are dynamic and
  *   node-guarded, so marking them external is the entire accommodation. The cost of the reduction: the warm number is
  *   tokenize+infer rather than tokenize+infer+decode — which is the model-only number the instrumentation
  *   plan asked for, and the decoder is platform-free TS running identically on both hosts.
@@ -31,7 +31,7 @@
  *   pipeline rather than through the neural loader. It is deliberately outside this accounting. add
  *   it here only alongside the pipeline stage that fetches it.
  *
- *   BUDGETS ARE REGRESSION TRIPWIRES rather than TARGETS. They are set generously against the first run on
+ *   budgets are regression tripwires rather than targets. They are set generously against the first run on
  *   the lab workstation. A failure means the quantity moved a lot. the repair is to read the receipt
  *   this file prints rather than to widen the constant.
  *
@@ -39,7 +39,7 @@
  *   and is deterministic, while the wire number depends on the compressor. Both are reported,
  *   because the wire column is the one comparable to a live-demo trace.
  *
- *   READING THE RECEIPT: vitest's default reporter hides console output from a file whose tests all
+ *   reading the receipt: vitest's default reporter hides console output from a file whose tests all
  *   pass, so run it with the verbose reporter when you want the numbers rather than the verdict:
  *
  *   ```
@@ -106,33 +106,33 @@ const RUNTIME_JS_RAW_BYTES_BUDGET = 4_000_000
 const EVIDENCE_RAW_BYTES_BUDGET = 32_000_000
 
 /**
- * Session init on the WASM arm — tokenizer load plus ORT session creation, warm-up infer included, with the model bytes
+ * Session init on the wasm arm — tokenizer load plus ORT session creation, warm-up infer included, with the model bytes
  * already in memory so no network enters the number.
  */
 const INIT_WASM_MS_BUDGET = 12_000
 
 /**
  * Session init on the WebGPU arm. Asserted only when the browser granted a WebGPU adapter and the runner's diagnostics
- * report `webgpu` — the runner falls back to WASM silently, so without that check the arm would measure the other arm
- * under a WebGPU name. Headless Chromium grants a SOFTWARE adapter (SwiftShader) where no GPU is reachable, which is
+ * report `webgpu` — the runner falls back to wasm silently, so without that check the arm would measure the other arm
+ * under a WebGPU name. Headless Chromium grants a software adapter (SwiftShader) where no GPU is reachable, which is
  * why the receipt prints the adapter's identity beside the number: 2,997 ms on SwiftShader is not a claim about
  * hardware.
  */
 const INIT_WEBGPU_MS_BUDGET = 20_000
 
 /**
- * Median tokenize+infer on the WASM arm, single-threaded. The 2026-06 node one-thread probe measured 41–44 ms p50/p95
+ * Median tokenize+infer on the wasm arm, single-threaded. The 2026-06 node one-thread probe measured 41–44 ms p50/p95
  * on this class of model.
  */
 const WARM_P50_WASM_MS_BUDGET = 140
 
 /**
- * P95 tokenize+infer on the WASM arm, single-threaded.
+ * P95 tokenize+infer on the wasm arm, single-threaded.
  */
 const WARM_P95_WASM_MS_BUDGET = 220
 
 /**
- * HTTP range requests a cold gazetteer session costs — opening `candidate.db` over sql.js-httpvfs plus the
+ * Http range requests a cold gazetteer session costs — opening `candidate.db` over sql.js-httpvfs plus the
  * candidate-table probes. The candidate table is clustered so a probe touches a handful of B-tree pages. the demo's own
  * measured session was 38 requests. This budget is what fails when a schema or clustering change turns a probe into a
  * scan.
@@ -140,7 +140,7 @@ const WARM_P95_WASM_MS_BUDGET = 220
 const GAZETTEER_RANGE_REQUESTS_BUDGET = 120
 
 /**
- * Peak `performance.memory.usedJSHeapSize` across the whole browser session. V8 accounts `ArrayBuffer` storage and WASM
+ * Peak `performance.memory.usedJSHeapSize` across the whole browser session. V8 accounts `ArrayBuffer` storage and wasm
  * linear memory outside the JS heap, so this number does not include the ~53 MB of artifact bytes the session holds nor
  * ORT's own arena — it bounds the JS side only, which is where a leak in the runner or the tokenizer would show.
  * Measured at ~10 MiB on the first run. the budget is the "something is retaining objects per parse" regression check
@@ -193,7 +193,7 @@ const CANDIDATE_PROBE_KEYS = ["washington", "newyork", "cupertino", "anchorage",
 const CANDIDATE_PROBE_LIMIT = 8
 
 /**
- * Bytes per HTTP range request, matching the demo's sql.js-httpvfs configuration (16 SQLite pages at the candidate DB's
+ * Bytes per http range request, matching the demo's sql.js-httpvfs configuration (16 SQLite pages at the candidate DB's
  * 8 KiB page size). Changing it changes the request count by construction.
  */
 const HTTPVFS_CHUNK_SIZE = 65_536
@@ -208,8 +208,8 @@ const WEBGPU_LAUNCH_ARGS = ["--enable-unsafe-webgpu"] as const
 
 /**
  * The candidate-table probe. `WOFCandidateTableLookup` issues this shape per resolve — a contiguous probe on the
- * `WITHOUT ROWID` B-tree keyed by `name_key` — and the range-fetch count is a property of that access pattern rather
- * than of the SELECT list.
+ * `without rowid` B-tree keyed by `name_key` — and the range-fetch count is a property of that access pattern rather
+ * than of the select list.
  */
 const CANDIDATE_PROBE_SQL =
 	"SELECT spr_id, name, country_id, placetype_id, latitude, longitude, neg_rank, is_primary, population " +
@@ -260,7 +260,7 @@ const haveModel = weights !== null && (await pathExists(weights.modelPath)) && (
 const haveBrowser = (await tryChromiumExecutable()) !== null
 
 /**
- * A LOCATOR for the onnxruntime-web asset directory rather than the file the runtime will fetch: ORT picks its own
+ * A locator for the onnxruntime-web asset directory rather than the file the runtime will fetch: ORT picks its own
  * `.wasm` variant at load time, and the whole directory is mounted at `/ort/` so whichever it asks for is served and
  * counted.
  */
@@ -281,7 +281,7 @@ const BUNDLE_RESOLVE_DIR = String(repoRootPath())
 // MARK: Static asset server
 
 /**
- * The class a served response is counted against. Byte accounting happens on the SERVER rather than in the browser: the
+ * The class a served response is counted against. Byte accounting happens on the server rather than in the browser: the
  * server sees exactly what left the socket, encoding included, and cannot be fooled by a cache hit.
  */
 type AssetClass = "model" | "tokenizer" | "ortWasm" | "sqliteRuntime" | "runtimeJS" | "evidence" | "gazetteerRanges"
@@ -556,7 +556,7 @@ async function createAssetServer(
 /**
  * The page-side API `/app.js` installs on `globalThis`. The bundle is built with esbuild from the package's compiled
  * `out/` tree — the artifacts an npm consumer bundles — and served as `/app.js`, which is the `runtimeJS` class.
- * Declared here so every `page.evaluate` callback below is type-checked against the same contract the entry source
+ * Declared here so every `page.evaluate` callback below is type-checked against the same interface the entry source
  * implements.
  */
 interface BrowserSLOAPI {
@@ -842,7 +842,7 @@ async function measure(resolved: ResolvedWeights, ortDistLocator: string): Promi
 	page.on("pageerror", (error) => pageErrors.push(String(error)))
 
 	page.on("console", (message) => {
-		// ORT writes its own WARNINGS to the WASM stderr, which reaches the page as a console error
+		// ORT writes its own warnings to the wasm stderr, which reaches the page as a console error
 		// (`VerifyEachNodeIsAssignedToAnEp` fires on every session). Reporting those as page errors
 		// trains the reader to ignore the channel, and then a real one goes unread.
 		if (message.type() === "error" && !message.text().includes("W:onnxruntime")) {
@@ -879,7 +879,7 @@ async function measure(resolved: ResolvedWeights, ortDistLocator: string): Promi
 	// The byte table is snapshotted here rather than after the explicit fetches: onnxruntime-web pulls its
 	// `.wasm` during session creation and sql.js-httpvfs pulls its worker + wasm when the gazetteer
 	// page opens, so an earlier snapshot reports both classes as zero — which reads as "this
-	// session downloads no WASM" rather than "the snapshot was early". Everything after this line
+	// session downloads no wasm" rather than "the snapshot was early". Everything after this line
 	// is deliberately excluded: a second session on the WebGPU arm re-fetches artifacts a cold user
 	// session pays for once.
 	const download = server.snapshot()
@@ -893,7 +893,7 @@ async function measure(resolved: ResolvedWeights, ortDistLocator: string): Promi
 			useWebGPU: true,
 		})
 
-		// `WebONNXRunner` falls back to WASM silently when the WebGPU session fails to build, so the
+		// `WebONNXRunner` falls back to wasm silently when the WebGPU session fails to build, so the
 		// arm is only real if the diagnostics say so.
 		webgpuInit = attempt.backend === "webgpu" ? attempt : null
 	}

@@ -3,7 +3,7 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Batched bulk-write transactions — the `COMMIT`/`BEGIN` cadence every streaming ingest repeats around its
+ *   Batched bulk-write transactions — the `commit`/`begin` cadence every streaming ingest repeats around its
  *   raw prepared-statement loop.
  */
 
@@ -21,7 +21,7 @@ export interface BatchedTransaction {
 	 */
 	commit(): void
 	/**
-	 * Best-effort `ROLLBACK`, and it must never replace the real error: a build runs with the journal off (nothing is
+	 * Best-effort `rollback`, and it must never replace the real error: a build runs with the journal off (nothing is
 	 * ever published without the swap), so SQLite may refuse to unwind. What matters is that the caller sees why the
 	 * ingest stopped rather than that a scratch file was tidied.
 	 */

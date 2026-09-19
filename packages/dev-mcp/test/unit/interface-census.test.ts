@@ -3,7 +3,7 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   The contract census's denominators.
+ *   The interface census's denominators.
  *
  *   The tally itself is arithmetic. What is easy to get wrong is what a zero is allowed to mean: a strict dependent
  *   with no stranding count because it is never stranded, and one with no stranding count because no parse ever
@@ -11,7 +11,7 @@
  */
 
 import type { AddressNode, AddressTree } from "@mailwoman/core/decoder"
-import { censusTrees, type ContractRow } from "@mailwoman/dev-mcp/contract/census"
+import { censusTrees, type InterfaceRow } from "@mailwoman/dev-mcp/interface/census"
 import { describe, expect, it } from "vitest"
 
 function node(tag: string, value: string, children: AddressNode[] = []): AddressNode {
@@ -22,7 +22,7 @@ function tree(roots: AddressNode[]): AddressTree {
 	return { raw: "", roots, system: undefined }
 }
 
-function row(id: string, input: string, roots: AddressNode[]): ContractRow {
+function row(id: string, input: string, roots: AddressNode[]): InterfaceRow {
 	return { id, input, tree: tree(roots) }
 }
 

@@ -4,9 +4,9 @@
  * @author Teffen Ellis, et al.
  *
  *   Failure report (#1104-adjacent): run N models over the schema-correct parity corpus, collect the
- *   per-floor-label DISAGREEMENTS with structural metadata, and emit a cross-model HTML report — which
+ *   per-floor-label disagreements with structural metadata, and emit a cross-model html report — which
  *   addresses remain beyond reach, which are model-specific regressions/fixes, and what those failures
- *   CORRELATE with (country, delimiter class, script, source). The tool that would have caught the v261
+ *   correlate with (country, delimiter class, script, source). The tool that would have caught the v261
  *   country regression as "a shared class across the fragment lineage" at a glance.
  *
  *   Emits a Docusaurus MDX report into the evals tree so it folds into the docs build and accumulates a
@@ -15,7 +15,7 @@
  *
  *   Usage (label=cacheRoot pairs. label=shipped uses the installed default):
  *     node packages/mailwoman/lib/dev-tools/failure/report.run.ts \
- *       [--corpus golden:<dir>[:N]] [--out docs/articles/evals/competitive-parity/<file>.mdx] [--date YYYY-MM-DD] \
+ *       [--corpus golden:<dir>[:N]] [--out docs/articles/evals/competitive-parity/<file>.mdx] [--date yyyy-MM-DD] \
  *       shipped=shipped v257=$MAILWOMAN_TEMP_ROOT/v257-cache v261=$MAILWOMAN_TEMP_ROOT/v261-cache
  *   Writes the MDX (default docs/articles/evals/competitive-parity/failure-report.mdx) plus
  *   `$MAILWOMAN_TEMP_ROOT/failure-report.json`.
@@ -58,8 +58,8 @@ interface Fixture {
 
 /**
  * Load the corpus. Default = the schema-correct parity corpus (street-family aware, campaign check).
- * `golden:<dir>[:<sampleN>]` = the golden dev set (broad label coverage INCLUDING country/region, which parity is
- * sparse on) — note its `street` gold is FLAT-schema (pre-split), so street reads confounded there.
+ * `golden:<dir>[:<sampleN>]` = the golden dev set (broad label coverage including country/region, which parity is
+ * sparse on) — note its `street` gold is flat-schema (pre-split). Therefore, street reads confounded there.
  * country/region/locality/postcode/house_number are single-tag and valid.
  */
 async function loadCorpus(
@@ -131,7 +131,7 @@ interface FixtureFailures {
 	country: string
 	source: string
 	flags: StructuralFlags
-	// modelLabel -> the floor labels that DISAGREED, with expected/got.
+	// modelLabel -> the floor labels that disagreed, with expected/got.
 	failsByModel: Record<string, { label: string; expected: string; got: string }[]>
 }
 
@@ -194,7 +194,7 @@ async function runFailureReport(): Promise<void> {
 			const fails: { label: string; expected: string; got: string }[] = []
 
 			// Grade every gold label (not just the floors) so country/region/locality/venue failures — the
-			// classes a candidate silently trades — are captured. Floor labels compare their tag FAMILY
+			// classes a candidate silently trades — are captured. Floor labels compare their tag family
 			// (street = prefix/street/suffix/particle); all others compare by direct tag name.
 			for (const [goldLabel, gold] of Object.entries(f.expect)) {
 				if (!gold?.length) continue
@@ -218,8 +218,8 @@ async function runFailureReport(): Promise<void> {
 	// "Beyond reach": failed on every graded model.
 	const beyondReach = anyFail.filter((r) => labels.every((l) => r.failsByModel[l]))
 
-	// Per-LABEL failure count per model — the view where a silently-traded class (e.g. country on the
-	// fragment lineage) jumps out: a label whose failure count RISES across candidates.
+	// Per-label failure count per model — the view where a silently-traded class (e.g. country on the
+	// fragment lineage) jumps out: a label whose failure count rises across candidates.
 	const allLabels = [
 		...new Set(
 			all.flatMap((r) =>
@@ -354,7 +354,7 @@ async function runFailureReport(): Promise<void> {
 			.map((r) => mdRow([`\`${r.country}\``, cell(r.input), `\`${r.source}\``])),
 	].join("\n")
 
-	// Model-specific: failed on SOME but not all graded models — a fix or regression between candidates.
+	// Model-specific: failed on some but not all graded models — a fix or regression between candidates.
 	const diffs = anyFail.filter((r) => !beyondReach.includes(r))
 
 	const diffTable = [

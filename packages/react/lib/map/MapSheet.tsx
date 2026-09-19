@@ -13,7 +13,7 @@
  *   Escape closes it too, because a panel over the whole screen is a modal in every way that matters to someone
  *   holding a keyboard.
  *
- *   NODE-SAFE: pure React, no maplibre.
+ *   node-safe: pure React, no maplibre.
  */
 
 import { type ReactNode, useEffect } from "react"

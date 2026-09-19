@@ -3,7 +3,7 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   GENERATED — do not edit by hand. Per-country population, derived from GeoNames countryInfo.txt
+ *   generated — do not edit by hand. Per-country population, derived from GeoNames countryInfo.txt
  *   (https://download.geonames.org/export/dump/countryInfo.txt, CC-BY-4.0). Estimates are
  *   census-vintage. a prominence race reads the magnitude rather than the currency. Countries GeoNames
  *   declines to estimate are absent, never zero.

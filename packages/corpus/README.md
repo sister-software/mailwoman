@@ -102,7 +102,7 @@ the source that only the adapter's author has read. Ten of the 23 adapters here 
 role: four facility (`state-hi-schools`, `usgov-hrsa-fqhc`, `usgov-imls-pls`,
 `usgov-samhsa-treatment-locator`), three mailing (`synth-po-box`, `state-tx-notaries`,
 `usgov-irs-bmf`), two practice (`usgov-nppes`, `state-ny-notaries`) and one registered-office
-(`state-ia-contractors`). A defaulted field would record premise for all ten.
+(`state-ia-builders`). A defaulted field would record premise for all ten.
 
 **Assertion per field.** `AssertedProposition` in
 [`@mailwoman/evidence`](../evidence/lib/status.ts) records what a publisher asserts, per field, in
@@ -119,10 +119,10 @@ its prefix. A dual-licensed source needs a record of which terms the build elect
 `Licence Ouverte` or ODbL, and this project elects the former, which is why that reasoning sits in
 a docstring rather than in the data. Still open.
 
-Where the ledger overlaps an existing contract, reuse that shape rather than writing a second
+Where the ledger overlaps an existing interface, reuse that shape rather than writing a second
 provenance vocabulary. A layer database already embeds `layer_manifest` (`source`,
 `source_vintage`, `build_sha`, `license`, `attribution`, `tier`) and `layer_coverage` — see
-[the layer contract](../../docs/engineering/reference/layer-contract.mdx).
+[the layer interface](../../docs/engineering/reference/layer-interface.mdx).
 
 ## The address-source register
 
@@ -173,4 +173,4 @@ stops and nobody checked the national portal behind it.
 
 ## License
 
-[AGPL-3.0-only](https://www.gnu.org/licenses/agpl-3.0.html)
+[AGPL-3.0-only](https://www.gnu.org/licenses/AGPL-3.0.html)

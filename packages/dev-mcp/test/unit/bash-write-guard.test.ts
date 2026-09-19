@@ -3,7 +3,7 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- * @file The refused set and the admitted set are both the contract, and the admitted set is the one that decides
+ * @file The refused set and the admitted set are both the interface, and the admitted set is the one that decides
  *   whether the guard is usable: a guard that refuses ordinary work gets switched off. The cases below came from
  *   driving the first version over the commands a working session runs, where it refused 55 of 56 of them.
  */
@@ -186,7 +186,7 @@ describe("bash-write-guard: the work a session actually does", () => {
 		["a database probe", `sqlite3 /tmp/wof.db 'select count(*) from place'`],
 		["an environment assignment", `MAILWOMAN_DATA_ROOT=\${HOME}/data yarn test`],
 		// A quoted value used to split the assignment into two words, so the head became the quote placeholder and the
-		// refusal named `QUOTED` — a word nobody typed, for a command admitted the moment the quotes came off. Quoting a
+		// refusal named `quoted` — a word nobody typed, for a command admitted the moment the quotes came off. Quoting a
 		// value that carries `$PWD` or a space is how anyone writes one.
 		["an environment assignment with a quoted value", `MAILWOMAN_DATA_ROOT="/mnt/playpen/x" yarn test`],
 		["a quoted PATH before a node script", `PATH="$PWD/node_modules/.bin:$PATH" node config/vale/check-rules.ts`],
@@ -199,7 +199,7 @@ describe("bash-write-guard: the work a session actually does", () => {
 		],
 		["a redirect after changing directory", `cd /tmp && echo hi > probe.txt`],
 		["a home-relative redirect", `echo x > ~/notes.txt`],
-		// `\b` ends a word at a hyphen, so the arbitrary-program rule read this check's own NAME as `yarn node …` and
+		// `\b` ends a word at a hyphen, so the arbitrary-program rule read this check's own name as `yarn node …` and
 		// refused a read-only guard. The subcommand has to be a whole argument.
 		["a health check whose name starts with a refused subcommand", `yarn mwops health node-modules-reacharound`],
 		["a script whose name starts with a refused subcommand", `yarn exec-plan --dry-run`],

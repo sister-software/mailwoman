@@ -3,14 +3,14 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Re-fetch the state-level open-data sources (NY/TX/DE/OR notaries, IA contractors, WA health
+ *   Re-fetch the state-level open-data sources (NY/TX/DE/or notaries, IA contractors, WA health
  *   providers, HI lobbyists). Reproducible recovery if `$MAILWOMAN_DATA_ROOT` is lost.
  *
  *   HI public schools is fetched separately by `mailwoman corpus fetch state-hi-schools` — its
- *   upstream is an XLSX workbook that requires an openpyxl-driven sheet-concatenation pre-step
+ *   upstream is an xlsx workbook that requires an openpyxl-driven sheet-concatenation pre-step
  *   before the adapter can consume it.
  *
- *   Each source lands in its own subdirectory of `<outRoot>/<slug>/` along with a `MANIFEST.json`
+ *   Each source lands in its own subdirectory of `<outRoot>/<slug>/` along with a `manifest.json`
  *   recording origin URL + download timestamp + sha256 so downstream adapters can verify provenance.
  *
  *   Invoke via `mailwoman corpus fetch state-sources --out-root <path>`. Uses Node's built-in fetch
@@ -60,7 +60,7 @@ const SOURCES: readonly Source[] = [
 		url: "https://data.oregon.gov/api/views/j2pk-zk6z/rows.csv?accessType=DOWNLOAD",
 	},
 	{
-		slug: "state-ia-contractors",
+		slug: "state-ia-builders",
 		filename: "IA_Active_Construction_Contractor_Registrations.csv",
 		url: "https://data.iowa.gov/api/views/dpf3-iz94/rows.csv?accessType=DOWNLOAD",
 	},

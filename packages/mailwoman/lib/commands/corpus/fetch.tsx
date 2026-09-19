@@ -5,7 +5,7 @@
  *
  *   `mailwoman corpus fetch <source>` — reproducible bulk-download of the open-data sources the
  *   corpus build consumes (disk-loss recovery, weekly refresh, fresh-environment bootstrap). Each
- *   source writes its raw files plus a sibling `MANIFEST.json` (origin URL, timestamp, byte count,
+ *   source writes its raw files plus a sibling `manifest.json` (origin URL, timestamp, byte count,
  *   sha256). See `@mailwoman/corpus/tools` `fetch/index.ts` for the source registry + license tiers.
  */
 
@@ -44,7 +44,7 @@ const sources = [
 ] as const satisfies readonly FetchSourceID[]
 
 /**
- * Native command-line contract consumed by the filesystem command router.
+ * Native command-line interface consumed by the filesystem command router.
  */
 export const spec = {
 	name: "fetch",

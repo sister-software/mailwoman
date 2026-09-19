@@ -12,7 +12,7 @@ page describes, so a reader can check the page against the code.
 ```yaml
 ---
 title: HTTP API (/v1)
-description: The native Mailwoman wire contract — endpoints, bodies, statuses, and the error envelope.
+description: The native Mailwoman wire interface — endpoints, bodies, statuses, and the error envelope.
 role: reference
 source-of-truth: api/routes.ts, api/schema.ts, api/app.ts
 ---
@@ -22,10 +22,10 @@ source-of-truth: api/routes.ts, api/schema.ts, api/app.ts
 
 1. `# Title` — the surface, named as it is named in code.
 2. **Scope.** One paragraph: what this surface is and what it is not.
-3. **Contract.** The tables. Endpoints, parameters, return shapes, defaults.
+3. **Interface.** The tables. Endpoints, parameters, return shapes, defaults.
 4. **Errors.** One closed table: stable code, one-line meaning, next step.
 5. **Examples.** Full request and full literal response, together.
-6. **Rationale.** Why the contract has this shape. Last, never first.
+6. **Rationale.** Why the interface has this shape. Last, never first.
 7. **See also.**
 
 ## Opening move

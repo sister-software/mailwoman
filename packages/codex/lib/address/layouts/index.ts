@@ -6,13 +6,13 @@
  *   The per-country layout table. Each entry reads in the order it prints, so checking a country means looking at the
  *   shape of an address from there rather than at a nested call.
  *
- *   THE LINE SKELETONS COME FROM libaddressinput, Google's address metadata, which this repository already ships at
+ *   the line skeletons come from libaddressinput, Google's address metadata, which this repository already ships at
  *   `packages/core/data/chromium-i18n/ssl-address/` (252 countries, Apache-2.0) and already has a refresh command for
  *   (`mailwoman dev download ssl-address`). Its `fmt` field is the print order — `%N%n%O%n%A%n%C, %S %Z` for the United
  *   States — and it carries the two things the OpenStreetMap-derived templates get wrong for the locales this project
  *   publishes weights for: Japan's postal mark and largest-first order, and China's unseparated admin run.
  *
- *   WHAT THE DATASET DOES NOT CARRY, and what is therefore authored here:
+ *   what the dataset does not carry, and what is therefore authored here:
  *
  *   1. **The `%A` expansion.** libaddressinput models the street address as one opaque field, because its consumers
  *      hold it as free text. This project's `ComponentTag` union splits it into a house number, the four street-family
@@ -82,7 +82,7 @@ export const japaneseSubPrefecture = addr`${subregion}${locality}${dependent_loc
 export const chineseStreet = addr`${street}${house_number}`
 
 /**
- * How a system joins its lines for SINGLE-LINE output. Absent reads as `", "`, the anglophone default.
+ * How a system joins its lines for single-line output. Absent reads as `", "`, the anglophone default.
  *
  * The CJK entries are the reason this is per-system rather than a caller's argument: joining Japan's lines with a comma
  * produces `1-9-1, 丸の内, 千代田区, 東京都 100-0005`, which is the romanized convention printed backwards.
@@ -93,8 +93,8 @@ export const LINE_JOINS: Readonly<Record<string, string>> = {
 	TW: "",
 	KR: " ",
 	// Written in Han script the same way CN and TW are, and absent here for as long as the table was keyed by country:
-	// Hong Kong's country answer is its ENGLISH register, so a Chinese join under that key would have reached the Latin
-	// ordering. It is the LOCAL-script join, which is why {@link lineJoinForCountry} asks which script first.
+	// Hong Kong's country answer is its english register, so a Chinese join under that key would have reached the Latin
+	// ordering. It is the local-script join, which is why {@link lineJoinForCountry} asks which script first.
 	HK: "",
 	MO: "",
 	// Korean, and the same split KR already states.
@@ -123,7 +123,7 @@ export function isLargestFirstSystem(countryCode: string | null | undefined, scr
 }
 
 /**
- * Which order a layout actually PRINTS: `true` when its `region` line precedes its street line.
+ * Which order a layout actually prints: `true` when its `region` line precedes its street line.
  *
  * `null` when the layout names no region or no street, which several island and city-state records do — those carry no
  * order to contradict.
@@ -275,9 +275,9 @@ ${chineseStreet}
 ${venue}
 ${attention}`,
 
-	// %S%n%C%n%A%n%O%n%N — the generated skeleton is libaddressinput's `fmt`, which is the CHINESE field order, and the
+	// %S%n%C%n%A%n%O%n%N — the generated skeleton is libaddressinput's `fmt`, which is the chinese field order, and the
 	// renderer joins it with `", "` because `LINE_JOINS` has no HK entry. That combination prints
-	// `KLN, YAU TSIM MONG DISTRICT, 21 JORDAN ROAD`, which is neither register.
+	// `KLN, YAU tsim mong district, 21 jordan road`, which is neither register.
 	//
 	// Hong Kong writes both. The Chinese form is `九龍油尖旺佐敦道21號` and the English form is
 	// `21 Jordan Road, Yau Tsim Mong, Kowloon`, and this table holds one layout per country, so it holds the Latin one
@@ -347,7 +347,7 @@ export function layoutForCountry(countryCode: string | null | undefined, script?
 /**
  * How the country named by `countryCode` joins its lines for single-line output, in `script`.
  *
- * The CJK joins belong to the LOCAL script alone. Japan's lines joined with `" "` and Hong Kong's with `""` are right
+ * The CJK joins belong to the local script alone. Japan's lines joined with `" "` and Hong Kong's with `""` are right
  * for `東京都千代田区丸の内1-9-1`, and applying either to a Latin ordering is the state that printed a Chinese field sequence
  * with Latin separators: the order comes from the layout while the separator came from a country flag, so the two could
  * name different systems. Asking for a script makes them name one.
@@ -366,9 +366,9 @@ export function lineJoinForCountry(countryCode: string | null | undefined, scrip
  * Which script {@link layoutForCountry} answers in when no caller says.
  *
  * `local` everywhere except a country whose default layout prints the other order from its own script's skeleton, which
- * is Hong Kong: its hand-authored layout is the English register, so a caller asking for no script gets the Latin
- * ordering and must get the Latin separator with it. Reading the join off the layout that was picked is the whole fix —
- * before, the order came from the layout and the separator from a country flag, so the two could name different
+ * is Hong Kong: its hand-authored layout is the English register. Therefore, a caller asking for no script gets the
+ * Latin ordering and must get the Latin separator with it. Reading the join off the layout that was picked is the whole
+ * fix — before, the order came from the layout and the separator from a country flag, so the two could name different
  * systems.
  */
 export function defaultScriptForCountry(countryCode: string): AddressScript {

@@ -1,46 +1,46 @@
-# === v3.2.0-fragment-span — #1143. One variable vs v310: the span head. THE DECIDING RUN. ===
+# === v3.2.0-fragment-span — #1143. One variable vs v310: the span head. the deciding RUN. ===
 #
-# WHY THIS RUN EXISTS. The span-head arc's ship case died on a measurement rather than an opinion. Paris
+# why this RUN exists. The span-head arc's ship case died on a measurement rather than an opinion. Paris
 # target class (n=63, production config, int8):
 #     v264 token@1 (shipped)              33/63 = 0.524
 #     v301 seg@1   (the flag's whole case) 48/63 = 0.762   <- "+23.8pp", the reason to ship a flag
-#     v310 token@1 (the fr-fragment SOURCE, no span head) 56/63 = 0.889 <- a PLAIN decode, +36.5pp
-# The span decode is 12.7pp WORSE on its own target class than the source-trained model's plain token decode. So the
+#     v310 token@1 (the fr-fragment source, no span head) 56/63 = 0.889 <- a plain decode, +36.5pp
+# The span decode is 12.7pp worse on its own target class than the source-trained model's plain token decode. So the
 # flag ships nothing: an opt-in path that loses to the default is not a feature. §6 of the review
 # (2026-07-16-span-head-arc-review-follow-up.md) said "ship behind a flag" on the belief that the
 # span decode owned that class. T1c + T2 falsified the belief.
 #
-# BUT THE COMPARISON IS BETWEEN ARTIFACTS rather than DECODES. v301's span head was trained on the old, thin
+# but the comparison is between artifacts rather than decodes. v301's span head was trained on the old, thin
 # corpus — the exact distribution T1c named as the cause and T2 replaced. T1a diagnosed the span
-# decode as MISCALIBRATED (over-eager to emit/extend a street segment: 19/54 street-free rows got a
+# decode as miscalibrated (over-eager to emit/extend a street segment: 19/54 street-free rows got a
 # street vs the shipped 12/54); T1c showed the BIO head carried the same miscalibration from the
 # other side. T2 fixed it at the distribution and the BIO side recovered (bare-locality held at
 # 0.980, contextful guards improved). Nobody has ever trained a span head on a corpus that teaches
-# bare streets. THIS RUN IS THAT, and it is the only remaining question the arc can ask.
+# bare streets. this RUN is that, and it is the only remaining question the arc can ask.
 #
-# THE ONE CHANGE vs v3.1.0-fr-fragment: model.use_span_scorer true, span_loss_weight 0.5, span_dim
-# 128, max_span 8, and train.span_head_learning_rate 1e-3 (a FRESH head cannot train at a pretrained
+# the one change vs v3.1.0-fr-fragment: model.use_span_scorer true, span_loss_weight 0.5, span_dim
+# 128, max_span 8, and train.span_head_learning_rate 1e-3 (a fresh head cannot train at a pretrained
 # encoder's fine-tuning LR — the #727 Phase-1 lesson that cost a run). Corpus, tokenizer, lexicons,
 # class_weights, country_weights, every source_weight incl. synth-fr-fragment 12.0, encoder LR, and
 # schedule are verbatim from v310. init_from v310 step-008000. Clean attribution.
 #
-# THE CHECK (pre-registered, and the bar is HIGHER than the flag ever had to clear):
-#   1. PARIS, THE KILL SHOT: seg@1 must beat v310's token@1 = 56/63 (0.889). This is the bar the flag
-#      FAILED. If a span head trained on the fr-fragment source cannot beat a plain decode trained on the same source on the target
+# the check (pre-registered, and the bar is higher than the flag ever had to clear):
+#   1. paris, the kill shot: seg@1 must beat v310's token@1 = 56/63 (0.889). This is the bar the flag
+#      failed. If a span head trained on the fr-fragment source cannot beat a plain decode trained on the same source on the target
 #      class, the span head has no case at any weight and the arc closes.
-#   2. HALLUCINATION: parity.street.hallucination_rate on the 54 street-free rows must fall from
-#      v301-span's 0.352 toward v264's 0.222. T1a's falsifier. Note the rate was never ESTABLISHED
+#   2. hallucination: parity.street.hallucination_rate on the 54 street-free rows must fall from
+#      v301-span's 0.352 toward v264's 0.222. T1a's falsifier. Note the rate was never established
 #      (McNemar p=0.12, n=54) — direction is the read rather than significance.
-#   3. WITHIN-MODEL MARGIN: seg@1 must beat this model's own token@1 by more than v301's honest
+#   3. within-model margin: seg@1 must beat this model's own token@1 by more than v301's honest
 #      +0.38pp (1 fixture, production config). That is the decode's real marginal value.
-#   4. GUARD: the fragment board's 7 cells vs V310 (not v264) — bare-street 0.715, particle 0.855,
+#   4. guard: the fragment board's 7 cells vs V310 (not v264) — bare-street 0.715, particle 0.855,
 #      homonym 0.517, date-name 0.158, street-hn 0.948, alnum 0.960, bare-locality 0.980.
-#   5. GUARD: the v6.0.0-shipped-baseline check. ⚠ v310's TIGHTEST margin is arena.perturb 79 vs floor
+#   5. guard: the v6.0.0-shipped-baseline check. ⚠ v310's tightest margin is arena.perturb 79 vs floor
 #      78 (+1.0pp) — a span head could push it under, and now the floor would actually catch it.
 #
 # If check 1 fails, the span head is done. Close it, do not flag it, do not tune span_loss_weight and
 # re-run — that is the treadmill the arc's own guard forbids. The four phases still paid for
-# themselves: oracle@k and the k-best decode are the instruments that REVEALED the headroom and drove
+# themselves: oracle@k and the k-best decode are the instruments that revealed the headroom and drove
 # T1a -> T1c -> T2. The arc found the answer. the answer was data.
 #
 # ⚠ conventions loss-mask is off in this lineage (inherited). Do not turn it on — the synth-fr-fragment source teaches FR
@@ -87,7 +87,7 @@ data:
     usgov-hrsa-fqhc: 2.0
     usgov-imls-pls: 2.0
     usgov-nad: 1.0
-    state-ia-contractors: 2.0
+    state-ia-builders: 2.0
     state-tx-notaries: 1.5
     state-ny-notaries: 2.0
     deepseek-kryptonite: 3.0
@@ -107,9 +107,9 @@ data:
     synth-no-street-led: 12.0
     synth-cz-pcfirst-preposition: 12.0
     synth-nl-postcode: 6.0
-    # PROBE 1: the fragment/autocomplete source (assay weight — moderate precedent).
+    # probe 1: the fragment/autocomplete source (assay weight — moderate precedent).
     synth-fragment: 6.0
-    # #727 T2 NEW — the one variable. 12.0 = the targeted-fix precedent (fr-bare-street,
+    # #727 T2 new — the one variable. 12.0 = the targeted-fix precedent (fr-bare-street,
     # si-bare-village, no-street-led are all 12.0). Streets with no house number + the
     # bare-locality counter.
     synth-fr-fragment: 12.0
@@ -148,12 +148,12 @@ model: # Verbatim from v2.4.1.
   use_postcode_anchor: true
   use_gazetteer_anchor: true
   gazetteer_feature_dim: 5
-  # #1104 country channel ON — dedicated 2-dim [country_surface, country_ambiguous] soft feed with its
+  # #1104 country channel on — dedicated 2-dim [country_surface, country_ambiguous] soft feed with its
   # own projection + confidence (must equal the lexicon's feature_dim). Default-False elsewhere, so a
   # resume from a pre-country checkpoint stays byte-identical until this flips.
   use_country_anchor: true
   country_feature_dim: 2
-  # #1104 homograph-guard SOFTENER — the one variable vs v263. Scales the country_ambiguous dim by 0.5
+  # #1104 homograph-guard softener — the one variable vs v263. Scales the country_ambiguous dim by 0.5
   # before the country_projection (bakes into the exported ONNX. no lexicon/inference change). v263's
   # hard guard (scale 1.0) over-suppressed homograph countries Georgia/Jordan (country-homograph F1
   # 89.8->82.6); softening should recover homograph recall without giving back the country F1 the
@@ -195,7 +195,7 @@ model: # Verbatim from v2.4.1.
     I-intersection_b: 1.0
   use_phrase_priors: true
   phrase_feature_dim: 10
-  # #1143 THE ONE VARIABLE vs v310: the semi-Markov span scorer. Knobs verbatim from v3.0.1 (the
+  # #1143 the one variable vs v310: the semi-Markov span scorer. Knobs verbatim from v3.0.1 (the
   # probe that passed its check). fp32 partition math is enforced inside span_scorer.py.
   use_span_scorer: true
   span_loss_weight: 0.5
@@ -212,7 +212,7 @@ train: # Same-vocab init_from fine-tune off the shipped v261 (fresh optimizer; -
   eval_batch_size: 128
   grad_accum_steps: 1
   learning_rate: 1.0e-5
-  # A FRESH head cannot train at the encoder's fine-tuning LR — #727 Phase 1 spent a whole run
+  # A fresh head cannot train at the encoder's fine-tuning LR — #727 Phase 1 spent a whole run
   # learning that. Its own param group, verbatim from v3.0.1.
   span_head_learning_rate: 1.0e-3
   weight_decay: 0.01

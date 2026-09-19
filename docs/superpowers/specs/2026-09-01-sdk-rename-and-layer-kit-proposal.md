@@ -26,7 +26,7 @@ intuitive answer**, which is why they are written down rather than acted on.
 3. **Do not build `layer-kit` for de-duplication.** The four layer packages share eight filenames and
    **0.18% of their lines**. There is almost nothing to de-duplicate; a shared package would be imposing one
    abstraction over four in fact different implementations (§4).
-4. **A shared package may still be worth building for a different reason** — a single tested contract for the
+4. **A shared package may still be worth building for a different reason** — a single tested interface for the
    ingest stages — but that is a design argument that must be made on its own evidence, and this record does
    not make it (§4.3).
 
@@ -129,7 +129,7 @@ Two limits on the instrument, both of which reduce against over-reading it:
 - `--min-lines 20` cannot see the 5–15-line idioms that were the actual duplication class here — a batched
   commit loop, a manifest block. The number is a floor on duplication rather than a measure of it.
 - "same filename, 2.1× size" measures VOLUME rather than shared structure. Two files can differ in length and still
-  share a control-flow skeleton; the table below is evidence against a copy rather than evidence against a contract.
+  share a control-flow skeleton; the table below is evidence against a copy rather than evidence against a interface.
 
 And the same-named files are not the same size:
 
@@ -153,15 +153,15 @@ This is the inverse of the usual finding, and it is the reason the audit's insti
 not be taken on sight. `@mailwoman/core/layers`, which all four already share, is what the in fact common
 part looks like — and it is already extracted.
 
-### 4.3 The contract question already has a home — and it is not a new package
+### 4.3 The interface question already has a home — and it is not a new package
 
-`@mailwoman/core/layers` **is** the contract package. A fifth layer today already inherits
+`@mailwoman/core/layers` **is** the interface package. A fifth layer today already inherits
 `runIngestChunkScript`, `buildSealedArtifact`, `polygonLayerManifest`, `designatedCoverageCells`,
 `assertNoNegativeClaim` and `areaAgreementFrom` (with its witness type). So the question is not "should one
 exist" but "what is still missing from the one that does" — which makes `layer-kit` the wrong shape twice
 over: it would duplicate an existing home as well as failing the de-duplication test in §4.1.
 
-The unextracted contract pieces are known and few. Three were deferred **with reasons** during #2041, and the
+The unextracted interface pieces are known and few. Three were deferred **with reasons** during #2041, and the
 fourth is tracked:
 
 | piece                                           | why it was left                               | the difference that blocks a naive merge                              |

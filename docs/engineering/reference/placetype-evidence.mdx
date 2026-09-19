@@ -85,7 +85,7 @@ What comes out is a `placetypeCensus` record on the parse trace (`{parent, child
 per known parent, plus the probed-parent count as the denominator), whose `applied` is hard-coded
 `false`. The decode is byte-identical with the census present or absent, asserted at both the prior
 and the full-decode level in `neural/placetype-census-observability.test.ts`. That test is the
-contract: a calibration δ has to be measured off these traces rather than slipped in.
+interface: a calibration δ has to be measured off these traces rather than slipped in.
 
 Two things the first real traces showed. `shoreditch, london` (en-GB) reads `london` at lift 1.52×
 on `dependent_locality` — the evidence is there and it is the right sign. `astoria, queens, ny`

@@ -7,7 +7,7 @@
  *   (PMTiles) from the per-state address-point (+ interpolation) databases. See `coverage-core.ts` for the
  *   pipeline + fog model. Publish the result with `mailwoman tiles publish`.
  *
- *   Maintainer-only: needs the local databases + `tippecanoe` on PATH + the @duckdb/node-api dev dep.
+ *   Maintainer-only: needs the local databases + `tippecanoe` on path + the @duckdb/node-api dev dep.
  */
 
 import { extractDelimited } from "@mailwoman/core/scripting/arguments"
@@ -57,7 +57,7 @@ const unit = (description: string, defaultValue: number) =>
 	}) as const
 
 /**
- * The command-line contract the filesystem command router reads for `mailwoman coverage build`.
+ * The command-line interface the filesystem command router reads for `mailwoman coverage build`.
  *
  * Its option names and descriptions are the source the CLI reference page is generated from, so a
  * rename here moves `docs/articles/developers/reference/cli.mdx` and the docs check refuses the drift.

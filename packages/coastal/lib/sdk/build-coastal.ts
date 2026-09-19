@@ -6,29 +6,29 @@
  *   Build `coastal-england.db` — the sealed scenario-scoped polygon layer, from the authority's published
  *   geodatabase.
  *
- *   THE COVERAGE IS `source_present`, AND THAT IS THE WHOLE POINT OF THIS LAYER BEING THE SECOND ONE. The
+ *   the coverage is `source_present`, and that is the whole point OF this layer being the second one. The
  *   sibling flood build writes `basis = designated, completeness = 1.0` over the authority's stated England
  *   footprint, because the Planning Practice Guidance defines Zone 1 as the land outside Zones 2 and 3 — an
- *   absence there is a designation. NCERM publishes no coverage statement, so an absent erosion polygon is
+ *   absence there is a designation. ncerm publishes no coverage statement, so an absent erosion polygon is
  *   either "inland" or "coast, outside the mapped risk area" and the published layers cannot tell those
  *   apart. A builder that generalized the flood rule would write "no erosion risk" over the whole of England.
  *   So the coverage rows here are exactly the cells the source's own polygons reach, on the weakest basis the
- *   contract has, and {@linkcode assertNoNegativeClaim} refuses anything stronger before a row is written.
+ *   interface has, and {@linkcode assertNoNegativeClaim} refuses anything stronger before a row is written.
  *   `coastal_mapped_extent` stays empty, which is what would have to change first.
  *
- *   THERE IS NO BUILD-TIME TOUCH TABLE, AND ITS ABSENCE IS A CONSEQUENCE OF THE KEY. A flood cell row names a
- *   ZONE CODE, so its containment is not decided until every feature carrying that code has been seen, which
+ *   there is no build-time touch table, and its absence is A consequence OF the KEY. A flood cell row names a
+ *   zone code, so its containment is not decided until every feature carrying that code has been seen, which
  *   is why that build streams touches into a temporary table and resolves them at the end. An erosion cell
- *   row names ONE POLYGON, so it is final the moment that polygon is classified. The rows go straight in, and
+ *   row names one polygon, so it is final the moment that polygon is classified. The rows go straight in, and
  *   memory stays flat in row count with nothing to resolve afterwards.
  *
- *   THE INGEST IS BOUNDED ANYWAY. h3's WASM heap cannot be reset from JavaScript and does not survive an
+ *   the ingest is bounded anyway. h3's wasm heap cannot be reset from JavaScript and does not survive an
  *   unbounded number of polyfill calls. the sibling product died twice on that, after roughly 510,000 and
  *   798,000 features. This product's largest layer holds 7,501, so one chunk per layer fits inside the
  *   100,000-id default with two orders of magnitude to spare — and the bound still ships, because a build
  *   that stays inside a ceiling by luck is not the same fact as one that cannot cross it.
  *
- *   THE AREA CROSS-CHECK IS BELT AND BRACES AND IT STAYS. It costs one subtraction per feature and its
+ *   the area cross-check is belt and braces and IT stays. It costs one subtraction per feature and its
  *   absence is silent: a hole read as an exterior ring produces a well-formed polygon that simply covers
  *   ground the authority did not map, and answers "inside" for every point in it. The zoning survey measured
  *   that at 4.1% over a national layer.
@@ -84,7 +84,7 @@ export const COASTAL_SCHEMA_VERSION = 1
  * Feature ids per chunk process.
  *
  * Sized against the measured ceiling on the sibling product rather than guessed: single-process runs over that layer
- * died after roughly 510,000 and 798,000 features as h3's WASM heap fragmented. NCERM's largest layer holds 7,501
+ * died after roughly 510,000 and 798,000 features as h3's wasm heap fragmented. ncerm's largest layer holds 7,501
  * features, so this default puts one whole layer in one process. That ceiling makes the build reproducible rather than
  * the fact that this product happens to sit far below it.
  */
@@ -96,7 +96,7 @@ export const DEFAULT_CHUNK_SIZE = 100_000
 export type BuildCoastalInput =
 	| {
 			/**
-			 * A feature source consumed IN THIS PROCESS. Correct for a fixture and for anything small. it is what the batched
+			 * A feature source consumed IN this process. Correct for a fixture and for anything small. it is what the batched
 			 * form falls back to per chunk, so the two share one implementation.
 			 */
 			source: CoastalFeatureSource
@@ -135,7 +135,7 @@ export type BuildCoastalOptions = BuildCoastalInput & {
 	buildCmd: string
 	buildSHA: string
 	/**
-	 * ISO-8601, supplied by the caller. Never generated here: the contract says so, and a library-generated timestamp
+	 * ISO-8601, supplied by the caller. Never generated here: the interface says so, and a library-generated timestamp
 	 * makes two builds of the same inputs differ.
 	 */
 	createdAt: string
@@ -166,7 +166,7 @@ export interface BuildCoastalResult {
 	wholeCellRows: number
 	partialCellRows: number
 	/**
-	 * `partialCellRows / (wholeCellRows + partialCellRows)` over the STORED rows — the whole side is compacted per
+	 * `partialCellRows / (wholeCellRows + partialCellRows)` over the stored rows — the whole side is compacted per
 	 * feature, so this is not the same number the resolution was chosen on and is reported separately.
 	 */
 	storedPartialShare: number
@@ -197,7 +197,7 @@ export interface BuildCoastalResult {
 /**
  * The relative gap between the two area readings that fails the build.
  *
- * The comparison is a spherical ring area against GDAL's planar area in the source's own projection, so the two never
+ * The comparison is a spherical ring area against gdal's planar area in the source's own projection, so the two never
  * agree exactly: British National Grid's scale factor runs 0.9996 at its central meridian to about 1.0004 at the edges
  * of its usable zone, contributing roughly a tenth of a percent, and the spherical approximation contributes a similar
  * amount against the ellipsoid. One percent leaves both far inside the tolerance while sitting well below the error a
@@ -291,10 +291,10 @@ export async function buildCoastalDatabase(options: BuildCoastalOptions): Promis
 				}>
 			).map((row) => row.resolution)
 
-			// NO SECONDARY INDEXES, AND THAT IS A DECISION RATHER THAN AN OMISSION. Both probes this artifact serves are
-			// already primary-key probes: the cell table's `(h3_cell, area_id)` key answers `WHERE h3_cell = ?` as a range
+			// no secondary indexes, and that is A decision rather than an omission. Both probes this artifact serves are
+			// already primary-key probes: the cell table's `(h3_cell, area_id)` key answers `where h3_cell = ?` as a range
 			// scan of a handful of rows, and a scenario filter over those few rows costs nothing. the geometry table is
-			// probed by `area_id`, its own key. A `(scenario_key, h3_cell)` index over a `WITHOUT ROWID` table carries the
+			// probed by `area_id`, its own key. A `(scenario_key, h3_cell)` index over a `without rowid` table carries the
 			// primary key in every entry, so it would roughly double the cell tier to serve a scan that is already short —
 			// size for a reader that does not exist.
 			const totalCellRows = ingested.wholeCellRows + ingested.partialCellRows
@@ -373,7 +373,7 @@ export function aggregateChunks(chunks: ReadonlyArray<CoastalChunkResult>): Stre
 
 		mergeCountsInto(defenceTypeCounts, chunk.defenceTypeCounts)
 
-		// A coverage cell straddles chunk boundaries — one chunk is one SCENARIO, and every scenario covers the same coast
+		// A coverage cell straddles chunk boundaries — one chunk is one scenario, and every scenario covers the same coast
 		// — so the counts ADD rather than replace. Taking the last chunk's value would report a cell as holding only the
 		// last scenario's polygons, which is a twelfth of what is there.
 		mergeCountsInto(observedByCoverageCell, chunk.observedByCoverageCell)
@@ -395,7 +395,7 @@ export function aggregateChunks(chunks: ReadonlyArray<CoastalChunkResult>): Stre
 /**
  * Refuse a scenario whose streamed count disagrees with the live service's.
  *
- * PER SCENARIO RATHER THAN POOLED, because a pooled total can agree while two layers are transposed — twelve layers of
+ * PER scenario rather than pooled, because a pooled total can agree while two layers are transposed — twelve layers of
  * nearly identical size is exactly the population where that goes unnoticed.
  */
 function assertScenarioCounts(
@@ -421,7 +421,7 @@ function assertScenarioCounts(
 /**
  * Refuse a coverage row that would license a negative claim.
  *
- * THIS IS THE CHECK THE MEANING-OF-ZERO INVERSION TURNS ON. NCERM publishes no coverage statement, so no row of this
+ * This is the check the meaning-OF-zero inversion turns on. ncerm publishes no coverage statement, so no row of this
  * layer may support an exclusion — a `designated` or `surveyed` basis here would let an absent polygon be read as a
  * designation of safety over the whole of inland England. The reader checks the same thing at open time, so an artifact
  * built by some other path cannot get past it either.
@@ -432,7 +432,7 @@ export function assertNoNegativeClaim(cells: ReadonlyArray<CoverageCell>): void 
 
 /**
  * Run the ingest as a sequence of bounded child processes — one per scenario layer, then one for the two
- * ground-instability layers. The shared chunk contract — the parent's no-handle rule, and the fail-loud handling of a
+ * ground-instability layers. The shared chunk interface — the parent's no-handle rule, and the fail-loud handling of a
  * chunk that dies or prints nothing — lives with `ingestChunkArguments` and `runChunkProcess`.
  */
 async function runBatchedIngest(
@@ -453,7 +453,7 @@ async function runBatchedIngest(
 			throw new Error(`coastal build: ${stringifyJSON(scenarioKey)} is not one of the twelve published scenarios`)
 		}
 
-		// Each layer numbers its own `OBJECTID` from 1, so the range is per layer. The upper bound is deliberately open —
+		// Each layer numbers its own `objectid` from 1, so the range is per layer. The upper bound is deliberately open —
 		// `ogrinfo` reports a count rather than a maximum id, and a range that stopped at the count would drop every feature past
 		// a gap in the numbering.
 		let from = 1

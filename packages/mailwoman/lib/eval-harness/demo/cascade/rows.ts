@@ -4,18 +4,18 @@
  * @author Teffen Ellis, et al.
  *
  *   Row schema + loud validation for the demo-cascade smoke eval (#524). Split out of the runner
- *   (`demo-cascade-smoke.ts`) so the schema contract is unit-testable without loading the model /
- *   the hot DB — a malformed row must fail NAMING the row, never silently skip or crash mid-run.
+ *   (`demo-cascade-smoke.ts`) so the schema interface is unit-testable without loading the model /
+ *   the hot DB — a malformed row must fail naming the row, never silently skip or crash mid-run.
  *
- *   Row convention (see `data/eval/external/demo-cascade-smoke.README.md`): each row asserts the
- *   RESOLVED WOF PLACE ID of the top cascade hit — the whole-stack contract — not parse components.
+ *   Row convention (see `data/eval/external/demo-cascade-smoke.readme.md`): each row asserts the
+ *   resolved WOF place ID of the top cascade hit — the whole-stack interface — not parse components.
  *   Exactly one of `expect.id` (a verified WOF id) or `expect.anchor_centroid` (postcode-only dead
  *   ends where the slim DB has no row and the demo synthesizes an anchor-centroid hit) per row.
  *
  *   Restored 2026-08-06. The 2026-07-10 probe triage (c61159ef) swept this file into the gitignored
  *   `scripts/diagnostic/` drawer while leaving its only importer — `demo-cascade-smoke.ts`, a
  *   promotion-eval battery leg — behind in `scripts/eval/`. The commit message's "check spawn targets
- *   verified present post-move" was true of the spawn TARGET and false of its dependency, so the
+ *   verified present post-move" was true of the spawn target and false of its dependency, so the
  *   cascade leg has been an `ERR_MODULE_NOT_FOUND` ever since. it was spawned with `nothrow` and only
  *   when a `wof-hot.db` was present, which is why nothing surfaced it for four weeks.
  */
@@ -78,14 +78,14 @@ class SmokeRowError extends Error {
 }
 
 /**
- * Parse + validate a JSONL smoke-row file. Throws a {@link SmokeRowError} naming the 1-based row number (and echoing the
+ * Parse + validate a jsonl smoke-row file. Throws a {@link SmokeRowError} naming the 1-based row number (and echoing the
  * offending line) on any malformed row. Returns at least one row — an empty file is an error rather than a vacuous
  * pass.
  */
 export function parseSmokeRows(text: string, sourceLabel: string): SmokeRow[] {
-	// The row NUMBER is the point of this parser: every error names the 1-based line a human would
+	// The row number is the point of this parser: every error names the 1-based line a human would
 	// count to in the file. TextSpliterator drops empty segments, so a fixture with a blank line
-	// renumbers every row after it — measured, by the "numbers rows by FILE line" case in
+	// renumbers every row after it — measured, by the "numbers rows by file line" case in
 	// demo-cascade-rows.test.ts, which caught exactly that when this was briefly a spliterator.
 	// split() keeps blank lines, and the input is one bounded committed fixture.
 	// oxlint-disable-next-line mailwoman/prefer-spliterator -- row numbering needs blank lines kept

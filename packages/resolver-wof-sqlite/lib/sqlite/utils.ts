@@ -51,7 +51,7 @@ export function prepareAll<Parameters extends SQLInputValue[], Row, DB>(
 /**
  * True when `name` is a table in the open database. The street-level lookups use this to degrade gracefully on an
  * empty/tableless extract — an interrupted `build-*-extract.ts`, or a stray 0-byte file (e.g. `sqlite3 <missing>.db
- * "…"` CREATES one) — rather than throwing `no such table` at construction and taking down a whole state's geocode
+ * "…"` creates one) — rather than throwing `no such table` at construction and taking down a whole state's geocode
  * (#568). A missing table makes the lookup a no-op miss.
  */
 export function hasTable<DB>(db: DatabaseClient<DB>, name: string): boolean {
@@ -66,11 +66,11 @@ export function hasTable<DB>(db: DatabaseClient<DB>, name: string): boolean {
  * True when `table` exists in the open database and carries `column`.
  *
  * The column-level sibling of {@link hasTable}, and it exists for the same reason one layer down: an artifact built
- * before a column was added is still a VALID artifact, and a reader that unconditionally names the new column in its
- * `SELECT` turns "this gazetteer is a build behind" into `no such column` at the first keystroke. Probe once at
- * construction and shape the query — `table_info` is a PRAGMA, so it must not sit on a per-query path.
+ * before a column was added is still a valid artifact, and a reader that unconditionally names the new column in its
+ * `select` turns "this gazetteer is a build behind" into `no such column` at the first keystroke. Probe once at
+ * construction and shape the query — `table_info` is a pragma, so it must not sit on a per-query path.
  *
- * Note the interpolation: PRAGMA does not take bound parameters, so `table` is spliced. Every caller passes a
+ * Note the interpolation: pragma does not take bound parameters, so `table` is spliced. Every caller passes a
  * module-level constant. never pass user input.
  */
 export function hasColumn<DB>(db: DatabaseClient<DB>, table: string, column: string): boolean {

@@ -7,7 +7,7 @@
  *
  *   **Phase 1.5.1 pivot.** Replaces the previous SpatiaLite-backed implementation (formerly at
  *   `packages/corpus/lib/adapters/wof-postalcode/`, removed in this same change). The rationale is
- *   in `wof-admin-json/adapter.ts` and in `DECISIONS.md` — short version: the SQLite distribution
+ *   in `wof-admin-json/adapter.ts` and in `decisions.md` — short version: the SQLite distribution
  *   mirror is dead, the live distro tags every postcode row `mz:is_current = -1` which the old
  *   `is_current = 1` predicate excluded, and localized `name:*` variants don't ship in the SQLite
  *   export at all.
@@ -54,7 +54,7 @@ import { buildAncestryIndex, walkFeatures, type WOFRecord } from "#utils"
 /**
  * US state name → USPS alpha-2, the surface form a US postal address carries.
  *
- * WOF names the region in full (`Oregon`); the layout renders whatever it is given, because a layout is an ORDER and
+ * WOF names the region in full (`Oregon`); the layout renders whatever it is given, because a layout is an order and
  * not a vocabulary. Choosing the surface form is therefore this adapter's decision, and the postal one is the code.
  */
 const US_STATE_ABBREVIATION_BY_NAME: ReadonlyMap<string, string> = new Map(
@@ -73,7 +73,7 @@ function regionSurface(country: string, name: string): string {
 /**
  * Map a WOF placetype to a Mailwoman `ComponentTag`, or `undefined` to skip.
  *
- * Per-adapter deliberately (the admin adapter carries its own): each table is a record FILTER for its adapter's
+ * Per-adapter deliberately (the admin adapter carries its own): each table is a record filter for its adapter's
  * emission set — this one keeps `postalcode` plus the ancestry placetypes its variants render — not a shared
  * vocabulary.
  */

@@ -58,12 +58,12 @@ const REFUSED_ENDPOINT_HOSTS = new Set(["photon.komoot.io", "nominatim.openstree
 /**
  * Minimum spacing between two dispatches to an external arm, in milliseconds.
  *
- * A JUDGEMENT rather than a measurement, and stated as one: these endpoints are self-hosted, so no upstream publishes a
+ * A judgement rather than a measurement, and stated as one: these endpoints are self-hosted, so no upstream publishes a
  * rate for them and there is no limit to honour. What the interval provides is that a 400-row loop cannot saturate a
  * service sharing this box's memory bandwidth with the resident gazetteer — 20 dispatches per second is far above what
  * a sequential comparison reaches anyway, so it costs a well-behaved run nothing and bounds a pathological one.
  *
- * Set through `minRequestIntervalMs` rather than `requestsPerMinute` deliberately: AGENTS.md records that the budget
+ * Set through `minRequestIntervalMs` rather than `requestsPerMinute` deliberately: agents.md records that the budget
  * budget alone does not deliver N requests per minute (measured at 100/min for `requestsPerMinute: 10`), and the
  * interval limit is the one that actually holds a rate.
  */
@@ -118,7 +118,7 @@ export interface ExternalAnswer {
 	label: string | null
 	/**
 	 * The answer's place-identity chain (mailwoman arms only — the resolved hierarchy's placeIDs, finest first). A
-	 * coordinate diff is blind to a wrong-INSTANCE win under a nearly-right coordinate (the Astoria class: the correct
+	 * coordinate diff is blind to a wrong-instance win under a nearly-right coordinate (the Astoria class: the correct
 	 * Queens point under the Oregon placeID), and the 2026-08-18 band-injection battery needed a hand-written probe for
 	 * exactly this. Absent when the arm cannot state identity — external engines, oracles, and runs recorded before this
 	 * field existed — and an identity comparison only runs when both sides carry one.
@@ -196,7 +196,7 @@ function readString(value: unknown): string | null {
 }
 
 /**
- * A coordinate from either a JSON number or the decimal STRING Nominatim answers with, range-checked by
+ * A coordinate from either a JSON number or the decimal string Nominatim answers with, range-checked by
  * `@mailwoman/spatial`'s own bounds.
  *
  * Two traps, both closed by the validator rather than by a finiteness test. `Number("")` is 0, so an empty string would
@@ -328,7 +328,7 @@ const ENGINE_PROTOCOLS: Record<ExternalEngine, EngineProtocol> = {
 /**
  * Validate an endpoint and strip it to an origin plus path prefix.
  *
- * @throws When the URL is unparseable, is not HTTP(S), or names a host that may never be scored.
+ * @throws When the URL is unparseable, is not http(S), or names a host that may never be scored.
  */
 export function assertScorableEndpoint(endpoint: string): string {
 	let url: URL
@@ -391,7 +391,7 @@ export class ExternalGeocoderClient extends APIClient {
 	/**
 	 * Top-1 for one raw query string.
 	 *
-	 * @throws On a transport or HTTP failure that survived the retry ceiling. Throwing rather than returning a no-result
+	 * @throws On a transport or http failure that survived the retry ceiling. Throwing rather than returning a no-result
 	 *   is what lets the caller separate "this endpoint does not hold this address" from "this endpoint is gone" — the
 	 *   second must not be able to accumulate silently into a row of misses.
 	 */

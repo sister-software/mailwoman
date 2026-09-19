@@ -19,7 +19,7 @@ describe("summarizeLatency", () => {
 	})
 
 	it("passes p in [0, 100], not a fraction", () => {
-		// The unit AGENTS.md flags specifically. A fraction would floor to index 0 and report the MINIMUM as the median.
+		// The unit agents.md flags specifically. A fraction would floor to index 0 and report the minimum as the median.
 		const reading = summarizeLatency([1, 2, 3, 4, 100])
 
 		expect(reading.p50_ms).not.toBe(1)

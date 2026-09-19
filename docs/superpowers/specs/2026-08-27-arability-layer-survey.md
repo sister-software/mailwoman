@@ -11,9 +11,9 @@ activity-affordance vector wants a per-cell signal that can sit beside light, dw
 density. Acquiring the same national datasets twice, with two aggregation choices that can never be
 reconciled cell for cell, is the outcome §4 exists to prevent.
 
-The consuming implementation already exists, so nothing below proposes new architecture. The layer contract
+The consuming implementation already exists, so nothing below proposes new architecture. The layer interface
 (`layer_manifest` / `layer_coverage` on the H3 spine) is specified in
-[`../../engineering/reference/layer-contract.mdx`](../../engineering/reference/layer-contract.mdx);
+[`../../engineering/reference/layer-interface.mdx`](../../engineering/reference/layer-interface.mdx);
 `packages/bdc` is the worked federal-provider shape; the exclusion-grade coverage pilot
 ([`2026-08-27-exclusion-grade-coverage-pilot.md`](./2026-08-27-exclusion-grade-coverage-pilot.md)) is
 the basis discipline; the flood survey
@@ -196,7 +196,7 @@ underlying survey is far older. Measured on one real survey area — Polk County
 | SSURGO database for Polk County, Iowa   | —        | 1998, 2009 |
 
 **The field survey behind a polygon republished in 2025 was published in 1960.** The dataset's own
-`<enddate>` is `20250909`, which is the refresh, so a consumer reading the time-period-of-content as
+`<enddate>` is `20250909`, which is the refresh. Therefore, a consumer reading the time-period-of-content as
 survey currency reads it wrong. The manifest's `source_vintage` must be the refresh; the per-survey-area
 survey date is a separate fact the metadata carries and the layer should carry too.
 
@@ -354,7 +354,7 @@ CreateProcess error=267, The directory name is invalid`. All seven were exercise
   blocked port cannot produce a `CreateProcess` fault string, so **the failure is in fact the backend rather than this network**. And the year range is its own answer: out-of-range years are rejected with
   `"Error: The year must be between 1997 and 2019."` — **six crop years behind the shipped 2025 CDL**,
   even if the backend were repaired. The WSDL's own SOAP binding address names port 80, which redirects
-  into the dead 443, so the only working entry is the explicit `:8080`.
+  into the dead 443. Therefore, the only working entry is the explicit `:8080`.
 
   **Treat the CropScape API as unavailable for data retrieval** — not because it cannot be reached, but
   because it answers and fails. NASS publishes no decommissioning statement (a checked absence; the FAQ,
@@ -497,7 +497,7 @@ nothing about what is in the soil.**
 
 One live contradiction, reported rather than resolved: data.europa.eu labels "LUCAS 2018 TOPSOIL data"
 **CC BY 4.0**, while the record's only distribution link points back at the ESDAC page carrying the
-restrictive contract above. The European Commission's legal notice resolves the hierarchy in ESDAC's
+restrictive interface above. The European Commission's legal notice resolves the hierarchy in ESDAC's
 favour — "**Unless otherwise indicated** (e.g. in individual copyright notices), content owned by the
 EU … is licensed under … CC BY 4.0" — and a per-dataset Notification is exactly such an individual
 notice. That reading is stated as a reading (§8); no authority states it for this dataset. The portal
@@ -865,7 +865,7 @@ the two is claimed.
 
 ### 4.6 Tables
 
-Six domain tables plus the two contract tables, written as Kysely schema modules with the typed
+Six domain tables plus the two interface tables, written as Kysely schema modules with the typed
 interface co-located with its `createXTable`, per the house database discipline. The pilot is
 polygon-shaped, so §4.3's polygon rule governs: `soil_map_unit_area` is the truth, `soil_map_unit_cell`
 is the containment summary above it, and `soil_capability_cell` is the reduction both consumers read.
@@ -926,11 +926,11 @@ soil_survey_area           -- the authority's mapped footprint rather than the u
   survey_source_date TEXT?   -- the FIELD survey date from the area's own metadata (1960 for IA153)
   source_scale     INTEGER?  -- 15840 for IA153's original survey
 
-layer_manifest / layer_coverage   -- the contract tables, from @mailwoman/core/layers
+layer_manifest / layer_coverage   -- the interface tables, from @mailwoman/core/layers
 ```
 
 `WITHOUT ROWID` on `soil_map_unit_cell` and `soil_capability_cell` and not on `soil_map_unit_area`
-follows the contract's own guidance — small fixed-width rows probed by their exact primary key belong in
+follows the interface's own guidance — small fixed-width rows probed by their exact primary key belong in
 the B-tree; a row carrying a geometry blob does not.
 
 **The three cell-facing tables are one pipeline rather than three sources.** `soil_map_unit_area` holds what
@@ -964,7 +964,7 @@ the failure two separate acquisitions would guarantee.
 | `build_cmd` / `build_sha`   | the invocation and the commit that produced it                                    |
 | `freshness_policy`          | `versioned-refresh` — NRCS re-issues annually under the same product              |
 | `spine_keys`                | `{ h3: { column: "h3_cell", resolution: … } }` — see below and §1                 |
-| `created_at`                | caller-supplied, per the contract                                                 |
+| `created_at`                | caller-supplied, per the interface                                                |
 
 **The resolution is a measurement the pilot takes, and §4.4 has already bounded it. Run the
 `partial`-share measurement at res 7, 8, 9 and 10** — four candidates, on the pilot region, over the
@@ -1111,7 +1111,7 @@ the signal path share the data and share nothing else, so neither constrains the
 ### 5.5 The carrier, and the one place it does not fit
 
 `QueryIntentMarker` is the carrier, for the same reasons and with the same reservation the flood survey
-records. Its contract is already the requirement: additive, attributed, always accompanied by the
+records. Its interface is already the requirement: additive, attributed, always accompanied by the
 ordinary answer, never changing which answer wins, carrying `mechanism` in the `family:rule` form and an
 `evidence` record where everything above goes.
 
@@ -1276,7 +1276,7 @@ its search half does not.
 **EU.**
 
 - **Which license prevails for LUCAS 2018 topsoil** between data.europa.eu's CC BY 4.0 label and ESDAC's
-  restrictive per-dataset contract. The European Commission legal notice's "unless otherwise indicated"
+  restrictive per-dataset interface. The European Commission legal notice's "unless otherwise indicated"
   carve-out points to ESDAC's terms, but **that is a reading and no authority states it for this
   dataset.** Recorded as a contradiction rather than resolved.
 - **Whether a site-wide ESDAC data policy exists** under an unguessed URL. Eighteen candidate URLs each
@@ -1305,6 +1305,6 @@ its search half does not.
 
 - **Whether the res-8/res-9 choice survives at national scale** is not settled and cannot be settled by
   this record. §4.4's delineation-size distribution is measured on **one county in Iowa**, which is dense
-  prime farmland and therefore finely delineated. A rangeland or forest county will have larger
+  prime farmland and. Therefore, finely delineated. A rangeland or forest county will have larger
   delineations and a different mixture share, and §4.7's measurement must be taken per region rather than
   assumed from `IA153`.

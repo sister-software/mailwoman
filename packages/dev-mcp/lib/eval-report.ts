@@ -5,7 +5,7 @@
  *
  *   Read a promotion-eval run's own artifacts.
  *
- *   Unlike the gauntlet, the eval writes STRUCTURED output: `verdict.json` carries every floor with its reading, and
+ *   Unlike the gauntlet, the eval writes structured output: `verdict.json` carries every floor with its reading, and
  *   `provenance.txt` records each graded artifact's md5 and dynamic-quant fingerprint. So nothing here parses prose for
  *   a number — the log is read only for the two things that exist nowhere else, the lore-guard refusal and the
  *   pre-filled ledger command.
@@ -42,12 +42,12 @@ export interface FloorReading {
 
 export interface EvalReport {
 	/**
-	 * `PASS` / `FAIL` from `verdict.json`, or `null` when the file is absent — a run that crashed before assembling one.
+	 * `pass` / `fail` from `verdict.json`, or `null` when the file is absent — a run that crashed before assembling one.
 	 */
 	verdict: string | null
 	label: string | null
 	/**
-	 * WHICH ARTIFACT the floors were read from, verbatim from the verdict.
+	 * Which artifact the floors were read from, verbatim from the verdict.
 	 *
 	 * Surfaced at the top rather than buried because it is a documented confound: a package-shaped cache's `model.onnx`
 	 * is whatever the package ships — int8, in every shipped weights package — and the verdict said `fp32` for a
@@ -244,7 +244,7 @@ async function declaredArtifacts(packageDir: PathBuilderLike): Promise<string[]>
  * Check that a `--weights-cache` root has the layout the eval expects, and say what is missing when it does not.
  *
  * The eval's own failure here is deliberate and stays in place: `promotion-eval.ts` names the package directory rather
- * than calling `resolveWeights({cacheRoot})` precisely so a mis-staged candidate dies on an ENOENT instead of falling
+ * than calling `resolveWeights({cacheRoot})` precisely so a mis-staged candidate dies on an enoent instead of falling
  * through to the installed workspace package — which in this repo always resolves, and would grade the shipped model
  * under the candidate's label. This check runs before the spawn only so the reader learns the expected shape from a
  * sentence rather than from a stack trace. it never substitutes for that guard.

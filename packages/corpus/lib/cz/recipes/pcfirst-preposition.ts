@@ -5,11 +5,11 @@
  *
  *   `cz-pcfirst-preposition` — the Czech pc-first prepositional-locality recipe, fourth orthography
  *   of the #901 leading-name-boundary family. The #897 close-out read all 8 residual CZ rows as one
- *   class: a LEADING postcode mis-assigned as house_number while the multi-word "nad/pod/u X"
+ *   class: a leading postcode mis-assigned as house_number while the multi-word "nad/pod/u X"
  *   locality shatters ("51244 Rokytnice nad Jizerou, Dolní Rokytnice 111" → street
  *   'RokytnicenadJizerou' + house_number '51244'). That leading-5-digit confusion is the
- *   anchor-pollution class whose decode-time OVERRIDE was correctly killed in #723 — this recipe is
- *   the model-first fix as DATA: real prepositional localities in the order that breaks, so the
+ *   anchor-pollution class whose decode-time override was correctly killed in #723 — this recipe is
+ *   the model-first fix as data: real prepositional localities in the order that breaks, so the
  *   model learns that a leading postcode before a multi-word name is a postcode. pc-first leads the
  *   cycle (the lesson); canonical and city-first keep the polarity balanced (the v1.9.9 lesson).
  */
@@ -18,7 +18,7 @@ import { mulberry32 as makeMulberry32 } from "@mailwoman/core/utils"
 
 import { alignAndWrite, readTuples, type CorpusRecipe, recipeSourceID } from "#recipes/scaffold"
 /**
- * The order-cycle slot for the STREET-LESS form (`«city» «pc», Česko`) — the exact surface of the
+ * The order-cycle slot for the street-less form (`«city» «pc», Česko`) — the exact surface of the
  * `cz-full-praha-100-00` board row, whose absence from the street-containing orders was the v4.5.0 no-promote's
  * measured gap.
  */
@@ -53,10 +53,10 @@ export const czPcFirstPrepositionRecipe: CorpusRecipe = {
 			}
 
 			const order = read % 4
-			// The OFFICIAL Czech rendering spaces the PSČ as `NNN NN` ('512 44'); OpenAddresses stores it
+			// The official Czech rendering spaces the PSČ as `NNN NN` ('512 44'); OpenAddresses stores it
 			// unspaced ('51244'), and a model trained only on the source form reads the spaced surface as
 			// house_number + garbage (the 'Praha 100 00' mangle). Alternate the two renderings so both
-			// orthographies are attested — the LABEL is the postcode either way.
+			// orthographies are attested — the label is the postcode either way.
 			const spaced = read % 2 === 0 && /^\d{5}$/.test(postcode)
 			const postcodeSurface = spaced ? `${postcode.slice(0, 3)} ${postcode.slice(3)}` : postcode
 			let raw: string

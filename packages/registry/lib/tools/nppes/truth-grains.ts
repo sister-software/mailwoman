@@ -26,7 +26,7 @@ export type TruthLabel = (rec: SourceRecord) => string
 /**
  * Union every pair in each block whose org names agree.
  *
- * Quadratic within a block, which is what keeps the test honest: the Jaccard test is per PAIR, so a chain of
+ * Quadratic within a block, which is what keeps the test honest: the Jaccard test is per pair. Therefore, a chain of
  * near-matches cannot transitively fuse two genuinely distinct co-located orgs unless some pair actually agrees.
  */
 function unionAgreeingPairs(
@@ -65,9 +65,9 @@ export function collectPrimaryCoordinates(records: readonly SourceRecord[]): Map
 
 /**
  * The string-keyed org-name truth: same NPI ⇒ same entity (so an NPI's records stay together and recall is preserved),
- * PLUS union two NPIs at the same address KEY whose primary org names agree.
+ * plus union two NPIs at the same address KEY whose primary org names agree.
  *
- * Blocking on the address string is a conservative LOWER bound — `1504 Taub LOOP` and `1504 Taub LP STE 100` key apart
+ * Blocking on the address string is a conservative lower bound — `1504 Taub loop` and `1504 Taub LP STE 100` key apart
  * even though they are one building, so a correct merge across them is still charged as an error. The coordinate grain
  * below is the tighter reading. Neither relies on the NPPES subpart flag, which the gold set showed misses 37%.
  */
@@ -95,7 +95,7 @@ export function buildOrgNameGrain(npiPrimary: Map<string, NPIPrimary>): TruthLab
 
 /**
  * The coordinate-keyed org-name truth: union same-org NPIs whose primary practice coordinates fall within
- * {@linkcode COLOCATION_KM}. Blocking by the GEOCODED BUILDING catches the same-building pairs the address string keys
+ * {@linkcode COLOCATION_KM}. Blocking by the geocoded building catches the same-building pairs the address string keys
  * apart, so this F1 is at or above the string grain's. the Jaccard test still blocks distinct co-located orgs.
  *
  * Brute-force pairwise over the sampled NPIs — trivial at this scale, and unlike a cell key it has no boundary
@@ -131,7 +131,7 @@ export function buildOrgNameCoordGrain(npiPrimary: Map<string, NPIPrimary>, npiC
  * O(n) rather than O(n²).
  *
  * A robustness check on the coordinate grain rather than a replacement: a hard cell boundary can split a same-building
- * pair into adjacent cells, so this slightly UNDER-counts relative to the radius. Coarser resolutions absorb more of
+ * pair into adjacent cells, so this slightly under-counts relative to the radius. Coarser resolutions absorb more of
  * that.
  */
 export function buildOrgNameH3Grain(

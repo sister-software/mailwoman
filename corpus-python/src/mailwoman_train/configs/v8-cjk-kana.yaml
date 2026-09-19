@@ -8,12 +8,12 @@
 # 11 val / 14 board rows, `coarse-placer-cn-units` at source share 0.02) and the 49-label `stage3-cjk` head are
 # unchanged. the char vocabulary is re-sealed over the new JP train split plus the CN characters.
 #
-# WHY. Both 49-label runs (this recipe's JP + CN arm and its JP-only control) closed the municipality span before
+# why. Both 49-label runs (this recipe's JP + CN arm and its JP-only control) closed the municipality span before
 # the trailing 市 on かすみがうら市, the one official-kana municipality the board holds out: 598 and 398 of its 823
 # rows. The 47-label record missed 2. Hiragana + 市 as a municipality shape is what the corpus never showed the head
 # more than a handful of times. this register shows it on ~5% of rows.
 #
-# --- WHAT THE RUN MUST SHOW (pre-registered, same instruments as the v8-cjk-full read) ----------------------
+# --- what the RUN must show (pre-registered, same instruments as the v8-cjk-full read) ----------------------
 #   * `かすみがうら市` on the JP board: rows failed of 823, against 598 (shared head) / 398 (control) / 2 (record).
 #     The register is aimed at this class. fewer than 100 failed rows is the reading that says it worked.
 #   * JP board, blended coordinate-acceptability ≥ 0.9653 and municipality macro ≥ 0.9757 (the shared head's own

@@ -7,18 +7,18 @@
  *
  *   The full upstream distribution at data.geocode.earth/wof/dist/sqlite/ ships ~7 tables. this file
  *   models only the ones we read. Pretending to model the others would be misleading — we haven't
- *   verified their shapes and they're not part of the resolver's contract.
+ *   verified their shapes and they're not part of the resolver's interface.
  *
  *   Authoritative schema docs:
  *
- *   - Whosonfirst SQLite README: https://github.com/whosonfirst/go-whosonfirst-sqlite
+ *   - Whosonfirst SQLite readme: https://github.com/whosonfirst/go-whosonfirst-sqlite
  *   - Per-table sources under https://github.com/whosonfirst/go-whosonfirst-sqlite-features
  */
 
 /**
  * The FTS5 virtual table built by this package on first open (not shipped by upstream WOF).
  *
- * `content` is unindexed — it's there so we can roundtrip the original name back to the caller without a second SELECT.
+ * `content` is unindexed — it's there so we can roundtrip the original name back to the caller without a second select.
  * The actual FTS rebuild happens in `fts.ts::buildPlaceSearchFTS`.
  */
 export interface PlaceSearchTable {
@@ -34,7 +34,7 @@ export interface PlaceSearchTable {
  *
  * Lifecycle flags carry two conventions, both meaning "currently valid": `is_current = -1` (modern Who's On First) and
  * `is_current = 1` (legacy Mapzen-era). Only `is_current = 0` means "not current". Filters in `lookup.ts` and `fts.ts`
- * use `is_current != 0 AND is_deprecated = 0` — see #91 for the diagnostic that uncovered the mixed-convention
+ * use `is_current != 0 and is_deprecated = 0` — see #91 for the diagnostic that uncovered the mixed-convention
  * reality.
  *
  * Lat/lon live directly on this row — no GeoJSON extraction needed for centroid resolution. `min_*` / `max_*` form a
@@ -69,9 +69,9 @@ export interface SprTable {
  *
  * No `kind` column in real WOF — the FTS build just concatenates all names per id.
  *
- * `official` (#936 ingest bit, our unified builds only. absent in real WOF dumps) marks a PREFERRED-form name in an
+ * `official` (#936 ingest bit, our unified builds only. absent in real WOF dumps) marks a preferred-form name in an
  * official language of the place's country — the aliases eligible to join the name-exact tier under the option-3 rule.
- * See `unified-schema.ts` for the full contract.
+ * See `unified-schema.ts` for the full interface.
  */
 export interface NamesTable {
 	id: number
@@ -134,7 +134,7 @@ export interface PlaceAbbrTable {
 
 /**
  * `concordances` — external-id cross-references per place (`id → (other_source, other_id)`), e.g. a GeoNames or
- * Overture GERS id. Metadata only. not part of the resolve path.
+ * Overture gers id. Metadata only. not part of the resolve path.
  */
 export interface ConcordancesTable {
 	id: number
@@ -160,8 +160,8 @@ export interface CoincidentRolesTable {
 /**
  * The full schema we hand to `Kysely<WOFDatabase>` / `new DatabaseClient<WOFDatabase>(...)`. Tables not listed here
  * will fail type-checked queries — by design. The reader ({@link WOFSQLitePlaceLookup}) already consumes this. the
- * build/augment WRITERS adopt it so a column rename is a compile error on both sides (the drift that bit the corpus
- * TIGER adapter).
+ * build/augment writers adopt it so a column rename is a compile error on both sides (the drift that bit the corpus
+ * tiger adapter).
  */
 /**
  * The provenance row every built extract carries: source fingerprints travelling with the database rather than in a

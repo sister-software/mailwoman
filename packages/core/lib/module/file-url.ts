@@ -5,7 +5,7 @@
  *
  *   Conversion between `file:` URLs and filesystem paths — what `import.meta.resolve` answers with, and what a dynamic
  *   `import()` of a path wants. `import.meta.dirname` and `import.meta.filename` cover a module's own location, so
- *   these are for a URL that names SOMETHING ELSE: a resolved specifier, a sibling computed from one.
+ *   these are for a URL that names something else: a resolved specifier, a sibling computed from one.
  */
 
 import { fileURLToPath as nativeFileURLToPath, pathToFileURL as nativePathToFileURL } from "node:url"

@@ -2,7 +2,7 @@
  * @copyright Sister Software.
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
- * @file Google Geocoding result → mailwoman {@linkcode OracleGeocodeResult}. This is the DOMAIN half of
+ * @file Google Geocoding result → mailwoman {@linkcode OracleGeocodeResult}. This is the domain half of
  *   the isp-nexus port. everything else in this workspace is plumbing that was rewritten rather than
  *   carried over.
  *
@@ -12,8 +12,8 @@
  *
  *     1. **The uppercasing.** The original's `getShortName`/`getLongName` both ended in
  *        `.toUpperCase()`, because it was serving a USPS-shaped US-only pipeline where uppercase is the
- *        postal form. This oracle exists to canonicalize gauntlet cases across ~160 COUNTRIES, where
- *        the same call turns `Köln` into `KÖLN`, `Île-de-France` into `ÎLE-DE-FRANCE`, and every CJK or
+ *        postal form. This oracle exists to canonicalize gauntlet cases across ~160 countries, where
+ *        the same call turns `Köln` into `KÖLN`, `Île-de-France` into `ÎLE-DE-france`, and every CJK or
  *        Cyrillic name into itself with the reader's confidence quietly damaged. Casing is preserved
  *        exactly as Google returns it.
  *     2. **The US state-code prefix.** `AdminLevel1Code[adminLevel1] || "ZZ"` fed a US FIPS lookup that
@@ -24,7 +24,7 @@
  *        two-digit latitude and drops the last for a three-digit longitude, so the round was
  *        asymmetric between hemispheres and bought nothing. Coordinates pass through untouched.
  *
- *   THE COMPONENT MAPPING IS THE JUDGEMENT CALL, and {@linkcode OracleGeocodeResult.raw} is the escape
+ *   the component mapping is the judgement call, and {@linkcode OracleGeocodeResult.raw} is the escape
  *   hatch that keeps it from being lossy. See {@linkcode COMPONENT_RULES} for the ordering rule and
  *   {@linkcode REGION_ABBREVIATION_COUNTRIES} for the one place a country-conditional choice is made.
  */
@@ -56,7 +56,7 @@ interface ComponentRule {
 }
 
 /**
- * The component-type → `ComponentTag` table, IN PRIORITY ORDER. Two independent first-writer-wins rules apply as it is
+ * The component-type → `ComponentTag` table, IN priority order. Two independent first-writer-wins rules apply as it is
  * walked, and both are required:
  *
  * 1. **A tag is written once.** A later rule for an already-filled tag is skipped.
@@ -104,16 +104,16 @@ const COMPONENT_RULES: readonly ComponentRule[] = [
 ]
 
 /**
- * The countries whose written postal convention puts the first-level subdivision in its ABBREVIATED form, so
+ * The countries whose written postal convention puts the first-level subdivision in its abbreviated form, so
  * `administrative_area_level_1` is taken from `short_name` there and `long_name` everywhere else.
  *
  * The list is short on purpose. An abbreviation is the conventional written form in these five and almost nowhere else:
  * a French address writes `Île-de-France`, not `IDF`; a German one writes `Nordrhein-Westfalen`, not `NW`; Google has a
  * `short_name` for both regardless, and taking it would produce a `region` no parser will ever see in real input. The
- * United States, Canada, Australia, Mexico and Brazil are the cases where the opposite is true — `NY`, `ON`, `NSW`,
+ * United States, Canada, Australia, Mexico and Brazil are the cases where the opposite is true — `NY`, `on`, `NSW`,
  * `JAL`, `SP` are what appears on the envelope.
  *
- * WHEN THIS IS WRONG FOR YOUR CASE, read `raw.address_components` — both forms are always there. This is a default that
+ * When this is wrong FOR your case, read `raw.address_components` — both forms are always there. This is a default that
  * makes the common case right rather than a claim about postal law.
  */
 const REGION_ABBREVIATION_COUNTRIES = new Set(["US", "CA", "AU", "MX", "BR"])
@@ -179,7 +179,7 @@ export function buildGoogleComponents(result: GoogleGeocodeResult): ComponentDic
 		}
 	}
 
-	// ZIP+4 arrives as a SEPARATE component, and an address written with one writes it hyphenated onto
+	// ZIP+4 arrives as a separate component, and an address written with one writes it hyphenated onto
 	// the ZIP (`10001-1234`). Appending is what makes the oracle's `postcode` comparable to a parser
 	// output for the same input. leaving the suffix on `raw` alone would make every ZIP+4 case look
 	// like a mismatch on the last five characters.
@@ -198,7 +198,7 @@ export function buildGoogleComponents(result: GoogleGeocodeResult): ComponentDic
  * Three of the four are unambiguous. `GEOMETRIC_CENTER` is not: Google documents it as the centre of "a polyline (for
  * example, a street) or polygon (region)", which spans both the `street` and `admin` tiers depending on which shape it
  * was. A `route` value in the result's own `types` identifies a street. otherwise this reports `admin`, which
- * UNDER-claims. That direction is deliberate — an oracle that over-claims precision is worse than one that
+ * under-claims. That direction is deliberate — an oracle that over-claims precision is worse than one that
  * under-claims, because a case author pinning `expectTier` from it would encode a tolerance the parser can never earn.
  *
  * A missing `location_type` returns `null` rather than a guess. Read `raw.geometry` when it does.
@@ -221,8 +221,8 @@ export function toResolutionTier(result: GoogleGeocodeResult): ResolutionTier | 
 /**
  * The `{ latitude, longitude }` shape the rest of the repo speaks, from Google's `{ lat, lng }`.
  *
- * `GeoPoint` is deliberately not in this path. It would validate the pair — which is worth doing on an INPUT, and
- * `google-client.ts` does exactly that on the reverse-geocode argument — but on an OUTPUT it can only discard: a
+ * `GeoPoint` is deliberately not in this path. It would validate the pair — which is worth doing on an input, and
+ * `google-client.ts` does exactly that on the reverse-geocode argument — but on an output it can only discard: a
  * `GeoPoint.from` returning `null` for a coordinate Google actually served would turn a reportable oddity into a
  * missing result. Null Island is the concrete case: `GeoPoint.from` treats `0, 0` as the missing-coordinate sentinel,
  * and a geocode that genuinely lands in the Gulf of Guinea is exactly the kind of thing an oracle should surface rather

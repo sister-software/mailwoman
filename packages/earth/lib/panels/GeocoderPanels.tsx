@@ -85,7 +85,7 @@ export function useGeocoderPanels({ handle, debugDefault }: GeocoderPanelsOption
 			) : undefined,
 			bias: <GeoBiasRow active={geoBias.active} error={geoBias.error} onToggle={geoBias.toggle} />,
 			permalink: (text) => <PermalinkButton text={text} />,
-			// The two display toggles read on the MODEL rather than on an address, so they live behind the Developer capsule
+			// The two display toggles read on the model rather than on an address, so they live behind the Developer capsule
 			// rather than above every result — at the top of the result sheet they were the first thing a visitor met,
 			// and on a phone they pushed the answer below the fold.
 			developerExtras: (

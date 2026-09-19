@@ -13,7 +13,7 @@ function makeStages(overrides: Partial<RuntimePipelineStages> = {}): RuntimePipe
 	return {
 		normalize: (raw) => ({ raw, normalized: raw }),
 		computeQueryShape: (input) => {
-			// The stage contract accepts a bare string as well as a normalized input.
+			// The stage interface accepts a bare string as well as a normalized input.
 			const normalized = typeof input === "string" ? input : input.normalized
 
 			return {

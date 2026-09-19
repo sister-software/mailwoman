@@ -57,7 +57,7 @@ class FilePMTilesSource implements Source {
 const TILE_CACHE_LIMIT = 64
 
 /**
- * Plain-text attribution out of archive metadata (HTML tags stripped, entities decoded); empty string when absent.
+ * Plain-text attribution out of archive metadata (html tags stripped, entities decoded); empty string when absent.
  */
 export function readAttribution(metadata: unknown): string {
 	if (
@@ -73,7 +73,7 @@ export function readAttribution(metadata: unknown): string {
 }
 
 /**
- * Plain text out of an HTML fragment via `htmlparser2`'s event parser — a hand scan misreads `<` inside attribute
+ * Plain text out of an html fragment via `htmlparser2`'s event parser — a hand scan misreads `<` inside attribute
  * values and unclosed tags, and the parser's own entity decoding covers the full named set a metadata field can carry.
  * Local rather than `@mailwoman/core`'s `htmlToText`: this package stays standalone by design, and one attribution
  * string does not price core's shipped data into every consumer.
@@ -103,12 +103,12 @@ export class TileSource implements TileProvider, AsyncDisposable {
 	readonly maxZoom: number
 
 	/**
-	 * Plain-text attribution from archive metadata (HTML tags stripped); empty string when absent.
+	 * Plain-text attribution from archive metadata (html tags stripped); empty string when absent.
 	 */
 	readonly attribution: string
 
 	/**
-	 * Null for HTTP sources — fetch connections have no handle to hold or close.
+	 * Null for http sources — fetch connections have no handle to hold or close.
 	 */
 	private readonly handle: FileHandle | null
 	private readonly pmtiles: PMTiles

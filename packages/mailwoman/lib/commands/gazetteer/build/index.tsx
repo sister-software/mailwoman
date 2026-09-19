@@ -7,7 +7,7 @@
  *   GeoNames → verified, sealed admin gazetteer) then `build candidate` (the byte-range candidate
  *   table) from that fresh admin artifact. The legacy standalone GeoNames fold is skipped here — the
  *   admin build already folds the full 161-country set upstream (a superset of the old fold list).
- *   Both artifacts land at STAGING/dated paths. swapping/promoting stays deliberate (RELEASING.md).
+ *   Both artifacts land at staging/dated paths. swapping/promoting stays deliberate (releasing.md).
  */
 
 import { formatFileSize } from "@mailwoman/core/fs/readers"
@@ -17,7 +17,7 @@ import { join } from "path-ts"
 import { type CommandSpec, CommandTaskResult, type CommandComponent, phaseReporter, useCommandTask } from "#cli-kit"
 
 /**
- * Native command-line contract consumed by the filesystem command router.
+ * Native command-line interface consumed by the filesystem command router.
  */
 export const spec = {
 	name: "build",

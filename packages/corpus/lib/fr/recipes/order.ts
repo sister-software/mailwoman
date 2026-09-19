@@ -3,19 +3,19 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   `fr-order` recipe — French reversed-order coverage (#560). Reads REAL OpenAddresses FR
+ *   `fr-order` recipe — French reversed-order coverage (#560). Reads real OpenAddresses FR
  *   tuples (`fr/countrywide.csv` from the cached zip), then for each row picks — by
- *   `--reversed-fraction` (default 0.5) — whether to render in CANONICAL French order
- *   (number-street, postcode-city) or one of four REVERSED / postcode-first variants the
+ *   `--reversed-fraction` (default 0.5) — whether to render in canonical French order
+ *   (number-street, postcode-city) or one of four reversed / postcode-first variants the
  *   v4.4.0→v0.5.0 regression exposed (the model misses house_number in every reversed one):
  *
  *   - A: "47110 Sainte-Livrade-sur-Lot, 69 Allée du Bugatel" (postcode city, HN street)
  *   - B: "Sainte-Livrade-sur-Lot, 47110, 619 Impasse de la Rose" (city, postcode, HN street)
- *   - C: "Sainte-Livrade-sur-Lot 59 bis Rue des Ecuries 47110" (city HN street postcode — NO commas)
+ *   - C: "Sainte-Livrade-sur-Lot 59 bis Rue des Ecuries 47110" (city HN street postcode — no commas)
  *   - D: "47110, 6 rue de la république, Sainte-Livrade-sur-Lot" (postcode, HN street, city)
  *
  *   Sub-modes ride alongside order: `bis`/`ter`/`quater` ordinal suffixes in house_number, and
- *   ALL-CAPS locality. `--golden` emits a held-out reversed-order eval set with a different
+ *   all-caps locality. `--golden` emits a held-out reversed-order eval set with a different
  *   seed.
  *
  *   The inline synthesis (the OA-CSV reader, the ordinal/all-caps tables, the canonical + reversed
@@ -25,7 +25,7 @@
  *   legacy script used.
  *
  *   Not ported (diagnostic-only, no effect on emitted bytes): the post-run `runSpanCheck` self-check
- *   (it reads the finished file back with a separate PRNG and prints to stderr. the recipe's output
+ *   (it reads the finished file back with a separate prng and prints to stderr. the recipe's output
  *   stream is still open during `run`), and the dead `renderReversed` helper (the legacy `main`
  *   inlined the variant logic and never called it).
  */
@@ -53,7 +53,7 @@ const ORDINAL_SUFFIXES: readonly string[] = ["bis", "ter", "quater"]
  */
 const ORDINAL_PROB = 0.12
 /**
- * Probability that a locality renders ALL-CAPS (another sub-mode: "SAINTE-LIVRADE-SUR-LOT").
+ * Probability that a locality renders all-caps (another sub-mode: "sainte-livrade-SUR-LOT").
  */
 const ALLCAPS_PROB = 0.1
 
@@ -95,7 +95,7 @@ function maybeAddOrdinal(random: () => number, house_number: string): string {
 }
 
 /**
- * Render a tuple in CANONICAL French order: "9 Rue de la Promenade, 01200 Villes".
+ * Render a tuple in canonical French order: "9 Rue de la Promenade, 01200 Villes".
  */
 function renderCanonical(
 	hn: string,

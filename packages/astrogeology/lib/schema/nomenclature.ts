@@ -4,7 +4,7 @@
  * @author Teffen Ellis, et al.
  *
  *   One nomenclature feature as every artifact carries it: east-positive longitude in −180..180, latitude in −90..90,
- *   the stable id from the source's feature link. The schema is the contract between the build and the app. a value
+ *   the stable id from the source's feature link. The schema is the interface between the build and the app. a value
  *   outside it never leaves the build.
  */
 

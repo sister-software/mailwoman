@@ -1,0 +1,22 @@
+## Reject a relative clause that carries several operations and then states a result.
+##
+## A relative clause can qualify one nearby proposition. It should not carry the
+## next operations and their consequence. Split the causal sequence into
+## explicit sentences and repeat the subject when needed.
+##
+##   REJECTED:
+##     "`_init_weights` walks `self.parameters()`, which yields in registration
+##      order and draws from the global RNG for each, so moving construction
+##      changes every later initialization."
+##
+##   PREFERRED:
+##     "`_init_weights` walks `self.parameters()` in registration order.
+##      Initializing each parameter advances the global RNG state. Moving
+##      construction therefore changes every later initialization."
+extends: existence
+message: "'%s' makes a relative clause carry several operations and a result — split the sequence into explicit sentences."
+level: error
+ignorecase: true
+tokens:
+  - ',\s+which\b[^.;]{0,160}\s+(?:so|therefore|thus|hence|causing|causes|meaning)\b'
+  - ',\s+which\b[^.;]{0,100}\band\b[^.;]{0,100}\s+(?:so|therefore|thus|hence)\b'

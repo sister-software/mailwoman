@@ -3,7 +3,7 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   The guarded execution-provider selection in ONNXRunner. ORT's GPU providers (cuda/webgpu) THROW at
+ *   The guarded execution-provider selection in ONNXRunner. ORT's GPU providers (cuda/webgpu) throw at
  *   session-create when their runtime/driver is absent rather than soft-falling-back, so ONNXRunner
  *   retries on CPU. Mocks `ort.InferenceSession.create` — no model, no GPU needed.
  */

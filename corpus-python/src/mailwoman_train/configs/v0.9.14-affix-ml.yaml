@@ -1,43 +1,43 @@
-# === v0.9.14-affix-ml (#466 step 1) — the AFFIX MULTI-LOCALE REROLL ==============================
+# === v0.9.14-affix-ml (#466 step 1) — the affix multi-locale reroll ==============================
 # One conceptual variable vs v0.9.8-affix (the conditional affix change): the affix recipe output is now multi-locale.
-# Corpus v0.4.11-affix-ml = v0.4.6-affix with the US-only `synth-affix` recipe output SWAPPED for a multi-locale
-# one (50K US affix splits — identical exposure to v0.9.8 — PLUS 40K native-order FR/DE/IT/NL balance rows,
+# Corpus v0.4.11-affix-ml = v0.4.6-affix with the US-only `synth-affix` recipe output swapped for a multi-locale
+# one (50K US affix splits — identical exposure to v0.9.8 — plus 40K native-order FR/DE/IT/NL balance rows,
 # no affix split, no annotation). Everything else is held exactly at v0.9.8: same recipe (postcode
 # anchor on, self-cond on, phrase priors on), same source_weights (synth-affix 2.0), seed 42, 20k steps.
 # No gazetteer anchor here — that + its choreography fold in at consolidation (#466). This is a clean
 # solo A/B: does multi-locale balance clear the FR-postcode dilution without losing the street_suffix /
 # street_prefix F1 the affix rows produced?
 #
-# WHY. v0.9.8 cleared the affix check (street_prefix 0→78, street_suffix 0→67, P100. US street +2.1
+# why. v0.9.8 cleared the affix check (street_prefix 0→78, street_suffix 0→67, P100. US street +2.1
 # negative-space) but its one blemish was FR postcode −3.9 — a US-only recipe output (every row "City, ST ZIP")
-# strengthened the US postcode-after-region pattern and diluted FR's postcode-BEFORE-locality order.
-# The night-9 cumulative country run PROVED the recovery: its multi-locale rows lifted FR postcode
+# strengthened the US postcode-after-region pattern and diluted FR's postcode-before-locality order.
+# The night-9 cumulative country run proved the recovery: its multi-locale rows lifted FR postcode
 # 95.6→99.5. This reroll folds that exact fix into the affix recipe itself (see the postmortem
-# 2026-06-09, and docs/articles/plan/2026-06-09-parity-endgame.mdx move 2). The US affix EXPOSURE is
+# 2026-06-09, and docs/articles/plan/2026-06-09-parity-endgame.mdx move 2). The US affix exposure is
 # unchanged (50K US rows at weight 2.0 = same weighted mass as v0.9.8); the balance rows are additive.
 #
-# PRE-REGISTERED CHECK (stop at 20k), fp32-to-fp32 vs v4.1.0 / v0.9.8:
-#   - RECOVER FR postcode: FR postcode F1 >= v4.1.0 (undo the −3.9. back within ~1pp).
-#   - RETAIN the affix classes: street_suffix F1 >= 65% AND street_prefix F1 >= 70% on the real-affix eval
+# PRE-registered check (stop at 20k), fp32-to-fp32 vs v4.1.0 / v0.9.8:
+#   - recover FR postcode: FR postcode F1 >= v4.1.0 (undo the −3.9. back within ~1pp).
+#   - retain the affix classes: street_suffix F1 >= 65% and street_prefix F1 >= 70% on the real-affix eval
 #     (data/eval/external/street-affix-real.jsonl) — at or above v0.9.8 (78/67).
 #   - `street` F1 >= v4.1.0 (no loss. negative space) on golden US + the real-affix eval.
-#   - RETAIN unit: `unit` >= 88% on data/eval/external/unit-real-designators.jsonl.
-#   - NO-REGRESSION (within ~1pp, fp32): US house_number / postcode / locality / region. DE native-order
+#   - retain unit: `unit` >= 88% on data/eval/external/unit-real-designators.jsonl.
+#   - no-regression (within ~1pp, fp32): US house_number / postcode / locality / region. DE native-order
 #     locality (de-order-eval.ts). The balance rows ADD FR/DE order signal — DE should hold or improve.
-#   DECISION: FR postcode recovered + affix retained + no regression check → PROMOTE candidate (v4.2.0) and the
-#     affix change is BANKED for consolidation. If affix slips below v0.9.8: too much balance crowded the
+#   decision: FR postcode recovered + affix retained + no regression check → promote candidate (v4.2.0) and the
+#     affix change is banked for consolidation. If affix slips below v0.9.8: too much balance crowded the
 #     US exposure — raise synth-affix to 2.5 or lower --multilocale-count and rerun. If FR still dilutes:
 #     raise --multilocale-count (more FR balance).
 # Measure: per-locale-f1.ts (US/FR golden, fp32 — needs --tokenizer + --model-card) + score-affix.ts
-#   (the UNFOLDED affix scorer — per-locale-f1's foldToComponents joins affixes into `street` and can't
+#   (the unfolded affix scorer — per-locale-f1's foldToComponents joins affixes into `street` and can't
 #   measure the split) + the street-affix-real + unit-real-designators evals + de-order-eval.ts.
 #
-# CORPUS: v0.4.11-affix-ml (recipe-output swap, no base rebuild). Reproduce:
+# corpus: v0.4.11-affix-ml (recipe-output swap, no base rebuild). Reproduce:
 #   built by the street-affix recipe (packages/corpus/lib/recipes/street/affix.ts) with --output /tmp/affix-ml-train.jsonl --count 50000 --multilocale-count 40000 --seed 42
-#   python3 scripts/jsonl-to-parquet.py --input /tmp/affix-ml-train.jsonl --output <NEW>/train/part-affix-ml-train.parquet
-#   python3 scripts/assemble-affix-ml-overlay-manifest.py --base <v0.4.6-affix MANIFEST.json> \
-#       --new-dir <NEW> --modal-root /data/.../corpus-v0.4.11-affix-ml --version v0.4.11-affix-ml
-#   # then stage the parquet + the manifest through R2 — NOT `modal volume put`, which a mounted
+#   python3 scripts/jsonl-to-parquet.py --input /tmp/affix-ml-train.jsonl --output <new>/train/part-affix-ml-train.parquet
+#   python3 scripts/assemble-affix-ml-overlay-manifest.py --base <v0.4.6-affix manifest.json> \
+#       --new-dir <new> --modal-root /data/.../corpus-v0.4.11-affix-ml --version v0.4.11-affix-ml
+#   # then stage the parquet + the manifest through R2 — not `modal volume put`, which a mounted
 #   # container cannot see:
 #   mailwoman corpus upload --corpus-version v0.4.11-affix-ml
 #   cd corpus-python && modal run -m launch.train_remote::sync_assets --corpus-versions v0.4.11-affix-ml
@@ -64,7 +64,7 @@ data:
     usgov-hrsa-fqhc: 2.0
     usgov-imls-pls: 2.0
     usgov-nad: 1.0
-    state-ia-contractors: 2.0
+    state-ia-builders: 2.0
     state-tx-notaries: 1.5
     state-ny-notaries: 2.0
     deepseek-kryptonite: 3.0
@@ -73,7 +73,7 @@ data:
     synth-german: 6.0
     # retained from v4.1.0 (v0.9.7-unit-v3), so `unit` stays at or above 88% on unit-real-designators.
     synth-unit: 1.5
-    # the multi-locale affix source. 2.0 keeps the US affix EXPOSURE identical to v0.9.8 (50K US rows at
+    # the multi-locale affix source. 2.0 keeps the US affix exposure identical to v0.9.8 (50K US rows at
     # 2.0); the 40K FR/DE/IT/NL balance rows ride the same weight (additive, postcode-order signal).
     synth-affix: 2.0
   train_rows_per_epoch: 1000000

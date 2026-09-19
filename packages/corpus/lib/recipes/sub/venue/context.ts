@@ -17,12 +17,12 @@ import type { LocaleBaseTuple } from "#synthesizers/locale"
 
 /**
  * DE + ES address context. Both read through {@link readLocaleTuples}, the `locale` recipe's own streaming + reservoir
- * reader, so the CSV handling (quoted fields, CRLF, city-noise cleaning, the DE per-part region fallback) has exactly
+ * reader, so the CSV handling (quoted fields, crlf, city-noise cleaning, the DE per-part region fallback) has exactly
  * one implementation.
  *
  * DE reads `europe.zip`'s two members rather than `oa-cache/de__*.zip`: the cached per-state zips the `locale` recipe
  * names are not materialized on this host, and the archive members are byte-identical to OA's current run (verified in
- * `corpus/AGENTS.md`'s "a file's mtime is not its data's vintage" note).
+ * `corpus/agents.md`'s "a file's mtime is not its data's vintage" note).
  */
 const CONTEXT_PARTS: Readonly<Record<string, readonly LocalePart[]>> = {
 	DE: [
@@ -70,7 +70,7 @@ export async function loadContextTuples(
 		const pooled: LocaleBaseTuple[] = []
 
 		for (const [index, part] of parts.entries()) {
-			// A dedicated stream PRNG, seeded per part, so the input sample is reproducible without
+			// A dedicated stream prng, seeded per part, so the input sample is reproducible without
 			// perturbing the emit loop's draws (the `locale` recipe's rule, kept).
 			const streamRandom = makeMulberry32(seed + index)
 
@@ -100,7 +100,7 @@ export interface StreetNegatives {
 }
 
 /**
- * Shortest token that can carry a `-gate` street suffix and still be a NAME rather than the bare word: `gate` itself is
+ * Shortest token that can carry a `-gate` street suffix and still be a name rather than the bare word: `gate` itself is
  * four characters, so the class starts at five (`Highgate`, `Moorgate`, `Stonegate`).
  */
 const MIN_GATE_SUFFIX_TOKEN_LENGTH = 5

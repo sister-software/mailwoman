@@ -41,7 +41,7 @@ export async function runParseCompare(registry: EngineRegistryLike, args: Record
 	if (!version) {
 		throw new Error(
 			"mwdev_parse_compare needs `version` — your claim about what is running at that endpoint. " +
-				"`@mailwoman/libpostal` serves the identical /parse contract, so a URL and a port are not evidence of " +
+				"`@mailwoman/libpostal` serves the identical /parse interface, so a URL and a port are not evidence of " +
 				"which parser answers there, and a mailwoman-against-mailwoman run reads as near-total agreement."
 		)
 	}

@@ -5,9 +5,9 @@
  *
  *   The fetch the browser runtime loads its artifacts through. The data origin resets a long download now and then
  *   (measured: 1 of 18 cold loads lost the 38 MB model to `net::ERR_CONNECTION_RESET` 4.9 s in, and 2 of 16 loads
- *   failed under a two-attempt retry that covered the connection alone), and a reset that far in rejects the BODY
+ *   failed under a two-attempt retry that covered the connection alone), and a reset that far in rejects the body
  *   read rather than the `fetch()` call. So the body is buffered here, inside the retry, and the loader receives a response
- *   whose bytes are already complete. An HTTP status is never retried: a 404 is an answer, and the loaders decide what
+ *   whose bytes are already complete. An http status is never retried: a 404 is an answer, and the loaders decide what
  *   an absent artifact means.
  */
 
@@ -22,8 +22,8 @@ const ATTEMPTS = 3
 const FIRST_RETRY_DELAY_MS = 500
 
 /**
- * `fetch` rejects with a `TypeError` for a network failure (a reset, a refused connection, a CORS refusal) and never
- * for an HTTP status. a body read that loses its connection rejects the same way. Anything else (an abort, a bad URL)
+ * `fetch` rejects with a `TypeError` for a network failure (a reset, a refused connection, a cors refusal) and never
+ * for an http status. a body read that loses its connection rejects the same way. Anything else (an abort, a bad URL)
  * is not retried.
  */
 function isNetworkFailure(error: unknown): boolean {
@@ -67,7 +67,7 @@ export type BytesReceived = (received: number, total: number | null) => void
  * signal until it is over. Buffering still happens — the retry above needs a complete body — but the caller learns how
  * far along it is while it happens.
  *
- * `content-length` describes the bytes ON THE WIRE while the reader yields decoded ones, so a content-encoded response
+ * `content-length` describes the bytes on the wire while the reader yields decoded ones, so a content-encoded response
  * can report a fraction above 1. The consumer clamps rather than this lying about the total it was given.
  */
 async function drainWithProgress(response: Response, onBytes: BytesReceived): Promise<Uint8Array> {

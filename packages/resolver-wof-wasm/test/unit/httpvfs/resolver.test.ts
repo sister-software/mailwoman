@@ -5,7 +5,7 @@
  *
  *   Unit tests for the demo's #741 postal-city side-index probe in the browser candidate lookup
  *   (`WOFCandidateTableLookup`), against a node:sqlite-backed stub worker that mimics
- *   sql.js-httpvfs's `db.exec` contract. Pins parity with the Node lookup: an exact `(name_key,
+ *   sql.js-httpvfs's `db.exec` interface. Pins parity with the Node lookup: an exact `(name_key,
  *   postcode)` hit resolves a postal city to its geographic locality. a bare query, and a
  *   candidate.db without the side-index (today's production demo), are byte-stable.
  */
@@ -83,9 +83,9 @@ describe("browser WOFCandidateTableLookup postal-city side-index (#741)", () => 
 	})
 })
 
-describe("sql.js-httpvfs external-name contract (the batch-B casing incident)", () => {
+describe("sql.js-httpvfs external-name interface (the batch-B casing incident)", () => {
 	// The acronym-casing sweep (da54bc8c) renamed `window.createDbWorker` → `createDBWorker` — an
-	// EXTERNAL library's export, explicitly exempt from the house convention (AGENTS.md). The UMD
+	// external library's export, explicitly exempt from the house convention (agents.md). The UMD
 	// loaded, the capitalized global never existed, and the demo street tier silently fell back to
 	// the admin cascade for three days. These pins make the next sweep fail loudly instead.
 	test("the library actually exports `createDbWorker` (lowercase b)", async () => {

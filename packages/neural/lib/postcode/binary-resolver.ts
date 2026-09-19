@@ -5,7 +5,7 @@
  *
  *   Browser-side postcode resolver for the anchor (#240). A pure-JS, zero-dependency
  *   `PostcodeResolver` backed by a compact flat binary instead of SQLite, so the postcode anchor
- *   runs in the WASM/browser parser behind the same `lookup()` interface as the server-side
+ *   runs in the wasm/browser parser behind the same `lookup()` interface as the server-side
  *   `WOFPostcodeLookup`.
  *
  *   This file owns both ends of the format — `serializePostcodeBinary` (run in Node by
@@ -13,8 +13,8 @@
  *   layout can never drift between writer and reader.
  *
  *   Binary layout (little-endian): magic "PCB1" (4 bytes) u32 recordCount u8 countryCount, then
- *   countryCount × 2 ASCII bytes (the country table) u8 keyWidth (max postcode length in bytes)
- *   records recordCount × { key[keyWidth] ASCII right-padded with 0x00, u8 countryIdx, i16 latQ,
+ *   countryCount × 2 ascii bytes (the country table) u8 keyWidth (max postcode length in bytes)
+ *   records recordCount × { key[keyWidth] ascii right-padded with 0x00, u8 countryIdx, i16 latQ,
  *   i16 lonQ }, sorted by key bytes ascending. A postcode present in two countries appears as two
  *   adjacent records (same key, different countryIdx).
  *
@@ -70,7 +70,7 @@ export interface PostcodeBinaryEntry {
 }
 
 /**
- * Right-pad an ASCII postcode to `width` with NUL; `\0` sorts below any real char, so shorter keys order before longer
+ * Right-pad an ascii postcode to `width` with NUL; `\0` sorts below any real char, so shorter keys order before longer
  * ones with the same prefix, which is what we want.
  */
 function encodeKey(s: string, width: number, out: Uint8Array, offset: number): void {
@@ -235,7 +235,7 @@ export class PostcodeBinaryResolver {
 		let i = 0
 
 		while (i < this.#count) {
-			// Decode this record's postcode key (ASCII, 0x00-right-padded).
+			// Decode this record's postcode key (ascii, 0x00-right-padded).
 			const keyBase = this.#recBase + i * this.#recSize
 			let postcode = ""
 

@@ -3,10 +3,10 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   The source products, typed. A nomenclature archive is regenerated nightly by USGS and is pinned by SNAPSHOT: the
+ *   The source products, typed. A nomenclature archive is regenerated nightly by usgs and is pinned by snapshot: the
  *   fetch records the day's bytes and SHA-256 in the lock, and the build reads only the locked snapshot. A DEM is a
  *   stable product pinned by URL and byte count. the first fetch writes its SHA-256 and every later fetch refuses a
- *   change. Every row is public domain (USGS `<useconst>`).
+ *   change. Every row is public domain (usgs `<useconst>`).
  */
 
 import type { BuildableBodyID } from "#bodies"
@@ -29,7 +29,7 @@ export interface PlanetarySource {
 
 /**
  * The four products the pipeline reads, as measured on 2026-09-07: the nomenclature centre-point shapefiles (9,086 Moon
- * points, 2,052 Mars points, longitude 0..360) and the LOLA 118 m and MOLA 463 m global DEMs.
+ * points, 2,052 Mars points, longitude 0..360) and the lola 118 m and mola 463 m global DEMs.
  */
 const SOURCES = {
 	"moon-nomenclature": {

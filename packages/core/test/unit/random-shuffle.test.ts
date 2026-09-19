@@ -9,7 +9,7 @@
  *   those loops drew, because a changed order silently rewrites an artifact nobody re-reads.
  *
  *   The fourth, in `conformal-calibrate.run.ts`, takes a raw LCG state modulo `i + 1` rather than
- *   `floor(random() * (i + 1))`. That is the same walk with a different SAMPLER, so it goes through `shuffleBy`;
+ *   `floor(random() * (i + 1))`. That is the same walk with a different sampler, so it goes through `shuffleBy`;
  *   the last case asserts both halves — that `shuffleBy` reproduces it, and that `shuffleWith` does not.
  */
 
@@ -132,7 +132,7 @@ describe("shuffleWith", () => {
 
 	it("reproduces the modulo-indexed walk through shuffleBy, and not through shuffleWith", () => {
 		// `conformal-calibrate.run.ts` derives its index as `state % (i + 1)` over a raw glibc LCG state. That is the same
-		// WALK with a different SAMPLER, so `shuffleBy` reproduces it — which is why that call site no longer keeps a loop.
+		// walk with a different sampler, so `shuffleBy` reproduces it — which is why that call site no longer keeps a loop.
 		for (const size of [2, 17, 64, 500]) {
 			for (const seed of SEEDS) {
 				const mixed = (seed * 2_654_435_761 + 1) & 0xff_ff_ff_ff

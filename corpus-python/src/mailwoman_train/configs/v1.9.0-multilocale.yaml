@@ -1,24 +1,24 @@
 # === v1.9.0-multilocale (the multi-locale parse-recall change, #148) ============================
 # Clone of v1.8.0-fr-admin-split (production-default lineage) with one added change: the
 # `overture-multilocale` source — ~150k real Overture address rows each across 20 EU locales
-# (ES/IT/NL/PT/BE/PL/DE/AT/CH/CZ/DK/NO/SE/FI/IE/GB/SK/SI/HR/HU), ~3M rows total. The model is
+# (ES/IT/NL/PT/be/PL/DE/AT/CH/CZ/DK/no/SE/FI/IE/GB/SK/SI/HR/HU), ~3M rows total. The model is
 # en-us/fr-trained and never saw non-en/fr street + locality formats. the 8-locale assembled-
-# COORDINATE panel (docs/articles/evals/2026-06-22-fr-eval-coverage-scorecard.md) showed RESOLVE
-# RATE tracks training representation — FR/IT (trained) ~80%, vs mid-tier PT/PL/AT/CZ ~50% — and
-# root-caused the gap to PARSE (the model fails to emit a resolvable locality), not gazetteer
+# coordinate panel (docs/articles/evals/2026-06-22-fr-eval-coverage-scorecard.md) showed resolve
+# rate tracks training representation — FR/IT (trained) ~80%, vs mid-tier PT/PL/AT/CZ ~50% — and
+# root-caused the gap to parse (the model fails to emit a resolvable locality), not gazetteer
 # coverage. This source feeds the missing locales.
 #
-# CRITICAL (data_loader.py:244): country_weights.get(country) is None -> the row is EXCLUDED. The
+# critical (data_loader.py:244): country_weights.get(country) is None -> the row is excluded. The
 # v1.8.0 config listed only US/FR/DE, which would silently drop every EU overture row. All 22
 # countries are listed below at 1.0 (an acceptance filter relative to max_weight rather than a 1/N split,
 # so US/FR are not starved — every 1.0 row is accepted).
 #
-# GOAL / CHECK: grade the ASSEMBLED coordinate, never label-F1 (the panel's whole lesson). Diagnostic-
+# goal / check: grade the assembled coordinate, never label-F1 (the panel's whole lesson). Diagnostic-
 # first: at the step-2000/4000 checkpoint, run scripts/eval/nonus-coord-panel.ts — mid-tier resolve
 # (PT/PL/AT/CZ, pre-registered ~50%) must move up, and the US/FR golden guardrail must hold (US
-# per-locale-f1 not worse >1pp. FR centroid flat). If mid-tier resolve is flat at 2-4k, KILL (the
+# per-locale-f1 not worse >1pp. FR centroid flat). If mid-tier resolve is flat at 2-4k, kill (the
 # change or the weight is wrong) before the full 40k. Not promoted without operator GO (model swap).
-# CORPUS: corpus-v0.8.0 (base, incl. fr-admin-split) + overture-multilocale overlay -> R2 -> sync.
+# corpus: corpus-v0.8.0 (base, incl. fr-admin-split) + overture-multilocale overlay -> R2 -> sync.
 # Launch: cd corpus-python && modal run -d -m launch.train_remote --config v1.9.0-multilocale.yaml --resume none
 data:
   corpus_dir: /data/corpus/versioned/v0.9.0-multilocale/corpus-v0.9.0-multilocale
@@ -56,7 +56,7 @@ data:
     usgov-hrsa-fqhc: 2.0
     usgov-imls-pls: 2.0
     usgov-nad: 1.0
-    state-ia-contractors: 2.0
+    state-ia-builders: 2.0
     state-tx-notaries: 1.5
     state-ny-notaries: 2.0
     deepseek-kryptonite: 3.0

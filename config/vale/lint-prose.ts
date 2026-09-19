@@ -5,7 +5,7 @@
  * @author Teffen Ellis, et al.
  * @file The tracked-file entry point for the repository's Vale prose surfaces.
  *
- *   The package scripts stay declarative. This file owns the pathspecs, asks the shared git reader for the INDEX's
+ *   The package scripts stay declarative. This file owns the pathspecs, asks the shared git reader for the index's
  *   file set, and invokes Vale through the shared process boundary. No shell parses a file list here.
  */
 

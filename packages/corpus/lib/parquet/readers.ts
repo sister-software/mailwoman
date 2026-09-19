@@ -58,7 +58,7 @@ export async function tryReadParquetRows<T>(
  * file for the reason above: a count is a measurement, and `0` from a file nobody wrote is a different statement than
  * `0` from a file that holds no rows.
  *
- * Takes a PATH rather than a connection, so a caller already holding one pays a second. That is the trade the shared
+ * Takes a path rather than a connection, so a caller already holding one pays a second. That is the trade the shared
  * name is worth: the query is `count(*)` over `read_parquet`, and a caller that writes it inline writes the escaping
  * inline with it.
  */
@@ -85,7 +85,7 @@ export async function countParquetRows(path: PathBuilderLike): Promise<number> {
  * Read this before a projection when the file's schema is in question — it answers what is there, where a failed
  * projection only says that something asked for is missing.
  *
- * Asks `DESCRIBE`, which names the LOGICAL columns. `parquet_schema` walks the physical tree instead, where a LIST
+ * Asks `describe`, which names the logical columns. `parquet_schema` walks the physical tree instead, where a list
  * column's leaf is its `element` child: filtering that tree to leaves answers `element` once per list and never names
  * `tokens`, `labels` or the span triple, so a caller checking whether the file carries one is told it does not.
  */

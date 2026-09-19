@@ -9,7 +9,7 @@
  *   Motivation (the `dependent_locality` dead-tag investigation): the trained model struggles with rare
  *   sub-locality tags because they have almost no WOF grounding, and we underuse WOF's statistical counts
  *   + parent/ancestor relationship chains. This surfaces, per placetype: the global row count, the
- *   distribution of its PARENT placetype (how the type relates upward), and its modal ANCESTOR-placetype
+ *   distribution of its parent placetype (how the type relates upward), and its modal ancestor-placetype
  *   chain. Read-only. The `--json` payload is shaped to feed an "effective placetype" soft-prior later.
  */
 
@@ -28,7 +28,7 @@ import { type CommandSpec, CommandTaskResult, type CommandComponent, useCommandT
 const UNDERTRAINED_PLACETYPE_COUNT = 200_000
 
 /**
- * Native command-line contract consumed by the filesystem command router.
+ * Native command-line interface consumed by the filesystem command router.
  */
 export const spec = {
 	name: "placetype-stats",

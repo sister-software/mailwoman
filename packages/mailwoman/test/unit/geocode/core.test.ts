@@ -3,9 +3,9 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   #928: `countryFromPostcodeFormat` — a parsed postcode's FORMAT as a country signal, used by the
+ *   #928: `countryFromPostcodeFormat` — a parsed postcode's format as a country signal, used by the
  *   `postcodeCountryPrior` change to override the language-based placer (which conflates GB/US). The
- *   essential guarantee: the GB pattern is UNFORGEABLE across the formats we resolve — it never matches
+ *   essential guarantee: the GB pattern is unforgeable across the formats we resolve — it never matches
  *   a US ZIP, an NL `\d{4} [A-Z]{2}`, an FR 5-digit, or a Canadian `A#A #A#` code — so turning the change
  *   on can never mis-route a non-GB address.
  */
@@ -148,7 +148,7 @@ describe("extractGeocodeResult — a component the answer did not follow (#2301)
 			{ tag: "postcode", value: "744301", reason: "postcode_move_refused", distance_km: 1914.2 },
 		])
 
-		// The component itself is KEPT, which is what separates this from `dropped_components`.
+		// The component itself is kept, which is what separates this from `dropped_components`.
 		expect(r.components.postcode).toBe("744301")
 		expect(r.dropped_components).toBeUndefined()
 	})

@@ -3,7 +3,7 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   The two halves of the OSGB36 → WGS84 pipeline are tested SEPARATELY and against different
+ *   The two halves of the OSGB36 → WGS84 pipeline are tested separately and against different
  *   tolerances, because they fail differently. The projection is exact algebra and is held to
  *   sub-millimetre. the Helmert is an approximation to OSTN15 and is held to the ±5 m the module
  *   docstring promises. Collapsing them into one end-to-end assertion at 5 m would let a real
@@ -45,7 +45,7 @@ const ANNEXE_C_OSGB36 = { latitude: dms(52, 39, 27.2531), longitude: dms(1, 43, 
  * geodetic to National Grid E/N.
  *
  * This is the test that pins the datum shift, and it is worth being precise about what it can and cannot show. Annexe D
- * uses the SAME Helmert this module does, so agreement here proves the implementation — the parameter signs, the
+ * uses the same Helmert this module does, so agreement here proves the implementation — the parameter signs, the
  * Position-Vector rotation convention, the cartesian round trip. It says nothing about how close the Helmert is to
  * OSTN15 truth. that is the separate 40-point test below.
  */
@@ -57,7 +57,7 @@ const ANNEXE_D_ETRS89 = { latitude: dms(53, 36, 43.1653), longitude: -dms(1, 39,
  * A six-point span of OS's official OSTN15/OSGM15 developer-pack test vectors (`OSTN15_OSGM15_TestInput_*`), each
  * pairing a published OSGB36 easting/northing with the published ETRS89 latitude/longitude of the same physical point.
  *
- * OSTN15 is the exact transformation. these residuals therefore measure the Helmert APPROXIMATION, which is the number
+ * OSTN15 is the exact transformation. these residuals therefore measure the Helmert approximation, which is the number
  * the module's ±5 m promise is about. Six of the forty are inlined — chosen to span the extremes rather than to sample
  * evenly, because the error is a smooth field and only its corners are informative. TP01 (Scilly) and TP31 (St Kilda)
  * are the two worst points in the whole set. TP08 (Bristol) and TP38 (Shetland waters) are among the best. The full
@@ -160,8 +160,8 @@ test("osgb36ToWGS84 spans the GB extent without the series diverging", () => {
 })
 
 test("the grid origin is a real Atlantic coordinate, not a sentinel", () => {
-	// Code-Point Open writes 0,0 for its 865 no-coordinate rows, but 0,0 IS a valid grid point (south-west
-	// of the Scillies). The module cannot detect the sentinel and must not try — this pins that contract so
+	// Code-Point Open writes 0,0 for its 865 no-coordinate rows, but 0,0 is a valid grid point (south-west
+	// of the Scillies). The module cannot detect the sentinel and must not try — this pins that interface so
 	// nobody "helpfully" adds a zero check here instead of filtering at the call site.
 	const origin = osgb36ToWGS84({ easting: 0, northing: 0 })
 

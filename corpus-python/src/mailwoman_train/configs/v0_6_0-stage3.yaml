@@ -35,7 +35,7 @@ data:
     usgov-hrsa-fqhc: 2.0
     usgov-imls-pls: 2.0
     usgov-nad: 1.0
-    state-ia-contractors: 2.0
+    state-ia-builders: 2.0
     state-tx-notaries: 1.5
     state-ny-notaries: 2.0
     deepseek-kryptonite: 3.0
@@ -70,7 +70,7 @@ model:
   # The CRF transition table is 33x33 in STAGE3 (was 21x21 in STAGE2), and
   # bf16 + masked -inf transitions appear numerically unstable when training.
   # v0.5.4 used crf_loss_weight=0.0 (CE-only) and trained fine — match that.
-  # CRF is still ACTIVE at inference (Viterbi with the structural mask).
+  # CRF is still active at inference (Viterbi with the structural mask).
   # Defer learned-transition training to v0.6.1+ with a fp32 or grad-clip
   # investigation.
   crf_loss_weight: 0.0

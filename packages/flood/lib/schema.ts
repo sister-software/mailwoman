@@ -4,22 +4,22 @@
  * @author Teffen Ellis, et al.
  *
  *   Typed schema for `flood.db` — the two-tier polygon layer: the authority's unsimplified rings as the
- *   truth table, an H3 cell table above them as the summary, plus the layer-contract tables from
+ *   truth table, an H3 cell table above them as the summary, plus the layer-interface tables from
  *   `@mailwoman/core/layers`.
  *
- *   WHY TWO TIERS. A rooftop answer needs point-in-polygon against the real geometry — hexes alone either
+ *   why two tiers. A rooftop answer needs point-in-polygon against the real geometry — hexes alone either
  *   bloat to absurd resolution or lie exactly at zone boundaries, which is where a flood answer matters
  *   most. So the rings are stored once, unsimplified, with a precomputed bbox. the cell table classifies
  *   every cell `whole` or `partial` per zone. a `whole` cell answers in one primary-key probe, and only a
  *   `partial` cell falls through to the ray cast, against just the polygons {@link FloodZoneCellAreaTable}
  *   names for that cell. Size concentrates where it is irreducible: the boundary fringe.
  *
- *   `WITHOUT ROWID` ON THE CELL TABLES AND NEVER ON THE GEOMETRY TABLE. Small fixed-width rows probed by
+ *   `without rowid` on the cell tables and never on the geometry table. Small fixed-width rows probed by
  *   their exact primary key belong in the B-tree. a row carrying a geometry blob does not — clustering it
- *   into the B-tree makes every index page a geometry page. That is the root `AGENTS.md` rule, and this
+ *   into the B-tree makes every index page a geometry page. That is the root `agents.md` rule, and this
  *   layer is the first one where both halves of it appear in the same database.
  *
- *   THE WHOLE-CELL SET IS COMPACTED, SO IT IS MIXED-RESOLUTION. `compactCells` collapses a uniform
+ *   the whole-cell SET is compacted, SO IT is mixed-resolution. `compactCells` collapses a uniform
  *   interior parent-ward, which is hierarchy-respecting run-length encoding — a zone's interior becomes a
  *   handful of coarse cells and only the fringe stays fine. A row therefore carries its own `resolution`,
  *   and a probe walks `cellToParent` from the index resolution up to the coarsest resolution present.
@@ -28,7 +28,7 @@
  *   mixes them.
  */
 
-import type { LayerContractDatabase } from "@mailwoman/core/layers"
+import type { layerschemadatabase } from "@mailwoman/core/layers"
 import { addBoundingBoxColumns, addCellIndexColumns, addRingGeometryColumns } from "@mailwoman/sqlite/schema-columns"
 import { sql, type Kysely } from "kysely"
 
@@ -49,12 +49,12 @@ export const FloodCellContainment = {
 export type FloodCellContainment = (typeof FloodCellContainment)[keyof typeof FloodCellContainment]
 
 /**
- * One authority polygon, verbatim. A plain rowid table: it holds a geometry blob, which is the one shape `WITHOUT
- * ROWID` hurts.
+ * One authority polygon, verbatim. A plain rowid table: it holds a geometry blob, which is the one shape `without
+ * rowid` hurts.
  */
 export interface FloodZoneAreaTable {
 	/**
-	 * The authority's own feature id — the EA's `OBJECTID`, as text so a source that publishes a non-numeric id needs no
+	 * The authority's own feature id — the EA's `objectid`, as text so a source that publishes a non-numeric id needs no
 	 * schema change.
 	 */
 	area_id: string
@@ -101,7 +101,7 @@ export interface FloodZoneAreaTable {
 /**
  * Per (cell, zone): does the zone cover the whole cell, or only part of it?
  *
- * Keyed on `(h3_cell, zone_code)` rather than on a polygon, because the question a reader asks is about the ZONE. A
+ * Keyed on `(h3_cell, zone_code)` rather than on a polygon, because the question a reader asks is about the zone. A
  * cell wholly inside any FZ3 polygon answers `FZ3` whichever polygon that was.
  */
 export interface FloodZoneCellTable {
@@ -135,9 +135,9 @@ export interface FloodZoneCellAreaTable {
 }
 
 /**
- * The authority's MAPPED FOOTPRINT — one row per statement, never derived from the hazard polygons.
+ * The authority's mapped footprint — one row per statement, never derived from the hazard polygons.
  *
- * Deriving it from the polygon union is the error this whole layer is built to avoid: Zone 1 IS the mapped area minus
+ * Deriving it from the polygon union is the error this whole layer is built to avoid: Zone 1 is the mapped area minus
  * the polygons, so a footprint taken from the polygons reports every Zone 1 location as unmapped. What is stored is the
  * authority's own coverage sentence, where it is published, and the boundary artifact used to realize "England" as a
  * cell set — because the sentence names a country and a cell set needs an outline, and which outline that was is part
@@ -150,7 +150,7 @@ export interface FloodMapExtentTable {
 	extent_id: string
 	/**
 	 * What the authority says about this footprint. `mapped` for the EA's England statement. a source with an
-	 * availability layer of its own (FEMA's is layer 0) writes its published categories here instead.
+	 * availability layer of its own (fema's is layer 0) writes its published categories here instead.
 	 */
 	status: string
 	/**
@@ -196,7 +196,7 @@ export interface FloodZoneVocabularyTable {
 /**
  * Pass to `new DatabaseClient<FloodDatabase>(...)`.
  */
-export interface FloodDatabase extends LayerContractDatabase {
+export interface FloodDatabase extends layerschemadatabase {
 	flood_zone_area: FloodZoneAreaTable
 	flood_zone_cell: FloodZoneCellTable
 	flood_zone_cell_area: FloodZoneCellAreaTable
@@ -205,13 +205,13 @@ export interface FloodDatabase extends LayerContractDatabase {
 }
 
 /**
- * The subset of a Kysely handle the DDL touches. Same reasoning as `LayerContractHandle`: Kysely is invariant in its
+ * The subset of a Kysely handle the DDL touches. Same reasoning as `layerschemahandle`: Kysely is invariant in its
  * schema parameter, so naming only the members these functions call lets a caller pass its own wider handle.
  */
 export type FloodSchemaHandle = Pick<Kysely<FloodDatabase>, "schema">
 
 /**
- * Create `flood_zone_area`. A PLAIN rowid table on purpose — the `rings` blob is exactly the payload `WITHOUT ROWID`
+ * Create `flood_zone_area`. A plain rowid table on purpose — the `rings` blob is exactly the payload `without rowid`
  * penalizes.
  */
 export async function createFloodZoneAreaTable(db: FloodSchemaHandle): Promise<void> {
@@ -230,14 +230,14 @@ export async function createFloodZoneAreaTable(db: FloodSchemaHandle): Promise<v
 
 /**
  * Create `flood_zone_cell` — the summary tier. Small fixed-width rows probed by their exact primary key, which is the
- * `WITHOUT ROWID` shape.
+ * `without rowid` shape.
  */
 export async function createFloodZoneCellTable(db: FloodSchemaHandle): Promise<void> {
 	const table = db.schema.createTable("flood_zone_cell")
 
 	await addCellIndexColumns(table, "zone_code")
 		.addPrimaryKeyConstraint("flood_zone_cell_pk", ["h3_cell", "zone_code"])
-		// `WITHOUT ROWID` has no first-class builder. the raw modifier is the idiomatic fallback.
+		// `without rowid` has no first-class builder. the raw modifier is the idiomatic fallback.
 		.modifyEnd(sql`without rowid`)
 		.execute()
 }

@@ -5,7 +5,7 @@
  *
  *   `mailwoman eval gauntlet-build <artifact>` — build the Gauntlet's data artifacts:
  *
- *   - `fdic-holdout` — the US verified-coord held-out pool (FDIC BankFind → fdic-us.csv, the fast
+ *   - `fdic-holdout` — the US verified-coord held-out pool (fdic BankFind → fdic-us.csv, the fast
  *       fresh-draw source for `eval gauntlet --layer holdout --source us`).
  *   - `regression-db` — the curated regression corpus (`cases/<cc>/*.jsonl` →
  *       `$MAILWOMAN_DATA_ROOT/gauntlet/regression.db`, build-on-copy).
@@ -16,7 +16,7 @@ import { type CommandSpec, CommandTaskResult, type ParsedCommandComponent, useCo
 export const description = "Build the Gauntlet data artifacts (fdic-holdout, regression-db)"
 
 /**
- * Native command-line contract consumed by the filesystem command router.
+ * Native command-line interface consumed by the filesystem command router.
  */
 export const spec = {
 	name: "gauntlet-build",

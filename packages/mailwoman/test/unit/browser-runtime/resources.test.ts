@@ -4,16 +4,16 @@
  * @author Teffen Ellis, et al.
  *
  *   Pair-index asset URL construction (2026-08-05). History: the binaries were published flat at
- *   `mailwoman/pair-index/pair-index-<cc>.bin` and rebuilt IN PLACE for PIX schema 3 — the objects
+ *   `mailwoman/pair-index/pair-index-<cc>.bin` and rebuilt IN place for PIX schema 3 — the objects
  *   carry `immutable` Cache-Control, so the CDN served the schema-1 bytes for a week while the
  *   site's reader threw on them (`schemaVersion 1 predates the typed parent record`), and the fix
  *   was a manual purge. Every other model-independent artifact (gazetteer, poi, national street
  *   extracts) avoids that with a generation segment plus a site-side version constant. these tests
  *   pin the same scheme here.
  *
- *   The 2026-08-05 transition HEAD probe (`resolvePairIndexBaseURL`) is gone: its own removal
+ *   The 2026-08-05 transition head probe (`resolvePairIndexBaseURL`) is gone: its own removal
  *   condition — every generation object published under `pair-index/<PAIR_INDEX_VERSION>/` — was
- *   met, and the probe's aborted HEAD was the demo's last standing console error, failing every
+ *   met, and the probe's aborted head was the demo's last standing console error, failing every
  *   strict e2e run against production.
  */
 

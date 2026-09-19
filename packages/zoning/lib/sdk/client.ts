@@ -6,29 +6,29 @@
  *   The Department's ArcGIS item, its feature service and the Hub download job, read through
  *   {@linkcode APIClient}.
  *
- *   THESE ARE API REQUESTS AND THEY GO THROUGH `APIClient`. Small bodies, repeated calls, a third-party
+ *   these are API requests and they GO through `APIClient`. Small bodies, repeated calls, a third-party
  *   host — the pacing, bounded retry, response caching and `ResourceError` mapping are exactly what they
  *   need. The 247 MB bulk export is not one of them: it is a file transfer, it streams to disk on raw
  *   `fetch`, and `download.ts` says so in place.
  *
- *   FOUR MEASURED CLIENT BEHAVIORS ARE ENCODED HERE RATHER THAN WRITTEN DOWN SOMEWHERE ELSE.
+ *   four measured client behaviors are encoded here rather than written down somewhere else.
  *
  *   1. The Hub download job answers with a `resultUrl` that 302s. `…/api/download/v1/items/<id>/geojson?
  *      redirect=false&layers=0` returns `{"status":"Completed","resultUrl":…}` in 249 bytes. the result URL
  *      itself redirects, so the transfer needs `redirect: "follow"`. A client that took the first response as
  *      the file writes a redirect page to disk and reports a successful download.
- *   2. THE BULK EXPORT IS EPSG:2157 UNDER A `crs` MEMBER RFC 7946 REMOVED. The file's own header carries
- *      `"crs":{"type":"name","properties":{"name":"EPSG:2157"}}` and its coordinates are Irish Transverse
+ *   2. the bulk export is epsg:2157 under A `crs` member RFC 7946 removed. The file's own header carries
+ *      `"crs":{"type":"name","properties":{"name":"epsg:2157"}}` and its coordinates are Irish Transverse
  *      Mercator metres. A strict RFC 7946 reader ignores the member and places Ireland at latitude 735,435.
- *      GDAL honours it, which is why `sdk/ingest.ts` reads the archive through ogr2ogr and asserts the
+ *      gdal honours it, which is why `sdk/ingest.ts` reads the archive through ogr2ogr and asserts the
  *      reprojected result falls inside the Department's own declared extent.
- *   3. THE PUBLISHER'S OWN AREA STATISTIC IS NOT IN THE ARCHIVE. `Shape__Area` is a service field and the
+ *   3. the publisher'S own area statistic is not IN the archive. `Shape__Area` is a service field and the
  *      GeoJSON export drops it, so the area cross-check has to come from {@linkcode readShapeAreaSum} — which
  *      makes it a genuine two-path check rather than the archive agreeing with itself. Measured:
  *      5,444,492,956.40 m² over 85,330 features.
- *   4. `GZT_LINK` POINTS AT A HOST WITH NO DNS RECORD. All 85,330 rows link their generic type's definition to
- *      `viewer.myplan.ie`, which has no A or AAAA record, and three candidate replacements on the live host
- *      answer HTTP 404. So `zoning_vocabulary.definition_url` cannot be populated from it and is left NULL
+ *   4. `GZT_LINK` points AT A host with no DNS record. All 85,330 rows link their generic type's definition to
+ *      `viewer.myplan.ie`, which has no A or aaaa record, and three candidate replacements on the live host
+ *      answer http 404. So `zoning_vocabulary.definition_url` cannot be populated from it and is left NULL
  *      rather than filled with a plausible one.
  */
 
@@ -163,7 +163,7 @@ export class GZTClient extends APIClient<APIClientConfig> {
 	}
 
 	/**
-	 * The feature count the service reports, and the EPSG code it declares.
+	 * The feature count the service reports, and the epsg code it declares.
 	 *
 	 * The second path in the build's agreement check: the same authority, a different distribution channel. An archive
 	 * whose feature count disagrees with the live service is not a file this build should be writing into a sealed
@@ -203,7 +203,7 @@ export class GZTClient extends APIClient<APIClientConfig> {
 	/**
 	 * The sum of the Department's own `Shape__Area` column, in square metres.
 	 *
-	 * THE ONE NUMBER THAT SETTLES THE HOLE QUESTION, and it has to come from the service because the bulk export drops
+	 * The one number that settles the hole question, and it has to come from the service because the bulk export drops
 	 * the column. Read with the holes the rings total 5,444.5 km²; read without them, 5,666.6 km². The difference is 4.1%
 	 * of area and, far more importantly, a ray cast that answers "inside" for every location a plan carved out.
 	 */
@@ -306,9 +306,9 @@ export class GZTClient extends APIClient<APIClientConfig> {
 /**
  * Refuse an attribution the published item no longer matches.
  *
- * READ AT BUILD TIME RATHER THAN TRUSTED FROM THE CONSTANT. The constant is what the artifact is stamped with offline.
- * this is the live value it is reconciled with when the network is available. The check is on the DEPARTMENT'S CREDIT
- * LINE and on the Tailte Éireann clause separately, because they are two different statements and the second is the one
+ * Read AT build time rather than trusted from the constant. The constant is what the artifact is stamped with offline.
+ * this is the live value it is reconciled with when the network is available. The check is on the department'S credit
+ * line and on the Tailte Éireann clause separately, because they are two different statements and the second is the one
  * that holds this layer at `build-local`: an item that dropped it would be a licence change worth hearing about, and an
  * item that dropped only the credit line would be a different one.
  *

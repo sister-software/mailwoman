@@ -1,5 +1,5 @@
 /**
- * Operator interesting-address board (2026-08-09): a focused projection of the PERMANENT gauntlet cases rather than a
+ * Operator interesting-address board (2026-08-09): a focused projection of the permanent gauntlet cases rather than a
  * second answer key. Exact component-span recall for venue-heavy GB addresses and a bilingual JP pair. reviewed Google
  * normalization lives on each gauntlet row's source/coordinate/note and is not treated as parser gold.
  *

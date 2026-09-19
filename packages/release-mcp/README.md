@@ -9,7 +9,7 @@ the operations this server is not exposing, so an absence is visible rather than
 
 **The two publishing operations are off by default.** A session that receives this server must not thereby receive npm
 authority. Start the server with `--allow-external-write` to expose `release_publish_workspace` and
-`release_bless_package`; they still run the plan → execute contract the operations themselves enforce — a plan file from
+`release_bless_package`; they still run the plan → execute interface the operations themselves enforce — a plan file from
 `release_plan` whose digest must match on an unmoved, clean HEAD.
 
 ```jsonc

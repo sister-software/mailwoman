@@ -3,25 +3,25 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   `mailwoman situs interpolation-database --state VT` — build a per-state STREET-SEGMENT database (#483)
- *   from TIGER EDGES: side-aware house-number ranges + segment polylines, keyed by the one shared
+ *   `mailwoman situs interpolation-database --state VT` — build a per-state street-segment database (#483)
+ *   from tiger edges: side-aware house-number ranges + segment polylines, keyed by the one shared
  *   street normalizer (`@mailwoman/resolver-wof-sqlite/street-normalize` — the same function the
  *   interpolation lookup applies at query time. one normalizer, never two). The interpolation
  *   tier's data half. design in `docs/articles/plan/2026-06-11-interpolation-design.md`.
  *
- *   One row PER SIDE per address-carrying road edge (left and right carry independent ranges and ZIPs
- *   in TIGER). Parity is derived from the from/to numbers ('odd' | 'even' | 'mixed'); descending
+ *   One row PER side per address-carrying road edge (left and right carry independent ranges and ZIPs
+ *   in tiger). Parity is derived from the from/to numbers ('odd' | 'even' | 'mixed'); descending
  *   ranges keep their raw from/to (direction matters for the interpolation position) alongside
  *   min/max index columns. Non-numeric ranges (hyphenated, alphanumeric) are skipped and counted.
  *
- *   Inputs: TIGER EDGES shapefiles per county (the same files the intersection eval reads),
+ *   Inputs: tiger edges shapefiles per county (the same files the intersection eval reads),
  *   downloaded to --edges-dir from:
- *   https://www2.census.gov/geo/tiger/TIGER2023/EDGES/tl_2023_<countyfips>_edges.zip
+ *   https://www2.census.gov/geo/tiger/TIGER2023/edges/tl_2023_<countyfips>_edges.zip
  *
  *   Maintainer-only: needs the local shapefiles + the @duckdb/node-api dev dep + the optional
  * @mailwoman/resolver-wof-sqlite peer (the shared schema + normalizer). Progress streams to stderr.
  *   the final summary lands on stdout. The build writes to a temp path, then atomically swaps into
- *   place (scripts/AGENTS.md) — the original script rebuilt in place.
+ *   place (scripts/agents.md) — the original script rebuilt in place.
  */
 
 import { dataRootPath } from "@mailwoman/core/data-root"
@@ -56,7 +56,7 @@ const STATE_FIPS: Record<string, string> = {
 	TX: "48",
 	IL: "17",
 	NJ: "34",
-	// All 50 states + DC (FIPS PUB 5-2 / TIGER column statefp)
+	// All 50 states + DC (FIPS PUB 5-2 / tiger column statefp)
 	AL: "01",
 	AK: "02",
 	AZ: "04",
@@ -107,7 +107,7 @@ const STATE_FIPS: Record<string, string> = {
 }
 
 /**
- * Native command-line contract consumed by the filesystem command router.
+ * Native command-line interface consumed by the filesystem command router.
  */
 export const spec = {
 	name: "interpolation-database",
@@ -207,7 +207,7 @@ const SitusInterpolationDatabase: CommandComponent<typeof spec> = ({ options }) 
 		console.error(`${shapefiles.length} county shapefiles for ${STATE}`)
 
 		await makeDirectories(dirname(finalOut))
-		// Build into a temp path. atomically swap on success (scripts/AGENTS.md).
+		// Build into a temp path. atomically swap on success (scripts/agents.md).
 		const tmpOut = `${finalOut}.building-${process.pid}.db`
 
 		for (const sfx of ["", "-wal", "-shm"]) {
@@ -234,8 +234,8 @@ const SitusInterpolationDatabase: CommandComponent<typeof spec> = ({ options }) 
 		{
 			using kdb = new DatabaseClient<StreetSegmentDatabase>(tmpOut)
 			kdb.exec("PRAGMA journal_mode = WAL;")
-			// DDL via the SHARED street-segment-schema builder (the table the reader + tests use) so this
-			// producer can't drift. DuckDB below is the raw spatial reader. the hot INSERT stays on `db`.
+			// DDL via the shared street-segment-schema builder (the table the reader + tests use) so this
+			// producer can't drift. DuckDB below is the raw spatial reader. the hot insert stays on `db`.
 
 			await createStreetSegmentTable(kdb)
 			await writeInterpCalibration(kdb, calibration)
@@ -330,13 +330,13 @@ const SitusInterpolationDatabase: CommandComponent<typeof spec> = ({ options }) 
 				.get() as Record<string, number>
 		}
 
-		// Stamped on the TEMP file, before the swap: `swapDatabaseIntoPlace` is the moment the artifact
+		// Stamped on the temp file, before the swap: `swapDatabaseIntoPlace` is the moment the artifact
 		// becomes the live one, and a manifest written after it would be a write to a published file.
 		await stampLayerManifest(tmpOut, {
 			name: `interpolation-us-${STATE.toLowerCase()}`,
 			version: String(options.release),
 			schemaVersion: 1,
-			// US Census TIGER/Line is public domain, so unlike the ODbL layers this one could ship. It is
+			// US Census tiger/Line is public domain, so unlike the ODbL layers this one could ship. It is
 			// build-local because nothing publishes it today rather than because the licence forbids it.
 			tier: LayerTier.BuildLocal,
 			license: "public-domain",

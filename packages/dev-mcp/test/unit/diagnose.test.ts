@@ -4,7 +4,7 @@
  * @author Teffen Ellis, et al.
  *
  *   The account assembly and the shape predicates, driven off hand-built facts so no weights load and no gazetteer
- *   opens. Every case here is a claim about WHAT A PREDICATE MEANS — the point of a v1 classifier is that its
+ *   opens. Every case here is a claim about what A predicate means — the point of a v1 classifier is that its
  *   definitions are readable, so the tests are where the definitions are pinned.
  */
 
@@ -117,7 +117,7 @@ const ITEM: ResolvedInput = { id: "row-1", input: "Weimar, Thüringen", country:
 
 describe("collectParseFacts — known formats against the parse", () => {
 	it("matches a postcode hit against the postcode component under a different offset frame", () => {
-		// The detector's spans are offsets into the NORMALIZED input, component values are taken from the RAW one, so
+		// The detector's spans are offsets into the normalized input, component values are taken from the RAW one, so
 		// the comparison folds both to characters. "SW1A 1AA" vs "sw1a1aa" is the same assertion.
 		const facts = collectParseFacts(
 			traceOf({ queryShape: { knownFormats: [{ format: "uk_postcode", confidence: 1, span: { body: "SW1A 1AA" } }] } }),
@@ -613,7 +613,7 @@ function evidenceOf(channels: Partial<NeuralParseTrace>) {
 describe("rows_cap", () => {
 	it("caps the emitted rows non-clean-first while the aggregates cover every row", async () => {
 		// Structural: exercise the partition + cap arithmetic without an engine — the pure tail of
-		// runDiagnose is not separable, so this pins the partition helper's contract by construction.
+		// runDiagnose is not separable, so this pins the partition helper's interface by construction.
 		const rows = [
 			{ id: "a", shapes: ["clean"] },
 			{ id: "b", shapes: ["evidence_starved"] },

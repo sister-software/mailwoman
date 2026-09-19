@@ -12,7 +12,7 @@
 ## harness), and the token exists for the marketing verb ("harness the power
 ## of"). A bare-noun token flagged the vocabulary itself.
 extends: existence
-message: "'%s' is filler — cut it or replace it with the concrete claim."
+message: "'%s' is filler — remove it or replace it with the concrete claim."
 level: error
 ignorecase: true
 tokens:

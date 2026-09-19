@@ -19,7 +19,7 @@ The manifest lists `model.onnx`, which `mwops release copy-weights` materializes
 
 - **No `tokenizer.model`.** A char graph has no SentencePiece vocabulary; weights resolution requires
   `char-vocab.json` in its place (`packages/neural/lib/weights/index.ts`, the card's `encoder` block).
-- **No soft-feed channels.** The char path is channel-free by contract: no postcode-anchor, gazetteer, country or
+- **No soft-feed channels.** The char path is channel-free by interface: no postcode-anchor, gazetteer, country or
   evidence lexicons, and the graph declares no channel inputs.
 - **No FST autocomplete artifact.** `fst-ja-jp.bin` / `fst-zh-cn.bin` ship in the `@mailwoman/neural-weights-ja-jp` and
   `-zh-cn` overlays, data-only packages over this base.

@@ -3,7 +3,7 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   `POST /v1/license-status`: a lid answers one of four words and nothing else. No licensee, no dates, no reason: an
+ *   `post /v1/license-status`: a lid answers one of four words and nothing else. No licensee, no dates, no reason: an
  *   installation checking online learns whether its key still stands, and a stranger with a lid learns only that.
  */
 

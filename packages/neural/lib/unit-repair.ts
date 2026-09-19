@@ -12,15 +12,15 @@
  *   the BIO labels after decode but before `buildAddressTree`. The model is untouched. this is a
  *   decoder-side correction, the same "lowest risk" change family as postcode-repair.
  *
- *   PRECISION GUARDS (mirror postcode-repair — never regress a confident parse):
+ *   precision guards (mirror postcode-repair — never regress a confident parse):
  *
- *   - We only fire on EXPLICIT designators (Apt, Ste, Suite, Unit, Rm, Floor, Bldg, Flat, … + bare
+ *   - We only fire on explicit designators (Apt, Ste, Suite, Unit, Rm, Floor, Bldg, Flat, … + bare
  *       "#<n>"). Ambiguous tokens are deliberately excluded: "Box" (that's po_box), bare "F"/"No"
  *       (too greedy), "Space"/"Stop" (common words).
  *   - ADD path (model emitted no unit over the matched run): allowed only over `O` tokens — never over
  *       house_number / street* / postcode / po_box / a geographic container. So a
  *       confidently-labeled street or number is safe.
- *   - SNAP path: when the model already started a unit span inside the match, we expand/clip it to the
+ *   - snap path: when the model already started a unit span inside the match, we expand/clip it to the
  *       full detected shape.
  *   - Local smear-clip: unit tokens immediately flanking a snapped run are cleared (mirrors
  *       postcode-repair) so "Apt 4 Springfield" can't leave a stray I-unit on "Springfield".
@@ -121,7 +121,7 @@ export function repairUnitLabels(text: string, input: readonly DecoderToken[]): 
 		// po_box/region/country/venue.
 		if (!hasUnit && !isAddSafe(tokens, overlap, ADD_OVER_TAGS)) continue
 
-		// SNAP/ADD: relabel the matched run as a single unit span.
+		// snap/ADD: relabel the matched run as a single unit span.
 		overlap.forEach((i, k) => setLabel(i, k === 0 ? UNIT_B : UNIT_I))
 
 		// Local smear clip: clear unit tokens immediately flanking the snapped run.

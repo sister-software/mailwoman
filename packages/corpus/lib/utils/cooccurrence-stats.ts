@@ -12,7 +12,7 @@
 import { openParquetRowStream } from "#parquet/streams"
 
 /**
- * Separator inside a bigram key (`tok1␟tok2`) and a label-bigram value (`lab1␟lab2`): U+001F UNIT SEPARATOR, a
+ * Separator inside a bigram key (`tok1␟tok2`) and a label-bigram value (`lab1␟lab2`): U+001F unit separator, a
  * character no address token contains. Render a key for humans with `key.split(COOCCURRENCE_KEY_SEP).join(" ")`.
  */
 export const COOCCURRENCE_KEY_SEP = ""

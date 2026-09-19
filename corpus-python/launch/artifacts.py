@@ -75,7 +75,7 @@ def export_onnx(
 
     # #727 stage-2: a span-scorer model's ONNX carries a `span_scores` output, but the JS k-best
     # decoder (neural/semi-markov-decode.ts, PR #1154) also needs the segment-transition table, which
-    # is DECODE-TIME data rather than part of the graph. Write it as a sidecar next to model.onnx so the
+    # is decode-time data rather than part of the graph. Write it as a sidecar next to model.onnx so the
     # grade's oracle@k / seg@1 arc reads can consume it. Returns None (no file) for a span-less model,
     # keeping the export byte-identical for every pre-#727 recipe.
     import json as _json
@@ -106,8 +106,8 @@ def quantize_onnx(
     import sys
     from pathlib import Path
 
-    # RELOAD BEFORE READING. This function is almost always called right after `export_onnx` wrote its
-    # fp32 to the volume, and a container that started with an older view reads the PREVIOUS model —
+    # reload before reading. This function is almost always called right after `export_onnx` wrote its
+    # fp32 to the volume, and a container that started with an older view reads the previous model —
     # silently, since the path is the same. Two checkpoints exported to `model.onnx` in sequence and
     # quantized in between produced byte-identical int8 artifacts because of this, which reads as "the
     # two checkpoints are the same model" rather than as a stale mount.
@@ -122,7 +122,7 @@ def quantize_onnx(
     if not fp32.is_file():
         raise RuntimeError(f"no fp32 at {fp32} after vol.reload() — export it first")
 
-    # The INPUT's digest travels with the output. An int8 artifact is otherwise unattributable: nothing
+    # The input's digest travels with the output. An int8 artifact is otherwise unattributable: nothing
     # in the file says which checkpoint it came from, and the fp32 it was made from is usually
     # overwritten by the next export.
     fp32_md5 = hashlib.md5(fp32.read_bytes()).hexdigest()

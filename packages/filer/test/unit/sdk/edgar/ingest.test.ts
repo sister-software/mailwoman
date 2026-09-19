@@ -2,7 +2,7 @@
  * @copyright Sister Software.
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
- * @file Tests for the assembled EDGAR chain.
+ * @file Tests for the assembled edgar chain.
  *
  *   The Exhibit 21 documents are real vendored filings. the submissions payloads are minimal stubs carrying
  *   only what this module reads. No test performs a live request — the client is an object literal

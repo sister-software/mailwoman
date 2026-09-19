@@ -27,7 +27,7 @@ const PRESETS = [
 ]
 
 /**
- * A stateful wrapper so the version picker + WASM toggle actually drive (a plain fixture can't hold state).
+ * A stateful wrapper so the version picker + wasm toggle actually drive (a plain fixture can't hold state).
  */
 function StatefulGeocoder({ panels }: { panels?: GeocoderPanels }) {
 	const [selectedVersion, setSelectedVersion] = useState("v7.2.0")

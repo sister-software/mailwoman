@@ -5,7 +5,7 @@
  *
  *   POI intent stage assembly (spec §3.1–3.2). This is the only module that joins the pieces:
  *   `@mailwoman/poi-taxonomy` (the lexicon), `@mailwoman/kind-classifier` (subject matching), and
- *   the pipeline contract from core. Wired by `createRuntimePipeline({ poiQueryKind: true })`;
+ *   the pipeline interface from core. Wired by `createRuntimePipeline({ poiQueryKind: true })`;
  *   dormant otherwise.
  */
 
@@ -58,7 +58,7 @@ export function createPOINameLookup(searcher: POINameSearch): POIPhraseLookup {
  * The union phrase → subject lookup (part 2 of the brand-lexicon work): `@mailwoman/poi-taxonomy` categories first
  * (existing behavior, unchanged), then the taxonomy's own brand table (`lookupPOIBrand`, exact-phrase, no locale
  * filtering), then `@mailwoman/variant-aliases`' brand-kind regional slang (locale-restricted, e.g. "mcdo" →
- * fr-FR/fr-CA/fr-BE) chained through `resolveBrandName` to recover the QID.
+ * fr-FR/fr-CA/fr-be) chained through `resolveBrandName` to recover the QID.
  *
  * Precedence on a phrase that matches both a category and a brand: the category wins. Deterministic, and intentional —
  * `@mailwoman/poi-taxonomy`'s categories are the curated set. a brand phrase collision (none observed in the shipped
@@ -163,7 +163,7 @@ export const poiTaxonomyLookup: POIPhraseLookup = (phrase, locale) => {
 export interface POIIntentStageDeps {
 	lookup: POIPhraseLookup
 	/**
-	 * Parses the anchor remainder ("Springfield IL") through the ADDRESS pipeline. Callers must hand in a pipeline
+	 * Parses the anchor remainder ("Springfield IL") through the address pipeline. Callers must hand in a pipeline
 	 * without the poi stage (recursion guard) — `createRuntimePipeline` does.
 	 */
 	parseAnchor: (text: string, opts?: PipelineOpts) => Promise<PipelineResult>
@@ -216,7 +216,7 @@ export function createPOIIntentStage(
 		}
 
 		// The place binding (#1999). A hit's `countryScope` is a claim about establishments, so it is judged against the
-		// country the anchor RESOLVED to — which exists only now, after the anchor parse — and never against the caller's
+		// country the anchor resolved to — which exists only now, after the anchor parse — and never against the caller's
 		// locale. Recorded on the intent whether or not it removed anything, so a receipt can say which country the set
 		// was bound to and what fell out.
 		if (intent.subject.kind === "category") {

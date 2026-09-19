@@ -155,7 +155,7 @@ export function splitRows(rows: Iterable<SplitInputRow>, opts: SplitOptions = {}
 /**
  * Deterministic bucket for a stable id.
  *
- * Stays on raw `createHash` rather than `sha256Hex` from `@mailwoman/core/utils`: it needs the digest BYTES, and the
+ * Stays on raw `createHash` rather than `sha256Hex` from `@mailwoman/core/utils`: it needs the digest bytes, and the
  * shared helper returns hex. Re-parsing hex back into bytes to reach the same four octets would cost more than the one
  * line it saves.
  */
@@ -169,7 +169,7 @@ export function hashBucket(id: string, n: number): number {
 
 /**
  * Write a `SplitManifest` to `<outputDir>/{train,val,test}.json`. The manifests are line-separated source_id lists (one
- * id per line) so they diff cleanly in git. Also writes `<outputDir>/MANIFEST.json` with the full structured manifest
+ * id per line) so they diff cleanly in git. Also writes `<outputDir>/manifest.json` with the full structured manifest
  * including holdouts + counts + corpus version.
  *
  * Reruns produce byte-identical files (the underlying `splitRows` is deterministic).
@@ -199,7 +199,7 @@ export type SplitInputLabeledRow = Pick<LabeledRow, "source_id" | "country" | "c
 
 /**
  * Streaming variant of `writeSplitManifests`: derives the per-split source-id .txt manifests + `SPLIT_MANIFEST.json` by
- * streaming three per-split labeled-row JSONL files (one per split). Memory cost is O(1) — `sort(1)` from coreutils
+ * streaming three per-split labeled-row jsonl files (one per split). Memory cost is O(1) — `sort(1)` from coreutils
  * handles the deterministic sort with disk spill for files that exceed in-memory thresholds.
  *
  * Used by `buildCorpus` after the align loop has already partitioned labeled rows into `labeled-{train,val,test}.jsonl`
@@ -235,7 +235,7 @@ export async function writeSplitManifestsFromLabeledFiles(opts: {
 }
 
 /**
- * Extract `source_id`s from a labeled JSONL file, write them sorted to `outPath`. Empty input → empty output file (not
+ * Extract `source_id`s from a labeled jsonl file, write them sorted to `outPath`. Empty input → empty output file (not
  * absent). Uses `sort(1)` for disk-spilling external sort so peak memory stays O(1) regardless of labeled-row count.
  */
 async function streamSortedSourceIDs(labeledJsonlPath: string, outPath: string): Promise<void> {

@@ -74,7 +74,7 @@ New workspace `map-tui/`, source at the workspace root per convention, published
   build). Data-driven; no theming engine in v1.
 - **`raster.ts`** — geometry rasterizer: web-mercator projection, Bresenham polylines with
   width, scanline polygon fill, viewport clip — into an RGBA subpixel buffer at asciify's
-  braille contract (2×4 px per cell).
+  braille interface (2×4 px per cell).
 - **`frame.ts`** — the `MapFrame` frame value: columns, rows, char + color arrays
   (`Uint32Array` each), and the attribution string. `frameToANSILines(frame)` converts it for
   Ink/static embedding; label and marker overlays land as character cells with
@@ -105,7 +105,7 @@ parsed tree and the classifier's labeled char spans (the sentencepiece native-of
 carries offsets end to end; the exact accessor is plan-time verification item 1).
 
 The existing one-shot path becomes create → geocode → close in a try/finally and stays
-byte-identical: `geocode.test.ts` must pass unmodified, and the #1577 contract — nothing on the
+byte-identical: `geocode.test.ts` must pass unmodified, and the #1577 interface — nothing on the
 non-debug success path renders through Ink; output goes through `writeRawStdout` — is untouched.
 
 ## 3. The debug view (mailwoman workspace)
@@ -138,7 +138,7 @@ Tiles path resolution (CLI layer, never inside map-tui): `--tiles <path>` flag �
 "planet.pmtiles")` existence probe. On the lab host the playpen dump symlinks into the data
 root.
 
-## 4. Static render contract
+## 4. Static render interface
 
 With `--debug` and a non-TTY stdout: render the same component tree once at
 `--debug-size <cols>x<rows>` (default `120x36`; the flag is ignored on a TTY where the terminal

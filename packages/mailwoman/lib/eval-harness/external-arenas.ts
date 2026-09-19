@@ -3,7 +3,7 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   External-arenas.ts — run the three UNBIASED capability arenas through harness-neural.
+ *   External-arenas.ts — run the three unbiased capability arenas through harness-neural.
  *
  *   Our own 376-assertion suite is a Pelias/addressit port (the retired rules parser's lineage), so
  *   it over-represents that lineage's cases. These three arenas come from outside it and together
@@ -19,20 +19,20 @@
  *   All three are scored with --postcode-repair.
  *
  *   Usage (default shipped weights): node packages/mailwoman/lib/dev-tools/external-arenas.run.ts
- *   Against a specific model (e.g. a fresh v0.7.2 export): MODEL=/path/model.int8.onnx
- *   TOKENIZER=/path/tokenizer.model\
- *   MODELCARD=/path/model-card.json node packages/mailwoman/lib/dev-tools/external-arenas.run.ts
+ *   Against a specific model (e.g. a fresh v0.7.2 export): model=/path/model.int8.onnx
+ *   tokenizer=/path/tokenizer.model\
+ *   modelcard=/path/model-card.json node packages/mailwoman/lib/dev-tools/external-arenas.run.ts
  *
  *   Emits per-arena three-bucket tables (neural-only / both / v0-only / both-fail) and, for the
  *   postal arena, a breakdown by edge_class. Run `yarn compile` first — the harness resolves
  * @mailwoman/neural to its compiled out/ tree.
  *
- *   `promotion-eval.ts` calls {@linkcode externalArenas} IN-PROCESS (when the spec floors
+ *   `promotion-eval.ts` calls {@linkcode externalArenas} IN-process (when the spec floors
  *   `arena.perturb`) and captures `${report}${reportError}` into `<out-dir>/arenas.md` — the file
- *   the verdict assembler column-reads for `arena.perturb`. A THROW here is what the child's
+ *   the verdict assembler column-reads for `arena.perturb`. A throw here is what the child's
  *   non-zero exit was, and the check aborts on it exactly as before.
  *
- *   SCOPE NOTE (de-shell): the three inner probes this still spawns as child processes —
+ *   scope note (de-shell): the three inner probes this still spawns as child processes —
  *   `perturb-golden.run.ts`, `harness-neural.run.ts` (×3) and `summarize-arenas.run.ts` — are
  *   `lib/dev-tools/` residents rather than eval legs, and de-shelling them is a separate job. `zx`
  *   therefore survives here while it is gone from `promotion-eval.ts`.
@@ -88,7 +88,7 @@ export interface ExternalArenasOptions {
  * Run the three unbiased capability arenas. Narration splits across `report`/`reportError` the way the child process's
  * stdout/stderr did, because the check concatenates them in that order into `arenas.md`.
  *
- * THROWS on a failed inner probe — the in-process spelling of the non-zero exit the check treats as fatal.
+ * Throws on a failed inner probe — the in-process spelling of the non-zero exit the check treats as fatal.
  */
 export async function externalArenas(
 	options: ExternalArenasOptions = {},
@@ -149,7 +149,7 @@ export async function externalArenas(
 		reportError(perturbed.stderr.trimEnd())
 	}
 
-	// Stage each arena in its own dir (harness loads ALL .jsonl in a --falsehoods dir).
+	// Stage each arena in its own dir (harness loads all .jsonl in a --falsehoods dir).
 	await makeDirectories(join(outDir, "libpostal"))
 	await makeDirectories(join(outDir, "postal"))
 	await copyFileTo("data/eval/external/libpostal-cases.jsonl", join(outDir, "libpostal", "libpostal-cases.jsonl"))

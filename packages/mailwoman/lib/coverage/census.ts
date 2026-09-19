@@ -3,7 +3,7 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   WHAT CAN MAILWOMAN DO, PER COUNTRY — parse and geocode kept apart, from primary sources.
+ *   what can mailwoman do, PER country — parse and geocode kept apart, from primary sources.
  *
  *   This exists because establishing it by hand took a full session and produced four wrong answers on the way. The
  *   question sounds like one question and is five, held in five places that do not agree:
@@ -12,7 +12,7 @@
  *      ships a `model.onnx` at all, the other eight are data-only overlays over it, and `en-nz` / `en-in` ship for
  *      locales the shipped model has never seen a training row from.
  *   2. **The corpus holds rows** — but a country can hold 11 million rows and none of them a street.
- *   3. **The training config ADMITS the country** — `country_weights` is a hard filter (`data_loader.py`: `weight is
+ *   3. **The training config admits the country** — `country_weights` is a hard filter (`data_loader.py`: `weight is
  *      None -> continue`), so a country absent from it trains on nothing no matter how many rows exist. That is the
  *      Norway bug's mechanism, and it was still live for every country outside the map.
  *   4. **The gazetteer can resolve it** — 244 countries, which is a different and much wider set than the parser's.
@@ -21,7 +21,7 @@
  *   Conflating any two of those produces a confident wrong answer, which is why the report keeps them in separate
  *   columns and names the mismatches explicitly rather than leaving them to be noticed.
  *
- *   ## The corpus census is CACHED, and says when it was taken
+ *   ## The corpus census is cached, and says when it was taken
  *
  *   Counting rows means reading every train parquet file. Measured on 681M rows across 705 files: ~6 minutes projecting
  *   `country` alone, and ~19 minutes once `labels` comes too — and `labels` cannot be dropped, because the street count
@@ -130,7 +130,7 @@ export interface CoverageReport {
 	mismatches: CoverageMismatches
 	corpusVersion: string
 	/**
-	 * The corpus version the CONFIG points at, which is not always the one the census counted.
+	 * The corpus version the config points at, which is not always the one the census counted.
 	 */
 	configuredCorpusVersion?: string
 	/**
@@ -222,7 +222,7 @@ async function* streamCorpusCensusRows(path: string): AsyncGenerator<Record<stri
 /**
  * The manifest's parquet-file list, under whichever key the manifest on disk writes.
  *
- * The key is a string contract with every corpus ever built, so it is read and never renamed. Both spellings are live:
+ * The key is a string interface with every corpus ever built, so it is read and never renamed. Both spellings are live:
  * of the 41 manifests under `$MAILWOMAN_DATA_ROOT/corpus/versioned`, 8 write `slices` and 33 write the pre-rename key.
  * A reader that knows only one of them finds no files, counts no rows, and reports every country as untrained — an
  * absence indistinguishable from the real thing, and the shape this census exists to catch. `manifest_files` in
@@ -238,7 +238,7 @@ function manifestFiles(manifest: Record<string, unknown>): Array<{ split?: strin
 /**
  * Count every train row in the corpus, per country, and how many carry a street span.
  *
- * Exact rather than sampled: parquet files are grouped by SOURCE, so a stride over them reads a handful of families and
+ * Exact rather than sampled: parquet files are grouped by source, so a stride over them reads a handful of families and
  * reports their countries as the corpus's. Column projection keeps the full read affordable.
  */
 export async function buildCorpusCensus(manifestPath: string): Promise<CorpusCensus> {
@@ -316,7 +316,7 @@ export function sameCorpusVersion(a: string, b: string): boolean {
 /**
  * The corpus version the training config points at, from its `corpus_dir`.
  *
- * This exists so a CACHED census can be checked against the corpus the run actually reads. The two are separate
+ * This exists so a cached census can be checked against the corpus the run actually reads. The two are separate
  * artifacts that both look authoritative: the census names the corpus it counted, the config names the corpus it trains
  * on, and nothing made them agree. A census of `0.26.0` answering a question about a `0.27.0` run reports a country's
  * rows as zero when the newer corpus added them — an absence indistinguishable from the real thing, which is the
@@ -349,7 +349,7 @@ export async function readConfiguredCorpusVersion(configPath: string): Promise<s
  * Read `country_weights` out of a training config without a YAML dependency.
  *
  * The block is a flat `CC: weight` list, so a line scan is enough — and it preserves the one thing a YAML parser would
- * destroy here: a bare `NO` key stays the string `"NO"` rather than becoming the boolean `false`. That retyping is the
+ * destroy here: a bare `no` key stays the string `"no"` rather than becoming the boolean `false`. That retyping is the
  * exact bug this file exists partly to surface, so the reader must not reproduce it.
  */
 export async function readAdmittedCountries(configPath: string): Promise<Set<string>> {
@@ -359,9 +359,9 @@ export async function readAdmittedCountries(configPath: string): Promise<Set<str
 	let inBlock = false
 
 	// A training config is a few hundred lines, and this reader must stay synchronous: the whole point is to read the
-	// block without a YAML parser, so a bare `NO` key stays the string it is rather than becoming the boolean YAML 1.1
+	// block without a YAML parser, so a bare `no` key stays the string it is rather than becoming the boolean YAML 1.1
 	// makes of it.
-	// oxlint-disable-next-line mailwoman/prefer-spliterator -- small, bounded, and sync by contract
+	// oxlint-disable-next-line mailwoman/prefer-spliterator -- small, bounded, and sync by interface
 	for (const line of (await readLocalTextFile(configPath)).split("\n")) {
 		if (/^\s*country_weights:\s*$/.test(line)) {
 			inBlock = true
@@ -463,7 +463,7 @@ export async function readGazetteerCoverage(dbPath: string): Promise<Map<string,
 }
 
 /**
- * Countries whose rooftop address points a CONSUMER can actually obtain.
+ * Countries whose rooftop address points a consumer can actually obtain.
  *
  * `data-bundles.ts` is the authority and it has four entries — candidate, poi, us, fr. Every other rooftop database on
  * a lab machine is ODbL `build-local` and cannot be shipped, which reads identically to published from inside the
@@ -472,7 +472,7 @@ export async function readGazetteerCoverage(dbPath: string): Promise<Map<string,
 export const ROOFTOP_PUBLISHED = new Set(["US", "FR"])
 
 /**
- * The training config whose `country_weights` decides admission, chosen by MODIFICATION TIME.
+ * The training config whose `country_weights` decides admission, chosen by modification time.
  *
  * Not by filename. The version scheme does not sort lexically and does not sort numerically either — `v8-leg2-sp.yaml`
  * wins both against `v4.8.0-trailing-region-placement-8k.yaml`, because `v8` was a corpus-line experiment and `v4.x` is
@@ -498,7 +498,7 @@ export async function newestConfig(repoRoot: string): Promise<string> {
 }
 
 /**
- * The newest corpus manifest, by MODIFICATION TIME.
+ * The newest corpus manifest, by modification time.
  *
  * Not by directory name. Corpus versions are `v0.9.9-si-bare-village`, `v0.26.0-trailing-region-leftcontext`,
  * `v8-jp-full-…` — a set that sorts neither lexically (`v0.9.9` beats `v0.26.0`, because `9` > `2`) nor numerically
@@ -526,7 +526,7 @@ export interface CensusCoverageOptions {
 	 */
 	configPath: string
 	/**
-	 * Corpus MANIFEST.json to census. Only read when the cache is missing or `refresh` is set.
+	 * Corpus manifest.json to census. Only read when the cache is missing or `refresh` is set.
 	 */
 	manifestPath: string
 	/**
@@ -564,7 +564,7 @@ export async function censusCoverage(options: CensusCoverageOptions): Promise<Co
 	const board = await readBoardCoverage(options.casesRoot)
 	const gazetteerPath = options.gazetteerPath ?? String(dataRootPath("wof", "candidate.db"))
 	const gazetteer = await readGazetteerCoverage(gazetteerPath)
-	// DERIVED from `release.config.json` rather than restated here. This was a hand-written eleven-entry table, and
+	// derived from `release.config.json` rather than restated here. This was a hand-written eleven-entry table, and
 	// `repo-health`'s `locale-tables` check exists because it was a second copy of the config's two lists. the check
 	// still holds every other country→locale table against the config, and this one can no longer disagree with it.
 	const weightsPackages = weightsPackageByCountry(await readReleaseConfig())
@@ -601,7 +601,7 @@ export async function censusCoverage(options: CensusCoverageOptions): Promise<Co
 	const configuredCorpusVersion = await readConfiguredCorpusVersion(options.configPath)
 
 	// A cached census and a config are two artifacts that both look authoritative and were never made to agree. When
-	// they name different corpora every row count below is about the WRONG corpus, and reads as a real absence.
+	// they name different corpora every row count below is about the wrong corpus, and reads as a real absence.
 	const corpusMismatch =
 		configuredCorpusVersion &&
 		census.corpusVersion !== "unknown" &&

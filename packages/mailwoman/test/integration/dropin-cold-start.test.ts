@@ -5,24 +5,24 @@
  *
  *   Cold-start integration test for the drop-in servers (`@mailwoman/photon`, `@mailwoman/nominatim`,
  *   `@mailwoman/libpostal`) and the MCP server (`@mailwoman/mcp`) — Tasks 7 and 14 of the docs reorg. Spawns each
- *   COMPILED `cli.js` and asserts the doctor-grade cold-start contract the tutorial docs print verbatim:
+ *   compiled `cli.js` and asserts the doctor-grade cold-start interface the tutorial docs print verbatim:
  *
  *   - `photon`/`nominatim` need a gazetteer to answer queries. With none present, `serve` must exit non-zero
  *     within 30 s and its stderr must name the fix (`mailwoman data pull`) — never an unhandled-rejection
  *     stack trace. This was previously a bare, WAF-blocked `curl` line (measured 2026-08-03: an unranged GET
  *     against the public bucket 403s) — see `resolver-backend.ts`'s `buildNoGazetteerMessage`.
  *   - `libpostal` needs only the model weights — no gazetteer, no data pull; `serve` must bind and answer
- *     `GET /` with 200 (the "lowest-dependency drop-in" the README claims). On a CONSUMER install the published
+ *     `GET /` with 200 (the "lowest-dependency drop-in" the readme claims). On a consumer install the published
  *     package ships the binaries, so a bare data root is the complete cold start. that half of the claim belongs
- *     to the clean-install smoke. IN-REPO the workspace package is bare by design (#1733: `link-dev-weights`
+ *     to the clean-install smoke. IN-repo the workspace package is bare by design (#1733: `link-dev-weights`
  *     populates the data-root overlay, never the tracked package), so the test seeds its scratch root's overlay
  *     from whatever weights this environment resolves and proves the data-independence half. a box that resolves
  *     no weights at all skips with the resolver's own message rather than failing on its environment.
- *   - `mcp` speaks JSON-RPC over stdio rather than HTTP, and loads its deps LAZILY, so its cold start fails
+ *   - `mcp` speaks JSON-RPC over stdio rather than http, and loads its deps lazily, so its cold start fails
  *     inside a tool call rather than at boot: the server must still connect and list its tools with no data at
  *     all, and the first model-backed tool call must answer with the same `mailwoman data pull` fix as a tool
  *     error — not the internal `resolveExtracts: at least one database is required`, which is what it said before
- *     Task 14. A second, network-free test asserts `@mailwoman/mcp` DECLARES `@mailwoman/neural-weights-en-us`;
+ *     Task 14. A second, network-free test asserts `@mailwoman/mcp` declares `@mailwoman/neural-weights-en-us`;
  *     it did not until 2026-08-03, so a standalone `npm install @mailwoman/mcp` could never load the model
  *     (measured against the published 8.6.0 — the same defect Task 7 fixed in `@mailwoman/libpostal`). Nothing
  *     inside this monorepo can catch that one at runtime, because yarn hoists every workspace sibling into
@@ -94,7 +94,7 @@ const PREFLIGHT_TIMEOUT_MS = 30_000
 const HEALTHY_TIMEOUT_MS = 30_000
 
 /**
- * Vitest's own per-test ceiling — see the note in `corpus-cli.test.ts`: must exceed the child's own timeout PLUS
+ * Vitest's own per-test ceiling — see the note in `corpus-cli.test.ts`: must exceed the child's own timeout plus
  * whatever this test queues behind the CLI-spawn lock (up to 120 s under contention). Generous costs nothing on a
  * passing test.
  */
@@ -130,7 +130,7 @@ function spawnServer(
 	cliPath: string,
 	args: string[],
 	env: NodeJS.ProcessEnv,
-	// The HTTP drop-ins never read stdin, so it stays closed for them. `@mailwoman/mcp` is its stdin — the
+	// The http drop-ins never read stdin, so it stays closed for them. `@mailwoman/mcp` is its stdin — the
 	// JSON-RPC transport runs over it — so the MCP round-trip below opens it.
 	stdin: "ignore" | "pipe" = "ignore"
 ): SpawnedServer {
@@ -183,7 +183,7 @@ async function waitForHealthy(server: SpawnedServer, port: number, deadlineMs: n
 }
 
 /**
- * SIGTERM + wait for exit (bounded by a SIGKILL fallback) — asserts the process actually goes away rather than just
+ * Sigterm + wait for exit (bounded by a sigkill fallback) — asserts the process actually goes away rather than just
  * that it answered once.
  */
 async function stopServer(server: SpawnedServer): Promise<void> {
@@ -207,7 +207,7 @@ async function stopServer(server: SpawnedServer): Promise<void> {
 /**
  * Drive an MCP stdio server through one round trip: `initialize`, `notifications/initialized`, then each requested
  * JSON-RPC call in order, resolving to the results in the same order. Hand-rolled rather than pulled from
- * `@modelcontextprotocol/sdk` because the point of the test is the WIRE — a client object that reconnects, retries or
+ * `@modelcontextprotocol/sdk` because the point of the test is the wire — a client object that reconnects, retries or
  * reshapes an error would hide exactly the behaviour being asserted. The transport is newline-delimited JSON both ways
  * (`StdioServerTransport`), so a line-buffered reader is the whole protocol.
  */
@@ -236,7 +236,7 @@ async function mcpRoundTrip(
 			if (!line) continue
 
 			// A partial line parses to null and is simply skipped — the next chunk completes it, and
-			// `server.stdout` accumulates the whole stream. Degrading is the contract here rather than an error.
+			// `server.stdout` accumulates the whole stream. Degrading is the interface here rather than an error.
 			const message = tryParsingJSON<{ id?: number; result?: Record<string, unknown> }>(line)
 			const resolve = message && typeof message.id === "number" ? pending.get(message.id) : undefined
 
@@ -349,9 +349,9 @@ describe.skipIf(!hasLibpostalCLI)("mailwoman-libpostal serve — cold start, zer
 			const dataRoot = await freshDataRoot()
 
 			// The claim under test is "weights only, zero data artifacts" — not "the workspace package carries
-			// weights". A CONSUMER install satisfies the weights half natively (the published package ships the
+			// weights". A consumer install satisfies the weights half natively (the published package ships the
 			// binaries. the clean-install smoke owns that claim). A dev checkout deliberately does not (#1733:
-			// `link-dev-weights` populates the DATA-ROOT overlay, never the tracked package — the YN0035/worktree
+			// `link-dev-weights` populates the data-root overlay, never the tracked package — the YN0035/worktree
 			// hazards), so seed the scratch root's overlay from whatever this environment resolves. the child then
 			// proves the data-independence half on every box, through the same overlay rung a dev run uses.
 			const { resolveWeights } = await import("@mailwoman/neural/weights")
@@ -464,7 +464,7 @@ describe.skipIf(!isFull || !hasMailwomanCLI || !hasPhotonCLI || !hasNominatimCLI
 			"mailwoman data pull candidate + photon/nominatim serve bind and answer 200; Paris routes to France not Texas",
 			async () => {
 				const reuseRoot = $public.MAILWOMAN_COLD_START_DATA_ROOT
-				// A `--data-root` supplied through the environment is the CALLER's and is never removed. the one this
+				// A `--data-root` supplied through the environment is the caller's and is never removed. the one this
 				// test makes is registered on the file's fixture stack by `freshDataRoot`.
 				const dataRoot = reuseRoot ?? (await freshDataRoot())
 
@@ -475,7 +475,7 @@ describe.skipIf(!isFull || !hasMailwomanCLI || !hasPhotonCLI || !hasNominatimCLI
 					})
 				)
 
-				// photon: auto-detects the convention-path candidate.db — NO $MAILWOMAN_CANDIDATE_DB export needed.
+				// photon: auto-detects the convention-path candidate.db — no $MAILWOMAN_CANDIDATE_DB export needed.
 				// Since #1444 that fallback lives in `resolveCandidateDBPath` itself, so it is no longer a
 				// photon/nominatim special case: every entry point reads the convention path.
 				await withCLISpawnLockAsync(async () => {

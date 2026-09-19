@@ -135,7 +135,7 @@ perturbations that must not move the assembled coordinate. See
 [Input robustness](../records/site-2026-08/concepts/input-robustness.mdx) for the absorption layers behind it and the
 coverage matrix.
 
-The ship-config channels are part of the contract: a gaz-trained model is graded with
+The ship-config channels are part of the interface: a gaz-trained model is graded with
 `--gazetteer-lexicon` + `--suppress-gaz-near-postcode`, and (v4.3.0+) `--conventions auto` —
 the eval spec declares them (`requires_gazetteer_lexicon`, `requires_conventions`) so the runner
 threads them everywhere. A scorer invoked without the declared channels grades a crippled model
@@ -171,7 +171,7 @@ drift bounded — but also found two unsigned drifts (`fr.cedex_real` −6.7, li
 The complement to the cadence rule, decided _before_ a promote needed it rather than under
 promotion pressure:
 
-1. **Between re-scores, floors are immutable contracts.** Measured == floor is a `PASS` — a
+1. **Between re-scores, floors are immutable interfaces.** Measured == floor is a `PASS` — a
    knife-edge is legal rather than a defect. A promote that dips below a floor fails; shipping it anyway
    is a spec _revision_ under the existing no-silent-drift rules (written reason, attribution,
    operator sign-off) **plus a note in that version's ledger row**, so margin erosion is visible

@@ -20,13 +20,13 @@ Root cause: the spec is written downstream of the code, and clients are vendored
 
 ## Decisions (settled 2026-07-12)
 
-| Question  | Decision                                                                                                                                                                                                                           |
-| --------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Scope     | The 3 vendor drop-ins **and** a new first-party native API. One stack, four surfaces.                                                                                                                                              |
-| Framework | **Hono + `@hono/zod-openapi`** (Zod 4). Web-standard primitives; node via `@hono/node-server`; edge stays open. Fastify rejected (node-only); tRPC rejected (owns its wire format — cannot reproduce fixed vendor REST contracts). |
-| Clients   | Spec is the artifact. Python (PyPI) + Rust (crates.io, progenitor) regenerate from the emitted spec in the release workflow. No generated source in the repo.                                                                      |
-| Topology  | New `@mailwoman/api-kit` (plumbing) + new `@mailwoman/api` (native surface). Drop-ins keep their workspaces. `mailwoman/server/` deleted.                                                                                          |
-| Legacy    | **Vendor wire compatibility is the only binding constraint.** No deprecation shims for the express `Router` exports; internal/consumer churn is acceptable.                                                                        |
+| Question  | Decision                                                                                                                                                                                                                            |
+| --------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Scope     | The 3 vendor drop-ins **and** a new first-party native API. One stack, four surfaces.                                                                                                                                               |
+| Framework | **Hono + `@hono/zod-openapi`** (Zod 4). Web-standard primitives; node via `@hono/node-server`; edge stays open. Fastify rejected (node-only); tRPC rejected (owns its wire format — cannot reproduce fixed vendor REST interfaces). |
+| Clients   | Spec is the artifact. Python (PyPI) + Rust (crates.io, progenitor) regenerate from the emitted spec in the release workflow. No generated source in the repo.                                                                       |
+| Topology  | New `@mailwoman/api-kit` (plumbing) + new `@mailwoman/api` (native surface). Drop-ins keep their workspaces. `mailwoman/server/` deleted.                                                                                           |
+| Legacy    | **Vendor wire compatibility is the only binding constraint.** No deprecation shims for the express `Router` exports; internal/consumer churn is acceptable.                                                                         |
 
 ## Architecture
 
@@ -38,7 +38,7 @@ Zod schemas (next to routes) ──> Hono route table ──> emitted OpenAPI (3
         └── z.infer static types       └── request validation + typed handlers
 ```
 
-- Each schema is declared **next to the route it validates, in the package that owns that wire contract**. No central schema package.
+- Each schema is declared **next to the route it validates, in the package that owns that wire interface**. No central schema package.
 - `createRoute({ method, path, request, responses })` binds schema, handler, and OpenAPI metadata in one object.
 - Each surface is a Hono sub-app behind an engine interface — the existing `createPhotonRouter(engine)` pattern carried over as `createPhotonApp(engine)`. Engine interfaces are unchanged; engine implementers are untouched.
 - The OpenAPI document is emitted from the route table — never handwritten — in 3.1 and 3.0 flavors. 3.0 exists solely for generator compatibility (progenitor); it kills `downgrade-spec.py`.

@@ -6,7 +6,7 @@
  *   Geocoder validation against provided coordinates (#619) — a free, honest, real-world accuracy
  *   eval.
  *
- *   TX HHSC's nursing-facilities registry ships a `Geo Location` (`lat,lon`) per facility alongside
+ *   TX hhsc's nursing-facilities registry ships a `Geo Location` (`lat,lon`) per facility alongside
  *   its physical address. We geocode the address with mailwoman's real parser + resolver and
  *   measure the great-circle delta to the provided point — p50 / p90, broken down by the resolution
  *   tier we assign (address_point / interpolated / admin). This is an independent check of the

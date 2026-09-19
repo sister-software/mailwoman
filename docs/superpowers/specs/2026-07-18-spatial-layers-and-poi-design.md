@@ -71,7 +71,7 @@ build-then-swap) from reference data to analysis layers.
 above all) must carry a `layer_coverage` table: per-H3-cell (coarse res) completeness signal, so
 consumers can distinguish "mapped and absent" from "unmapped." Absence of a row is never
 evidence by itself. Scorers built on layers emit `{claim, evidence_found, coverage_confidence}`,
-never a bare score. This field is contract-mandatory from day one because retrofitting
+never a bare score. This field is interface-mandatory from day one because retrofitting
 epistemics onto sealed artifacts means rebuilding all of them.
 
 **Tiers.**
@@ -83,13 +83,13 @@ epistemics onto sealed artifacts means rebuilding all of them.
   builds on their own disk, nothing ODbL is distributed by us. Same posture as the unpublished
   `osm/` workspace.
 - `private` — the user's own data (CRM, survey notes, parcel relationships), conforming to the
-  same schema contract, loaded from `$MAILWOMAN_DATA_ROOT`, never leaves their machine. This is
+  same schema interface, loaded from `$MAILWOMAN_DATA_ROOT`, never leaves their machine. This is
   how "internal geo" (who owns the building, have we worked with this builder) joins the same
   query surface as public layers.
 
 ### 2.2 Spatial primitives (compute)
 
-`@mailwoman/spatial` grows a small closed verb set over the layer contract:
+`@mailwoman/spatial` grows a small closed verb set over the layer interface:
 `nearest(layer, from, k)`, `within(layer, center, radius)`, `distance(a, b)`,
 `aggregate(layer, h3res)`; later `along(street-network, a, b)` (TIGER geometry) for
 route-length questions ($/mile builds). Deterministic, unit-tested, no ML.
@@ -200,7 +200,7 @@ then "requires the locally-built OSM layer," not a mangled parse.
 
 ## 4. Phase 2 — BDC plausibility (proving-ground vertical; separate spec)
 
-Named here so Phase 1 decisions serve it; specced separately once Phase 1's contract is real.
+Named here so Phase 1 decisions serve it; specced separately once Phase 1's interface is real.
 
 The question: grade broadband availability filings by physical plausibility — does claimed
 fiber service have the co-present physical plant (datacenter within reasonable distance, fiber
@@ -246,7 +246,7 @@ situs 124.9M points × ACS income × along-network distance × BDC competitors) 
 
 ## 6. Sequencing
 
-1. **Layer contract** (manifest + coverage tables + tier semantics) — first, so poi.db is born
+1. **Layer interface** (manifest + coverage tables + tier semantics) — first, so poi.db is born
    conforming. Small PR: schema module + docs page.
 2. **Phase 1 POI arc** — kind + intent record + lexicon wiring + poi.db pilot (CA) + pipeline
    branch + API/CLI surfaces. 3 wiring PRs + 1 data PR, per the repo-cost audit.

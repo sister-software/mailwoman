@@ -3,17 +3,17 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   `sub-venue` recipe (#35 step 4) — teach the `unit` tag the venue-INTERIOR shapes it was
+ *   `sub-venue` recipe (#35 step 4) — teach the `unit` tag the venue-interior shapes it was
  *   never taught, so the modifier+designator class wins at the shipped `venueStructureBiasScale` of
  *   6.0 instead of needing ~11 nats. `docs/engineering/sub-venue-corpus-task.mdx` is the spec. the
  *   vocabulary is `corpus/data/sub-venue-lexicon.json` (v0.2.0) and the curation ledger is
- *   `corpus/src/tools/sub-venue-promotions.ts`. The READ half — promotions, identifier
+ *   `corpus/src/tools/sub-venue-promotions.ts`. The read half — promotions, identifier
  *   distributions, name pools — is `sub-venue-sources.ts`; this file renders lines and emits rows.
  *
- *   ── WHY THIS SYNTHESIZES RATHER THAN HARVESTS ────────────────────────────────────────────────────
+ *   ── why this synthesizes rather than harvests ────────────────────────────────────────────────────
  *   Wave 1's lesson, and the reason the spec's "get real data first" instruction is honoured in a
- *   shape it did not anticipate: the attested SURFACE STRINGS are thin. 87 GB features attest
- *   `terminal`, 29 attest `wing`, 4 attest `concourse` (3 of which are a street called CONCOURSE WAY).
+ *   shape it did not anticipate: the attested surface strings are thin. 87 GB features attest
+ *   `terminal`, 29 attest `wing`, 4 attest `concourse` (3 of which are a street called concourse WAY).
  *   You cannot train a tag on 29 strings. What the five extracts do carry at volume is the three
  *   things a generator needs — 45,000+ real venue names across four countries, a per-region
  *   identifier distribution measured over 2,868 gate/terminal/campus refs, and the confound
@@ -21,32 +21,32 @@
  *   modifier` sampled per locale, and the attested strings ride along as seasoning
  *   ({@link ATTESTED_FRACTION}) rather than as the corpus.
  *
- *   ── THE PER-REGION IDENTIFIER RULE, AND WHY IT IS NOT COSMETIC ───────────────────────────────────
+ *   ── the PER-region identifier rule, and why IT is not cosmetic ───────────────────────────────────
  *   `Gate A12` is a rendering rather than a string anyone wrote down: all but 13 of Great Britain's 658
  *   `aeroway=gate` features are unnamed and carry only a `ref`. The lexicon therefore ships a
  *   distribution, and it differs by country far more than the shared English vocabulary suggests —
  *   GB gates are 71% bare digits and JP 89%, FR and DE are ~60% letter-digit (`A37`, `B05`), and ES
- *   gives a THIRD of its gates a range (`B18-B20`), which no other country does at that rate. A
+ *   gives a third of its gates a range (`B18-B20`), which no other country does at that rate. A
  *   generator that samples Great Britain's shape into a Spanish line produces a plausible string that
  *   is wrong about Spain, so every leg samples its own region.
  *
- *   ── ONLY PROMOTED (designator, locale) PAIRS PRODUCE POSITIVES ───────────────────────────────────
+ *   ── only promoted (designator, locale) pairs produce positives ───────────────────────────────────
  *   A promotion names a designator, a phrase and a locale, because the same token is a designator in
  *   one language and a disaster in another: `hall` is 0-of-3,273 in Great Britain and 35-of-40 in
- *   France; `wing` is 23-of-29 in Great Britain and 4-of-3,358 in the United States. A REJECTED pair
- *   generates NEGATIVES in that locale instead — en-US `wing` rows are Red Wing rather than units.
+ *   France; `wing` is 23-of-29 in Great Britain and 4-of-3,358 in the United States. A rejected pair
+ *   generates negatives in that locale instead — en-US `wing` rows are Red Wing rather than units.
  *
  *   `shape: "identifier-required"` is honoured as the ledger's docstring demands: de-DE `halle` is
  *   emitted only as `Halle <identifier>`, never bare and never after a modifier, because its 168-hit
- *   confound includes the CITY Halle (Saale) and only the identifier-containing shape separates them.
+ *   confound includes the city Halle (Saale) and only the identifier-containing shape separates them.
  *   {@link buildSubVenueForm} enforces it and `sub-venue.test.ts` pins it.
  *
- *   ── LABELS ───────────────────────────────────────────────────────────────────────────────────────
+ *   ── labels ───────────────────────────────────────────────────────────────────────────────────────
  *   Sub-venue is `unit`; the container is `venue`. That is the spec's wording and it invents nothing:
  *   `block` / `sub_block` exist in the `ComponentTag` union but are JP-char-model-only and outside
  *   `ACTIVE_TAGS` (STAGE3), so they are not reachable from a Latin-script recipe output.
  *
- *   ── WHAT IS DELIBERATELY NOT HERE ────────────────────────────────────────────────────────────────
+ *   ── what is deliberately not here ────────────────────────────────────────────────────────────────
  *   1. **A modifier+designator form outside English.** `VENUE_STRUCTURE_MODIFIERS` is an English
  *        list, and the extracts say the localized modifier surfaces do not exist to copy: `aile` in
  *        France is 0 hits, `ala` in Spain 0, `flügel` in Germany 0. Generating `Terminal Sud` would
@@ -123,7 +123,7 @@ export interface SubVenueLeg {
 	negativeShare: number
 	/**
 	 * Ca-ES only — keep context tuples whose postcode starts with one of these. Catalan-language territories by postal
-	 * prefix (07 Illes Balears, 08 Barcelona, 17 Girona, 25 Lleida, 43 Tarragona) rather than by a REGION string, whose
+	 * prefix (07 Illes Balears, 08 Barcelona, 17 Girona, 25 Lleida, 43 Tarragona) rather than by a region string, whose
 	 * spelling in the OA export is not something to guess at.
 	 */
 	postcodePrefixes?: readonly string[]
@@ -209,12 +209,12 @@ export const US_IDENTIFIER_REGION_BORROWED_FROM = "GB"
  * The row count this recipe output is built at, and the arithmetic behind it. `--count` overrides. this is the number
  * to use absent a reason.
  *
- * The training sampler (`corpus-python/src/mailwoman_train/data_loader.py`, `_raw_row_stream`) draws SOURCES from a
+ * The training sampler (`corpus-python/src/mailwoman_train/data_loader.py`, `_raw_row_stream`) draws sources from a
  * multinomial over `source_weights` and yields the next row from that source's iterator. Two consequences set the
  * size:
  *
  * 1. A source's share of an epoch is `weight / Σweights`, independent of how many rows it has.
- * 2. **A source that exhausts is DELETED from the multinomial** — there is no cycling. Under-size the recipe output and
+ * 2. **A source that exhausts is deleted from the multinomial** — there is no cycling. Under-size the recipe output and
  *    its nominal reps per row are fiction for the rest of the epoch.
  *
  * Measured against the shipped `v4.1.0-gb-venue-l1e4-2k` weight table: 33 sources summing to 144.5. At the reps per row
@@ -228,9 +228,9 @@ export const US_IDENTIFIER_REGION_BORROWED_FROM = "GB"
 export const RECOMMENDED_ROW_COUNT = 120_000
 
 /**
- * Share of emitted rows that are NEGATIVES (the confound classes, carrying no `unit`).
+ * Share of emitted rows that are negatives (the confound classes, carrying no `unit`).
  *
- * The spec's instruction is structural: "include the confound shapes as NEGATIVES in the same recipe output, or the
+ * The spec's instruction is structural: "include the confound shapes as negatives in the same recipe output, or the
  * model learns the surface rather than the structure". 0.3 is the share the `no-fragment` recipe settled on for its own
  * counter-distribution and there is no measurement here that beats it; `--negative-fraction` moves it.
  */
@@ -245,7 +245,7 @@ const DEFAULT_NEGATIVE_FRACTION = 0.3
 const ATTESTED_FRACTION = 0.1
 
 /**
- * Within the SYNTHESIZED positives of an English leg: the split between the two proposal shapes.
+ * Within the synthesized positives of an English leg: the split between the two proposal shapes.
  *
  * Modifier-heavy on purpose. Designator+identifier proposes at 0.85 confidence and already wins the decode at the
  * shipped 6.0. modifier+designator proposes at 0.6 and needs 5.87–10.65. The failing class is the one to teach, and the
@@ -395,7 +395,7 @@ export const buildPositiveForms = buildSubVenueForm
  */
 export const NegativeClass = {
 	/**
-	 * A locale-REJECTED surface in the venue slot: Red Wing Shoes, Village Hall, Porte de Champerret.
+	 * A locale-rejected surface in the venue slot: Red Wing Shoes, Village Hall, Porte de Champerret.
 	 */
 	RejectedVenue: "rejected-venue",
 	/**
@@ -415,7 +415,7 @@ export const NegativeClass = {
 	 */
 	GateSuffixStreet: "gate-suffix-street",
 	/**
-	 * A PROMOTED phrase outside the shape its promotion covers — `Halle Rosengarten`, `PHOENIX Halle`. The other half of
+	 * A promoted phrase outside the shape its promotion covers — `Halle Rosengarten`, `phoenix Halle`. The other half of
 	 * an `identifier-required` ruling. see `LegPools.unpromotedShapes`.
 	 */
 	UnpromotedShape: "unpromoted-shape",
@@ -541,7 +541,7 @@ const NO_STREET_SHARE = 0.25
 const SUBVENUE_FIRST_CUTOFF = 0.55
 
 /**
- * Emit one leg's POSITIVE rows: `<sub-venue> unit`, a real `venue`, and the leg's own address skeleton.
+ * Emit one leg's positive rows: `<sub-venue> unit`, a real `venue`, and the leg's own address skeleton.
  */
 function emitPositives(
 	context: EmitContext,
@@ -569,7 +569,7 @@ function emitPositives(
 		const tuple = sample(pools.context, random)
 		const venue = sample(pools.venues, random)
 
-		// A venue name that CONTAINS the sub-venue string (or vice versa) makes the two spans
+		// A venue name that contains the sub-venue string (or vice versa) makes the two spans
 		// unresolvable — alignment claims the longer one and quarantines the other — and the row would
 		// teach an overlap that never occurs on a real envelope. Redraw instead.
 		const lowVenue = venue.toLowerCase()
@@ -609,7 +609,7 @@ function emitPositives(
 const NEGATIVE_WITH_STREET_SHARE = 0.75
 
 /**
- * Emit one leg's NEGATIVE rows — the confound classes, none of which carries a `unit`.
+ * Emit one leg's negative rows — the confound classes, none of which carries a `unit`.
  */
 function emitNegatives(
 	context: EmitContext,

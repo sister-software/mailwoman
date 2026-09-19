@@ -51,7 +51,7 @@ coordinate is routinely 20–100 m from the building and further on a long rural
 
 **Google's errors arrive under HTTP 200.** `REQUEST_DENIED`, `OVER_QUERY_LIMIT`, `INVALID_REQUEST` and
 `UNKNOWN_ERROR` are 200s carrying a `status` field, invisible to every check `core/api` provides. The
-client maps them onto the normal `ResourceError` contract and refuses to cache any body that is not a
+client maps them onto the normal `ResourceError` interface and refuses to cache any body that is not a
 real answer — a `REQUEST_DENIED` persisted under a 30-day TTL would make an unbilled key look like a
 permanently broken address.
 

@@ -193,7 +193,7 @@ def emit_transliteration(args: argparse.Namespace, api_key: str, sink: Sink, che
                 "response_content": content,
             }
         )
-        # A truncated completion leaves the batch PENDING so the next run asks for the rest.
+        # A truncated completion leaves the batch pending so the next run asks for the rest.
         if finish == "length":
             return f"{RETRY_PREFIX}{batch.batch_id}", stats
         return batch.batch_id, stats

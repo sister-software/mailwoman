@@ -158,7 +158,7 @@ export function lookupDirectionalAbbreviation(input: unknown): DirectionalAbbrev
  */
 export interface DirectionalMatch {
 	/**
-	 * The matched directional name, e.g. "NORTH", "NORTH EAST".
+	 * The matched directional name, e.g. "north", "north east".
 	 */
 	directional: DirectionalName
 	/**
@@ -187,8 +187,8 @@ export function lookupDirectional(input: unknown): DirectionalMatch | null {
 /**
  * If the first whitespace-separated word of `street` is a known USPS directional (abbrev or name), return the canonical
  * name, its abbreviation, and the matched surface word. Null otherwise. (The leading-end counterpart of
- * {@link matchTrailingSuffix}; mirrors unit-designator's `matchLeadingDesignator`.) Single-word only — the spaced "NORTH
- * EAST" form is normalized to its one-word variant in real US streets, which this matches via the lookup.
+ * {@link matchTrailingSuffix}; mirrors unit-designator's `matchLeadingDesignator`.) Single-word only — the spaced "north
+ * east" form is normalized to its one-word variant in real US streets, which this matches via the lookup.
  */
 export function matchLeadingDirectional(
 	street: string
@@ -209,7 +209,7 @@ export function matchLeadingDirectional(
  *
  * - `"abbr"` → the USPS abbreviation ("N", "NE").
  * - `"full"` → the one-word spelled-out form ("North", "Northeast") — the common US street form rather than the
- *   publication's spaced "NORTH EAST".
+ *   publication's spaced "north east".
  */
 export function renderDirectional(
 	match: { canonical: DirectionalName; abbreviation: DirectionalAbbreviation },

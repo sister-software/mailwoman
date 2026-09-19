@@ -3,22 +3,22 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   `mailwoman gazetteer anchor-lexicon` — build the gazetteer-anchor LEXICON (knowledge-ladder rung
+ *   `mailwoman gazetteer anchor-lexicon` — build the gazetteer-anchor lexicon (knowledge-ladder rung
  *   3.2; #464). One generated artifact, codex as the single source of truth, consumed by both the
  *   Python trainer (gazetteer_anchor.py) and the TS inference side — so the two matchers cannot
  *   drift (the PLACETYPE_ORDER lesson: dual implementations silently corrupt).
  *
- *   The lexicon maps normalized surface forms → a candidate-tag BITMASK: country=1, region=2,
+ *   The lexicon maps normalized surface forms → a candidate-tag bitmask: country=1, region=2,
  *   po_box=4, cedex=8, homograph=16 (set iff country∩region by construction). Two entry maps with
- *   different match rules (encoded as DATA so both consumers share them):
+ *   different match rules (encoded as data so both consumers share them):
  *
- *   - `entries` — case-INSENSITIVE, keyed lowercase ("georgia", "costa rica", "timor-leste").
- *   - `code_entries` — exact-UPPERCASE only ("CA", "GA", "IN", "USA"), because "in"/"ca" as common
+ *   - `entries` — case-insensitive, keyed lowercase ("georgia", "costa rica", "timor-leste").
+ *   - `code_entries` — exact-uppercase only ("CA", "GA", "IN", "USA"), because "in"/"ca" as common
  *       lowercase words would fire everywhere. Country/region surfaces ≤3 alphabetic chars land
  *       here. po_box/cedex designators stay case-insensitive regardless of length ("Box 17" is
  *       titlecase).
  *
- *   The anchor is membership CLUES rather than verdicts — the model decides every tag (model-first, see
+ *   The anchor is membership clues rather than verdicts — the model decides every tag (model-first, see
  *   docs/engineering/reference/closed-vocab-fields-model-first.mdx). A "Box" hit inside "Box
  *   Canyon Rd" is fine: the homograph/contrast training teaches the model to read context.
  *
@@ -45,7 +45,7 @@ const BIT = { country: 1, region: 2, po_box: 4, cedex: 8, homograph: 16 }
 const SLOTS = ["country", "region", "po_box", "cedex", "homograph"]
 
 /**
- * Native command-line contract consumed by the filesystem command router.
+ * Native command-line interface consumed by the filesystem command router.
  */
 export const spec = {
 	name: "anchor-lexicon",
@@ -61,7 +61,7 @@ export const spec = {
 
 /**
  * The shared word-normalization rule (mirrored verbatim in gazetteer_anchor.py and the TS matcher — documented in
- * `rules.word_norm` below): per whitespace-word, strip LEADING/TRAILING characters that are not Unicode letters or
+ * `rules.word_norm` below): per whitespace-word, strip leading/trailing characters that are not Unicode letters or
  * digits (keep internal ones: "timor-leste", "u.s.a"), then rejoin single-spaced. Entry keys and scanned tokens both
  * pass through it, so "U.S.A." ≡ "u.s.a".
  */

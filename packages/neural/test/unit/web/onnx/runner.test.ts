@@ -5,7 +5,7 @@
  *
  *   End-to-end smoke test for `WebONNXRunner` using the real `@mailwoman/neural-weights-en-us`
  *   package + the production tokenizer + the production decoder. Runs in Node — `onnxruntime-web`'s
- *   WASM execution provider works there too. WebGPU is skipped via `useWebGPU: false` since Node
+ *   wasm execution provider works there too. WebGPU is skipped via `useWebGPU: false` since Node
  *   doesn't have a WebGPU adapter to fall back from.
  *
  *   What this test guards:

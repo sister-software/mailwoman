@@ -5,11 +5,11 @@
  *
  *   ISO 3166-2 subdivision → country reference, the cross-country complement to `country.ts`'s
  *   ISO 3166-1 `matchCountry`. A subdivision token ("QC", "Ontario", "Illinois") names a first-level
- *   admin unit whose COUNTRY is the piece the resolver needs when a region qualifier is the only
+ *   admin unit whose country is the piece the resolver needs when a region qualifier is the only
  *   signal that the locale-inferred default country is wrong ("Montreal QC" under a US locale).
  *
  *   Scope is deliberately minimal: the two subdivision systems whose two-letter codes people write
- *   ON THE ADDRESS LINE and whose homonymous localities collide across the border — US states
+ *   on the address line and whose homonymous localities collide across the border — US states
  *   (`us/state.ts`) and Canadian provinces (`ca/province.ts`). Both directions are covered: the ISO
  *   code (`QC` → Quebec) and the full name (`Quebec` / `Québec` → the `QC` record), so a resolver
  *   can expand the abbreviation the gazetteer FTS index lacks ("QC" is not an alt-name of Québec)
@@ -94,7 +94,7 @@ export function matchSubdivision(token: string | null | undefined): SubdivisionM
 }
 
 /**
- * Per-country subdivision lookups for callers that already KNOW the country. Kept separate from
+ * Per-country subdivision lookups for callers that already know the country. Kept separate from
  * {@link SUBDIVISION_LOOKUP} on purpose: the combined map is only unambiguous because the US and CA sets are disjoint,
  * and Australia breaks that property twice — `WA` collides with Washington and `NT` with the Northwest Territories. A
  * country-scoped caller (the admin-coherence check reads the winner's resolver-stamped country) dissolves the collision

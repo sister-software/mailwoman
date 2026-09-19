@@ -6,7 +6,7 @@
  *   Root vitest config — runs tests across every workspace from the repo root.
  *
  *   Workspace aliases redirect each `@mailwoman/*` import to source `.ts`, which is needed because
- *   Vite's applied condition set differs from Node's. They are GENERATED from each workspace's own
+ *   Vite's applied condition set differs from Node's. They are generated from each workspace's own
  *   `exports` map rather than hand-listed — see {@link workspaceAliases} for why the hand-listed
  *   version kept going wrong. The only hand-written entry left is the `onnxruntime-web` one below,
  *   which is not a workspace.
@@ -33,7 +33,7 @@ const escapeRegExp = (input: string): string => input.replaceAll(/[.*+?^${}()|[\
  * generic `@mailwoman/core/(.+) -> core/$1/index.ts` rule assumed every subpath was a directory, so each bare-file
  * subpath needed its own earlier entry (`objects`, `fs`, `crypto`, `api/disk-storage`, …) and a new one was a silent
  * `Cannot find package` in unrelated suites until someone added it. The mirror-image gap on `@mailwoman/corpus/(.+) ->
- * corpus/src/$1.ts` mis-resolved the exported `./tools` DIRECTORY subpath (#1523).
+ * corpus/src/$1.ts` mis-resolved the exported `./tools` directory subpath (#1523).
  *
  * Reading the map instead means a workspace that exports a subpath is importable in tests, one that does not is not,
  * and the answer matches what a real consumer gets. Order: every exact subpath before every wildcard, longest first,
@@ -97,14 +97,14 @@ export default defineConfig({
 			// Production imports keep `onnxruntime-web/webgpu` — this alias lives only in the vitest
 			// module graph, where WebGPU is unavailable anyway.
 			//
-			// ASK THE PACKAGE, don't hand-assemble the dist path (2026-08-06 triage). This read
+			// ASK the package, don't hand-assemble the dist path (2026-08-06 triage). This read
 			// `resolvePath(here, "node_modules/onnxruntime-web/dist/ort.node.min.mjs")` — a literal that
 			// says the same thing the comment above says, except it says it in a form the package
 			// cannot correct. `import.meta.resolve("onnxruntime-web")` applies the `node` condition of
 			// the exports map the comment is describing, so an ORT upgrade that renames or relocates
 			// the Node bundle keeps resolving. the literal would have silently missed. Verified
 			// 2026-08-06 against onnxruntime-web 1.x: it resolves to `dist/ort.node.min.mjs`, the same
-			// file the literal named. `exports` has no `./dist/*` subpath, so the ROOT specifier is
+			// file the literal named. `exports` has no `./dist/*` subpath, so the root specifier is
 			// the only one that reaches it.
 			{
 				find: /^onnxruntime-web\/webgpu$/,
@@ -119,9 +119,9 @@ export default defineConfig({
 		// The old isolate:true justification (libpostal's top-level await breaking `class extends`
 		// under a shared graph) no longer reproduces — #481 made the libpostal resource a lazy
 		// getter, and the structural bare/subpath interleave is covered by the side-effect
-		// `import "@mailwoman/core"` workaround in the affected files (see AGENTS.md).
+		// `import "@mailwoman/core"` workaround in the affected files (see agents.md).
 		//
-		// The shared-graph contract: `vi.mock` factories are only consulted at module EVALUATION,
+		// The shared-graph interface: `vi.mock` factories are only consulted at module evaluation,
 		// so a module already cached by an earlier file in the same fork is returned as-is — mocks
 		// declared against it silently never apply. Any file that mocks a shared module must call
 		// `vi.resetModules()` before importing the module under test (reference:
@@ -159,7 +159,7 @@ export default defineConfig({
 			"**/.claude/worktrees/**",
 			// `corpus-python/.venv` is a Python virtualenv that vendors a Svelte app (trackio) carrying
 			// its own *.test.js files. Vitest collected five of them. they normally surface as an
-			// unexplained `1 skipped`, and at `--maxWorkers=4` one FAILED the run outright with "No test
+			// unexplained `1 skipped`, and at `--maxWorkers=4` one failed the run outright with "No test
 			// suite found in file .../legend.test.js". CI never saw it — .venv is not checked in, so a
 			// fresh checkout collects 316 files against a working tree's 321 — but it is a real local
 			// and agent-worktree flake, and the failure mode is a red run nobody can attribute.
@@ -167,7 +167,7 @@ export default defineConfig({
 			// scratchpad/ holds staged release trees, probe output, and copied source. Same class: not
 			// checked in, so invisible to CI, and a landmine locally.
 			"**/scratchpad/**",
-			// @mailwoman/react's tests are Vitest BROWSER MODE only (playwright/chromium via the
+			// @mailwoman/react's tests are Vitest browser mode only (playwright/chromium via the
 			// workspace's own vitest.config.ts + `test:browser`). Importing vitest/browser inside
 			// this root forks-pool sweep is a hard error ("can be imported only inside the Browser
 			// Mode"), which is exactly what broke CI's Test leg from #1215 onward. CI runs the

@@ -3,12 +3,12 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   PROBE builder — WOF-hierarchy generalization of the PIX1 placetype-pair index (static-index
+ *   probe builder — WOF-hierarchy generalization of the PIX1 placetype-pair index (static-index
  *   survey candidate #3. design: `docs/superpowers/plans/2026-07-26-pair-index-hierarchy-design.md`).
  *   Extracts per-country (locality, region) pairs from the WOF admin DB's `ancestors` table and
  *   writes one PIX1 binary per country to `$MAILWOMAN_DATA_ROOT/wof/pair-index-hierarchy-probe/`.
  *
- *   Lives in the gazetteer pipeline (the sanctioned home for builders — scripts/AGENTS.md's closed
+ *   Lives in the gazetteer pipeline (the sanctioned home for builders — scripts/agents.md's closed
  *   drawer) but is not yet behind a `mailwoman gazetteer` command: it's a probe, runnable directly
  *   (`node mailwoman/gazetteer-pipeline/pair-index-hierarchy-probe.ts`) via `runIfScript` so plain
  *   import stays side-effect-free. Graduation path (design doc): fold into `gazetteer pair-index`
@@ -31,7 +31,7 @@
  *
  *   Extraction policy (measured in the design doc):
  *
- *   - Child places: `spr` rows, `placetype = 'locality'`, `is_current = 1 AND is_deprecated = 0`.
+ *   - Child places: `spr` rows, `placetype = 'locality'`, `is_current = 1 and is_deprecated = 0`.
  *   - Edges: the `ancestors` table, `ancestor_placetype` in the per-country parent set — US `region`;
  *     FR `region` + `macroregion` (both the département and the région are `region`-tagged surfaces in
  *     FR addresses. WOF splits them across two placetypes).
@@ -39,13 +39,13 @@
  *     `official = 1`, for child and parent alike. The official-name union is what makes the FR
  *     artifact carry "Bretagne" (official fra) alongside the spr default "Brittany" — the #936
  *     precedent (official-language names are name-exact evidence).
- *   - Fold: `normalizeFSTToken` (NFKC, lowercase, strip punctuation/symbols) on both sides — the
+ *   - Fold: `normalizeFSTToken` (nfkc, lowercase, strip punctuation/symbols) on both sides — the
  *     same single-sourced fold the GB/NZ register artifacts and the decode-side probe use
  *     (`foldVersion: 1`).
  *
  *   Self-verifying (the sealed-artifact spirit): after the temp-write + rename, the bytes are
  *   re-read through a fresh `PairIndexResolver` and known per-country pairs are probed, printing
- *   `PROBE OK`/`PROBE MISS` receipts. The independent ground-truth sweep lives in
+ *   `probe OK`/`probe miss` receipts. The independent ground-truth sweep lives in
  *   `pair-index-hierarchy-verify.ts` — run it after this.
  *
  *   Run: `node mailwoman/gazetteer-pipeline/pair-index-hierarchy-probe.ts [--countries us,fr] [--db <path>] [--out <dir>] [--skip-source-md5]`
@@ -84,7 +84,7 @@ export function resolveHierarchyRunInputs(values: { countries?: string; db?: str
 
 /**
  * The (locality, region) edge spec per country — ComponentTag space on the artifact side, WOF placetype space on the
- * extraction side. FR's `region` ComponentTag covers BOTH WOF `region` (départements: "Ille-et-Vilaine") and WOF
+ * extraction side. FR's `region` ComponentTag covers both WOF `region` (départements: "Ille-et-Vilaine") and WOF
  * `macroregion` (régions: "Bretagne") — either surface is a region-tagged parent in a French address.
  */
 export const EDGE_SPEC_BY_COUNTRY: Readonly<
@@ -95,8 +95,8 @@ export const EDGE_SPEC_BY_COUNTRY: Readonly<
 }
 
 /**
- * Post-write self-check probes, PER COUNTRY (the pair-index.tsx lesson: probing another country's names against a fresh
- * index prints reassuring `PROBE MISS` lines that verify nothing). Raw surfaces — folded through `normalizeFSTToken` at
+ * Post-write self-check probes, PER country (the pair-index.tsx lesson: probing another country's names against a fresh
+ * index prints reassuring `probe miss` lines that verify nothing). Raw surfaces — folded through `normalizeFSTToken` at
  * probe time, exactly like a decode-time caller would.
  */
 const PROBE_PAIRS_BY_COUNTRY: Readonly<Record<string, ReadonlyArray<readonly [child: string, parent: string]>>> = {
@@ -131,7 +131,7 @@ export interface HierarchyPairIndexHeader extends PairIndexHeaderInput {
 		namePolicy: "spr-name+official-names-v1"
 	}
 	/**
-	 * TRUE on every artifact this module writes: uncalibrated (delta 0), never for shipping as-is.
+	 * True on every artifact this module writes: uncalibrated (delta 0), never for shipping as-is.
 	 */
 	probeArtifact: true
 }
@@ -207,7 +207,7 @@ async function main(): Promise<void> {
 
 	await makeDirectories(outDir)
 
-	// READ-ONLY on the admin DB — this module must never write to it.
+	// read-only on the admin DB — this module must never write to it.
 	await using db = new DatabaseClient<WOFDatabase>(dbPath, { readOnly: true })
 
 	const sourceMD5 = values["skip-source-md5"] ? "(skipped)" : await md5File(dbPath)
@@ -246,9 +246,9 @@ async function main(): Promise<void> {
 		const childSurfaces = collectSurfaces(db, wofCountry, spec.childWOFPlacetypes)
 		const parentSurfaces = collectSurfaces(db, wofCountry, spec.parentWOFPlacetypes)
 
-		// Phase 3: fold + dedupe into PIX1 entries. Tag = the CHILD's ComponentTag — what a decode hit
-		// resolves the child span to. `parentTag` (PIX2 / schema 3) = the PARENT's, which this builder knows
-		// from its own edge declaration rather than from the row: `edge.parent` below is `region`, and BOTH
+		// Phase 3: fold + dedupe into PIX1 entries. Tag = the child's ComponentTag — what a decode hit
+		// resolves the child span to. `parentTag` (PIX2 / schema 3) = the parent's, which this builder knows
+		// from its own edge declaration rather than from the row: `edge.parent` below is `region`, and both
 		// WOF parent placetypes this spec selects (`region`, FR's `macroregion`) project onto that one
 		// ComponentTag — a département and a région are alike region-tagged surfaces in a French address,
 		// which is exactly why the spec pairs them.
@@ -290,7 +290,7 @@ async function main(): Promise<void> {
 
 		const header: HierarchyPairIndexHeader = {
 			country,
-			// Uncalibrated PROBE — zero on purpose: even an accidentally-wired probe artifact biases
+			// Uncalibrated probe — zero on purpose: even an accidentally-wired probe artifact biases
 			// nothing. The calibration task owns any real value (the pair-index.tsx `--delta` discipline).
 			delta: 0,
 			foldVersion: 1,
@@ -312,7 +312,7 @@ async function main(): Promise<void> {
 		const outPath = join(outDir, outName)
 		const tmpPath = join(outDir, `.tmp-${outName}`)
 
-		// Temp-write + rename: the artifact is never observable half-written (AGENTS.md sealed-artifact
+		// Temp-write + rename: the artifact is never observable half-written (agents.md sealed-artifact
 		// discipline, applied to a flat binary).
 		await writeLocalFile(bytes, tmpPath)
 		await movePath(tmpPath, outPath)

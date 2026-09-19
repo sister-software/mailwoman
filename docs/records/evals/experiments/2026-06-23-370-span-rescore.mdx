@@ -24,7 +24,7 @@ Run the shipped v4.13.0 model over a 7-locale coordinate-golden panel (IT/PT/PL/
 | **coverage-gap**       | gold not in the gazetteer — nothing to recover                                        |   104 |
 | emitted-but-unresolved | model emitted the gold locality, resolver still missed                                |     5 |
 
-The 116 swaps are the prize. A representative one: `86-300 Grudziądz, Daliowa 4`. The gold locality is **Grudziądz**, which is in the gazetteer — but the model splits it into `Grudzi` + `dz` on the `ą` combining mark (the #555 fragmentation), so neither fragment resolves. The full word sits right there in the raw text, intact. The model's subword tokenizer mangled it; a whitespace tokenizer wouldn't.
+The 116 swaps are the prize. A representative one: `86-300 Grudziądz, Daliowa 4`. The gold locality is **Grudziądz**, which is in the gazetteer — but the model splits it into `Grudzi` + `dz` on the `ą` combining mark (the #555 fragmentation). Therefore, neither fragment resolves. The full word sits right there in the raw text, intact. The model's subword tokenizer mangled it; a whitespace tokenizer wouldn't.
 
 ## Falsify before building
 

@@ -14,9 +14,9 @@
  *   A blocked lane is printed with what it will measure once unblocked and is scored nowhere. Mapping
  *   breadth is blocked by #1980 today, so every run prints `coverage partial`.
  *
- *   Report-only by design: the exit code is non-zero only when the HARNESS broke — a moved ruler, an
+ *   Report-only by design: the exit code is non-zero only when the harness broke — a moved ruler, an
  *   instrument that could not run, a missing database. A recorded decision is a result rather than a failure, and
- *   the RECORDING itself is the operator's.
+ *   the recording itself is the operator's.
  */
 
 import { writeLocalJSONFile } from "@mailwoman/core/fs/writers"
@@ -26,7 +26,7 @@ import { type CommandSpec, harnessCommand } from "#cli-kit"
 export const description = "Pre-registered phase-2 decision ruler (#1967)"
 
 /**
- * Native command-line contract consumed by the filesystem command router.
+ * Native command-line interface consumed by the filesystem command router.
  */
 export const spec = {
 	name: "phase-2-decision",

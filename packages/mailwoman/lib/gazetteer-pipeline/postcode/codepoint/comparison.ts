@@ -6,7 +6,7 @@
  *   `promotion-eval.ts` for the Code-Point Open GB database: compare it against the incumbent GeoNames
  *   `GB_full` rows before anything swaps in `DEFAULT_POSTCODE_DATABASES`.
  *
- *   This exists because the swap is a DATA-SOURCE change rather than a refresh. The two sources disagree on
+ *   This exists because the swap is a data-source change rather than a refresh. The two sources disagree on
  *   which postcodes exist and on where each one is, and both kinds of disagreement have to be looked at
  *   before the shipped database moves. What this tool does not do is decide: a large coordinate delta is a
  *   finding, and the finding usually indicts GeoNames (whose GB provenance is the muddled one — see
@@ -16,7 +16,7 @@
  *   Three questions, three sections of {@link CodePointCheckReport}:
  *
  *   1. **Which postcodes are in one and not the other.** The join key is `spr.name`, which both databases
- *      store in the #920 sanitized form (`SW1A1AA`), so the comparison is exact rather than fuzzy.
+ *      store in the #920 sanitized form (`SW1A1AA`). Therefore, the comparison is exact rather than fuzzy.
  *   2. **How far apart the shared ones are.** Haversine metres per joined postcode, reported as a
  *      distribution rather than a mean — the mean of a bimodal disagreement is a number that describes
  *      neither mode.
@@ -37,14 +37,14 @@ import { DatabaseClient } from "@mailwoman/sqlite/client"
 const M_PER_KM = 1000
 
 /**
- * A postcode present in one database and absent from the other, summarized by postcode AREA rather than listed. The
+ * A postcode present in one database and absent from the other, summarized by postcode area rather than listed. The
  * full list runs to six figures. the area histogram is what tells you whether a gap is structural (a whole area
  * missing) or diffuse (churn spread across all of them).
  */
 export interface AreaHistogram {
 	total: number
 	/**
-	 * `{ AREA: count }`, descending by count when rendered.
+	 * `{ area: count }`, descending by count when rendered.
 	 */
 	byArea: Record<string, number>
 }
@@ -99,9 +99,9 @@ export interface IncumbentOnlyBreakdown {
 	 */
 	crownDependencies: number
 	/**
-	 * Everything else: postcodes the incumbent has and the current OS register does not. These are TERMINATED postcodes —
+	 * Everything else: postcodes the incumbent has and the current OS register does not. These are terminated postcodes —
 	 * the incumbent snapshot never dropped them. Diffuse across every area (top: B, W, M, GU, SW…), which is the shape of
-	 * churn rather than of a coverage hole. Losing them is a currency IMPROVEMENT rather than a regression, though a
+	 * churn rather than of a coverage hole. Losing them is a currency improvement rather than a regression, though a
 	 * consumer geocoding historical addresses would feel it.
 	 */
 	terminated: number
@@ -152,14 +152,14 @@ const CROWN_DEPENDENCY_AREAS = ["IM", "GY", "JE"] as const
  * Chosen for (a) being individually verifiable by a reader, and (b) spanning England, Scotland and Wales plus both
  * coordinate extremes of the join. `expected` is the landmark's own position. a Code-Point centroid is the postcode
  * unit's mean delivery point, so tens of metres of offset is correct behaviour and not error. The looser entries (the
- * three city-centre probes near 500-900 m) are loose because the LANDMARK coordinate is a district rather than a door —
+ * three city-centre probes near 500-900 m) are loose because the landmark coordinate is a district rather than a door —
  * both databases agree with each other there to within 3 m, which is the comparison this list is actually making.
  *
  * The Senedd probe is `CF99 1SN` and that is not a typo. It was originally `CF99 1NA`, which the first eval run
  * reported absent from Code-Point Open and present in the incumbent. Chasing it found the real story rather than a bug:
  * the Senedd's postcode changed from `CF99 1NA` to `CF99 1SN` in 2021, Code-Point Open 2026-05 carries only the current
  * one, and the incumbent GeoNames snapshot still carries the retired one 114 m away. That single row is the whole
- * 33,761-postcode "only in incumbent" residual in miniature — those are TERMINATED postcodes rather than missing
+ * 33,761-postcode "only in incumbent" residual in miniature — those are terminated postcodes rather than missing
  * coverage.
  */
 export const CODEPOINT_PROBES = [
@@ -178,7 +178,7 @@ export const CODEPOINT_PROBES = [
 /**
  * The #920 sanitized form — every non-letter/number stripped. Both databases store this as `spr.name`, so it is the
  * join key. Duplicated from `resolver-wof-sqlite/geonames-postal.ts` rather than imported because that package is an
- * OPTIONAL peer and this check must run without it.
+ * optional peer and this check must run without it.
  */
 function normalizeName(raw: string): string {
 	return raw.replaceAll(/[^\p{L}\p{N}]/gu, "").toUpperCase()
@@ -198,7 +198,7 @@ export interface RunCodePointCheckOptions {
 	codepointPath: string
 	/**
 	 * The incumbent, e.g. the frozen `<data-root>/wof/frozen-backup-2026-08-04/postalcode-geonames-tail.db`. Opened
-	 * READ-ONLY — this tool never writes to either input.
+	 * read-only — this tool never writes to either input.
 	 */
 	incumbentPath: string
 	onPhase?: (phase: string, detail?: string) => void
@@ -208,7 +208,7 @@ export interface RunCodePointCheckOptions {
  * Run the check. Both databases are opened read-only. nothing is written anywhere.
  *
  * Memory: the incumbent's GB rows are held in a `Map` of ~1.84 M entries (~250 MB) so the join is a single pass over
- * each side rather than a SQL `ATTACH` join across two 800 MB+ files. Measured at ~40 s end to end.
+ * each side rather than a SQL `attach` join across two 800 MB+ files. Measured at ~40 s end to end.
  */
 export function runCodePointCheck(options: RunCodePointCheckOptions): CodePointCheckReport {
 	const phase = options.onPhase ?? (() => {})

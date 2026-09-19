@@ -4,7 +4,7 @@
  * @author Teffen Ellis, et al.
  * @file `diffParse` — telling the four span events apart.
  *
- *   Every test here is a case a COMPONENT-MAP diff reports identically, which is why this file exists. The worked
+ *   Every test here is a case a component-MAP diff reports identically, which is why this file exists. The worked
  *   example is real: v4.8.0 turned `Ye Three Lords, 27 Minories, London EC3N 1DE` from
  *   `venue "Ye Three Lords" · locality London · street Minories` into `locality "Ye Three Lords"`. Keyed by tag that
  *   reads as "the locality changed"; what happened is that two spans were destroyed and a third was retagged onto the
@@ -50,7 +50,7 @@ describe("diffParse", () => {
 		const diff = diffParse(INPUT, before, after)
 		const changed = diff.spans.filter(isChange)
 
-		// The venue was RETAGGED onto its own text rather than deleted — a tag-keyed diff cannot say this.
+		// The venue was retagged onto its own text rather than deleted — a tag-keyed diff cannot say this.
 		const retag = changed.find((s) => s.kind === "retagged")
 
 		expect(retag?.tagBefore).toBe("venue")

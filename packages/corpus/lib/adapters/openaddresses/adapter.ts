@@ -21,8 +21,8 @@
  *   one. This matches how a `mailwoman corpus build` invocation pins each file to a country via the
  *   inputs JSON.
  *
- *   Properties consumed (per the canonical OpenAddresses schema. both UPPERCASE and lowercase
- *   variants are accepted because legacy dumps used UPPERCASE):
+ *   Properties consumed (per the canonical OpenAddresses schema. both uppercase and lowercase
+ *   variants are accepted because legacy dumps used uppercase):
  *
  *   | Property | ComponentTag | | ------------- |
  *   -------------------------------------------------------------- | | `number` | `house_number` |
@@ -56,7 +56,7 @@ export const OPENADDRESSES_ADAPTER_ID = "openaddresses"
 export const OPENADDRESSES_DEFAULT_LICENSE = "CC-BY-4.0"
 
 /**
- * Subset of OpenAddresses Feature properties the adapter inspects. The runtime accepts UPPERCASE or lowercase keys.
+ * Subset of OpenAddresses Feature properties the adapter inspects. The runtime accepts uppercase or lowercase keys.
  * this interface documents the canonical lowercase form after normalization.
  */
 interface OaProperties {
@@ -125,7 +125,7 @@ export interface OpenaddressesAdapterOptions {
 
 /**
  * Build an OpenAddresses adapter. The optional `defaultLicense` lets callers stamp a non-default fallback for dumps
- * known to carry a single license throughout (e.g. a PDDL-only state extract).
+ * known to carry a single license throughout (e.g. a pddl-only state extract).
  */
 export function createOpenaddressesAdapter(opts: OpenaddressesAdapterOptions = {}): CorpusAdapter {
 	const defaultLicense = opts.defaultLicense ?? OPENADDRESSES_DEFAULT_LICENSE

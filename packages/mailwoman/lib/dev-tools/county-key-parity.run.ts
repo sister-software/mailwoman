@@ -2,15 +2,15 @@
  * @copyright Sister Software
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
- * @file County-key parity between the TIGER interpolation extracts and WOF's county ancestry, per US state (#2129).
+ * @file County-key parity between the tiger interpolation extracts and WOF's county ancestry, per US state (#2129).
  *
- *   A county-scoped join from a WOF county ancestor into a TIGER county-keyed extract reads "no data" wherever the two
+ *   A county-scoped join from a WOF county ancestor into a tiger county-keyed extract reads "no data" wherever the two
  *   registers disagree about what a county is, and that absence is indistinguishable from "not there". This measures
  *   the cheap half of the check the issue asks for: for every state extract under `$MAILWOMAN_DATA_ROOT/interpolation`,
  *   the count of distinct `county_fips` values against the count of WOF `county` records whose region ancestor is that
  *   state. Equal counts do not prove the keys correspond. unequal counts prove they cannot.
  *
- *   Measured 2026-09-05 over 51 extracts: two mismatches — Connecticut (9 planning-region codes 09110–09190 in TIGER
+ *   Measured 2026-09-05 over 51 extracts: two mismatches — Connecticut (9 planning-region codes 09110–09190 in tiger
  *   2023 against WOF's 8 historical counties) and Alaska (30 against 29, the 2019 Valdez-Cordova split).
  *
  *   Usage: node packages/mailwoman/lib/dev-tools/county-key-parity.run.ts [--candidate <candidate.db>]

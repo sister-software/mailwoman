@@ -18,7 +18,7 @@ import {
 } from "#cli/native/spec"
 
 /**
- * Native reverse-geocode command contract.
+ * Native reverse-geocode command interface.
  */
 export const spec = {
 	name: "reverse",

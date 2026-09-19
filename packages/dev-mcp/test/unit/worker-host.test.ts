@@ -4,7 +4,7 @@
  * @author Teffen Ellis, et al.
  *
  *   Host-level pins against a stub child — the injection point `WorkerHostOptions.workerPath` exists for. The stub advertises
- *   whatever tool metas its sidecar file holds, so the test can change a SCHEMA between forks without changing a name:
+ *   whatever tool metas its sidecar file holds, so the test can change a schema between forks without changing a name:
  *   exactly the restart the name-only `tools_changed` compare failed to announce, leaving clients on a stale schema
  *   with no signal to refresh.
  */

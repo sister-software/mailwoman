@@ -6,15 +6,15 @@
  *
  *   Both ways it failed before were hard to read. An unroutable name returned zero hits, which is indistinguishable
  *   from "this country has no places": a extract reaches routing only through the name `deriveSchemaName` derives from
- *   its filename, so a file spelled one letter off the placetype it serves answers with nothing while holding every
- *   row that was asked for. A routable name threw from deep inside a SELECT instead.
+ *   its filename. Therefore, a file spelled one letter off the placetype it serves answers with nothing while holding every
+ *   row that was asked for. A routable name threw from deep inside a select instead.
  *
  *   The two `spr`-only fixtures below differ only in that prefix — `postalcode-x.db` routes, `postcode-x.db` does
  *   not — so each test isolates one of the two failure modes.
  *
  *   `postalcode-empty.db` is the third case and the one the first version missed. It carries no tables, so a guard
  *   keyed on `spr` alone reads it as "not claiming to be a place extract" and waves it through — after which every
- *   query routed to it by its name dies mid-SELECT, which is the exact failure the guard exists to prevent. A
+ *   query routed to it by its name dies mid-select, which is the exact failure the guard exists to prevent. A
  *   zero-byte or truncated extract file is this shape, and one was on disk when the guard first shipped.
  */
 
@@ -45,7 +45,7 @@ const writeMain = (path: string): void => {
 }
 
 /**
- * A extract that CLAIMS to be a place extract — it carries `spr` — and cannot serve one.
+ * A extract that claims to be a place extract — it carries `spr` — and cannot serve one.
  */
 const writeSprOnly = (path: string): void => {
 	using db = new DatabaseClient<WOFDatabase>(path)

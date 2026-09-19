@@ -11,7 +11,7 @@
 import type { BuildableBodyID } from "#bodies"
 
 /**
- * What a suggestion carries back: enough to place AND FRAME the feature without a second lookup.
+ * What a suggestion carries back: enough to place and frame the feature without a second lookup.
  *
  * `diameterKm` is what a camera needs to choose a zoom, and its absence is not a neutral gap: a framing function given
  * no diameter falls to its smallest-feature branch, so every search result and every deep link framed a 4,000 km canyon

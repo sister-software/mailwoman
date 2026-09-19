@@ -7,7 +7,7 @@
  *   the path production takes rather than on the base alone.
  *
  *   Why this exists: every candidate cache under `$MAILWOMAN_DATA_ROOT/candidates/` held exactly one package,
- *   `neural-weights-en-us`. The gauntlet warns when a routed overlay is absent and grades those cases BASE-ONLY, so
+ *   `neural-weights-en-us`. The gauntlet warns when a routed overlay is absent and grades those cases base-only, so
  *   every board read taken through an explicit cache has graded DE, ES, GB, IN, IT and NZ without their pair-index and
  *   deploc priors. A base-only pass is not evidence the production path passes — the overlay changes the prior (#2223).
  *
@@ -16,7 +16,7 @@
  *   the resolver and it finds the base model beside it rather than shipping its own. Every other file is a symlink
  *   into `$MAILWOMAN_DATA_ROOT/weights/<locale>/`, except the base's `model.onnx`, which points at the candidate.
  *
- *   A declared file with nothing behind it is REPORTED rather than silently skipped and not fatal: the data root legitimately
+ *   A declared file with nothing behind it is reported rather than silently skipped and not fatal: the data root legitimately
  *   lacks some declared siblings (en-us's calibration pair is not materialized there), and the harness has its own
  *   guard, `assertDeclaredAnchorBins`, for the ones whose absence changes a score. A cache that names what it does not
  *   carry is a measurement. one that stays quiet is the defect this tool was written for.
@@ -62,7 +62,7 @@ const BASE_LOCALE = "en-us"
 /**
  * Locales staged by default: the base plus every overlay the gauntlet's board can route to, which is the set whose
  * absence the harness warns about. `routing.ts` is the authority on which countries route where. this list is the
- * PACKAGE side of it, so an overlay published but unrouted (fr-fr, en-au) can still be staged by naming it.
+ * package side of it, so an overlay published but unrouted (fr-fr, en-au) can still be staged by naming it.
  */
 const DEFAULT_LOCALES = [BASE_LOCALE, "en-gb", "en-nz", "de-de", "en-in", "es-es", "it-it"]
 

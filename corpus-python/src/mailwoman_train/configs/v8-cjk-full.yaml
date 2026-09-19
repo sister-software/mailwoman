@@ -8,9 +8,9 @@
 #   1. The head. `label_set: stage3-cjk` = stage3-jp + `locality_unit` (47 → 49 BIO). Every stage3-jp
 #      label keeps its id, so the JP per-tag read is comparable against the 24k record label for label.
 #   2. The mixture. The corpus is the v8-cjk overlay: the eight JP train parts referenced where they
-#      already sit on the volume, plus ONE CN part of 126 rows the `cn-organizational-units` recipe labeled
+#      already sit on the volume, plus one CN part of 126 rows the `cn-organizational-units` recipe labeled
 #      by the suffix grammar (train 126 / val 11 / board 14. docs on #2034). `source_weights` is the
-#      mixture knob — the loader samples a SOURCE per pull from this multinomial and restarts an exhausted
+#      mixture knob — the loader samples a source per pull from this multinomial and restarts an exhausted
 #      source with a fresh shuffled pass — so CN's 2% share means the 126 rows are each presented roughly
 #      (24000 × 256 × 0.02) / 126 ≈ 975 times over the run: a rule-shaped tag learned from a small register,
 #      not a claim about Chinese addresses at large. `country_weights` is not that knob: it is a per-row
@@ -20,8 +20,8 @@
 #      Both countries accept every row. the mixture lives in source_weights. Set the CN source to 0.0 and
 #      this config is v8-jp-full with a wider head, which is the control if the JP read moves.
 #
-# --- WHY ONE HEAD AND NOT A CN MODEL (the distribution decision, operator 2026-09-05) ---------------------
-# The consumer-facing shape is ONE CJK weights package a consumer installs as a unit: #1177 Phase B makes
+# --- why one head and not A CN model (the distribution decision, operator 2026-09-05) ---------------------
+# The consumer-facing shape is one CJK weights package a consumer installs as a unit: #1177 Phase B makes
 # the CJK char model the second script-routed weights package beside the Latin SentencePiece model, and JP + CN
 # ride it together. A per-script CN model was refused on supply — 126 labeled rows cannot train a model
 # that stands on its own. they can supplement one.
@@ -38,25 +38,25 @@
 # would be a third delta the 24k comparison could not attribute. If the JP read moves, the control above
 # (CN source 0.0) separates the head widening from the mixture. the locale head is the fix to try after.
 #
-# --- FROM SCRATCH, for the same two reasons v8-jp-full states: the classifier is (49, 384) here and
+# --- from scratch, for the same two reasons v8-jp-full states: the classifier is (49, 384) here and
 # (47, 384) at the JP checkpoint, and the char vocabulary is re-sealed (2,237 JP characters plus every CN
 # train character, re-sorted by code point), so a padded copy would map the wrong row to the wrong
 # character. Never `init_from` to grow a capability.
 #
-# --- WHAT THE RUN MUST SHOW (pre-registered, read on the same instruments as the JP record) ----------
+# --- what the RUN must show (pre-registered, read on the same instruments as the JP record) ----------
 #   * JP half: the 24k record's per-tag span exact-match table, re-scored on jp-board.jsonl with
 #     `score_jp_probe_board.py --label-set stage3-cjk`; coordinate-acceptability ≥ 0.70 is the check the
 #     JP arc registered and stays the check here. A drop of more than 1pp on any JP tag against the 24k
 #     record is the finding that says the CN rows cost something.
 #   * CN half: per-tag F1 for `locality_unit` and `dependent_locality` on the 11 CN val rows every eval
 #     step (train_log.csv), and span exact-match on the 14 rows of cn-board.jsonl at the end. n is small
-#     and the bar is stated as a READING rather than a check: the rows are the register's whole labeled supply.
+#     and the bar is stated as a reading rather than a check: the rows are the register's whole labeled supply.
 #     The zh-CN gauntlet rows stay improvement targets until a serving path exists. The val stream
 #     draws from the same source multinomial as train, so the 11 CN val rows are pulled about 2% of
 #     val pulls with restarts (≈ 400 pulls at val_rows 20011, each row ≈ 36 times); the F1 is over 11
 #     distinct rows however many times they are shown.
 #
-# --- Char mode is channel-free (D5): no anchor / gazetteer / country / evidence paths here, by contract.
+# --- Char mode is channel-free (D5): no anchor / gazetteer / country / evidence paths here, by interface.
 #
 # `precision`, `lr_schedule` and `grad_clip_norm` are spelled out because the trainer's default precision
 # is fp32 and v8-jp-full ran bf16. an omitted field here would be a silent third delta.

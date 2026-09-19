@@ -4,7 +4,7 @@
  * @author Teffen Ellis, et al.
  * @file `projectCoverage` — the projection that dropped the guard it was supposed to carry.
  *
- *   The corpus-mismatch guard was computed correctly by the census, covered by fifteen passing tests, and INVISIBLE on
+ *   The corpus-mismatch guard was computed correctly by the census, covered by fifteen passing tests, and invisible on
  *   its first live call: this projection builds its result field by field and did not name it. That is the same shape
  *   as every other silent-absence defect in this repo — a field the consumer needed came back missing rather than
  *   wrong, and missing reads as "there is none of it". So the projection is pure and tested rather than inline and trusted.

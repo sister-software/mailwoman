@@ -3,7 +3,7 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Source row → feature, once, at build. The USGS products use east longitude in 0..360 with bounding boxes that may
+ *   Source row → feature, once, at build. The usgs products use east longitude in 0..360 with bounding boxes that may
  *   run past 360 (a feature on the prime meridian reads 359.2..360.16); rendering wants −180..180. Every conversion is
  *   here so a consumer never guesses the source convention.
  */

@@ -2,7 +2,7 @@
  * Perturb-golden.ts — corpus-perturbation neutral-arena generator (Direction A).
  *
  * Our 376-assertion suite is a Pelias/addressit port (v0's lineage), so it can't reveal where neural beats rules. This
- * builds an UNBIASED arena from ground truth WE OWN: take golden v0.1.2 (already labeled in our schema) and apply rule-
+ * builds an unbiased arena from ground truth WE own: take golden v0.1.2 (already labeled in our schema) and apply rule-
  * defeating perturbations while keeping the component labels intact. Rule-based parsers lean on delimiters /
  * capitalization / canonical spacing. a contextual neural model should degrade more gracefully. The three-bucket
  * harness then shows whether that's true (the methodology-vindication test).
@@ -50,7 +50,7 @@ interface GoldenRow {
 }
 
 /**
- * Collapse the whitespace between the region and the postcode where the row writes them adjacently — `OR 97214` →
+ * Collapse the whitespace between the region and the postcode where the row writes them adjacently — `or 97214` →
  * `OR97214`, `Auvergne-Rhône-Alpes 69001` → `Auvergne-Rhône-Alpes69001`.
  *
  * Driven by the row's own components rather than by a shape. `\b([A-Z]{2})\s+(\d{5})\b` matches a US region code and a
@@ -87,7 +87,7 @@ async function main(): Promise<void> {
 	let base = 0
 
 	for await (const file of Globerator.files("jsonl", { cwd: GOLDEN, absolute: false, recursive: false })) {
-		// The stride below needs the row COUNT before it can pick a row, then indexes them, so the whole
+		// The stride below needs the row count before it can pick a row, then indexes them, so the whole
 		// set has to be resident either way — streaming would only move the materialization.
 		// oxlint-disable-next-line mailwoman/prefer-spliterator -- see above
 		const lines = (await readLocalTextFile(join(GOLDEN, file))).split("\n").filter((l) => l.trim())

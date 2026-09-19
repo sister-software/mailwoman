@@ -12,7 +12,7 @@ import { type CommandSpec, harnessCommand } from "#cli-kit"
 export const description = "Read the 56 reserved bare-postcode capability cases with one warm classifier"
 
 /**
- * Native command-line contract consumed by the filesystem command router.
+ * Native command-line interface consumed by the filesystem command router.
  */
 export const spec = {
 	name: "bare-postcode",

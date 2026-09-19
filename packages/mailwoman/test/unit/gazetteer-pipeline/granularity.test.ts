@@ -87,7 +87,7 @@ function ladderFixtureDB(): string {
 		db.prepare(`INSERT INTO spr VALUES (?, ?, ?, ?, ?, ?)`).run(id, name, placetype, country, isCurrent, isDeprecated)
 	}
 
-	// Camden AND Shoreditch both under London — one covered parent rather than two.
+	// Camden and Shoreditch both under London — one covered parent rather than two.
 	const links: Array<[child: number, ancestor: number]> = [
 		[4, 2],
 		[5, 2],

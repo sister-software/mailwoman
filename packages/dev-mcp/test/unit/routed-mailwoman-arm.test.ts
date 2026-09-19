@@ -56,7 +56,7 @@ function fakeDeps(overrides: Partial<RoutedMailwomanArmDeps> = {}): RoutedMailwo
 			throw new Error("routed-arm tests drive runOne, never deps.geocodeTraced")
 		}),
 		// Every overlay loaded, which is what a stub with no weights cache should claim: the arm under test makes no
-		// promote suggestion, so a truthful `false` keeps the stub from implying a degraded instrument.
+		// promote suggestion. Therefore, a truthful `false` keeps the stub from implying a degraded instrument.
 		gradedBaseOnly: vi.fn(() => false),
 		diagnoseParse: vi.fn(async () => {
 			throw new Error("routed-arm tests drive runOne, never deps.diagnoseParse")
@@ -118,8 +118,8 @@ describe("buildRoutedMailwomanArm", () => {
 	})
 
 	it("forwards every SUPPORTED config key into buildDeps — a key accepted but dropped grades the wrong configuration silently", async () => {
-		// The #1882 incident this pins: `candidate_db` joined the SUPPORTED list without joining this
-		// spread, so both arms of a staged-artifact comparison ran the LIVE artifact and reported
+		// The #1882 incident this pins: `candidate_db` joined the supported list without joining this
+		// spread, so both arms of a staged-artifact comparison ran the live artifact and reported
 		// 0 of 649 rows differed — a zero indistinguishable from a real no-effect.
 		const deps = fakeDeps()
 

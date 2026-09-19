@@ -5,7 +5,7 @@
  *
  *   Refuse to run a compiled tree that predates its source.
  *
- *   This server imports SOURCE, so `out/` is normally not on its path at all (see `tree-fingerprint.ts`). One thing
+ *   This server imports source, so `out/` is normally not on its path at all (see `tree-fingerprint.ts`). One thing
  *   re-opens it: the gauntlet writes its whole report to stdout, and stdout here is the JSON-RPC channel — running it
  *   in-process would corrupt the transport. So it is spawned as `out/cli.js`, which puts the stale-`out/` trap back on
  *   the table, and this is the answer to it.

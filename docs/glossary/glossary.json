@@ -352,7 +352,7 @@
 		},
 		{
 			"term": "composition window",
-			"definition": "The W dimension of the char path's (S,W) contract: the characters describing one label unit — a whole word for Latin char-word mode, the character ± ctx neighbors for CJK (ctx 3 → W 7, giving the CNN local n-gram context for designators like 丁目).",
+			"definition": "The W dimension of the char path's (S,W) interface: the characters describing one label unit — a whole word for Latin char-word mode, the character ± ctx neighbors for CJK (ctx 3 → W 7, giving the CNN local n-gram context for designators like 丁目).",
 			"tags": ["model", "cjk"],
 			"aliases": [],
 			"relatedTerms": ["char path"]

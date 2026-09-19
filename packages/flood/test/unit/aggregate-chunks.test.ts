@@ -6,7 +6,7 @@
  *   The batched build's arithmetic — the one part of that path a fixture build cannot reach, because a
  *   fixture runs in a single process.
  *
- *   A RANGE OF FEATURE IDS IS NOT A REGION, so a coverage cell is reached by several chunks and their
+ *   A range OF feature IDS is not A region, so a coverage cell is reached by several chunks and their
  *   counts must ADD. Taking the last chunk's value instead would report a busy floodplain as holding
  *   only the polygons whose ids happened to fall in the final range — a well-formed artifact that
  *   under-reports what the authority mapped, with nothing anywhere to say so.

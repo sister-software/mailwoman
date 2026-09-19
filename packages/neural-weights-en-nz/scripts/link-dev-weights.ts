@@ -7,17 +7,17 @@
  *   Materialize the en-nz overlay's dev artifacts. The steps live in
  *   `@mailwoman/resolver-wof-sqlite/weights-overlay-linker`; this file is the manifest.
  *
- *   #1179 OVERLAY FORM: en-nz declares `mailwoman.baseWeights: "@mailwoman/neural-weights-en-us"`, so
+ *   #1179 overlay form: en-nz declares `mailwoman.baseWeights: "@mailwoman/neural-weights-en-us"`, so
  *   `resolveWeights` falls through to the en-us package for `model.onnx` / `tokenizer.model`. This overlay links no
- *   model or tokenizer — it REMOVES any leftover local pair so the base fallback engages (a stale local file would
- *   SHADOW the base fallback and silently serve outdated bytes. the fr-fr manifest's header records the incident).
+ *   model or tokenizer — it removes any leftover local pair so the base fallback engages (a stale local file would
+ *   shadow the base fallback and silently serve outdated bytes. the fr-fr manifest's header records the incident).
  *
  *   What en-nz owns locally (`resolveFromPackageDir` resolves these from the overlay dir with no base fallback):
  *
  *   - `anchor-lexicon-v1.json` / `country-surface-lexicon-v1.json` — checked-in repo files.
  *   - `street-type-lexicon-v*.json` / `locality-surface-lexicon-v*.json` — the evidence lexicons, by the generation
  *       the card names under `requires.<channel>.lexicon`, the same pair the `files` array ships.
- *   - `pair-index-nz.bin` (NZ arc, #1277) — no committed source (derived from the LINZ-derived OpenAddresses NZ
+ *   - `pair-index-nz.bin` (NZ arc, #1277) — no committed source (derived from the linz-derived OpenAddresses NZ
  *       countrywide CSV, the same register `synth-nz-v2` was built from), built through the shared
  *       `buildPairIndexOverlay` (whose freshness guard compares the format, every calibrated magnitude, and the
  *       source md5. sidecar-cached — the CSV is 2.12M rows). `--delta 10` is the NZ-sweep-calibrated value (saturates
@@ -40,7 +40,7 @@ import {
 } from "@mailwoman/resolver-wof-sqlite/weights-overlay-linker"
 
 /**
- * The LINZ-derived OpenAddresses NZ countrywide CSV — the build's one source, md5-recorded in the header.
+ * The linz-derived OpenAddresses NZ countrywide CSV — the build's one source, md5-recorded in the header.
  */
 const NZ_SOURCE_CSV = String(dataRootPath("openaddresses", "extracted", "nz", "countrywide.csv"))
 

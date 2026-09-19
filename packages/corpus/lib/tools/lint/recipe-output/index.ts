@@ -24,7 +24,7 @@
  *   5. **Basic sanity.** Truncated rows (tokens.length !== labels.length), all-O rows >90% of the output.
  *
  *   Output: markdown report on stdout, optional JSON sidecar via `outJSON`. The command exits 0 if
- *   no errors, 1 if any errors (warnings don't refuse). Per the design, the MANIFEST entry for a
+ *   no errors, 1 if any errors (warnings don't refuse). Per the design, the manifest entry for a
  *   flagged recipe output should require `lint_acknowledged: true` before training consumes it.
  *
  *   Usage: mailwoman dev lint corpus-slice\

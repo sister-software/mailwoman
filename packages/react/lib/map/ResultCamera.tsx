@@ -14,7 +14,7 @@
  *   {@link cameraToViewState} into a controlled `<MapCanvas viewState>` and skip this component — the
  *   `center` case has that declarative path. only `bounds` strictly requires this. Renders nothing.
  *
- *   `target` is expected to be the STABLE, memoized `camera` off a `useMapPlaceRender` spec, so listing it
+ *   `target` is expected to be the stable, memoized `camera` off a `useMapPlaceRender` spec, so listing it
  *   as the effect dependency re-runs the camera move exactly when the resolved place changes — no
  *   value-key dance, no dependency-lint suppression.
  */

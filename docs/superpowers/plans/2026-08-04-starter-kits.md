@@ -1,6 +1,6 @@
 # Starter Kits Implementation Plan
 
-> **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
+> **For agentic workers:** required sub-skill: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
 **Goal:** Four single-sourced starter templates, an `npm init @mailwoman` engine with four shims, generated template repos in the mailwoman org, and the CI that keeps all of it true.
 
@@ -42,7 +42,7 @@ Task 8  publish runbook + operator handoff (bless list, repo-creation checklist)
 
 **Interfaces:**
 
-- Produces: `renderTemplate(kit: string, versions: Record<string,string>, outDir: string)` — Tasks 2–6 consume it; smoke contract: `smoke.sh <projectDir>` exits 0 when the kit's first command produced its expected output.
+- Produces: `renderTemplate(kit: string, versions: Record<string,string>, outDir: string)` — Tasks 2–6 consume it; smoke interface: `smoke.sh <projectDir>` exits 0 when the kit's first command produced its expected output.
 
 - [ ] Write the renderer test (RED): stamping replaces `__MAILWOMAN_VERSION__` tokens; output contains no `workspace:` or `"latest"`; `_shared` files land composed.
 - [ ] Implement renderer (GREEN). The geocoder template: `index.mjs` = the CSV-loop worked example from `geocode-a-csv.mdx` reduced to one file (candidate-default world: no env exports; doctor-first; next-steps print).

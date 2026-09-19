@@ -4,7 +4,7 @@
  * @author Teffen Ellis, et al.
  *
  *   `mailwoman gazetteer promote [<candidate-db>]` — point the drop-in convention path
- *   `<data-root>/wof/candidate.db` at a candidate build (a symlink — a POINTER swap, never a DB
+ *   `<data-root>/wof/candidate.db` at a candidate build (a symlink — a pointer swap, never a DB
  *   mutation). The nominatim/photon CLIs auto-use this path for worldwide resolution. Defaults to
  *   the canonical `candidate-global.db`.
  */
@@ -16,7 +16,7 @@ import { type CommandSpec, CommandTaskResult, type ParsedCommandComponent, useCo
 import { DEFAULT_CANDIDATE_OUT } from "#gazetteer-pipeline/defaults"
 
 /**
- * Native command-line contract consumed by the filesystem command router.
+ * Native command-line interface consumed by the filesystem command router.
  */
 export const spec = {
 	name: "promote",

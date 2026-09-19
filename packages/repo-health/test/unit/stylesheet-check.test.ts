@@ -14,7 +14,7 @@
  *   gets an exemption instead of a fix.
  */
 
-import { stylesheetDiagnostics } from "@mailwoman/repo-health/checks/stylesheet-contract"
+import { stylesheetDiagnostics } from "@mailwoman/repo-health/checks/stylesheet-check"
 import { describe, expect, it } from "vitest"
 
 /**
@@ -26,7 +26,7 @@ const OTHER = "packages/earth/lib/styles/app.css"
 
 const messages = (file: string, css: string) => stylesheetDiagnostics(file, css).map((d) => d.message)
 
-describe("stylesheet-contract", () => {
+describe("stylesheet-interface", () => {
 	describe("the system stylesheet's invariants", () => {
 		const RESET = "@layer reset { *, *::before, *::after { box-sizing: border-box; } }"
 		const BUTTON = "@layer base { button { color: inherit; } }"

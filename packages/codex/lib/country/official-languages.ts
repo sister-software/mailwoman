@@ -3,7 +3,7 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   GENERATED — do not edit by hand. Official languages per ISO 3166-1 territory, derived from
+ *   generated — do not edit by hand. Official languages per ISO 3166-1 territory, derived from
  *   Unicode CLDR 47.0.0 supplemental territoryInfo (`_officialStatus`). `official` merges
  *   CLDR's `official` + `de_facto_official`; `regional` is `official_regional` (kept separate —
  *   the #936 probe showed it pulls in cross-border quirks like Korean-in-CN, so consumers opt in).

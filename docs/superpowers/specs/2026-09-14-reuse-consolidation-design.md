@@ -156,7 +156,7 @@ differ by design and the differences are required — `flood` represents Zone 1 
 implementation parameterizes over them; it never averages them.
 
 **Where the kit lives** is the one open question. `@mailwoman/core/layers` already holds the manifest and schema
-contract at 895 lines and every layer depends on `core` already, but an ingest pipeline in `core` adds weight to
+interface at 895 lines and every layer depends on `core` already, but an ingest pipeline in `core` adds weight to
 the package everything depends on. A new `@mailwoman/layer-kit` workspace is cleaner and costs the seven-register
 registration that `AGENTS.md` documents. Decide before writing code.
 
@@ -200,13 +200,13 @@ bias in the 22,829 figure, and it changes the campaign's answer.
 **Every high-similarity family in lane B is already consolidated.** The shared implementation exists and each
 layer's file is a manifest plus a call:
 
-| Family                        | Similarity | Where the shared implementation already lives                                                                                                                     |
-| ----------------------------- | ---------: | ----------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `lib/scripts/ingest-chunk.ts` |       0.72 | `runIngestChunkScript` + `INGEST_CHUNK_FLAGS`, `@mailwoman/core/scripting/ingest-chunk-script`                                                                    |
-| `lib/sdk/download.ts`         |       1.00 | `downloadZippedGeodatabase`, `@mailwoman/core/utils`                                                                                                              |
-| `lib/schema.ts`               |       0.78 | `addBoundingBoxColumns` / `addCellIndexColumns` / `addRingGeometryColumns`, `@mailwoman/sqlite/schema-columns`; `LayerContractDatabase`, `@mailwoman/core/layers` |
-| `observations/*-route.ts`     |          — | `#observations/layer-record`                                                                                                                                      |
-| `corpus/lib/us/adapters/**`   |          — | `#adapters/utils`, `@mailwoman/codex/address-format`, `#us/fips-state`, `CSVSpliterator`                                                                          |
+| Family                        | Similarity | Where the shared implementation already lives                                                                                                                   |
+| ----------------------------- | ---------: | --------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `lib/scripts/ingest-chunk.ts` |       0.72 | `runIngestChunkScript` + `INGEST_CHUNK_FLAGS`, `@mailwoman/core/scripting/ingest-chunk-script`                                                                  |
+| `lib/sdk/download.ts`         |       1.00 | `downloadZippedGeodatabase`, `@mailwoman/core/utils`                                                                                                            |
+| `lib/schema.ts`               |       0.78 | `addBoundingBoxColumns` / `addCellIndexColumns` / `addRingGeometryColumns`, `@mailwoman/sqlite/schema-columns`; `layerschemadatabase`, `@mailwoman/core/layers` |
+| `observations/*-route.ts`     |          — | `#observations/layer-record`                                                                                                                                    |
+| `corpus/lib/us/adapters/**`   |          — | `#adapters/utils`, `@mailwoman/codex/address-format`, `#us/fips-state`, `CSVSpliterator`                                                                        |
 
 **Two files that correctly call the same shared helper with different arguments are structurally similar.** An
 8-gram node-kind hash cannot tell them from two files that duplicate the logic, so the clustering instrument counts
@@ -228,7 +228,7 @@ A sixth probe went looking for the rest of that category — a string-literal un
 values, an interface restating its keys, a zod schema restating an interface — and found **223 lines**, of which
 most are not duplicates on inspection. `NominatimResult` and `NominatimResultSchema` share every field name and
 are deliberately different: the interface types `annotations` as `OpenCageAnnotations` where the wire schema has
-`z.looseObject({})`, so `z.infer` would widen it. The wire contract and the engine contract are two things.
+`z.looseObject({})`, so `z.infer` would widen it. The wire interface and the engine interface are two things.
 
 ### What the tree holds
 

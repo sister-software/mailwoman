@@ -371,7 +371,7 @@ def test_punct_drop_removes_separator_commas_and_retargets_spans():
     dropped = drop_separator_punct(_punct_row())
     assert dropped is not None
     assert dropped["raw"] == "123 Main St Portland OR 97214"
-    # The critical property: every span still covers its ORIGINAL entity text in the mutated raw.
+    # The critical property: every span still covers its original entity text in the mutated raw.
     assert _span_texts(dropped) == [
         ("house_number", "123"),
         ("street", "Main St"),

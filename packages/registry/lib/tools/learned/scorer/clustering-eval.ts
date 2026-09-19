@@ -3,25 +3,25 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Learned-scorer CLUSTERING A/B (#603 Tier 2) — the definitive test the pairwise probe
+ *   Learned-scorer clustering A/B (#603 Tier 2) — the definitive test the pairwise probe
  *   (`learned-scorer-eval.ts`) deferred. The probe showed a learned scorer ranks candidate pairs
  *   better than Fellegi-Sunter (GBT +0.0177 AUC, +6.6pp pairwise F1); a better pairwise scorer need
  *   not lift the assembled clustering F1 (clustering depends on the threshold +
  *   connected-components). This measures the clustering F1 directly, leakage-free:
  *
  *   1. Sample NPI-keyed records (real registry + name-drift + address-variation), geocode once.
- *   2. Split the NPIs into TRAIN / EVAL. Train a GBT + an LR on pairs blocked among TRAIN records (label
+ *   2. Split the NPIs into train / eval. Train a GBT + an LR on pairs blocked among train records (label
  *        = same-NPI). The eval NPIs' records are never seen in training.
- *   3. Cluster the EVAL records three ways via the same `resolveEntities` pipeline (block → score →
+ *   3. Cluster the eval records three ways via the same `resolveEntities` pipeline (block → score →
  *        connected-components) — once with the FS baseline, once with the GBT as the link scorer
  *        (the new `ResolveConfig.scorer` hook), once with the LR. Sweep the link threshold for
  *        each. take best F1.
  *   4. Report the eval clustering F1 (the dedup benchmark's metric): does the learned scorer beat the FS
- *        baseline on the ASSEMBLED output rather than just pairwise ranking?
+ *        baseline on the assembled output rather than just pairwise ranking?
  *
  *   The FS arm is the benchmark's baseline (same model: address-frequency + collapsed spatial,
  *   EM-fit), so the comparison is credible. Honest framing: in-domain (one state), a held-out-NPI
- *   split (not a held-out STATE — generalization across states is the next axis), a compact
+ *   split (not a held-out state — generalization across states is the next axis), a compact
  *   pure-Node GBT.
  *
  *   Run: `mailwoman registry scorer-eval clustering [--npis 2000] [--split 0.67] [--seed 1]
@@ -84,7 +84,7 @@ export interface ScorerClusteringEvalOptions {
 	 */
 	split?: number
 	/**
-	 * Base PRNG seed. Default 1.
+	 * Base prng seed. Default 1.
 	 */
 	seed?: number
 	/**
@@ -128,7 +128,7 @@ export async function scorerClusteringEval(
 	report?.("[C] geocoding…")
 	const geocoder = await options.createGeocoder()
 
-	// `auth`/`taxonomy` ride as attributes so the SHARED featurizer's #625 roll-up features can read the
+	// `auth`/`taxonomy` ride as attributes so the shared featurizer's #625 roll-up features can read the
 	// authorized official. the FS arm ignores them (no discriminators configured).
 	const mapping: ColumnMapping = {
 		id: "npi",
@@ -147,7 +147,7 @@ export async function scorerClusteringEval(
 
 	// Use address frequency and the collapsed-spatial model as the baseline feature basis.
 	// pattern is EM-independent, so the same featurize() is consistent at train and inference time. ---
-	// The featurizer is the SHARED production one (createMatchFeaturizer) — train ≡ eval ≡ inference, one
+	// The featurizer is the shared production one (createMatchFeaturizer) — train ≡ eval ≡ inference, one
 	// definition. Feed the collapsed-spatial + address-frequency comparison set (the benchmark baseline).
 	const comparisons = buildDefaultModel({ collapseSpatial: true, addressFrequency }).comparisons
 	const featurize = createMatchFeaturizer({ comparisons, addressFrequency })
@@ -164,7 +164,7 @@ export async function scorerClusteringEval(
 	}
 
 	/**
-	 * One held-out-NPI split: train the GBT + LR on TRAIN pairs, then cluster the EVAL records three ways (FS baseline,
+	 * One held-out-NPI split: train the GBT + LR on train pairs, then cluster the eval records three ways (FS baseline,
 	 * GBT scorer, LR scorer) through the same `resolveEntities` pipeline, sweeping the link threshold finely for each and
 	 * taking best F1. The geocode is shared across seeds. only the split, the trained scorers, and the eval subset move
 	 * with the seed.
@@ -189,7 +189,7 @@ export async function scorerClusteringEval(
 		const dim = trainX[0]?.length ?? 0
 		const gbt = trainGBT(trainX, trainY, trainW, { rounds: 120, depth: 3, lr: 0.3, minLeaf: 20 })
 
-		// LR (batch GD, class-balanced) — the SHARED trainer, same as the pairwise probe.
+		// LR (batch GD, class-balanced) — the shared trainer, same as the pairwise probe.
 		const lrSc = trainLogisticRegression(trainX, trainY, trainW, dim)
 
 		const gbtScorer = (a: SourceRecord, b: SourceRecord) => gbtScore(gbt, featurize(a, b))
@@ -201,7 +201,7 @@ export async function scorerClusteringEval(
 		): ArmScore =>
 			bestOver(thresholds, (t) => toArmScore(scoreEntities(resolveEntities(evalRecords, cfg(t)).entities, npiLabel, N)))
 
-		// FS baseline: EM-fit weights in bits, fine grid [0..25]. Learned scorers: a FINE sweep from each
+		// FS baseline: EM-fit weights in bits, fine grid [0..25]. Learned scorers: a fine sweep from each
 		// scorer's own eval-pair score distribution, so a coarse grid can't understate them.
 		const { pairs: evalPairs } = block(evalRecords, defaultBlockingKeys())
 
@@ -326,7 +326,7 @@ export async function scorerClusteringEval(
 			`fair. The GBT is a compact pure-Node implementation (120 rounds, depth 3), not a tuned XGBoost/LightGBM — a real ` +
 			`GBM with more NPIs/features could move the number further. Thresholds are swept per scorer (FS in bits, learned ` +
 			`scorers in logits), each at its own best operating point — note a 300-NPI smoke MISLED (FS ahead): too few ` +
-			`co-located collisions to exhibit the over-merge, which only bites at scale, so trust the larger eval. NPI-as-truth ` +
+			`co-located collisions to exhibit the over-merge. It only bites at scale. Therefore, trust the larger eval. NPI-as-truth ` +
 			`is conservative (a cross-NPI merge is a candidate, not necessarily an error)._`
 	)
 

@@ -4,7 +4,7 @@
  * @author Teffen Ellis, et al.
  *
  *   `<Geocoder>` — the whole geocoder, composed. It is the map analogue of `PipelineExplorer`
- *   and takes the SAME DI shape: an injected {@link GeocoderRuntime} (the host owns ONNX / httpvfs / R2 /
+ *   and takes the same DI shape: an injected {@link GeocoderRuntime} (the host owns ONNX / httpvfs / R2 /
  *   the composed map style) plus a {@link GeocoderPanels} bag (the host's ModelVisualizer / VersionCompare /
  *   About / Permalink). Everything here is composition + a `ClientOnly` boundary:
  *

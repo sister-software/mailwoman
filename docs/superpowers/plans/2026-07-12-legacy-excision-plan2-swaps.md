@@ -1,8 +1,8 @@
 # Legacy Excision Plan 2 — Production Swaps (`/v1/parse`, libpostal, nominatim) Implementation Plan
 
-> **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
+> **For agentic workers:** required sub-skill: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
-**Goal:** Swap the three production surfaces off the v1 rules parser — `/v1/parse` to native neural output, libpostal `/parse` to a neural-backed engine behind the existing wire contract, nominatim `streetParts` deleted in favor of fields the geocode already returns — each conditional against the phase-0 goldens.
+**Goal:** Swap the three production surfaces off the v1 rules parser — `/v1/parse` to native neural output, libpostal `/parse` to a neural-backed engine behind the existing wire interface, nominatim `streetParts` deleted in favor of fields the geocode already returns — each conditional against the phase-0 goldens.
 
 **Architecture:** Raw `classifier.parse` everywhere (not the runtime pipeline — its reconcile stage merges street into house_number, #566). The libpostal projection extends in place (`libpostal/engine.ts`): a tree-aware `treeToParseMatches` assembles the street-name family into one match so the untouched route layer + `COMPONENT_TO_LIBPOSTAL` keep producing libpostal wire shapes. Checks are structured comparisons with pre-registered per-label agreement floors (spec §Projection layer, Plan-2 amendments) — byte-equality is unattainable across the engine swap by design.
 
@@ -16,7 +16,7 @@
 
 - **Pre-registered check floors (set before any check run; do not adjust to green a failing check — a miss is an adjudication rather than a threshold bug):** after case-folding (`.toLowerCase()`) and street assembly: `house_number` agreement ≥ 0.97, `postcode` ≥ 0.97, `road`/street-family ≥ 0.90, measured over golden rows where the rules engine emitted that label.
 - **Raw `classifier.parse(text, { postcodeRepair: true })` is the parse entry point** — never `createRuntimePipeline`/`runPipeline` for parse-only surfaces (#566).
-- **Wire contracts:** libpostal + nominatim response SHAPES are frozen (compat drop-ins); `/v1/parse`'s shape changes deliberately (v7 major) and its schema edit auto-cascades to the emitted OpenAPI + regenerated clients (client publish stays a separate manual dispatch — no action here).
+- **Wire interfaces:** libpostal + nominatim response SHAPES are frozen (compat drop-ins); `/v1/parse`'s shape changes deliberately (v7 major) and its schema edit auto-cascades to the emitted OpenAPI + regenerated clients (client publish stays a separate manual dispatch — no action here).
 - **Goldens are readonly** — checks read them, never rewrite them.
 - Tabs; 4-line license headers on new files; explicit `.ts` relative imports; zero raw `process.env`/`process.argv`; acronym casing (`decodeAsJSON`-style).
 - **Compile receipts mandatory:** every task reports `yarn tsc -b <workspace>` output; `yarn compile` before any spawned `out/cli.js`.
@@ -165,7 +165,7 @@ git commit -m "feat(libpostal): tree-aware projection — treeToParseMatches + m
 - Consumes: `classifier.parse` (`neural/classifier.ts:313`), `decodeAsTuples`/`decodeAsXML` (`@mailwoman/core`), phase-0 golden `mailwoman/test-fixtures/legacy-golden/v1-parse-golden.jsonl`.
 - Produces: new wire `ParseOutcome = { input: string; components: Array<{tag, value}>; tree: AddressTree; debug?: string }`. `engine.parse` is **undefined when weights are absent** → the existing 501 route path answers (replaces the rules always-on invariant; documented in the migration guide, plan 5).
 
-- [ ] **Step 1: Redefine the engine contract** — `api/engine.ts`: delete the `SerializedSolution` import; replace the `ParseOutcome` interface:
+- [ ] **Step 1: Redefine the engine interface** — `api/engine.ts`: delete the `SerializedSolution` import; replace the `ParseOutcome` interface:
 
 ```ts
 import type { AddressTree } from "@mailwoman/core"

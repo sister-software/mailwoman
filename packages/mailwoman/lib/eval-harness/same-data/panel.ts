@@ -59,7 +59,7 @@ const HOMOGRAPH_CONTEST_SHARE = 1 / 3
 const COUNTRY_INFO_COLUMNS = { iso: 0, country: 4 } as const
 
 /**
- * The postal dump's admin1 CODE column. `@mailwoman/corpus`'s {@link GEONAMES_POSTAL_COLUMNS} names the admin1 NAME at
+ * The postal dump's admin1 code column. `@mailwoman/corpus`'s {@link GEONAMES_POSTAL_COLUMNS} names the admin1 name at
  * index 3 because that is what a corpus row renders. this panel keys on the code beside it, which is stable across the
  * register's language variants.
  */
@@ -264,7 +264,7 @@ export function buildPanel(inputs: PanelBuildInputs): PanelBuildResult {
 				.slice(0, 2)
 				.every((bearer) => goldSets.has(bearer.geonameid))
 		})
-		// One row per NAME, keyed on the first bearer in geonameid order, so a name cannot enter the panel twice.
+		// One row per name, keyed on the first bearer in geonameid order, so a name cannot enter the panel twice.
 		.filter((city) => {
 			const bearers = byName
 				.get(city.asciiname.toLowerCase())!

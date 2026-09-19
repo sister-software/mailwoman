@@ -5,7 +5,7 @@
 ## or change itself. Warning severity preserves conversational uses where the
 ## phrase identifies a literal artifact that immediately follows.
 extends: existence
-message: "Cut the presentation preamble '%s' and start with the information it introduces."
+message: "Remove the presentation preamble '%s' and start with the information it introduces."
 level: warning
 ignorecase: true
 tokens:

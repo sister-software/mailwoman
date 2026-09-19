@@ -3,7 +3,7 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Assemble a corpus OVERLAY MANIFEST — generalized from assemble-fr-admin-split-overlay-manifest.
+ *   Assemble a corpus overlay manifest — generalized from assemble-fr-admin-split-overlay-manifest.
  *   Adds parquet files to a base corpus, keeping every base file verbatim (pure overlay add), and
  *   re-roots base paths to /data (the Modal volume). Parameterized by --parquet + --source, one
  *   label per parquet, so it works for any overlay (the fr-admin-split one is the original; #148's
@@ -16,8 +16,8 @@
  *
  *   Pipeline (the recipe rides the result): `mailwoman corpus slice <recipe> --out <canonical>`, then
  *   `mailwoman corpus align-slice --input <canonical> --out <labeled> --corpus-version 0.5.0`, then
- *   `mailwoman dev jsonl-to-parquet --input <labeled> --output <NEW>/train/<parquet>`, then
- *   `mailwoman corpus overlay-manifest --base <BASE>/MANIFEST.json --new-dir <NEW>\
+ *   `mailwoman dev jsonl-to-parquet --input <labeled> --output <new>/train/<parquet>`, then
+ *   `mailwoman corpus overlay-manifest --base <base>/manifest.json --new-dir <new>\
  *   --modal-root /data/corpus/versioned/<ver>/<dir> --version <ver>\
  *   --parquet <parquet> --source <source> --note "..."`
  *

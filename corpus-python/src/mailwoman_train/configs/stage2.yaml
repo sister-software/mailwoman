@@ -10,16 +10,16 @@
 #   - Label smoothing 0.1 on the per-token CE loss leg. Dual loss = CE_smoothed + CRF_NLL.
 #
 # Hand off:
-#   HSA_OVERRIDE_GFX_VERSION=11.0.0 CONFIG=src/mailwoman_train/configs/stage2.yaml \
+#   HSA_OVERRIDE_GFX_VERSION=11.0.0 config=src/mailwoman_train/configs/stage2.yaml \
 #     scripts/train_with_resume.sh
 #
 # Once training completes:
-#   CHECKPOINT=/data/models/checkpoints/stage2/step-050000 scripts/ship_v0_3_0.sh
+#   checkpoint=/data/models/checkpoints/stage2/step-050000 scripts/ship_v0_3_0.sh
 
 data:
   # corpus-v0.3.0 — adds the US DOT NAD source (~97M structured 911-grade address
   # points, "venue/house_number/street" fully populated). Other sources unchanged
-  # from v0.2.0. OA-CA + SAMHSA deferred (see run-corpus-build.ts header).
+  # from v0.2.0. OA-CA + samhsa deferred (see run-corpus-build.ts header).
   corpus_dir: /data/corpus/versioned/v0.3.0/corpus-v0.3.0
   tokenizer_dir: /data/models/tokenizer/v0.1.0
   max_length: 128
@@ -30,7 +30,7 @@ data:
   # sources + adds usgov-nad. NAD is unique in having full structured supervision
   # at venue+street+house_number granularity for the entire US residential +
   # commercial address space. weight=2.0 lifts it without overwhelming the
-  # geographic diversity of TIGER + the venue diversity of NPPES.
+  # geographic diversity of tiger + the venue diversity of NPPES.
   source_weights:
     wof-admin: 1.0
     wof-postalcode: 1.0
@@ -40,13 +40,13 @@ data:
     usgov-hrsa-fqhc: 2.0
     usgov-imls-pls: 2.0
     usgov-nad: 2.0
-    state-ia-contractors: 2.0
+    state-ia-builders: 2.0
     state-tx-notaries: 1.5
     state-ny-notaries: 2.0
   train_rows_per_epoch: null
   val_rows: 4096
   # active_components_present (was coarse_components_present) — accepts rows with
-  # any ACTIVE tag, including fine-only rows (BAN's house_number+street, TIGER's
+  # any active tag, including fine-only rows (BAN's house_number+street, tiger's
   # street-only segments). Keeps the existing key for ↔config-loader compat. the
   # implementation is the relaxed check in labels.py.
   coarse_filter: true
@@ -91,7 +91,7 @@ train:
   # landscape is more sensitive than v0.2.0's CE-only path: even at 3e-4 with clipping
   # and crf_loss_weight=0.1, training would slowly degrade as LR ramped past 2e-4
   # (val_macro_f1 0.32 → 0.19 by step 1000). 1.5e-4 is the safe-territory choice for
-  # NER+CRF training per the AllenNLP / FLAIR defaults.
+  # NER+CRF training per the AllenNLP / flair defaults.
   learning_rate: 1.5e-4
   weight_decay: 0.01
   warmup_steps: 1000

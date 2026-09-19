@@ -3,13 +3,13 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   The sealed-artifact invariant: every SQLite DB a build produces is a READ-ONLY asset. `sealDatabase`
+ *   The sealed-artifact invariant: every SQLite DB a build produces is a read-only asset. `sealDatabase`
  *   is the last step of every builder — checkpoint, freeze the journal, chmod 0444. `openBuiltClient`
  *   (`@mailwoman/sqlite/sealed`) is how anything opens a data artifact. a write-mode open of a sealed
- *   file throws a NAMED error pointing at the rebuild command instead of a cryptic SQLITE_READONLY. Unsealing is deliberate and
+ *   file throws a named error pointing at the rebuild command instead of a cryptic SQLITE_READONLY. Unsealing is deliberate and
  *   manual (`chmod u+w`), never programmatic — rebuild, don't mutate.
  *
- *   `swapDatabaseIntoPlace` is the other half of that invariant — the atomic publish step AGENTS.md
+ *   `swapDatabaseIntoPlace` is the other half of that invariant — the atomic publish step agents.md
  *   specifies in prose ("build it successfully, then move the previous version to a temp directory,
  *   and then move the new version into place"). It lives here because this module already owns the
  *   built-artifact lifecycle, and because a rule the project states in prose and implements more than
@@ -60,7 +60,7 @@ export async function isSealed(path: PathBuilderLike): Promise<boolean> {
 }
 
 /**
- * Finalize a built DB: WAL-checkpoint → `journal_mode = DELETE` → remove `-wal`/`-shm` sidecars → `chmod 0o444`.
+ * Finalize a built DB: WAL-checkpoint → `journal_mode = delete` → remove `-wal`/`-shm` sidecars → `chmod 0o444`.
  * Idempotent. Throws if the checkpoint cannot complete (another writer holds the DB).
  */
 export async function sealDatabase(path: PathBuilderLike): Promise<void> {

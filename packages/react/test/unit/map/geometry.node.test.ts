@@ -6,7 +6,7 @@
  *   Pure geometry tests — bare node, no map, no DOM. They exercise the circle-ring + bounds math the demo
  *   outline draws with, including the edge cases the imperative `_map-helpers.ts` handled: a single point
  *   (no bbox → default radius), a degenerate bbox (zero span → clamped floor), an over-large bbox
- *   (clamped ceiling), a sub-visible radius (meter floor), MultiPolygon bounds, and the DOCUMENTED
+ *   (clamped ceiling), a sub-visible radius (meter floor), MultiPolygon bounds, and the documented
  *   non-normalization of antimeridian-crossing geometry.
  */
 

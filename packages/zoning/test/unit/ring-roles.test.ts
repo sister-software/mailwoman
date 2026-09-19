@@ -5,13 +5,13 @@
  *
  *   The hole-role resolution, pinned against the convention it depends on.
  *
- *   THE SIGN CONVENTION IS A CONTRACT AND IT IS PINNED FIRST. `ringSignedAreaM2` signs CLOCKWISE positive,
+ *   the sign convention is A interface and IT is pinned first. `ringSignedAreaM2` signs clockwise positive,
  *   which is the opposite of the standard planar shoelace, and this resolver reads a ring's role off that
  *   sign. A change to the helper that flipped it would turn every exterior into a hole and every hole into an
  *   exterior — and the resulting polygons would still be well-formed, still answer containment questions, and
  *   still be wrong everywhere.
  *
- *   THE REST IS THE PUBLISHER'S ENCODING. This service puts each ring in its own `MultiPolygon` part on the
+ *   the rest is the publisher'S encoding. This service puts each ring in its own `MultiPolygon` part on the
  *   features that carry holes that way, so a reader taking the arriving nesting at face value reads a hole as
  *   a second zoned area. Every case below arrives in that shape.
  */
@@ -26,7 +26,7 @@ const SIDE = 0.01
 
 describe("the sign convention this resolver reads roles from", () => {
 	it("signs a clockwise ring POSITIVE and a counter-clockwise one negative", () => {
-		// Clockwise is the EXTERIOR under this service, so this is the statement the whole resolution rests on. The two ring
+		// Clockwise is the exterior under this service, so this is the statement the whole resolution rests on. The two ring
 		// builders are `@mailwoman/spatial`'s own, aliased by the test-kit to this product's meaning.
 		expect(
 			ringSignedAreaM2(exteriorRing(ORIGIN.lon, ORIGIN.lat, ORIGIN.lon + SIDE, ORIGIN.lat + SIDE))

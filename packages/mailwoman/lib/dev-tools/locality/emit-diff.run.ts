@@ -2,7 +2,7 @@ import { dataRootPath } from "@mailwoman/core/data-root"
 /**
  * @copyright Sister Software · @license AGPL-3.0 · @author Teffen Ellis, et al.
  *
- *   #148 diagnostic — dump-and-read why v1.9.0 (multi-locale retrain) REGRESSED EU resolve. For each
+ *   #148 diagnostic — dump-and-read why v1.9.0 (multi-locale retrain) regressed EU resolve. For each
  *   golden row, parse with two models (baseline + candidate), extract the emitted `locality` span, and
  *   resolve each tree → record whether it resolved + the emitted locality. Lets us see whether the
  *   candidate emits a different locality string (grain mismatch) or the same string that stopped

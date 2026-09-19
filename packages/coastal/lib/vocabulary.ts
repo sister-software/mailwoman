@@ -6,29 +6,29 @@
  *   The Environment Agency's own words, as data: the product identity, the twelve scenarios it publishes,
  *   the policy and defence domains those scenarios carry, and the attribution string OGL v3.0 requires.
  *
- *   A SCENARIO IS PART OF THE CLAIM, NEVER A PARAMETER OF IT. NCERM publishes twelve erosion-zone layers
+ *   A scenario is part OF the claim, never A parameter OF IT. ncerm publishes twelve erosion-zone layers
  *   because the answer depends on which management scenario, which horizon and which sea-level-rise
  *   allowance the reader means. Pooling them would answer a question no authority asked, and would let a
  *   reader take a 2105 projection for a present-day designation. So every stored row, every index row and
  *   every reading names its scenario.
  *
- *   THE DOMAINS BELOW ARE CLOSED AND THE BUILDER THROWS ON A VALUE OUTSIDE THEM. An unknown code is a
+ *   the domains below are closed and the builder throws on A value outside them. An unknown code is a
  *   source-schema change, which is the event a reader most needs to hear about. coercing it to a nearest
  *   neighbour or to null converts "the source changed" into "there is nothing here". Each one is a census
  *   of all twelve published layers rather than of one, taken from the 2024 geodatabase — a domain read from
  *   a single layer is a domain that throws on the day another layer carries its ninth value.
  *
- *   BLANK IS A SINGLE SPACE rather than AN EMPTY STRING. Every "blank" value in this product is `" "`, on 87 rows
+ *   blank is A single space rather than an empty string. Every "blank" value in this product is `" "`, on 87 rows
  *   across the twelve layers — the same 87 that carry `published = 0`, and all of them on SMP layers (13 to
  *   16 per layer. the NFI layers have none). A reader testing `=== ""` finds nothing and reports the
  *   anomalous rows as ordinary ones.
  *
- *   `def_type` IS DIRTY AND THE FOLD IS FOR COMPARING, NEVER FOR STORING. The census returns 14 distinct
+ *   `def_type` is dirty and the fold is FOR comparing, never FOR storing. The census returns 14 distinct
  *   values and 12 distinct case-folded ones: `Sheet piles` 1,344 beside `Sheet Piles` 270, and
  *   `Vertical Wall - Concrete` 16,074 beside `Vertical Wall - concrete` 12. The stored value is the source's
  *   own string.
  *
- *   AND THE TWO POLICY FIELDS DO NOT AGREE WITH EACH OTHER ON SPELLING. `mt_smp` writes
+ *   and the two policy fields do not agree with each other on spelling. `mt_smp` writes
  *   `No Active Intervention / Managed Realignment` where `lt_smp` writes
  *   `No Active Intervention/Managed Realignment` — same 72 rows, different spacing. Both spellings are in the
  *   domain below. neither is normalized away.
@@ -70,10 +70,10 @@ export const NCERM_DATASET_ID = "9fede91f-5acd-4fd2-9bd8-98153fa3c2ff"
 export const NCERM_CATALOGUE_PACKAGE_ID = "e75374d5-ef4b-4f9f-abc1-6aefde4627b7"
 
 /**
- * The OGC service slug, and it is a MISSPELLING OF THE PRODUCT.
+ * The OGC service slug, and it is a misspelling OF the product.
  *
- * `…/spatialdata/ncerm-national-2024/wfs?…GetCapabilities` — the correct spelling of NCERM — answers HTTP 404;
- * `…/spatialdata/ncern-national-2024/wfs?…` answers HTTP 200 with 110,478 bytes. Any client must use the misspelling,
+ * `…/spatialdata/ncerm-national-2024/wfs?…GetCapabilities` — the correct spelling of ncerm — answers http 404;
+ * `…/spatialdata/ncern-national-2024/wfs?…` answers http 200 with 110,478 bytes. Any client must use the misspelling,
  * and a build that "corrected" it would lose the service half of the two-path verification while reporting a clean
  * run.
  */
@@ -86,7 +86,7 @@ export const NCERM_SERVICE_SLUG = "ncern-national-2024"
  * or linking to any attribution statement specified by the Information Provider(s)", so this string is the licence
  * condition rather than decoration, and it rides in `layer_manifest.attribution`.
  *
- * TAKEN FROM THE STRUCTURED FIELD, NEVER FROM THE ABSTRACT. The abstract ends with a doubled and malformed pair — "…©
+ * Taken from the structured field, never from the abstract. The abstract ends with a doubled and malformed pair — "…©
  * Environment Agency copyright and/or database right Attribution statement: © Environment Agency copyright and/or
  * database right 2025. All rights reserved. " — whose first copy is inherited from the superseded 2018–2021 record and
  * carries no year. The ISO record has no `gmd:credit` element at all. `parseAttributionStatement` in `sdk/client.ts` is
@@ -168,7 +168,7 @@ export interface CoastalScenario {
 	/**
 	 * The cumulative-erosion-distance column, in metres.
 	 *
-	 * ITS NAME VARIES PER LAYER and that is the trap: `nfi2055_0` on NFI/2055/0CC, `smp2105_95` on SMP/2105/95CC. A
+	 * Its name varies PER layer and that is the trap: `nfi2055_0` on NFI/2055/0CC, `smp2105_95` on SMP/2105/95CC. A
 	 * builder that read one fixed column name would find the column missing on eleven of the twelve layers, which
 	 * `ogr2ogr` reports as a SQL error rather than as a silent null — but a builder that coalesced it would write NULL
 	 * distances for eleven scenarios and report a successful build.
@@ -238,7 +238,7 @@ export const NCERM_SCENARIOS_BY_KEY: ReadonlyMap<string, CoastalScenario> = new 
 /**
  * The scenario a reading answers under when a caller names none.
  *
- * NOT AN ARBITRARY PICK, AND NEVER A HIDDEN ONE — every reading names the scenario it answered under, so a caller can
+ * Not an arbitrary pick, and never A hidden one — every reading names the scenario it answered under, so a caller can
  * see which of the twelve spoke. Among them this is the least projected: `NFI` assumes no future works are delivered
  * rather than assuming a plan's delivery, `0CC` is the present-day allowance rather than a sea-level-rise projection,
  * and `2055` is the nearer of the two horizons. A caller wanting another scenario names it.
@@ -246,7 +246,7 @@ export const NCERM_SCENARIOS_BY_KEY: ReadonlyMap<string, CoastalScenario> = new 
 export const DEFAULT_NCERM_SCENARIO = "NFI_2055_0CC"
 
 /**
- * The two ground-instability layers, which are a DIFFERENT HAZARD and live in their own table.
+ * The two ground-instability layers, which are a different hazard and live in their own table.
  *
  * They carry a different schema (`location`, `local_auth`, `smp_pu1`…`smp_pu5`, `rearscarpr`), 80 features each, and no
  * erosion distance and no scenario at all. Folding them into the erosion zones would let a reader answer an erosion
@@ -286,7 +286,7 @@ export const NCERM_BLANK = " "
 /**
  * The Shoreline Management Plan policy domain — `mt_smp` and `lt_smp` pooled.
  *
- * NINE spellings for eight policies, because the two fields disagree on the spacing around one slash. Both are members.
+ * Nine spellings for eight policies, because the two fields disagree on the spacing around one slash. Both are members.
  * neither is normalized.
  */
 export const NCERM_POLICY_VALUES: ReadonlySet<string> = new Set([
@@ -346,7 +346,7 @@ export const NCERM_POLICY_INTERPRETATION_VALUES: ReadonlySet<string> = new Set(
 /**
  * The defence-type domain, case-folded — twelve distinct defences behind fourteen published spellings.
  *
- * Membership is tested on the fold, because `Sheet piles` and `Sheet Piles` are one defence. the STORED value is the
+ * Membership is tested on the fold, because `Sheet piles` and `Sheet Piles` are one defence. the stored value is the
  * source's own string, because normalizing it would put this package's spelling into an artifact that claims to repeat
  * the authority's.
  */
@@ -406,9 +406,9 @@ export const NCERM_PRODUCT_LIMITS: ReadonlyArray<string> = [
 /**
  * Why this layer's coverage licenses no negative claim, in one sentence a receipt can carry.
  *
- * THE INVERSION OF THE FLOOD RULE, AND THE WHOLE REASON THIS LAYER EXISTS AS A SECOND ONE. For flood zones the
+ * The inversion OF the flood rule, and the whole reason this layer exists AS A second one. For flood zones the
  * authority states England-wide coverage and defines Zone 1 as the absence, so a location with no polygon is a
- * designation. NCERM publishes no coverage statement at all, and a location in England with no erosion polygon is one
+ * designation. ncerm publishes no coverage statement at all, and a location in England with no erosion polygon is one
  * of two entirely different things — not on the coast, or on the coast and outside the mapped risk area — which the
  * published layers cannot tell apart. A builder that copied the flood rule would write "no erosion risk" over the whole
  * country.

@@ -3,7 +3,7 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   `mailwoman filer edgar-ingest`'s library half — the EDGAR chain against a live SEC client, with the
+ *   `mailwoman filer edgar-ingest`'s library half — the edgar chain against a live SEC client, with the
  *   full registrant index. No argv, no `process.exit`: the command owns argument parsing, rendering, and
  *   exit codes. Every field on the result is a number the command can render without importing another
  *   module.
@@ -26,11 +26,11 @@ export interface FilerEdgarIngestOptions {
 	 */
 	queries: string[]
 	/**
-	 * Output directory for the subsidiary rows as JSONL.
+	 * Output directory for the subsidiary rows as jsonl.
 	 */
 	outDir: string
 	/**
-	 * Optional CIK lookup-data file path (`cik-lookup-data.txt`, one `NAME:CIK:` per line).
+	 * Optional CIK lookup-data file path (`cik-lookup-data.txt`, one `name:CIK:` per line).
 	 */
 	cikLookupPath?: string
 	/**
@@ -50,7 +50,7 @@ export interface FilerEdgarIngestResult {
 }
 
 /**
- * Run the EDGAR ingest chain against a live SEC client and write the subsidiary rows to `outDir` as JSONL.
+ * Run the edgar ingest chain against a live SEC client and write the subsidiary rows to `outDir` as jsonl.
  *
  * The ticker index is read from `cikLookupPath` when given. it is parsed to `CompanyTickerEntry[]` once and reused
  * across every query.

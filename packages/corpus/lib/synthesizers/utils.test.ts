@@ -529,7 +529,7 @@ describe("registry + defaults", () => {
 //
 // Every augmentation transforms `raw` by direct string splicing (replace/case-map on the raw
 // itself — never a rebuild from a token list), and the build pipeline re-runs `alignRow` on each
-// augmented copy, deriving the char-offset span triple from the AUGMENTED raw. These probes pin
+// augmented copy, deriving the char-offset span triple from the augmented raw. These probes pin
 // the property v0.5.0 makes essential: intra-span punctuation (the dotted `P.O. Box` is the
 // canonical case) survives onto the augmented copy, and every span addresses the new raw exactly.
 // A future refactor that rebuilds raw from tokens would fail these.
@@ -602,7 +602,7 @@ describe("augmented copies keep intra-span punctuation (#519)", () => {
 	const cases: ReadonlyArray<[id: string, row: CanonicalRow, expectedPoBox: string]> = [
 		["case-upper", poBoxRow(), "P.O. BOX 5"],
 		["case-lower", poBoxRow(), "p.o. box 5"],
-		// drop-commas deliberately deletes the commas BETWEEN spans. the dots inside the span stay.
+		// drop-commas deliberately deletes the commas between spans. the dots inside the span stay.
 		["drop-commas", poBoxRow(), "P.O. Box 5"],
 		["double-space", poBoxRow(), "P.O.  Box  5"],
 		// typo-inject edits the locality ("Portland"); the po_box span (digits → never eligible) survives.
@@ -712,7 +712,7 @@ describe("composeAdversarialRow", () => {
 	})
 
 	it("place-name venue: shared 'Buffalo' token stays labeled venue, not locality", () => {
-		// Kryptonite case #1 from CONTEXT.md / issue #22.
+		// Kryptonite case #1 from context.md / issue #22.
 		const address = baseRow({
 			raw: "Buffalo, NY 14201",
 			components: { locality: "Buffalo", region: "NY", postcode: "14201" },
@@ -909,7 +909,7 @@ describe("composeAdversarialRow", () => {
 	})
 
 	it("address that fails alignment quarantines with the propagated reason", () => {
-		// region "QQQQQQ" can't be located in the raw and is too far from any window to match
+		// region "qqqqqq" can't be located in the raw and is too far from any window to match
 		// under default edit distance — alignment quarantines it.
 		const address = baseRow({
 			raw: "Buffalo, NY 14201",
@@ -949,7 +949,7 @@ describe("composeAdversarialRow", () => {
 		expect(span_tags).toEqual(["venue", "locality", "region", "postcode"])
 		expect(span_starts).toEqual([0, 23, 32, 35])
 		expect(span_ends).toEqual([21, 30, 34, 40])
-		// Every span reconstructs its component surface verbatim off the COMPOSED raw.
+		// Every span reconstructs its component surface verbatim off the composed raw.
 		const surfaces = span_tags!.map((_, i) => raw.slice(span_starts![i]!, span_ends![i]!))
 		expect(surfaces).toEqual(["Buffalo Health Clinic", "Buffalo", "NY", "14201"])
 		// The separator comma + space sit outside every span (deliberately unlabeled).
@@ -1064,7 +1064,7 @@ describe("typoInject (#530)", () => {
 		const tag = changed[0]!
 		expect(tag).not.toBe("house_number")
 		expect(tag).not.toBe("postcode")
-		// substring contract: the typo'd value is present in the new raw
+		// substring interface: the typo'd value is present in the new raw
 		expect(out!.raw).toContain(out!.components[tag]!)
 		// changed, and same length (a transpose or a single-char substitution)
 		expect(out!.components[tag]).not.toBe(row.components[tag])
@@ -1089,7 +1089,7 @@ describe("typoInject (#530)", () => {
 		expect(out).toBeNull()
 	})
 
-	it("the augmented row still aligns — every span addresses raw exactly (end-to-end substring contract)", () => {
+	it("the augmented row still aligns — every span addresses raw exactly (end-to-end substring interface)", () => {
 		const out = typoInject(row)!
 		const aligned = alignRow(out)
 		expect(aligned.kind, `typo'd row should align (got ${stringifyJSON(aligned.row)})`).toBe("labeled")

@@ -4,7 +4,7 @@
  * @author Teffen Ellis, et al.
  *
  *   Zod wire schemas for the Photon-compatible surface. Key names and envelopes are the vendor
- *   contract — immutable. Query schemas are validator-proof by construction (unions accepting
+ *   interface — immutable. Query schemas are validator-proof by construction (unions accepting
  *   string or repeated values) with doc-exact `.openapi()` overrides: validation can never fail,
  *   and every wire decision stays in the handlers (see routes.ts's legacyQuery adapter).
  */
@@ -49,7 +49,7 @@ export const PhotonFeatureCollectionSchema =
 	featureCollectionSchema(PhotonFeatureSchema).openapi("PhotonFeatureCollection")
 
 /**
- * The error/degenerate envelope: an EMPTY FeatureCollection carrying a message. Never `{error}` on this surface.
+ * The error/degenerate envelope: an empty FeatureCollection carrying a message. Never `{error}` on this surface.
  */
 export const PhotonMessageCollectionSchema = z
 	.object({

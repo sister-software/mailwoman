@@ -3,13 +3,13 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Per-address-system LAYOUTS: the order a system prints its components in, as data.
+ *   Per-address-system layouts: the order a system prints its components in, as data.
  *
  *   A layout is written as a tagged template that reads in the order it prints, so reviewing one means looking at the
  *   shape of the address it produces rather than at a nested function call. The interpolations are slots. the literal
  *   text between them are connectors.
  *
- *   ONE RULE governs rendering, and it replaces four mechanisms that each did part of the job elsewhere — the
+ *   one rule governs rendering, and it replaces four mechanisms that each did part of the job elsewhere — the
  *   `filter(isPresent).join(…)` written by hand in 28 files, a pass that stripped a connector a template wrote between
  *   two slots when one was empty, a pass that spliced a missing line back in, and a chain of `if (x) parts.push(x)`:
  *
@@ -19,13 +19,13 @@
  *   has only one side, so it binds to the single slot it touches — which is how Japan's postal mark 〒 disappears with
  *   an absent postcode while an interior space does not.
  *
- *   WHY A TEMPLATE RATHER THAN NESTED CALLS. The order has to be readable by someone checking whether a country is
+ *   why A template rather than nested calls. The order has to be readable by someone checking whether a country is
  *   right, and the check is "does this look like an address from there". A nested `seq(", ", locality, seq(" ", region,
  *   postcode))` encodes the same thing and reads like a parser. The template also needs no nesting for the common case:
  *   treating every separator as a connector makes each line flat, and the four outcomes of a partially-filled tail
  *   (`New York, NY 10118` / `New York, NY` / `New York, 10118` / `NY 10118`) fall out of the one rule.
  *
- *   The RENDERER is the sibling `render.ts`, and the public surface over it is `format.ts`. They are separate modules
+ *   The renderer is the sibling `render.ts`, and the public surface over it is `format.ts`. They are separate modules
  *   rather than one so a consumer that only wants the table — a conformance check, a documentation build — imports
  *   `#address/layouts` and loads no evaluator.
  */
@@ -40,7 +40,7 @@ export interface AddressSlot {
 }
 
 /**
- * A connector: literal text that renders only between neighbours that rendered. Written as the text BETWEEN
+ * A connector: literal text that renders only between neighbours that rendered. Written as the text between
  * interpolations, never constructed by hand.
  */
 export interface AddressConnector {
@@ -103,7 +103,7 @@ export function either(...alternatives: readonly AddressLayout[]): AddressAltern
  * both a box and a street address, and printing the box alone would lose the half a courier needs.
  *
  * That placement is measured rather than assumed. The engine this table replaces rendered `P.O. Box 5` + `100 Main St` +
- * `Portland, OR 97214` as three lines in that order, and the same shape for Germany, Australia and Great Britain.
+ * `Portland, or 97214` as three lines in that order, and the same shape for Germany, Australia and Great Britain.
  * libaddressinput models no box at all, which is why the slot is authored here rather than transcribed.
  */
 const poBoxLine = SLOTS.po_box
@@ -111,7 +111,7 @@ const poBoxLine = SLOTS.po_box
 /**
  * The street line where the number leads: the anglophone order, and France's.
  *
- * An intersection is an ALTERNATIVE to the street name because it is a different way of saying where rather than a
+ * An intersection is an alternative to the street name because it is a different way of saying where rather than a
  * second thing to print — the shape the old `composeRoad` drew in its own docstring before hand-compiling it into a
  * chain of `if` statements. The box is not an alternative, so it sits outside the choice.
  */

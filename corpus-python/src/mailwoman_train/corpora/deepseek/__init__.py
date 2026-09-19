@@ -39,7 +39,7 @@ Checkpointing: progress is tracked at the request granularity. If interrupted, r
 with the same arguments and previously-completed batches are skipped (matched by their
 deterministic batch_id). The id is derived from the batch's inputs, so a change to that
 derivation invalidates every checkpoint on disk and the only symptom is a larger bill —
-`tests/mailwoman_train/corpora/test_deepseek_contract.py` pins it.
+`tests/mailwoman_train/corpora/test_deepseek_interface.py` pins it.
 
 The modules:
 

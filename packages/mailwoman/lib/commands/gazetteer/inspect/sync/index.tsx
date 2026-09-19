@@ -11,7 +11,7 @@
  *   default). Which repositories to sync is decided in `sync-plan.ts` before any network work, so a mistake is a
  *   message rather than a directory full of clones.
  *
- *   The progress display reports REPOSITORIES, and the per-repository `▸` lines are the required part: a first
+ *   The progress display reports repositories, and the per-repository `▸` lines are the required part: a first
  *   clone of a large country runs for minutes, and a counter that moves only on completion is indistinguishable from a
  *   hang while it does. Those lines go to stderr, so they survive the non-interactive Ink render that writes one frame
  *   at unmount.
@@ -57,7 +57,7 @@ const CONCURRENCY = 8
 const MAX_LISTED_CHECKS = 25
 
 /**
- * Native command-line contract consumed by the filesystem command router.
+ * Native command-line interface consumed by the filesystem command router.
  */
 export const spec = {
 	name: "sync",
@@ -127,8 +127,8 @@ const WOFSync: CommandComponent<typeof spec, [string?]> = ({ options, args }) =>
 				all: options.all,
 			})
 
-			// WHERE each repo comes from is resolved per repo rather than assumed to be upstream. `gh repo list` enumerates the
-			// UPSTREAM org, so the discovered `url` always names upstream — cloning from it would pull upstream data over
+			// where each repo comes from is resolved per repo rather than assumed to be upstream. `gh repo list` enumerates the
+			// upstream org, so the discovered `url` always names upstream — cloning from it would pull upstream data over
 			// the corrections our fork carries (the January 2019 GB deprecation batch is the first, #1742). Existing
 			// clones are not re-pointed here: `synchronizeRepo` pulls in place and never rewrites a remote, so this fixes
 			// new clones only. `gazetteer repos-sync` reports and re-points the existing ones.
@@ -144,7 +144,7 @@ const WOFSync: CommandComponent<typeof spec, [string?]> = ({ options, args }) =>
 						console.error(`▸ ${name}: ${origin.reason}`)
 					}
 
-					// `owner` is the DIRECTORY, and it stays upstream even when the bytes come from our fork. The
+					// `owner` is the directory, and it stays upstream even when the bytes come from our fork. The
 					// destination is `<root>/<owner>/<name>`, so keying it on the resolved org would give one repo two
 					// homes — and `ingestWOF` globs the whole root, so the build would read both and resolve the conflict
 					// by FastGlob enumeration order (`repos-audit.ts` documents that hazard). One repo, one directory,

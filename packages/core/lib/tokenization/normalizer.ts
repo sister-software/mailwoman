@@ -11,7 +11,7 @@ import regenerate from "regenerate"
  * normalization.
  */
 const CombiningDiacriticalPattern = regenerate()
-	.add(0x20_0d) // ZERO WIDTH JOINER (U+200D)
+	.add(0x20_0d) // zero WIDTH JOINER (U+200D)
 	.addRange(0x03_00, 0x03_6f) // Combining Diacritical Marks
 	.addRange(0x1a_b0, 0x1a_ff) // Combining Diacritical Marks Extended
 	.addRange(0x1d_c0, 0x1d_ff) // Combining Diacritical Marks Supplement
@@ -75,11 +75,11 @@ export class TextNormalizer implements TextNormalizerInit {
 
 		if (this.removeAccents) {
 			input = input
-				// We first normalize to NFKD to decompose any accented characters...
+				// We first normalize to nfkd to decompose any accented characters...
 				.normalize("NFKD")
 				// Then we remove the accented characters...
 				.replace(CombiningDiacriticalPattern, "")
-				// And finally we normalize to NFKC to recompose the string.
+				// And finally we normalize to nfkc to recompose the string.
 				.normalize("NFKC")
 		}
 

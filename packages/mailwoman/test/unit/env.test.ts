@@ -41,11 +41,11 @@ test("CLI secrets stay private and package-owned", () => {
 })
 
 /**
- * A BLANK environment variable must mean the same as an absent one.
+ * A blank environment variable must mean the same as an absent one.
  *
  * Shells, Docker and CI all produce empty strings where an operator believes they set nothing: `export FOO=`, an unset
  * `${VAR}` interpolation, a compose key with no value. Any coerced-numeric schema turns that into `0`, and a
- * `.positive()` or `.min()` then rejects it — so the process dies at IMPORT, before any application code runs, citing a
+ * `.positive()` or `.min()` then rejects it — so the process dies at import, before any application code runs, citing a
  * variable nobody knowingly set. The failure lives in the interaction between `z.coerce` and a constraint rather than
  * in either one, so every coerced-numeric key gets these cases.
  */

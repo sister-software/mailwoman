@@ -101,7 +101,7 @@ function usage(io: DispatchIO): number {
 
 /**
  * Run one operation of a registry: the release registry under `mwops release`, the shop's under `mwops shop`. The
- * contract is the same object, so the view is one function.
+ * interface is the same object, so the view is one function.
  */
 async function runOperation(
 	verb: "release" | "shop",

@@ -52,7 +52,7 @@ export interface POIExecutorOpts {
 	 */
 	resolveOvertureCategories?: (categoryID: string) => string[]
 	/**
-	 * Read-time WOF ancestry lookup (the poiQueryKind register row's second debt payment) — injected SYNCHRONOUSLY
+	 * Read-time WOF ancestry lookup (the poiQueryKind register row's second debt payment) — injected synchronously
 	 * because this executor's return type (`POIIntentOutcome`, no Promise) is called synchronously from `poi-intent.ts`'s
 	 * `deps.execute`. Absent = no reverse geocoder wired (missing admin gazetteer db, or `poiQueryKind: true` with no
 	 * `poiDatabasePath`) — results carry no `ancestry` key at all (house meaning-of-zero: absence rather than an empty
@@ -195,11 +195,11 @@ function decorateAncestry(result: POIResult, reverseGeocode: POIExecutorOpts["re
 }
 
 /**
- * Spatial anchor for the search: the anchor tree's DEEPEST node carrying a resolved centroid (walking roots + one level
+ * Spatial anchor for the search: the anchor tree's deepest node carrying a resolved centroid (walking roots + one level
  * of children — the resolver decorates `lat`/`lon` on the nodes it wins, Phase 4.3), else the caller-supplied
  * `biasPoint` ("near me"), else undefined (category/brand callers abstain on this. name callers search un-anchored).
  *
- * Exported because an observer reading a finished outcome has to name the point the search was CENTRED ON, and the
+ * Exported because an observer reading a finished outcome has to name the point the search was centred on, and the
  * outcome does not carry it. A second copy of this walk would answer a neighbouring coordinate whenever the anchor tree
  * carries more than one geo node, and the observer would then attribute the answer to the wrong cell — a wrong reading
  * of a correct search, which is indistinguishable downstream from a correct reading.

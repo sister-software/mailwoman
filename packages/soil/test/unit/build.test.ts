@@ -5,9 +5,9 @@
  *
  *   The fixture rung: a real sealed artifact from hand-built geometry, then read back.
  *
- *   THESE ARE THE ONLY PLACE THREE OF THE FOUR ABSENCES CAN BE EXERCISED. Every Iowa survey area is fully
- *   digitized, so `NOTCOM`, `NOTPUB` and access-denied map units never appear in the live build — which
- *   means the fixture is what pins `nodata_share`, and what proves a `NOTCOM` polygon does not arrive as a
+ *   these are the only place three OF the four absences can be exercised. Every Iowa survey area is fully
+ *   digitized, so `notcom`, `notpub` and access-denied map units never appear in the live build — which
+ *   means the fixture is what pins `nodata_share`, and what proves a `notcom` polygon does not arrive as a
  *   low capability class.
  */
 
@@ -90,7 +90,7 @@ describe("the fixture build", () => {
 	it("declares the spine key on the table a consumer joins, table-qualified", () => {
 		const spineKeys = lookup.identity.manifest.spineKeys
 
-		// The layer contract settles this: the key names what a consumer joins on, and for this layer that is the
+		// The layer interface settles this: the key names what a consumer joins on, and for this layer that is the
 		// single-resolution reduction rather than the mixed-resolution containment index.
 		expect(spineKeys.h3?.column).toBe("soil_capability_cell.h3_cell")
 		expect(spineKeys.h3?.resolution).toBe(INDEX_RESOLUTION)

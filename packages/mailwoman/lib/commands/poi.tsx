@@ -12,7 +12,7 @@
  *   fell through) reports that and exits 0 — this command is a debug probe rather than a strict
  *   POI-only parser.
  *
- *   Exit-code contract:
+ *   Exit-code interface:
  *
  *   - 0 on any completed probe, including "no POI intent" and abstain outcomes.
  *   - 1 on a missing positional query or a fatal pipeline error.
@@ -44,7 +44,7 @@ import {
 } from "#cli-kit"
 
 /**
- * Native command-line contract consumed by the filesystem command router.
+ * Native command-line interface consumed by the filesystem command router.
  */
 export const spec = {
 	name: "poi",

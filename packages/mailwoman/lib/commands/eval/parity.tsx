@@ -20,7 +20,7 @@ const MAX_REPORTED_DISAGREEMENTS = 50
 export const description = "Parity-corpus eval — rescued v1 gold vs a checkpoint (plan-2 swap floors)"
 
 /**
- * Native command-line contract consumed by the filesystem command router.
+ * Native command-line interface consumed by the filesystem command router.
  */
 export const spec = {
 	name: "parity",

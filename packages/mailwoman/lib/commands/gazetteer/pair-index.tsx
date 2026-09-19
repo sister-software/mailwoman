@@ -5,9 +5,9 @@
  *
  *   `mailwoman gazetteer pair-index` — build the PIX1 placetype-pair index (placetype-pair-prior
  *   arc) from the HM Land Registry PPD tuples CSV (`corpus/src/tools/fetch/ppd.ts`'s
- *   `gb-tuples.csv`; columns `NUMBER,STREET,CITY,DISTRICT,REGION,POSTCODE`). Streams the CSV
+ *   `gb-tuples.csv`; columns `number,street,city,district,region,postcode`). Streams the CSV
  *   (CSVSpliterator, the `corpus/src/database-recipes/locale.ts` `readTuples` idiom), folds
- *   child=CITY/parent=DISTRICT through `normalizeFSTToken` and tags every pair `dependent_locality`
+ *   child=city/parent=district through `normalizeFSTToken` and tags every pair `dependent_locality`
  *   (`PairIndexBuilder`, `gazetteer-pipeline/pair-index.ts` — the extracted, unit-tested fold/dedupe/
  *   skip logic), then writes `pair-index-<country>.bin` via `serializePairIndex`.
  *
@@ -18,16 +18,16 @@
  *   an artifact whose locale nobody has boarded the parent side of ships with the parent bias off
  *   rather than with an inherited magnitude (the D-rule's per-locale check, expressed in the build).
  *
- *   PARENT TAGS (PIX2 / schema 3). Every entry records the parent's own `ComponentTag`, and each
+ *   parent tags (PIX2 / schema 3). Every entry records the parent's own `ComponentTag`, and each
  *   source states it from its own semantics — see {@link SOURCE_PARENT_TAGS} for the table and the
  *   evidence line behind each row. Nothing here defaults one.
  *
- *   Self-verifying (the sealed-artifact spirit — see AGENTS.md's database section, which this
+ *   Self-verifying (the sealed-artifact spirit — see agents.md's database section, which this
  *   mirrors for a flat binary): after writing, the command re-reads the bytes through a fresh
- *   `PairIndexResolver` and probes a few known (child, parent) pairs, printing `PROBE OK`/`PROBE
- *   MISS` lines rather than trusting the write silently succeeded.
+ *   `PairIndexResolver` and probes a few known (child, parent) pairs, printing `probe OK`/`probe
+ *   miss` lines rather than trusting the write silently succeeded.
  *
- *   Also prints the raw (pre-fold) CITY word-length distribution (p50/p90/p99/max + a per-length
+ *   Also prints the raw (pre-fold) city word-length distribution (p50/p90/p99/max + a per-length
  *   count table) — this sizes the word-span window the decode-side prior walks.
  */
 
@@ -48,7 +48,7 @@ import { type CommandSpec, CommandTaskResult, type CommandComponent, useCommandT
  * merges punctuation-variant duplicates the raw census counts separately (e.g. "St Helens" vs "St. Helens" fold to the
  * same `(child, parent)` key). The collision receipt: 221 merge groups — 220 groups where 2 raw census lines collapse
  * to 1 production entry (220 × 1 collapsed line = 220) plus 1 group where 3 raw lines collapse to 1 entry (1 × 2
- * collapsed lines = 2) — 220 + 2 = 222 raw lines absorbed. 19,431 − 222 = 19,209. A mismatch AGAINST 19,209 on a real
+ * collapsed lines = 2) — 220 + 2 = 222 raw lines absorbed. 19,431 − 222 = 19,209. A mismatch against 19,209 on a real
  * rebuild means this build's fold diverged from the adjudicated baseline rather than that 19,209 is wrong. investigate
  * before trusting the artifact.
  */
@@ -71,8 +71,8 @@ const RUNG3_PRE_FOLD_CENSUS_LINE_COUNT = 19_431
 const EXPECTED_US_PAIR_COUNT = 47_878
 
 /**
- * Known (child, parent) pairs probed after write as a self-check — PER COUNTRY, keyed by the `--country` code. Probing
- * another country's names against a freshly built index prints reassuring-looking `PROBE MISS` lines that verify
+ * Known (child, parent) pairs probed after write as a self-check — PER country, keyed by the `--country` code. Probing
+ * another country's names against a freshly built index prints reassuring-looking `probe miss` lines that verify
  * nothing (the en-nz first build ran the GB names — caught 2026-07-24). A country without an entry gets a loud skip
  * rather than a false verification.
  */
@@ -116,7 +116,7 @@ const PROBE_PAIRS_BY_COUNTRY: Readonly<Record<string, ReadonlyArray<readonly [ci
 		["Nippes", "Köln"],
 		["Schwabing", "München"],
 	],
-	// R6: the FR instance. These are LIEUX-DITS under their communes (BAN `nom_ld`) rather than quartiers —
+	// R6: the FR instance. These are lieux-dits under their communes (BAN `nom_ld`) rather than quartiers —
 	// see gazetteer-pipeline/lieudit-pairs.ts for why the French source differs from the US one.
 	fr: [
 		["Pinsonnac", "Montpeyroux"],
@@ -128,16 +128,16 @@ const PROBE_PAIRS_BY_COUNTRY: Readonly<Record<string, ReadonlyArray<readonly [ci
  * The parent-slot `ComponentTag` each source column carries (PIX2 / schema 3). PIX2 records the parent's tag per entry
  * rather than deriving it from the child's, so every source has to name the slot it read. The evidence for each:
  *
- * - `registerDistrict` — the `--source` CSV's `DISTRICT` column. On GB's PPD tuples that is the POST TOWN
+ * - `registerDistrict` — the `--source` CSV's `district` column. On GB's PPD tuples that is the post town
  *   (`corpus/src/database-recipes/locale.ts`'s `districtAsLocality` check reads it as the locality line); on the NZ
- *   LINZ/OpenAddresses countrywide export it is the town/city above the suburb in `CITY`. Both are the locality slot.
+ *   linz/OpenAddresses countrywide export it is the town/city above the suburb in `city`. Both are the locality slot.
  * - `secondaryPairsJSONL` — the `--pairs-jsonl` files. All three shipped ones pair a neighbourhood-class child with a
  *   town: `london-pairs-v2.jsonl` (966 London wards ∪ neighbourhoods under "London", R3/R4b), `ni-pairs-v1.jsonl` (87
  *   Belfast-area, R7), `gb-regions-v1.jsonl` (10,708 Scotland/Wales/England villages under their post town or civil
- *   parish, R8 — with the parish's administrative suffix STRIPPED precisely so the parent reads as the town an address
+ *   parish, R8 — with the parish's administrative suffix stripped precisely so the parent reads as the town an address
  *   writes). A line may override with its own `parentTag` when a future source is not that shape.
  *
- * The two remaining sources state their own and are not in this table: `--borough-db` reads the WOF parent ROW's
+ * The two remaining sources state their own and are not in this table: `--borough-db` reads the WOF parent row's
  * placetype per pair (`borough-pairs.ts`), and `--ban-dir` is always the commune (`lieudit-pairs.ts`).
  */
 const SOURCE_PARENT_TAGS = {
@@ -155,7 +155,7 @@ function splitPathList(value: string | undefined): string[] {
 }
 
 /**
- * Native command-line contract consumed by the filesystem command router.
+ * Native command-line interface consumed by the filesystem command router.
  */
 export const spec = {
 	name: "pair-index",
@@ -196,7 +196,7 @@ const GazetteerPairIndex: CommandComponent<typeof spec> = ({ options }) => {
 
 		// The PPD tuples CSV is a GB national register — there is no equivalent for the US instance (USPS routes
 		// city/state/ZIP, so no postal source carries dependent localities). A country whose pairs come entirely from
-		// the WOF/secondary sources below runs with NO CSV rather than being handed an empty one.
+		// the WOF/secondary sources below runs with no CSV rather than being handed an empty one.
 		const sourcePath =
 			options.source ?? (country === "gb" ? String(dataRootPath("ppd", "2026-07-22", "gb-tuples.csv")) : undefined)
 
@@ -248,7 +248,7 @@ const GazetteerPairIndex: CommandComponent<typeof spec> = ({ options }) => {
 		if (options.boroughDB) {
 			const before = builder.distinctCount
 
-			// `pair.parentTag` is the WOF parent ROW's placetype projection rather than a per-source constant — a
+			// `pair.parentTag` is the WOF parent row's placetype projection rather than a per-source constant — a
 			// locality/localadmin parent is `locality`, a borough parent is `dependent_locality`.
 			for (const pair of extractBoroughPairs(options.boroughDB, country.toUpperCase())) {
 				builder.addRow(pair.child, pair.parent, pair.parentTag)
@@ -277,13 +277,13 @@ const GazetteerPairIndex: CommandComponent<typeof spec> = ({ options }) => {
 			)
 		}
 
-		// R3: generic secondary pairs (ONSPD-derived London ward pairs. future NI/IE sources) — the
+		// R3: generic secondary pairs (onspd-derived London ward pairs. future NI/IE sources) — the
 		// same fold/dedupe path, counted into the cross-check delta alongside the boroughs.
 		if (options.pairsJSONL) {
 			for (const path of splitPathList(options.pairsJSONL)) {
 				const before = builder.distinctCount
 
-				// Streamed — a `--pairs-jsonl` path is whatever the operator points at, and the ONSPD
+				// Streamed — a `--pairs-jsonl` path is whatever the operator points at, and the onspd
 				// ward export already runs to hundreds of thousands of rows.
 				// A line may carry its own `parentTag`; all three shipped files are (neighbourhood, post town)
 				// sets, so absent means `SOURCE_PARENT_TAGS.secondaryPairsJSONL` — see that table's evidence
@@ -376,9 +376,9 @@ const GazetteerPairIndex: CommandComponent<typeof spec> = ({ options }) => {
 			),
 		]
 
-		// The rung-3 cross-check assumes a COMPLETE build — a nonzero --holdout-fraction deliberately produces a
+		// The rung-3 cross-check assumes a complete build — a nonzero --holdout-fraction deliberately produces a
 		// smaller `entries.length` by design, so the strict count-match check is meaningless (and would misreport
-		// "BLOCKED") under holdout. Check against `built.entries.length` (pre-holdout) instead in that case.
+		// "blocked") under holdout. Check against `built.entries.length` (pre-holdout) instead in that case.
 		const preHoldoutCount = built.entries.length
 		// Pre-fold context suffix — the raw rung-3 census line count, for provenance/debugging (e.g. diffing a
 		// future source refresh against this cycle's raw count). Not the cross-check target. see

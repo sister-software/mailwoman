@@ -7,7 +7,7 @@
  *   pair-index entry shape. The French instance of the dependent-locality prior.
  *
  *   Why BAN and not WOF, when the US instance (R5) took WOF: the source has to be whatever the
- *   POSTAL FORMAT carries. WOF's French neighbourhood records are Paris quartiers ("Des Halles",
+ *   postal format carries. WOF's French neighbourhood records are Paris quartiers ("Des Halles",
  *   "Palais Royal") — cartographic subdivisions that never appear in a French postal address, since
  *   the arrondissement is encoded in the postcode (75001 = 1er). The line that does appear is the
  *   lieu-dit, written alone between the street and the commune (La Poste's line 5). Indexing

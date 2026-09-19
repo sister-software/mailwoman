@@ -7,11 +7,11 @@
  *
  *   Two invariants, both required (the fr-fragment lesson, transplanted):
  *
- *   1. THE SPLIT with a DIACRITIC surface. The board keeps diacritics. a diacritic-stripping norm
+ *   1. the split with a diacritic surface. The board keeps diacritics. a diacritic-stripping norm
  *      would leak `Tømmerlien` silently. Pinned in both directions.
- *   2. THE COUNTER-DISTRIBUTION. Teaching bare `{street} {number}` alone lets the model flip its
+ *   2. the counter-distribution. Teaching bare `{street} {number}` alone lets the model flip its
  *      default from "bare -> locality" to "bare -> street", and stop emitting postcode to win the
- *      digit. The bare-LOCALITY and bare-POSTCODE counter rows must both exist and carry no street.
+ *      digit. The bare-locality and bare-postcode counter rows must both exist and carry no street.
  */
 
 import { noFragmentRecipe } from "@mailwoman/corpus/no/recipes/fragment"

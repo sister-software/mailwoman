@@ -4,28 +4,28 @@
  * @author Teffen Ellis, et al.
  *
  *   The committed canonical-form suite, checked against the corpus it was drawn from. No model, no gazetteer —
- *   two JSONL files, the pure law module and Stage 1, so this runs wherever the repo does.
+ *   two jsonl files, the pure law module and Stage 1, so this runs wherever the repo does.
  *
- *   THE POINT IS THAT NOTHING HERE IS AUTHORED. Every `base` must be the verbatim `input` of the committed
+ *   the point is that nothing here is authored. Every `base` must be the verbatim `input` of the committed
  *   board row its `rowRef` names, and every `variant` must be exactly the named transformation applied to that
  *   base. That matters more in this law than in any of its siblings: the composed and decomposed spellings of
  *   `Köln` render identically, so a hand-typed variant is a value no reviewer can check by eye. Two things
- *   hold the line — the variant is re-derived here, and the committed file writes every non-ASCII code point
- *   of a variant ESCAPED (`Ko\u0308ln`), which makes the decomposition visible in a diff and leaves the file
+ *   hold the line — the variant is re-derived here, and the committed file writes every non-ascii code point
+ *   of a variant escaped (`Ko\u0308ln`), which makes the decomposition visible in a diff and leaves the file
  *   itself byte-stable under any editor that normalizes what it saves.
  *
- *   AND THAT NO ARM IS MISSING BY ACCIDENT. Every absent arm has to name the applicability rule that refuses
+ *   and that no ARM is missing BY accident. Every absent arm has to name the applicability rule that refuses
  *   it, and both declared rules have to refuse something real. A suite that could quietly drop the arms it
  *   fails would report a smaller violation count, and a smaller count is indistinguishable from a law that
  *   holds.
  *
- *   THE COVERAGE READING IS PINNED rather than merely printed. `eligibleByState.nfd` is zero because every committed
+ *   the coverage reading is pinned rather than merely printed. `eligibleByState.nfd` is zero because every committed
  *   board row is composed, which is the measured reason this suite states the decompose arm and no other. The
  *   day a decomposed row is committed that number moves, this test fails, and the failure says which arm just
  *   became stateable — which is the whole of what the pin is for.
  *
- *   STAGE 1 IS ASSERTED HERE TOO. Both forms of every committed base must reach the same normalized text, so a
- *   live violation of this law is a defect DOWNSTREAM of normalization rather than in it. That is the first
+ *   stage 1 is asserted here too. Both forms of every committed base must reach the same normalized text, so a
+ *   live violation of this law is a defect downstream of normalization rather than in it. That is the first
  *   question a violation raises, and it is answered without loading a model.
  */
 

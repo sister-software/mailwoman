@@ -3,7 +3,7 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   `state-ia-contractors`: Iowa Active Construction Contractor Registrations CSV consumer.
+ *   `state-ia-builders`: Iowa Active Construction Contractor Registrations CSV consumer.
  *
  *   Iowa Workforce Development publishes a public registry of active construction contractors. Each
  *   row carries a business name, street address, city/state/zip, and contact info.
@@ -28,12 +28,12 @@ import { lookupStateAbbreviation } from "#us/fips-state"
  * Registry id for this adapter. Stamped into every row it emits, so a corpus record can be traced back to the dataset
  * it came from.
  */
-export const STATE_IA_CONTRACTORS_ADAPTER_ID = "state-ia-contractors"
+export const STATE_IA_BUILDERS_ADAPTER_ID = "state-ia-builders"
 /**
  * License carried by this source (Public Domain), attached to each row so downstream consumers inherit the terms rather
  * than having to look them up.
  */
-export const STATE_IA_CONTRACTORS_DEFAULT_LICENSE = "Public Domain"
+export const STATE_IA_BUILDERS_DEFAULT_LICENSE = "Public Domain"
 
 interface IaContractorRow {
 	"Registration #": string
@@ -47,17 +47,17 @@ interface IaContractorRow {
 	"Last Name": string
 }
 
-export function createStateIaContractorsAdapter(): CorpusAdapter {
+export function createStateIaBuildersAdapter(): CorpusAdapter {
 	return {
-		id: STATE_IA_CONTRACTORS_ADAPTER_ID,
-		defaultLicense: STATE_IA_CONTRACTORS_DEFAULT_LICENSE,
+		id: STATE_IA_BUILDERS_ADAPTER_ID,
+		defaultLicense: STATE_IA_BUILDERS_DEFAULT_LICENSE,
 		addressRole: AddressRole.RegisteredOffice,
 		description:
 			"Iowa Active Construction Contractor Registrations — business name + full street address (public-domain).",
 
 		async *rows(opts: AdapterOptions): AsyncIterable<CanonicalRow> {
 			if (opts.country && opts.country !== "US") {
-				throw new Error(`state-ia-contractors adapter: only US supported, got country=${opts.country}`)
+				throw new Error(`state-ia-builders adapter: only US supported, got country=${opts.country}`)
 			}
 
 			const rows = CSVSpliterator.fromAsync(opts.inputPath, {
@@ -111,18 +111,18 @@ export function createStateIaContractorsAdapter(): CorpusAdapter {
 				const regNum = (record["Registration #"] ?? "").trim()
 
 				const sourceID = regNum
-					? `${STATE_IA_CONTRACTORS_ADAPTER_ID}-${regNum}`
-					: stableSourceID(STATE_IA_CONTRACTORS_ADAPTER_ID, aligned)
+					? `${STATE_IA_BUILDERS_ADAPTER_ID}-${regNum}`
+					: stableSourceID(STATE_IA_BUILDERS_ADAPTER_ID, aligned)
 
 				yield {
 					raw,
 					components: aligned,
 					country: "US",
 					locale: "en-US",
-					source: STATE_IA_CONTRACTORS_ADAPTER_ID,
+					source: STATE_IA_BUILDERS_ADAPTER_ID,
 					source_id: sourceID,
 					corpus_version: "",
-					license: STATE_IA_CONTRACTORS_DEFAULT_LICENSE,
+					license: STATE_IA_BUILDERS_DEFAULT_LICENSE,
 				}
 
 				emitted++
@@ -134,4 +134,4 @@ export function createStateIaContractorsAdapter(): CorpusAdapter {
 /**
  * The configured adapter instance registered with the corpus builder.
  */
-export const stateIaContractorsAdapter = createStateIaContractorsAdapter()
+export const stateIaBuildersAdapter = createStateIaBuildersAdapter()

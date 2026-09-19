@@ -6,7 +6,7 @@ The mandate: recover the one regression v4.5.0 shipped with — fr.house_number 
 
 ## What shipped
 
-- **Wave A — all three delegated, verified, merged** (each a single-concern Sonnet contract in a worktree):
+- **Wave A — all three delegated, verified, merged** (each a single-concern Sonnet interface in a worktree):
   - **#561** — `scripts/build-fr-order-extract.mjs` (`synth-fr-order`): reversed-order FR extract mirroring the German both-order shape. Verified: 0 oob spans, 199/199 reversed-order span check pass.
   - **#562** — NZ "Private Box" colloquial codex alias (#517), `officiallyInvalid` citation per operator ruling. In-scope, CI-green.
   - **#563** — FR golden diversification: +150 OA-sourced rows across 56 localities + both orders, diluting the Sainte-Livrade share 98.8% → 78.8%. Verified: 0 components-not-in-raw.

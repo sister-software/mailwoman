@@ -5,7 +5,7 @@
  *
  *   `usePOISearch` — the headless core of the POI explorer. Owns the taxonomy-runtime load, the
  *   debounced classify → subject → OverpassQL derivation, and the "Search live" state machine. The
- *   runtime loader and the live-search probe are both INJECTABLE, so stories/tests drive it with mocks
+ *   runtime loader and the live-search probe are both injectable, so stories/tests drive it with mocks
  *   and no network or db. Presentation is entirely the caller's concern.
  */
 
@@ -33,7 +33,7 @@ export interface UsePOISearchOptions {
 	 */
 	runLiveSearch?: POILiveSearch
 	/**
-	 * Whether the injected probe can serve BRAND subjects (fetch by Wikidata QID). Default false: brand subjects show the
+	 * Whether the injected probe can serve brand subjects (fetch by Wikidata QID). Default false: brand subjects show the
 	 * intent + QID chip but no live-search affordance. The docs' httpvfs probe leaves this off — brand-wide row hydration
 	 * is pathological over byte-range (measured) — so brand live search is a server-side-backend capability. Category
 	 * live search is unaffected either way.
@@ -104,7 +104,7 @@ export function usePOISearch({
 }: UsePOISearchOptions): UsePOISearch {
 	const [runtime, setRuntime] = useState<POIRuntime | null>(null)
 	/**
-	 * The classify result KEYED BY the query that produced it. The visible result is derived during render
+	 * The classify result keyed BY the query that produced it. The visible result is derived during render
 	 * (`storedResult.query === trimmedText ? … : null`), so a new query invalidates the old answer by derivation — the
 	 * effect never writes state synchronously to "reset", which is the react(set-state-in-effect) shape the lint bump
 	 * rightly flags.
@@ -120,7 +120,7 @@ export function usePOISearch({
 
 	// The load fires exactly once on mount regardless of whether the caller passes a fresh `loadRuntime`
 	// closure each render (an inline `async () => …` would otherwise retrigger the effect → reload →
-	// re-render loop). `useEffectEvent` reads the LATEST closure without joining the dependency list —
+	// re-render loop). `useEffectEvent` reads the latest closure without joining the dependency list —
 	// the runtime is a load-once resource.
 	const loadRuntimeEvent = useEffectEvent(() => loadRuntime())
 
@@ -222,8 +222,8 @@ export function usePOISearch({
 
 	const subject = result?.subject
 
-	// A subject is live-searchable when a probe is wired, it has an anchor, and: a CATEGORY that isn't build-local, or a
-	// BRAND with a QID AND a brand-capable probe (`brandLiveSearch`). Brands without a QID / without a brand probe show
+	// A subject is live-searchable when a probe is wired, it has an anchor, and: a category that isn't build-local, or a
+	// brand with a QID and a brand-capable probe (`brandLiveSearch`). Brands without a QID / without a brand probe show
 	// the intent + QID chip but no live affordance.
 	const subjectLiveCapable =
 		subject !== undefined &&

@@ -3,7 +3,7 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   #1684 — the conditional-scope check: a locale-INFERRED country filter yields when the model's own locale head
+ *   #1684 — the conditional-scope check: a locale-inferred country filter yields when the model's own locale head
  *   confidently reads the text as a different country's addressing.
  *
  *   The measured basis (2026-08-19, the graded scope compare + witness traces):
@@ -17,9 +17,9 @@
  *
  *   Two commitments, both measured rather than chosen: the check only ever drops the scope (the head's country is
  *   evidence the text is foreign-shaped, never a resolved country — re-pointing to GB for a Chinese address would
- *   trade one wrong filter for another), and it never fires on an EXPLICIT caller scope (that contract belongs to
+ *   trade one wrong filter for another), and it never fires on an explicit caller scope (that interface belongs to
  *   #1735's pre-scope). Abstention-filling was measured out separately: unscoping empty results won 2 of 28 fills on
- *   the graded run, so absence stays honest — this check changes which candidates RACE rather than whether silence becomes an
+ *   the graded run, so absence stays honest — this check changes which candidates race rather than whether silence becomes an
  *   answer.
  */
 
@@ -30,10 +30,10 @@ import type { AddressTree } from "@mailwoman/core/decoder"
  * and the address's own evidence points away from it, on either of two independent signals:
  *
  * 1. The locale head confidently reads the text as a different country's addressing (see the module docstring).
- * 2. The postcode's FORMAT implies a country set that EXCLUDES the inferred country (`formatCountries`, from the #1589
+ * 2. The postcode's format implies a country set that excludes the inferred country (`formatCountries`, from the #1589
  *    implementation). `A1V 0A9` is structurally Canadian and nothing else, yet the inferred US scope used to survive it
  *    — the format evidence only reached the postalcode probe, never the walk's own scope, so `Gander` resolved to a US
- *    alias ghost. The format signal only speaks on DISTINCTIVE shapes: `countriesFromPostcodeFormat("75008")` is the
+ *    alias ghost. The format signal only speaks on distinctive shapes: `countriesFromPostcodeFormat("75008")` is the
  *    empty set (a bare 5-digit string is ambiguous many ways), so every such postcode keeps the scope via the empty-set
  *    silence below, and the Dallas ZIP the locale prior exists to guard never reaches the exclusion test.
  *

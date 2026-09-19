@@ -24,7 +24,7 @@
  *   기초구역번호 on the 주소 row is the five-digit postcode — and the building name). The row-count note in the zip
  *   gives 6,424,089 addresses and 8,194,643 lots for the 2026-08-31 edition.
  *
- *   MEMBER NAMES ARE CP949 WITHOUT THE UTF-8 FLAG, so a zip reader that trusts the format's CP437 default finds
+ *   member names are CP949 without the UTF-8 flag, so a zip reader that trusts the format's CP437 default finds
  *   `┴╓╝╥_╝¡┐ïÆ╣▌╗π.txt` and matches nothing; `filenameEncoding` decodes the central directory's real bytes. The
  *   contents need the same treatment one layer down, which is what `decodeByteStream` does before the line split.
  */
@@ -37,7 +37,7 @@ import { TextSpliterator } from "spliterator"
 /**
  * The publisher's encoding, for both the member names and their contents.
  *
- * `cp949`, not `euc-kr`: the register uses the UHC extension, and Node's WHATWG `euc-kr` reads none of it. One row in
+ * `cp949`, not `euc-kr`: the register uses the UHC extension, and Node's whatwg `euc-kr` reads none of it. One row in
  * 48,000 carries such a sequence and decodes to a different string with no error raised — see `decodeByteStream`.
  */
 const ENCODING = "cp949"
@@ -182,7 +182,7 @@ export interface ReadJusoOptions {
 }
 
 /**
- * Stream every LABEL row, region by region.
+ * Stream every label row, region by region.
  *
  * The lot and supplement files of one 시도 are held while its address file streams, so the join never holds the country
  * at once — the largest region's two side files rather than 6.4 million addresses.

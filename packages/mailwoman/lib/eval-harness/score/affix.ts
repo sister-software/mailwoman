@@ -5,7 +5,7 @@
  *
  *   Affix-aware per-tag scorer. `per-locale-f1`'s `foldToComponents` joins
  *   `street_prefix`+`street`+`street_suffix` into one `street`, so it cannot measure the affix
- *   split. This scores the UNFOLDED `decodeAsJSON` output against split ground truth: exact-match
+ *   split. This scores the unfolded `decodeAsJSON` output against split ground truth: exact-match
  *   (case-insensitive) P/R/F1 per tag.
  *
  *   `promotion-eval.ts` calls this SIX times per battery — the affix set, `unit-real-designators`,
@@ -38,7 +38,7 @@ export interface ScoreAffixOptions {
 	 */
 	model?: string
 	/**
-	 * Eval JSONL. Default `data/eval/external/street-affix-real.jsonl`.
+	 * Eval jsonl. Default `data/eval/external/street-affix-real.jsonl`.
 	 */
 	file?: string
 	/**
@@ -47,7 +47,7 @@ export interface ScoreAffixOptions {
 	 */
 	gazetteerLexicon?: string
 	/**
-	 * Write the machine-readable sidecar here — the contract the check verdict reads. The markdown is presentation.
+	 * Write the machine-readable sidecar here — the interface the check verdict reads. The markdown is presentation.
 	 */
 	json?: string
 	/**
@@ -63,7 +63,7 @@ export interface ScoreAffixOptions {
 	 */
 	suppressGazNearPostcode?: boolean
 	/**
-	 * PACKAGE-SHAPED (#718-safe): `<root>` loads model + tokenizer + card + ALL soft channels (anchor + gazetteer +
+	 * Package-shaped (#718-safe): `<root>` loads model + tokenizer + card + all soft channels (anchor + gazetteer +
 	 * country) from the package via `loadFromWeights` — the only in-distribution grade for a country-channel model
 	 * (v6.2.0+). Takes precedence over the explicit {@linkcode ScoreAffixOptions.model} path.
 	 */
@@ -108,7 +108,7 @@ const TAGS = [
 ] as const
 
 /**
- * Score one eval file's UNFOLDED per-tag P/R/F1. Every narration line goes through `report`, one call per line, so the
+ * Score one eval file's unfolded per-tag P/R/F1. Every narration line goes through `report`, one call per line, so the
  * check's captured markdown matches the child-process stdout it replaced byte-for-byte.
  */
 export async function scoreAffix(

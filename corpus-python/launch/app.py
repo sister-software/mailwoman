@@ -36,7 +36,7 @@ __all__ = [
     "vol",
 ]
 
-# Image with PyTorch (CUDA), rclone, sentencepiece, pyarrow, onnx
+# Image with PyTorch (cuda), rclone, sentencepiece, pyarrow, onnx
 training_image = (
     modal.Image.debian_slim(python_version="3.12")
     .apt_install("curl", "unzip")
@@ -45,21 +45,21 @@ training_image = (
         "curl -sSL https://rclone.org/install.sh | bash",
     )
     .pip_install(
-        # --- PINNED export/quant toolchain (2026-06-09)
-        # These five drive the ONNX graph that ships to browsers. They were UNPINNED (`>=`)
+        # --- pinned export/quant toolchain (2026-06-09)
+        # These five drive the ONNX graph that ships to browsers. They were unpinned (`>=`)
         # and drifted between v0.9.3 (Jun-6) and v0.9.7 (Jun-8): transformers→5.x and
         # onnx→1.21 started rejecting a dynamo-emitted value_info during int8 quant (see
         # mailwoman_train/quantize.py's value_info strip). Pinned to the exact set that
-        # produced the v4.1.0 int8 artifact, VERIFIED graph-identical (opset 17, same
+        # produced the v4.1.0 int8 artifact, verified graph-identical (opset 17, same
         # 28×DynamicQuantizeLinear/MatMulInteger, 0 reverse-slices) to the Safari-proven
-        # v0.9.3 graph. INVARIANT: the int8 graph (opset + quant op scheme) must stay
+        # v0.9.3 graph. invariant: the int8 graph (opset + quant op scheme) must stay
         # within what the pinned `onnxruntime-web` native WebGPU EP runs on Metal (the
         # JSEP int8-dequant slice bug — the neural web runner uses onnxruntime-web/webgpu). A bump
         # here that raises the opset or changes the quant scheme is a Safari decision rather than
         # a free upgrade — re-verify on a real iOS device (CI cannot exercise WebGPU).
         # Query the live image set with `modal run -m launch.train_remote::versions`.
-        # onnx 1.21.0→1.22.0 (2026-07-12): security parity with pyproject (GHSA-hwpq-hmq9-wj77,
-        # Dependabot #1057) — verify-toolchain requires the pins agree. VERIFIED same day by
+        # onnx 1.21.0→1.22.0 (2026-07-12): security parity with pyproject (ghsa-hwpq-hmq9-wj77,
+        # Dependabot #1057) — verify-toolchain requires the pins agree. verified same day by
         # re-export + re-quant of v241-fr-nsplice-ft step-12000 off this image: fp32 byte-
         # identical to the 1.21.0-era export (md5 1c58b0a0) and int8 byte-identical to the
         # shipped production artifact (md5 121162e6) — the bump provably does not touch the
@@ -70,7 +70,7 @@ training_image = (
         # answer bit-equal logits at sequence 8, 64 and 128. A rebuild of a pre-0.7.2 artifact differs
         # in md5 and is correct.
         # onnxruntime 1.26.0->1.29.0 (matching the `onnxruntime-web` the browser runs): graph-neutral,
-        # both quantize one fixed fp32 to a BYTE-IDENTICAL int8. The quantizer is now the same version
+        # both quantize one fixed fp32 to a byte-identical int8. The quantizer is now the same version
         # as the executor, which is what the gap cost: the artifact was validated by a runtime three
         # minors from the one serving it.
         "torch==2.12.0",
@@ -79,11 +79,11 @@ training_image = (
         "onnxruntime==1.29.0",
         "onnxscript==0.7.2",
         # --- non-graph deps
-        # sentencepiece is PINNED rather than floored (2026-08-01). It was `>=0.2.0` under a comment saying
+        # sentencepiece is pinned rather than floored (2026-08-01). It was `>=0.2.0` under a comment saying
         # unpinned floors are fine here — that assumption was false, because SP decides the token IDS
         # the model trains on. Measured: 0.2.1 and 0.2.2 disagree on a Viterbi tie-break for repeated
         # digit runs ("...555" segments ['55','5'] under 0.2.1 and ['5','55'] under 0.2.2), which fired
-        # on 5/10,000 real corpus rows in the TS↔Python parity fixture. The shipped WASM runtime
+        # on 5/10,000 real corpus rows in the TS↔Python parity fixture. The shipped wasm runtime
         # (@mailwoman/sentencepiece-wasm) is built from 0.2.2 and reproduces 0.2.2 exactly, so training
         # pins to 0.2.2 to keep train and serve on one convention. A float here means the resolved
         # version depends on when Modal last rebuilt the image layer — i.e. train/serve agreement
@@ -178,7 +178,7 @@ def _load_r2_env() -> dict[str, str]:
     return env
 
 
-# The secret is built from the LOCAL checkout at deploy time, so the lookup runs only there. This
+# The secret is built from the local checkout at deploy time, so the lookup runs only there. This
 # module is imported inside every container too, where there is no .env and where only the functions
 # that declare this secret are given the keys — so raising unconditionally crash-looped every
 # function that does not use R2, the epoch audit included.

@@ -45,7 +45,7 @@ The corpus draws from several open data sources. Each one contributes a differen
 | **NAD** (US DOT)                 | **57.9M** (new in v0.3.0) | structured 911-grade address points, full venue/street/house_number coverage |
 | **state-ny-notaries**            | 32K                       | NY notary names + business addresses                                         |
 | **state-tx-notaries**            | 511K                      | TX notary names + business addresses                                         |
-| **state-ia-contractors**         | 17K                       | Iowa contractor names + addresses                                            |
+| **state-ia-builders**            | 17K                       | Iowa contractor names + addresses                                            |
 
 Skipped in v0.3.0:
 
@@ -57,7 +57,7 @@ The diversity of sources matters more than the absolute count. NPPES contributes
 
 ## Stage 1 — Per-adapter row emission
 
-Each adapter is a TypeScript async generator that yields `CanonicalRow` objects. The contract is straightforward:
+Each adapter is a TypeScript async generator that yields `CanonicalRow` objects. The interface is straightforward:
 
 ```ts
 interface CorpusAdapter {

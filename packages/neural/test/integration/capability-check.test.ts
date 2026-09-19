@@ -5,7 +5,7 @@
  *
  *   Load-time capability delta check (#718/#719). The structural fix that makes the D2/#719 bug-class
  *   — a conventions `forbiddenTags` row destroying a tag the model demonstrably emits — impossible
- *   to ship: `createScorer` reads the model-card's `capabilities` block and FAILS CLOSED when a
+ *   to ship: `createScorer` reads the model-card's `capabilities` block and fails closed when a
  *   conventions row forbids a certified tag (`maskOffF1 − maskOnF1 > 5pp`).
  *
  *   Two essential assertions:

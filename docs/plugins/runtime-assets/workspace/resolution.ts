@@ -12,7 +12,7 @@ import { resolvePackagePathFrom } from "@mailwoman/core/module/resolve-from"
 /**
  * The directory a workspace keeps its TypeScript in, relative to the package root.
  *
- * Each source probe below is followed by an `out/` fallback, so a probe aimed at the WRONG directory does not fail
+ * Each source probe below is followed by an `out/` fallback, so a probe aimed at the wrong directory does not fail
  * loudly — it silently hands the site bundle compiled JavaScript instead of the source the alias exists to select. That
  * is what happened when source moved here from the package root, and only `webpack-policy.test.ts` noticed.
  */

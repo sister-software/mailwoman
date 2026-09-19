@@ -5,7 +5,7 @@
  *
  *   Linear-chain CRF Viterbi decoder in TypeScript.
  *
- *   ITS OWN SUBPATH ON PURPOSE — do not fold this into the package barrel. `@mailwoman/neural`'s root export
+ *   its own subpath on purpose — do not fold this into the package barrel. `@mailwoman/neural`'s root export
  *   pulls onnxruntime, and the docs bundle needs the decoder without the runtime. The decode is pure
  *   arithmetic over scores someone else produced, which is exactly why it can be reached without them.
  *
@@ -87,7 +87,7 @@ function isValidTransition(from: string, to: string): boolean {
 }
 
 /**
- * A position-scoped transition bonus (TRANSITION-BETA build, 2026-07-24): `+bonus` on every transition into `toLabel`
+ * A position-scoped transition bonus (transition-beta build, 2026-07-24): `+bonus` on every transition into `toLabel`
  * at exactly `timestep` — from any predecessor label (at `timestep === 0` the "predecessor" is the sequence start, so
  * the bonus lands on the start transition instead). The placetype-pair prior emits one per pair hit at the child span's
  * first piece when its index header carries `transitionBeta`; the hook itself is generic — a sparse list of
@@ -101,7 +101,7 @@ function isValidTransition(from: string, to: string): boolean {
  */
 interface ViterbiTransitionAdjustment {
 	/**
-	 * Timestep whose INCOMING transition is adjusted.
+	 * Timestep whose incoming transition is adjusted.
 	 */
 	timestep: number
 	/**
@@ -133,7 +133,7 @@ export interface ViterbiInput {
 	endTransitions?: number[]
 	/**
 	 * Position-scoped transition bonuses (see {@link ViterbiTransitionAdjustment}). Omitted/empty = the exact
-	 * pre-TRANSITION-BETA decode — no behavioral term is added anywhere.
+	 * pre-transition-beta decode — no behavioral term is added anywhere.
 	 */
 	transitionAdjustments?: ReadonlyArray<ViterbiTransitionAdjustment>
 }
@@ -165,7 +165,7 @@ export function viterbi(input: ViterbiInput): ViterbiResult {
 	const endTrans = input.endTransitions ?? new Array<number>(numLabels).fill(0)
 
 	// Sparse per-timestep lookup for the position-scoped transition bonuses. Null when none were
-	// passed — the hot loop below then never consults it (the pre-TRANSITION-BETA code path, exactly).
+	// passed — the hot loop below then never consults it (the pre-transition-beta code path, exactly).
 	let adjustAt: Map<number, Map<number, number>> | null = null
 
 	if (input.transitionAdjustments?.length) {

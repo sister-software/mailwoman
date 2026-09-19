@@ -18,10 +18,10 @@ markup (same method `baseline.md` used, so the before/after numbers are comparab
 **Criterion (plan §Phase 2): "the four goal questions have one primary answer each; prominent
 concepts have an explicit owner and a source-of-truth link."**
 
-| #                                                                                                | Verdict               | Evidence                                                                                                                                                         |
-| ------------------------------------------------------------------------------------------------ | --------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Four goal questions have one primary answer each, ≤2 section choices, no plan/history or archive | **PASS**              | See click-path table §2. All four improved from baseline's 2 PASS / 2 FAIL to 4/4.                                                                               |
-| Prominent concepts (canonical pages) have explicit role + source-of-truth                        | **PASS, after 1 fix** | 5 of 6 target pages already had `role`/`audience`/`source-of-truth`; `what-mailwoman-is.mdx` was missing all three — fixed (edit #1, §4). See contract table §3. |
+| #                                                                                                | Verdict               | Evidence                                                                                                                                                          |
+| ------------------------------------------------------------------------------------------------ | --------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Four goal questions have one primary answer each, ≤2 section choices, no plan/history or archive | **PASS**              | See click-path table §2. All four improved from baseline's 2 PASS / 2 FAIL to 4/4.                                                                                |
+| Prominent concepts (canonical pages) have explicit role + source-of-truth                        | **PASS, after 1 fix** | 5 of 6 target pages already had `role`/`audience`/`source-of-truth`; `what-mailwoman-is.mdx` was missing all three — fixed (edit #1, §4). See interface table §3. |
 
 ## 2. Click-path table — four goal questions, before vs. after
 
@@ -34,18 +34,18 @@ Traced from `/docs/` (the docs landing surface a reader hits from the navbar "Do
 | (a) What does Mailwoman do, when to use it?               | Homepage 0 clicks (good). Navbar "Docs" → `/docs/status`, a dense changelog — **not** an intro; deep answer (`what-mailwoman-is.mdx`) needed the switcher, undiscoverable from a status page.                                                                                     | Homepage 0 clicks (unchanged). Navbar "Docs" now **is** `/docs/` — the fork-in-the-road front door (`articles/index.mdx`), a capsule answer + explicit "I want to…" forks, 0 additional clicks. Deep page `what-mailwoman-is.mdx`: Understand (1 section choice) → Concepts category.                                                            | **pass** (was: adequate only via homepage)                        |
 | (b) How do I parse, geocode, integrate?                   | Homepage "Read the docs" → `/docs/getting-started` (1 click). Navbar "Docs" → `/docs/status` → Getting started (2 clicks). Entry-point contradiction: `getting-started.mdx` opened with `NeuralAddressClassifier`, `api.mdx` calls `createRuntimePipeline` the recommended entry. | Homepage "Read the docs" → `/docs/getting-started` (1 click, unchanged). Front door has a direct "Get started →" link (0 switcher clicks). **Entry-point contradiction fixed** (Phase 2b, `03140a4f`): `getting-started.mdx`'s first code sample now uses `createRuntimePipeline`, matching `api.mdx`. Recipes: Use Mailwoman, 1 section choice. | **pass** (was already best of the four; contradiction now closed) |
 | (c) How does the system work at a useful technical level? | Content existed and was good but unreachable from homepage/navbar; `/docs/status` → switch to Understanding/Concepts (2 clicks, plus discovering the switcher existed at all).                                                                                                    | Front door **directly links** "How Mailwoman parses an address →" — 0 switcher clicks, 1 click from `/docs/`. Also reachable via Understand (1 section choice) → Concepts category, where it's `sidebar_position: 1`.                                                                                                                            | **pass** (was: inadequate — content good, path wasn't)            |
-| (d) Authoritative contract or operational procedure?      | 3+ clicks past navbar plus a manual expand behind a lowercase, 🧪-flagged, auto-labeled `reference` category; clicking the category header itself misrouted to an unrelated tokenizer report; `SCHEMA.mdx` had zero frontmatter.                                                  | `Reference` switcher (1 section choice) lands directly on `SCOPE.mdx`; `SCHEMA.mdx` ("Component Schema") is now a **flat, un-nested, correctly-titled** top-level entry in that same sidebar — 1 more click, no expand, no misroute. Operational procedure (`OPERATIONS.mdx`): `Contribute` switcher (1 section choice) → flat list, 1 click.    | **pass** (was: inadequate — the roughest of the four)             |
+| (d) Authoritative interface or operational procedure?     | 3+ clicks past navbar plus a manual expand behind a lowercase, 🧪-flagged, auto-labeled `reference` category; clicking the category header itself misrouted to an unrelated tokenizer report; `SCHEMA.mdx` had zero frontmatter.                                                  | `Reference` switcher (1 section choice) lands directly on `SCOPE.mdx`; `SCHEMA.mdx` ("Component Schema") is now a **flat, un-nested, correctly-titled** top-level entry in that same sidebar — 1 more click, no expand, no misroute. Operational procedure (`OPERATIONS.mdx`): `Contribute` switcher (1 section choice) → flat list, 1 click.    | **pass** (was: inadequate — the roughest of the four)             |
 
 Net: 4/4 PASS, up from baseline's 2/4. `SCHEMA.mdx` itself still has zero frontmatter (falls back to
 its H1, "Component Schema" — happens to read fine) — noted in §5 rather than a blocker since it's reachable
 and correctly labeled either way.
 
-## 3. Canonical-page contract table
+## 3. Canonical-page interface table
 
 Per brief: the four canonical concept pages (`how-mailwoman-parses-an-address.mdx`,
 `how-mailwoman-resolves-a-place.mdx`, `data-locales-and-coverage.mdx`, `quality-and-evaluation.mdx`)
 plus `what-mailwoman-is.mdx` and `documentation-map.mdx`. Each must declare
-`role`/`audience`/`source-of-truth` and link to (a) ≥1 Reference contract page and (b) evidence
+`role`/`audience`/`source-of-truth` and link to (a) ≥1 Reference interface page and (b) evidence
 (evals/dated records) where it makes evidence-graded claims.
 
 | Page                                           | role/audience/source-of-truth           | Links to Reference                                                                                               | Links to evidence                                                                                          | Verdict        |
@@ -141,7 +141,7 @@ paragraph-level rewrite rather than a link fix).
   reverse). Not one of the six pages this audit's brief named in scope for the frontmatter check.
 - `plan/reference/SCHEMA.mdx` has no frontmatter at all (title falls back to its H1). Currently
   harmless — the H1 ("Component Schema") reads fine as a sidebar label — but inconsistent with the
-  content-model contract for a `reference`-role page.
+  content-model interface for a `reference`-role page.
 - Two Phase-0-flagged merges still undone: `fst-gazetteer-prior.mdx` / `fst-priors-as-shallow-fusion.mdx`
   (overlapping FST-prior mechanics); `plan/reference/record-matcher-sources.md` /
   `concepts/record-matcher-data-catalog.md` (near-duplicate prose, same subject).
@@ -173,6 +173,6 @@ Not re-verified here (outside the brief's four checklist items, or explicitly de
 per the plan's coordination boundary): the baseline's duplicate-title findings (`Retrospectives` ×2
 in evals/retrospectives — delegated section; `Start here` title collision between
 `understanding/README.mdx` and the `startHere` switcher label — in-scope territory but not one of
-the four click-path/canonical-contract/link-pass checks this audit ran); external `https://` link
+the four click-path/canonical-interface/link-pass checks this audit ran); external `https://` link
 liveness (baseline explicitly scoped this out too — Docusaurus's build-time checker doesn't cover
 it).

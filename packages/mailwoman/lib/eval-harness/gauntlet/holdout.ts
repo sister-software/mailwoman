@@ -3,12 +3,12 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Held-out fresh-draw Gauntlet — THE generalization check (DeepSeek 019f1144: "the only layer that
+ *   Held-out fresh-draw Gauntlet — the generalization check (DeepSeek 019f1144: "the only layer that
  *   measures the tail. when it conflicts with the curated suite, it wins"). Each run draws a fresh random
  *   sample with truth coordinates (BAN for FR), so the model can't memorize it, and runs both the candidate
  *   and the current production model on the same draw. It checks on a two-proportion z-test: ship only if the
  *   candidate is not statistically worse than production at the locality tolerance. Absolute accuracy is not
- *   the check — the candidate-vs-prod DELTA is (this controls for data drift + coverage gaps).
+ *   the check — the candidate-vs-prod delta is (this controls for data drift + coverage gaps).
  *
  *   Run: mailwoman eval gauntlet --layer holdout --candidate ./out/v194-final/model.onnx [--n 300]
  */
@@ -21,7 +21,7 @@ import { TextSpliterator } from "spliterator"
 import { buildGauntletDeps, type GauntletDeps, type GauntletResolverPins } from "#eval-harness/gauntlet/harness"
 
 /**
- * Two-sided 95% critical value of the standard normal. The check blocks only on a SIGNIFICANT regression, so a
+ * Two-sided 95% critical value of the standard normal. The check blocks only on a significant regression, so a
  * candidate that is ahead or within noise passes. this is the noise boundary.
  */
 const Z_CRITICAL_95_TWO_SIDED = -1.96
@@ -39,11 +39,11 @@ export interface HoldoutLayerOptions {
 	 */
 	n?: number
 	/**
-	 * Truth source: `fr` (BAN) or `us` (FDIC). Default `fr`.
+	 * Truth source: `fr` (BAN) or `us` (fdic). Default `fr`.
 	 */
 	source?: string
 	/**
-	 * A tokenizer-SPLICE candidate (#444/#884/#912) ships a new vocab. grading it needs the candidate tokenizer (+ card)
+	 * A tokenizer-splice candidate (#444/#884/#912) ships a new vocab. grading it needs the candidate tokenizer (+ card)
 	 * paired with the candidate model. Production is then also run through the shipped trio (createScorer both sides) so
 	 * the only variables are the ONNX + the vocab. Omit for a model-only bump.
 	 */
@@ -86,8 +86,8 @@ export interface Sample {
 
 /**
  * Held-out truth sources — fresh-draw rather than in mailwoman's training corpus, so they measure generalization. Each
- * parses a semicolon row of its staging file into a BARE-form query (no postcode — the hard case the tail exercises) +
- * truth coord. FR/BAN streams the 5 GB file. the smaller pools (US/FDIC, ~77k) are the fast draw. Add a source by
+ * parses a semicolon row of its staging file into a bare-form query (no postcode — the hard case the tail exercises) +
+ * truth coord. FR/BAN streams the 5 GB file. the smaller pools (US/fdic, ~77k) are the fast draw. Add a source by
  * dropping a staging file + a parser here.
  */
 export interface SourceDef {
@@ -151,9 +151,9 @@ export async function drawHoldoutSample(
 	let seen = 0
 	let line = 0
 
-	// Semicolon-delimited CSV (not JSONL) → TextSpliterator for the line layer, keep the `.split(";")`.
+	// Semicolon-delimited CSV (not jsonl) → TextSpliterator for the line layer, keep the `.split(";")`.
 	// crlf: the staging files are LF today, but the final column (the truth coord) would otherwise
-	// carry a stray \r on a CRLF source and fail to parse.
+	// carry a stray \r on a crlf source and fail to parse.
 	for await (const raw of TextSpliterator.fromAsync(src.file, { crlf: true })) {
 		if (line++ === 0) continue // header
 		const s = src.parse(raw.split(";"))
@@ -199,7 +199,7 @@ async function score(deps: GauntletDeps, sample: Sample[]): Promise<{ hits: numb
 }
 
 /**
- * Two-proportion z (candidate − prod). z < −1.96 → candidate significantly WORSE (block).
+ * Two-proportion z (candidate − prod). z < −1.96 → candidate significantly worse (block).
  */
 function zStat(cand: number, prod: number, n: number): number {
 	const pc = cand / n
@@ -211,7 +211,7 @@ function zStat(cand: number, prod: number, n: number): number {
 }
 
 /**
- * Run the held-out candidate-vs-prod layer. `exitCode` is 0 for `PASS` and 1 when the candidate significantly worse, 2
+ * Run the held-out candidate-vs-prod layer. `exitCode` is 0 for `pass` and 1 when the candidate significantly worse, 2
  * = usage error (missing candidate / unknown source).
  */
 export async function runHoldoutLayer(options: HoldoutLayerOptions = {}): Promise<{ pass: boolean; exitCode: number }> {

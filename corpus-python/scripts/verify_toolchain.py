@@ -21,7 +21,7 @@ The ruff pin has the same shape and one more copy: ``pyproject.toml``'s ``[dev]`
 version a developer's venv installs, and three shell call sites (``package.json``'s ``lint:python``
 and ``fix:python``, ``.husky/pre-commit``) name the version ``uvx`` fetches. A bump that moves the
 pin without the call sites leaves a local ruff that lints differently from the one CI runs, which is
-the failure the pyproject comment warns about — and it happened, so this script now checks all four.
+the failure the pyproject comment warns about — and it happened. Therefore, this script now checks all four.
 
 This script asserts they agree, and (when the heavy ML deps are actually installed) that the
 installed versions match the pins too. It needs none of torch/onnx to run the cross-file checks, so

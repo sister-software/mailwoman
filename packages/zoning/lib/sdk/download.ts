@@ -5,8 +5,8 @@
  *
  *   Acquire the Department's bulk GeoJSON export — a 247,452,342-byte file streamed to disk.
  *
- *   THIS IS A FILE TRANSFER rather than AN API REQUEST, AND IT KEEPS RAW `fetch` ON PURPOSE. The repo's rule sends
- *   HTTP clients through `@mailwoman/core/api`'s `APIClient`, and the rule draws its line at what that class
+ *   this is A file transfer rather than an API request, and IT keeps RAW `fetch` on purpose. The repo's rule sends
+ *   http clients through `@mailwoman/core/api`'s `APIClient`, and the rule draws its line at what that class
  *   is for: pacing, bounded retry, response caching and error mapping over small bodies and repeated calls.
  *   None of it applies here. Caching a 247 MB body through a JSON-validating disk cache would write a second,
  *   unreadable copy of a file already on disk. there is nothing to pace, because this runs once per product
@@ -15,12 +15,12 @@
  *   are the existing transfers that say the same thing in the same place. The job that produces this URL, and
  *   every other metadata read around it, do go through `APIClient` — see `client.ts`.
  *
- *   THE RESULT URL REDIRECTS AND THE FETCH MUST FOLLOW IT. The Hub download job answers
+ *   the result URL redirects and the fetch must follow IT. The Hub download job answers
  *   `{"status":"Completed","resultUrl":…}`; the result URL itself 302s to the generated file. Node's `fetch`
  *   follows redirects by default, and the option is passed explicitly anyway — a transfer that stopped at the
  *   redirect would write a short body to disk and report a successful download.
  *
- *   FRESHNESS IS THE ITEM'S OWN MODIFIED DATE, NEVER A LENGTH PROBE. The cache is keyed on the vintage the
+ *   freshness is the item'S own modified date, never A length probe. The cache is keyed on the vintage the
  *   item declares, so a re-run against the same vintage never re-transfers and a new vintage never overwrites
  *   the old one in place.
  */

@@ -5,35 +5,35 @@
  *
  *   Typed schema for `coastal-england.db` — the scenario-scoped two-tier polygon layer: the authority's
  *   unsimplified rings as the truth table, an H3 cell table above them as the summary, the two
- *   ground-instability layers apart from both, plus the layer-contract tables from `@mailwoman/core/layers`.
+ *   ground-instability layers apart from both, plus the layer-interface tables from `@mailwoman/core/layers`.
  *
- *   `area_id` IS SCOPED BY SCENARIO, AND THE KEY INSIDE A SCENARIO IS THE AUTHORITY'S FEATURE ID — NOT ITS
- *   FRONTAGE ID. The same frontage appears in all twelve scenario layers with a different distance each
+ *   `area_id` is scoped BY scenario, and the KEY inside A scenario is the authority'S feature ID — not its
+ *   frontage ID. The same frontage appears in all twelve scenario layers with a different distance each
  *   time, so the source's `frontageid` is not unique across the artifact. measured, it is not unique within
  *   a layer either. `NCERM_NFI_2055_0CC` holds 7,379 features over 7,369 distinct frontage ids (frontage
  *   39260 alone appears ten times), and the twelve layers together hold 89,211 features over far fewer
- *   frontages — 835 rows would have collided. So the key is `<scenario key>:<OBJECTID>` and `frontage_id`
+ *   frontages — 835 rows would have collided. So the key is `<scenario key>:<objectid>` and `frontage_id`
  *   rides as an attribute, which is what a reader joins on when it wants the frontage rather than the row.
  *
- *   THE CELL TABLE NAMES POLYGONS rather than CLASSES, AND THAT IS WHERE THIS LAYER DIFFERS FROM THE FLOOD ONE.
+ *   the cell table names polygons rather than classes, and that is where this layer differs from the flood one.
  *   A flood answer is a zone code from a two-value domain, so its index accumulates per code. An erosion
  *   answer is a specific frontage polygon carrying its own distance, policy and defence, so the index names
  *   the polygon and the scenario it belongs to. Overlap is real rather than theoretical: 3,727 of the 7,492
  *   features on `NCERM_SMP_2105_95CC` carry a non-zero `maxoverlap`, so a cell can name several polygons of
  *   one scenario and a reading reports every one that contains the point.
  *
- *   `WITHOUT ROWID` ON THE CELL TABLE AND NEVER ON THE GEOMETRY TABLES. Small fixed-width rows probed by
+ *   `without rowid` on the cell table and never on the geometry tables. Small fixed-width rows probed by
  *   their exact primary key belong in the B-tree. a row carrying a geometry blob does not — clustering it
  *   into the B-tree makes every index page a geometry page.
  *
- *   THE WHOLE-CELL SET IS COMPACTED PER FEATURE, SO IT IS MIXED-RESOLUTION. A row therefore carries its own
+ *   the whole-cell SET is compacted PER feature, SO IT is mixed-resolution. A row therefore carries its own
  *   `resolution`, and a probe walks `cellToParent` from the index resolution up to the coarsest resolution
  *   present. `layer_coverage` is not compacted and stays single-resolution, because
  *   `recoverCoverageResolution` recovers one resolution from the stored cells and throws on a table that
  *   mixes them.
  */
 
-import type { LayerContractDatabase } from "@mailwoman/core/layers"
+import type { layerschemadatabase } from "@mailwoman/core/layers"
 import { addBoundingBoxColumns, addCellIndexColumns, addRingGeometryColumns } from "@mailwoman/sqlite/schema-columns"
 import { sql, type Kysely } from "kysely"
 
@@ -55,11 +55,11 @@ export type CoastalCellContainment = (typeof CoastalCellContainment)[keyof typeo
 
 /**
  * One authority erosion polygon, verbatim. A plain rowid table: it holds a geometry blob, which is the one shape
- * `WITHOUT ROWID` hurts.
+ * `without rowid` hurts.
  */
 export interface CoastalZoneAreaTable {
 	/**
-	 * `<scenario key>:<OBJECTID>` — see this file's header for why the frontage id cannot serve.
+	 * `<scenario key>:<objectid>` — see this file's header for why the frontage id cannot serve.
 	 */
 	area_id: string
 	/**
@@ -151,7 +151,7 @@ export interface CoastalZoneCellTable {
 }
 
 /**
- * NCERM's two ground-instability layers — a DIFFERENT HAZARD, kept apart so a reader cannot answer an erosion question
+ * Ncerm's two ground-instability layers — a different hazard, kept apart so a reader cannot answer an erosion question
  * from a landslide polygon.
  *
  * 160 rows in total (80 per layer, sharing feature ids and attributes and differing in geometry), which is why they
@@ -160,7 +160,7 @@ export interface CoastalZoneCellTable {
  */
 export interface CoastalGroundInstabilityTable {
 	/**
-	 * `<kind>:<OBJECTID>` — the two layers reuse feature ids 1–80.
+	 * `<kind>:<objectid>` — the two layers reuse feature ids 1–80.
 	 */
 	area_id: string
 	/**
@@ -187,12 +187,12 @@ export interface CoastalGroundInstabilityTable {
 }
 
 /**
- * The authority's MAPPED FOOTPRINT — one row per statement, never derived from the hazard polygons.
+ * The authority's mapped footprint — one row per statement, never derived from the hazard polygons.
  *
- * EMPTY IN THIS EDITION, AND ITS EMPTINESS IS THE CLAIM. The Environment Agency publishes no coverage statement for
- * NCERM, so there is no footprint to record and `layer_coverage` carries `basis = source_present`. The table exists
+ * Empty IN this edition, and its emptiness is the claim. The Environment Agency publishes no coverage statement for
+ * ncerm, so there is no footprint to record and `layer_coverage` carries `basis = source_present`. The table exists
  * because the day a footprint source is settled — the Shoreline Management Plan Mapping record, or the frontage
- * geometry behind `frontageid`; see the workspace README — is the day this layer may write a stronger basis, and the
+ * geometry behind `frontageid`; see the workspace readme — is the day this layer may write a stronger basis, and the
  * row that licenses it belongs beside the coverage rather than in a code change nobody can audit.
  *
  * Deriving a footprint from the union of the erosion polygons is forbidden: the union of "at risk" areas is not the
@@ -234,7 +234,7 @@ export interface CoastalScenarioVocabularyTable {
 /**
  * Pass to `new DatabaseClient<CoastalDatabase>(...)`.
  */
-export interface CoastalDatabase extends LayerContractDatabase {
+export interface CoastalDatabase extends layerschemadatabase {
 	coastal_zone_area: CoastalZoneAreaTable
 	coastal_zone_cell: CoastalZoneCellTable
 	coastal_ground_instability: CoastalGroundInstabilityTable
@@ -243,13 +243,13 @@ export interface CoastalDatabase extends LayerContractDatabase {
 }
 
 /**
- * The subset of a Kysely handle the DDL touches. Same reasoning as `LayerContractHandle`: Kysely is invariant in its
+ * The subset of a Kysely handle the DDL touches. Same reasoning as `layerschemahandle`: Kysely is invariant in its
  * schema parameter, so naming only the members these functions call lets a caller pass its own wider handle.
  */
 export type CoastalSchemaHandle = Pick<Kysely<CoastalDatabase>, "schema">
 
 /**
- * Create `coastal_zone_area`. A PLAIN rowid table on purpose — the `rings` blob is exactly the payload `WITHOUT ROWID`
+ * Create `coastal_zone_area`. A plain rowid table on purpose — the `rings` blob is exactly the payload `without rowid`
  * penalizes.
  */
 export async function createCoastalZoneAreaTable(db: CoastalSchemaHandle): Promise<void> {
@@ -278,14 +278,14 @@ export async function createCoastalZoneAreaTable(db: CoastalSchemaHandle): Promi
 
 /**
  * Create `coastal_zone_cell` — the summary tier. Small fixed-width rows probed by their exact primary key, which is the
- * `WITHOUT ROWID` shape.
+ * `without rowid` shape.
  */
 export async function createCoastalZoneCellTable(db: CoastalSchemaHandle): Promise<void> {
 	const table = db.schema.createTable("coastal_zone_cell")
 
 	await addCellIndexColumns(table, ["scenario_key", "area_id"])
 		.addPrimaryKeyConstraint("coastal_zone_cell_pk", ["h3_cell", "area_id"])
-		// `WITHOUT ROWID` has no first-class builder. the raw modifier is the idiomatic fallback.
+		// `without rowid` has no first-class builder. the raw modifier is the idiomatic fallback.
 		.modifyEnd(sql`without rowid`)
 		.execute()
 }

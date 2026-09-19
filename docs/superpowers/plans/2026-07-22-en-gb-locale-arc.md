@@ -1,6 +1,6 @@
 # en-GB Locale Arc Implementation Plan
 
-> **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
+> **For agentic workers:** required sub-skill: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
 **Goal:** Ship en-GB parsing (with the `dependent_locality` dead-tag resurrection) end to end: PPD-derived corpus extract → 2k probe → resolver artifacts → `@mailwoman/neural-weights-en-gb` overlay package.
 

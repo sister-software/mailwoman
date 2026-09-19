@@ -12,7 +12,7 @@
  *   2. `LabeledRow`: alignment's output. Adds a SentencePiece token list and a parallel BIO label list,
  *        suitable for direct ingestion by the neural training loop.
  *
- *   `CorpusAdapter` is the contract every data source implements; `AdapterOptions` is the
+ *   `CorpusAdapter` is the interface every data source implements; `AdapterOptions` is the
  *   per-invocation knob set (input path, optional country filter, row cap, abort signal).
  */
 
@@ -113,7 +113,7 @@ export interface SourceProvenance {
 	corpus_version: string
 
 	/**
-	 * Short license label or SPDX id for _this_ row. Defaults to the adapter's `defaultLicense`, but per-row sources
+	 * Short license label or spdx id for _this_ row. Defaults to the adapter's `defaultLicense`, but per-row sources
 	 * (OpenAddresses) override.
 	 */
 	license: string
@@ -241,8 +241,8 @@ export interface QuarantinedRow {
 /**
  * Per-invocation knobs handed to an adapter by the runner.
  *
- * `inputPath` is interpreted by the adapter — it might be a single file path, a directory of files, or even an HTTPS
- * URL. Each adapter documents its own expected shape in its README.
+ * `inputPath` is interpreted by the adapter — it might be a single file path, a directory of files, or even an https
+ * URL. Each adapter documents its own expected shape in its readme.
  *
  * `country` filters to a single ISO 3166-1 alpha-2 country _at the adapter level_. Adapters that hold multi-country
  * data (OSM PBF, OpenAddresses) must honor this. single-country adapters (BAN) may ignore it but should reject
@@ -280,9 +280,9 @@ export interface AdapterOptions {
 }
 
 /**
- * The contract every data source implements.
+ * The interface every data source implements.
  *
- * Adapters are async generators: they yield `CanonicalRow`s one at a time, the runner consumes them (writing JSONL +
+ * Adapters are async generators: they yield `CanonicalRow`s one at a time, the runner consumes them (writing jsonl +
  * maintaining checksums + driving alignment). Streaming is mandatory — many sources are tens of millions of rows and
  * cannot be buffered.
  *
@@ -296,7 +296,7 @@ export interface CorpusAdapter {
 	readonly id: string
 
 	/**
-	 * Default SPDX-ish license label for rows from this adapter. Per-row overrides allowed.
+	 * Default spdx-ish license label for rows from this adapter. Per-row overrides allowed.
 	 */
 	readonly defaultLicense: string
 
@@ -327,7 +327,7 @@ export interface CorpusAdapter {
 	 * - Set `source` to `this.id` on every emitted row.
 	 * - Set `license` to `this.defaultLicense` unless overriding per-row.
 	 *
-	 * Implementations MUST NOT:
+	 * Implementations must not:
 	 *
 	 * - Set `corpus_version` (the runner stamps it).
 	 * - Mutate previously-yielded rows.

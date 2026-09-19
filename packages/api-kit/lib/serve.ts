@@ -39,7 +39,7 @@ const defaultOnListen = ({ port, address }: { port: number; address: string }) =
 	console.error(`[mailwoman] native /v1 API listening on http://${address}:${port}`)
 
 /**
- * Boot a node HTTP listener for a Hono app. Returns an async-disposable handle once the listener is ready.
+ * Boot a node http listener for a Hono app. Returns an async-disposable handle once the listener is ready.
  */
 export function serveNode({ onListen = defaultOnListen, ...options }: ServeNodeOptions): Promise<ServerHandle> {
 	return new Promise<ServerHandle>((resolve, reject) => {

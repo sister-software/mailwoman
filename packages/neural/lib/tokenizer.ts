@@ -6,14 +6,14 @@
  *   SentencePiece tokenizer wrapper over `@mailwoman/sentencepiece-wasm` (google/sentencepiece
  *   v0.2.2 with the native-offsets binding — task #26).
  *
- *   History: the previous runtime (`@sctg/sentencepiece-js`, an emscripten build of an OLDER
+ *   History: the previous runtime (`@sctg/sentencepiece-js`, an emscripten build of an older
  *   sentencepiece whose binding never exposed the offset-carrying proto API) forced this file to
- *   RECONSTRUCT char offsets by re-walking the input string alongside the emitted pieces — ~90
+ *   reconstruct char offsets by re-walking the input string alongside the emitted pieces — ~90
  *   lines of cursor arithmetic with two documented hazard classes (byte-fallback desync, fixed by
  *   hand. surrogate-pair accounting, deferred) and one undocumented one (normalizer-changed
  *   surfaces: a piece like `DŽ` for input `Ǆ` desyncs a literal-length cursor). SentencePiece
  *   itself has always known the answer: `Encode(text, &SentencePieceText)` yields per-piece
- *   `begin`/`end` BYTE offsets with the invariant `utf8(text).slice(begin, end) == surface` and
+ *   `begin`/`end` byte offsets with the invariant `utf8(text).slice(begin, end) == surface` and
  *   contiguity between consecutive pieces — including the "zero-width except the last piece owns
  *   the character's span" behavior for byte-fallback runs that the old reconstruction implemented
  *   manually (verified byte-for-byte in the swap's parity battery, 1,066 fixture rows).
@@ -23,8 +23,8 @@
  *   - **Byte → UTF-16 conversion.** The native offsets are UTF-8 byte positions. the decoder wants
  *       JS string (UTF-16 code-unit) ranges. The conversion walks code points once per encode and
  *       is exact for non-BMP input (the old shim's deferred hazard, now covered by tests).
- *   - **Leading-whitespace trim.** A `▁`-prefixed piece's native span INCLUDES the whitespace the
- *       sentinel consumed (surface " Rock" for piece `▁Rock`); the decoder's contract has always
+ *   - **Leading-whitespace trim.** A `▁`-prefixed piece's native span includes the whitespace the
+ *       sentinel consumed (surface " Rock" for piece `▁Rock`); the decoder's interface has always
  *       been starts-at-the-word (`start` points at "R"). Trimming preserves the shipped decode
  *       byte-exactly, and collapses the bare-`▁` piece to the zero-width-after-space range the
  *       word grouper expects.
@@ -43,12 +43,12 @@ import createSentencePiece, {
 import type { PathBuilderLike } from "path-ts"
 
 /**
- * SentencePiece's word-boundary marker (U+2581 LOWER ONE EIGHTH BLOCK).
+ * SentencePiece's word-boundary marker (U+2581 lower one eighth block).
  */
 export const SPACE_SENTINEL = "▁"
 
 /**
- * The WASM module instantiates once per process — every tokenizer instance shares it.
+ * The wasm module instantiates once per process — every tokenizer instance shares it.
  */
 let modulePromise: Promise<SentencePieceModule> | null = null
 
@@ -87,7 +87,7 @@ export interface EncodeResult {
 
 /**
  * Map every UTF-8 byte boundary of `text` to its UTF-16 code-unit offset. Returned as a plain array indexed by byte
- * offset (holes at non-boundary indexes are filled with the containing character's START so a defensive lookup can
+ * offset (holes at non-boundary indexes are filled with the containing character's start so a defensive lookup can
  * never land outside the string) — exact for surrogate-pair (non-BMP) input, the old reconstruction's deferred hazard.
  */
 function buildByteToUTF16Map(text: string): number[] {
@@ -191,7 +191,7 @@ export class MailwomanTokenizer {
 			const end = byteToUTF16[raw.ends[i]!] ?? text.length
 
 			// A ▁ piece's native span includes the consumed whitespace — trim to the word start (the
-			// decoder's contract. see header). Bounded by `end`, so zero-width spans stay put.
+			// decoder's interface. see header). Bounded by `end`, so zero-width spans stay put.
 			while (start < end && WHITESPACE_RE.test(text[start]!)) {
 				start++
 			}

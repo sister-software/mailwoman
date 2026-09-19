@@ -1,6 +1,6 @@
 # Browser Export Conditions Implementation Plan
 
-> **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
+> **For agentic workers:** required sub-skill: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
 **Goal:** Make every `@mailwoman/*` subpath the browser client reaches bundle under the `browser` condition with no Node builtin in its static graph, so `docs/plugins/demo-assets/webpack-policy.ts` needs no stub, shim or fallback for `@mailwoman/*`.
 
@@ -203,7 +203,7 @@ async function bundleForBrowser(specifier: string): Promise<Metafile> {
 	return result.metafile
 }
 
-/** A file the walk reached is always in the metafile; a miss is an esbuild contract change rather than an empty import list. */
+/** A file the walk reached is always in the metafile; a miss is an esbuild interface change rather than an empty import list. */
 function inputOf(metafile: Metafile, file: string): Metafile["inputs"][string] {
 	const input = metafile.inputs[file]
 	if (!input) throw new Error(`metafile has no input for ${file}`)

@@ -5,7 +5,7 @@
  *
  *   The `flood.db` reader — what the authority's map assigns at a coordinate, and on what basis.
  *
- *   THREE ANSWERS, AND KEEPING THEM APART IS THE WHOLE JOB.
+ *   three answers, and keeping them apart is the whole JOB.
  *
  *   1. `designated` — the authority's map assigns a zone here, and the zone code is the answer.
  *   2. `designated_absence` — the authority determined here and assigns no zone. Inside England that is
@@ -16,26 +16,26 @@
  *      zone scheme. the England border strip is unknown too, because the footprint's interior test drops
  *      any cell not wholly inside the outline.
  *
- *   READINGS 2 AND 3 ARE THE SAME EMPTY ANSWER FROM THE GEOMETRY AND OPPOSITE ANSWERS FROM THE READER.
+ *   readings 2 and 3 are the same empty answer from the geometry and opposite answers from the reader.
  *   A layer that could not tell them apart would report every unmapped location as low-hazard, which is
  *   the failure this whole program exists to prevent.
  *
- *   NEITHER READING IS A STATEMENT ABOUT A PROPERTY. The layer reports which zone the authority's map
+ *   neither reading is A statement about A property. The layer reports which zone the authority's map
  *   assigns at a location, which is a fact about the map. The EA states that its data is "not suitable for
  *   showing whether an individual property is at risk of flooding", and this reader never claims otherwise
  *   — `limits` carries the authority's own exclusions on every answer.
  *
- *   THE PROBE IS STRUCTURE FIRST, GEOMETRY LAST. `cellToParent` up the compacted whole-cell chain answers
+ *   the probe is structure first, geometry last. `cellToParent` up the compacted whole-cell chain answers
  *   an interior point with primary-key probes alone. only a cell the boundary crosses reaches the ray
  *   cast, and then only against the polygons `flood_zone_cell_area` already named for that cell. That is
- *   SCOPE invariant 6's division: containment precomputed at build time, spatial math kept to the
+ *   scope invariant 6's division: containment precomputed at build time, spatial math kept to the
  *   irreducibly geometric edge.
  *
- *   THE READER IS SYNCHRONOUS AND USES RAW PREPARED STATEMENTS. It answers one point per geocode with up
+ *   the reader is synchronous and uses RAW prepared statements. It answers one point per geocode with up
  *   to `indexResolution - coverageResolution` primary-key probes plus a bounded geometry read, and the
  *   ray cast it wraps is synchronous anyway. Kysely's builder is async, so an async reader would put a
  *   promise between the coordinate and the point test for no query the builder expresses better. The DDL
- *   that created these tables IS Kysely — see `schema.ts`.
+ *   that created these tables is Kysely — see `schema.ts`.
  */
 
 import {
@@ -178,7 +178,7 @@ export interface FloodZoneLookupOptions {
 /**
  * Read a sealed `flood.db`.
  *
- * Everything that would make the reader answer a well-formed wrong thing is refused at CONSTRUCTION rather than at
+ * Everything that would make the reader answer a well-formed wrong thing is refused at construction rather than at
  * query time: a manifest naming a different layer, a coverage table with no rows, an extent row that is missing or
  * duplicated. Each of those would otherwise present as a reader that simply always answers `unknown`, which on a
  * receipt is indistinguishable from a region the authority genuinely has not mapped.
@@ -212,7 +212,7 @@ export class FloodZoneLookup implements Disposable {
 			"SELECT area_id FROM flood_zone_cell_area WHERE h3_cell = ? ORDER BY area_id"
 		)
 
-		// TWO STATEMENTS, AND THE SPLIT IS THE POINT. The bbox is the prefilter, so it is read without the blob: the
+		// two statements, and the split is the point. The bbox is the prefilter, so it is read without the blob: the
 		// largest features in this product carry hundreds of thousands of vertices, and pulling one off disk only to
 		// reject it on a rectangle would make the prefilter cost more than the test it replaces.
 		this.#selectAreaBounds = this.#database.prepare(
@@ -234,7 +234,7 @@ export class FloodZoneLookup implements Disposable {
 		const coverage = this.#readCoverage(indexCell)
 		const zone = this.#resolveZone(indexCell, latitude, longitude)
 
-		// COVERAGE QUALIFIES THE ABSENCE AND NOTHING ELSE — the same asymmetry `supportsExclusion` carries. A polygon
+		// coverage qualifies the absence and nothing else — the same asymmetry `supportsExclusion` carries. A polygon
 		// containing the point is the authority's determination at that location, and needs no coverage row to be true.
 		// an empty answer needs one, because without it the emptiness is a statement about our map rather than theirs.
 		if (zone.zoneCode) {

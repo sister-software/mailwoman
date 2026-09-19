@@ -58,7 +58,7 @@ Two hand-maintained tables in source re-derive what the gazetteer build already 
   used for coordinate plausibility. WOF carries country geometries; this is WOF data re-derived by
   eyeball.
 - **Artifact home already exists:** `layer_manifest` / `layer_coverage`
-  (`core/layers/manifest.ts:69,135`) — the layer contract's coverage implementation, plus the candidate
+  (`core/layers/manifest.ts:69,135`) — the layer interface's coverage implementation, plus the candidate
   gazetteer's own manifest. Bake at gazetteer build/eval time: per-country `hard_resolve_rate` (the
   ≥95% bar becomes a manifest query, honoring meaning-of-zero: absence = unmeasured rather than
   ineligible) and per-country bbox rows.
@@ -109,7 +109,7 @@ Two hand-maintained tables in source re-derive what the gazetteer build already 
   property of the **calibration set** rather than the geometry" — yet the CALLER passes it
   (`mailwoman/geocode-core.ts:640-650` resolves 1.70/per-region tables from `deps` and forwards it
   per call). The artifact whose property it is (the TIGER interpolation DB) says nothing.
-- **Artifact:** calibration rows in the interpolation/situs DB manifest (the layer contract already
+- **Artifact:** calibration rows in the interpolation/situs DB manifest (the layer interface already
   gives every layer DB a manifest); readers consume from the header, callers stop carrying numbers.
   Same move the pair-index made with δ. Effort S; the per-region table shape already exists in
   code (`interpCalibrationForRegion`).

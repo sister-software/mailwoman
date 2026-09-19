@@ -1,9 +1,9 @@
-# === v4.2.0-base-anchor-v2 — DRAFT rather than LAUNCH-READY. The base rebuild that closes the GB anchor hole. ===
+# === v4.2.0-base-anchor-v2 — draft rather than launch-ready. The base rebuild that closes the GB anchor hole. ===
 #
-# NAMING: the next BASE in the v4 line (v4.0.0/v4.0.1 were the from-scratch base runs. v4.1.x were
+# naming: the next base in the v4 line (v4.0.0/v4.0.1 were the from-scratch base runs. v4.1.x were
 # GB-venue fine-tunes off v4.0.1). Nothing here is the npm major — that is a separate number.
 #
-# WHY THIS RUN EXISTS. `docs/records/evals/2026-08-05-en-gb-anchor-off.md`. The shared encoder's
+# why this RUN exists. `docs/records/evals/2026-08-05-en-gb-anchor-off.md`. The shared encoder's
 # anchor input reserves one slot per country (`neural/anchor-inference.ts`'s
 # `LOCALE_ORDER = [US, FR, DE, CA, GB, JP, ES, IT, NL]`). Every recipe in this directory — all of
 # them, one distinct value — pointed `anchor_lookup_path` at `/data/anchor/pilot-anchor-lookup.json`:
@@ -12,11 +12,11 @@
 # seen and cost 24 exact postcodes on the 120-row gb-golden board; #1467 shipped the interim
 # mitigation (en-gb ships no bin, the channel resolves off). This run is the fix.
 #
-# THE ONE NAMED DELTA vs v4.0.1-base-60k: `anchor_lookup_path`. Everything else below is
+# the one named delta vs v4.0.1-base-60k: `anchor_lookup_path`. Everything else below is
 # v4.0.1-base-60k verbatim unless a comment says otherwise, and the two comments that follow are
 # both no-op restatements of what v4.0.1 already carried, kept because a reader will look for them.
 #
-# MEASURED, on the artifact this config points at (`mailwoman gazetteer build anchor-lookup
+# measured, on the artifact this config points at (`mailwoman gazetteer build anchor-lookup
 # --include DE,FR,US,GB,NL,ES,IT`), 2026-08-05:
 #
 #   keys 2,286,339 (was 67,708) · letter-containing 2,214,803 (was 0)
@@ -33,20 +33,20 @@
 #   loader cost: 1.32 GB resident / 1.37 GB peak at `load_anchor_lookup`, vs 0.05 GB for the pilot
 #   lookup. Budget it — it is paid once at loader init, on every worker.
 #
-# LAUNCH CHECKLIST (all four, in order — the first two are the ones that make this run mean anything):
+# launch checklist (all four, in order — the first two are the ones that make this run mean anything):
 #   1. Upload the lookup to the volume:
 #        $MAILWOMAN_DATA_ROOT/anchor/staging-2026-08-05/pilot-anchor-lookup-v2-2026-08-05.json
 #        -> /data/anchor/pilot-anchor-lookup-v2-2026-08-05.json
-#   2. RUN THE SMOKE COUNT against the volume copy, for every country whose slot this run is meant
+#   2. RUN the smoke count against the volume copy, for every country whose slot this run is meant
 #      to light. A zero is this defect repeating, and it is silent otherwise:
 #        python3 corpus-python/scripts/count_painted_anchor_rows.py \
 #          --lookup /data/anchor/pilot-anchor-lookup-v2-2026-08-05.json \
-#          --jsonl <each source's JSONL in the feed>
-#   3. Confirm the startup census DRAWS the GB/NL/ES/IT sources (the v383 gap: a truncated census
+#          --jsonl <each source's jsonl in the feed>
+#   3. Confirm the startup census draws the GB/NL/ES/IT sources (the v383 gap: a truncated census
 #      log hid a source drawing zero rows). A lookup key with no row to paint is still no gradient.
 #   4. cd corpus-python && modal run -d -m launch.train_remote --config v4.2.0-base-anchor-v2.yaml --resume none
 #
-# SHIP OBLIGATION — the inference half, which belongs elsewhere. The train painter keys a
+# ship obligation — the inference half, which belongs elsewhere. The train painter keys a
 # postcode as `raw[begin:end].replace(" ", "").upper()` over a shape-detected span (`SW1A 2AA` ->
 # `SW1A2AA`). Inference's default scan keys `[A-Za-z0-9]+` runs and so can never produce that key.
 # The model this run produces must therefore ship a card declaring:
@@ -57,17 +57,17 @@
 # it leaves this run's GB/NL postcodes unanchored at serve time — the mirror image of the bug that
 # started this. See `neural/anchor-inference.ts`'s `AnchorSpanMode`.
 #
-# PRE-REGISTERED CHECKS: the v4.0.0 sheet verbatim (G1-G8 + Fisher sanity), plus:
+# PRE-registered checks: the v4.0.0 sheet verbatim (G1-G8 + Fisher sanity), plus:
 #   - gb-golden: exact `postcode` >= 318/318 across three registers with the anchor channel fed
 #     (the #1467 mitigation reached 318/318 by switching the channel off. this run has to hold it
 #     with the channel on, which is the whole point).
 #   - No US/FR regression: the 100-row US + 46-row FR parity boards, three registers each.
-#   - Anchor-ablation delta: score the resulting model anchor-ON vs anchor-OFF on gb-golden. A
-#     delta of zero means slot 4 STILL took no gradient and the lookup swap did not land.
-#   STOP RULE: a gb-golden miss with the channel fed => diagnose before a second launch.
+#   - Anchor-ablation delta: score the resulting model anchor-on vs anchor-off on gb-golden. A
+#     delta of zero means slot 4 still took no gradient and the lookup swap did not land.
+#   stop rule: a gb-golden miss with the channel fed => diagnose before a second launch.
 
 data:
-  # v0.17.0-batch = v0.15.0-venue + TWO overlay parquet files (manifest chain assembled 2026-08-05):
+  # v0.17.0-batch = v0.15.0-venue + two overlay parquet files (manifest chain assembled 2026-08-05):
   #   part-sub-venue.parquet  120,000 rows  source=synth-sub-venue  (#1486 — designator x per-region identifier)
   #   part-gb.parquet         800,000 rows  source=synth-gb         (v0.14.0-gb's recipe output, HM Land Registry PPD OGL v3.0)
   corpus_dir: /data/corpus/versioned/v0.17.0-batch/corpus-v0.17.0-batch
@@ -110,7 +110,7 @@ data:
     usgov-hrsa-fqhc: 2.0
     usgov-imls-pls: 2.0
     usgov-nad: 1.0
-    state-ia-contractors: 2.0
+    state-ia-builders: 2.0
     state-tx-notaries: 1.5
     state-ny-notaries: 2.0
     deepseek-kryptonite: 3.0
@@ -133,9 +133,9 @@ data:
     synth-fragment: 6.0
     synth-fr-fragment: 12.0
     synth-no-fragment: 12.0
-    # ---- DECISIONS RESOLVED 2026-08-05 (both sources ride the v0.17.0-batch overlay above) ----
+    # ---- decisions resolved 2026-08-05 (both sources ride the v0.17.0-batch overlay above) ----
     # synth-gb at 6.0: operator ruled "do it all to make the most of the cost"; the measured risk
-    # (32.8% B-dependent_locality mass skewing the tag, seen in the v4.1.x arc UNDER the 0.3 class
+    # (32.8% B-dependent_locality mass skewing the tag, seen in the v4.1.x arc under the 0.3 class
     # weight this run corrects to 1.0) is exactly what the 2k probe reads before the 60k spend —
     # per-tag dep-loc emission + the US/FR stability boards are the kill switch. Weight 6.0 matches
     # the other single-country synth sources rather than the 12.0 saturation tier.
@@ -152,7 +152,7 @@ data:
   augment_glue_prob: 0.25
   augment_ordinal_prob: 0.3
   augment_punct_drop_prob: 0.3
-  # THE ONE NAMED DELTA. 2,286,339 keys / 2,214,803 letter-containing, vs the pilot's 67,708 / 0.
+  # the one named delta. 2,286,339 keys / 2,214,803 letter-containing, vs the pilot's 67,708 / 0.
   # Rebuild with: mailwoman gazetteer build anchor-lookup --include DE,FR,US,GB,NL,ES,IT --output <path>
   anchor_lookup_path: /data/anchor/pilot-anchor-lookup-v2-2026-08-05.json
   gazetteer_lexicon_path: /data/gazetteer/anchor-lexicon-v1.json
@@ -160,7 +160,7 @@ data:
   gazetteer_choreography: true
   affix_relabel_lexicon_path: /data/gazetteer/affix-relabel-lexicon-v1.json
   # Already `shaped` in v4.0.1 — restated because it is required here. The shaped painter is what
-  # makes the widened lookup reachable: it detects postcode SHAPES over the raw text (so a GB unit
+  # makes the widened lookup reachable: it detects postcode shapes over the raw text (so a GB unit
   # arrives as one span with its space) where the gold path only ever painted labeled postcode spans.
   anchor_paint_mode: shaped
   anchor_value_mode: posterior_latlon

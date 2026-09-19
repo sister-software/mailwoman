@@ -3,7 +3,7 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   `useGeocoderRuntime` — the app's runtime assembly. It builds the REAL {@link GeocoderRuntime} that
+ *   `useGeocoderRuntime` — the app's runtime assembly. It builds the real {@link GeocoderRuntime} that
  *   `@mailwoman/react/map`'s geocoder consumes, wiring the browser runtime's async fetchers and factories into the
  *   fully client-side geocoder.
  *
@@ -106,7 +106,7 @@ export interface GeocoderRuntimeHandle {
 	 */
 	releases: ReleaseInfo[]
 	/**
-	 * Whether the CPU/WASM backend is forced (threaded into the host compare classifier load).
+	 * Whether the CPU/wasm backend is forced (threaded into the host compare classifier load).
 	 */
 	forceWASM: boolean
 	/**
@@ -186,10 +186,10 @@ export function useGeocoderRuntime({ config, initialCenter }: GeocoderRuntimeOpt
 	)
 
 	/*
-	 * THE PARSE CALLBACKS DEPEND ON THE BUNDLE THEY PARSE WITH. There is no mirror.
+	 * the parse callbacks depend on the bundle they parse with. There is no mirror.
 	 *
 	 * They used to read `rt.assets` out of a ref so their identity could stay fixed across a load, and the ref was
-	 * written in an EFFECT — which lost a race it could not win. React runs effects child-first, and `runtime.ready`
+	 * written in an effect — which lost a race it could not win. React runs effects child-first, and `runtime.ready`
 	 * is derived from the same `rt.assets`, so a descendant effect reacting to `ready` flipping true ran before this
 	 * parent's effect had written the mirror: `?q=` answered "Classifier not ready" on a page whose classifier had
 	 * loaded fine. Writing the mirror during render instead closed the window and broke a different rule — a ref
@@ -206,7 +206,7 @@ export function useGeocoderRuntime({ config, initialCenter }: GeocoderRuntimeOpt
 	const extrasRef = useRef<WeakMap<ResolvedPlaceView, CandidateExtras>>(new WeakMap())
 	// Lazy street-tier situs/interp lookups, cached by parsed state/country slug (in-flight promise dedup).
 	const streetLookupsRef = useRef<Map<string, Promise<StreetLookups>>>(new Map())
-	// Lazy crisp-polygon DB + per-id cache. The cache is STATE (not a ref) so a landed polygon rebuilds
+	// Lazy crisp-polygon DB + per-id cache. The cache is state (not a ref) so a landed polygon rebuilds
 	// `resolveMapPlace` → the runtime → `useGeocode`'s mapPlace memo, drawing the geometry. Cache value:
 	// `undefined` = unfetched, `null` = fetched-absent (fall through to bbox), geometry = present.
 	const polygonDBRef = useRef<Promise<PolygonDB> | null>(null)
@@ -290,7 +290,7 @@ export function useGeocoderRuntime({ config, initialCenter }: GeocoderRuntimeOpt
 
 			const postcodeNode = nodes.find((n) => n.tag === "postcode")
 
-			// ── Street tier (#377): exact situs point / TIGER interpolation, ahead of the admin cascade. ──
+			// ── Street tier (#377): exact situs point / tiger interpolation, ahead of the admin cascade. ──
 			let streetResolution: StreetResolution | null = null
 
 			const streetParts = nodes

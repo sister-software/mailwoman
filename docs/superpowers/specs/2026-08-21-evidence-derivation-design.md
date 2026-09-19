@@ -66,7 +66,7 @@ bdc.db      build writes basis = source_present
 
 street-centroids-fr.db   ban:fr, release 2026-05-18
             2,195,655 streets across 32,539 communes
-            NO layer_coverage table at all — predates the contract
+            NO layer_coverage table at all — predates the interface
 ```
 
 So the blocking condition is not a missing layer. It is an unwired one.
@@ -150,7 +150,7 @@ would drag core's ~11 MB of shipped data behind every leaf consumer — the same
 them.** Evidence cannot depend on core, and the alternative — each declaring its own copy of the same
 three strings — is the arrangement AGENTS.md records as a defect generator: _when two copies must
 agree, share the FUNCTION; sharing the constants proves nothing_. The #861 literals matched for the
-contract's whole life while the formula diverged. The `layer_coverage` schema and its IO stay in
+interface's whole life while the formula diverged. The `layer_coverage` schema and its IO stay in
 core; only the vocabulary and the check move.
 
 **Registration:** a new workspace joins four registers, and only the first fails loudly — the root

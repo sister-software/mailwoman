@@ -41,7 +41,7 @@ const CHECK_OUT_DIR = tempRootPath("mailwoman-docs-build-check")
 
 /**
  * Lines Docusaurus prints for genuine problems. We scan combined stdout+stderr for these markers rather than relying
- * solely on exit code, because broken-link warnings (the most common docs regression) are emitted as `[WARNING]`
+ * solely on exit code, because broken-link warnings (the most common docs regression) are emitted as `[warning]`
  * without failing the build by default.
  */
 const PROBLEM_MARKERS = [/\[ERROR\]/, /\[WARNING\]/, /Broken link/i, /Error: /]

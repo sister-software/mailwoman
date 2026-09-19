@@ -8,7 +8,7 @@
  *   Built with `createElement`, not JSX, for the reason `shared.ts` gives in its own header — the kit's index is
  *   imported under the dev `node →` condition, which strips `.ts` and cannot read `.tsx`.
  *
- *   ADOPT IT WHEN A COMMAND IS OPEN ANYWAY, and never as a sweep. The 22 `eval` commands moved together because the
+ *   adopt IT when A command is open anyway, and never as a sweep. The 22 `eval` commands moved together because the
  *   flow was identical across all of them and the move was reviewable as one diff. the 131 other `useCommandTask`
  *   commands are not a backlog. A command that renders anything but the ✓/✗ tail and one JSON payload keeps the hook,
  *   which is why four of the original 26 still do.
@@ -33,7 +33,7 @@ export interface HarnessCommandOptions<Spec extends CommandSpec, T> {
 	/**
 	 * The value to print as JSON, or `undefined` to print nothing.
 	 *
-	 * The OPTIONS are passed so the condition is named at the call site rather than assumed here: a command that prints
+	 * The options are passed so the condition is named at the call site rather than assumed here: a command that prints
 	 * under `--json` writes `(result, options) => (options.json ? result.report : undefined)`, which keeps the flag that
 	 * decides it in the file that declares it. A command whose task narrates on stdout omits this entirely — most of the
 	 * commands under `commands/eval/` do, and rendering anything would duplicate their output.

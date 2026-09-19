@@ -301,7 +301,7 @@ one preserved beside it as `resolver_score_raw`.
 
 - **Cost.** High, and it is the only option with a compatibility surface: `resolver_score` is a published metadata
   field, `browser-cascade.ts` tiebreaks on it, and `reconcile.ts` clamps it. Changing its meaning is a breaking
-  change to a shipped contract, so it wants a major.
+  change to a shipped interface, so it wants a major.
 - **What it buys.** One threshold that means the same thing everywhere, and it repairs `normalizeResolverScore`'s
   saturation as a side effect (a calibrated `[0, 1]` score is exactly what that combiner was written expecting).
 - **What it does not buy.** Calibration does not create separation. On the measured data the _ordering_ is barely

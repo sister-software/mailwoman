@@ -28,7 +28,7 @@ After the LLM generates a row, the validator confirms that every annotated compo
 
 the validator checks: does `350` substring-match the surface? Does `5th Avenue`? Does `New York`? Does `NY`? Does `10118`? If any one fails, the row is rejected before it reaches the training corpus.
 
-The implementation is unglamorous (`generate_deepseek_corpus.py::align_or_reject` if you want to read it) but the contract it enforces is what makes the corpus trustworthy.
+The implementation is unglamorous (`generate_deepseek_corpus.py::align_or_reject` if you want to read it) but the interface it enforces is what makes the corpus trustworthy.
 
 ## What goes wrong without it
 

@@ -181,7 +181,7 @@ def test_the_fixture_holds_out_a_district_and_keeps_the_attribution(built: dict[
     """A fixture with no board row, or no agency, would pin an empty path through the build."""
     assert built["report"]["board_districts"] >= 1, "no held-out 鄉鎮市區 — the bucket floor missed the fixture"
     assert built["report"]["attribution"], "the report carries no source agency, which the licence requires"
-    assert built["centroids"], "no district centroid landed, so no board row can be scored"
+    assert built["centroids"], "no district centroid landed. Therefore, no board row can be scored"
 
 
 def write_reference() -> None:

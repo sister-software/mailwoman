@@ -195,7 +195,7 @@ export async function evalCoarsePlacer(options: EvalCoarsePlacerOptions = {}): P
 
 				if (isOffMapHandled(p)) {
 					missOk++
-				} // a latin/cjk in-map input mis-routed to OTHER = a false abstention
+				} // a latin/cjk in-map input mis-routed to other = a false abstention
 			}
 		}
 

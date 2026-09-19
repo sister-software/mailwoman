@@ -3,7 +3,7 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   TIGER operator tool exports.
+ *   tiger operator tool exports.
  */
 
 export * from "#tools/race/dots/index"

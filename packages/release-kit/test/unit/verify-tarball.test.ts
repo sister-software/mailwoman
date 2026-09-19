@@ -109,8 +109,8 @@ describe("collectMissingImportTargets", () => {
 
 describe("collectMissingBinTargets", () => {
 	it("flags a bin whose file the tarball lacks — the map-tui class", () => {
-		// `@mailwoman/map-tui` declares `bin: { "map-tui": "./out/cli.js" }` and packs `out/` as a GLOB, so an
-		// unbuilt tree packs clean and npm PATH-links a file that isn't there. Nothing else in the manifest
+		// `@mailwoman/map-tui` declares `bin: { "map-tui": "./out/cli.js" }` and packs `out/` as a glob, so an
+		// unbuilt tree packs clean and npm path-links a file that isn't there. Nothing else in the manifest
 		// mentions `out/cli.js`, which is why neither the files nor the exports guard sees it.
 		const bin = { "map-tui": "./out/cli.js" }
 

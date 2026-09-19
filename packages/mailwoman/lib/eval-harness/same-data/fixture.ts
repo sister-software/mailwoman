@@ -3,10 +3,10 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   The frozen candidate fixture every arm of the same-data benchmark reads (#2261): the row contract, the
+ *   The frozen candidate fixture every arm of the same-data benchmark reads (#2261): the row interface, the
  *   replay key, the digests, and the validator that refuses a fixture two arms could read differently.
  *
- *   Evidence is keyed per LOOKUP rather than per row: one input costs the walk up to `maxLookups` backend
+ *   Evidence is keyed per lookup rather than per row: one input costs the walk up to `maxLookups` backend
  *   calls (default 10), each with its own text, placetype and scope. So a row holds a map from canonical
  *   query to answer, plus the pool — the deduplicated union of every answer, which is the ordered candidate
  *   set the row offered. Which of the pool an arm consults is its own query policy and part of what is being
@@ -23,13 +23,13 @@ import { compareByCodePoint } from "@mailwoman/core/strings/compare"
 import { canonicalJSON, definitionContentHash } from "#eval-harness/preregistration"
 
 /**
- * The row contract's version. A change to the shape of a fixture row bumps it, and a scorer refuses a fixture whose
+ * The row interface's version. A change to the shape of a fixture row bumps it, and a scorer refuses a fixture whose
  * version it does not know — a silently reinterpreted field is the failure this number exists to prevent.
  */
 export const SAME_DATA_SCHEMA_VERSION = 1
 
 /**
- * Candidate fields the fixture never carries, because each is a verdict the backend already computed ABOUT THE QUERY
+ * Candidate fields the fixture never carries, because each is a verdict the backend already computed about the query
  * rather than a fact about the place. Carrying one hands every arm a partly solved row.
  *
  * This tuple is the one home: {@link SameDataCandidate} is derived from it, and the frozen definition's own list is
@@ -354,10 +354,10 @@ export function observeEvidence(arm: string, row: SameDataFixtureRow): ArmEviden
 /**
  * A backend that answers only from the fixture.
  *
- * A key the fixture does not hold RAISES **and** is appended to `misses`. Both are needed, and the second is the one
+ * A key the fixture does not hold raises **and** is appended to `misses`. Both are needed, and the second is the one
  * that matters: `resolveTree` catches a backend throw on purpose — "a backend failure should not abort the whole tree
  * walk" — records `backend_error` on the trace and emits `picked: null`. So a raise alone reaches the arm as an
- * ABSTENTION, and the arm would report the resolver refusing when it was the fixture that refused. The caller reads
+ * abstention, and the arm would report the resolver refusing when it was the fixture that refused. The caller reads
  * `misses` after the walk and turns a non-empty list into a harness error, which the scorer excludes from every
  * metric.
  */

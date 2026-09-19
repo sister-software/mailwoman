@@ -1,30 +1,30 @@
-# === v1.9.2-multilocale-au (#208/#148 — ADD AUSTRALIA to the proven 3-order recipe) =============
+# === v1.9.2-multilocale-au (#208/#148 — ADD australia to the proven 3-order recipe) =============
 # v1.9.1 (shipped v4.13.0) fixed v1.9.0's order-overfit by re-rendering the overture EU recipe output in 3
 # orders (rotated i%3) so locality+postcode appear in every position. It worked (EU +9..+31pp, US/FR
 # held) — but AU was never in it: country_weights lists US + 21 EU locales, no AU, and data_loader
-# EXCLUDES any row whose country isn't listed. So v4.13.0 reads AU's native postcode-first format
+# excludes any row whose country isn't listed. So v4.13.0 reads AU's native postcode-first format
 # ("3053 Carlton, Barry Street 50") with its US/EU number-first prior and mangles it. au-order-probe.ts
 # proved the model parses the same addresses perfectly when reordered (65% -> 87% @25km). It's the
 # German/EU word-order gap again, for AU.
 #
-# THE ONE NEW VARIABLE: add AU. Everything else is v1.9.1 VERBATIM. Two lines change:
+# the one new variable: add AU. Everything else is v1.9.1 verbatim. Two lines change:
 #   - country_weights: + AU: 1.0  (so the gnaf AU rows aren't excluded — the data_loader.py check).
-#   - source_weights:  + gnaf: 6.0  (the gnaf G-NAF AU 3-order source, #208). 6.0 matches the TARGETED-
+#   - source_weights:  + gnaf: 6.0  (the gnaf G-NAF AU 3-order source, #208). 6.0 matches the targeted-
 #     FIX precedent — synth-german (6.0) and synth-fr-admin-split (6.0) are single-concept format fixes,
-#     exactly gnaf's role. overture's 3.0 was for BROAD 16-locale exposure, a different job. The
+#     exactly gnaf's role. overture's 3.0 was for broad 16-locale exposure, a different job. The
 #     step-2000 check adjudicates dilution: lower if US/EU regress, raise if AU flat.
 # The gnaf recipe output is the same 3-order rotation (canonical/pc-first/city-first, i%3) overture used. built
 # by `mailwoman gnaf assemble` (G-NAF PSV join, 150k held-out from the AU eval) + the `gnaf` corpus
 # adapter. Pure overlay ADD onto corpus-v0.9.1-multilocale (scripts/assemble-overlay-manifest.py).
 #
-# CRITICAL (data_loader.py:244): country_weights.get(country) is None -> the row is EXCLUDED.
+# critical (data_loader.py:244): country_weights.get(country) is None -> the row is excluded.
 #
-# GOAL / CHECK: grade the ASSEMBLED coordinate, never label-F1. Diagnostic-first: at step-2000/4000 run
+# goal / check: grade the assembled coordinate, never label-F1. Diagnostic-first: at step-2000/4000 run
 # scripts/eval/nonus-coord-panel.ts + the AU coord panel — AU @25km must lift toward the 87% ceiling,
 # and the EU in-source locales (PT/PL/AT/CZ/IT) + US per-locale-F1 must hold (not worse >1pp) + FR
-# centroid flat. If AU is flat or US/EU regress at 2-4k, KILL (overfit/dilution — the #148 failure mode).
+# centroid flat. If AU is flat or US/EU regress at 2-4k, kill (overfit/dilution — the #148 failure mode).
 # Not promoted without operator GO (model swap).
-# CORPUS: corpus-v0.9.1-multilocale (verbatim) + gnaf-AU 3-order overlay -> R2 -> sync. (#208)
+# corpus: corpus-v0.9.1-multilocale (verbatim) + gnaf-AU 3-order overlay -> R2 -> sync. (#208)
 # Launch: cd corpus-python && modal run -d -m launch.train_remote --config v1.9.2-multilocale-au.yaml --resume none
 data:
   corpus_dir: /data/corpus/versioned/v0.9.2-multilocale-au/corpus-v0.9.2-multilocale-au
@@ -63,7 +63,7 @@ data:
     usgov-hrsa-fqhc: 2.0
     usgov-imls-pls: 2.0
     usgov-nad: 1.0
-    state-ia-contractors: 2.0
+    state-ia-builders: 2.0
     state-tx-notaries: 1.5
     state-ny-notaries: 2.0
     deepseek-kryptonite: 3.0
@@ -80,7 +80,7 @@ data:
     # the step-2000 diagnostic check adjudicates dilution (lower if US/FR regress, raise if mid-tier flat).
     overture: 3.0
     # #208 change: the gnaf G-NAF AU 3-order source (150k rows, 1 locale). Weight 6.0 matches the
-    # TARGETED-FIX precedent (synth-german 6.0, synth-fr-admin-split 6.0 — single-concept format fixes),
+    # targeted-FIX precedent (synth-german 6.0, synth-fr-admin-split 6.0 — single-concept format fixes),
     # not overture's 3.0 (broad 16-locale exposure). The step-2000 check adjudicates: lower if US/EU
     # regress, raise if AU flat.
     gnaf: 6.0

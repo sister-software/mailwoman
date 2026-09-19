@@ -34,7 +34,7 @@ class TrainState:
     started: float
 
     #: `vocab_size` is 2 on the char path, which reads no SentencePiece table — the same dummy
-    #: width `build_model` uses, carried here so the checkpoint's extras can state it.
+    #: width `build_model` uses, carried here. Therefore, the checkpoint's extras can state it.
     vocab_size: int = 2
 
     #: The step this PROCESS began at: 0 on a fresh run, the checkpoint's step on a resume.

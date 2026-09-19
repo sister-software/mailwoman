@@ -6,9 +6,9 @@
  *   The live half of the semantic-utility probe (#1928): load the frozen pre-registration, run its target
  *   and control rows through the same pipeline construction the POI board uses, and emit a receipt.
  *
- *   THIS MODULE DECIDES NOTHING IT DID NOT READ. Every row, every threshold and the baseline it compares
+ *   this module decides nothing IT did not read. Every row, every threshold and the baseline it compares
  *   against come from `probe-definition.json`, which {@linkcode loadProbeDefinition} refuses to hand over
- *   if its content hash has moved. The runner adds an ARM LABEL and the measurements; #1929 supplies one
+ *   if its content hash has moved. The runner adds an ARM label and the measurements; #1929 supplies one
  *   semantic observation and runs the same command, and #1930 reads the two receipts.
  *
  *   The receipt records the artifact identity as well as the numbers. A pass rate over an unnamed database and an
@@ -17,7 +17,7 @@
  *   backend that answered, and the weights package version — and when one of those cannot be read it says
  *   so in place rather than omitting the field.
  *
- *   AN ARM LABEL IS NOT A MEASUREMENT OF WHAT RAN. `semanticRoute` records whether the injected route was
+ *   an ARM label is not A measurement OF what RAN. `semanticRoute` records whether the injected route was
  *   actually built, and what it was built from — a route dropped on the way in produces exactly the numbers
  *   a route that changed nothing produces, and the two are opposite findings. Every firing is recorded
  *   beside its row as an observation carrying the assertion, its modality and every provenance record
@@ -73,7 +73,7 @@ export interface ProbeRowObservation extends SemanticObservation {
 }
 
 /**
- * What the run did about the injected semantic route — read from the route that was BUILT, never from the arm label.
+ * What the run did about the injected semantic route — read from the route that was built, never from the arm label.
  */
 export interface ProbeSemanticRouteRecord extends Partial<SemanticRouteIdentity> {
 	/**
@@ -121,7 +121,7 @@ export interface SemanticProbeOptions extends POIBoardOptions {
 	 */
 	boardFixturesPath?: string
 	/**
-	 * Commit sha recorded in the receipt. Defaults to the checkout's own short HEAD.
+	 * Commit sha recorded in the receipt. Defaults to the checkout's own short head.
 	 */
 	gitCommit?: string
 	/**
@@ -134,7 +134,7 @@ export interface SemanticProbeOptions extends POIBoardOptions {
 /**
  * Run one arm of the probe.
  *
- * The control rows are read from the COMMITTED board file and matched against the pre-registration's frozen copies, so
+ * The control rows are read from the committed board file and matched against the pre-registration's frozen copies, so
  * a control that has been edited on the board stops the run instead of quietly grading a different row.
  */
 export async function runSemanticUtilityProbe(options: SemanticProbeOptions = {}): Promise<ProbeReceipt> {

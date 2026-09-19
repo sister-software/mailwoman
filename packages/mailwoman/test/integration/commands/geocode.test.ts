@@ -46,7 +46,7 @@ const TX_INTERPOLATION_DB = dataRootPath("interpolation", "interpolation-us-tx.d
  *
  * The old 10 s was set against an imagined fast path. Measured 2026-08-03 on an idle 16-core box, one `mailwoman
  * geocode` takes 5.62 s end to end — 2.73 s of it node boot plus this CLI's import graph, before any model is touched —
- * so the margin was 1.8x. Eight concurrent spawns reach 8.75 s, 87% of the old budget, and vitest runs test FILES in
+ * so the margin was 1.8x. Eight concurrent spawns reach 8.75 s, 87% of the old budget, and vitest runs test files in
  * parallel. That is why these "flaked": not randomness, a deterministic threshold sitting just under a floor nobody had
  * measured. A generous budget costs nothing on a passing test.
  */
@@ -173,7 +173,7 @@ describe("geocode argument validation", () => {
 					encoding: "utf8",
 					// Unset the env var and point the data root at an empty dir: since the proximity-bias
 					// pass, geocode auto-attaches the wofExtractPaths default set when the env is absent —
-					// on a standard data root that now SUCCEEDS (the new contract). The error contract
+					// on a standard data root that now succeeds (the new interface). The error interface
 					// only survives when no default database exists either.
 					env: childEnv({ MAILWOMAN_WOF_DB: undefined, MAILWOMAN_DATA_ROOT: emptyDataRoot }),
 					timeout: CLI_SPAWN_TIMEOUT_MS,

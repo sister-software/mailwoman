@@ -10,7 +10,7 @@ import { resolvePath } from "path-ts"
  *   #757 — fail-fast guard for the npm-provenance `repository` requirement.
  *
  *   Since the repo went public (v4.8.0) every npm publish is provenance-signed, and sigstore
- *   provenance verification REJECTS (HTTP 422) any workspace whose `package.json` lacks a
+ *   provenance verification rejects (http 422) any workspace whose `package.json` lacks a
  *   `repository.url` matching the source repo. This is invisible until release, and has bitten
  *   twice on new/edited workspaces — `spatial` (#660, v4.10.0) and `tiger` (#739, v4.12.0) — each
  *   costing a recovery cycle. (Writing this test immediately caught a third + fourth: the two
@@ -32,7 +32,7 @@ describe("#757 release provenance: every published workspace declares its reposi
 
 		const repo = pkg.repository
 
-		// npm also accepts a shorthand string here, which carries no `directory` and so cannot satisfy the block
+		// npm also accepts a shorthand string here. It carries no `directory`. Therefore, it cannot satisfy the block
 		// below. a missing or empty repository.url is what npm provenance rejects with E422.
 		if (typeof repo !== "object") {
 			throw new TypeError(`${ws}/package.json must declare "repository" as an object, not ${typeof repo}`)

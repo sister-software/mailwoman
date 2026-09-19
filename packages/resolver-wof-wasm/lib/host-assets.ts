@@ -3,8 +3,8 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   What a host must stage to serve the httpvfs readers: sql.js-httpvfs's UMD bundle, its worker and its WASM, loaded
- *   at run time by URL (the UMD via a classic script tag, the worker and WASM handed to `createDbWorker`), so no bundler
+ *   What a host must stage to serve the httpvfs readers: sql.js-httpvfs's UMD bundle, its worker and its wasm, loaded
+ *   at run time by URL (the UMD via a classic script tag, the worker and wasm handed to `createDbWorker`), so no bundler
  *   ever sees them. Node-side, a build step, never the browser. `syncArtifact` is the idempotent copy every staged asset
  *   goes through: a size-identical destination is left alone so a dev server watching it sees no change.
  */
@@ -49,8 +49,8 @@ export async function syncArtifact(
 }
 
 /**
- * Stage sql.js-httpvfs's runtime assets (the UMD bundle + its Worker + WASM) into `destDir`. The demo loads these at
- * RUNTIME by URL — the UMD via a classic <script>, the worker + wasm passed to createDbWorker — so webpack never sees
+ * Stage sql.js-httpvfs's runtime assets (the UMD bundle + its Worker + wasm) into `destDir`. The demo loads these at
+ * runtime by URL — the UMD via a classic <script>, the worker + wasm passed to createDbWorker — so webpack never sees
  * them. That's deliberate: bundling sql.js-httpvfs (a webpack UMD bundle with dynamic Worker/wasm requires) is exactly
  * what produces "Critical dependency" build warnings, so we keep it out of the graph entirely.
  *
@@ -85,9 +85,9 @@ export async function stageSQLJSAssets(destDir: PathBuilderLike): Promise<boolea
 
 		// Idempotent stage — syncArtifact skips a size-identical copy. This runs in loadContent(), which
 		// the Docusaurus dev server (`yarn start`) re-invokes on reload — and `destDir` lives under the
-		// watched `static/` tree. An UNCONDITIONAL copy rewrites the file (fresh mtime) even when the
+		// watched `static/` tree. An unconditional copy rewrites the file (fresh mtime) even when the
 		// bytes are identical, the watcher sees a "change" and reloads, loadContent() re-runs and
-		// re-copies… a reload LOOP that shows up as the /demo page flickering during `start`. Skipping
+		// re-copies… a reload loop that shows up as the /demo page flickering during `start`. Skipping
 		// the no-op copy breaks the cycle. (Prod `build` runs loadContent once, so the loop is a
 		// dev-server-only hazard.)
 		if (await syncArtifact(src, dest, `sql.js-httpvfs ${f}`)) {

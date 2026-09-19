@@ -36,7 +36,7 @@ export function wofRepoName(theme: "admin" | "postalcode" | "venue", country: st
  *
  * Two are in use and both are legitimate. `gazetteer inspect sync` writes `<root>/<owner>/<name>`, which is what the
  * admin ingest's depth-agnostic GeoJSON glob reads. The shipped postcode extracts were built from repositories cloned
- * by hand as `<root>/<name>`. A reader that knows one layout reports a repository that is present as MISSING, and every
+ * by hand as `<root>/<name>`. A reader that knows one layout reports a repository that is present as missing, and every
  * reader here treats missing as "no evidence" and continues — so the wrong layout is silent rather than loud.
  */
 export async function resolveWOFRepo(

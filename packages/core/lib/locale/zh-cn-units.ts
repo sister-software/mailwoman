@@ -6,13 +6,13 @@ import { stringifyJSON } from "#json"
  * @author Teffen Ellis, et al.
  * @file The CN organizational-unit reader (#2034). China's rural and state-farm addresses carry a hierarchy below the
  *   named settlement that the universal tags have no rung for: `孟定农场 → 三分场 → 八队` (Mengding Farm → No. 3 sub-farm →
- *   No. 8 production team), the XPCC ladder `一四三团十二连` (143rd regiment → 12th company), the villager group `民权三组`.
+ *   No. 8 production team), the xpcc ladder `一四三团十二连` (143rd regiment → 12th company), the villager group `民权三组`.
  *   The schema holds the whole ordinal chain as one `locality_unit` span. this module is the deterministic reading of
  *   that span — which rung each generic names — and the labeler the corpus recipe uses to write the span in the first
  *   place. Both halves share the one generic table, so a generic added for labeling is read back the same way.
  *
  *   The vocabulary is geography wearing organizational words. `团` is a regiment and `连` a company, but a 1983
- *   place-name reform treated a `团` as approximately a town and a `连` as approximately a village, and current XPCC farm
+ *   place-name reform treated a `团` as approximately a town and a `连` as approximately a village, and current xpcc farm
  *   pages still describe farms by numbered `连队`. A literal translation reads as mail to an army formation. the reader
  *   names the rung, never translates it.
  */
@@ -37,7 +37,7 @@ export type CNUnitRung = (typeof CN_UNIT_RUNGS)[number]
 /**
  * Generic suffix → rung. Longer generics are listed first so `生产队` is read before `队` and `大队` before `队`. Every entry
  * here is a suffix the census of the coarse-placer CN rows found at least once as the tail of an ordinal unit. a
- * generic that only ever follows a NAME (`林场`, `牧场`, `垦殖场`) belongs to the named head and is deliberately absent.
+ * generic that only ever follows a name (`林场`, `牧场`, `垦殖场`) belongs to the named head and is deliberately absent.
  */
 export const CN_UNIT_GENERICS: ReadonlyArray<readonly [generic: string, rung: CNUnitRung]> = [
 	["生产大队", "brigade"],
@@ -55,7 +55,7 @@ export const CN_UNIT_GENERICS: ReadonlyArray<readonly [generic: string, rung: CN
 
 /**
  * The ordinals an organizational unit is numbered with: Chinese numerals (`三`, `二十九`, `一零三`, `十五`) or Arabic digits.
- * `〇`/`零` occur inside XPCC regiment numbers (`一零三团`).
+ * `〇`/`零` occur inside xpcc regiment numbers (`一零三团`).
  */
 const ORDINAL = "[〇零一二三四五六七八九十百千\\d]+"
 
@@ -136,7 +136,7 @@ export function readCNUnits(span: string): CNUnit[] {
  * Split a CJK run into the named head and the trailing organizational chain, for the corpus labeler.
  *
  * `孟定农场三分场二队` → head `孟定农场`, chain `三分场二队`; `八场八队` → head empty, chain `八场八队`. A generic with no ordinal in front of it
- * is part of a NAME rather than a rung: `红卫大队` is a brigade-era toponym that survives as a village name, so it carries
+ * is part of a name rather than a rung: `红卫大队` is a brigade-era toponym that survives as a village name, so it carries
  * no chain and the whole run stays the head. `null` when the run carries no chain at all.
  */
 export function splitCNUnitChain(run: string): { head: string; chain: string } | null {

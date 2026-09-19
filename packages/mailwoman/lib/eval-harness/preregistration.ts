@@ -7,8 +7,8 @@
  *   hash, the freeze-record loader that refuses a ruler whose hash has moved, and the artifact-identity
  *   readers every probe receipt carries.
  *
- *   ONE LOADER, THREE RULERS. Each pre-registration keeps its own definition type, its own audit and its
- *   own committed JSON, but the refusal ladder is the contract they share: the freeze record must name
+ *   one loader, three rulers. Each pre-registration keeps its own definition type, its own audit and its
+ *   own committed JSON, but the refusal ladder is the interface they share: the freeze record must name
  *   this definition and version, the definition's content hash must equal the frozen hash, and the audit
  *   must be clean. A caller never receives a definition it may only partly trust.
  */
@@ -33,7 +33,7 @@ export function preregistrationPath(directory: string, name: string): string {
 /**
  * Canonical JSON for hashing: keys sorted at every depth, array order preserved, no insignificant whitespace.
  *
- * The hash covers CONTENT rather than bytes so a formatter pass cannot break the freeze and a reordered key cannot slip
+ * The hash covers content rather than bytes so a formatter pass cannot break the freeze and a reordered key cannot slip
  * past it. Array order is meaningful — row order is reported order — so it is never sorted.
  */
 export function canonicalJSON(value: unknown): string {
@@ -57,7 +57,7 @@ export function definitionContentHash(definition: unknown): string {
 
 /**
  * The freeze record every pre-registration commits beside its definition: the definition's identity and the content
- * hash that pins it. The identity field's NAME varies per ruler (`probeID`, `decisionID`), so the loader takes it as a
+ * hash that pins it. The identity field's name varies per ruler (`probeID`, `decisionID`), so the loader takes it as a
  * parameter rather than declaring it here.
  */
 export interface FrozenDefinitionFreezeRecord {

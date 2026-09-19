@@ -8,7 +8,7 @@
  *
  *   A bare hash of the input would be reversible in practice: the address space a provider grants
  *   access to is enumerable, so anyone holding the register can hash every row and read the published
- *   identifiers straight back. The salt is what breaks that, and it has to be RUN-SPECIFIC rather than
+ *   identifiers straight back. The salt is what breaks that, and it has to be RUN-specific rather than
  *   repository-wide — two reports under one salt can be joined row-for-row into a longer record of the
  *   same premises, which is the linkage the identifier exists to prevent.
  */

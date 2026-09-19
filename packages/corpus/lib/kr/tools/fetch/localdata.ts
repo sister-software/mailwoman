@@ -6,7 +6,7 @@
  *   Fetch Korea's local-government permit registry (지방행정인허가데이터): one CSV per permit category,
  *   every business a local authority has licensed, about 195 categories. Each row carries both address
  *   forms of the same premises — `소재지전체주소` (the lot-number form, 지번) and `도로명전체주소` (the
- *   road-name form) — plus both postcodes and a planar coordinate (`좌표정보(x/y)`, EPSG:5174). That
+ *   road-name form) — plus both postcodes and a planar coordinate (`좌표정보(x/y)`, epsg:5174). That
  *   pairing is the cheapest dual-format signal Korean addresses offer, and the coordinate is the
  *   board's coordinate half, which is why this source carries the weight it does rather than being a side
  *   dish.
@@ -17,7 +17,7 @@
  *   the address of the licensed premises. One verdict over the source would discard the permit identity.
  *
  *   The public-data portal labels the category files "이용허락범위 제한 없음" and links them to
- *   `file.localdata.go.kr`, which serves them behind a session: the category page sets the XSRF cookie,
+ *   `file.localdata.go.kr`, which serves them behind a session: the category page sets the xsrf cookie,
  *   `/file/validate/download-count` is the portal's own rate check (429 when it wants a pause), and
  *   `/file/download/<slug>/info` streams the CSV. The files are CP949 as delivered. the adapter
  *   decodes. The restaurant category alone is about 700 MB.
@@ -76,7 +76,7 @@ interface Session {
 const USER_AGENT = "Mozilla/5.0 (X11; Linux x86_64) mailwoman-corpus-fetch"
 
 /**
- * Open a session on the portal: the category page answers the XSRF cookie and the navigation that names every category.
+ * Open a session on the portal: the category page answers the xsrf cookie and the navigation that names every category.
  */
 async function openSession(): Promise<Session> {
 	const res = await fetch(INDEX_URL, {

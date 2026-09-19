@@ -13,8 +13,8 @@
  *   `DebugSessionApp` clamps its ↑/↓ against the same list, so the two can't disagree about how far down it goes.
  *
  *   Nothing here computes an address fact. Every value is read off the {@link GeocodeResult}, the {@link AddressTree},
- *   or the session's own clock. a section with no data is OMITTED rather than rendered empty, and a field with no value
- *   renders {@link ABSENT}.
+ *   or the session's own clock. a section with no data is omitted rather than rendered empty, and a field with no value
+ *   renders {@link absent}.
  */
 
 import { walkNodes, type AddressNode, type AddressTree } from "@mailwoman/core/decoder"
@@ -23,7 +23,7 @@ import { ABSENT } from "#debug-view/trace-rows"
 import type { GeocodeResult } from "#geocode/result"
 import type { GeocodeTrace } from "#geocode/session"
 
-//#region Contract
+//#region Interface
 
 /**
  * One rendered row of the output pane.
@@ -52,7 +52,7 @@ export interface OutputLine {
 	 */
 	confidence?: number
 	/**
-	 * Rendered as a badge INSTEAD of `value` — reserved for the two verdicts a reader scans for first, the resolution
+	 * Rendered as a badge instead of `value` — reserved for the two verdicts a reader scans for first, the resolution
 	 * tier and the kind. A badge on every row would be a badge on none.
 	 */
 	badge?: string
@@ -192,7 +192,7 @@ export function outputLines(input: OutputLinesInput): OutputLine[] {
 		}
 	}
 
-	// Advisories, never a second opinion about the answer (ROAD_TO_V9 §4) — carried on the RESULT, so they
+	// Advisories, never a second opinion about the answer (ROAD_TO_V9 §4) — carried on the result, so they
 	// survive even when the register was pinned and there is no kind verdict above them.
 	for (const marker of result.intent_markers ?? []) {
 		lines.push({ kind: "field", label: `  ${marker.code}`, value: marker.mechanism, detail: marker.message })
@@ -224,9 +224,9 @@ export function outputLines(input: OutputLinesInput): OutputLine[] {
 		value: result.uncertainty_m == null ? "unknown" : `${result.uncertainty_m} m`,
 	})
 
-	// The resolved place is the DEEPEST decorated node — `hierarchy` is ordered most-specific-first, so its head is
+	// The resolved place is the deepest decorated node — `hierarchy` is ordered most-specific-first, so its head is
 	// the finest place the gazetteer actually confirmed. Deliberately not `candidates[0]`: that is the resolver's
-	// PRIMARY node for the candidate ranking, and on a rooftop tier (where the coordinate came from a database rather than a
+	// primary node for the candidate ranking, and on a rooftop tier (where the coordinate came from a database rather than a
 	// place row) it falls back to the first resolved admin node — the region, which is not what a reader means by
 	// "resolved place". The candidate head still shows up below when it differs.
 	const place = result.hierarchy.at(0)

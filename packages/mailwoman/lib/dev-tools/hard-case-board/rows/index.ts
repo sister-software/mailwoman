@@ -3,10 +3,10 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   The hard-case board's FRAGMENT-REGISTER rows — inputs whose difficulty is their SHAPE.
+ *   The hard-case board's fragment-register rows — inputs whose difficulty is their shape.
  *
  *   Split out of `build/hard-case-board.run.ts` because the two halves change for different reasons and
- *   at different rates: the builder is implementation (read a WOF point, walk two FST binaries, emit JSONL),
+ *   at different rates: the builder is implementation (read a WOF point, walk two FST binaries, emit jsonl),
  *   while this file is the editorial content — which inputs pin which discrimination case, and why. A row
  *   here carries no coordinates and no bias numbers on purpose. those are measured at build time from
  *   primary data, so the only thing a curator can get wrong is the choice, which is the thing worth
@@ -41,7 +41,7 @@ export interface Curated {
 }
 
 /**
- * Metro-scale bar for an admin-centroid answer — the sweep's `APPROXIMATE` tier.
+ * Metro-scale bar for an admin-centroid answer — the sweep's `approximate` tier.
  */
 export const ADMIN_TOL = 25_000
 

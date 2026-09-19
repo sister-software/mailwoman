@@ -15,7 +15,7 @@
  *   The second branch this file used to carry — an automatic "Historical record" banner for docs in
  *   the `archive` sidebar, dated from the doc id or a `date:` field — went with the sidebar. The
  *   docs-reorg Task 4 tree surgery moved every archived page to `docs/records/`, which is outside
- *   the Docusaurus content root, so no published doc can be in an `archive` sidebar any more and
+ *   the Docusaurus content root. Therefore, no published doc can be in an `archive` sidebar any more and
  *   the branch was unreachable. Task 5 removed it along with the date derivation it was the only
  *   caller of. Bring both back from git history if a published archive door ever returns.
  */

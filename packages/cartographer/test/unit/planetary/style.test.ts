@@ -50,7 +50,7 @@ test.each(["moon", "mars"] as const)(
 			},
 		})
 
-		// Under globe projection a background layer paints the SPHERE, so this is the body's surface tone rather than
+		// Under globe projection a background layer paints the sphere, so this is the body's surface tone rather than
 		// the field around it. the app's stylesheet paints that behind a transparent canvas.
 		const surface = style.layers.find((layer) => layer.id === "planetary/space")
 		expect(surface).toMatchObject({ type: "background", paint: { "background-color": PALETTES[body].space } })

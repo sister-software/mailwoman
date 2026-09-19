@@ -88,7 +88,7 @@ describe("prominence-floor ruler (#2264)", () => {
 	it("refuses a gap between bands, which would drop rows with nothing reporting it", () => {
 		const problems = auditProminenceDefinition(
 			withChange((draft) => {
-				// One below the second band's floor, so 999 itself falls in no band.
+				// One below the second band's floor. Therefore, 999 itself falls in no band.
 				draft.populationBands[0]!.max = draft.populationBands[0]!.max - 1
 			})
 		)

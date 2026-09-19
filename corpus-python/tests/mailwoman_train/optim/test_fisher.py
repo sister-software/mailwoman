@@ -1,6 +1,6 @@
 """Fisher capture + EWC consumption (v8.3.0 Phase 1 — fisher.py).
 
-Pins the three contract properties the design memo names:
+Pins the three interface properties the design memo names:
 
 1. **Byte-identical trajectory** — capture only reads ``p.grad``; a run with the accumulator
    attached ends with exactly the weights of a run without it (the rng/byte-stability rule).
@@ -192,7 +192,7 @@ def test_fresh_head_params_are_unpenalized(tmp_path: Path) -> None:
     with pytest.raises(ValueError, match="no parameter names"):
         ewc.penalty(WithHead())
 
-    # The realistic shape: same names, one EXTRA fresh param. Penalty must ignore the extra.
+    # The realistic shape: same names, one extra fresh param. Penalty must ignore the extra.
     tuned = _tiny(seed=1)
     tuned.load_state_dict(base.state_dict())
     baseline = float(ewc.penalty(tuned))

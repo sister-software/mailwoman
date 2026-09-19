@@ -1,7 +1,7 @@
 # Golden eval set v0.1.3
 
 Hand-labeled ground truth for the Mailwoman neural classifier. **This is the
-contract for "what good looks like."** Eval scripts compare classifier output
+interface for "what good looks like."** Eval scripts compare classifier output
 to the components in each entry.
 
 ## What changed in v0.1.3 (2026-08-06)
@@ -9,7 +9,7 @@ to the components in each entry.
 **US street spans are labeled SPLIT.** The rest of this file is v0.1.2's, carried
 forward; read `MANIFEST.json`'s `convention` block for the authoritative statement,
 `REVIEW-DECK.md` for the rows that moved, and
-[SCHEMA.mdx](../../../../docs/engineering/reference/SCHEMA.mdx) for the contract.
+[SCHEMA.mdx](../../../../docs/engineering/reference/SCHEMA.mdx) for the interface.
 
 `6220 SE Salmon St` is four components rather than two: `house_number` `6220`,
 `street_prefix` `SE`, `street` `Salmon`, `street_suffix` `St`. v0.1.2 folded the

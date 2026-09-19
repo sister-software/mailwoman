@@ -29,7 +29,7 @@ export type StringifiedJSON = Tagged<"StringifiedJSON", string>
  *   be doing the conversion this parameter exists to hold.
  *
  * @returns A string containing the pretty-printed JSON representation of the input object.
- * @see {@linkcode stringifyJSON} for a JSONL-compatible version that returns a branded type.
+ * @see {@linkcode stringifyJSON} for a jsonl-compatible version that returns a branded type.
  */
 export function prettyJSON(input: unknown, newline = true, space: string | number = "\t"): StringifiedJSON {
 	return (JSON.stringify(input, null, space) + (newline ? "\n" : "")) as StringifiedJSON
@@ -42,7 +42,7 @@ export function prettyJSON(input: unknown, newline = true, space: string | numbe
  * valid JSON. It is also one of two places in the codebase that is allowed to use `JSON.stringify`
  *
  * @param input The object to be stringified.
- * @param keys An ALLOWLIST of property names, in the order they should print. Two call sites need it and neither is
+ * @param keys An allowlist of property names, in the order they should print. Two call sites need it and neither is
  *   cosmetic: a cache key that must omit the API key and fix the order of what remains, and a regenerated seed file
  *   that must diff only where a value changed. Passing the list here keeps both on the branded printer.
  *

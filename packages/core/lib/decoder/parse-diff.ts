@@ -16,7 +16,7 @@
  *   locality changed" in a map diff, when what actually happened is that two spans were destroyed and a third was
  *   retagged onto the text of one of them.
  *
- *   So spans are matched by OVERLAP first and tag second, which lets the four events be told apart:
+ *   So spans are matched by overlap first and tag second, which lets the four events be told apart:
  *
  *   - `retagged`  — same text, different tag. The venue that became a locality.
  *   - `moved`     — same tag, different span. The locality that slid onto the neighbouring segment.
@@ -261,7 +261,7 @@ export function diffParse(
 export const CONFIDENCE_NOISE_FLOOR = 0.02
 
 /**
- * Render a diff the way a reader reads one — the ADDRESS first, then the spans that moved under it.
+ * Render a diff the way a reader reads one — the address first, then the spans that moved under it.
  *
  * Address-first is the point. An aggregate that reports "18 regressed" without the strings is the shape that let a
  * venue-destroying regression read as a routine count for five runs.

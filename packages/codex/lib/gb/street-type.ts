@@ -8,7 +8,7 @@
  *   The contrast across the codex's street files is structural. A US street type is a trailing word
  *   with a USPS-standardized abbreviation (`Main Street` → `ST`). A German street type is a fused
  *   agglutinative suffix (`Hauptstraße`). A French type is a leading standalone word (`Rue de la
- *   Paix`). British practice is the US shape — a separate TRAILING word — but with a notably RICHER
+ *   Paix`). British practice is the US shape — a separate trailing word — but with a notably richer
  *   and more local vocabulary: alongside the everyday `Road`/`Street`/`Avenue` sit `Crescent`,
  *   `Mews`, `Close`, `Wynd`, `Brae`, `Gait`, `Croft`, `Dene` and a long tail of landscape words
  *   (`Brook`, `Copse`, `Dell`, `Hollow`, `Spinney`) that read as thoroughfare types in the UK and

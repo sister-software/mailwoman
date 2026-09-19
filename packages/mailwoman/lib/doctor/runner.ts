@@ -16,7 +16,7 @@
 import { mailwomanDataRoot } from "@mailwoman/core/data-root"
 import { DefaultMailwomanPaths } from "@mailwoman/core/env"
 import { isWritable, pathExists, statPath } from "@mailwoman/core/fs/readers"
-import { readLayerManifest, type LayerContractDatabase } from "@mailwoman/core/layers"
+import { readLayerManifest, type layerschemadatabase } from "@mailwoman/core/layers"
 import { isSelfServicePayload, type LicenseKeyVerification, verifyConfiguredLicenseKey } from "@mailwoman/core/license"
 import { confirmLicenseKeyPublished, type LicenseKeyPublication } from "@mailwoman/core/license/publication"
 import { checkLicenseStatus, type LicenseStatusAnswer } from "@mailwoman/core/license/status"
@@ -91,7 +91,7 @@ export interface DoctorDeps {
 	 */
 	dataRoot(): { path: string; fromEnv: boolean }
 	/**
-	 * The candidate.db the TOOLS would actually use — `resolveCandidateDBPath` (explicit ?? `$MAILWOMAN_CANDIDATE_DB`),
+	 * The candidate.db the tools would actually use — `resolveCandidateDBPath` (explicit ?? `$MAILWOMAN_CANDIDATE_DB`),
 	 * on disk. No convention-path fallback: that's exactly what geocode/serve do.
 	 */
 	envCandidatePath(): Promise<string | undefined>
@@ -164,7 +164,7 @@ export interface DoctorDeps {
 /**
  * Read `engines.node` from mailwoman's own package.json, defaulting to `">=0"` if unreadable.
  *
- * Located by SELF-REFERENCE through the package's own `exports` map (`"./package.json": "./package.json"`), so this
+ * Located by self-reference through the package's own `exports` map (`"./package.json": "./package.json"`), so this
  * finds the right manifest from the source tree, the compiled `out/` tree and an installed tarball alike — none of the
  * `__isCompiledTree` distance arithmetic `core/utils/repo.ts` needs. `import.meta.resolve` rather than a static `with {
  * type: "json" }` import (the form `photon/app.ts` and friends use) because the tolerant fallback is the point:
@@ -191,13 +191,13 @@ async function defaultConventionCandidatePath(dataRoot: string): Promise<string 
 }
 
 /**
- * Open a POI db READ-ONLY, read its layer manifest, and narrow it to the identity fields doctor prints.
+ * Open a POI db read-only, read its layer manifest, and narrow it to the identity fields doctor prints.
  */
 /**
- * Open a layer db READ-ONLY and read the identity fields of its manifest — what the layer is and what it asks.
+ * Open a layer db read-only and read the identity fields of its manifest — what the layer is and what it asks.
  */
 async function readLayerIdentity(path: string): Promise<LayerIdentity> {
-	using kdb = new DatabaseClient<LayerContractDatabase>(path, { readOnly: true })
+	using kdb = new DatabaseClient<layerschemadatabase>(path, { readOnly: true })
 	const manifest = await readLayerManifest(kdb)
 
 	return {
@@ -357,7 +357,7 @@ async function gatherOverlay(deps: DoctorDeps, locale: string): Promise<DoctorCh
 }
 
 /**
- * Run every diagnostic and assemble the report. The check ORDER is the render order, and it is RUNTIME FIRST (#1577):
+ * Run every diagnostic and assemble the report. The check order is the render order, and it is runtime first (#1577):
  * node version, then the ONNX binding, then the model weights, then the optional data layers, then the informational
  * locale overlays.
  *
@@ -456,7 +456,7 @@ export interface EnvironmentEntry {
 /**
  * Every path and variable the checks above resolved, for `mailwoman doctor --verbose` (#1577).
  *
- * Reads through the SAME {@link DoctorDeps} the checks do, so the dump can never disagree with the verdicts printed
+ * Reads through the same {@link DoctorDeps} the checks do, so the dump can never disagree with the verdicts printed
  * above it — that disagreement is exactly the bug a verbose mode exists to catch (a reader who exported
  * `$MAILWOMAN_DATA_ROOT` in one shell and ran the CLI in another).
  */

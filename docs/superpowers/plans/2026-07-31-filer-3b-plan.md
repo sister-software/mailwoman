@@ -1,6 +1,6 @@
 # Filer Spine Phase 3b Implementation Plan — corporate families + the record-linkage eval
 
-> **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
+> **For agentic workers:** required sub-skill: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
 **Goal:** Distinguish **corporate families** from entity clusters — typed, provenanced, time-scoped — sourced from Form 499's holding/management fields and SEC EDGAR Exhibit 21, plus the held-out record-linkage eval published as a scorecard.
 
@@ -23,7 +23,7 @@
 5. **The SEC client is the repo's first throttled fetcher — build it deliberately.** `bdc/sdk/client.ts` has no rate limiting, caching, or retry, and `filer/sdk` shipped no fetcher at all. SEC's fair-access policy requires a descriptive User-Agent with a contact address and ≤10 requests/second. Implement: UA from `$private.SEC_EDGAR_USER_AGENT` (fail fast if unset), a token-bucket limiter, an on-disk cache keyed by URL, and bounded retry with backoff on 429/5xx. Tests use a stub `fetchImpl`; **no live network in the suite**.
 6. **Exhibit 21 parsing abstains rather than guesses.** Exhibit 21 is free-form — HTML tables, nested lists, plain text, wildly inconsistent across filers. A subsidiary row that cannot be confidently extracted is **counted and dropped, never inferred**. The result reports `parsed` and `unparseable` counts; a filing whose exhibit yields nothing is a normal outcome rather than an error. Positive evidence only, exactly as the BDC vertical does it.
 7. **Transfer-of-control edges are OUT of 3b.** The transaction layer (`2026-07-31-transaction-layer-and-portability.md` §2) needs FCC assignment/transfer applications, which live in the **ULS bulk tree 3c is already ingesting** (`data.fcc.gov/download/pub/uls/complete/`, verified reachable). Doing it in 3c costs one extra table on a download already being parsed; doing it here means standing up ULS ingestion twice. Note also that 3a's snapshot semantics mean historic-dated edges must arrive in the same build or a post-build pass.
-8. **`filer.db` stays outside the layer contract** (3a decision 2 unchanged) — still no coordinates until 3c.
+8. **`filer.db` stays outside the layer interface** (3a decision 2 unchanged) — still no coordinates until 3c.
 
 ## Acceptance checks (§7-3b, pre-registered — Task 3 and Task 8 discharge them)
 
@@ -154,7 +154,7 @@ Concretely, this task must extend `insertFamilyMembership`'s reach (or its EDGAR
 
 ## Out of scope for 3b
 
-Transfer-of-control edges (decision 7 → 3c, same ULS tree); CORES of any kind (spec §11 — confirmed dead, no supported programmatic source); ASR/ULS ingestion (3c); layer-contract conformance (3a decision 2); a `mailwoman filer build` CLI (inherited gap — flag for 3c); restoring cross-component inferred discovery beyond what EDGAR corroboration provides.
+Transfer-of-control edges (decision 7 → 3c, same ULS tree); CORES of any kind (spec §11 — confirmed dead, no supported programmatic source); ASR/ULS ingestion (3c); layer-interface conformance (3a decision 2); a `mailwoman filer build` CLI (inherited gap — flag for 3c); restoring cross-component inferred discovery beyond what EDGAR corroboration provides.
 
 ## Self-review notes
 

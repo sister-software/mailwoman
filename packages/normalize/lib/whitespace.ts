@@ -3,11 +3,11 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Whitespace collapse — a run of inline whitespace (`[ \t]`) becomes one ASCII space AT EVERY RUN
- *   LENGTH, so a lone tab normalizes exactly as a doubled one does. Newlines (`\n`/`\r`) are preserved:
+ *   Whitespace collapse — a run of inline whitespace (`[ \t]`) becomes one ascii space AT every RUN
+ *   length, so a lone tab normalizes exactly as a doubled one does. Newlines (`\n`/`\r`) are preserved:
  *   QueryShape's segmentation grammar reads one as a segment separator on a par with a comma, and it
  *   reads a RAW tab the same way — folding every tab here is what keeps a tab-separated export from
- *   re-segmenting the query. The trailing trim also drops trailing sentence-punctuation NOISE (#829 tail): a
+ *   re-segmenting the query. The trailing trim also drops trailing sentence-punctuation noise (#829 tail): a
  *   trailing `.`/`,`/`;`/`:` (e.g. `…Washington DC.`) glues onto the last token and drops the street
  *   tier (`address_point`→`admin`). Trailing only + a conservative set — leading punctuation and
  *   quotes/brackets are never touched (they can be meaningful). Offset-map-correct via the same substring
@@ -28,8 +28,8 @@ export interface WhitespaceResult {
 	text: string
 	map: number[]
 	/**
-	 * How many inline-whitespace runs were REWRITTEN — a run longer than one character, or a one-character run that was
-	 * not already an ASCII space. A run that was already a single space is not one of them.
+	 * How many inline-whitespace runs were rewritten — a run longer than one character, or a one-character run that was
+	 * not already an ascii space. A run that was already a single space is not one of them.
 	 */
 	runs: number
 }
@@ -63,7 +63,7 @@ export function collapseWhitespace(input: string): WhitespaceResult {
 				i += 1
 			}
 
-			// A one-character run counts too when the character is not already an ASCII space: the tab→space
+			// A one-character run counts too when the character is not already an ascii space: the tab→space
 			// rewrite emitted above is a real edit, and `changed` is what decides whether the caller ever
 			// receives it — the early return below hands back the untouched input otherwise.
 			if (i - start > 1 || ch !== " ") {

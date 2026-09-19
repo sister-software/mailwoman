@@ -96,7 +96,7 @@ const handler: ExportedHandler<LicenseWorkerBindings> = {
 		const state = isolateState(env)
 		const selfTest = await state.selfTest
 
-		// A worker that would refuse to mint over HTTP refuses to mint on a schedule too. the report says why.
+		// A worker that would refuse to mint over http refuses to mint on a schedule too. the report says why.
 		if (selfTest.status !== "ok") {
 			console.error(stringifyJSON({ reconcile: "skipped", reason: selfTest.reason }))
 

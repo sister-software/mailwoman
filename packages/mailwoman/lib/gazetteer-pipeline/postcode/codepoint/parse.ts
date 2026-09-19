@@ -10,7 +10,7 @@
  *
  *   Headerless, ten columns, every text field double-quoted. From `Doc/Code-Point_Open_Column_Headers.csv`:
  *
- *     PC, PQ, EA, NO, CY, RH, LH, CC, DC, WC
+ *     PC, PQ, EA, no, CY, RH, LH, CC, DC, WC
  *     Postcode, Positional_quality_indicator, Eastings, Northings, Country_code,
  *     NHS_regional_HA_code, NHS_HA_code, Admin_county_code, Admin_district_code, Admin_ward_code
  *
@@ -64,7 +64,7 @@ export type CodePointCountry = (typeof CODEPOINT_COUNTRY_CODES)[keyof typeof COD
  */
 export interface CodePointRecord {
 	/**
-	 * The postcode in OS's own spacing — outward code, one space, inward code (`SW1A 1AA`). This is the DISPLAY form. the
+	 * The postcode in OS's own spacing — outward code, one space, inward code (`SW1A 1AA`). This is the display form. the
 	 * normalized lookup form is derived by the database builder via the #920 name law.
 	 */
 	postcode: string
@@ -134,7 +134,7 @@ export interface CodePointParseStats {
 const UNIT_POSTCODE = /^[A-Z]{1,2}[0-9][A-Z0-9]?\s[0-9][A-Z]{2}$/
 
 /**
- * Extract the postcode AREA — the leading one or two letters (`SW1A 1AA` → `SW`, `B33 8TH` → `B`). This is the key
+ * Extract the postcode area — the leading one or two letters (`SW1A 1AA` → `SW`, `B33 8TH` → `B`). This is the key
  * `Doc/metadata.txt` counts by.
  */
 export function postcodeArea(postcode: string): string {
@@ -214,7 +214,7 @@ export async function* readCodePointCSV(csvPath: string, stats: CodePointParseSt
 /**
  * Normalize Code-Point's postcode spacing to the single-space display form.
  *
- * The product is SPECIFIED as a fixed 7-character field — the outward code left-justified, the inward code
+ * The product is specified as a fixed 7-character field — the outward code left-justified, the inward code
  * right-justified, so a short postcode like `B1 1AA` is padded to `B1 1AA` with two spaces. The 2026-05 CSVs happen to
  * ship the single-spaced form already, but the specification is what a future extract will follow, and a double space
  * would otherwise sail through as a distinct postcode from its single-spaced twin. Collapsing runs of whitespace costs

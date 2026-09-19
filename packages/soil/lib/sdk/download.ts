@@ -8,23 +8,23 @@
  *   The transfer itself lives in `@mailwoman/core/utils`, and `streamToDisk` explains why a file transfer of
  *   this size keeps raw `fetch` instead of going through `APIClient`, plus the `.part`-rename rule. What is
  *   soil's, and stays here, is the URL shape, the cache key, and the two facts below that the shared
- *   transfer is told rather than assumes: the progress stride and what a 400 means. The METADATA reads
+ *   transfer is told rather than assumes: the progress stride and what a 400 means. The metadata reads
  *   around this one do go through `APIClient` — see `client.ts`.
  *
- *   Freshness is `sacatalog.saverest`, never a length probe, and the host leaves no choice. It answers `HEAD`
- *   with HTTP 405 (`allow: GET`) and IGNORES `Range`: a request with `Range: bytes=0-0` returned HTTP 200 and
+ *   Freshness is `sacatalog.saverest`, never a length probe, and the host leaves no choice. It answers `head`
+ *   with http 405 (`allow: GET`) and ignores `Range`: a request with `Range: bytes=0-0` returned http 200 and
  *   transferred the whole 27,598,377 bytes in 7.23 s. So "check the size first" starts a real download. The
  *   cache is keyed on the version date the tabular service reports instead, and a vintage already on disk is
- *   never re-fetched. The `Range` behaviour is PATH-SPECIFIC rather than host-wide — `/DataAvailability/`
+ *   never re-fetched. The `Range` behaviour is path-specific rather than host-wide — `/DataAvailability/`
  *   does answer 206 — so a client must probe per path rather than conclude from one.
  *
- *   THE FILENAME EMBEDS THE VERSION DATE AND A WRONG ONE IS AN HTTP 400. Not a 404: asking for a date the
+ *   the filename embeds the version date and A wrong one is an http 400. Not a 404: asking for a date the
  *   host does not hold reads as a malformed request rather than a missing file, which is why the date comes
  *   from the catalogue rather than from a guess. The square brackets must be sent literally, so the URL is
  *   built with them percent-encoded.
  *
- *   TWO CACHE VARIANTS EXIST AND THE BARE ONE IS WANTED. `wss_SSA_IA153_[2025-09-09].zip` is 25,474,922 bytes;
- *   `wss_SSA_IA153_soildb_IA_2003_[2025-09-09].zip` is 27,598,377 and differs only by an EMPTY Microsoft Access
+ *   two cache variants exist and the bare one is wanted. `wss_SSA_IA153_[2025-09-09].zip` is 25,474,922 bytes;
+ *   `wss_SSA_IA153_soildb_IA_2003_[2025-09-09].zip` is 27,598,377 and differs only by an empty Microsoft Access
  *   template container for a workflow this program does not use. Confirmed on a second area (`IA015`:
  *   38,981,269 against 41,104,724 bytes) and on a third that ships no template at all (`TX299`, 13,455,641
  *   bytes, 97 files, no `.mdb`).
@@ -55,7 +55,7 @@ export function surveyAreaArchiveURL(areaSymbol: string, versionDate: string): s
 export interface DownloadSurveyAreaOptions {
 	areaSymbol: string
 	/**
-	 * The version date from `sacatalog.saverest`, as `YYYY-MM-DD`.
+	 * The version date from `sacatalog.saverest`, as `yyyy-MM-DD`.
 	 */
 	versionDate: string
 	/**
@@ -74,7 +74,7 @@ const PROGRESS_STRIDE_BYTES = 8 * 1024 * 1024
 
 /**
  * What this host answers for a version date it does not hold. Not a 404: it reads as a malformed request rather than a
- * missing file, which is why the message below says so and why the date comes from the catalogue rather than a guess.
+ * missing file. The message below reports that status. The date comes from the catalogue rather than a guess.
  */
 const UNKNOWN_VERSION_STATUS = 400
 
@@ -132,7 +132,7 @@ export async function downloadSurveyArea(options: DownloadSurveyAreaOptions): Pr
 			})
 		}
 
-		// The archive holds its files under an `<AREASYMBOL>/` root already, so it unzips into the vintage directory
+		// The archive holds its files under an `<areasymbol>/` root already, so it unzips into the vintage directory
 		// rather than into a directory named for itself.
 		await runFile("unzip", ["-o", "-q", archivePath, "-d", vintageDirectory])
 	} else {

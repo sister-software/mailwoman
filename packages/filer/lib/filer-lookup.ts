@@ -16,7 +16,7 @@
  *
  *   **`identifiers` is `relationship: same_entity` only.** Built from every authoritative edge regardless of
  *   `relationship`, it would surface a `HoldingCompany`/`ManagementCompany` edge — correctly typed
- *   authoritative by the builder — as if the holding-company NAME were "this filer's own identifier":
+ *   authoritative by the builder — as if the holding-company name were "this filer's own identifier":
  *   exactly the entity/family conflation criterion 1 exists to prevent, hiding in a different field than
  *   `cluster`. So `identifiers` answers only "which other identifiers denote this same legal entity";
  *   a holding-/management-company relationship is reported via `families` instead, which carries the raw
@@ -30,28 +30,28 @@
  *   raw "no such table: filer_family" surfaced straight from SQLite once this reader started
  *   unconditionally querying that table.
  *
- *   **Temporal scoping (criterion 4).** An edge is "in force" `asOf` a date when `valid_from <= asOf AND
- *   (valid_to IS NULL OR asOf < valid_to)` — the same half-open-interval convention `cluster-filers.ts`'s
- *   cross-vintage supersession already commits to (`valid_to` marks the date an assertion STOPPED
+ *   **Temporal scoping (criterion 4).** An edge is "in force" `asOf` a date when `valid_from <= asOf and
+ *   (valid_to is NULL or asOf < valid_to)` — the same half-open-interval convention `cluster-filers.ts`'s
+ *   cross-vintage supersession already commits to (`valid_to` marks the date an assertion stopped
  *   holding rather than the last date it held). Applied identically to `identifiers` and `inferred_links`.
  *
- *   **Authoritative/inferred never conflated (criterion 2).** `cluster` is read from `filer_cluster WHERE
- *   assertion = 'authoritative'` only; `inferred_links` is read from `filer_edge WHERE assertion =
+ *   **Authoritative/inferred never conflated (criterion 2).** `cluster` is read from `filer_cluster where
+ *   assertion = 'authoritative'` only; `inferred_links` is read from `filer_edge where assertion =
  *   'inferred'` only — two disjoint queries against two disjoint row sets. There is no code path here that
  *   could fold an inferred relationship into the authoritative `cluster` field: the same guarantee
  *   `cluster-filers.ts` makes on the write side (decision 5), restated here on the read side.
  *
  *   **Criterion 2 reaches `families` too.** Those two disjoint queries are both
  *   `filer_edge`-backed, so until `filer_family` grew its own `assertion`/`match_score` the rule stopped
- *   at the table boundary — and `families`/`familyRollup` answer from `filer_family` ALONE (that is the
- *   whole precondition). The EDGAR ingest writes the repo's first INFERRED family membership,
- *   which therefore arrived here shape-identical to a Form 499 holding-company disclosure the filer
+ *   at the table boundary — and `families`/`familyRollup` answer from `filer_family` alone (that is the
+ *   whole precondition). The edgar ingest writes the repo's first inferred family membership,
+ *   The inferred family membership arrived here shape-identical to a Form 499 holding-company disclosure the filer
  *   itself filed. {@link FilerLookupFamily} now carries the grading, and a same-family authoritative row
  *   and inferred row are reported as two entries, never folded into one.
  *
  *   **`cluster` is `asOf`-scoped too.** `filer_cluster` itself carries no
  *   temporal columns (`schema.ts`) — `cluster-filers.ts`'s `clusterAuthoritativeComponents` recomputes it
- *   from whatever the CURRENT edge graph looks like on every run, with no `asOf` concept of its own. Read
+ *   from whatever the current edge graph looks like on every run, with no `asOf` concept of its own. Read
  *   unguarded, that snapshot would let `cluster` assert full present-day membership at any `asOf` date,
  *   directly contradicting `identifiers`'s own scoping (reviewer probe: `asOf` before any connecting edge
  *   existed returned `identifiers: []` yet `cluster` still asserted two nodes were one entity — the same
@@ -76,7 +76,7 @@
  *
  *   **A derived conclusion is never indistinguishable from a sourced fact.** The picked primary FRN is
  *   reported in its own top-level `primary_frn` field, never
- *   folded into `attributes` — `attributes` is exclusively flattened `filer_attribute` ROWS (real
+ *   folded into `attributes` — `attributes` is exclusively flattened `filer_attribute` rows (real
  *   provenance: `source`/`source_vintage` on every fact), and a computed value written there under the
  *   same key as a genuine sourced attribute would silently clobber it (reviewer-confirmed) and, even
  *   without a collision, be visually indistinguishable from one. `primary_frn` carries `derived_from`
@@ -98,18 +98,18 @@
  *   **`family_id` alone is a canonicalized slug rather than a display name.** Each
  *   {@link FilerLookupFamily} entry also carries {@linkcode readFamilyDisplayNames}'s output — the family's
  *   raw holding-/management-company name spelling(s), recovered from the `filer_edge` rows that imply the
- *   membership. See that function's docstring for why a MULTI-spelling family (two raw names that
+ *   membership. See that function's docstring for why a multi-spelling family (two raw names that
  *   canonicalize identically) surfaces every spelling rather than picking one.
  *
  *   **This reader canonicalizes nothing.** `filer.db` is a sealed, shipped artifact
  *   with its own version line; `@mailwoman/record`'s `canonicalizeOrganizationName` lives in another
  *   workspace and its designation/jurisdiction packs are explicitly documented as extensible. So no fact
- *   behind `families`/`display_names` is re-derived here — each is READ from a column the builder wrote,
+ *   behind `families`/`display_names` is re-derived here — each is read from a column the builder wrote,
  *   the naming provenance included: that is what `filer_family.naming_node_id` is for. (Not a claim that
  *   this reader derives nothing at all: `primary_frn` is
  *   openly this reader's own computation, labelled as such at its own docstring below. The distinction is
- *   that a DERIVED conclusion is declared as one, while a re-derived canonical KEY silently disagrees with
- *   the artifact that stored it.) `mintFamilyID` (`family-id.ts`) remains the WRITER'S single derivation
+ *   that a derived conclusion is declared as one, while a re-derived canonical KEY silently disagrees with
+ *   the artifact that stored it.) `mintFamilyID` (`family-id.ts`) remains the writer'S single derivation
  *   rule and is still exported for callers that need to mint a `family_id` to query BY. nothing in the
  *   read path calls it.
  */
@@ -155,10 +155,10 @@ export interface FilerLookupIdentifier {
 }
 
 /**
- * The queried node's AUTHORITATIVE cluster (criterion 2), `asOf`-scoped (see {@linkcode deriveClusterMembersAsOf}) —
+ * The queried node's authoritative cluster (criterion 2), `asOf`-scoped (see {@linkcode deriveClusterMembersAsOf}) —
  * `null` when clustering (`cluster-filers.ts`) has never been run, the node carries no authoritative cluster
  * assignment, or (the asOf-scoping case) no authoritative edge corroborating the assignment is in force as of the
- * query's `asOf` date. `members` are `filer_node.node_id`s, and may be a PROPER SUBSET of the full `filer_cluster`
+ * query's `asOf` date. `members` are `filer_node.node_id`s, and may be a proper subset of the full `filer_cluster`
  * snapshot's membership when the component only partially held together as of that date.
  */
 export interface FilerLookupCluster {
@@ -167,7 +167,7 @@ export interface FilerLookupCluster {
 }
 
 /**
- * One INFERRED relationship the queried node carries, `asOf` the query's date — reported SEPARATELY from
+ * One inferred relationship the queried node carries, `asOf` the query's date — reported separately from
  * {@link FilerLookupResult.cluster} (criterion 2), never merged into it. `to` is the other end's `filer_node.node_id`.
  */
 export interface FilerLookupInferredLink {
@@ -178,7 +178,7 @@ export interface FilerLookupInferredLink {
 
 /**
  * One corporate-family membership the queried node carries, `asOf` the query's date — reported on
- * {@link FilerLookupResult.families}, a field STRUCTURALLY DISTINCT from {@link FilerLookupResult.cluster} (§7-3b
+ * {@link FilerLookupResult.families}, a field structurally distinct from {@link FilerLookupResult.cluster} (§7-3b
  * criterion 1, required). `relationship` is one of {@link FilerRelationship} (`holding_company`, `management_company`,
  * `parent_company`, `subsidiary` — never `same_entity`, which is reserved for entity-cluster edges and never written to
  * `filer_family`). Deliberately carries no `members` field and no `cluster_id`-shaped key — see the module docstring's
@@ -187,12 +187,12 @@ export interface FilerLookupInferredLink {
  * (`family-rollup.ts`) to read a family's full membership list. this field only answers "which families does this node
  * belong to, and under what relationship."
  *
- * `display_names` is the DISTINCT set of raw `identifier_value` spellings, across every current member of this family,
+ * `display_names` is the distinct set of raw `identifier_value` spellings, across every current member of this family,
  * that imply the membership — the human-readable name(s) behind the canonicalized `family_id`, which the headline
  * "these filers report holding company H" output needs and the slug alone cannot supply. See
  * {@linkcode
  * readFamilyDisplayNames}'s docstring for the exact join and the "expose the plurality, never collapse" rule
- * this follows when two spellings (e.g. `"Realbuild Co"` / `"REALBUILD CO., INC."`) canonicalize to the same
+ * this follows when two spellings (e.g. `"Realbuild Co"` / `"realbuild CO., INC."`) canonicalize to the same
  * `family_id`.
  */
 export interface FilerLookupFamily {
@@ -201,15 +201,15 @@ export interface FilerLookupFamily {
 	/**
 	 * One of {@link FilerEdgeAssertion} — how strongly this membership is evidenced. `authoritative` is a membership the
 	 * source document states directly (a Form 499 row naming its own holding company); `inferred` is one a matcher
-	 * concluded (EDGAR's subsidiary-name→FRN corroboration). This field is what carries criterion 2's "inferred never
+	 * concluded (edgar's subsidiary-name→FRN corroboration). This field is what carries criterion 2's "inferred never
 	 * merges with authoritative" rule past `cluster`/`inferred_links` (both `filer_edge`-backed) onto the family surface:
 	 * without it a name-match guess arrives here byte-identical to a filed disclosure and a caller has no way to tell
 	 * them apart. `source` cannot stand in for it: `edgar-exhibit-21` produces both grades.
 	 */
 	assertion: string
 	/**
-	 * The inferred match's score, `null` on an authoritative membership (`schema.ts`'s CHECK constraint enforces that
-	 * direction) — the same "reported SEPARATELY with their score" treatment {@link FilerLookupInferredLink} gives an
+	 * The inferred match's score, `null` on an authoritative membership (`schema.ts`'s check constraint enforces that
+	 * direction) — the same "reported separately with their score" treatment {@link FilerLookupInferredLink} gives an
 	 * inferred edge, restated on the family surface.
 	 */
 	match_score: number | null
@@ -223,7 +223,7 @@ export interface FilerLookupResult {
 	 * Flattened `filer_attribute` facts for the queried node only — one value per `key`, the latest `source_vintage`
 	 * winning on a repeat key (same plain-string-comparison convention as `cluster-filers.ts`'s `readLatestLegalNames`;
 	 * see that function's docstring for the "lexicographically greatest rather than date-parsed" caveat). Every value
-	 * here is a real `filer_attribute` row with its own `source`/`source_vintage` provenance — NEVER a computed value
+	 * here is a real `filer_attribute` row with its own `source`/`source_vintage` provenance — never a computed value
 	 * (see {@link FilerLookupResult.primary_frn} for the derived counterpart, kept structurally separate on purpose).
 	 */
 	attributes: Record<string, string>
@@ -231,7 +231,7 @@ export interface FilerLookupResult {
 	inferred_links: FilerLookupInferredLink[]
 	/**
 	 * Every corporate-family membership the queried node carries, `asOf` the query's date (§7-3b criterion 1, required) —
-	 * read EXCLUSIVELY from `filer_family`, a query that never shares a code path with `cluster` above. A family
+	 * read exclusively from `filer_family`, a query that never shares a code path with `cluster` above. A family
 	 * membership can never appear here as a `cluster` entry, and a `cluster` member can never appear here unless
 	 * `filer_family` independently asserts it — the two rollups are answers to different questions (same filer under
 	 * another identifier, vs. same corporate family as a different filer) and this field's shape
@@ -241,7 +241,7 @@ export interface FilerLookupResult {
 	 * there is no analogous "never computed" state for `families`, since every `filer_family` row is a direct fact rather
 	 * than a derived snapshot.
 	 *
-	 * **One entry per DISTINCT `(family_id, relationship, assertion, match_score)` rather than one per `filer_family`
+	 * **One entry per distinct `(family_id, relationship, assertion, match_score)` rather than one per `filer_family`
 	 * row.** A single membership can be asserted by several rows — two sources reporting it, or two raw spellings that
 	 * canonicalize to one `family_id` (`filer_family`'s PK carries `naming_node_id`, so those stay separate rows). The
 	 * rule is that the dedup key is exactly the projected tuple: two rows this shape cannot tell apart would arrive as
@@ -256,12 +256,12 @@ export interface FilerLookupResult {
 	/**
 	 * The primary-FRN pick (decision 6, criterion 3) when the queried node carries more than one authoritative FRN
 	 * identifier — `null` otherwise (including when cardinality is >1 but none of the FRNs has a form-499 filing to rank
-	 * by). A DERIVED conclusion, never a sourced fact — see the module docstring's "A derived conclusion…" section for
+	 * by). A derived conclusion, never a sourced fact — see the module docstring's "A derived conclusion…" section for
 	 * why this is its own field rather than an `attributes` entry.
 	 */
 	primary_frn: FilerLookupPrimaryFRN | null
 	/**
-	 * The date every temporal comparison in this result was scoped to — ALWAYS present, whether supplied by the caller or
+	 * The date every temporal comparison in this result was scoped to — always present, whether supplied by the caller or
 	 * defaulted to today (criterion 4).
 	 */
 	as_of: string
@@ -272,7 +272,7 @@ export interface FilerLookupResult {
 }
 
 /**
- * {@link FilerLookupResult.primary_frn}'s shape — visibly a DERIVED conclusion (`derived_from`, `as_of`), never
+ * {@link FilerLookupResult.primary_frn}'s shape — visibly a derived conclusion (`derived_from`, `as_of`), never
  * confusable with a sourced `filer_attribute` fact (which carries `source`/`source_vintage` instead).
  */
 export interface FilerLookupPrimaryFRN {
@@ -335,10 +335,10 @@ export function pickPrimaryFRN(candidates: readonly FRNFilingRecord[]): FRN {
  * (decision 6) must assemble candidates by querying `filer.db`'s own `form-499` edges, exactly like this. Reusing this
  * function instead of reimplementing the query keeps the temporal scoping below in one place.
  *
- * Applies the same full half-open predicate as every other temporal read in this module — `valid_from <= asOf AND
- * (valid_to IS NULL OR asOf < valid_to)` (see the module docstring; `schema.ts`'s `FilerEdgeTable.valid_to` documents
+ * Applies the same full half-open predicate as every other temporal read in this module — `valid_from <= asOf and
+ * (valid_to is NULL or asOf < valid_to)` (see the module docstring; `schema.ts`'s `FilerEdgeTable.valid_to` documents
  * why the convention is half-open rather than a stylistic choice). Both halves are required. With only `valid_from <=
- * asOf`, a CLOSED 499 edge (superseded by a later one, `valid_to` set to that later edge's `valid_from`) still wins the
+ * asOf`, a closed 499 edge (superseded by a later one, `valid_to` set to that later edge's `valid_from`) still wins the
  * "most recent" comparison over an in-force earlier edge, so the primary-FRN pick rests on an assertion this same
  * reader simultaneously reports as no longer in force via `identifiers`/`inferred_links`'s temporal scoping — a direct
  * self-contradiction.
@@ -420,7 +420,7 @@ function resolveQueriedIdentifier(query: FilerLookupQuery): QueriedIdentifier {
 }
 
 /**
- * `isoDate()` — today, as an ISO `YYYY-MM-DD` date string, the same sortable shape every real `valid_from`/`valid_to`
+ * `isoDate()` — today, as an ISO `yyyy-MM-DD` date string, the same sortable shape every real `valid_from`/`valid_to`
  * in `filer.db` uses. {@linkcode filerLookup}'s default `asOf` when the caller omits one. Exported so
  * `family-rollup.ts` shares this exact definition of "today" rather than growing its own — every reader in this SDK
  * should default `asOf` identically.
@@ -433,7 +433,7 @@ export function todayISODate(): string {
 /**
  * Guards a reader that hard-depends on `filer_family` — `filerLookup`'s own `families` field, and `family-rollup.ts`'s
  * `familyRollup` — against an artifact built before that table existed. `filer_family` was introduced at
- * {@link FILER_FAMILY_SCHEMA_VERSION}; an OLDER artifact's `filer.db` has no such table at all, so an unconditional
+ * {@link FILER_FAMILY_SCHEMA_VERSION}; an older artifact's `filer.db` has no such table at all, so an unconditional
  * `filer_family` query against one throws a raw, unhelpful "no such table: filer_family" straight from SQLite. Exported
  * (not just called inline in `filerLookup`) so `family-rollup.ts` shares this exact check rather than growing its own —
  * same "one definition, no drift" discipline as {@linkcode todayISODate}.
@@ -450,14 +450,14 @@ export function assertFamilySchemaVersion(schemaVersion: number, readerName: str
 
 /**
  * One `filer_family` membership row's full shape — every field {@linkcode readFamilyDisplayNames} needs to find the
- * SPECIFIC `filer_edge` row that implied this exact membership fact. Deliberately not the public
+ * specific `filer_edge` row that implied this exact membership fact. Deliberately not the public
  * `FilerLookupFamily`/`FamilyRollupMember` shapes (`family-rollup.ts`) — those omit `valid_from` on purpose (never
  * asked for on the public surface); this internal shape carries it because the display-name join needs it.
  */
 export interface FamilyMemberRow {
 	node_id: string
 	/**
-	 * The company node whose raw name PRODUCED this row's `family_id`, persisted by the builder (`schema.ts`'s
+	 * The company node whose raw name produced this row's `family_id`, persisted by the builder (`schema.ts`'s
 	 * `FilerFamilyTable.naming_node_id`). This is what {@linkcode readFamilyDisplayNames} joins on, so no reader has to
 	 * re-canonicalize edge targets to find its way back to the name.
 	 */
@@ -466,7 +466,7 @@ export interface FamilyMemberRow {
 	/**
 	 * One of {@link FilerEdgeAssertion} — surfaced onward as `FamilyRollupMember.assertion` (`family-rollup.ts`).
 	 * Deliberately not part of {@linkcode readFamilyDisplayNames}'s edge join: that join's authoritative-only rule (with
-	 * its one documented EDGAR widening) is a rule about which names may be presented as documented, and matching it to
+	 * its one documented edgar widening) is a rule about which names may be presented as documented, and matching it to
 	 * the family row's own assertion instead would silently admit every future name-similarity-inferred edge the rule
 	 * exists to keep out.
 	 */
@@ -487,9 +487,9 @@ export async function readFamilyMembers(
 	familyID: string,
 	asOf: string
 ): Promise<FamilyMemberRow[]> {
-	// The sort is the full primary key minus `family_id` (which this query pins), so the result is TOTALLY ordered:
+	// The sort is the full primary key minus `family_id` (which this query pins), so the result is totally ordered:
 	// `node_id` alone is not, because one member can carry several rows in the same family — reporting it under two
-	// SOURCES, or one row per raw spelling (see `createFilerFamilyTable`'s PK docstring, `schema.ts`). The sharp case
+	// sources, or one row per raw spelling (see `createFilerFamilyTable`'s PK docstring, `schema.ts`). The sharp case
 	// is criterion 2's own fixture: two rows for one member differing only in `assertion`, hence in `source`, which only
 	// the last two keys here separate. `FamilyRollup.members`' positional assertions depend on this total order.
 	return db
@@ -506,7 +506,7 @@ export async function readFamilyMembers(
 }
 
 /**
- * Read the DISTINCT set of raw `identifier_value` spellings a family's members' own holding-/management-company edges
+ * Read the distinct set of raw `identifier_value` spellings a family's members' own holding-/management-company edges
  * point to (the family_id alone is a canonicalized slug. this recovers the human-readable name(s) that produced it —
  * without it the headline "these filers report holding company H" output has only a normalization key, and no way back
  * to a name anyone actually filed). For each member row, reads the one `filer_edge` the builder wrote in lockstep with
@@ -514,23 +514,23 @@ export async function readFamilyMembers(
  * valid_from)` — `filer_edge`'s PK is `(from_node_id, to_node_id, source, valid_from)`, so pinning `to_node_id` makes
  * this an exact, single-row probe — then that edge's target node's raw `identifier_value`.
  *
- * **The naming provenance is READ, never re-derived.** The obvious alternative — call `mintFamilyID` here, at read
+ * **The naming provenance is read, never re-derived.** The obvious alternative — call `mintFamilyID` here, at read
  * time, and keep only the edges whose target canonicalizes back to the `familyID` being computed — gets the same
  * scoping, and is correct on the day it is written. It also couples a sealed, shipped, separately-versioned `filer.db`
- * to whatever `canonicalizeOrganizationName` (`@mailwoman/record`) happens to do in the READER'S build, with nothing
+ * to whatever `canonicalizeOrganizationName` (`@mailwoman/record`) happens to do in the reader'S build, with nothing
  * pinning the two together: `filer_manifest` carries `schema_version`/`build_sha`/`source_vintage` but no canonicalizer
  * identity, and `FILER_FAMILY_SCHEMA_VERSION` would not move for a designation-list edit in another workspace. A
  * reviewer reproduced the consequence: rewrite one persisted `family_id` to what a canonicalizer one designation-token
  * older would have minted (node, edge and membership all intact) and every `display_names` on both surfaces silently
- * empties — no error, no warning, the name simply gone. `filer_family.naming_node_id` carries that fact from BUILD time
+ * empties — no error, no warning, the name simply gone. `filer_family.naming_node_id` carries that fact from build time
  * instead, which is also the correct shape under this project's binding rule (provenance on every edge): a membership
  * row must not record the fact without recording what produced it.
  *
- * **`assertion: "authoritative"` is required — EXCEPT for EDGAR's own source.** The general rule is binding: a
- * `display_names` entry is presented as a DOCUMENTED name this family's members actually reported, so an edge inferred
- * by a NAME-SIMILARITY MATCH (a future fuzzy matcher's guess at "these two spellings probably name the same holding
+ * **`assertion: "authoritative"` is required — except for edgar's own source.** The general rule is binding: a
+ * `display_names` entry is presented as a documented name this family's members actually reported, so an edge inferred
+ * by a name-similarity match (a future fuzzy matcher's guess at "these two spellings probably name the same holding
  * company", say) must never surface here — that would restate a guess as a filing, and a dedicated regression test
- * (`family-rollup.test.ts`) pins exactly that case. EDGAR's subsidiary-name→FRN corroboration (`build-filer.ts`) is a
+ * (`family-rollup.test.ts`) pins exactly that case. edgar's subsidiary-name→FRN corroboration (`build-filer.ts`) is a
  * different shape of inference: the name itself is never guessed — it is the CIK's own node id, established by that
  * same builder's authoritative disclosure edge (`cik -> subsidiaryNameNode`) elsewhere in the graph — only which FRN
  * that already-authoritative name belongs to is inferred. So `source = "edgar-exhibit-21"` is the one case an
@@ -544,7 +544,7 @@ export async function readFamilyMembers(
  * `filer.db` itself has no grounds to hold — the same-name/different-entity hazard this phase keeps re-discovering is
  * mirrored exactly by a same-entity/different-name shortcut here. That plurality is why `naming_node_id` is part of
  * `filer_family`'s primary key rather than a mere payload column: the two spellings differ in nothing else, so a
- * narrower key would let `INSERT OR IGNORE` drop the second at build time and lose it before any reader ever ran (see
+ * narrower key would let `insert or ignore` drop the second at build time and lose it before any reader ever ran (see
  * `createFilerFamilyTable`'s docstring, `schema.ts`).
  */
 export async function readFamilyDisplayNames(
@@ -561,7 +561,7 @@ export async function readFamilyDisplayNames(
 			.where("filer_edge.from_node_id", "=", member.node_id)
 			// The join: the builder's own record of which company node named this family — read rather than recomputed. See the docstring above.
 			.where("filer_edge.to_node_id", "=", member.naming_node_id)
-			// The EDGAR-only widening — see the docstring above for why every other source keeps the strict
+			// The edgar-only widening — see the docstring above for why every other source keeps the strict
 			// authoritative-only rule.
 			.where((eb) =>
 				eb.or([
@@ -608,18 +608,18 @@ function nodeOrThrow(byID: ReadonlyMap<string, FilerNodeTable>, nodeID: string):
 }
 
 /**
- * Filters a `filer_cluster` cluster's STATIC member list down to the subset reachable from the queried node via
+ * Filters a `filer_cluster` cluster's static member list down to the subset reachable from the queried node via
  * `assertion: "authoritative"` `filer_edge` rows in force `asOf` a date (`filer_cluster` asOf-scoping). `filer_cluster`
  * itself carries no temporal columns at all (`schema.ts`) — `clusterAuthoritativeComponents` (`cluster-filers.ts`)
- * recomputes it from whatever the CURRENT edge graph looks like on every run, with no `asOf` concept of its own. Left
+ * recomputes it from whatever the current edge graph looks like on every run, with no `asOf` concept of its own. Left
  * unguarded, `filerLookup`'s `cluster` field would report full present-day membership at any `asOf` date, directly
  * contradicting `identifiers`'s own `asOf` scoping — reviewer probe: `asOf 2020-01-01` returned `identifiers: []`
  * (nothing in force that early) yet `cluster` still asserted two members were one entity, the same self-contradiction
  * the primary-FRN temporal fix (see {@linkcode readFRNFilingCandidates}'s docstring) closed for that probe.
  *
- * Bounded to the CANDIDATE members `filer_cluster` already names — a plain `WHERE from_node_id/to_node_id IN
+ * Bounded to the candidate members `filer_cluster` already names — a plain `where from_node_id/to_node_id IN
  * (candidateMembers)` query rather than a whole-graph traversal. Re-deriving the entire authoritative component graph
- * from scratch on every READ (the way `cluster-filers.ts`'s own `readAuthoritativeGroups` does on every clustering RUN)
+ * from scratch on every read (the way `cluster-filers.ts`'s own `readAuthoritativeGroups` does on every clustering RUN)
  * would be redundant work and a real perf regression for a large crosswalk. restricting the BFS to the snapshot's own
  * member list keeps this a small, node-local query, matching every other query in this reader.
  *
@@ -627,7 +627,7 @@ function nodeOrThrow(byID: ReadonlyMap<string, FilerNodeTable>, nodeID: string):
  * i.e. nothing here corroborates the snapshot's cluster assignment as of that date, so this reports "no cluster
  * observed" rather than asserting one the caller has no `asOf`-scoped evidence for. Otherwise returns the reachable
  * subset, sorted (mirrors `cluster-filers.ts`'s own `.orderBy("node_id")`/`.toSorted()` convention) — which may be a
- * PROPER subset of `candidateMembers` when the full component only partially held together as of that date.
+ * proper subset of `candidateMembers` when the full component only partially held together as of that date.
  *
  * `relationship: "same_entity"` is required on this edge query too — the same fix `cluster-filers.ts`'s
  * `readAuthoritativeGroups` needed, for the identical reason: without it, a HoldingCompany/ManagementCompany edge
@@ -717,7 +717,7 @@ function assertFRNIdentifier(value: string): FRN {
 }
 
 /**
- * Read the identity crosswalk for one identifier — see the module docstring for the full contract (XOR query,
+ * Read the identity crosswalk for one identifier — see the module docstring for the full interface (XOR query,
  * manifest-first, temporal scoping, the authoritative/inferred split, and the primary-FRN rule).
  */
 export async function filerLookup(
@@ -741,13 +741,13 @@ export async function filerLookup(
 		throw new Error(`filerLookup: no ${type} node found for value ${stringifyJSON(value)}`)
 	}
 
-	// Criterion 4: temporal scoping. valid_from <= asOf AND (valid_to IS NULL OR asOf < valid_to) — see the module
+	// Criterion 4: temporal scoping. valid_from <= asOf and (valid_to is NULL or asOf < valid_to) — see the module
 	// docstring. Applied identically to the authoritative edges below and the inferred edges further down.
 	//
 	// relationship = same_entity is also required — identifiers answers "which other
 	// identifiers denote this same entity", never "everything this node has an authoritative edge to regardless of
 	// what that edge means". Without this filter a HoldingCompany/ManagementCompany edge (correctly authoritative)
-	// surfaces the holding company's NAME here as if it were this filer's own identifier — see the module
+	// surfaces the holding company's name here as if it were this filer's own identifier — see the module
 	// docstring.
 	const authoritativeEdges = await db
 		.selectFrom("filer_edge")
@@ -854,7 +854,7 @@ export async function filerLookup(
 		source: edge.source,
 	}))
 
-	// Criterion 1 (3b, required): `families` is read from `filer_family` ONLY — an entirely separate query from
+	// Criterion 1 (3b, required): `families` is read from `filer_family` only — an entirely separate query from
 	// `cluster`'s filer_cluster/filer_edge path above and from `inferred_links`'s filer_edge path just above this. No
 	// function in this reader touches both a cluster source and a family source, so a family membership can never be
 	// returned as a cluster member, and vice versa. Same half-open asOf predicate as everywhere else in this module.
@@ -883,7 +883,7 @@ export async function filerLookup(
 		.orderBy("match_score")
 		.execute()
 
-	// display_names is a FAMILY-WIDE fact (every current member's own raw spelling) rather than just
+	// display_names is a family-wide fact (every current member's own raw spelling) rather than just
 	// this node's — so each distinct family_id needs its own member fetch rather than just the one row above. Plain loop rather than .map(), since readFamilyDisplayNames is async.
 	const families: FilerLookupFamily[] = []
 

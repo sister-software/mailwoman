@@ -32,7 +32,7 @@ import { banAdapter } from "#fr/adapters/ban/adapter"
 import type { CorpusAdapter } from "#types"
 import { fccBdcAdapter } from "#us/adapters/fcc-bdc/adapter"
 import { stateHiSchoolsAdapter } from "#us/adapters/state/hi-schools/adapter"
-import { stateIaContractorsAdapter } from "#us/adapters/state/ia-contractors/adapter"
+import { stateIaBuildersAdapter } from "#us/adapters/state/ia-builders/adapter"
 import { stateNyNotariesAdapter } from "#us/adapters/state/ny-notaries/adapter"
 import { stateTxNotariesAdapter } from "#us/adapters/state/tx-notaries/adapter"
 import { tigerAdapter } from "#us/adapters/tiger/adapter"
@@ -44,13 +44,13 @@ import { usgovNPPESAdapter } from "#us/adapters/usgov/nppes/adapter"
 
 /**
  * Built-in adapters. Order is significant: `corpus build` iterates this list to drive every adapter in turn.
- * Coarse-first (admin → postcode), then street-level (BAN FR, TIGER US, OpenAddresses global), then adversarial-source
- * (FCC BDC US, HRSA FQHC US).
+ * Coarse-first (admin → postcode), then street-level (BAN FR, tiger US, OpenAddresses global), then adversarial-source
+ * (FCC BDC US, HRSA fqhc US).
  *
- * The `usgov-samhsa-treatment-locator` adapter is intentionally absent from this list — the SAMHSA Open Data Foundry
+ * The `usgov-samhsa-treatment-locator` adapter is intentionally absent from this list — the samhsa Open Data Foundry
  * bulk CSV the adapter was written against is no longer publicly distributed (see issue #33, 2026-05-17 investigation).
  * The factory + named export remain available so the adapter can be hand-registered if an operator obtains a compatible
- * CSV (FOIA, partner channel, upstream restoration). Re-add it here once a stable public source returns.
+ * CSV (foia, partner channel, upstream restoration). Re-add it here once a stable public source returns.
  */
 export const BUILTIN_ADAPTERS: readonly CorpusAdapter[] = [
 	wofAdminAdapter,
@@ -69,7 +69,7 @@ export const BUILTIN_ADAPTERS: readonly CorpusAdapter[] = [
 	usgovNADAdapter,
 	usgovImlsPlsAdapter,
 	USGovIRSBMFAdapter,
-	stateIaContractorsAdapter,
+	stateIaBuildersAdapter,
 	stateTxNotariesAdapter,
 	stateNyNotariesAdapter,
 	stateHiSchoolsAdapter,
@@ -105,10 +105,10 @@ export {
 } from "#us/adapters/state/hi-schools/adapter"
 
 export {
-	STATE_IA_CONTRACTORS_ADAPTER_ID,
-	STATE_IA_CONTRACTORS_DEFAULT_LICENSE,
-	stateIaContractorsAdapter,
-} from "#us/adapters/state/ia-contractors/adapter"
+	STATE_IA_BUILDERS_ADAPTER_ID,
+	STATE_IA_BUILDERS_DEFAULT_LICENSE,
+	stateIaBuildersAdapter,
+} from "#us/adapters/state/ia-builders/adapter"
 
 export {
 	STATE_NY_NOTARIES_ADAPTER_ID,

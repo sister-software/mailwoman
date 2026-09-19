@@ -5,12 +5,12 @@
  *
  *   #743/#193 — fold GeoNames bilingual / alt-language place-names into a WOF/unified admin DB as
  *   first-class places. The hard-filter recall gap on bilingual countries (the address says
- *   "Karjaa" but the table holds the Swedish "Karis") is missing alt-LANGUAGE names rather than missing
+ *   "Karjaa" but the table holds the Swedish "Karis") is missing alt-language names rather than missing
  *   places: the WOF/Overture `names` carried only the primary, so the candidate build's Latin-alias
  *   explode (build-candidate pass 2) had nothing to widen. GeoNames' per-country dump carries the
  *   variants inline (the Karis row's `alternatenames` includes "Karjaa").
  *
- *   For each POPULATED place (feature class `P`) this writes an `spr` row + `names` rows (primary +
+ *   For each populated place (feature class `P`) this writes an `spr` row + `names` rows (primary +
  *   Latin alt-names) + population into the same tables the WOF/Overture paths use — synthetic ids
  *   based at {@link GEONAMES_ID_BASE} so the three sources never collide. The caller then rebuilds
  *   `place_search` ({@link buildPlaceSearchFTS} with `drop: true`) so the candidate build carries
@@ -42,13 +42,13 @@ const FOLD_OWNED_TABLES = ["spr", "names", "place_population", "ancestors"] as c
 /**
  * Clear everything the alias fold owns — `[GEONAMES_ID_BASE, GEONAMES_POSTAL_ID_BASE)` across {@link
  * FOLD_OWNED_TABLES}
- * — so a fold's output is a function of its country list and dumps ALONE, never of what the DB happened to hold first.
+ * — so a fold's output is a function of its country list and dumps alone, never of what the DB happened to hold first.
  * Returns the rows removed per table.
  *
- * This exists because the synthetic id is a POSITION (`GEONAMES_ID_BASE + n`, counted across the country list in
+ * This exists because the synthetic id is a position (`GEONAMES_ID_BASE + n`, counted across the country list in
  * order), not a derivation from the geonameid: change the list, its order, or a dump's contents and every subsequent id
- * shifts. Without the purge, a second fold overwrote the `spr` PREFIX it reached (`INSERT OR REPLACE`) while its
- * `names`/`ancestors` rows merely appended (bare `INSERT`) and `place_population` skipped unpopulated places entirely —
+ * shifts. Without the purge, a second fold overwrote the `spr` prefix it reached (`insert or replace`) while its
+ * `names`/`ancestors` rows merely appended (bare `insert`) and `place_population` skipped unpopulated places entirely —
  * so the previous run's names, ancestry and populations stayed bound to ids now describing other places.
  *
  * Measured on the live 2026-08-05 artifact: a 14-country re-fold over the 161-country fold baked into
@@ -208,9 +208,9 @@ export async function ingestGeonamesAliases(
 	onProgress?: (event: GeonamesIngestProgress) => void,
 	opts?: {
 		/**
-		 * #267: the countries for which to also fold the GeoNames A-class admin (PCLI country + ADM1 regions) and link each
-		 * locality's `parent_id` + ancestry chain (locality → region → country). PER-COUNTRY because a country that already
-		 * carries WOF admin would double up — pass only the ZERO-COVERAGE gap countries (the coverage-expansion targets),
+		 * #267: the countries for which to also fold the GeoNames A-class admin (pcli country + ADM1 regions) and link each
+		 * locality's `parent_id` + ancestry chain (locality → region → country). PER-country because a country that already
+		 * carries WOF admin would double up — pass only the zero-coverage gap countries (the coverage-expansion targets),
 		 * never the EU alias set. Without admin, a gap country's localities are orphans (`parent_id=-1`, no ancestors), so
 		 * `parentID` scoping and adminCoherence can't reach them and "Tbilisi, GE" can't resolve.
 		 */
@@ -231,8 +231,8 @@ export async function ingestGeonamesAliases(
 	const LATIN_NAME = /^[\p{Script=Latin}\p{M}\s\-'.]{2,60}$/u
 
 	/**
-	 * The DISPLAY rule, for `spr.name` and the A-class admin names. A row's display name stays in one script because
-	 * consumers render it beside Latin siblings. which names are REACHABLE is `cleanAlias`'s question, and the two are
+	 * The display rule, for `spr.name` and the A-class admin names. A row's display name stays in one script because
+	 * consumers render it beside Latin siblings. which names are reachable is `cleanAlias`'s question, and the two are
 	 * separate on purpose.
 	 */
 	const clean = (s: string): string | null => {
@@ -243,7 +243,7 @@ export async function ingestGeonamesAliases(
 
 	/**
 	 * GeoNames packs parenthesized asides, pipe-joined lists and bracketed qualifiers into `alternatenames`. Refusing
-	 * those is what the display rule's character class was doing that still needs doing. refusing a SCRIPT is not. This
+	 * those is what the display rule's character class was doing that still needs doing. refusing a script is not. This
 	 * fold is the only path by which a place in a fold country acquires a name in its own script, so a script test here
 	 * decides whether a country is reachable in its own writing at all — Hong Kong carried six Han lookup keys, all of
 	 * them the country row's, and every one of its eighteen districts was reachable only in romanization.
@@ -316,7 +316,7 @@ export async function ingestGeonamesAliases(
 		const v2File = opts?.alternateDir ? join(opts.alternateDir, `${cc}.txt`) : undefined
 		const readV2 = Boolean(v2File && (await pathExists(v2File)))
 
-		// Survey pass. The dump is STREAMED — NO's is 71 MB and only the caller knows which country
+		// Survey pass. The dump is streamed — no's is 71 MB and only the caller knows which country
 		// comes next — so what a later pass needs has to be collected here rather than re-scanned off a
 		// materialized array. Two things qualify, and both are small: the P-class geonameid set the V2
 		// decoration is restricted to, and the handful of A-class rows the admin pre-pass writes (one
@@ -351,7 +351,7 @@ export async function ingestGeonamesAliases(
 		// preferred if any qualifying row is.
 		const v2 = readV2 ? await parseAlternateNamesV2(v2File!, cc, wanted) : undefined
 
-		// #267 admin pre-pass (gap countries): fold the country (PCLI) + regions (ADM1), self+ancestry them, and
+		// #267 admin pre-pass (gap countries): fold the country (pcli) + regions (ADM1), self+ancestry them, and
 		// build the admin1→region map the localities link through. Point bbox (GeoNames gives a centroid only).
 		let countryID = -1
 		const adminMap = new Map<string, number>()
@@ -365,9 +365,9 @@ export async function ingestGeonamesAliases(
 				const lon = Number(f[5]) || 0
 
 				if (f[7]?.startsWith("PCL")) {
-					// Any country-level political entity — PCLI (independent), PCLD (dependent territory),
-					// PCLF (freely associated), PCLS (special administrative region: HK/MO/PS). All are the
-					// country tier. restricting to PCLI left those ~17 territories without a country row.
+					// Any country-level political entity — pcli (independent), pcld (dependent territory),
+					// pclf (freely associated), pcls (special administrative region: HK/MO/PS). All are the
+					// country tier. restricting to pcli left those ~17 territories without a country row.
 					if (countryID >= 0) continue // one country row
 					countryID = id++
 					sprInsert.run(countryID, -1, aname, "country", cc, lat, lon, lat, lon, lat, lon, 1, 0, 0, 0, 0, 0)
@@ -410,7 +410,7 @@ export async function ingestGeonamesAliases(
 			sprInsert.run(nid, parentID, name, "locality", cc, lat, lon, lat, lon, lat, lon, 1, 0, 0, 0, 0, 0)
 			namesInsert.run(nid, name, "locality", cc, "", "", 0, 0)
 
-			// The SELF row is unconditional (#1514). `populateAncestors` writes one for every spr row it
+			// The self row is unconditional (#1514). `populateAncestors` writes one for every spr row it
 			// sees, so a full build's freeze phase produces it either way — but the freeze does not run on
 			// the fold-on-copy path, and since the purge now clears this range the fold has to emit
 			// everything the closure would. Measured on the 161-country fold: 212,993 self rows, exactly the

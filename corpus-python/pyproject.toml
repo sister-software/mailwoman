@@ -25,7 +25,7 @@ dependencies = [
 # can install without dragging PyTorch / Transformers / ONNX onto every machine.
 [project.optional-dependencies]
 dev = [
-	# Local toolchain + tests. ruff is EXACT-pinned because package.json and .husky/pre-commit
+	# Local toolchain + tests. ruff is exact-pinned because package.json and .husky/pre-commit
 	# call the same version through uvx — a dev-local ruff that disagrees with CI lints or formats
 	# differently than the check does. This pin is the one those call sites must match, and
 	# `scripts/verify_toolchain.py` fails when they do not, because a bump that moved this line
@@ -48,7 +48,7 @@ train = [
 	"transformers==5.9.0",
 	"datasets>=5.0.1",
 	"onnx==1.22.0",
-	# The dynamo exporter itself, so it decides the graph. 0.7.0 -> 0.7.2 is NOT byte-neutral, unlike
+	# The dynamo exporter itself, so it decides the graph. 0.7.0 -> 0.7.2 is not byte-neutral, unlike
 	# the onnx 1.21.0 -> 1.22.0 bump above it: 0.7.2's optimizer constant-folds twelve shape-plumbing
 	# nodes (1 Mul, 9 Concat, 2 Reshape) into six initializers, so fp32 grows 2,576 bytes and int8
 	# seven. Nothing a runtime executes differently — opset 17, ir_version 10, inputs, outputs and
@@ -59,7 +59,7 @@ train = [
 	# Matches the `onnxruntime-web` the browser runs (package.json, packages/neural/package.json), which
 	# is npm's current `latest`. It quantizes the graph that runtime executes, so a version gap means
 	# the artifact is validated by a runtime that is not the one serving it. Verified graph-neutral:
-	# 1.26.0 and 1.29.0 quantize one fixed fp32 to a BYTE-IDENTICAL int8 (same sha256, opset 17, same
+	# 1.26.0 and 1.29.0 quantize one fixed fp32 to a byte-identical int8 (same sha256, opset 17, same
 	# node, initializer and value_info counts), so this bump cannot move what ships. The two runtimes
 	# do differ numerically executing that graph — up to ~1e-1 on a logit — and agree on every
 	# decision: 0 argmax flips over 172 real tokens across ten addresses. `verify_toolchain.py`
@@ -81,7 +81,7 @@ where = ["src"]
 [tool.setuptools.package-dir]
 "" = "src"
 
-# Files the package SHIPS beside its modules. `py.typed` makes the annotations visible to a consumer
+# Files the package ships beside its modules. `py.typed` makes the annotations visible to a consumer
 # that imports this package; `postcode-shapes.json` is the record `features/postcode_shapes.py`
 # reads, and a wheel without it raises at import rather than at first use.
 [tool.setuptools.package-data]
@@ -96,7 +96,7 @@ src = ["src", "tests", "scripts"]
 
 [tool.ruff.lint]
 # Ruff's defaults (pyflakes `F` + pycodestyle `E`) plus import sorting (`I`), pyupgrade
-# (`UP`), and bugbear (`B`). Line length is enforced by the formatter, so the linter's
+# (`up`), and bugbear (`B`). Line length is enforced by the formatter, so the linter's
 # `E501` is disabled to avoid double-reporting long lines it can't wrap (URLs, etc.).
 select = ["E", "F", "I", "UP", "B"]
 ignore = ["E501"]
@@ -118,7 +118,7 @@ pretty = true
 warn_unused_configs = true
 
 # pyarrow and sentencepiece ship no py.typed marker; numpy and pyyaml (via types-PyYAML) are
-# typed. The bare module name AND its submodules are both needed — "pyarrow.*" alone does not
+# typed. The bare module name and its submodules are both needed — "pyarrow.*" alone does not
 # match "import pyarrow". If real stubs ever appear for either, drop this override, don't keep it.
 [[tool.mypy.overrides]]
 module = ["pyarrow", "pyarrow.*", "onnxruntime", "onnxruntime.*"]
@@ -149,5 +149,5 @@ disallow_untyped_decorators = false
 exclude_dirs = ["launch", "scripts"]
 # B311: pseudo-random generators are used for corpus sampling/splits, seeded for
 # reproducibility (audits/, corpora/, countries/*/corpora, data/loader/, tokenizer/train.py). They are
-# data-generation randomness, never security/crypto — the CSPRNG rule does not apply.
+# data-generation randomness, never security/crypto — the csprng rule does not apply.
 skips = ["B311"]

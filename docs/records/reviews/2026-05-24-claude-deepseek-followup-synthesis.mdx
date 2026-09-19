@@ -48,7 +48,7 @@ Why this is better than the alternatives:
 
 - **vs porting beam decoder to TS**: half the work (~100 lines vs 200-300), and sequence-level n-best decoding was the wrong abstraction for the reconciler anyway. The reconciler takes per-span confidence rather than BIO-sequence-level confidence.
 - **vs synthesised top-k**: real model confidences (no artificial perturbations of argmax), so the measurement reflects the actual classifier signal.
-- **vs waiting for PR #128's top-k inference**: code path matches the eventual production runtime — when the top-k classifier eventually trains, the TS runtimeswaps "per-token softmax aggregation" for "classifier's top-k API," same downstream contract.
+- **vs waiting for PR #128's top-k inference**: code path matches the eventual production runtime — when the top-k classifier eventually trains, the TS runtimeswaps "per-token softmax aggregation" for "classifier's top-k API," same downstream interface.
 
 ## Go/no-go decision matrix for joint-reconcile vs argmax
 

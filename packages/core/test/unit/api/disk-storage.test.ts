@@ -147,7 +147,7 @@ describe("buildDiskStorage: round trip", () => {
 
 describe("buildDiskStorage: validate BEFORE writing", () => {
 	it("never writes an entry the configured validator rejects, and the next read is a clean miss", async () => {
-		// The historical failure: a 200 carrying an HTML error page was cached under a permanent TTL, so
+		// The historical failure: a 200 carrying an html error page was cached under a permanent TTL, so
 		// every later request replayed the poisoned entry forever with no self-healing path.
 		const storage = buildDiskStorage({
 			directory: directory.path,
@@ -207,7 +207,7 @@ describe("buildDiskStorage: validate BEFORE writing", () => {
 describe("buildDiskStorage: atomic write with a per-write-unique temp name", () => {
 	// The per-write-unique temp name is required, and a deterministic one is the tempting mistake.
 	// With a fixed `${finalPath}.building`, two writers racing on the same key target the same temp file:
-	// the first `rename()` moves it away and the second gets a raw ENOENT for a response that had already
+	// the first `rename()` moves it away and the second gets a raw enoent for a response that had already
 	// succeeded (reproduces 6/6), and with large bodies the interleaved writes can also leave a
 	// corrupt-but-parseable entry (2/10). 10 rounds at 200KB, two independent storage instances.
 	it("never throws and never corrupts when two independent writers race on the same key", async () => {
@@ -228,7 +228,7 @@ describe("buildDiskStorage: atomic write with a per-write-unique temp name", () 
 			const added = (await directoryNames(directory.path)).filter((name) => !before.has(name))
 
 			// Exactly one: not zero (both writes vanished), not two (an orphaned `.building` file left
-			// behind alongside the final one — the old bug's ENOENT path did exactly that).
+			// behind alongside the final one — the old bug's enoent path did exactly that).
 			expect(added).toHaveLength(1)
 
 			const entry = await readLocalJSONFile<CachedStorageValue>(directory.resolve(added[0]!))
@@ -287,9 +287,9 @@ describe("buildDiskStorage: a failed cache write is a cache miss, not a request 
 	})
 
 	it("leaves a SUCCESSFUL response intact through APIClient when the cache write fails", async () => {
-		// The contract, end to end: `axios-cache-interceptor` awaits `storage.set` inside its response
-		// `onFulfilled`, so a throwing write rejects a request whose HTTP response already succeeded. It
-		// escapes as a bare `Error` — no `status` — which `isTransientResourceError` reads as FALSE, so a
+		// The interface, end to end: `axios-cache-interceptor` awaits `storage.set` inside its response
+		// `onFulfilled`, so a throwing write rejects a request whose http response already succeeded. It
+		// escapes as a bare `Error` — no `status` — which `isTransientResourceError` reads as false, so a
 		// caller is told the failure is permanent and drops the work. Any filesystem error does this.
 		// reproduced here with a `0o500` parent.
 		if (!(await makeUnwritable())) {

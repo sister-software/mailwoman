@@ -4,7 +4,7 @@
  * @author Teffen Ellis, et al.
  *
  *   The shared headless-Chromium harness behind the `registry viz` renderers (an internal helper rather than a command). The WebGL consumers (Plotly 3D, MapLibre) get no GPU in headless Chromium, so
- *   the browser launches on ANGLE's SwiftShader software rasterizer (`--use-gl=angle
+ *   the browser launches on angle's SwiftShader software rasterizer (`--use-gl=angle
  *   --use-angle=swiftshader --enable-unsafe-swiftshader`); each caller owns its own navigation +
  *   wait strategy and screenshots inside the callback.
  *

@@ -59,7 +59,7 @@ Properties:
   the reverse derivation (today's direction) is the lossy one.
 - The alignment step gets SIMPLER: `alignRow` already finds components by char offset and then
   quantizes to tokens — the quantization step is deleted rather than added to.
-- The January Chevrotain experiment's output contract (typed char-offset spans) and Stage 2.7's
+- The January Chevrotain experiment's output interface (typed char-offset spans) and Stage 2.7's
   `PhraseProposal` both become directly storable as supervision if ever wanted.
 
 ## What this change touches (the full list)

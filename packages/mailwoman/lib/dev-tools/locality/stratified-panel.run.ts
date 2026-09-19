@@ -11,11 +11,11 @@
  *   built the panel that exposed it.
  *
  *   The draw: GeoNames' postal export through `readTriplesFromGeonames`, which applies the known-locality filter and
- *   the per-country locality COLUMN (column 3 is the city for the US, admin2 for PT/MX/IN), then
- *   `applyLocalityQuota` so one city's postcode list cannot fill a region, then a fixed count per region. A region the
+ *   the per-country locality column (column 3 is the city for the US, admin2 for PT/MX/IN), then
+ *   `applyLocalityQuota`. Therefore, one city's postcode list cannot fill a region, then a fixed count per region. A region the
  *   source holds fewer rows for contributes what it has, and the run reports which regions came up short.
  *
- *   The coordinate is the POSTCODE's, straight from the export's own columns. It is good enough to place a row on a
+ *   The coordinate is the postcode's, straight from the export's own columns. It is good enough to place a row on a
  *   map and to reject a gross mis-geocode. it is not a locality centroid, so a probe grading rooftop distance against
  *   it is grading the wrong thing. Each row says so in `coordinate_basis`.
  *
@@ -54,7 +54,7 @@ const { values } = parseArguments({
 		source: { type: "string" },
 		quota: { type: "string", default: String(DEFAULT_LOCALITY_QUOTA) },
 		/**
-		 * What the even draw is taken across: `region`, `shape` (the locality NAME's shape), or `region-shape`.
+		 * What the even draw is taken across: `region`, `shape` (the locality name's shape), or `region-shape`.
 		 *
 		 * Region answers #2311's interior spread. Shape answers a different question, and one the region draw cannot:
 		 * measured on `candidate.db`, 34.7% of the 86,063 distinct US locality names end in a USPS street suffix (`Orland
@@ -95,7 +95,7 @@ if (!STRATIFY.has(values.stratify!)) {
 }
 
 /**
- * The locality NAME's shape, in the same three buckets `us/locality-region-postcode-arms.run.ts` reports, using the
+ * The locality name's shape, in the same three buckets `us/locality-region-postcode-arms.run.ts` reports, using the
  * same {@linkcode suffixTail} so a rate read on this panel and a rate read on that one are about the same populations.
  */
 function shapeOf(locality: string): string {
@@ -173,7 +173,7 @@ for (const [stratum, bucket] of [...byStratum].toSorted()) {
 	}
 
 	// Taking the head of the bucket is a sample ordered by the source, which is postcode order within a state. For a
-	// REGION stratum that is harmless — the stratum already fixes the state. For a SHAPE stratum it is not: the first
+	// region stratum that is harmless — the stratum already fixes the state. For a shape stratum it is not: the first
 	// 400 suffix-tail names in US.txt are all Alaskan, so a shape draw taken from the head measures one state per
 	// bucket. A seeded shuffle spreads each shape across the country. The region draw keeps its existing order so the
 	// numbers already published against `us-stratified.jsonl` still describe the panel this writes.

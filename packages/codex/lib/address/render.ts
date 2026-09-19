@@ -12,10 +12,10 @@
  *
  *   This is the one render. `formatAddress` is the join over it, and the alignment a caller used to recover by
  *   searching the output string for each value is now a fact the render already holds: {@linkcode AddressRendering}
- *   says which tags it PLACED and names the ones it could not, where a substring search cannot tell a component the
+ *   says which tags it placed and names the ones it could not, where a substring search cannot tell a component the
  *   layout dropped from one whose value happens to sit inside another.
  *
- *   ONE RULE, from `@mailwoman/codex/address-layout`: a node that renders nothing removes itself, and its connector
+ *   one rule, from `@mailwoman/codex/address-layout`: a node that renders nothing removes itself, and its connector
  *   goes with it. A connector between two slots needs a rendered slot on each side. a connector at a line's edge has
  *   one side, so it binds to the slot it touches. Adjacent survivors collapse to the first, so the layout's stronger
  *   separator wins — an absent region gives `New York, 10118`, which is what the engine this replaces produced.
@@ -51,7 +51,7 @@ export interface AddressRendering {
 	 */
 	readonly placed: readonly ComponentTag[]
 	/**
-	 * Tags the dict carried a value for that the layout has no slot for — NAMED rather than silently dropped. France
+	 * Tags the dict carried a value for that the layout has no slot for — named rather than silently dropped. France
 	 * absorbing a region into its postcode line is the common case, and a caller aligning components against the output
 	 * needs to know the difference between "not printed" and "not supplied".
 	 */
@@ -95,7 +95,7 @@ function evaluateAtom(atom: AddressAtom, components: ComponentDict): readonly Ad
  * Which of a run of surviving connectors to print.
  *
  * A run forms when the slots between two connectors all render nothing, so what is left is several separators with no
- * values between them. The STRONGEST wins: a connector carrying punctuation is a harder boundary than a space, and
+ * values between them. The strongest wins: a connector carrying punctuation is a harder boundary than a space, and
  * printing the space would join two values the layout meant to separate. `Calle Mayor, 12` keeps its comma when the
  * street suffix is absent, and `New York, 10118` keeps its comma when the region is. the space forms of both would read
  * as one value.

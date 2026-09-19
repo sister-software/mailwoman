@@ -70,14 +70,14 @@ export async function loadClassifierFromWeights(
 		/**
 		 * Explicit `placetype-census-<cc>.bin` path, overriding the build-local data-root lookup (`loadPlacetypeCensus`).
 		 * For a harness that built a census to a scratch directory — the data root is read-only on the lab host, so "build
-		 * it and point at it" is the only way to exercise a FRESH artifact. A wrong-country file is still refused by the
+		 * it and point at it" is the only way to exercise a fresh artifact. A wrong-country file is still refused by the
 		 * loader's header check.
 		 */
 		placetypeCensusPath?: string
 		/**
 		 * Override the card's `suppress_gazetteer_near_postcode` declaration — the near-postcode gazetteer choreography.
 		 *
-		 * A DECLARED ABLATION for measurement, never a production setting: the choreography pairs with the train-time half,
+		 * A declared ablation for measurement, never a production setting: the choreography pairs with the train-time half,
 		 * so a model trained with it and served without it is a mismatch. `createScorer` has carried the same override
 		 * since the channel shipped. this makes the package-shaped path able to answer the same question.
 		 */
@@ -87,7 +87,7 @@ export async function loadClassifierFromWeights(
 	// The sanctioned crossing into the three Node-only modules. `webpackIgnore` leaves the import
 	// statement intact, so it becomes a runtime native ESM import: resolvable in Node, and never
 	// followed into the browser chunk graph, where `node:fs` and `onnxruntime-node`'s binaries would
-	// fail to parse. A STATIC import of any of the three would be followed, which the lint rule guards.
+	// fail to parse. A static import of any of the three would be followed, which the lint rule guards.
 
 	/* oxlint-disable typescript/no-restricted-imports -- webpackIgnore keeps these out of the bundle */
 	const [
@@ -110,7 +110,7 @@ export async function loadClassifierFromWeights(
 	/* oxlint-enable typescript/no-restricted-imports */
 	const resolved: ResolvedWeights = await resolveWeights(opts)
 
-	// The vocabulary belongs to the MODEL, so an overlay that shares a base model inherits it rather than
+	// The vocabulary belongs to the model, so an overlay that shares a base model inherits it rather than
 	// restating it. A carrier package's own card describes the overlay — its version, its own artifacts —
 	// and omitting `labels` there is correct. copying them in would be a second copy to go stale on the
 	// next retrain. Falling back is what keeps the two facts in one place.
@@ -136,12 +136,12 @@ export async function loadClassifierFromWeights(
 	}
 
 	// A char-path package (#2164) has no SentencePiece model: the encoder is the sealed character vocabulary plus the
-	// (S, W, ctx) contract the card declares, and the runner's `inferChars` feeds the graph.
+	// (S, W, ctx) interface the card declares, and the runner's `inferChars` feeds the graph.
 	const charEncoder =
 		resolved.encoder.kind === "char"
 			? {
 					vocabulary: parseCharVocabulary(await readLocalJSONFile(resolved.charVocabPath!), resolved.charVocabPath!),
-					contract: {
+					interface: {
 						maxUnits: resolved.encoder.maxUnits,
 						maxUnitWidth: resolved.encoder.maxUnitWidth,
 						ctxChars: resolved.encoder.ctxChars,
@@ -166,12 +166,12 @@ export async function loadClassifierFromWeights(
 	])
 
 	// Feed the channels the shipped model was trained against.
-	// The anchor-trained en-us model goes OOD when scored anchor-OFF (the #566/#685 crater: country
+	// The anchor-trained en-us model goes OOD when scored anchor-off (the #566/#685 crater: country
 	// ~0, region 71, locality 57 vs the server-tier 68/90/77). The browser loader already feeds the
 	// channels from URLs. this is the Node-side mirror so every consumer (ResolveRouter,
 	// GeocodeRouter, geocode.tsx, the CLI) transparently gains them with no callsite change.
 	//
-	// SOFT: each channel is best-effort. A caller-passed `postcodeAnchorLookup` always wins. When
+	// soft: each channel is best-effort. A caller-passed `postcodeAnchorLookup` always wins. When
 	// the model-card declares a channel required but the package didn't ship its data, we warn once
 	// (mirroring the web loader's `warnOnUnfedTrainedChannels`) and run that channel off — never crash.
 	const declared = await readRequiredChannels(resolved.modelCardPath)
@@ -208,7 +208,7 @@ export async function loadClassifierFromWeights(
 	// declared-required warning runs only for the channels whose artifact has a fixed name. the evidence
 	// channels' `requires`-declared enforcement arrives with the first bundle-trained card. Pocket tier is
 	// anchor-only: `resolveWeights` already withholds the gazetteer/country paths there, so a
-	// declared-required channel is EXPECTED to be unfed — don't warn.
+	// declared-required channel is expected to be unfed — don't warn.
 	const lexiconChannels: Array<{
 		channel: "gazetteer" | "country" | "street_type" | "locality_surface"
 		path: string | undefined
@@ -256,7 +256,7 @@ export async function loadClassifierFromWeights(
 	const localitySurfaceLexicon = lexicons.locality_surface
 
 	// Placetype-pair index sibling (placetype-pair-prior arc): construct a PairIndexResolver
-	// when the package shipped one for this country. HARD COUNTRY CHECK — an index built for one
+	// when the package shipped one for this country. hard country check — an index built for one
 	// country must never bias a parse resolved for a different locale (a mismatch is a packaging bug rather than something to apply anyway): the index header's `country` must equal the resolved locale's
 	// country subtag, or the default is skipped with a single warning naming both. Unlike the
 	// anchor/gazetteer/country soft-feed channels above, there is no "declared required" fail-closed
@@ -276,10 +276,10 @@ export async function loadClassifierFromWeights(
 			const localeCountry = (opts.locale ?? "en-us").toLowerCase().split("-")[1] ?? ""
 
 			if (peekedHeader.country === localeCountry) {
-				// `parentDelta` (#46, the whole-edge parent bias) rides the ARTIFACT, exactly as `delta` and
+				// `parentDelta` (#46, the whole-edge parent bias) rides the artifact, exactly as `delta` and
 				// `transitionBeta` do — the prior reads `PairIndexResolver.parentDelta` off the header, so a
 				// calibrated locale (us/gb/nz/fr at 5) is default-on and an unmeasured one (de/in/es/it, no header
-				// field) stays off, with no code here knowing which is which. The env is an OVERRIDE for eval
+				// field) stays off, with no code here knowing which is which. The env is an override for eval
 				// sweeps only and wins when set. see `MAILWOMAN_PAIR_PARENT_DELTA` in `neural/lib/env.ts`.
 				placetypePair = {
 					index: new PairIndexResolver(pairIndexBytes),
@@ -301,7 +301,7 @@ export async function loadClassifierFromWeights(
 		}
 	}
 
-	// PCN1 placetype census (observability rung, 2026-08-05): BUILD-LOCAL rather than a weights-package sibling — the
+	// PCN1 placetype census (observability rung, 2026-08-05): build-local rather than a weights-package sibling — the
 	// loader and the reasons live together in `loadPlacetypeCensus`. Absent artifact → `undefined` → the feature is
 	// entirely inert, silently, because not having built it is the normal state for every consumer.
 	const placetypeCensus = await loadPlacetypeCensus(
@@ -310,7 +310,7 @@ export async function loadClassifierFromWeights(
 	)
 
 	// Near-postcode gazetteer choreography + conventions mode: drive them off the card's declared
-	// SHIP-CONFIG (mirrors createScorer / the browser loader defaults), inert when the source
+	// ship-config (mirrors createScorer / the browser loader defaults), inert when the source
 	// channel is absent. Byte-stable for a non-anchor card (no `requires` → all undefined/false).
 	// The anchor span mode is card-declared too, never inferred: an undeclared card leaves it
 	// undefined and the channel keeps the alnum-run scan verbatim.

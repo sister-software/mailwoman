@@ -36,7 +36,7 @@ export interface TIGERBlockRow extends TIGERTabulatedBlockProperties {
 }
 
 /**
- * Given a row from the TIGER tabulated block table, parses it into a GeoJSON feature.
+ * Given a row from the tiger tabulated block table, parses it into a GeoJSON feature.
  *
  * @internal
  */
@@ -52,7 +52,7 @@ export function parseTIGERBlockFromRow({ serializedGeometry, ...properties }: TI
 }
 
 /**
- * Given a collection of rows from the TIGER tabulated block table, parses them into a GeoJSON feature collection.
+ * Given a collection of rows from the tiger tabulated block table, parses them into a GeoJSON feature collection.
  *
  * @internal
  */

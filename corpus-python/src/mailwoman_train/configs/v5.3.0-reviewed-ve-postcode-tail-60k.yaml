@@ -1,4 +1,4 @@
-# v5.3.0 — FROM-SCRATCH treatment: reviewed Venezuela postcode tails (#1821 / #1871)
+# v5.3.0 — from-scratch treatment: reviewed Venezuela postcode tails (#1821 / #1871)
 #
 # Control: v5.0.0-base-alltails-60k.yaml at seed 42. The replacement seed-control run uses the same
 # recipe at seed 43 to measure run-to-run variance. it is not the attribution control for this arm.

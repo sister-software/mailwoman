@@ -19,7 +19,7 @@ export interface BuildInfo {
 	 */
 	revision: string
 	/**
-	 * The same revision, full length. Kept BESIDE `revision` rather than replacing it: a production smoke already reads
+	 * The same revision, full length. Kept beside `revision` rather than replacing it: a production smoke already reads
 	 * `revision` and compares it against a short form, and a commit URL wants the whole thing.
 	 */
 	commit: string

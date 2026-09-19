@@ -1,9 +1,9 @@
 # === v8-leg2-charword — CJK Leg 2 A (char-word): the unification bake-off (checks v9's shape rather than v8). ===
-# Controlled encoder pair on the PRODUCTION latam feed: identical data block (v385's mixture +
-# augmentations + affix relabel, channel painting STRIPPED from both legs), identical geometry
+# Controlled encoder pair on the production latam feed: identical data block (v385's mixture +
+# augmentations + affix relabel, channel painting stripped from both legs), identical geometry
 # (384/4, the Leg-1 substrate), identical schedule — the one delta between v8-leg2-charword and
 # v8-leg2-sp is the embedding front-end. From scratch, 8k steps, no channels, no CRF.
-# PRIMARY READ: val token-F1 + per-tag F1 at 8k on the shared val stream (same seed); delta within
+# primary read: val token-F1 + per-tag F1 at 8k on the shared val stream (same seed); delta within
 # noise -> v9 may consider single-model unification. No check — a measurement.
 # Known asymmetries (recorded): the SP leg drops rows > 128 pieces while the char leg caps at 64
 # word units. the Latin char vocab (4,114 entries, min_count 2) was sealed from a 1M-row sample —
@@ -51,7 +51,7 @@ data:
     usgov-hrsa-fqhc: 2.0
     usgov-imls-pls: 2.0
     usgov-nad: 1.0
-    state-ia-contractors: 2.0
+    state-ia-builders: 2.0
     state-tx-notaries: 1.5
     state-ny-notaries: 2.0
     deepseek-kryptonite: 3.0
@@ -71,9 +71,9 @@ data:
     synth-no-street-led: 0.0
     synth-cz-pcfirst-preposition: 12.0
     synth-nl-postcode: 6.0
-    # PROBE 1: the fragment/autocomplete source (assay weight — moderate precedent).
+    # probe 1: the fragment/autocomplete source (assay weight — moderate precedent).
     synth-fragment: 6.0
-    # #727 T2 NEW — the one variable. 12.0 = the targeted-fix precedent (fr-bare-street,
+    # #727 T2 new — the one variable. 12.0 = the targeted-fix precedent (fr-bare-street,
     # si-bare-village, no-street-led are all 12.0). Streets with no house number + the
     # bare-locality counter.
     synth-fr-fragment: 12.0

@@ -5,12 +5,12 @@
  *
  *   Write a `layer_manifest` into a freshly built database — the one place every builder does it.
  *
- *   Phase 3 of the lab-reproducibility sequence rolls the layer contract out across the builders
+ *   Phase 3 of the lab-reproducibility sequence rolls the layer interface out across the builders
  *   `mailwoman data inventory` reported as unprovenanced. Four of them would otherwise repeat the same
- *   twenty-five lines of open/create/write/destroy, which is the shape AGENTS.md names a defect generator:
+ *   twenty-five lines of open/create/write/destroy, which is the shape agents.md names a defect generator:
  *   the code gets copied correctly and the reasoning does not travel with it.
  *
- *   THE ORDERING IS THE WHOLE CONTRACT. This must run before `sealDatabase`, because a sealed artifact is
+ *   the ordering is the whole interface. This must run before `sealDatabase`, because a sealed artifact is
  *   `0444` and a manifest written afterwards needs the database reopened read-write — the one thing
  *   `openBuiltClient` exists to refuse. Calling it after the seal does not fail quietly. it fails
  *   loudly, which is the correct half. What it would cost is the build, at its very end.
@@ -18,7 +18,7 @@
 
 import {
 	createLayerManifestTable,
-	type LayerContractDatabase,
+	type layerschemadatabase,
 	type LayerManifest,
 	writeLayerManifest,
 } from "@mailwoman/core/layers"
@@ -35,7 +35,7 @@ import { DatabaseClient } from "@mailwoman/sqlite/client"
  * @throws When the database is already sealed, which is the ordering mistake this function exists to make loud.
  */
 export async function stampLayerManifest(path: string, manifest: LayerManifest): Promise<void> {
-	using kdb = new DatabaseClient<LayerContractDatabase>(path)
+	using kdb = new DatabaseClient<layerschemadatabase>(path)
 
 	await createLayerManifestTable(kdb)
 	await writeLayerManifest(kdb, manifest)

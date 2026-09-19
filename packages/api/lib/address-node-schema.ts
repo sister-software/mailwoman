@@ -10,7 +10,7 @@ import type { AddressNode } from "@mailwoman/core/decoder"
 /**
  * OpenAPI representation of one decoded address-tree node.
  *
- * The decoder's recursive union cannot be derived by the OpenAPI generator, so the runtime wire contract is an open
+ * The decoder's recursive union cannot be derived by the OpenAPI generator, so the runtime wire interface is an open
  * object while the `AddressNode` type documents its recursive shape.
  */
 export const AddressNodeSchema = z.custom<AddressNode>().openapi("AddressNode", {

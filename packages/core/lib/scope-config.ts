@@ -13,7 +13,7 @@
  *   about the other.
  *
  *   The register carries membership only. The evidence behind a tier is prose with citations and stays in
- *   `docs/engineering/SCOPE.mdx`; `repo-health`'s `locale-scope` check refuses a disagreement between the two.
+ *   `docs/engineering/scope.mdx`; `repo-health`'s `locale-scope` check refuses a disagreement between the two.
  */
 
 import type { PathBuilderLike } from "path-ts"
@@ -22,7 +22,7 @@ import { readLocalJSONFile } from "#fs/readers"
 import { repoRootPathBuilder } from "#paths"
 
 /**
- * The declared tiers, keyed by the number SCOPE.mdx prints. Keys are strings because JSON has no integer keys, and the
+ * The declared tiers, keyed by the number scope.mdx prints. Keys are strings because JSON has no integer keys, and the
  * tier numbers are labels rather than a scale you would do arithmetic on.
  */
 export const SCOPE_TIER_KEYS = ["1", "2", "3", "4", "5"] as const

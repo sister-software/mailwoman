@@ -3,9 +3,9 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   `POST /v1/licenses/refresh`: the lid and its secret answer the current token. A wrong secret and an unknown lid
+ *   `post /v1/licenses/refresh`: the lid and its secret answer the current token. A wrong secret and an unknown lid
  *   answer the same body, so the route confirms nothing about which lids exist. Rate limited per lid, which is what an
- *   attacker guessing secrets holds constant, and per address independently, so a stranger who learns a lid cannot
+ *   attacker guessing secrets holds constant, and per address independently. Therefore, a stranger who learns a lid cannot
  *   spend its owner's allowance.
  */
 

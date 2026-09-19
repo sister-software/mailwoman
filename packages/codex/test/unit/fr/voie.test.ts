@@ -35,7 +35,7 @@ describe("isFrenchStreetWord", () => {
 	})
 
 	it("matches the whole token, so a non-voie word is not caught", () => {
-		// French types LEAD the name and are matched as whole tokens rather than suffixes — so neither a
+		// French types lead the name and are matched as whole tokens rather than suffixes — so neither a
 		// surname nor a commune that happens to contain a voie substring is flagged.
 		expect(isFrenchStreetWord("Paris")).toBe(false)
 		expect(isFrenchStreetWord("Bordeaux")).toBe(false)

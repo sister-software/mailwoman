@@ -6,8 +6,8 @@
  *   Tree resolution over a browser-side place lookup: the browser half of the same resolve cascade the
  *   node path runs, with nothing in it that belongs to one host.
  *
- *   The lookup is structural (`MailwomanLookupLike`) rather than a concrete class, so the HTTPVFS lookup,
- *   the WASM lookup here, and any future one all satisfy it.
+ *   The lookup is structural (`MailwomanLookupLike`) rather than a concrete class, so the httpvfs lookup,
+ *   the wasm lookup here, and any future one all satisfy it.
  */
 
 import { areaPostcodeLeadsLocality, isUnitGradePostcodeHit } from "@mailwoman/codex"
@@ -124,10 +124,10 @@ const WOF_RANK_REGION = 4
 
 /**
  * How the demo picks the pin from a resolved tree: prefer the most address-precise resolved node — under the
- * locality-first epoch convention the Node ladder follows (`extractGeocodeResult`): an AREA-class postcode (an FR
+ * locality-first epoch convention the Node ladder follows (`extractGeocodeResult`): an area-class postcode (an FR
  * 5-digit zone, an SI 4-digit code) is coarser than the locality it sits in, so it ranks below locality and pins only
  * when nothing finer resolved. Before 2026-08-11 this table put every postcode first (the old cascade's tier order) —
- * the staged-repoint e2e measured the demo pinning the SI `6250` AREA centroid where Node pins the Zabiče locality, the
+ * the staged-repoint e2e measured the demo pinning the SI `6250` area centroid where Node pins the Zabiče locality, the
  * exact drift the #861 convergence exists to prevent.
  *
  * The rows here are the demo's own ordering and deliberately not `PLACETYPE_SPECIFICITY`: `neighbourhood` sits below
@@ -140,7 +140,7 @@ const PIN_RANK: Record<string, number> = {
 	borough: 4,
 	localadmin: 4,
 	neighbourhood: 4,
-	// An AREA-class postcode sits below the whole locality tier rather than below `locality` alone. `borough` and `localadmin`
+	// An area-class postcode sits below the whole locality tier rather than below `locality` alone. `borough` and `localadmin`
 	// are not peers of that tier, they are it — `PLACETYPE_FILTER_GROUPS.locality` is `{locality, borough, localadmin}`
 	// because a New England civil town is `localadmin` in WOF. Ranked at 4.5 this pinned the postcode on 404 of 2,000 US
 	// panel rows where Node returns the town, and the town was closer on 65.6% of them: `344 East Sheldon Rd, Sheldon,
@@ -155,7 +155,7 @@ const PIN_RANK: Record<string, number> = {
 }
 
 /**
- * The rank a postcode takes when it LEADS — above locality, the same position Node's `ADMIN_LADDER_POSTCODE_FIRST`
+ * The rank a postcode takes when it leads — above locality, the same position Node's `ADMIN_LADDER_POSTCODE_FIRST`
  * gives it. Two routes reach it, exactly as on the Node side: a unit-grade exact hit (#977/#22), or an address system
  * whose area-grade codes are finer than its localities (`areaPostcodeLeadsLocality`, #1780).
  */
@@ -328,7 +328,7 @@ export async function runCascade(
 
 	collected.sort((a, b) => b.rank - a.rank || b.hit.score - a.hit.score)
 
-	// Cross-country postcode check, carried over from the old cascade: an ambiguous INTERNATIONAL
+	// Cross-country postcode check, carried over from the old cascade: an ambiguous international
 	// postcode (10115 = Berlin DE and a New York US ZIP shape) must not out-pin the parsed city
 	// across countries. When the top pin is a postcode whose country differs from the resolved
 	// locality's, the locality wins the pin. the postcode stays in the list.

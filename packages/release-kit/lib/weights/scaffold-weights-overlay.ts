@@ -86,7 +86,7 @@ export async function scaffoldWeightsOverlay(
 
 	/**
 	 * BCP-47 in, lowercase package suffix out: `es-ES` → `es-es`. The workspace directory, the package name and every
-	 * register use this form. the ORIGINAL casing is kept only for the model card's `locale` field, which is the one
+	 * register use this form. the original casing is kept only for the model card's `locale` field, which is the one
 	 * place the tag is a tag rather than an identifier.
 	 */
 	const localeTag = options.locale
@@ -103,7 +103,7 @@ export async function scaffoldWeightsOverlay(
 	}
 
 	/**
-	 * Read the ROOT version rather than a sibling package's. `prepare-version` refuses to bump a tree that is not
+	 * Read the root version rather than a sibling package's. `prepare-version` refuses to bump a tree that is not
 	 * version-synced, so a new workspace must be born at the root version — the v8.4.0 bdc/filer drift is what that guard
 	 * exists to catch.
 	 */
@@ -196,11 +196,11 @@ await materializeDevOverlay({
  *   overlay declares \`mailwoman.baseWeights\`, so it symlinks nothing and its only job is building the index that makes
  *   \`resolveWeights({locale: "${slug}"})\` surface \`pairIndexPath\` in local dev.
  *
- *   TODO(${slug}): say what makes this locale's index required, and what it is INERT without. If
- *   the locale writes its postcode BEFORE the locality, it needs entries in
+ *   TODO(${slug}): say what makes this locale's index required, and what it is inert without. If
+ *   the locale writes its postcode before the locality, it needs entries in
  *   \`SEGMENT_PARENT_POSTCODE_SHAPES\` and \`LEADING_POSTCODE_COUNTRIES\`
  *   (\`neural/placetype-pair-prior.ts\`) or the artifact changes nothing; if it writes the postcode
- *   last, say so, because the ABSENCE from that set is then deliberate. Write this for ${slug} rather than
+ *   last, say so, because the absence from that set is then deliberate. Write this for ${slug} rather than
  *   for whichever locale you read first.
  */
 

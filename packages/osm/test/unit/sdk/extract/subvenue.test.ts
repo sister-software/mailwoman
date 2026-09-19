@@ -3,19 +3,19 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Pins the pure interfaces of the sub-venue extractor: the hstore parser, the per-layer OGRSQL builder,
+ *   Pins the pure interfaces of the sub-venue extractor: the hstore parser, the per-layer ogrsql builder,
  *   the tag-rule matcher, and the feature decoder. `extractOSMSubVenues` itself spawns `ogr2ogr` and
- *   is not exercised here (GDAL is not a test dependency) — but the GeoJSON feature literals below
- *   are not invented. They are the verbatim stdout of the system `ogr2ogr` (GDAL 3.8.4) run against
+ *   is not exercised here (gdal is not a test dependency) — but the GeoJSON feature literals below
+ *   are not invented. They are the verbatim stdout of the system `ogr2ogr` (gdal 3.8.4) run against
  *   `fixtures/subvenue.osm` with the SQL {@link buildSubVenueSQL} produces, captured 2026-08-04.
- *   That is what makes the decoder test meaningful: it decodes bytes GDAL actually emitted, including
+ *   That is what makes the decoder test meaningful: it decodes bytes gdal actually emitted, including
  *   the per-layer promoted/hstore split that the module docstring turns on.
  *
  *   Reproduce the capture with:
  *
  *   ```sh
- *   ogr2ogr -f GeoJSONSeq /vsistdout/ -dialect OGRSQL -sql "<buildSubVenueSQL('points')>" osm/fixtures/subvenue.osm
- *   ogr2ogr -f GeoJSONSeq /vsistdout/ -dialect OGRSQL -sql "<buildSubVenueSQL('multipolygons')>" osm/fixtures/subvenue.osm
+ *   ogr2ogr -f GeoJSONSeq /vsistdout/ -dialect ogrsql -sql "<buildSubVenueSQL('points')>" osm/fixtures/subvenue.osm
+ *   ogr2ogr -f GeoJSONSeq /vsistdout/ -dialect ogrsql -sql "<buildSubVenueSQL('multipolygons')>" osm/fixtures/subvenue.osm
  *   ```
  */
 

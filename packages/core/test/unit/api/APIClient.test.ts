@@ -30,7 +30,7 @@ describe("APIClient: disposal", () => {
 	it("reaches a caching storage whose asyncDispose lives on the prototype", async () => {
 		let disposeCount = 0
 
-		// The regression case: [Symbol.asyncDispose] on the PROTOTYPE chain rather than an own property.
+		// The regression case: [Symbol.asyncDispose] on the prototype chain rather than an own property.
 		// The pre-migration predicate (Object.hasOwn on the instance) never matched this shape,
 		// leaving cache disposal as dead code.
 		const storagePrototype = {
@@ -86,8 +86,8 @@ describe("APIClient: unthrottled default (the shape TileAPI uses)", () => {
 })
 
 describe("APIClient: requestsPerMinute cooldown (A1 concurrency regression)", () => {
-	// MEASURED BEFORE THE FIX, through this exact surface: `fetch()` awaited `$cooldown` once and the
-	// request was only COUNTED by a response interceptor, so a 40-call fan-out put 40 dispatches on the
+	// measured before the FIX, through this exact surface: `fetch()` awaited `$cooldown` once and the
+	// request was only counted by a response interceptor, so a 40-call fan-out put 40 dispatches on the
 	// wire inside 3ms against a budget of 2/minute (and 40 against 10/minute). The check has to be
 	// checked and the slot reserved in the same synchronous step.
 	it("does not let a concurrent fan-out spend more than the per-minute budget before the cooldown opens", async () => {
@@ -122,7 +122,7 @@ describe("APIClient: requestsPerMinute cooldown (A1 concurrency regression)", ()
 	})
 
 	it("delivers no more than requestsPerMinute inside any sliding minute", async () => {
-		// The RATE, which is what the option promises — not the schedule, which is what every other test here asserts.
+		// The rate, which is what the option promises — not the schedule, which is what every other test here asserts.
 		// That gap is how a 10x overrun shipped: the budget released N back to back then waited `60000/N` ms, so a
 		// stated 10/minute sustained 100/minute, and no test failed because they all encoded the implemented spacing.
 		const BUDGET = 10
@@ -130,7 +130,7 @@ describe("APIClient: requestsPerMinute cooldown (A1 concurrency regression)", ()
 		const arrivals: number[] = []
 
 		const client = new APIClient({
-			displayName: "rate-contract",
+			displayName: "rate-interface",
 			requestsPerMinute: BUDGET,
 			clock,
 			axios: {
@@ -151,7 +151,7 @@ describe("APIClient: requestsPerMinute cooldown (A1 concurrency regression)", ()
 	})
 
 	it("still throttles a serial run", async () => {
-		// The FULL MINUTE rather than `60000 / requestsPerMinute`. This constant used to be 30_000 — the spacing between two
+		// The full minute rather than `60000 / requestsPerMinute`. This constant used to be 30_000 — the spacing between two
 		// requests — which encoded the very defect it read as guarding: a budget of 2 released 2, waited 30s, released
 		// 2 more, i.e. 4/minute against a stated 2. Measured on a bare client at `requestsPerMinute: 10`, a 20-call
 		// fan-out arrived `[0 x10, 6000 x10]` — 20 in one sliding minute, a sustained 100/minute.
@@ -332,11 +332,11 @@ describe("APIClient: bounded retry (A3)", () => {
 	it("maps a timeout to a transient network error, not the old uniform 500", async () => {
 		// The pre-migration mapper collapsed every responseless failure into `ResourceError.from(500,
 		// "Internal Server Error", "axios", "response", "missing")`, so a timeout was indistinguishable
-		// from a refused connection or a DNS failure. Its `ECONNABORTED: return` arm — which would have
-		// resolved the chain with `undefined` — could not be reached BY AXIOS: the `if (!response) throw`
+		// from a refused connection or a DNS failure. Its `econnaborted: return` arm — which would have
+		// resolved the chain with `undefined` — could not be reached BY axios: the `if (!response) throw`
 		// above it ran first, and axios never attaches a `response` to a timeout, so a differential across
 		// 18 failure shapes found no case that ever resolved. (Reachable in principle with a hand-built
-		// error carrying both a `response` and `ECONNABORTED`, which no stock adapter produces.)
+		// error carrying both a `response` and `econnaborted`, which no stock adapter produces.)
 		const { axios } = stubTransport([{ throws: { message: "timeout of 30000ms exceeded", code: "ECONNABORTED" } }])
 
 		const client = new APIClient({
@@ -414,7 +414,7 @@ describe("APIClient: the pacing check sits downstream of the cache (I2)", () => 
 	it("does not pace a cache HIT — only a request that actually reaches the network", async () => {
 		// The check used to live in `fetch()`, upstream of the cache interceptor, so every hit burned a
 		// full pacer sleep: measured 1 dispatch, 5 hits, five 111ms sleeps for zero network traffic.
-		// `/Archives/` documents are cached for a century by design, so warm re-runs are the EXPECTED
+		// `/Archives/` documents are cached for a century by design, so warm re-runs are the expected
 		// mode for a bulk crawl — at 100k cached documents that is ~3 hours of sleeping at an empty
 		// network.
 		const REPEATS = 6
@@ -488,7 +488,7 @@ describe("APIClient: every retry attempt takes its own pacer grant (I6/M-R)", ()
 		const client = new APIClient({
 			displayName: "paced-retries",
 			minRequestIntervalMs: INTERVAL_MS,
-			// A backoff far SHORTER than the pacing interval, so the pacer is the only thing that can
+			// A backoff far shorter than the pacing interval, so the pacer is the only thing that can
 			// produce the spacing — a test with a long backoff would pass with the pacer deleted.
 			retry: { maxAttempts: 3, baseDelayMs: 1 },
 			clock,

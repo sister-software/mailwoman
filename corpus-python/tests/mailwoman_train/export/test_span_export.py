@@ -1,6 +1,6 @@
 """#727 stage-2 Phase 2 — span-score export.
 
-Two contracts: (1) `span_scores` rides the ONNX graph as a NAMED output and matches torch;
+Two interfaces: (1) `span_scores` rides the ONNX graph as a NAMED output and matches torch;
 (2) the segment-transition table ships as a JSON-able sidecar whose axis comes from the file,
 never hardcoded (the PLACETYPE_ORDER dual-maintenance class).
 """

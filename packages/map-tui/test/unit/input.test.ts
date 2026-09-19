@@ -51,7 +51,7 @@ describe("decodeInputChunk", () => {
 	it("separates quit from interrupt", () => {
 		expect(eventsOf("q")).toEqual([{ kind: "quit" }])
 		// An ESC whose next byte cannot continue a sequence is the Esc KEY (here it quits twice — once for the
-		// Esc, once for the `q`). A TRAILING ESC is held instead. the escape-fragment suite below covers that.
+		// Esc, once for the `q`). A trailing ESC is held instead. the escape-fragment suite below covers that.
 		expect(eventsOf(`${ESC}q`)).toEqual([{ kind: "quit" }, { kind: "quit" }])
 		expect(eventsOf("\u0003")).toEqual([{ kind: "interrupt" }])
 	})
@@ -96,7 +96,7 @@ describe("decodeInputChunk", () => {
 		expect(eventsOf(`${ESC}[<64;5;5Mq`)).toEqual([{ kind: "wheel", delta: 1, column: 4, row: 4 }, { kind: "quit" }])
 	})
 
-	// Everything below is one bug: the fallback used to answer "Esc key" — i.e. QUIT — for any escape it had no rule
+	// Everything below is one bug: the fallback used to answer "Esc key" — i.e. quit — for any escape it had no rule
 	// for. Every case here quit the browser.
 	describe("escape sequences the decoder has no rule for", () => {
 		it("swallows an SS3 function key instead of quitting", () => {

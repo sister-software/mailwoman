@@ -1,13 +1,13 @@
 # === v8-cjk-kr-probe — 2,000-step probe of the JP + CN + KR mixture (the KR spec §5). ===============================#
 # One change against v8-cjk-kana (the CJK base, 0.9924 blended / 0.9821 municipality macro on the JP board): the corpus
 # is `v8-cjk-kr-2026-09-06`, the same JP + CN parts plus the Korean road-name-address corpus `v8-kr-2026-09-06`
-# (2,000,000 train / 20,000 val / 20,000 board rows over 27 held-out 시군구, five registers, `juso-kr`; KOGL Type 1,
+# (2,000,000 train / 20,000 val / 20,000 board rows over 27 held-out 시군구, five registers, `juso-kr`; kogl Type 1,
 # attribution 행정안전부) at source share 0.38, and the vocabulary re-sealed over the union (2,239 JP + 842 KR
-# characters → 3,165). No new tag: REGION → region, CITY → subregion (the 시군구 are WOF counties), DISTRICT →
-# dependent_locality, STREET, NUMBER, POSTCODE. Head, geometry, seed and schedule unchanged. Spec:
+# characters → 3,165). No new tag: region → region, city → subregion (the 시군구 are WOF counties), district →
+# dependent_locality, street, number, postcode. Head, geometry, seed and schedule unchanged. Spec:
 # docs/superpowers/specs/2026-09-06-kr-under-the-cjk-package.md.
 #
-# --- WHAT THE RUN MUST SHOW (pre-registered) ---------------------------------------------------------------------
+# --- what the RUN must show (pre-registered) ---------------------------------------------------------------------
 #   * KR board (`kr-board.jsonl`, scorer `--resolve-tags region,subregion --centroids kr-sigungu-centroids.json`):
 #     per-tag span exact-match `street` and `house_number` ≥ 0.99, `subregion` ≥ 0.97, `dependent_locality` ≥ 0.95,
 #     `region` ≥ 0.99, `postcode` ≥ 0.99. The untrained base reads 0.0000 on every tag but house_number (0.0428).

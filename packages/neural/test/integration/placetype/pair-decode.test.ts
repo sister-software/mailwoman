@@ -3,7 +3,7 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   The placetype-pair prior's two REGISTERED decode-order test classes: (1) a window
+ *   The placetype-pair prior's two registered decode-order test classes: (1) a window
  *   the prior biases stays a united BIO span through the `enforceWordConsistency` heal, and (2) a word
  *   the encoder is confident about (a large contrary logit) is not overridden by the prior — the
  *   encoder's veto stays intact at a realistic magnitude. Both exercise `#decode` end-to-end via
@@ -61,7 +61,7 @@ function fixedPairIndex(
 	return {
 		delta,
 		...(transitionBeta !== undefined ? { transitionBeta } : {}),
-		// No `parentDelta`: these are decode-ORDER tests for the child-side bias, and adding a parent write
+		// No `parentDelta`: these are decode-order tests for the child-side bias, and adding a parent write
 		// would move spans they assert on for reasons unrelated to what they measure.
 		probe: (c, p) => (c === child && p === parent ? { tag, parentTag: "locality" } : undefined),
 	}
@@ -80,7 +80,7 @@ describe("placetype-pair prior — decode-order integration", () => {
 		const { pieces } = tokenizer.encode(text)
 		expect(pieces.map((p) => p.piece)).toEqual(["▁Shore", "d", "itch", "▁London"])
 
-		// WEAK, internally-FRAGMENTED baseline for "shoreditch": B-street / O / B-locality across its 3
+		// weak, internally-fragmented baseline for "shoreditch": B-street / O / B-locality across its 3
 		// pieces (magnitude 1) — a legal-but-inconsistent BIO sequence, the exact fragmentation class
 		// `enforceWordConsistency` exists to heal. "London" decides decisively on its own (magnitude 5,
 		// irrelevant to what's under test).
@@ -96,7 +96,7 @@ describe("placetype-pair prior — decode-order integration", () => {
 			enforceWordConsistency: true,
 		})
 
-		// Baseline sanity — WITHOUT the placetypePair prior, this exact weak/fragmented logit set really
+		// Baseline sanity — without the placetypePair prior, this exact weak/fragmented logit set really
 		// does trigger a wordConsistency heal. This shows that fragmentation changes the decode.
 		const baseline = await classifier.traceParse(text, { spanProposer: false })
 		expect(baseline.repairs.find((r) => r.pass === "wordConsistency")).toBeDefined()
@@ -131,7 +131,7 @@ describe("placetype-pair prior — decode-order integration", () => {
 		const { pieces } = tokenizer.encode(text)
 		expect(pieces).toHaveLength(4)
 
-		// STRONG, already-consistent baseline for "shoreditch": B-street / I-street / I-street at
+		// strong, already-consistent baseline for "shoreditch": B-street / I-street / I-street at
 		// magnitude 20 — a realistic "the encoder is sure" margin (softmax-saturating relative to the
 		// prior's 6.0 delta. documented here since the brief calls for the exact magnitudes used). The
 		// placetypePair prior below would bias the same window toward `dependent_locality` at its real
@@ -174,7 +174,7 @@ describe("placetype-pair prior — TRANSITION-BETA chain integration (path-fusio
 	 * by 4, more than the per-piece emission gap but less than β=5. So a beta-less decode keeps the fused path (the
 	 * measured current-main behavior on the 17 comma-free GB rows), and the transitionBeta artifact flips it — the
 	 * probe's recovery mechanism, end-to-end through `#decode` → viterbi. Comma-free input, `probeMode` omitted: the auto
-	 * chain's ANCHORED leg is the one that fires, matching the production population.
+	 * chain's anchored leg is the one that fires, matching the production population.
 	 */
 	function fusedLogits(): number[][] {
 		const logits = [zeroRow(), zeroRow(), zeroRow(), zeroRow()]
@@ -198,8 +198,8 @@ describe("placetype-pair prior — TRANSITION-BETA chain integration (path-fusio
 			placetypePair: { index },
 		})
 
-		// The prior FIRED (anchored leg, emission bias composed) yet the global path stays fused — the exact
-		// emission-only miss the task-8 probe measured, and the exact decode a pre-TRANSITION-BETA build produces.
+		// The prior fired (anchored leg, emission bias composed) yet the global path stays fused — the exact
+		// emission-only miss the task-8 probe measured, and the exact decode a pre-transition-beta build produces.
 		expect(trace.priors.find((p) => p.kind === "placetypePair")).toEqual({
 			kind: "placetypePair",
 			applied: true,
@@ -231,7 +231,7 @@ describe("placetype-pair prior — TRANSITION-BETA chain integration (path-fusio
 			col("B-locality"),
 		])
 
-		// The beta is a DECODER term: the post-prior emission matrices are byte-identical across the two runs —
+		// The beta is a decoder term: the post-prior emission matrices are byte-identical across the two runs —
 		// only the transition side moved.
 		expect(withBeta.emissions).toEqual(betaLess.emissions)
 

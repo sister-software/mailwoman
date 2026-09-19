@@ -5,7 +5,7 @@
  *
  *   `@mailwoman/ancestrie` — a materialized trie over an ancestry graph. Build entries into a token
  *   trie, seal to one static binary artifact, and answer lexical continuation, rank, and containment
- *   questions from a single prefix walk. See the README for lineage and the format doc in
+ *   questions from a single prefix walk. See the readme for lineage and the format doc in
  *   `format.ts` for the bytes.
  */
 

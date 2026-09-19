@@ -1,6 +1,6 @@
 # Hono API surface, Phase 5: typed schemas, spec emission, client generation, docs sweep — Implementation Plan
 
-> **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
+> **For agentic workers:** required sub-skill: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
 **Goal:** Close the arc: type the flagship wire schemas (client generators need them), make spec emission a first-class CLI affordance (each surface prints its own document; the docs site regenerates its copies at build), stand up the Python/Rust client-generation pipeline as a CONDITIONAL release-workflow job (generation + artifact always; registry publishing off until the operator provisions PyPI/crates.io), and pay down the docs debt. `feat/api-clients` is superseded, its layout/publishing notes salvaged.
 

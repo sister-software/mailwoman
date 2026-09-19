@@ -41,7 +41,7 @@ import { SqliteDialect } from "#dialect/index"
  * A connection's non-Kysely surface: the statements Kysely does not model, plus ending the connection.
  *
  * Schema-agnostic by construction — none of these members mentions `DB` — so a `DatabaseClient<AnySchema>` satisfies it
- * and a helper need not name its caller's schema. That matters because Kysely is INVARIANT in `DB`: a parameter typed
+ * and a helper need not name its caller's schema. That matters because Kysely is invariant in `DB`: a parameter typed
  * `DatabaseClient` (the empty default) would reject every real client. This is the narrowing the
  * `mailwoman/no-database-handle-cast` rule prescribes, applied to the raw side.
  */
@@ -99,7 +99,7 @@ export class DatabaseClient<DB = Database> extends Kysely<DB> implements Disposa
 	}
 
 	/**
-	 * Run a statement Kysely does not model: `PRAGMA`, `VACUUM`, `ANALYZE`, `ATTACH`, FTS5 virtual-table DDL.
+	 * Run a statement Kysely does not model: `pragma`, `vacuum`, `analyze`, `attach`, FTS5 virtual-table DDL.
 	 *
 	 * Not to be confused with Kysely's `execute()`, which runs a compiled query. This one takes SQL text and returns
 	 * nothing.
@@ -112,7 +112,7 @@ export class DatabaseClient<DB = Database> extends Kysely<DB> implements Disposa
 	 * A prepared statement on this client's connection, for the bulk-write path.
 	 *
 	 * Kysely compiles per call, which a positional insert loop over millions of rows cannot afford. Reach for this only
-	 * there and in the other cases `AGENTS.md` lists as deliberately raw. everything cold goes through the query builder,
+	 * there and in the other cases `agents.md` lists as deliberately raw. everything cold goes through the query builder,
 	 * where the schema is checked.
 	 */
 	prepare(sql: string): StatementSync {

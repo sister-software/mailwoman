@@ -6,7 +6,7 @@
  *   The plumbing every layer's `scripts/ingest-chunk.ts` repeats — spawned by its builder, never run by
  *   hand.
  *
- *   THE PROCESS BOUNDARY IS THE CALLER'S POINT. h3's WASM heap cannot be reset from JavaScript and does not
+ *   the process boundary is the caller'S point. h3's wasm heap cannot be reset from JavaScript and does not
  *   survive an unbounded number of polyfill calls, so each chunk gets a heap that starts empty by getting an
  *   interpreter that starts empty. What lives here is only the plumbing: parse the shared flags, open the
  *   database the parent created with the build pragmas, run the chunk, and report its counts on stdout as
@@ -56,7 +56,7 @@ export async function runIngestChunkScript<
 	 */
 	context: string
 	/**
-	 * The script's own flags, INCLUDING a spread of {@link INGEST_CHUNK_FLAGS}.
+	 * The script's own flags, including a spread of {@link INGEST_CHUNK_FLAGS}.
 	 */
 	options: Options
 	run: (

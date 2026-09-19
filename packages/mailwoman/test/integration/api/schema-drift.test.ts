@@ -8,14 +8,14 @@
  *   boundary) and the real `GeocodeResult` interface this package owns (`geocode-core.ts`). `mailwoman`
  *   is the one workspace allowed to import both sides, so the pin lives here.
  *
- *   THE ALARM IS A TYPE ERROR rather than A RUNTIME ONE. vitest's esbuild transform strips types without
+ *   the alarm is A type error rather than A runtime one. vitest's esbuild transform strips types without
  *   checking them, so a plain `.test.ts` file gets zero protection from `yarn vitest run` alone — the
  *   type-level declarations below only mean anything under `tsc`. `mailwoman/tsconfig.json` normally
  *   excludes all of `./test/**` (vitest-only rather than part of `tsc -b`); this one file is carved back in via
  *   an explicit `files` entry specifically so `yarn compile` type-checks it. The `test()` at the bottom
- *   is a secondary, genuinely-useful RUNTIME backstop (see its own comment) — not the primary alarm.
+ *   is a secondary, genuinely-useful runtime backstop (see its own comment) — not the primary alarm.
  *
- *   BIDIRECTIONAL, WITH A DOCUMENTED COMPROMISE (per the task brief: "if exact bidirectional
+ *   bidirectional, with A documented compromise (per the task brief: "if exact bidirectional
  *   assignability is impossible ... document the achievable direction(s) precisely"):
  *
  *   `GeocodeOutcomeSchema` is deliberately `.loose()` (forward-compat — an engine field the schema
@@ -25,7 +25,7 @@
  *   type that has one — regardless of whether the named fields actually line up. Verified empirically
  *   (scratch `tsc` runs rather than checked in): `type _x = IsAssignable<GeocodeResult, z.infer<typeof
  *   GeocodeOutcomeSchema>>` is `false` even when every field matches, purely because of the index
- *   signature — "Index signature for type 'string' is missing in type 'GeocodeResult'." So the LITERAL
+ *   signature — "Index signature for type 'string' is missing in type 'GeocodeResult'." So the literal
  *   two-line form the brief sketches (`z.infer<typeof GeocodeOutcomeSchema> = {} as GeocodeResult` and
  *   back) is impossible for a `.loose()` schema in one of the two directions. Below is the closest
  *   equivalent that still catches every real class of drift:
@@ -47,10 +47,10 @@
  *     the schema's declared keys, so an added/removed/renamed field fails to compile even though the
  *     per-field value check alone would miss it.
  *
- *   Empirically verified each check fires independently: dropping a schema field breaks `_KeysMatch` AND
+ *   Empirically verified each check fires independently: dropping a schema field breaks `_KeysMatch` and
  *   Direction 2. narrowing one field's type (e.g. `lat` non-nullable) breaks Direction 1 only. adding a
  *   schema field `GeocodeResult` doesn't have breaks `_KeysMatch` alone when the field is optional, and
- *   `_KeysMatch` AND Direction 1 when it's required (Direction 2 permits width subtyping, so an extra
+ *   `_KeysMatch` and Direction 1 when it's required (Direction 2 permits width subtyping, so an extra
  *   schema-side field can never break it).
  *
  *   `vitest`'s own `expectTypeOf`/`assertType` were deliberately not used — they only gain teeth under
@@ -106,7 +106,7 @@ export type _ResultAcceptsSchema = Expect<IsAssignable<Inferred, GeocodeResult>>
 /**
  * Every `GeocodeResult` field name, as a `satisfies` object — TypeScript itself enforces this list can't drift from the
  * interface (add, remove, or rename a `GeocodeResult` field and this stops compiling). Exists so the runtime check
- * below has something concrete to compare against. JS has no reflection over a TS interface, so SOME hardcoded list is
+ * below has something concrete to compare against. JS has no reflection over a TS interface, so some hardcoded list is
  * unavoidable for a runtime assertion — this is the compile-time-guarded version of one.
  */
 const GEOCODE_RESULT_FIELD_NAMES = {

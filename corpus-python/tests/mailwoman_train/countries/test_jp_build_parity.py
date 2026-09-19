@@ -3,7 +3,7 @@
 `build` threads one `random.Random` through the selection masks, the register draw, the postcode
 fraction, the hyphen variant, the spacing and the country prefix. They share a stream, so moving,
 adding or dropping a draw anywhere re-renders the whole corpus, and nothing else in the suite would
-notice: the JP builder reads Overture-JP and KEN_ALL, which no test has, so it has never run under
+notice: the JP builder reads Overture-JP and KEN_ALL. It no test has. Therefore, it has never run under
 pytest at all.
 
 The fixture supplies both inputs at a size the build can finish in a second. It is not a sample of

@@ -332,10 +332,10 @@ describe("filer schema", () => {
 		/**
 		 * The counterpart to the two tests above — and the reason `naming_node_id` is IN the primary key rather than a
 		 * payload column beside it. `relationship` is excluded from the key because two values for one pair at one instant
-		 * are a CONTRADICTION. two `naming_node_id`s are not. `"Acme Holdings Inc"` and `"ACME HOLDINGS, INC."`
+		 * are a contradiction. two `naming_node_id`s are not. `"Acme Holdings Inc"` and `"acme holdings, INC."`
 		 * canonicalize to one `family_id`, so a filer that reported both spellings (two 499 rows the same day, or one
 		 * `bdcProviderID` on two provider-list rows) produces two rows differing in nothing else. Narrow the key and the
-		 * builder's `INSERT OR IGNORE` drops the second, taking that spelling's display name with it before any reader
+		 * builder's `insert or ignore` drops the second, taking that spelling's display name with it before any reader
 		 * runs.
 		 */
 		it("keeps two DIFFERENT naming_node_ids for the same (node_id, family_id, source, valid_from) tuple as separate rows — the multi-spelling plurality", async () => {
@@ -399,14 +399,14 @@ describe("filer schema", () => {
 		})
 
 		/**
-		 * `assertion` is graded evidence rather than decoration: EDGAR's subsidiary→FRN corroboration is the repo's first
-		 * INFERRED family membership, and without this column it would reach `filerLookup.families` shape-identical to a
+		 * `assertion` is graded evidence rather than decoration: edgar's subsidiary→FRN corroboration is the repo's first
+		 * inferred family membership, and without this column it would reach `filerLookup.families` shape-identical to a
 		 * Form 499 holding-company disclosure. Its two constraints close the two ways that grading can be defeated at write
-		 * time — a blank value (which `NOT NULL` accepts, and which would then match neither half of a criterion-2 read, so
+		 * time — a blank value (which `not NULL` accepts, and which would then match neither half of a criterion-2 read, so
 		 * the row would vanish from any surface that splits on strength), and a `match_score` on an authoritative row (a
 		 * fabricated confidence for a membership that matched nothing).
 		 *
-		 * Each expectation names the CONSTRAINT rather than just "CHECK constraint failed" — this table carries three, and
+		 * Each expectation names the constraint rather than just "check constraint failed" — this table carries three, and
 		 * a test that only pins the generic prefix passes when the wrong one fires.
 		 */
 		describe("assertion + match_score", () => {

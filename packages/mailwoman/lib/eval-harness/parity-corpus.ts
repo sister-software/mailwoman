@@ -24,7 +24,7 @@ import type { FSTMatcher } from "@mailwoman/resolver-wof-sqlite/fst"
 import { JSONSpliterator } from "spliterator"
 
 /**
- * Default check corpus. RATIFIED 2026-07-13 to the triaged set (321 live / 55 tombstones): the 22 rules-era no-solution
+ * Default check corpus. ratified 2026-07-13 to the triaged set (321 live / 55 tombstones): the 22 rules-era no-solution
  * assertions plus 33 gold-triage tombstones (rules-idiosyncratic fixtures a neural parser should not be graded against
  * — solver-permutation probes, autocomplete-era jitter, self-admitted TODOs. each carries a `dropped` reason).
  * Proposal
@@ -301,7 +301,7 @@ export async function runParityEval(options: ParityEvalOptions = {}): Promise<Pa
 		)
 	}
 
-	// The precision half. INFORMATIONAL, never a verdict — a floor here is an operator act. Reported
+	// The precision half. informational, never a verdict — a floor here is an operator act. Reported
 	// because "postcode 98.6%" is a recall number and reads like a capability, and the missing half is
 	// where the house_number deficit went.
 	console.log("")

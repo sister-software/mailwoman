@@ -28,8 +28,8 @@ import { privateNameShadowsCheck } from "#checks/private-name-shadows"
 import { pythonPrefixDirectoriesCheck } from "#checks/python-prefix-directories"
 import { runtimeFlagsCheck } from "#checks/runtime-flags"
 import { stalePathLiteralsCheck } from "#checks/stale-path-literals"
-import { stylesheetContractCheck } from "#checks/stylesheet-contract"
-import { testContractCheck } from "#checks/test-contract"
+import { stylesheetCheck } from "#checks/stylesheet-check"
+import { testLayoutCheck } from "#checks/test-layout"
 import { typecheckTestsCheck } from "#checks/typecheck-tests"
 import { versionSyncCheck } from "#checks/version-sync"
 import { vocabCensusCheck } from "#checks/vocab-census"
@@ -43,7 +43,7 @@ export const checks: ReadonlyArray<RepoCheck> = [
 	licenseRegisterCheck,
 	localeTablesCheck,
 	localeScopeCheck,
-	testContractCheck,
+	testLayoutCheck,
 	nodeModulesReacharoundCheck,
 	noRootScriptsCheck,
 	manifestTargetsCheck,
@@ -55,7 +55,7 @@ export const checks: ReadonlyArray<RepoCheck> = [
 	pythonPrefixDirectoriesCheck,
 	exportNameAffixCheck,
 	docLinkTargetsCheck,
-	stylesheetContractCheck,
+	stylesheetCheck,
 	runtimeFlagsCheck,
 	stalePathLiteralsCheck,
 	debtCheck,

@@ -29,7 +29,7 @@ export interface GeoFeature<G = GeometryLiteral, P extends object | null = never
 	geometry: G
 
 	/**
-	 * A unique identifier for the feature, such as a UUID, a serial number, or a name.
+	 * A unique identifier for the feature, such as a uuid, a serial number, or a name.
 	 */
 	id?: P extends IdentifiableGeoFeature ? P["GEOID"] : never
 

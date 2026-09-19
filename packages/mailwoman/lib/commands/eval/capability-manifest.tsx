@@ -14,7 +14,7 @@ import { type CommandSpec, harnessCommand } from "#cli-kit"
 export const description = "Generate the model-card capability manifest (#718/#719)"
 
 /**
- * Native command-line contract consumed by the filesystem command router.
+ * Native command-line interface consumed by the filesystem command router.
  */
 export const spec = {
 	name: "capability-manifest",

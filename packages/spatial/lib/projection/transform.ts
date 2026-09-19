@@ -5,37 +5,37 @@ import { runFile } from "@mailwoman/core/process"
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Ask PROJ which datum transformation it would choose, and refuse a ballpark one.
+ *   Ask proj which datum transformation it would choose, and refuse a ballpark one.
  *
- *   PROJ SUBSTITUTES A BALLPARK DATUM SHIFT WHEN THE ACCURATE GRID IS NOT ON DISK, AND IT DOES SO SILENTLY.
+ *   proj substitutes A ballpark datum shift when the accurate grid is not on disk, and IT does SO silently.
  *   Measured on the EA flood product: with the OSGB36→WGS84 grid missing, ogr2ogr placed the first
  *   feature's first vertex at `1.698151293, 52.648130027`; with `uk_os_OSTN15_NTv2_OSGBtoETRS.tif` present
  *   it placed it at `1.698174628, 52.648157259` — 3.4 m apart. Both look like perfectly ordinary WGS84
  *   coordinates, both pass a bounding-box check, and the whole layer is offset. It surfaced as eight
  *   disagreements out of 59 against the authority's own OGC service, every one a point that fell into a
- *   NEIGHBOURING sliver.
+ *   neighbouring sliver.
  *
- *   `--config PROJ_NETWORK ON` does not reach PROJ through GDAL 3.8, and `PROJ_ONLY_BEST=ON` was observed
- *   not to refuse, so neither is a usable guard. What is usable is asking PROJ what it would do: `projinfo`
+ *   `--config PROJ_NETWORK on` does not reach proj through gdal 3.8, and `PROJ_ONLY_BEST=on` was observed
+ *   not to refuse, so neither is a usable guard. What is usable is asking proj what it would do: `projinfo`
  *   names the best candidate operation and says when a grid is missing.
  *
- *   IT IS RUN EVEN WHERE NO TRANSFORMATION IS NEEDED, AND THAT IS THE POINT. A source already in EPSG:4326
+ *   IT is RUN even where no transformation is needed, and that is the point. A source already in epsg:4326
  *   gets `Null geographic offset from WGS 84 to WGS 84, 0 m, World.` — trivially usable, and the check costs
  *   one process. Skipping it on the reasoning that a source needs no shift makes the guard fire on the day
  *   a source arrives that does, which is the day nobody is looking.
  *
- *   SHARED BY EVERY VECTOR INGEST, because the failure is a property of PROJ rather than of any product. The
+ *   shared BY every vector ingest, because the failure is a property of proj rather than of any product. The
  *   parse is split from the spawn so it can be pinned against captured output: the two states it
  *   distinguishes were observed from the same command on the same machine, before and after the grid was
  *   installed, and they are the difference between a metre-accurate layer and a 3 m-offset one.
  */
 
 /**
- * What PROJ would do, and whether it can actually do it.
+ * What proj would do, and whether it can actually do it.
  */
 export interface DatumTransformationVerdict {
 	/**
-	 * The candidate operation line PROJ named, verbatim. Absent when it named none.
+	 * The candidate operation line proj named, verbatim. Absent when it named none.
 	 */
 	best?: string
 	usable: boolean
@@ -43,13 +43,13 @@ export interface DatumTransformationVerdict {
 }
 
 /**
- * Read `projinfo --summary` output: which operation PROJ would choose, and whether it can actually run.
+ * Read `projinfo --summary` output: which operation proj would choose, and whether it can actually run.
  */
 export function assessDatumTransformation(summary: string): DatumTransformationVerdict {
-	// The first line naming a candidate operation is the one PROJ will choose. Everything before it is a header, and the
+	// The first line naming a candidate operation is the one proj will choose. Everything before it is a header, and the
 	// `Note:` line about `--spatial-test` is not a candidate.
 	//
-	// `projinfo --summary` prints a header plus one line per candidate operation: two to nine lines, bounded by PROJ's own
+	// `projinfo --summary` prints a header plus one line per candidate operation: two to nine lines, bounded by proj's own
 	// candidate enumeration rather than by input size. Reaching for a streaming reader would put a `spliterator` dependency
 	// on this package for a fixed handful of lines.
 	// oxlint-disable-next-line mailwoman/prefer-spliterator -- bounded output, see above
@@ -88,7 +88,7 @@ export interface AssertDatumTransformationOptions {
 /**
  * Refuse an ingest whose best available datum transformation is a ballpark one, or is missing its grid.
  *
- * @throws {Error} When PROJ names no candidate, would use a ballpark offset, or would use an operation whose grid is
+ * @throws {Error} When proj names no candidate, would use a ballpark offset, or would use an operation whose grid is
  *   not installed.
  */
 export async function assertDatumTransformationAvailable(

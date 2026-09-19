@@ -1,6 +1,6 @@
 # Hono API surface, Phase 1: `@mailwoman/api-kit` + libpostal migration — Implementation Plan
 
-> **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
+> **For agentic workers:** required sub-skill: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
 **Goal:** Stand up the `@mailwoman/api-kit` plumbing workspace and migrate `@mailwoman/libpostal` from express to Hono + `@hono/zod-openapi`, with the OpenAPI document emitted from the route table and the handwritten `libpostal/openapi.yaml` retired through a spec-parity check.
 
@@ -98,7 +98,7 @@
  *
  *   `@mailwoman/api-kit` — plumbing for Mailwoman's HTTP surfaces: the node serve wrapper and
  *   OpenAPI emit helpers. Plumbing only, by rule: domain schemas live next to their routes in the
- *   package that owns the wire contract (see the 2026-07-12 design spec's anti-meta guardrails).
+ *   package that owns the wire interface (see the 2026-07-12 design spec's anti-meta guardrails).
  */
 
 export {}
@@ -352,7 +352,7 @@ git commit -m "feat(api-kit): serveNode wrapper + OpenAPI doc emit helpers"
   - `libpostal/engine.ts`: `LibpostalComponent`, `ParseMatch`, `COMPONENT_TO_LIBPOSTAL`, `toLibpostalComponents(matches: ParseMatch[]): LibpostalComponent[]`, `LibpostalEngine` — **moved verbatim from `index.ts`, zero signature changes** (public API).
   - `libpostal/schema.ts`: `ParseRequestSchema`, `ExpandRequestSchema`, `LibpostalComponentSchema`, `ParseResponseSchema`, `ExpandResponseSchema`, `ErrorSchema` (exact names — Task 4 imports them). Query-parameter schemas live in `routes.ts` beside their routes — they're route metadata rather than reusable wire shapes.
 
-- [ ] **Step 1: Move the engine block.** Reduce `LibpostalComponent`, `ParseMatch`, `COMPONENT_TO_LIBPOSTAL`, `toLibpostalComponents`, and `LibpostalEngine` (lines ~18–66 of `libpostal/index.ts`) verbatim into new `libpostal/engine.ts` with the standard copyright header and the docstring: engine contract + the `ComponentTag` → libpostal-label mapping (libpostal-specific knowledge lives here; the engine yields raw Mailwoman matches).
+- [ ] **Step 1: Move the engine block.** Reduce `LibpostalComponent`, `ParseMatch`, `COMPONENT_TO_LIBPOSTAL`, `toLibpostalComponents`, and `LibpostalEngine` (lines ~18–66 of `libpostal/index.ts`) verbatim into new `libpostal/engine.ts` with the standard copyright header and the docstring: engine interface + the `ComponentTag` → libpostal-label mapping (libpostal-specific knowledge lives here; the engine yields raw Mailwoman matches).
 
 - [ ] **Step 2: Write `libpostal/schema.ts`**
 
@@ -368,7 +368,7 @@ Wire-shape notes carried from the express implementation (immutable):
  * @author Teffen Ellis, et al.
  *
  *   Zod wire schemas for the libpostal-compatible surface. Key names and error bodies are the
- *   vendor contract — immutable. Presence of `query`/`address` is enforced in the handlers (not
+ *   vendor interface — immutable. Presence of `query`/`address` is enforced in the handlers (not
  *   the schemas) so validation failures keep libpostal's exact `{ error: "…" }` shape.
  */
 
@@ -424,7 +424,7 @@ Expected: all 7 existing tests pass unchanged (they import via `./index.ts`, whi
 
 ```bash
 git add libpostal
-git commit -m "refactor(libpostal): split engine contract + zod wire schemas out of index.ts"
+git commit -m "refactor(libpostal): split engine interface + zod wire schemas out of index.ts"
 ```
 
 ---
@@ -657,7 +657,7 @@ Handler rules (wire parity): trim inputs; `body.query ?? query.query ?? body.add
  *
  *   Route definitions + handlers for the libpostal-compatible surface. The OpenAPI document is
  *   emitted from these definitions — there is no handwritten spec. Wire shapes (bodies, error
- *   envelopes, status codes) are the vendor contract; see schema.ts.
+ *   envelopes, status codes) are the vendor interface; see schema.ts.
  */
 
 import { createRoute, type OpenAPIHono, z } from "@hono/zod-openapi"
@@ -674,7 +674,7 @@ import {
 
 /**
  * A friendly HTML landing page for `GET /` (#1022). libpostal's own REST server has no root page,
- * so there's no wire contract to match — pure courtesy for browser visitors. Relative example URLs
+ * so there's no wire interface to match — pure courtesy for browser visitors. Relative example URLs
  * so they resolve against whatever host/port serves this.
  */
 const ROOT_HTML = `<!doctype html>
@@ -886,7 +886,7 @@ export function createLibpostalApp(engine: LibpostalEngine, options: LibpostalAp
 		app.use(cors({ origin: "*", allowMethods: ["GET", "POST", "OPTIONS"], allowHeaders: ["*"], maxAge: 86400 }))
 	}
 
-	// Safety net: an engine fault returns the clean legacy JSON error, never a crash (wire contract).
+	// Safety net: an engine fault returns the clean legacy JSON error, never a crash (wire interface).
 	app.onError((_error, c) => c.json({ error: "internal error" }, 500))
 
 	registerLibpostalRoutes(app, engine)
@@ -945,7 +945,7 @@ git commit -m "feat(libpostal)!: express Router -> Hono app with emitted OpenAPI
  * @author Teffen Ellis, et al.
  *
  *   ONE-TIME migration check (deleted once adjudicated): the emitted OpenAPI document must cover
- *   the handwritten openapi.yaml's contract — every path, method, parameter, and status code.
+ *   the handwritten openapi.yaml's interface — every path, method, parameter, and status code.
  *   Differences are either bugs in the new routes or bugs that were always in the yaml.
  */
 
@@ -1012,7 +1012,7 @@ Run: `yarn vitest run --dir ./libpostal --reporter=verbose`
 Adjudication rules — each difference is exactly one of:
 
 1. **Bug in the new routes** (a path/param/status the express server really served is missing) → fix `routes.ts`, re-run.
-2. **Bug that was always in the yaml** (documented something the server never did) → record it in the Step 4 commit message; no code change. Known instance going in: `additionalProperties: false` on request schemas — express tolerated extra keys; the emitted document (strip-mode Zod) is the accurate contract.
+2. **Bug that was always in the yaml** (documented something the server never did) → record it in the Step 4 commit message; no code change. Known instance going in: `additionalProperties: false` on request schemas — express tolerated extra keys; the emitted document (strip-mode Zod) is the accurate interface.
 
 Expected end state: all 3 parity tests pass.
 

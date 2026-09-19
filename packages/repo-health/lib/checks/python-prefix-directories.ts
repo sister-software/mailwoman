@@ -13,7 +13,7 @@
  *   - The delimiter is `_`, which is what a Python module name uses where a TypeScript one uses `-`.
  *   - There is no workspace exclusion. A TypeScript directory name can be an npm package name, and
  *     `packages/neural-weights-en-gb` is published under that name. no Python directory here carries that kind of
- *     contract, so nothing needs the exemption.
+ *     interface, so nothing needs the exemption.
  *   - `__init__.py` and `__main__.py` never join a group. Both are Python's own names — the first marks a package and
  *     the second is what `python -m` runs — and neither is this repository's to arrange. They share no prefix with
  *     each other either, since the dunder is not an underscore-delimited segment a reader would group by.
@@ -46,9 +46,9 @@ const SOURCE_FILE = /\.py$/u
 const RESERVED = new Set(["__init__.py", "__main__.py"])
 
 /**
- * Prefixes that are a DISCOVERY CONTRACT rather than a hierarchy. pytest collects `test_*.py` by default, so every test
- * file in the tree shares the prefix by obligation. grouping them would report every test directory in the repository
- * and propose moving each into a `test/` subdirectory pytest would then have to be retaught to find.
+ * Prefixes that are a discovery interface rather than a hierarchy. pytest collects `test_*.py` by default, so every
+ * test file in the tree shares the prefix by obligation. grouping them would report every test directory in the
+ * repository and propose moving each into a `test/` subdirectory pytest would then have to be retaught to find.
  */
 const RESERVED_PREFIXES = new Set(["test"])
 

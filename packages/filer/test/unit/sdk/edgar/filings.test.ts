@@ -7,10 +7,10 @@
  *   No live network anywhere here: `fetchCompanyTickers`/`fetchTenKFilings`/`fetchExhibit21Documents` are
  *   exercised against hand-rolled stubs satisfying {@link SECGetClient}/{@link SECDocumentClient} (one method
  *   each), never a real `createSECClient()` or an axios harness. Everything else is a pure function over an
- *   authored fixture or `filer/test-fixtures/edgar/lumen-2025-index-headers.html` — a real, vendored EDGAR
- *   accession manifest (162 documents per its own `PUBLIC-DOCUMENT-COUNT` header field. this file's own SGML
- *   `&lt.DOCUMENT&gt.` block count is 161 — four sequence numbers, including 18, have no block of their own in
- *   this manifest, a real-EDGAR quirk this suite counts rather than papers over).
+ *   authored fixture or `filer/test-fixtures/edgar/lumen-2025-index-headers.html` — a real, vendored edgar
+ *   accession manifest (162 documents per its own `public-document-count` header field. this file's own sgml
+ *   `&lt.document&gt.` block count is 161 — four sequence numbers, including 18, have no block of their own in
+ *   this manifest, a real-edgar quirk this suite counts rather than papers over).
  */
 
 import { readLocalTextFile } from "@mailwoman/core/fs/readers"
@@ -141,7 +141,7 @@ describe("resolveCIKCandidates — the no-name-only-match check (required, 3a's 
 	})
 
 	it("reports ONE candidate for a registrant filed under several share classes", () => {
-		// `company_tickers.json` carries one row per TICKER, so a registrant with several share
+		// `company_tickers.json` carries one row per ticker, so a registrant with several share
 		// classes appears several times under one CIK. Measured 2026-08-03: "Liberty Broadband
 		// Corporation" came back as the same CIK four times, each scoring 1.0.
 		const shareClasses: CompanyTickerEntry[] = [
@@ -343,8 +343,8 @@ describe("Exhibit 21 document discovery", () => {
 	it("reads every document in the manifest, not only the exhibits", () => {
 		const documents = parseFilingDocuments(LUMEN_CIK, "0000018926-26-000014", headerHTML)
 
-		// The fixture's own SGML manifest carries 161 `<DOCUMENT>` blocks — see the module docstring above for
-		// why this differs from the header's `PUBLIC-DOCUMENT-COUNT: 162`.
+		// The fixture's own sgml manifest carries 161 `<document>` blocks — see the module docstring above for
+		// why this differs from the header's `public-document-count: 162`.
 		expect(documents).toHaveLength(161)
 		expect(documents[0]).toMatchObject({ type: "10-K", filename: "lumn-20251231.htm" })
 	})

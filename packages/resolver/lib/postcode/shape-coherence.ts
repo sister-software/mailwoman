@@ -3,33 +3,33 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Postcode-shape coherence (#31, Mechanism 1) — shape as CONFIDENCE and EXCLUSION, downstream of the
+ *   Postcode-shape coherence (#31, Mechanism 1) — shape as confidence and exclusion, downstream of the
  *   siblings. The fifth member of the joint-consistency coherence family (after `applyAdminCoherence`
  *   #263, `applyExplicitCountryCoherence` #822, `applyRegionCountryCoherence`, and
  *   `findPostcodeCountryScope` #42/#1477), and the only one that is pure-sync and backend-free:
  *   everything it needs is `candidateSystemsForPostcode` plus the tree.
  *
  *   The defect (M-1, `docs/superpowers/plans/2026-08-05-postcode-structure-arc.md`): the decoder
- *   sometimes tags a HOUSE NUMBER as `postcode` when its digits form a foreign postcode shape —
+ *   sometimes tags a house number as `postcode` when its digits form a foreign postcode shape —
  *   "1200" in "Twin Peaks Golf Course, 1200 Cornell Dr, Longmont, CO 80503" is accepted only by the
  *   AU/NZ 4-digit shape, while every sibling placetype says US. The shape alone cannot say a code is
  *   foreign (49/100 Gauntlet codes are accepted by more than one system, 10 by none), so this pass
- *   never reads the shape as country evidence by itself — it INTERSECTS each span's candidate systems
- *   with the systems the SIBLINGS already assert, and only a confident sibling set can demote.
+ *   never reads the shape as country evidence by itself — it intersects each span's candidate systems
+ *   with the systems the siblings already assert, and only a confident sibling set can demote.
  *
  *   ## The rule (three outcomes, per span)
  *
- *   1. **Intersection non-empty → CONFIRMED.** Stamp `postcode_shape_systems` (the narrowed
+ *   1. **Intersection non-empty → confirmed.** Stamp `postcode_shape_systems` (the narrowed
  *      intersection, upper-case). Additive metadata only — resolution is byte-identical (B1-1). The
  *      same intersection narrows `findPostcodeCountryScope`'s candidate list when the caller threads
  *      it (a pure subset of codex's shape candidates — safe by construction).
- *   2. **Intersection empty + confident siblings → EXCLUDED.** A digit-only span is demoted to
+ *   2. **Intersection empty + confident siblings → excluded.** A digit-only span is demoted to
  *      `house_number` (the correct sibling tag — B1-2's "correct sibling tag surviving"); a
  *      letter-containing span keeps its tag and gets `postcode_shape_excluded: true` instead (the
  *      compound-split corner — "15 07691" — is #942 postal-compound-recovery territory, out of
  *      scope). Either way the span's contribution to the resolve is stripped: `firstPostcodeValue`,
  *      the walk's postcode lookup, and the post-walk postcode passes all skip excluded spans.
- *   3. **No confident siblings → ABSTAIN** (the `postcode-country-coherence.ts:269` posture
+ *   3. **No confident siblings → abstain** (the `postcode-country-coherence.ts:269` posture
  *      verbatim). A shape no codex system recognizes (the 10/110 codes from countries without a codex system) also abstains —
  *      an empty candidate set is no evidence either way.
  *
@@ -45,7 +45,7 @@
  *   - Signals are filtered to the codex SystemCode universe before the intersection test. A country
  *     with no codex address system (ES, MX, IE, …) can never appear in any candidate set, so an unfiltered
  *     signal would make every intersection empty and every span "foreign" — filtering out those countries
- *     is the whole reason the JP-shaped "15 07691" span in the ES Portopetro row ABSTAINS rather
+ *     is the whole reason the JP-shaped "15 07691" span in the ES Portopetro row abstains rather
  *     than false-excludes.
  *
  *   Deliberately not a signal: a second postcode span. The census's "cross-span" idea fails on the
@@ -53,7 +53,7 @@
  *   are disjoint), a regression worse than the defect. Cross-country multi-postcode strings are
  *   pathological, and every M-1 span carries a country/region/`country_hint` signal instead.
  *
- *   `defaultCountry` is never a signal: it is a LOCALE DEFAULT rather than knowledge. B1-3's confound —
+ *   `defaultCountry` is never a signal: it is a locale default rather than knowledge. B1-3's confound —
  *   "Sydney NSW 2000, Australia" reached with a US default must not have its 2000 excluded, and "10
  *   Downing Street, London SW1A 2AA" under a US default must not either. Those rows are exactly what
  *   `findPostcodeCountryScope` exists to rescue, and an exclusion pass that trusted the default
@@ -66,9 +66,9 @@
  *   token, "Tabasco" is not a `matchSubdivision` key. ES "15 07691" — no ES address system). Within-country,
  *   the exclusion problem is close to empty on the curated board, and a 5-digit house number in a
  *   DE/FR address is shape-native — the shape cannot exclude it (M-1 finding #1), so the mechanism
- *   CONFIRMS it instead.
+ *   confirms it instead.
  *
- *   **D-rule: opt-in behind `ResolveOpts.postcodeShapeCoherence`, default-OFF.** Demotion is the
+ *   **D-rule: opt-in behind `ResolveOpts.postcodeShapeCoherence`, default-off.** Demotion is the
  *   failure mode with teeth, so a default-on promotion needs the full pre-registered eval (B1-1
  *   byte-stability, B1-2 exclusion ≥90% with the correct sibling tag surviving, B1-3 confound ≤2%
  *   false exclusions. kill on any B1-3 δ).
@@ -138,7 +138,7 @@ function collectSiblingSystems(roots: readonly AddressNode[]): Set<string> {
 		}
 
 		if (n.tag === "region") {
-			// (a) The region's value as a subdivision ("CA" → US, "ON" → CA — the US-wins tiebreak for
+			// (a) The region's value as a subdivision ("CA" → US, "on" → CA — the US-wins tiebreak for
 			// "CA" is matchSubdivision's own). (b) The `country_hint` stamp annotateUSRegions writes on
 			// 2-letter US state abbreviations — the same evidence via the pipeline's other path.
 			const sub = matchSubdivision(n.value)
@@ -202,7 +202,7 @@ export function applyPostcodeShapeCoherence(roots: readonly AddressNode[]): Post
 		}
 
 		if (siblingSystems.size) {
-			// Confident siblings, empty intersection → EXCLUDED. A digit-only span is demoted to its
+			// Confident siblings, empty intersection → excluded. A digit-only span is demoted to its
 			// correct sibling tag (B1-2); a letter-containing span (the "15 07691" compound corner) keeps
 			// its tag and is stamped instead — either way every resolve consumer skips it.
 			verdict.excluded.push(code)

@@ -3,13 +3,13 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   A tiny seeded PRNG shaped like Python's `random.Random` (the `random()` / `randint()` /
+ *   A tiny seeded prng shaped like Python's `random.Random` (the `random()` / `randint()` /
  *   `choice()` / `choices()` surface the `scripts/extract-tuples*.py` originals used). Lives here
  *   so the two ported extractors share one implementation.
  *
- *   NOTE — this is deliberately not a bit-exact port of CPython's MT19937. The source scripts draw
- *   their rows with SQL `ORDER BY RANDOM()` (already non-deterministic across runs) and the
- *   postcodes are synthetic shape-data ("the model learns the SHAPE rather than the exact mapping"), so a
+ *   note — this is deliberately not a bit-exact port of CPython's MT19937. The source scripts draw
+ *   their rows with SQL `order BY random()` (already non-deterministic across runs) and the
+ *   postcodes are synthetic shape-data ("the model learns the shape rather than the exact mapping"), so a
  *   byte-identical random stream adds nothing observable. What is preserved is what matters: a
  *   seeded, deterministic-per-input stream and Python's helper semantics — inclusive `randint`,
  *   uniform `choice`, with-replacement `choices`.
@@ -27,7 +27,7 @@
  *   comes to believe they are interchangeable. They are not — see `makeGlibcLcgFloat64`.
  *
  *   `shuffleBy` is the other half of the split. What a call site may be unable to change is its
- *   SAMPLER — the stream, and how an index is drawn from it. The WALK is the same everywhere, so it
+ *   sampler — the stream, and how an index is drawn from it. The walk is the same everywhere, so it
  *   is written once and takes `pick(bound)`; `shuffleWith` is the common sampler over it.
  */
 
@@ -51,7 +51,7 @@ export function mulberry32(seed: number): () => number {
 }
 
 /**
- * In-place Fisher-Yates over `array`, taking the SAMPLER as a parameter: `pick(bound)` returns an index in `[0,
+ * In-place Fisher-Yates over `array`, taking the sampler as a parameter: `pick(bound)` returns an index in `[0,
  * bound)`.
  *
  * The walk is "swap `i` with a uniform index in `[0, i]`, counting down". How that index is drawn is the sampler, and
@@ -213,7 +213,7 @@ export class SeededRandom {
 
 	/**
 	 * `k` distinct elements without replacement, as a new array. Mirrors Python `random.sample(seq, k)` semantics
-	 * (uniform, no mutation of the input); the selection ORDER is partial-Fisher-Yates, which — like {@link shuffle} — is
+	 * (uniform, no mutation of the input); the selection order is partial-Fisher-Yates, which — like {@link shuffle} — is
 	 * uniform but not CPython-bit-identical. `k` must be `<= seq.length`.
 	 */
 	sample<T>(seq: readonly T[], k: number): T[] {

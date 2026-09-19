@@ -6,16 +6,16 @@
  *   The checks that assert about the tree this test sits in, run as tests. Each must report no diagnostics: the
  *   reach-around guard's allowlist entries must still exist and still reach around (a stale exemption is a hole), every
  *   registered runtime flag must be touched by a test, and the scope register must still agree with the declaration it
- *   encodes. The checks carry those assertions as error diagnostics, so "no diagnostics" is the whole contract.
+ *   encodes. The checks carry those assertions as error diagnostics, so "no diagnostics" is the whole interface.
  *
  *   This file is also the only place several of them run. `yarn lint`'s health leg invokes four checks by id — `debt`,
- *   `bundle-graph`, `exports`, `test-contract` — and no workflow runs `mwops health all`, so a registered check with no
+ *   `bundle-graph`, `exports`, `test-interface` — and no workflow runs `mwops health all`, so a registered check with no
  *   test here is a check nothing executes. Registering one without a case below leaves it in the state it exists to
  *   prevent.
  *
  *   A check that walks tracked files belongs here once it passes `existingOnly: true`. The index can name a file the
  *   working tree no longer has — a rename staged and not committed is enough — and a walk that opens every path it is
- *   given throws ENOENT on that one, failing for a reason that has nothing to do with what it measures.
+ *   given throws enoent on that one, failing for a reason that has nothing to do with what it measures.
  */
 
 import { collectRepoContext } from "@mailwoman/repo-health"
@@ -24,7 +24,7 @@ import { localeTablesCheck } from "@mailwoman/repo-health/checks/locale/tables"
 import { noRootScriptsCheck } from "@mailwoman/repo-health/checks/no-root-scripts"
 import { nodeModulesReacharoundCheck } from "@mailwoman/repo-health/checks/node-modules-reacharound"
 import { runtimeFlagsCheck } from "@mailwoman/repo-health/checks/runtime-flags"
-import { stylesheetContractCheck } from "@mailwoman/repo-health/checks/stylesheet-contract"
+import { stylesheetCheck } from "@mailwoman/repo-health/checks/stylesheet-check"
 import { describe, expect, test } from "vitest"
 
 describe("the node_modules reach-around guard", () => {
@@ -76,13 +76,13 @@ describe("the locale registers", () => {
 	})
 })
 
-describe("the stylesheet contract", () => {
+describe("the stylesheet interface", () => {
 	// This case is the one that was missing. `.mw-map-sheet__handle` painted a button background and stated no color
 	// from the day the spacing-scale refactor shipped, and the check that says so ran nowhere: `yarn lint`'s health leg
 	// names four checks by id and no workflow runs `mwops health all`.
 	test("the design system's resets are present and no rule leaves an interactive surface uncolored", async () => {
 		const context = await collectRepoContext()
 
-		expect(await stylesheetContractCheck.run(context)).toEqual([])
+		expect(await stylesheetCheck.run(context)).toEqual([])
 	})
 })

@@ -99,9 +99,9 @@ export class ResourceError<S extends StatusCodes = StatusCodes> extends Error {
 	}
 
 	/**
-	 * @title HTTP status code.
+	 * @title http status code.
 	 *
-	 * A numeric status code conforming to the HTTP standard.
+	 * A numeric status code conforming to the http standard.
 	 */
 	status: S
 	/**

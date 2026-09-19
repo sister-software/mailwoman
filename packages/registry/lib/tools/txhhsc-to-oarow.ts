@@ -3,12 +3,12 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   #619: convert the TX HHSC nursing-facilities source (which ships an authoritative `Geo Location`
- *   = `lat,lon` per facility) into the OaRow JSONL the resolver eval consumes — so our geocoder can
+ *   #619: convert the TX hhsc nursing-facilities source (which ships an authoritative `Geo Location`
+ *   = `lat,lon` per facility) into the OaRow jsonl the resolver eval consumes — so our geocoder can
  *   be graded against the provided coordinates on real facility addresses (great-circle delta, tier
  *   breakdown via `oa-resolver-eval --address-points`).
  *
- *   Neutral scope: this measures GEOCODER ACCURACY on real public addresses. it makes no claim about
+ *   Neutral scope: this measures geocoder accuracy on real public addresses. it makes no claim about
  *   the facilities themselves.
  *
  *   Run: `mailwoman registry convert tx-hhsc [--src <tsv>] [--out /tmp/txhhsc-oarow.jsonl]`
@@ -28,11 +28,11 @@ import { inTXBBOX } from "#tools/shared"
  */
 export interface TXHHSCConvertOptions {
 	/**
-	 * The TX HHSC nursing-facilities TSV. Default `$MAILWOMAN_DATA_ROOT/record-matcher/sources/…`.
+	 * The TX hhsc nursing-facilities TSV. Default `$MAILWOMAN_DATA_ROOT/record-matcher/sources/…`.
 	 */
 	src?: PathBuilderLike
 	/**
-	 * Output OaRow JSONL path. Default `/tmp/txhhsc-oarow.jsonl`.
+	 * Output OaRow jsonl path. Default `/tmp/txhhsc-oarow.jsonl`.
 	 */
 	out?: string
 }
@@ -40,7 +40,7 @@ export interface TXHHSCConvertOptions {
 const GEO = /^\s*(-?\d+\.\d+)\s*,\s*(-?\d+\.\d+)\s*$/
 
 /**
- * Convert the TX HHSC nursing-facilities TSV into OaRow JSONL for `oa-resolver-eval`.
+ * Convert the TX hhsc nursing-facilities TSV into OaRow jsonl for `oa-resolver-eval`.
  */
 export async function convertTXHHSC(
 	options: TXHHSCConvertOptions = {},

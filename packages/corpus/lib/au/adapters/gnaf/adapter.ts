@@ -7,14 +7,14 @@
  *
  *   The model mis-parses Australian addresses in their native postcode-first / house-number-last
  *   order: it tags a leading 4-digit postcode as a house number (its US/EU prior) and swaps street
- *   ↔ locality with it. `scripts/eval/au-order-probe.ts` proved this is a word-ORDER coverage gap rather than capability — the same addresses parse perfectly in canonical order (65% → 87% @25km if the
+ *   ↔ locality with it. `scripts/eval/au-order-probe.ts` proved this is a word-order coverage gap rather than capability — the same addresses parse perfectly in canonical order (65% → 87% @25km if the
  *   parse were order-robust). EU survives the same eval because its postcodes are
  *   format-distinctive (a hyphenated `26-300` reads as a postcode anywhere); a bare AU `3053` only
  *   disambiguates by position.
  *
  *   So this adapter renders each assembled G-NAF tuple (from {@link ./assemble}) in one of three real
  *   AU layouts — real-AU canonical (number-first, postcode-trailing), postcode-first,
- *   locality-first — ROTATED by row index (`i % 3`), so the locality + postcode each land in every
+ *   locality-first — rotated by row index (`i % 3`), so the locality + postcode each land in every
  *   position across the corpus. This is the exact mechanism that fixed #148's v1.9.0 order-overfit
  *   for the 16 EU locales (`scripts/rerender-overture-multiorder.mjs`, v1.9.1 → shipped v4.13.0);
  *   AU was simply never in that train (`country_weights` had no AU, and `data_loader.py` excludes
@@ -23,7 +23,7 @@
  *   corpus aligner BIO-labels each (every component surface form occurs verbatim in `raw`, so
  *   alignment lands).
  *
- *   Input: the assembled component JSONL (one `{house_number,street,locality,region,postcode}` per
+ *   Input: the assembled component jsonl (one `{house_number,street,locality,region,postcode}` per
  *   line). Open G-NAF licence — attribute "Geoscape Australia".
  */
 
@@ -57,8 +57,8 @@ interface GNAFTuple {
 }
 
 /**
- * The address layouts an AU address actually arrives in. The model already handles postcode-TRAILING (canonical); the
- * two postcode-LEADING forms are the ones it fails, so they carry the change. We keep the canonical form too so the
+ * The address layouts an AU address actually arrives in. The model already handles postcode-trailing (canonical); the
+ * two postcode-leading forms are the ones it fails, so they carry the change. We keep the canonical form too so the
  * retrain doesn't forget it.
  */
 function renderOrders(c: GNAFTuple): string[] {
@@ -75,7 +75,7 @@ function renderOrders(c: GNAFTuple): string[] {
 }
 
 /**
- * Build the G-NAF adapter. `inputPath` is the assembled component JSONL (see {@link ./assemble}); it is country-pinned
+ * Build the G-NAF adapter. `inputPath` is the assembled component jsonl (see {@link ./assemble}); it is country-pinned
  * to AU regardless of `opts.country` (G-NAF is Australia-only).
  */
 export function createGNAFAdapter(): CorpusAdapter {
@@ -90,9 +90,9 @@ export function createGNAFAdapter(): CorpusAdapter {
 			let emitted = 0
 			let idx = 0
 
-			// Input is the assembled component JSONL (one tuple per line). TextSpliterator auto-disposes on
+			// Input is the assembled component jsonl (one tuple per line). TextSpliterator auto-disposes on
 			// loop completion and on an early `break` (abort / limit), so the old explicit handle teardown is
-			// gone. the parse tolerates a trailing CR on CRLF sources and the `!line.trim()` guard skips blanks.
+			// gone. the parse tolerates a trailing CR on crlf sources and the `!line.trim()` guard skips blanks.
 			// The render order rotates (i % 3), matching v1.9.1's rerender.
 			for await (const line of TextSpliterator.fromAsync(opts.inputPath)) {
 				if (opts.signal?.aborted) break

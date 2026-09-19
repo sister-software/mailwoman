@@ -3,28 +3,31 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   `mwdev_contract`'s measurement: parse an input set, validate each tree against the decoder's own structural
- *   contract, and report which violation classes fire — including the ones that do not.
+ *   `mwdev_interface`'s measurement: parse an input set, validate each tree against the decoder's own structural
+ *   interface, and report which violation classes fire — including the ones that do not.
  *
- *   The tree validated is `GeocodeRun.tree`, which is the tree AS THE RESOLVER SEES IT — after the postcode and
+ *   The tree validated is `GeocodeRun.tree`, which is the tree AS the resolver sees IT — after the postcode and
  *   stranded-affix repairs. So this counts what survives the repairs rather than what the raw decode emitted, which is
  *   the number that matters: a violation the repairs already clean up costs a consumer nothing.
  */
 
-import { censusTrees, type ContractRow } from "#contract/census"
 import type { EngineConfig, EngineRegistryLike } from "#engine/registry"
 import { resolveInputSet, type InputSetRef } from "#input-sets"
+import { censusTrees, type InterfaceRow } from "#interface/census"
 import { describeObservedRate } from "#power"
 import { provenanceFor } from "#tool-kit"
 
-export async function runContractCensus(registry: EngineRegistryLike, args: Record<string, unknown>): Promise<unknown> {
+export async function runInterfaceCensus(
+	registry: EngineRegistryLike,
+	args: Record<string, unknown>
+): Promise<unknown> {
 	const set = await resolveInputSet((args["inputs"] as InputSetRef | undefined) ?? { kind: "board" })
 	const config = (args["config"] as EngineConfig | undefined) ?? {}
 	const engine = await registry.acquire(config)
 	const limit = args["limit"] as number | undefined
 	const selected = limit ? set.inputs.slice(0, limit) : set.inputs
 
-	const rows: ContractRow[] = []
+	const rows: InterfaceRow[] = []
 	const errored: string[] = []
 
 	for (const item of selected) {
@@ -34,7 +37,7 @@ export async function runContractCensus(registry: EngineRegistryLike, args: Reco
 			rows.push({ id: item.id, input: item.input, tree: run.tree })
 		} catch {
 			// A row the engine cannot parse contributes nothing to any tally: counting it as valid would manufacture
-			// contract compliance out of a crash.
+			// interface compliance out of a crash.
 			errored.push(item.id)
 		}
 	}
@@ -72,7 +75,7 @@ export async function runContractCensus(registry: EngineRegistryLike, args: Reco
 }
 
 function summarize(census: ReturnType<typeof censusTrees>, powerSentence: string): string {
-	if (!census.n_evaluated) return `Nothing was evaluated, so no contract claim can be made. ${powerSentence}`
+	if (!census.n_evaluated) return `Nothing was evaluated, so no interface claim can be made. ${powerSentence}`
 
 	const worst = census.stranding.find((entry) => entry.stranded > 0)
 

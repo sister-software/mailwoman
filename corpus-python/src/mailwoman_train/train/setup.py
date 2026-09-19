@@ -115,7 +115,7 @@ def load_or_build_model(
             pad_token_id=tokenizer.pad_id if tokenizer is not None else 0,
             char_vocab_size=char_vocab_size,
         )
-        # Fine-tune from a pre-trained encoder: load MODEL weights only (no optimizer/scheduler/
+        # Fine-tune from a pre-trained encoder: load model weights only (no optimizer/scheduler/
         # step, unlike resume), so the supervised run starts fresh on the MLM-pretrained encoder.
         # The pretrain checkpoint's state_dict is key-identical (tied MLM head adds no params), so
         # this loads cleanly. strict=False surfaces any head mismatch instead of raising.

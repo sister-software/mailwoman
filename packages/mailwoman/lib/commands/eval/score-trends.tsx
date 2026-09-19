@@ -15,7 +15,7 @@ import { type CommandSpec, CommandTaskResult, type CommandComponent, useCommandT
 export const description = "Regenerate the per-tag score-trend page from evals/scores-by-version.json"
 
 /**
- * Native command-line contract consumed by the filesystem command router.
+ * Native command-line interface consumed by the filesystem command router.
  */
 export const spec = {
 	name: "score-trends",

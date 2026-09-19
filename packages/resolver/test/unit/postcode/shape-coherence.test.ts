@@ -4,7 +4,7 @@
  * @author Teffen Ellis, et al.
  *
  *   Tests for postcode-shape coherence (#31, Mechanism 1,
- *   `ResolveOpts.postcodeShapeCoherence`) — shape as CONFIDENCE and EXCLUSION, downstream of the
+ *   `ResolveOpts.postcodeShapeCoherence`) — shape as confidence and exclusion, downstream of the
  *   siblings. The pre-registered bars, per `docs/superpowers/plans/2026-08-05-postcode-structure-arc.md`:
  *
  *   - **B1-1** — byte-stability where it must be inert: a confirmed span (shape ∩ confident siblings
@@ -13,17 +13,17 @@
  *   - **B1-2** — the M-1 exclusion board: ≥90% of the mechanism's "speaks population" (confident
  *     siblings present) is excluded with the correct sibling tag surviving. 4 real Gauntlet spans
  *     (US 1600/3080/1200 via their region, PR 3499 via the territory-mapped country) + 9 synthesized
- *     US/PR 4-digit rows = 13/13. The MX and ES rows are DOCUMENTED ABSTENTIONS rather than in the
+ *     US/PR 4-digit rows = 13/13. The MX and ES rows are documented abstentions rather than in the
  *     denominator — MX has no country token ("Tabasco" is not a `matchSubdivision` key), and ES has
  *     no codex address system at all.
  *   - **B1-3** — confound protection ≤2% false exclusions: "Sydney NSW 2000, Australia" stays
  *     confirmed (the default country is never a signal), "10 Downing Street, London SW1A 2AA" under a
  *     US default abstains, "Ponce, 00716, Puerto Rico" stays confirmed via the PR→US territory map.
  *
- *   The rule under test (three outcomes, per span): intersection non-empty → CONFIRMED (additive
- *   stamp only); intersection empty + confident siblings → EXCLUDED (digit-only retags to
+ *   The rule under test (three outcomes, per span): intersection non-empty → confirmed (additive
+ *   stamp only); intersection empty + confident siblings → excluded (digit-only retags to
  *   `house_number`; letter-containing keeps its tag and is stamped `postcode_shape_excluded`); no
- *   confident siblings or no codex shape → ABSTAIN.
+ *   confident siblings or no codex shape → abstain.
  */
 
 import { walkNodes, type AddressNode, type AddressTree } from "@mailwoman/core/decoder"
@@ -113,7 +113,7 @@ describe("applyPostcodeShapeCoherence — CONFIRMED (B1-1)", () => {
 
 	it("confirms a DE/FR shape-native 5-digit span — M-1 finding #1, the documented limit", () => {
 		// A 5-digit house number is shape-native to US/DE/FR, so with a DE signal the intersection is
-		// non-empty — the shape cannot exclude it, and the mechanism CONFIRMS it instead.
+		// non-empty — the shape cannot exclude it, and the mechanism confirms it instead.
 		const roots = [postcodeNode("50733"), node({ tag: "country", value: "Germany" })]
 
 		const verdict = applyPostcodeShapeCoherence(roots)
@@ -254,7 +254,7 @@ describe("applyPostcodeShapeCoherence — ABSTENTIONS (B1-2 documented, B1-3 con
 	})
 
 	it("confounds: '10 Downing Street, London SW1A 2AA' under a US default abstains", () => {
-		// No country/region tokens in the tree → no signals → ABSTAIN, never exclude.
+		// No country/region tokens in the tree → no signals → abstain, never exclude.
 		const roots = [postcodeNode("SW1A 2AA")]
 
 		const verdict = applyPostcodeShapeCoherence(roots)
@@ -288,7 +288,7 @@ describe("firstPostcodeValue integration — excluded spans never become the add
 		const roots = [excluded, node({ tag: "region", value: "CO" }), good]
 		applyPostcodeShapeCoherence(roots)
 
-		// The resolver walk must use the GOOD span as the address's postcode — the excluded one is
+		// The resolver walk must use the good span as the address's postcode — the excluded one is
 		// skipped even though it appears first in tree order.
 		const resolver = createWOFResolver(silentBackend)
 		const resolved = await resolver.resolveTree(tree(...roots), { postcodeShapeCoherence: true })

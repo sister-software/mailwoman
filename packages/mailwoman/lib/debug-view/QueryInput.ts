@@ -10,7 +10,7 @@
  *
  *   - **Ctrl+W (`\x17`)** — what a terminal sends for "delete the word before the cursor", and what iTerm2 sends for
  *     ⌥⌫ by default — reaches `useInput` as `input: "w"` with `key.ctrl` set, because Ink resolves ctrl+letter to the
- *     LETTER. `ink-text-input`'s handler guards only ctrl+C, so every other ctrl chord falls through to its insert
+ *     letter. `ink-text-input`'s handler guards only ctrl+C, so every other ctrl chord falls through to its insert
  *     branch and types the letter: holding alt and pressing backspace appended a `w`.
  *   - **Meta+backspace (`\x1b\x7f`)** arrives correctly flagged (`key.backspace` + `key.meta`, empty input) and is
  *     then treated as a plain backspace — one character rather than one word.
@@ -40,7 +40,7 @@ export interface InputState {
 }
 
 /**
- * The UTF-16 offset one CODEPOINT left of `index`.
+ * The UTF-16 offset one codepoint left of `index`.
  *
  * `codePointAt(index - 2)` returns a value above the BMP only when `index - 2` genuinely starts a surrogate pair, so
  * this steps 2 across `🏠` and 1 across everything else. Stepping by one unit instead is how a backspace after an emoji
@@ -55,7 +55,7 @@ function stepLeft(value: string, index: number): number {
 }
 
 /**
- * The UTF-16 offset one CODEPOINT right of `index`.
+ * The UTF-16 offset one codepoint right of `index`.
  */
 function stepRight(value: string, index: number): number {
 	if (index >= value.length) return value.length
@@ -79,7 +79,7 @@ function clampCursor(value: string, index: number): number {
 }
 
 /**
- * What survives from a typed or PASTED run: CR/LF/tab runs collapse to one space, other control characters are dropped,
+ * What survives from a typed or pasted run: CR/LF/tab runs collapse to one space, other control characters are dropped,
  * and everything else is kept.
  *
  * Collapsing rather than rejecting is the point. Pasting a multi-line address into a one-line field is a thing people
@@ -95,7 +95,7 @@ function printableRun(input: string): string {
  * run of non-whitespace behind that.
  *
  * Whitespace-delimited (readline's `unix-word-rubout`, the tty's own `werase`) rather than alphanumeric-delimited
- * (`backward-kill-word`), because the text being edited is an address: one press should take `OR`, then `Portland,`,
+ * (`backward-kill-word`), because the text being edited is an address: one press should take `or`, then `Portland,`,
  * then `St` — not stop inside `Portland` at the comma.
  */
 export function wordStart(value: string, cursor: number): number {
@@ -137,7 +137,7 @@ export function applyKey(state: InputState, input: string, key: Key): InputState
 	if (key.end) return { value, cursor: value.length }
 
 	// Ink names the two deletes apart, and so does the keyboard: `backspace` is the key above Enter (`\x7f`),
-	// `delete` is the FORWARD Delete of the navigation cluster (`ESC[3~`). Folding them together made the Delete
+	// `delete` is the forward Delete of the navigation cluster (`ESC[3~`). Folding them together made the Delete
 	// key eat the character behind the cursor, which is the opposite of what it says on it.
 	if (key.backspace) {
 		const start = key.meta ? wordStart(value, cursor) : stepLeft(value, cursor)
@@ -231,7 +231,7 @@ export function QueryInput(props: QueryInputProps): ReactElement {
 
 	if (!focus) return createElement(Text, { wrap: "truncate-end" }, value)
 
-	// The inverted cell is a whole CODEPOINT rather than a UTF-16 unit: `slice(cursor, cursor + 1)` over `🏠` inverts half a
+	// The inverted cell is a whole codepoint rather than a UTF-16 unit: `slice(cursor, cursor + 1)` over `🏠` inverts half a
 	// surrogate pair and paints `�` under the cursor.
 	const safeCursor = clampCursor(value, cursor)
 	const point = value.codePointAt(safeCursor)

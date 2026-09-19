@@ -7,12 +7,12 @@
  *
  *   Two commitments from the epic bind every line here.
  *
- *   1. **Expectations pin OUTCOMES, never mechanisms.** Nothing in an account is asserted by a board row, and nothing
+ *   1. **Expectations pin outcomes, never mechanisms.** Nothing in an account is asserted by a board row, and nothing
  *      here is cached. Every account is recomputed from the current system on every call, so an explanation is free to
  *      dissolve the moment the system stops working that way. (The anti-Pelias rule: no mechanistic belief accumulates
  *      that a truer understanding of addresses could break against.)
- *   2. **Failure shapes are MECHANISM-STATES, never address shapes.** Every predicate below reads pipeline facts —
- *      channels, constraints, ranks, lineage — and none reads what KIND of address the row is. A shape makes a claim about
+ *   2. **Failure shapes are mechanism-states, never address shapes.** Every predicate below reads pipeline facts —
+ *      channels, constraints, ranks, lineage — and none reads what kind of address the row is. A shape makes a claim about
  *      what the system did on this input. it cannot fossilize a wrong belief about how addresses work.
  *
  *   Classification is v1: transparent predicates over recorded pipeline facts, with no calibration. Every result says so in its
@@ -23,11 +23,11 @@
  *   What v2 is, stated precisely (the loose earlier wording — "shapes get a calibrated posterior, novelty mints a
  *   class" — was wrong twice over, and the correction is worth carrying here rather than rediscovering):
  *
- *   1. **Class-conditional (Mondrian) SPLIT CONFORMAL** over held-out diagnosed rows, calibrated per shape, so a
- *      minority shape is not judged by a threshold a majority shape set. It yields PREDICTION SETS and p-values with
- *      an empirical coverage guarantee — NOT a posterior. A p of 0.82 is not "82% likely to be this shape", and any
+ *   1. **Class-conditional (Mondrian) split conformal** over held-out diagnosed rows, calibrated per shape, so a
+ *      minority shape is not judged by a threshold a majority shape set. It yields prediction sets and p-values with
+ *      an empirical coverage guarantee — not a posterior. A p of 0.82 is not "82% likely to be this shape", and any
  *      surface that reads it that way is lying about what conformal gives.
- *   2. **A separate conformal novelty detector** whose job is to ABSTAIN when no known shape fits.
+ *   2. **A separate conformal novelty detector** whose job is to abstain when no known shape fits.
  *   3. **Minting a new shape is a downstream clustering-and-review step**, not an operation conformal performs.
  *      Standard Mondrian CP assumes the taxonomy already exists. open-set conformal can flag that an observation
  *      belongs to no known class, and what to do about that is our architecture rather than the method's.
@@ -41,7 +41,7 @@
  *     75, wrong_instance_detected 38, rank_flip 10, parse_shape_contradiction 3, mis_tag_in_vocabulary 1. The first
  *     four could carry calibration. the last three cannot, and splitting them into train/calibration halves makes it
  *     worse.
- *   - **These shapes are MULTI-LABEL and Mondrian partitions.** `by_shape` counts overlap by construction and the
+ *   - **These shapes are multi-label and Mondrian partitions.** `by_shape` counts overlap by construction and the
  *     result says never to sum them, so "the class" a row calibrates under has to be defined first — earliest pipeline stage,
  *     full label set, or something else — and that choice is a modelling decision rather than a detail.
  *
@@ -49,7 +49,7 @@
  *   are actively drained by the fixes this tool motivates (five promoted in one night), so yesterday's diagnosed
  *   population is not exchangeable with tomorrow's failures.
  *
- *   Aggregation is BY SHAPE with each class's n, never by raw row count: the n=64 city-only aggregate at p=0.084 that
+ *   Aggregation is BY shape with each class's n, never by raw row count: the n=64 city-only aggregate at p=0.084 that
  *   motivated this issue concealed a six-row single-mechanism finding, and a rate over a mixture is a number about the
  *   mixture.
  */
@@ -85,7 +85,7 @@ const KNOWN_FORMAT_CONFIDENCE_FLOOR = 0.9
 
 /**
  * Row ids listed per shape before the list is capped. The `n` beside it is always the real count. this bounds the
- * PAYLOAD, never the measurement.
+ * payload, never the measurement.
  */
 const SHAPE_ID_CAP = 20
 
@@ -94,12 +94,12 @@ const SHAPE_ID_CAP = 20
  *
  * A flip is one geocode per row per setting and the setting space is five wide, so a full board would be thousands of
  * extra resolves plus an engine build per distinct patch. Every result that applies the narrowing says so, and says
- * that a clean row's settings are then UNMEASURED rather than measured and found inert.
+ * that a clean row's settings are then unmeasured rather than measured and found inert.
  */
 export const COUNTERFACTUAL_FULL_RUN_MAX_ROWS = 20
 
 /**
- * The v1 shape vocabulary, in PIPELINE EXECUTION ORDER — parse, evidence, retrieval, ranking, outcome.
+ * The v1 shape vocabulary, in pipeline execution order — parse, evidence, retrieval, ranking, outcome.
  *
  * A row can match several, and the order is what makes a multi-match readable: the earliest pipeline stage comes first,
  * so `[retrieval_empty, wrong_instance_detected]` reads as one story rather than two verdicts. The two terminal states
@@ -280,7 +280,7 @@ export interface RetrievalFacts {
 	 * `null` when the trace carries no resolver records at all (a trace predating them). An empty array is the walk
 	 * stating it performed no lookups — a different claim, and one the shapes must not read as retrieval failure.
 	 *
-	 * COVERAGE BOUND, and it is required for every retrieval shape below: the trace records the WALK's own
+	 * Coverage bound, and it is required for every retrieval shape below: the trace records the walk's own
 	 * `#lookupAndPick` and nothing else. The resolver's post-walk recovery passes — span-rescore (a famous name the model
 	 * tagged `street`, which the walk never queries because `street` is not in the placetype map) and the
 	 * postcode-compound recovery — query the backend directly and emit no record. So a row can carry a resolved
@@ -352,7 +352,7 @@ function decodeReading(parse: NeuralParseTrace): DecodeReading {
 /**
  * Fold a detector span and a component value to the same comparable form.
  *
- * Known-format spans are offsets into the NORMALIZED input while component values are taken from the RAW one, so the
+ * Known-format spans are offsets into the normalized input while component values are taken from the RAW one, so the
  * two frames cannot be compared by offset. Folding away case and every non-alphanumeric character compares what both
  * frames do agree on — the characters — which is what the contradiction is about.
  */
@@ -498,7 +498,7 @@ export function matchShapes(facts: {
 		shapes.push("evidence_starved")
 	}
 
-	// A span is only empty AT THE DECIDING SITE when nothing resolved it: a `postcode_format_probe` and an
+	// A span is only empty AT the deciding site when nothing resolved it: a `postcode_format_probe` and an
 	// `empty_admin_pick` both answer off an empty candidate table, and reading those as retrieval failure would report
 	// a working fallback as a defect.
 	const emptyDeciding = lookups.some(
@@ -630,7 +630,7 @@ export interface ShapeAggregate {
 /**
  * Per-shape counts and the rows in each class.
  *
- * Ordered by {@link DIAGNOSE_SHAPES} so two runs are diffable, and a shape no row matched is OMITTED rather than
+ * Ordered by {@link DIAGNOSE_SHAPES} so two runs are diffable, and a shape no row matched is omitted rather than
  * reported as zero — a class with no members is not a class anyone can describe, and a table of zeros reads as a
  * measurement of them.
  */
@@ -703,7 +703,7 @@ export function aggregateCounterfactuals(
 /**
  * The in-vocabulary mis-tag refinement of `unclassified` (#1722 v2 — the `bd-op2-london-college` class, where `Dhaka
  * 1205` decoded as street + house_number and the expected locality/postcode never existed): an expected component tag
- * the parse never produced, whose expected VALUE occurs verbatim in the input. A tag that exists with a WRONG value is
+ * the parse never produced, whose expected value occurs verbatim in the input. A tag that exists with a wrong value is
  * a different fact and stays out — that failure has a component to interrogate. this one does not.
  */
 function misTaggedInVocabulary(
@@ -825,7 +825,7 @@ export async function runDiagnose(registry: EngineRegistryLike, args: Record<str
 
 	const rows: RowAccount[] = accounts.map((account) => ({ ...account, rendered: renderAccount(account) }))
 
-	// Stable partition, non-clean first — only the EMITTED order. every aggregate reads `rows` whole.
+	// Stable partition, non-clean first — only the emitted order. every aggregate reads `rows` whole.
 	const emittedRows = [
 		...rows.filter((row) => !row.shapes.includes("clean")),
 		...rows.filter((row) => row.shapes.includes("clean")),

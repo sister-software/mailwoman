@@ -49,7 +49,7 @@ describe("po-box military rows", () => {
 	it("writes strictly more at variants 1 than at variants 0 — the discriminator the CLI defect erased", async () => {
 		// Asserting an exact count here would be asserting the Spanish po-box template: these tuples name a country
 		// the rendered line does not contain, so every tuple-driven row quarantines on `component-not-found:country`
-		// and never reaches the output. What the CLI defect destroyed is the DIFFERENCE between the two settings, and
+		// and never reaches the output. What the CLI defect destroyed is the difference between the two settings, and
 		// that is what this pins — `Number("0") || 1` made the two indistinguishable.
 		const zero = await run(TUPLES, [], { variants: 0, militaryRatio: 1 })
 		const one = await run(TUPLES, [], { variants: 1, militaryRatio: 1 })

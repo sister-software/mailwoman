@@ -8,7 +8,7 @@
  *   headers): the `$BCDClient`-bound `retrieveFilingDates()` → a plain function taking a
  *   {@linkcode BDCClient}.
  *
- *   CACHING MOVED TO THE CLIENT. Both the Nexus original (one `<filingType>-dates.json` per filing
+ *   caching moved TO the client. Both the Nexus original (one `<filingType>-dates.json` per filing
  *   type) and this port's first version (`dataRootPath("bdc", "cache", "filing-dates.json")`, unfiltered)
  *   hand-rolled a JSON file cache here. `BDCClient` is built on `APIClient` and now carries an on-disk
  *   response cache of its own, so the hand-rolled one was the exact duplication that migration exists to
@@ -67,7 +67,7 @@ export async function retrieveFilingDates(
  * Pick the latest (most recent) `as_of_date` among `entries` for the given `dataType`.
  *
  * Comparison is by parsed `Date` value rather than string ordering — the FCC's `as_of_date` values are `date`-formatted
- * (`YYYY-MM-DD`), which happens to sort correctly as strings too, but comparing as dates is the honest contract.
+ * (`yyyy-MM-DD`), which happens to sort correctly as strings too, but comparing as dates is the honest interface.
  */
 export function resolveLatestVintage(entries: readonly FCCAsOfDateEntry[], dataType: BDCFilingDataType): string {
 	const matching = entries.filter((entry) => entry.data_type === dataType)

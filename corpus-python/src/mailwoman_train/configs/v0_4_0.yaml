@@ -12,11 +12,11 @@
 # 2026-05-22 already. this config kicks off the Python-side retrain that wraps the work.
 #
 # Hand off:
-#   HSA_OVERRIDE_GFX_VERSION=11.0.0 CONFIG=src/mailwoman_train/configs/v0_4_0.yaml \
+#   HSA_OVERRIDE_GFX_VERSION=11.0.0 config=src/mailwoman_train/configs/v0_4_0.yaml \
 #     scripts/train_with_resume.sh
 #
 # Once training completes:
-#   CHECKPOINT=/data/models/checkpoints/v0_4_0/step-050000 scripts/ship_v0_4_0.sh
+#   checkpoint=/data/models/checkpoints/v0_4_0/step-050000 scripts/ship_v0_4_0.sh
 
 data:
   # Reuses corpus-v0.3.0 — issue #116 §6 confirms the corpus need not be rebuilt
@@ -43,7 +43,7 @@ data:
     usgov-hrsa-fqhc: 2.0
     usgov-imls-pls: 2.0
     usgov-nad: 1.0
-    state-ia-contractors: 2.0
+    state-ia-builders: 2.0
     state-tx-notaries: 1.5
     state-ny-notaries: 2.0
   train_rows_per_epoch: null

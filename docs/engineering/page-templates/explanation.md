@@ -1,6 +1,6 @@
 # Template: explanation
 
-An `explanation` page answers a why question. It has no steps and no contract tables, and a reader should be
+An `explanation` page answers a why question. It has no steps and no interface tables, and a reader should be
 able to close it having changed their mental model rather than their filesystem. Register rules are in
 [`../writing-system.md`](../writing-system.md) under Register by role.
 
@@ -57,5 +57,5 @@ groupPhrases("1600 Amphitheatre Parkway, Mountain View, CA 94043", shape, locale
 - The rule-world analog appears before the statistical term rather than after it.
 - Each term is defined in one sentence at first use, and the registry link carries the rest.
 - The page states what the design gives up rather than only what it gains.
-- No steps, no contract tables. Those belong on a `guide` or a `reference` page, linked from Related.
+- No steps, no interface tables. Those belong on a `guide` or a `reference` page, linked from Related.
 - The audit checklist in [`../writing-system.md`](../writing-system.md) has been run over the draft.

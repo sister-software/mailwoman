@@ -9,7 +9,7 @@
 # Control: v5.7.0 itself, from-scratch at seed 42 with the flag on, so this arm is its twin and the
 # only difference between them is which rows the US admin-tail source carries.
 #
-# WHAT MOVED IN THE CORPUS. v0.32.0-locality-shape overlays v0.30.0-bare-postcode with the same
+# what moved IN the corpus. v0.32.0-locality-shape overlays v0.30.0-bare-postcode with the same
 # three sources v0.31.0 carries. `synth-trailing-region-ca-bare` and `synth-unit-v30` are copies of
 # v0.31.0's parquet files, byte for byte. `synth-trailing-region-us` is rebuilt from the same
 # `applyCountryBudget` round-robin with locality name shape added to the bucket key, so the tuple
@@ -28,7 +28,7 @@
 # hold. Raising the share past 4,060/16,000 = 25.4% needs a smaller tuple budget or a second postal
 # source.
 #
-# WHAT IS BEING FIXED, and the reading behind it. `Saint Louis, MO 63131` answers no locality under
+# what is being fixed, and the reading behind it. `Saint Louis, MO 63131` answers no locality under
 # v5.7.0, while `Saint Louis, MO 63131, USA` and `123 Main St, Saint Louis, MO 63131` both answer
 # `Saint Louis`. Read through `diagnoseParse`, the first token of every failure carries `B-street`
 # at 0.78 to 0.93:
@@ -54,12 +54,12 @@
 # whether the arm's gain follows that division or spreads across all three buckets, which would
 # mean the stratification claimed nothing the extra rows alone would not have delivered.
 #
-# EXPOSURE. 60,000 steps x batch 128 = 7,680,000 samples. `synth-trailing-region-us` keeps
+# exposure. 60,000 steps x batch 128 = 7,680,000 samples. `synth-trailing-region-us` keeps
 # `source_reps: 1.0`, so 15,976 rows draw about 2,080 per 1,000,000-row epoch, the same exposure
 # v5.7.0 and v5.8.0 gave 16,000 rows. This arm adds no extra passes. It changes which rows the one
 # pass reads.
 #
-# PRE-REGISTERED BARS. Grade in order. Baselines were measured under the v5.7.0 candidate
+# PRE-registered bars. Grade in order. Baselines were measured under the v5.7.0 candidate
 # (`candidates/v570-cache`, `model.onnx` md5 e72b0cbb) with
 # `packages/mailwoman/lib/dev-tools/us/locality-region-postcode-arms.run.ts`.
 #
@@ -70,21 +70,21 @@
 # af671e351d3be6faa9dabf0ec9122d0b3ecd12140d03aa1c6b2bef9248d53a60. A bar that names a panel nobody
 # can rebuild cannot be graded a second time.
 #
-#   1. TARGET BUCKET. `us-shape-stratified.jsonl` carries 1,200 rows, 400 per bucket, over 1,132
+#   1. target bucket. `us-shape-stratified.jsonl` carries 1,200 rows, 400 per bucket, over 1,132
 #      distinct localities. Bare arm, suffix-word bucket: 123/379 (32.5%) under v5.7.0. It must
 #      rise. This is the bucket the corpus change adds 1,922 rows for.
 #
-#   2. UNTARGETED BUCKETS, which is what separates a shape result from a row-count result. Same
+#   2. untargeted buckets, which is what separates a shape result from a row-count result. Same
 #      panel, same arm: other multi-word 189/358 (52.8%) and single word 321/395 (81.3%). Neither
 #      may fall. If both rise by as much as bucket 1 does, the arm measured more US admin-tail rows
 #      rather than their shape, and the stratification carries no separate result.
 #
-#   3. CONTINUITY AND THE REVERSE RISK. `us.jsonl` (603 distinct localities), the panel v5.7.0 and
+#   3. continuity and the reverse risk. `us.jsonl` (603 distinct localities), the panel v5.7.0 and
 #      v5.8.0 were graded on: bare 555/603 (92.0%) may not fall, and `street_only` 594/603 may not
 #      fall. `street_only` puts a real street where the locality belongs and a row answering no
 #      locality is the pass, so it is where teaching this surface would show up as harm.
 #
-#   4. THE D-RULE, and the number v5.8.0 failed at. `mwdev_promotion_eval --spec v9.0.0-base` must
+#   4. the D-rule, and the number v5.8.0 failed at. `mwdev_promotion_eval --spec v9.0.0-base` must
 #      pass every declared floor, no row may regress on FR, GB or DE, and US `postcode` per-tag F1
 #      must hold at v5.7.0's 95.6% (n=2,660). v5.8.0 read 95.2% there and 10 FR/GB/DE regressions,
 #      and both readings are why its mechanism did not ship.
@@ -189,8 +189,8 @@ data:
     NG: 1.0
     NI: 1.0
     NL: 1.0
-    # Quoted, because YAML 1.1 reads a bare `NO` as the boolean false — the key then never matches a
-    # row's `country`, and `synth-no-fragment` (33,203 rows, all NO) becomes unselectable.
+    # Quoted, because YAML 1.1 reads a bare `no` as the boolean false — the key then never matches a
+    # row's `country`, and `synth-no-fragment` (33,203 rows, all no) becomes unselectable.
     "NO": 1.0
     NZ: 1.0
     OM: 1.0
@@ -252,9 +252,9 @@ data:
     # zero rows from either. `_index_by_source` now reads every source in a file, which makes them
     # visible, and `_apply_source_weights` refuses a source the weights never mention. Naming them at
     # zero reproduces the exposure v5.7.0 had. Measured on the shared v0.30.0-bare-postcode base,
-    # which this corpus overlays unchanged: state-ia-contractors 74,587 rows in part-0672,
+    # which this corpus overlays unchanged: state-ia-builders 74,587 rows in part-0672,
     # usgov-imls-pls 80,402 rows in the same file.
-    state-ia-contractors: 0.0
+    state-ia-builders: 0.0
     usgov-imls-pls: 0.0
     deepseek-kryptonite: 3.0
     synth-intersection: 1.0
@@ -306,7 +306,7 @@ data:
     # dropped before v5.5.0 were named nowhere and cost nothing to omit, which is why nothing failed
     # for five model versions.
     #
-    # Each floor is COUNTED. A reps target of 1.0 is exactly rows/samples of the run
+    # Each floor is counted. A reps target of 1.0 is exactly rows/samples of the run
     # (`derive_source_weights`), so 15,976 US rows draw about 2,080 per 1,000,000-row epoch and 500
     # is a floor a real draw clears four times over. The Canadian source at 4.0 draws about 7,156,
     # and 1,000 clears seven times over. `synth-unit-v30` inherits its predecessor's weight, which

@@ -338,7 +338,7 @@ test("deserializeFSTWeb: version 0 is rejected", () => {
 })
 
 test("deserializeFSTWeb: a version above MAX_VERSION (now 5) is rejected", () => {
-	// MAX_VERSION tracks the serializer's VERSION (5, the two-score split): v3/v4/v5 parse, v6+ is
+	// MAX_VERSION tracks the serializer's version (5, the two-score split): v3/v4/v5 parse, v6+ is
 	// rejected. This assertion is why the check stops drifting — it fails the moment the serializer
 	// bumps and the reader's check does not.
 	const bytes = buildFSTBuffer(PARIS_FIXTURE)

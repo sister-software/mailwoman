@@ -315,7 +315,7 @@ Minor, same file: the proportional font's bucket path is misspelled — `/fonts/
   address produces `1600 Pennsylvania Ave NW, W<your text>ashington, DC 20500`, which is exactly what
   happened on the first run of this audit. Select-on-focus, or ship the field empty with the address as
   placeholder only.
-- The same string is also the placeholder (`packages/react/lib/map/Geocoder.tsx:185`), which is therefore
+- The same string is also the placeholder (`packages/react/lib/map/Geocoder.tsx:185`), which is. Therefore,
   dead code — it can only appear after the user clears the field, at which point it re-suggests the text
   they had deleted.
 - The field is `disabled` for the entire 38 MB download, so the pre-filled text sits there uneditable for
@@ -418,7 +418,7 @@ Minor, same file: the proportional font's bucket path is misspelled — `/fonts/
   `GuidedTour`), plus `src/contexts/RuntimeEmbed.tsx` — those four were its only consumers —
   `CalibrationShowcase`, `F1ScoreTable`, `POIExplorer`, `DashboardMap`, `SplashScreen` and the stray
   `TrainingChart.tsx`. `PricingTiers` stays: its docblock records a decision to keep it for the Product
-  door, which has since landed, so that is now a choice rather than a wait. Verified by `docusaurus
+  door, which has since landed. Therefore, that is now a choice rather than a wait. Verified by `docusaurus
 build` completing with `onBrokenLinks` and `onBrokenAnchors` both `"throw"`.
 - `docs/src/pages/index.module.css` — 25 colour literals, 2 media queries, **zero `[data-theme]`
   overrides**; `:119-153` adds eight `rgba(255,255,255,…)` values that assume a dark hero.
@@ -481,10 +481,10 @@ fixed here was two implementations of one thing, and four of them had already di
 Dead rules removed: `.mw-map-sheet--bottom` (×2), `.mw-map-sheet__grip`, `.mw-map-searchbar__clear`.
 `.mw-map-chrome__search` was the last member of a deleted namespace, now `.mw-map-panel__search`.
 
-**The finding worth remembering.** `CHROME_SELECTORS` in `packages/site-kit/lib/playwright/chrome-contract.ts`
+**The finding worth remembering.** `CHROME_SELECTORS` in `packages/site-kit/lib/playwright/chrome-interface.ts`
 still listed `.mw-map-chrome--top` and `.mw-map-sheet--bottom`, and `visibleBoxes` SKIPS a selector whose
-`count() !== 1` — so the overlap contract had stopped testing the surface the restructure was about, and
-said nothing. A contract that skips what it cannot find reports green for a deleted subject. Two unit and
+`count() !== 1` — so the overlap interface had stopped testing the surface the restructure was about, and
+said nothing. A interface that skips what it cannot find reports green for a deleted subject. Two unit and
 browser assertions were stale the same way and had not been run since.
 
 Left alone deliberately:
@@ -523,7 +523,7 @@ tokens`, and the generator runs `--clean`. New tokens go in `styleframe.config.t
 run — which is how the first attempt at this pass was written, and would have gone unnoticed until someone
 regenerated.
 
-`stylesheet-contract` grew a detector for a raw pixel `border-radius`, so the scale is enforced rather than
+`stylesheet-interface` grew a detector for a raw pixel `border-radius`, so the scale is enforced rather than
 merely documented. The spacing scale is not enforced: it would need a lint over four properties and a way to
 exempt the values that are deliberate, and the check's house rule is that every rule in it is a defect that
 reached production.

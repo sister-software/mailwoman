@@ -6,7 +6,7 @@
 # these two commands, and the numbers on the pages are the contents of the two JSON files this
 # writes.
 #
-# WHAT IT DOWNLOADS
+# what IT downloads
 #
 #   candidate   the global admin gazetteer, about 1.65 GB. Both panels need it.
 #   fr          the French BAN rooftop database, about 6.95 GB. The French panel needs it; the Belgian
@@ -15,7 +15,7 @@
 # That is roughly 8.6 GB before either panel runs. Downloads land under the data root and are skipped
 # when a copy is already there, so a second run costs nothing.
 #
-# USAGE
+# usage
 #
 #   ./run-all.sh                      # into ./benchmark-data, or $MAILWOMAN_DATA_ROOT when set
 #   ./run-all.sh /path/to/data-root   # into a root you name

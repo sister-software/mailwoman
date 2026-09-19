@@ -1,6 +1,6 @@
 # Pastel Arc Phase 0: core helpers + cli-kit Implementation Plan
 
-> **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
+> **For agentic workers:** required sub-skill: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
 **Goal:** Land the shared foundations the migration phases consume: `readJSONL`/`writeJSONL`/`iterateJSONL`, stats + `formatPercent`, `sha256File` in `@mailwoman/core/utils`; and `mailwoman/cli-kit` (command types + `useCommandTask` + `CheckList`) / `mailwoman/test-kit` extracted from `mailwoman/sdk` with deprecated shims.
 

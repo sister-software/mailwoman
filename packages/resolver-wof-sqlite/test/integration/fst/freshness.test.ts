@@ -126,7 +126,7 @@ describe("readWOFSourceIdentity", () => {
 		const lie = "11111111111111111111111111111111"
 		await writeLocalTextFile(`${lie}  trusted-sidecar.db\n`, `${path}.md5`)
 
-		// The lie proves the sidecar was READ rather than the file re-hashed — the property that keeps
+		// The lie proves the sidecar was read rather than the file re-hashed — the property that keeps
 		// the guard cheap enough to leave switched on for a 5 GB source.
 		expect((await readWOFSourceIdentity(path)).md5).toBe(lie)
 	})

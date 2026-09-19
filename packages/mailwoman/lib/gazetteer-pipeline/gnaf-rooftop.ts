@@ -3,29 +3,29 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Build `osm/address-points-au-au.db` — the AU rooftop database from Geoscape G-NAF, on the SHARED
+ *   Build `osm/address-points-au-au.db` — the AU rooftop database from Geoscape G-NAF, on the shared
  *   situs schema + OSM H3 spine so the existing `OSMRegionDatabaseProvider` / `AddressPointSqliteLookup`
  *   serve it with zero runtime changes.
  *
- *   WHY G-NAF and not OSM for AU: the panel's en-AU misses were uniformly `tier=admin` at 1–6 km —
+ *   why G-NAF and not OSM for AU: the panel's en-AU misses were uniformly `tier=admin` at 1–6 km —
  *   correct locality centroids with no address point to snap to. G-NAF is the authoritative
  *   national register (~15M principal addresses including rural LOT numbering), CC-BY-4.0 with
  *   attribution — no ODbL posture, unlike the OSM-derived siblings in the same directory. The
- *   acquisition provenance (EULA, use-restriction fact sheet, sha256) lives beside the source data
- *   under `<data-root>/gnaf/<release>/PROVENANCE.md`.
+ *   acquisition provenance (eula, use-restriction fact sheet, sha256) lives beside the source data
+ *   under `<data-root>/gnaf/<release>/provenance.md`.
  *
- *   JOIN SHAPE (per state, streaming): `LOCALITY` (pid → name) and `STREET_LOCALITY` (pid →
+ *   join shape (per state, streaming): `locality` (pid → name) and `STREET_LOCALITY` (pid →
  *   name/type/suffix) load as maps; `ADDRESS_DEFAULT_GEOCODE` (detail-pid → lon/lat) loads as a
  *   map. then `ADDRESS_DETAIL` streams once. Retired rows and non-principal (alias) addresses are
  *   skipped. `NUMBER_FIRST` wins. a number-less row falls back to `LOT_NUMBER` (the `LOT 373`
  *   rural class the parser reads as unit + house_number). Street rendering: `STREET_NAME` +
- *   `STREET_TYPE_CODE` + suffix, with the directional suffix CODES expanded to words (the register
+ *   `STREET_TYPE_CODE` + suffix, with the directional suffix codes expanded to words (the register
  *   stores types as full words but suffixes as codes); keys via the shared `en` normalizer — the
  *   same branch the GB/NZ databases use.
  *
- *   G-NAF PSV is CRLF-terminated and quote-free: the trailing `\r` must be stripped at the reader
+ *   G-NAF PSV is crlf-terminated and quote-free: the trailing `\r` must be stripped at the reader
  *   boundary or the last column's name and every last-field value carry it — the geocode file's
- *   `LATITUDE` column is last, so the un-stripped join loses every coordinate (the ACT smoke's
+ *   `latitude` column is last, so the un-stripped join loses every coordinate (the ACT smoke's
  *   0-geocode failure).
  */
 
@@ -74,7 +74,7 @@ const SUFFIX_WORDS = new Map<string, string>([
 
 export interface GNAFRooftopOptions {
 	/**
-	 * The extracted `Standard/` PSV directory. Default: `<data-root>/gnaf/may26/extracted/G-NAF/G-NAF MAY 2026/Standard`.
+	 * The extracted `Standard/` PSV directory. Default: `<data-root>/gnaf/may26/extracted/G-NAF/G-NAF may 2026/Standard`.
 	 */
 	standardDir?: string
 	/**

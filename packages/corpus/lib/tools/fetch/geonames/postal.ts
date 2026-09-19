@@ -4,7 +4,7 @@
  * @author Teffen Ellis, et al.
  *
  *   Fetch the GeoNames per-country postal-code exports — the only source in this family that carries a
- *   `(postcode, locality, region)` triple with the NAMES inline.
+ *   `(postcode, locality, region)` triple with the names inline.
  *
  *   Source : https://download.geonames.org/export/zip/<CC>.zip
  *   License: CC-BY-4.0, attribute "GeoNames". Tier B.
@@ -25,7 +25,7 @@
  *     sits at its middle, so a postcode near the edge is routinely closer to a neighbouring town's centroid than to its
  *     own. Under 50% for four of the five, which is not a join.
  *
- *   The GeoNames export sidesteps both: columns 3 and 4 ARE the place and admin1 names, so there is nothing to join and
+ *   The GeoNames export sidesteps both: columns 3 and 4 are the place and admin1 names, so there is nothing to join and
  *   nothing to approximate. `@mailwoman/corpus`'s `geonames-postal` adapter consumes it directly.
  *
  *   ## Coverage is not universal, and the gap is the point
@@ -44,7 +44,7 @@
  *
  *   ## Why `downloadToFile` and not `APIClient`
  *
- *   Same split `AGENTS.md` draws and the `ourairports` sibling explains: these are static file transfers from a plain
+ *   Same split `agents.md` draws and the `ourairports` sibling explains: these are static file transfers from a plain
  *   file host, run once per refresh. The pacing, retry and caching `APIClient` exists for have nothing to act on here.
  *
  *   Invoke via `mailwoman corpus fetch geonames-postal --countries pt,au,nz`.
@@ -112,7 +112,7 @@ interface GeonamesPostalManifest {
 }
 
 /**
- * Download the requested GeoNames postal zips into `<outRoot>/geonames-postal/`, with a sibling `MANIFEST.json`
+ * Download the requested GeoNames postal zips into `<outRoot>/geonames-postal/`, with a sibling `manifest.json`
  * carrying each file's origin URL, sha256 and byte count, plus the countries the source does not publish.
  *
  * A country the source does not carry is counted as failed and named in `failedCodes` — it does not stop the rest.
@@ -150,7 +150,7 @@ export async function fetchGeonamesPostal(
 			const message = error instanceof Error ? error.message : String(error)
 
 			// A 404 here means GeoNames does not publish the country at all, which is a different finding from a failed
-			// transfer and the one a caller planning a recipe output needs to see. Branch on the TYPED status: matching message
+			// transfer and the one a caller planning a recipe output needs to see. Branch on the typed status: matching message
 			// prose classified a 500 as "unpublished" whenever the URL happened to contain the substring 404 — an
 			// ephemeral test-server port did exactly that in CI.
 			if (error instanceof HTTPStatusError && error.status === HTTP_NOT_FOUND) {

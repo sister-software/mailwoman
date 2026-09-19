@@ -4,7 +4,7 @@
  * @author Teffen Ellis, et al.
  *
  *   The `mwdev_run` tool definition — the description an agent reads, the input schema, and the handler wiring.
- *   The measurement itself lives in the package root. this file is the CONTRACT, and the description is the
+ *   The measurement itself lives in the package root. this file is the interface, and the description is the
  *   required half of it.
  */
 
@@ -32,7 +32,7 @@ const RUN_ROW_FIELDS = [
 	"components",
 	"lat",
 	"lon",
-	// Haversine kilometres from the row's TRUTH point, for the sets that carry one — board, panel, golden,
+	// Haversine kilometres from the row's truth point, for the sets that carry one — board, panel, golden,
 	// parity, and a literal set whose caller pinned coordinates. `null` on a row with no truth and on a row
 	// that resolved nothing, which are different facts: read it beside `lat`.
 	"km",

@@ -3,14 +3,14 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Outlier-exposure data for the #244 coarse-placer's explicit "OTHER" (off-map) class — milestone
+ *   Outlier-exposure data for the #244 coarse-placer's explicit "other" (off-map) class — milestone
  *   2. The closed-set model is confidently wrong on scripts it never saw (Cyrillic→DE@0.71). The
- *   fix is to TRAIN an "off my loaded map" class on those scripts. Source: the WOF `names` table,
+ *   fix is to train an "off my loaded map" class on those scripts. Source: the WOF `names` table,
  *   which carries native-script alternate names in dozens of languages
  *   (rus/ukr/ara/ell/heb/hin/tha/kat/hye/…) — i.e. exactly the off-map scripts we want the model to
  *   learn to abstain on. Balanced per-language for script diversity, filtered to a genuinely
- *   off-map dominant script (not Latin rather than CJK — those are the in-map countries), then APPENDED to
- *   the train/val/test splits as `country: "OTHER"`.
+ *   off-map dominant script (not Latin rather than CJK — those are the in-map countries), then appended to
+ *   the train/val/test splits as `country: "other"`.
  *
  *   Run after build-dataset. Run: `mailwoman placer build-dataset --outliers exposure [--per-lang
  *   2500]`
@@ -44,7 +44,7 @@ export interface BuildOutlierExposureOptions {
 	 */
 	wof?: PathBuilderLike
 	/**
-	 * Dataset dir the `OTHER` rows append to. Default `<repo>/data/coarse-placer`.
+	 * Dataset dir the `other` rows append to. Default `<repo>/data/coarse-placer`.
 	 */
 	data?: PathBuilderLike
 }
@@ -54,7 +54,7 @@ export interface BuildOutlierExposureOptions {
  */
 export interface BuildOutlierExposureResult {
 	/**
-	 * Total `OTHER` pool size (names + address-shaped variants).
+	 * Total `other` pool size (names + address-shaped variants).
 	 */
 	total: number
 }
@@ -122,10 +122,10 @@ function isOffMapScript(s: string): boolean {
 	return total > 0 && off / total > OFFMAP_DOMINANCE
 }
 
-// Mimic a real off-map ADDRESS: a pure-script place name isn't what we see at inference (those carry
+// Mimic a real off-map address: a pure-script place name isn't what we see at inference (those carry
 // Latin digits + structure, e.g. "ул. Тверская, д. 1"). For each name we also emit an address-shaped
 // variant — name + a house number, deterministically — so the model learns "off-map script + digits =
-// still OTHER" and doesn't get pulled to a country by the numeric/punctuation n-grams.
+// still other" and doesn't get pulled to a country by the numeric/punctuation n-grams.
 function addressVariant(name: string, h: number): string {
 	const n = (h % 4) + 1 // 1–4 digit house number
 	const num = String(h % Math.pow(10, n) || 7)
@@ -189,7 +189,7 @@ export async function buildOutlierExposure(
 		report?.(`  ${lang}: ${kept}`)
 	}
 
-	// Deterministic shuffle (FNV hash sort) + split 80/10/10, append as `OTHER`.
+	// Deterministic shuffle (FNV hash sort) + split 80/10/10, append as `other`.
 	pool.sort((a, b) => hashFNV1a(a) - hashFNV1a(b))
 	const nVal = Math.floor(pool.length * 0.1)
 	const nTest = Math.floor(pool.length * 0.1)

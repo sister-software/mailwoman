@@ -78,7 +78,7 @@ test("GeoNames postal names each postcode's delivery city, including territories
 	ins.run(3, -1, "00601", "postalcode", "US", 0, 0) // Puerto Rico, filed as US in WOF
 
 	// GeoNames files a US territory under PR rather than US. The database files it under US. Reading only `US`
-	// rows leaves every territory postcode unnamed — 149 of them against the 2024 Census ZCTA list.
+	// rows leaves every territory postcode unnamed — 149 of them against the 2024 Census zcta list.
 	const geonamesDir = join(dir, "geonames-postal")
 
 	await makeDirectories(geonamesDir)

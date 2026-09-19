@@ -6,19 +6,19 @@
  *   The scenario-keyed cell index: one accumulator per scenario, and the measurement the index resolution is
  *   chosen from.
  *
- *   THE CLASSIFIER ITSELF LIVES IN `@mailwoman/spatial`, re-exported below so this package's call sites and
+ *   the classifier itself lives IN `@mailwoman/spatial`, re-exported below so this package's call sites and
  *   its `@mailwoman/coastal/sdk/cells` subpath keep reading the same. `classifyFeatureCells`, the per-part
  *   zero-cell guard and the allocator-avoiding shortcuts around it are properties of h3-js rather than of
- *   this product — the layer contract's polygon-builder section states them as requirements on every polygon
+ *   this product — the layer interface's polygon-builder section states them as requirements on every polygon
  *   builder — and a second copy of the zero-cell guard is a second place for it to stop guarding.
  *
- *   WHAT STAYS HERE IS WHAT IS SCENARIO-SHAPED. The flood layer accumulates per zone code, because a flood
+ *   what stays here is what is scenario-shaped. The flood layer accumulates per zone code, because a flood
  *   answer is a code from a two-value domain. the soil layer accumulates per delineation and weights by
- *   covered area. An erosion answer is a SPECIFIC FRONTAGE POLYGON carrying its own distance, policy and
+ *   covered area. An erosion answer is a specific frontage polygon carrying its own distance, policy and
  *   defence, under one of twelve scenarios that must never be pooled — so this accumulates per (scenario,
  *   polygon) and reports per scenario.
  *
- *   THE MEASUREMENT IS PER SCENARIO AND NEVER POOLED, and that is not a reporting preference. The twelve
+ *   the measurement is PER scenario and never pooled, and that is not a reporting preference. The twelve
  *   scenario layers cover the same frontages with different extents, so a pooled `partial` share would
  *   average a present-day designation together with a 2105 projection and describe neither. The number that
  *   decides the resolution is the share within one scenario, because that is the population a scenario-scoped
@@ -96,7 +96,7 @@ export interface CellIndexMeasurement {
 /**
  * Accumulate one resolution's cell index over a stream of features, keeping the scenarios apart.
  *
- * Held as short-cell STRINGS rather than the integers the tables store, because `compactCells` and `cellToParent` are
+ * Held as short-cell strings rather than the integers the tables store, because `compactCells` and `cellToParent` are
  * h3-js functions over full indexes and round-tripping through the integer form at every step would cost more than the
  * strings do.
  */
@@ -141,7 +141,7 @@ export class CoastalCellIndex {
 	 * The measurement, per scenario and then pooled.
 	 *
 	 * The compacted count here is an approximation of what the build stores and is reported as one: the build compacts
-	 * each FEATURE's whole set, while this compacts the scenario's union of them. The union can only compact at least as
+	 * each feature's whole set, while this compacts the scenario's union of them. The union can only compact at least as
 	 * far, so this is a lower bound on the stored row count — which is the direction a size estimate should err in, and
 	 * the build's own receipt reports the real number.
 	 */
@@ -191,7 +191,7 @@ export class CoastalCellIndex {
 }
 
 /**
- * The per-scenario measurement as markdown table ROWS — what a build receipt carries, one line per element so a caller
+ * The per-scenario measurement as markdown table rows — what a build receipt carries, one line per element so a caller
  * printing them never has to split a joined string back apart.
  */
 export function formatScenarioMeasurementRows(measurements: readonly CellIndexMeasurement[]): string[] {

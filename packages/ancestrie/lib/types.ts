@@ -5,7 +5,7 @@
  *
  *   Public types for the ancestrie — a materialized trie over an ancestry graph. Domain-agnostic on
  *   purpose: entries are token sequences carrying a numeric id, a rank, parent edges, and an opaque
- *   payload. Nothing in this contract knows about placetypes, gazetteers, or geocoding — those live
+ *   payload. Nothing in this interface knows about placetypes, gazetteers, or geocoding — those live
  *   in the consumer's payload and tokenizer.
  */
 
@@ -47,7 +47,7 @@ export interface AncestrieEntry {
 	parentIDs: readonly number[]
 
 	/**
-	 * Ranking score, higher = surfaced first. Stored as an IEEE-754 float32, so values round-trip at f32 precision.
+	 * Ranking score, higher = surfaced first. Stored as an ieee-754 float32, so values round-trip at f32 precision.
 	 */
 	rank: number
 
@@ -148,7 +148,7 @@ export interface AutocompleteOptions<TPayload = Uint8Array | JSONValue> {
 
 	/**
 	 * Collapse suggestions sharing a key to the single highest-ranked one. `true` keys by the full token path (the
-	 * generalization of same-NAME dedupe: distinct entries at the same surface — New York the city vs the county —
+	 * generalization of same-name dedupe: distinct entries at the same surface — New York the city vs the county —
 	 * collapse to one); a function supplies the key itself. Off by default, so a caller surfacing distinct same-surface
 	 * entries sees them all.
 	 */
@@ -178,13 +178,13 @@ export interface AutocompleteResult<TPayload = Uint8Array | JSONValue> {
  * sealed {@link Ancestrie} class is the canonical implementation. a consumer whose entries live in its own structure —
  * an in-memory trie, a different binary format — supplies an adapter instead of re-implementing the algorithm
  * (`@mailwoman/resolver-wof-sqlite`'s FST gazetteer is the worked example: its `FST\0` artifacts predate this package
- * and stay in their own format, so its `fst-autocomplete` wraps the matcher in this contract).
+ * and stay in their own format, so its `fst-autocomplete` wraps the matcher in this interface).
  *
- * Order contracts the algorithm observes:
+ * Order interfaces the algorithm observes:
  *
  * - `entriesAt(stateID)` with no limit answers every accepting entry, in the reader's stored order.
  * - `entriesAt(stateID, limit)` answers the top-`limit` entries by rank, descending. A sealed artifact serves a prefix of
- *   its rank-sorted storage. an adapter over unsorted storage must select by rank itself. Order among rank TIES is the
+ *   its rank-sorted storage. an adapter over unsorted storage must select by rank itself. Order among rank ties is the
  *   reader's own, and is observable in suggestion order — two readers over the same entries may legitimately differ
  *   there.
  * - `ancestorsOf` decorates suggestions' `chain`. A reader that materializes lineage per entry may serve it from its
@@ -202,7 +202,7 @@ export interface AncestrieReaderLike<TPayload = Uint8Array | JSONValue> {
  */
 export interface AncestrieBuilderOptions {
 	/**
-	 * Applied to every token on `add`. See {@link TokenNormalizer} for the must-agree contract with the query side.
+	 * Applied to every token on `add`. See {@link TokenNormalizer} for the must-agree interface with the query side.
 	 */
 	normalizeToken?: TokenNormalizer
 }

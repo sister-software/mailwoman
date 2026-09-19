@@ -4,11 +4,11 @@
  * @author Teffen Ellis, et al.
  *
  *   Stage 2 of the confidence-calibration pipeline (task #59). Runs the shipped model over the
- *   calibration set (`build-calibration-set.py`) and emits one record per PREDICTED span pairing
+ *   calibration set (`build-calibration-set.py`) and emits one record per predicted span pairing
  *   its raw softmax confidence with a correct/incorrect label — the `(score, correct?)` pairs the
  *   isotonic fitter (`fit-isotonic-calibration.py`) consumes.
  *
- *   Calibration is over PREDICTIONS (spans the model emitted), conditioning on "the model said tag T
+ *   Calibration is over predictions (spans the model emitted), conditioning on "the model said tag T
  *   at confidence C — how often is it right?". So we iterate the decoded tree's spans rather than the
  *   gold.
  *
@@ -22,7 +22,7 @@
  *
  *   Matching (`correct?`):
  *
- *   - OA rows (`partial:true`) grade ONLY {locality, region, postcode} — the tags OA gold carries. A
+ *   - OA rows (`partial:true`) grade only {locality, region, postcode} — the tags OA gold carries. A
  *       predicted tag OA can't see is unlabelable and skipped (OA's silence is not a negative).
  *   - Corpus rows (`partial:false`) grade every predicted span against the full BIO gold. a predicted
  *       tag the address lacks is a hallucination → wrong.
@@ -147,7 +147,7 @@ async function main(): Promise<void> {
 		ONNXRunner.create(values["model"] || "packages/neural-weights-en-us/model.onnx"),
 	])
 
-	// Ship-config channels (v4.4.0): the calibrator must describe the model AS DEPLOYED — anchor +
+	// Ship-config channels (v4.4.0): the calibrator must describe the model AS deployed — anchor +
 	// gazetteer (+ suppression), conventions, and the span bridge all change span confidences.
 	const { parseAnchorLookup, parseGazetteerLexicon } = await import("@mailwoman/neural")
 	const anchorPath = values["anchor-lookup"] || dataRootPath("anchor", "pilot-anchor-lookup.json")
@@ -178,7 +178,7 @@ async function main(): Promise<void> {
 		}
 
 		// onnxruntime-node accumulates native tensor memory across runs faster than JS GC reclaims it
-		// (~380-parse SIGKILL on the lab box). Periodic forced GC reclaims it. run with `node
+		// (~380-parse sigkill on the lab box). Periodic forced GC reclaims it. run with `node
 		// --expose-gc` for full calibration sets (8000 rows). No-op without the flag. (#787 pattern.)
 		if (i % 50 === 0) {
 			;(globalThis as { gc?: () => void }).gc?.()

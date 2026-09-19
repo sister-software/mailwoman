@@ -1,28 +1,28 @@
-# === v3.24.0-bundle-ordinal-8k — PRODUCTION BUNDLE CANDIDATE, INCREMENT 6 (Option-A Phase 4). ===
+# === v3.24.0-bundle-ordinal-8k — production bundle candidate, increment 6 (Option-A Phase 4). ===
 # (Claude-owned. operator 2026-07-29 "that seems like a big failure and something we need to fix" —
 # the Fifth-Ave metamorphic hold, resolved by training the invariant rather than waiving it.)
 #
-# WHAT THE 8.2.0 PRE-SHIP GAUNTLET CAUGHT on v3.23-4k (record: progress.md 2026-07-29):
-#   1. World-city rotation on fed bare lookups — FIXED CODE-SIDE (the street-context check at the
+# what the 8.2.0 PRE-ship gauntlet caught on v3.23-4k (record: progress.md 2026-07-29):
+#   1. World-city rotation on fed bare lookups — fixed code-side (the street-context check at the
 #      soft-features boundary. locality evidence needs street context. every measured win class carries
 #      street words). Ships regardless of this run.
 #   2. "350 Fifth Ave, New York, NY" → locality absorbed into region (283km resolve). v385-clean ⇒
 #      a real model regression. 1/8 in the targeted sweep (point brittleness rather than a class — the
 #      state-name-starvation hypothesis was probed and weakened: 5/6 state-name-city rows clean).
 #
-# ONE NAMED DELTA vs v3.23.0: augment_ordinal_prob 0.3 — the ordinal-street swap (5th↔Fifth, both
+# one named delta vs v3.23.0: augment_ordinal_prob 0.3 — the ordinal-street swap (5th↔Fifth, both
 # directions, street-family labels only. splice_expansion arithmetic. rng-stream-identical at 0).
-# The num-ordinal BAND relation is a STATED gauntlet invariant. v385 satisfied it by luck of the
+# The num-ordinal band relation is a stated gauntlet invariant. v385 satisfied it by luck of the
 # draw, v3.23 lost it by the same luck — this trains it.
 #
-# PRE-REGISTERED CHECKS: G1-G6 VERBATIM from the v3.23 header (P0 grid --lexicon
+# PRE-registered checks: G1-G6 verbatim from the v3.23 header (P0 grid --lexicon
 # locality-surface-lexicon-v6.json --street-lexicon street-type-lexicon-v3.json per save. G5
-# ablated all floors incl. fr.cedex 82.2. G6 canary formatted-clean) PLUS:
-#   G7 THE FULL PRE-SHIP GAUNTLET on the dev-linked flip (regression + metamorphic + held-out) —
-#      the exact instrument that stopped the 8.2.0 reduce. the Fifth-Ave INV/BAND pair must clear and
+# ablated all floors incl. fr.cedex 82.2. G6 canary formatted-clean) plus:
+#   G7 the full PRE-ship gauntlet on the dev-linked flip (regression + metamorphic + held-out) —
+#      the exact instrument that stopped the 8.2.0 reduce. the Fifth-Ave INV/band pair must clear and
 #      the world-city fixtures stay clear under the street-context check.
-#   VERDICT: all seven ⇒ resume the 8.2.0 reduce at the metadata surfaces. A save passing G1-G6 but
-#   not G7 ⇒ STOP, back to the operator (no further augment iteration without a fresh decision).
+#   verdict: all seven ⇒ resume the 8.2.0 reduce at the metadata surfaces. A save passing G1-G6 but
+#   not G7 ⇒ stop, back to the operator (no further augment iteration without a fresh decision).
 #
 # Launch: cd corpus-python && modal run -d -m launch.train_remote --config v3.24.0-bundle-ordinal-8k.yaml --resume none
 #
@@ -66,7 +66,7 @@ data:
     usgov-hrsa-fqhc: 2.0
     usgov-imls-pls: 2.0
     usgov-nad: 1.0
-    state-ia-contractors: 2.0
+    state-ia-builders: 2.0
     state-tx-notaries: 1.5
     state-ny-notaries: 2.0
     deepseek-kryptonite: 3.0
@@ -86,9 +86,9 @@ data:
     synth-no-street-led: 0.0
     synth-cz-pcfirst-preposition: 12.0
     synth-nl-postcode: 6.0
-    # PROBE 1: the fragment/autocomplete source (assay weight — moderate precedent).
+    # probe 1: the fragment/autocomplete source (assay weight — moderate precedent).
     synth-fragment: 6.0
-    # #727 T2 NEW — the one variable. 12.0 = the targeted-fix precedent (fr-bare-street,
+    # #727 T2 new — the one variable. 12.0 = the targeted-fix precedent (fr-bare-street,
     # si-bare-village, no-street-led are all 12.0). Streets with no house number + the
     # bare-locality counter.
     synth-fr-fragment: 12.0
@@ -140,12 +140,12 @@ model: # Verbatim from v2.4.1.
   use_postcode_anchor: true
   use_gazetteer_anchor: true
   gazetteer_feature_dim: 5
-  # #1104 country channel ON — dedicated 2-dim [country_surface, country_ambiguous] soft feed with its
+  # #1104 country channel on — dedicated 2-dim [country_surface, country_ambiguous] soft feed with its
   # own projection + confidence (must equal the lexicon's feature_dim). Default-False elsewhere, so a
   # resume from a pre-country checkpoint stays byte-identical until this flips.
   use_country_anchor: true
   country_feature_dim: 2
-  # P-A street-type channel ON — a dedicated 1-dim street_type soft feed with its own projection +
+  # P-A street-type channel on — a dedicated 1-dim street_type soft feed with its own projection +
   # confidence (must equal the lexicon's feature_dim=1). Separate from the gazetteer, so init_from v385
   # loads clean (v385 lacks street_type_* → strict=False leaves only those fresh).
   use_street_type_anchor: true
@@ -153,7 +153,7 @@ model: # Verbatim from v2.4.1.
   # v3.16.0 — the locality-surface channel is on (the bundle).
   use_locality_surface_anchor: true
   locality_surface_feature_dim: 2
-  # #1104 homograph-guard SOFTENER — the one variable vs v263. Scales the country_ambiguous dim by 0.5
+  # #1104 homograph-guard softener — the one variable vs v263. Scales the country_ambiguous dim by 0.5
   # before the country_projection (bakes into the exported ONNX. no lexicon/inference change). v263's
   # hard guard (scale 1.0) over-suppressed homograph countries Georgia/Jordan (country-homograph F1
   # 89.8->82.6); softening should recover homograph recall without giving back the country F1 the

@@ -3,10 +3,10 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   The PCN1 census OBSERVABILITY rung (2026-08-05): the census rides the placetype-pair prior's
+ *   The PCN1 census observability rung (2026-08-05): the census rides the placetype-pair prior's
  *   parent-candidate probes and records what it knows on the trace, and that is the whole feature.
  *
- *   **The contract this file exists to hold is the NEGATIVE one.** A census present must produce a
+ *   **The interface this file exists to hold is the negative one.** A census present must produce a
  *   decode byte-identical to a census absent — same emission matrix, same transition adjustments, and
  *   (end-to-end, on real weights) the same emissions/path/tokens. The 2026-08-04 wiring assessment
  *   ruled that no decode wiring ships before a calibration rung measures a δ, and the artifact header
@@ -111,7 +111,7 @@ const PAIR_INDEX = mockPairIndex({
 	"fishburn|stocktonontees": { tag: "dependent_locality", parentTag: "locality" },
 })
 
-describe("census observability — the byte-identical-decode contract", () => {
+describe("census observability — the byte-identical-decode interface", () => {
 	test.each([
 		["segment path (comma-delimited)", "Shoreditch, London"],
 		["anchored path (comma-free)", "Fishburn Stockton-on-Tees"],
@@ -211,11 +211,11 @@ describe("census observability — what lands on the trace", () => {
 // the repair passes, the tree build) reads the census. Conditioned on the dev weights being linked —
 // `link-dev-weights.ts` puts both the model and `pair-index-us.bin` in place, and the pair index is
 // required here: without it the prior never runs and there is no parent candidate to probe
-// alongside. The census artifact is BUILT into a temp dir rather than resolved from the data root,
+// alongside. The census artifact is built into a temp dir rather than resolved from the data root,
 // which is read-only on the lab host. a fixture census is enough to prove the wiring.
 // Resolved rather than probed in the workspace: the binaries are not in git, so where they live is the
 // resolver's answer (package, data-root overlay, or user cache) and not a directory this file can name. A
-// skip-guard keyed on the wrong directory does not fail — it SKIPS, and the suite reports success while
+// skip-guard keyed on the wrong directory does not fail — it skips, and the suite reports success while
 // testing nothing.
 const resolved = await (async () => {
 	try {

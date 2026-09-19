@@ -10,7 +10,7 @@
  *   `dependent_locality` tier in 11 of 244 countries. Read-only, no network, no model — three
  *   grouped queries over `spr`/`ancestors` and a markdown render.
  *
- *   The report is a COMMITTED artifact (the `fill-rates.md` precedent), so the source md5 and the
+ *   The report is a committed artifact (the `fill-rates.md` precedent), so the source md5 and the
  *   parent-coverage floor are pinned in its header. Re-running against a rebuilt gazetteer and
  *   diffing the report is the intended workflow.
  */
@@ -23,7 +23,7 @@ import { type CommandSpec, CommandTaskResult, type CommandComponent, useCommandT
 import { DEFAULT_COVERAGE_FLOOR } from "#gazetteer-pipeline/defaults"
 
 /**
- * Native command-line contract consumed by the filesystem command router.
+ * Native command-line interface consumed by the filesystem command router.
  */
 export const spec = {
 	name: "granularity",

@@ -1,11 +1,11 @@
 # v2.5.7-fragment-v5-gentle-full — the full run the v256 probe greenlit (#1102 fork option (a)
-# confirmed: the twin<->US-recall trade was SCHEDULE rather than capacity). Same v255 composition + same
+# confirmed: the twin<->US-recall trade was schedule rather than capacity). Same v255 composition + same
 # gentle dynamics as v256 (lr 1e-5, warmup 500), but the full 8000-step budget instead of the 2k
 # diagnostic. Hypothesis: street climbs back toward/past 0.55-0.60 (v255 territory) without the
 # oscillation that broke the Dublin pin at the aggressive 5e-5/8k schedule. Grade: full parity
-# floors + us-recall-flip-census + a PACKAGE-SWAP gauntlet (the #718-safe Dublin coordinate check).
+# floors + us-recall-flip-census + a package-swap gauntlet (the #718-safe Dublin coordinate check).
 # Residual after this: the #727 boundary-digit-absorption class (postcode-adjacent region -> street).
-# LAUNCH: this recipe reaches the volume with the rest of the training code, and not `modal volume
+# launch: this recipe reaches the volume with the rest of the training code, and not `modal volume
 #         put`, which writes what a mounted container cannot see.
 #         mailwoman corpus upload --code  &&  \
 #         cd corpus-python && modal run -m launch.train_remote::sync_assets  &&  \
@@ -47,7 +47,7 @@ data:
     usgov-hrsa-fqhc: 2.0
     usgov-imls-pls: 2.0
     usgov-nad: 1.0
-    state-ia-contractors: 2.0
+    state-ia-builders: 2.0
     state-tx-notaries: 1.5
     state-ny-notaries: 2.0
     deepseek-kryptonite: 3.0
@@ -67,7 +67,7 @@ data:
     synth-no-street-led: 12.0
     synth-cz-pcfirst-preposition: 12.0
     synth-nl-postcode: 6.0
-    # PROBE 1: the fragment/autocomplete source (assay weight — moderate precedent).
+    # probe 1: the fragment/autocomplete source (assay weight — moderate precedent).
     synth-fragment: 6.0
   train_rows_per_epoch: 1000000
   val_rows: 4096

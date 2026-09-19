@@ -503,7 +503,7 @@ test("GET /openapi.json: full-info document config lands (license, contact, serv
 	expect(doc.tags?.map((t) => t.name)).toContain("meta")
 })
 
-// MARK: CORS + body limit + the 500 safety net
+// MARK: cors + body limit + the 500 safety net
 
 test("CORS: permissive Access-Control-Allow-Origin on responses (browser clients), GET/POST/OPTIONS", async () => {
 	const app = createMailwomanAPI(fullEngine)

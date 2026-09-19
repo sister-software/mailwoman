@@ -8,7 +8,7 @@
  *   goes out through `onSelect`. No load state, no manifest fetch — the host (via `useReleaseRuntime`) owns
  *   that. Renders nothing when there is fewer than two versions to choose between.
  *
- *   NODE-SAFE: pure React + a `<select>`, no maplibre. It rides the `@mailwoman/react/map` subpath only
+ *   node-safe: pure React + a `<select>`, no maplibre. It rides the `@mailwoman/react/map` subpath only
  *   because it is a demo-specific control rather than because it needs WebGL.
  */
 

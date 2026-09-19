@@ -6,25 +6,25 @@
  *   `mailwoman gazetteer build postcode-prefix <database>` — build a PFX1 postcode-prefix index
  *   (postcode-structure arc, B3-1) from a postcode database already in the data root.
  *
- *   Two databases, and they are DELIBERATELY TWO FILES rather than one `postcode-prefix-gb.bin`:
+ *   Two databases, and they are deliberately two files rather than one `postcode-prefix-gb.bin`:
  *
  *   - `gb-codepoint` → `postcode-prefix-gb-esw.bin`. 2,863 outward codes from OS Code-Point Open
  *       (OGL v3, shippable tier), each with a centroid and its measured `radiusP95Km`. Code-Point Open
  *       covers England, Scotland and Wales only — the scope slug says so, because a file named for the
  *       whole country while missing a constituent one is the coverage confusion the database's own meta
  *       spends three keys warning about.
- *   - `gb-ni-osm` → `postcode-prefix-gb-ni.bin`. 80 BT districts from OpenStreetMap, ANCESTRY-ONLY,
- *       no coordinates. ODbL 1.0, so BUILD-LOCAL: folding these nodes into the Code-Point file would
+ *   - `gb-ni-osm` → `postcode-prefix-gb-ni.bin`. 80 BT districts from OpenStreetMap, ancestry-only,
+ *       no coordinates. ODbL 1.0, so build-local: folding these nodes into the Code-Point file would
  *       put a share-alike obligation on an OGL artifact, and nothing downstream could see it had
  *       happened. That licence split — not the format — is why the two GB registers stay apart.
  *
  *   Self-verifying (the sealed-artifact spirit, PCN1's posture): after writing, the command re-reads
- *   THE FILE — not the buffer still in memory, which would only verify the serializer against itself
+ *   the file — not the buffer still in memory, which would only verify the serializer against itself
  *   — through a fresh `PostcodePrefixIndexResolver`, and reports the round-trip totals: node count,
  *   summed `unitCount`, the median per-prefix `radiusP95Km`. Those three numbers are B3-1's bar, so
  *   the bar is graded by reading the artifact rather than by the builder's memory of it.
  *
- *   Output goes to a NEW DATED path under `$MAILWOMAN_DATA_ROOT/postcode-prefix/`. Nothing is
+ *   Output goes to a new dated path under `$MAILWOMAN_DATA_ROOT/postcode-prefix/`. Nothing is
  *   overwritten, and the file is sealed read-only afterwards.
  */
 
@@ -66,7 +66,7 @@ interface DatabaseRecipe {
 	 */
 	polygonFile?: string
 	/**
-	 * Prefixes probed after write. Per DATABASE, never shared: probing Code-Point prefixes against a freshly built NI
+	 * Prefixes probed after write. Per database, never shared: probing Code-Point prefixes against a freshly built NI
 	 * index prints reassuring-looking misses that verify nothing (the lesson the pair-index command's en-nz first build
 	 * taught).
 	 */
@@ -108,7 +108,7 @@ export const description = "Build a PFX1 postcode-prefix index from a postcode d
 const databaseNames = ["gb-codepoint", "gb-ni-osm", "us-wof"] as const
 
 /**
- * Native command-line contract consumed by the filesystem command router.
+ * Native command-line interface consumed by the filesystem command router.
  */
 export const spec = {
 	name: "postcode-prefix",
@@ -208,7 +208,7 @@ const GazetteerBuildPostcodePrefix: CommandComponent<typeof spec, [DatabaseName]
 		await movePath(tmpPath, outPath)
 		await changeMode(outPath, SEALED_MODE)
 
-		// ── Self-verifying readback: B3-1's bar, graded by re-reading the FILE rather than the buffer still in
+		// ── Self-verifying readback: B3-1's bar, graded by re-reading the file rather than the buffer still in
 		// memory. Reading the buffer would verify the serializer against itself and prove nothing about
 		// what landed on disk — the whole point of a round-trip bar.
 		const resolver = new PostcodePrefixIndexResolver(await readLocalBuffer(outPath))

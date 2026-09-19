@@ -13,7 +13,7 @@ import type { PathBuilderLike } from "path-ts"
 import { connectDuckDB, escapeSQLIdentifier, escapeSQLString } from "#parquet/duckdb"
 
 /**
- * DuckDB hands a LIST column back as `{ items: [...] }`. Unwrap it so a row reads the way the schema declares it,
+ * DuckDB hands a list column back as `{ items: [...] }`. Unwrap it so a row reads the way the schema declares it,
  * recursively, because a nested list arrives nested the same way.
  */
 function normalizeDuckDBValue(value: unknown): unknown {
@@ -27,7 +27,7 @@ function normalizeDuckDBValue(value: unknown): unknown {
 }
 
 /**
- * A row limit has to be a non-negative safe integer before it reaches a `LIMIT` clause, because it is interpolated
+ * A row limit has to be a non-negative safe integer before it reaches a `limit` clause, because it is interpolated
  * rather than bound.
  */
 export function validateRowLimit(value: number): number {
@@ -41,7 +41,7 @@ export interface ParquetRowStreamOptions {
 	/**
 	 * Columns to project. Every column when omitted.
 	 *
-	 * A column the file does not carry RAISES rather than coming back absent: a projection that silently drops a field
+	 * A column the file does not carry raises rather than coming back absent: a projection that silently drops a field
 	 * hands the consumer a well-formed row with the field missing, which reads as "this row has no value there" rather
 	 * than "this file has no such column".
 	 */

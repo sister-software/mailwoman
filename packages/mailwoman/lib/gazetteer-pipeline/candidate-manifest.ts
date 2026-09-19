@@ -5,25 +5,25 @@
  *
  *   The candidate gazetteer's `layer_manifest` — the artifact every geocode actually reads.
  *
- *   THE CANDIDATE IS DERIVED, so its manifest names its INPUT rather than restating the input's sources.
+ *   the candidate is derived, so its manifest names its input rather than restating the input's sources.
  *   `buildCandidateTable` reads an admin gazetteer plus postcode and locality databases. it ingests nothing
  *   from WOF, Overture or GeoNames directly. A manifest that repeated "whosonfirst+overture+geonames" here
  *   would be true of the ancestor and unfalsifiable of this file — it could not tell you which admin build
  *   this came from, which is the only question a reproduction actually asks.
  *
  *   So the source is the ancestor's identity, read out of the ancestor's own manifest when it has one:
- *   `admin-global-priority@2026-08-17.0`. That makes provenance a CHAIN, and a chain is what survives the
+ *   `admin-global-priority@2026-08-17.0`. That makes provenance a chain, and a chain is what survives the
  *   thing the flat form cannot — the lab holds thirteen candidate builds and about ten admin builds, and
  *   which pairs with which is currently recorded nowhere.
  *
- *   AN UNPROVENANCED ANCESTOR IS REPORTED rather than HIDDEN. Every admin build that predates phase 3 has no
+ *   an unprovenanced ancestor is reported rather than hidden. Every admin build that predates phase 3 has no
  *   manifest, so the chain terminates in `unknown` and says so. Substituting the file's name would look
  *   like provenance and carry none.
  */
 
 import { pathExists } from "@mailwoman/core/fs/readers"
 import { LayerFreshnessPolicy, type LayerManifest, LayerTier } from "@mailwoman/core/layers"
-import type { LayerContractDatabase } from "@mailwoman/core/layers/schema"
+import type { layerschemadatabase } from "@mailwoman/core/layers/schema"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
 import { tableExists } from "@mailwoman/sqlite/introspection"
 
@@ -46,11 +46,11 @@ export async function ancestorIdentity(adminDBPath: string): Promise<string> {
 
 	// `probeManifest` answers `{}` for a missing table and an empty one alike — tell those apart.
 	try {
-		using db = new DatabaseClient<LayerContractDatabase>(adminDBPath, { readOnly: true })
+		using db = new DatabaseClient<layerschemadatabase>(adminDBPath, { readOnly: true })
 
 		return tableExists(db, "layer_manifest")
 			? "unknown (admin manifest is empty)"
-			: "unknown (admin gazetteer predates the layer contract)"
+			: "unknown (admin gazetteer predates the layer interface)"
 	} catch (error) {
 		return `unknown (${(error as Error).message})`
 	}
@@ -99,7 +99,7 @@ export async function candidateLayerManifest(input: CandidateManifestInput): Pro
 		buildSHA: input.buildSHA,
 		freshnessPolicy: LayerFreshnessPolicy.Sealed,
 		// `spr_id` is the join back to the admin gazetteer, and the reason a chained manifest is worth having:
-		// the id only means something against a KNOWN ancestor.
+		// the id only means something against a known ancestor.
 		spineKeys: { wofID: "spr_id" },
 		createdAt: input.createdAt,
 	}

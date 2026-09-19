@@ -60,7 +60,7 @@ def test_the_shipped_config_declares_the_head_lr_and_no_warm_start():
     assert cfg.train.learning_rate == 5e-4
     # From scratch, deliberately: the probe checkpoint's (33, 384) classifier and 1,918-row char
     # embedding are both size-mismatched against this run, and `load_state_dict(strict=False)`
-    # raises on a size mismatch (it only tolerates missing/unexpected KEYS).
+    # raises on a size mismatch (it only tolerates missing/unexpected keys).
     assert cfg.train.init_from == ""
     # `reinit_label_rows` requires init_from and is a no-op on a from-scratch model.
     assert cfg.train.reinit_label_rows == []

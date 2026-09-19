@@ -133,7 +133,7 @@ export class PlacetypeDataSource implements Disposable {
 
 	public prepareTables(): void {
 		// Raw DDL by design: this runs in a synchronous construction path. Kysely's schema-builder is
-		// async, so migrating would force an async-factory refactor across every consumer. See AGENTS.md.
+		// async, so migrating would force an async-factory refactor across every consumer. See agents.md.
 		this.#db.exec(/* sql */ `
 
 			CREATE TABLE IF NOT EXISTS records (

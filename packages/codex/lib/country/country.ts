@@ -147,11 +147,11 @@ export function matchCountry(token: string | null | undefined): CountryMatch | n
 }
 
 /**
- * The ISO 3166-1 alpha-2 code to key a layout or a per-country table by, from whatever surface a DECLARED country field
+ * The ISO 3166-1 alpha-2 code to key a layout or a per-country table by, from whatever surface a declared country field
  * carries — `ES`, `ESP` or `Spain`.
  *
  * Two resolvers, in this order, because they answer different questions. A two-letter value is taken as the code:
- * {@link matchCountry} deliberately refuses `AR` and `VE` because in address TEXT they are Arkansas and a Spanish
+ * {@link matchCountry} deliberately refuses `AR` and `VE` because in address text they are Arkansas and a Spanish
  * preposition far more often than Argentina and Venezuela, and that caution is wrong for a field whose whole job is to
  * name the country. Anything longer goes through {@link matchCountry}, which resolves an alpha-3 and a name alike.
  *

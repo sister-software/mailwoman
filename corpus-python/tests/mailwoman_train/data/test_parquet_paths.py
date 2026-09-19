@@ -1,4 +1,4 @@
-"""Strict parquet-path resolution contract (#480 — the v0.7.1 trap).
+"""Strict parquet-path resolution interface (#480 — the v0.7.1 trap).
 
 A manifest that declares parquet files the resolver cannot find is a BROKEN corpus. partial
 resolution must raise with the missing list, never train on the survivors.

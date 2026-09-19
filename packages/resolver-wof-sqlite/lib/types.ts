@@ -39,7 +39,7 @@ export type WOFPlacetype =
  * treat it as ordinal rather than absolute.
  *
  * `id` is the WOF place id. It's named generically (not `wof_id`) so the shape stays structurally compatible with
- * `@mailwoman/resolver`'s `ResolvedPlace` — `WOFSQLitePlaceLookup` satisfies the generic `ResolverBackend` contract
+ * `@mailwoman/resolver`'s `ResolvedPlace` — `WOFSQLitePlaceLookup` satisfies the generic `ResolverBackend` interface
  * without an adapter shim.
  *
  * `distanceKm` is populated only when the query carried `near` (and the place has a centroid). Useful for downstream
@@ -56,7 +56,7 @@ export interface PlaceCandidate {
 	lat: number
 	lon: number
 	/**
-	 * The place's IMMEDIATE ancestor id — the `candidate_ancestor` row at depth 1.
+	 * The place's immediate ancestor id — the `candidate_ancestor` row at depth 1.
 	 *
 	 * Absent means the artifact carries no ancestors sidecar rather than that the place is a root: an artifact predating
 	 * the sidecar answers no lineage at all, and the two readings must stay apart (meaning-of-zero).
@@ -89,33 +89,33 @@ export interface PlaceCandidate {
 	 */
 	population?: number
 	/**
-	 * REFERENTIAL likelihood in [0, 1] — `referentialFromPopulation(population)`, the named form of the prominence key
+	 * Referential likelihood in [0, 1] — `referentialFromPopulation(population)`, the named form of the prominence key
 	 * this resolver has always ranked namesakes by (ROAD_TO_V9 §2, ratified 2026-08-06).
 	 *
 	 * It is a strictly-increasing function of {@link PlaceCandidate.population} below `REFERENTIAL_SATURATION_POPULATION`
 	 * and constant above it, so ordering by it — via `compareReferential`, which restores the megacity order with a
-	 * population tiebreak — is the SAME ORDER as ordering by population. That equivalence is the point: naming the
+	 * population tiebreak — is the same order as ordering by population. That equivalence is the point: naming the
 	 * ranking key costs nothing at the ranking.
 	 *
 	 * Absent when the candidate has no population on record, exactly as {@link PlaceCandidate.population} is.
 	 */
 	referential?: number
 	/**
-	 * STRICT encyclopedia-evidence importance in [0, 1], fan-out-guarded per #1497 — CARRIED, NEVER RANKED ON.
+	 * Strict encyclopedia-evidence importance in [0, 1], fan-out-guarded per #1497 — carried, never ranked on.
 	 *
-	 * RESERVED SLOT awaiting a strict-channel source: present only when a extract's `place_importance` table carries the
+	 * Reserved slot awaiting a strict-channel source: present only when a extract's `place_importance` table carries the
 	 * split columns, and no shipped extract does — the FTS lookup's clauses emit NULL for everything today. `undefined`
 	 * means either "no encyclopedia entry for this place" or "this gazetteer predates the split"; both are absence, and
-	 * neither is 0. The BLENDED prior the ranking reads is {@link PlaceCandidate.importance}.
+	 * neither is 0. The blended prior the ranking reads is {@link PlaceCandidate.importance}.
 	 *
 	 * Saint-Denis is why this is not a ranking key: the Seine-Saint-Denis suburb (pop 96,128) scores 0.1173 while the
 	 * Aude hamlet (pop 418) scores 0.5683. Consumers that want to display salience read this. the ranking never does.
 	 */
 	encyclopedic?: number
 	/**
-	 * BLENDED global toponym prior in [0, 1] (#28) — `candidate.importance` surfaced verbatim: the score source's legacy
+	 * Blended global toponym prior in [0, 1] (#28) — `candidate.importance` surfaced verbatim: the score source's legacy
 	 * blended importance (encyclopedia-derived where the concordance matched, a population-derived proxy elsewhere).
-	 * Emitted only by the candidate-table backend, and only when the artifact measured this place — absent is UNMEASURED,
+	 * Emitted only by the candidate-table backend, and only when the artifact measured this place — absent is unmeasured,
 	 * never zero. Consumed by `rankByImportance` (`resolver/toponym-prior.ts`) for the bare-toponym class. See
 	 * `candidate-schema.ts` → `CandidateTable.importance` for why the blend rather than the strict channel, is what
 	 * ships.
@@ -136,7 +136,7 @@ export interface PlaceCandidate {
 	 */
 	mismatch?: boolean
 	/**
-	 * Admin-containment stamp (#1717 stage 2) — TRI-STATE, mirroring `ResolvedPlace.containedByQualifier` in
+	 * Admin-containment stamp (#1717 stage 2) — TRI-state, mirroring `ResolvedPlace.containedByQualifier` in
 	 * `@mailwoman/core`: `true` = the ancestors sidecar vouches this candidate sits under the query's
 	 * {@link FindPlaceQuery.regionQualifier}. `false` = evaluated and not vouched for. absent = never evaluated (no
 	 * qualifier on the query, or an artifact without the sidecar). Absence is required — the resolver walk reads it as
@@ -146,7 +146,7 @@ export interface PlaceCandidate {
 	/**
 	 * The #1882 exemption's firing mark (#1893), mirroring `ResolvedPlace.variantAliasExempted` in `@mailwoman/core`:
 	 * present only when this candidate's row would have taken the cross-country alias penalty and the exemption prevented
-	 * it. Emitted by the candidate-table backend alone — the WASM FTS lookup never runs the ranker, and its candidates
+	 * it. Emitted by the candidate-table backend alone — the wasm FTS lookup never runs the ranker, and its candidates
 	 * omit the field (not evaluated, never "did not fire").
 	 */
 	variantAliasExempted?: true
@@ -192,20 +192,20 @@ export interface FindPlaceQuery {
 	 */
 	country?: string
 	/**
-	 * ISO 3166-1 alpha-2 — narrows the TYPO-FUZZY tier only (#1585). Exact and qualifier-strip probes stay worldwide (a
-	 * locale hint is a prior, never a hard filter on exact matches), but a typo CORRECTION into a different country's
-	 * namespace is nearly always a scrape, so the corrected-key probes honor this scope and a scoped-empty ABSTAINS
+	 * ISO 3166-1 alpha-2 — narrows the typo-fuzzy tier only (#1585). Exact and qualifier-strip probes stay worldwide (a
+	 * locale hint is a prior, never a hard filter on exact matches), but a typo correction into a different country's
+	 * namespace is nearly always a scrape, so the corrected-key probes honor this scope and a scoped-empty abstains
 	 * rather than falling through to a world-fuzzy candidate. Ignored when `country` is set (already narrower).
 	 */
 	fuzzyCountry?: string
 	/**
-	 * Restrict name matching to PRIMARY-keyed rows (#1632) — set by probes whose surface is a RE-READING (a token taken
-	 * out of a longer classified span), which never named an alias. See the ResolverBackend contract in
+	 * Restrict name matching to primary-keyed rows (#1632) — set by probes whose surface is a RE-reading (a token taken
+	 * out of a longer classified span), which never named an alias. See the ResolverBackend interface in
 	 * `@mailwoman/core/resolver`.
 	 */
 	primaryOnly?: boolean
 	/**
-	 * Alias-row NAME ROLES the probe refuses to answer through (#1730) — the bare-toponym side races pass `abbr`/`gloss`.
+	 * Alias-row name roles the probe refuses to answer through (#1730) — the bare-toponym side races pass `abbr`/`gloss`.
 	 * Role-NULL alias rows (the exonym tier) stay open. backends/artifacts without a role column ignore it.
 	 */
 	excludeNameRoles?: readonly string[]
@@ -228,8 +228,8 @@ export interface FindPlaceQuery {
 	 */
 	postcodeContainmentCoherence?: boolean
 	/**
-	 * The tree's parsed REGION qualifier (#1717 stage 2) — set by the resolver on locality lookups when
-	 * `ResolveOpts.adminContainmentRerank` is on. See the `ResolverBackend` contract in `@mailwoman/core/resolver`: a
+	 * The tree's parsed region qualifier (#1717 stage 2) — set by the resolver on locality lookups when
+	 * `ResolveOpts.adminContainmentRerank` is on. See the `ResolverBackend` interface in `@mailwoman/core/resolver`: a
 	 * capable backend stamps `containedByQualifier`, ranks contained candidates first, and may ADD contained same-key
 	 * candidates a country scope hid — additive only, never a filter. Ignored on an artifact without the ancestors
 	 * sidecar (candidates then carry no stamp).

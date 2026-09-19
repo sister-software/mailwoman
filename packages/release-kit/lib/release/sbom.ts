@@ -3,28 +3,28 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Generate Software Bill of Materials (SBOM) artifacts for the published `mailwoman` package in
- *   both open standards — SPDX 2.3 and CycloneDX 1.5 — using the zero-dependency `npm sbom` builtin
+ *   Generate Software Bill of Materials (sbom) artifacts for the published `mailwoman` package in
+ *   both open standards — spdx 2.3 and CycloneDX 1.5 — using the zero-dependency `npm sbom` builtin
  *   (npm >= 9.5). The files land in `docs/static/sbom/` so Docusaurus serves them at
  *   `https://mailwoman.ai/sbom/mailwoman-<version>.{spdx,cdx}.json`.
  *
  *   Why generate from the published tarball rather than the working tree: the monorepo uses yarn's
- *   `workspace:*` protocol, which `npm sbom` cannot resolve, and an SBOM's job is to document what a
+ *   `workspace:*` protocol, which `npm sbom` cannot resolve, and an sbom's job is to document what a
  *   consumer actually installs — concrete versions, the production dependency closure. So the
  *   operation `npm pack`s the released version, then installs and inspects that tarball.
  *
  *   One wrinkle: the published `mailwoman` package.json carries a single devDependency,
  *   `@mailwoman/osm`, an internal dev-only workspace that is never published (a clean install would
- *   404 on it). Consumers never install a dependency's devDependencies, and a production SBOM excludes
+ *   404 on it). Consumers never install a dependency's devDependencies, and a production sbom excludes
  *   them by definition, so devDependencies are stripped before installing. The extracted tarball
  *   directory is renamed to `mailwoman` so the CycloneDX root component's display name (which npm
  *   derives from the directory basename) reads `mailwoman` rather than `package`.
  *
- *   Two npm-SPDX-output quirks are normalized so the document passes the SPDX reference validator
- *   (pyspdxtools): the `created` timestamp is truncated to whole seconds (SPDX forbids fractional
- *   seconds) and any `_` in an SPDXID is rewritten to `-` (the SPDX SPDXID charset is letters,
+ *   Two npm-spdx-output quirks are normalized so the document passes the spdx reference validator
+ *   (pyspdxtools): the `created` timestamp is truncated to whole seconds (spdx forbids fractional
+ *   seconds) and any `_` in an spdxid is rewritten to `-` (the spdx spdxid charset is letters,
  *   numbers, `.`, and `-` only — e.g. `string_decoder`). The rewrite is applied consistently across
- *   every SPDXID cross-reference (documentDescribes, relationships, hasFiles) so the graph stays
+ *   every spdxid cross-reference (documentDescribes, relationships, hasFiles) so the graph stays
  *   internally consistent. CycloneDX output validates as-is and is only re-serialized for a tidy diff.
  *
  *   Usage:  yarn mwops release sbom [--version <x.y.z>] [--out <dir>]
@@ -33,7 +33,7 @@
  *     --out      output directory (default: docs/static/sbom).
  *
  *   Validate the output (the DPG demonstrable-adherence evidence — see docs/articles/licensing/sbom.md):
- *     SPDX:       uvx --from spdx-tools pyspdxtools -i docs/static/sbom/mailwoman-<version>.spdx.json
+ *     spdx:       uvx --from spdx-tools pyspdxtools -i docs/static/sbom/mailwoman-<version>.spdx.json
  *     CycloneDX:  cyclonedx-cli validate --input-file docs/static/sbom/mailwoman-<version>.cdx.json
  */
 
@@ -45,7 +45,7 @@ import { runFileSync } from "@mailwoman/core/process"
 import { dirname, join, resolvePath, type PathBuilderLike } from "path-ts"
 
 /**
- * SPDX restricts the SPDXID charset to letters, numbers, `.` and `-`; npm emits `_` from package names.
+ * Spdx restricts the spdxid charset to letters, numbers, `.` and `-`; npm emits `_` from package names.
  */
 const sanitizeSPDXID = (id: string): string => (typeof id === "string" ? id.replaceAll(/[^a-zA-Z0-9.-]/g, "-") : id)
 
@@ -58,7 +58,7 @@ interface SPDXDocument {
 }
 
 /**
- * Rewrite npm's SPDX output into a form the SPDX 2.3 reference validator accepts (see file header).
+ * Rewrite npm's spdx output into a form the spdx 2.3 reference validator accepts (see file header).
  */
 function normalizeSPDX(doc: SPDXDocument): SPDXDocument {
 	doc.creationInfo.created = doc.creationInfo.created.replace(/\.\d{3}Z$/, "Z")
@@ -99,7 +99,7 @@ export interface GenerateSBOMReport {
 	spdxPath: string
 	cdxPath: string
 	/**
-	 * SPDX packages minus the root component.
+	 * Spdx packages minus the root component.
 	 */
 	dependencies: number
 }

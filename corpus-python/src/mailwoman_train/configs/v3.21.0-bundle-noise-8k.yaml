@@ -1,32 +1,32 @@
-# === v3.21.0-bundle-noise-8k — PRODUCTION BUNDLE CANDIDATE, INCREMENT 3 (Option-A Phase 3). ===
+# === v3.21.0-bundle-noise-8k — production bundle candidate, increment 3 (Option-A Phase 3). ===
 # (Claude-owned. the pre-registered held-back change from the v3.20.0 header, deployed on its
 # stated condition: the fed-vs-ablated golden gap survived the v5 retrain.)
 #
 # What v3.20.0 taught (record: .superpowers/sdd/progress.md 2026-07-28): the collision-family
-# lexicon fixes are NECESSARY BUT NOT SUFFICIENT. G1/G2 passed at 6000 with the arc's best
+# lexicon fixes are necessary but not sufficient. G1/G2 passed at 6000 with the arc's best
 # fragment numbers (homonym +0.177 asis / +0.667 lower+heal, house-number classes +0.003/−0.007)
 # and the 11 canary rows whose flips were caused by false lexicon surfaces are fixed — but G5/G6
 # still failed: 9 canary rows flip on legitimate evidence ("Cider Mill Rd" street-word paint,
 # "Washington, DC" with zero locality paint), the fed-vs-ablated golden gap is unchanged
 # (street_prefix 75 vs 98 ablated. census 175→165). Root cause: the absence curriculum teaches
-# presence/ABSENCE robustness but the model never SEES false presence — painted evidence is
+# presence/absence robustness but the model never sees false presence — painted evidence is
 # (near-)always truthful in training, so evidence commands rather than informs.
 #
-# ONE NAMED DELTA vs v3.20.0:
+# one named delta vs v3.20.0:
 #   evidence_noise_prob 0.15 — the false-evidence curriculum (train.perturb_evidence_noise):
-#   per row per channel, past the anchor-curriculum ramp, either ROLL a real painted pattern to
+#   per row per channel, past the anchor-curriculum ramp, either roll a real painted pattern to
 #   wrong tokens (the collision shape) or paint a synthetic 1-token false positive on a clean row;
-#   LABELS stay gold, so the gradient itself teaches evidence-as-hint. Unit-smoked locally
+#   labels stay gold, so the gradient itself teaches evidence-as-hint. Unit-smoked locally
 #   (identity pre-ramp / at p=0. mass-conserving roll. synthetic hit on clean rows).
 #
-# PRE-REGISTERED CHECKS: G1-G6 VERBATIM from the v3.20.0 header (P0 grid per save with
+# PRE-registered checks: G1-G6 verbatim from the v3.20.0 header (P0 grid per save with
 # --lexicon locality-surface-lexicon-v5.json --street-lexicon street-type-lexicon-v2.json;
 # G2 dual references. G3 invariance --baseline v385. G4 gauntlet ×3. G5 golden all floors on the
 # FED weights-cache — named watch fr.cedex_real/us.street stays: if either misses while ablated
-# passes all else, NO-SHIP names a FEED problem and the feed work unbundles. G6 canary zero
-# fed-vs-ablated flips). VERDICT: all six ⇒ promotion battery. Earlier-save fallback for
-# G1/G2/G5/G6. G3 new-class ⇒ STOP, operator decides. No knob iteration inside the run.
-# If G5/G6 STILL fail with the noise leg: STOP — the register-conditional feeding design question
+# passes all else, no-ship names a feed problem and the feed work unbundles. G6 canary zero
+# fed-vs-ablated flips). verdict: all six ⇒ promotion battery. Earlier-save fallback for
+# G1/G2/G5/G6. G3 new-class ⇒ stop, operator decides. No knob iteration inside the run.
+# If G5/G6 still fail with the noise leg: stop — the register-conditional feeding design question
 # (fragment-shaped queries feed the channels, full addresses do not) goes to the operator. that
 # is a decode-surface decision the anti-hellscape doctrine taxes rather than a change to slip in.
 #
@@ -73,7 +73,7 @@ data:
     usgov-hrsa-fqhc: 2.0
     usgov-imls-pls: 2.0
     usgov-nad: 1.0
-    state-ia-contractors: 2.0
+    state-ia-builders: 2.0
     state-tx-notaries: 1.5
     state-ny-notaries: 2.0
     deepseek-kryptonite: 3.0
@@ -93,9 +93,9 @@ data:
     synth-no-street-led: 0.0
     synth-cz-pcfirst-preposition: 12.0
     synth-nl-postcode: 6.0
-    # PROBE 1: the fragment/autocomplete source (assay weight — moderate precedent).
+    # probe 1: the fragment/autocomplete source (assay weight — moderate precedent).
     synth-fragment: 6.0
-    # #727 T2 NEW — the one variable. 12.0 = the targeted-fix precedent (fr-bare-street,
+    # #727 T2 new — the one variable. 12.0 = the targeted-fix precedent (fr-bare-street,
     # si-bare-village, no-street-led are all 12.0). Streets with no house number + the
     # bare-locality counter.
     synth-fr-fragment: 12.0
@@ -103,9 +103,9 @@ data:
     # (matches fr-fragment). Bare streets + street+number with no postcode partner, + counters.
     synth-no-fragment: 12.0
     synth-gb: 10.0 # FEED: 6.1% stream × .328 dep-loc (probe-2 had this at 20.2% — the skew culprit)
-    synth-nz: 4.0 # FEED NEW: 2.4% stream × .792 (synth-nz-v2 800k. key also covers the old 2,990-row po-box recipe output — harmless, same country)
-    synth-es-pedania: 5.0 # FEED NEW: 3.0% stream × .303 (post-4b formatter fix)
-    synth-fr-lieudit: 3.0 # FEED NEW: 1.8% stream × 1.00 (BAN nom_ld, 4ce6821a. directly feeds the bare-locality regression class)
+    synth-nz: 4.0 # FEED new: 2.4% stream × .792 (synth-nz-v2 800k. key also covers the old 2,990-row po-box recipe output — harmless, same country)
+    synth-es-pedania: 5.0 # FEED new: 3.0% stream × .303 (post-4b formatter fix)
+    synth-fr-lieudit: 3.0 # FEED new: 1.8% stream × 1.00 (BAN nom_ld, 4ce6821a. directly feeds the bare-locality regression class)
   train_rows_per_epoch: 1000000
   val_rows: 4096
   coarse_filter: true
@@ -151,12 +151,12 @@ model: # Verbatim from v2.4.1.
   use_postcode_anchor: true
   use_gazetteer_anchor: true
   gazetteer_feature_dim: 5
-  # #1104 country channel ON — dedicated 2-dim [country_surface, country_ambiguous] soft feed with its
+  # #1104 country channel on — dedicated 2-dim [country_surface, country_ambiguous] soft feed with its
   # own projection + confidence (must equal the lexicon's feature_dim). Default-False elsewhere, so a
   # resume from a pre-country checkpoint stays byte-identical until this flips.
   use_country_anchor: true
   country_feature_dim: 2
-  # P-A street-type channel ON — a dedicated 1-dim street_type soft feed with its own projection +
+  # P-A street-type channel on — a dedicated 1-dim street_type soft feed with its own projection +
   # confidence (must equal the lexicon's feature_dim=1). Separate from the gazetteer, so init_from v385
   # loads clean (v385 lacks street_type_* → strict=False leaves only those fresh).
   use_street_type_anchor: true
@@ -164,7 +164,7 @@ model: # Verbatim from v2.4.1.
   # v3.16.0 — the locality-surface channel is on (the bundle).
   use_locality_surface_anchor: true
   locality_surface_feature_dim: 2
-  # #1104 homograph-guard SOFTENER — the one variable vs v263. Scales the country_ambiguous dim by 0.5
+  # #1104 homograph-guard softener — the one variable vs v263. Scales the country_ambiguous dim by 0.5
   # before the country_projection (bakes into the exported ONNX. no lexicon/inference change). v263's
   # hard guard (scale 1.0) over-suppressed homograph countries Georgia/Jordan (country-homograph F1
   # 89.8->82.6); softening should recover homograph recall without giving back the country F1 the

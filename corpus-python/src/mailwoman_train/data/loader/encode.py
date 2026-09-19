@@ -69,7 +69,7 @@ def resolve_char_mode(cfg_data: DataConfig) -> CharMode | None:
 
     CharCNN input path (#825 / v8 CJK). When char_mode != "off" the row loop skips SentencePiece
     entirely and encodes per-unit char windows (encode_row_units). The mode is channel-free by
-    contract — the channels project per SP-piece and get a per-unit re-alignment post-probe — so a
+    interface — the channels project per SP-piece and get a per-unit re-alignment post-probe — so a
     configured channel path alongside char_mode is a config mistake, raised loudly here.
     """
     mode = getattr(cfg_data, "char_mode", "off")
@@ -181,7 +181,7 @@ def iter_encoded(
     """
     rng = rng or random.Random(0)
     char = resolve_char_mode(cfg_data)
-    # Label vocabulary (v8 CJK Phase 2): non-default sets are threaded through the CHAR path only.
+    # Label vocabulary (v8 CJK Phase 2): non-default sets are threaded through the char path only.
     # The SP path still encodes against the module-global STAGE3 maps, so a non-default set there
     # would silently mislabel — raise instead (the #1349 lesson: silent label-space mismatches).
     label_set = resolve_label_set(getattr(cfg_data, "label_set", "stage3"))

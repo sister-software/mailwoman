@@ -3,10 +3,10 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   The FROZEN ruler for the absence-observation probe (#1965), and the arithmetic that reads it. Pure —
+ *   The frozen ruler for the absence-observation probe (#1965), and the arithmetic that reads it. Pure —
  *   no model, no database, no pipeline — so every refusal is testable without loading an engine.
  *
- *   WHAT THIS PROBE MEASURES IS AN ASYMMETRY rather than A DELTA. #1928's ruler compares two arms against a
+ *   what this probe measures is an asymmetry rather than A delta. #1928's ruler compares two arms against a
  *   frozen baseline count. This one asserts a conjunction and its complement: inside exclusion-grade
  *   coverage a pharmacy-affordance answer holding nothing carries an absence observation, and everywhere
  *   else the route is silent. So every row registers a `expectedOutcome` — either `absence_observation` or
@@ -14,15 +14,15 @@
  *   outcome registered for it. A row that stayed silent for a reason nobody registered fails, even though
  *   it stayed silent.
  *
- *   THE ANCHORS ARE DERIVED FROM THE PILOT LAYER rather than INVENTED. Each target row names the coverage cell
+ *   the anchors are derived from the pilot layer rather than invented. Each target row names the coverage cell
  *   its anchor resolves into and the `observed_rows` that cell carries. The rows were selected by walking
  *   the pilot layer's own zero-observed cells, taking gazetteer places whose coordinates fall inside one,
  *   and keeping the ones whose resolved search centre lands back in the same cell. No address is written
  *   by hand anywhere in the definition, and a cell centroid is a coordinate — the row's anchor is a place
  *   the gazetteer already carries rather than a street line composed to fit.
  *
- *   THE CONTROLS SPLIT THE CONJUNCTION. `outside_coverage` rows put the same query and the same empty
- *   answer outside the surveyed cell set, which is the whole contract: the `[]` there is silence.
+ *   the controls split the conjunction. `outside_coverage` rows put the same query and the same empty
+ *   answer outside the surveyed cell set, which is the whole interface: the `[]` there is silence.
  *   `wrong_class` puts a different category at the exact cell a target fires on, so the artifact half of
  *   the conjunction is shown to be required at a cell where the coverage half holds. `cell_populated`
  *   rows sit inside exclusion-grade coverage on cells the layer holds rows in. A control set that could
@@ -30,7 +30,7 @@
  */
 
 import { stringifyJSON } from "@mailwoman/core/json"
-// The canonical-JSON encoder is IMPORTED rather than re-typed: two freeze records hashing the same content
+// The canonical-JSON encoder is imported rather than re-typed: two freeze records hashing the same content
 import { compareByCodePoint } from "@mailwoman/core/strings/compare"
 
 import {
@@ -280,7 +280,7 @@ export interface AbsenceCounts {
 /**
  * Count one run.
  *
- * The denominators are the REGISTERED row counts, never the rows that happened to answer, so a probe that stops being
+ * The denominators are the registered row counts, never the rows that happened to answer, so a probe that stops being
  * able to read a row reports a lower hold count rather than a smaller board.
  */
 export function computeAbsenceCounts(

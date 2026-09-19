@@ -2,8 +2,8 @@
  * @copyright Sister Software
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
- * @file The sibling-prefix contract: three or more children sharing a hyphen prefix become a directory, and the two
- *   kinds of name that are contracts rather than layout stay put.
+ * @file The sibling-prefix interface: three or more children sharing a hyphen prefix become a directory, and the two
+ *   kinds of name that are interfaces rather than layout stay put.
  */
 
 import { collectRepoContext } from "@mailwoman/repo-health"
@@ -20,7 +20,7 @@ describe("findPrefixGroups", () => {
 	test("groups three siblings and leaves a pair alone", () => {
 		const groups = findPrefixGroups([
 			`${ADAPTERS}/state-hi-schools/adapter.ts`,
-			`${ADAPTERS}/state-ia-contractors/adapter.ts`,
+			`${ADAPTERS}/state-ia-builders/adapter.ts`,
 			`${ADAPTERS}/state-ny-notaries/adapter.ts`,
 			`${ADAPTERS}/juso-kr/adapter.ts`,
 			`${ADAPTERS}/localdata-kr/adapter.ts`,
@@ -32,7 +32,7 @@ describe("findPrefixGroups", () => {
 
 		expect(groups[0]?.members.map((member) => member.name)).toEqual([
 			"state-hi-schools",
-			"state-ia-contractors",
+			"state-ia-builders",
 			"state-ny-notaries",
 		])
 	})
@@ -154,7 +154,7 @@ describe("prefixDirectoriesCheck", () => {
 			repoRoot: ".",
 			trackedFiles: [
 				`${ADAPTERS}/state-hi-schools/adapter.ts`,
-				`${ADAPTERS}/state-ia-contractors/adapter.ts`,
+				`${ADAPTERS}/state-ia-builders/adapter.ts`,
 				`${ADAPTERS}/state-ny-notaries/adapter.ts`,
 			],
 		})

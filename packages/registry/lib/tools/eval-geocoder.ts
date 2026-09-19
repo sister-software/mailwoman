@@ -3,7 +3,7 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   The injected-geocoder contract for the record-matcher tools. The registry package deliberately
+ *   The injected-geocoder interface for the record-matcher tools. The registry package deliberately
  *   never imports the heavy runtime (neural parser, WOF resolver, per-state extracts) — `mailwoman`
  *   depends on `@mailwoman/registry`, so the reverse import would cycle the workspace graph. Instead
  *   each tool takes an {@linkcode EvalGeocoderFactory} the CLI command constructs from

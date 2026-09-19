@@ -3,7 +3,7 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   The RESOLVED-place → Photon-schema projection: decorating a resolved gazetteer place (proper-
+ *   The resolved-place → Photon-schema projection: decorating a resolved gazetteer place (proper-
  *   cased names + ancestry + country, house/street grade overrides) into {@link PhotonProperties},
  *   plus the `format=jsonld` schema.org re-serialization. Wire types + feature/collection
  *   construction live in `engine.ts`.
@@ -20,7 +20,7 @@ import {
 } from "#engine"
 
 /**
- * The resolved-place info in a forward `/api` result: the admin ladder (MOST-SPECIFIC first) with GAZETTEER names, the
+ * The resolved-place info in a forward `/api` result: the admin ladder (most-specific first) with gazetteer names, the
  * coordinate, the resolved country, and the postcode. {@link photonForwardProperties} projects it onto Photon's schema.
  * #1014 — decorate from the resolved place rather than the parsed input span.
  */
@@ -37,7 +37,7 @@ export interface PhotonForwardInput {
 	 */
 	places: ReadonlyArray<{ tag: string; name: string }>
 	/**
-	 * A HOUSE-GRADE result (#1041): set only when the resolver produced a specific building coordinate — the
+	 * A house-grade result (#1041): set only when the resolver produced a specific building coordinate — the
 	 * `address_point` (rooftop) or `interpolated` tier fired rather than an admin centroid.
 	 * {@link photonForwardProperties} then re-tags the schema `osm_key: place` / `osm_value: house` / `type: house` and
 	 * surfaces the parsed `housenumber` + `street`, matching upstream komoot/photon's own bare-address-point shape
@@ -48,7 +48,7 @@ export interface PhotonForwardInput {
 	 */
 	house?: { number?: string | null; street?: string | null } | null
 	/**
-	 * A STREET-GRADE result (#1050): set when the street-centroid tier (#1042/#1046) fired — a street-level coordinate,
+	 * A street-grade result (#1050): set when the street-centroid tier (#1042/#1046) fired — a street-level coordinate,
 	 * below rooftop/interp, above admin. {@link photonForwardProperties} re-tags it `osm_key: highway` / `osm_value:
 	 * residential` / `type: street` with the full assembled street name in `name` — matching upstream komoot's street
 	 * results (verified live 2026-07-10: a street primary returns `{osm_key:"highway", osm_value:<class>, type:"street",
@@ -108,7 +108,7 @@ export function photonOSMTags(tagOrPlacetype: string): { osm_key: string; osm_va
 }
 
 /**
- * Project a resolved forward result into Photon properties — decorating from the RESOLVED gazetteer place (proper-cased
+ * Project a resolved forward result into Photon properties — decorating from the resolved gazetteer place (proper-cased
  * names + ancestry + country), not the parsed input span, and always emitting `osm_key`/`osm_value`/`type` so Photon
  * client libraries (leaflet-control-geocoder, @openrunner/photon-geocoder) never dereference undefined. #1014.
  */
@@ -142,7 +142,7 @@ export function photonForwardProperties(input: PhotonForwardInput): PhotonProper
 		props.countrycode = input.country.code.toLowerCase()
 	}
 
-	// #1041: house-grade override. A rooftop / interpolated coordinate is a BUILDING rather than the admin locality the
+	// #1041: house-grade override. A rooftop / interpolated coordinate is a building rather than the admin locality the
 	// ancestry above would label it — re-tag the schema so a Photon client renders (and zooms to) a house, and surface
 	// the parsed housenumber + street. Matches upstream komoot/photon's bare address point (osm_key:place, osm_value:
 	// house, type:house, with housenumber + street and no name). Drop the admin-derived `name` — else the QGIS FLF label
@@ -213,7 +213,7 @@ export function photonForwardCollection(result: PhotonForwardResult, limit: numb
 }
 
 /**
- * Project a Photon `Feature` into a schema.org `Place` JSON-LD object (`format=jsonld`, #1052) — the OUTPUT-format
+ * Project a Photon `Feature` into a schema.org `Place` JSON-LD object (`format=jsonld`, #1052) — the output-format
  * projection. Reads the feature's already-decorated {@link PhotonProperties} (housenumber/street/city/state/postcode/
  * countrycode + the coordinate), so it stays a pure re-serialization of the same resolved place the FeatureCollection
  * carries. `streetAddress` is the plain house-number-first join (the light router has no locale formatter).

@@ -3,14 +3,14 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   The premise-linkage report writer (#1902) and the PREFLIGHT that decides whether anything is
+ *   The premise-linkage report writer (#1902) and the preflight that decides whether anything is
  *   written at all.
  *
  *   The threat this guards against is not a careless operator. It is an ordinary change: someone adds
  *   a field to help debug a bad run, a provider payload rides along inside it, and the report is
  *   already in a pull request before anybody reads the diff closely. So the writer does not trust the
  *   type system to have kept the report clean — the types are what the code was written against, and
- *   the leak arrives in the code that was written afterwards. It re-derives the answer from the VALUES
+ *   the leak arrives in the code that was written afterwards. It re-derives the answer from the values
  *   about to be serialized:
  *
  *   1. Every key must be one this schema declares. An unknown key is refused whatever it holds, which
@@ -20,7 +20,7 @@
  *        held in memory for exactly this comparison and discarded with the run.
  *   3. No row whose terms forbid a published coordinate may carry a coordinate error.
  *   4. The run itself must be at least the agreed minimum cell size, and any per-class cell below it is
- *        REMOVED before publication — with the removal counted, because a suppression nobody can see is
+ *        removed before publication — with the removal counted, because a suppression nobody can see is
  *        indistinguishable from a class that had no rows.
  *
  *   A refusal throws and names the path. It never writes a partial file: every check runs against the
@@ -48,7 +48,7 @@ export type PremiseLinkageRedactionReason =
 	(typeof PremiseLinkageRedactionReason)[keyof typeof PremiseLinkageRedactionReason]
 
 /**
- * A refusal to publish, naming the value that caused it. The message carries the PATH and the reason, never the
+ * A refusal to publish, naming the value that caused it. The message carries the path and the reason, never the
  * offending value — an error message is a log line, and a log line is a disclosure.
  */
 export class PremiseLinkageRedactionError extends Error {
@@ -106,7 +106,7 @@ const REPORT_KEY_ALLOWLIST: ReadonlySet<string> = new Set<string>([
 const ADDRESS_SHAPE = /\d+\s+\p{L}/u
 
 /**
- * A digit run long enough to be an authoritative object identifier (a UPRN reaches twelve).
+ * A digit run long enough to be an authoritative object identifier (a uprn reaches twelve).
  *
  * The cost of this check is that a dataset version written as a bare eight-digit date is refused. That is the intended
  * trade: a version string can be given a non-bare form in one edit, and a leaked identifier cannot be recalled.
@@ -176,7 +176,7 @@ function walkPublishable(value: unknown, path: string, inputs: readonly string[]
 }
 
 /**
- * What the preflight reads. The rows and the inputs are CHECKED and never written — they are how the writer knows what
+ * What the preflight reads. The rows and the inputs are checked and never written — they are how the writer knows what
  * the report was computed from.
  */
 export interface PremiseLinkagePreflightInput {

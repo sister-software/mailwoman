@@ -2,11 +2,11 @@
  * @copyright Sister Software
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
- * @file The exclusion check. An {@link Exclusion} is the only evidence kind that can act on an ABSENCE, so it is the only
+ * @file The exclusion check. An {@link Exclusion} is the only evidence kind that can act on an absence, so it is the only
  *   one with no public constructor: {@link requireExclusionBasis} is the sole way to make one, and it refuses far more
  *   often than it admits.
  *
- *   FOLD PARITY IS A PRECONDITION rather than a detail. A key that "exists nowhere" may exist under a surface we did not
+ *   fold parity is A precondition rather than a detail. A key that "exists nowhere" may exist under a surface we did not
  *   probe. The board's coverage-miss decomposition found this class directly — `Tel Aviv-Yafo`, `São Paulo - SP`,
  *   `Co. Westmeath` are real places reported as coverage misses — and it is indistinguishable from a true absence at
  *   the decision point. So the probe must name the fold it used and the layer must name the fold its builder wrote,
@@ -14,18 +14,18 @@
  */
 
 /**
- * What a `completeness` value RESTS ON. The magnitude alone cannot be acted on: a cell recorded at `1.0` because an
+ * What a `completeness` value rests on. The magnitude alone cannot be acted on: a cell recorded at `1.0` because an
  * authority designates the set complete, and a cell recorded at `1.0` because the source happened to return rows there,
  * license entirely different conclusions.
  *
- * Only {@link CoverageBasis.Designated} and {@link CoverageBasis.Surveyed} can support an EXCLUSION — "the thing you
+ * Only {@link CoverageBasis.Designated} and {@link CoverageBasis.Surveyed} can support an exclusion — "the thing you
  * asked for is not here". {@link CoverageBasis.SourcePresent} supports presence and nothing else: the source looked,
  * which is not the same as the source found everything.
  */
 export const CoverageBasis = {
 	/**
 	 * An authority declares the set complete for this cell — BAN holding every address in a commune, OS declaring OS Open
-	 * UPRN complete for GB. A miss inside a designated cell is evidence of absence.
+	 * uprn complete for GB. A miss inside a designated cell is evidence of absence.
 	 */
 	Designated: "designated",
 	/**
@@ -35,7 +35,7 @@ export const CoverageBasis = {
 	Surveyed: "surveyed",
 	/**
 	 * The source returned rows in this cell and we recorded that. Says nothing about what the source missed. A miss here
-	 * is UNKNOWN, never absence.
+	 * is unknown, never absence.
 	 */
 	SourcePresent: "source_present",
 } as const
@@ -43,7 +43,7 @@ export const CoverageBasis = {
 export type CoverageBasis = (typeof CoverageBasis)[keyof typeof CoverageBasis]
 
 /**
- * Whether a coverage reading can support an EXCLUSION — a claim that the thing asked for is not there.
+ * Whether a coverage reading can support an exclusion — a claim that the thing asked for is not there.
  *
  * Presence is supportable from any basis. Absence is not: `source_present` records that the source returned rows, which
  * says nothing about what it missed. Callers building negative evidence must check on this rather than on
@@ -129,9 +129,9 @@ export function requireExclusionBasis(input: RequireExclusionInput): Exclusion |
 }
 
 /**
- * Inputs a fold identity is computed over. Each exercises one axis a fold can differ on: a WORD-INTERNAL diacritic (the
+ * Inputs a fold identity is computed over. Each exercises one axis a fold can differ on: a word-internal diacritic (the
  * axis `resolver/fold-name.ts` gets wrong — it maps the combining mark to a space, splitting the word), a diacritic
- * ADJACENT to punctuation (which hides that bug), hyphens, periods, apostrophes, case, collapsing whitespace, and a
+ * adjacent to punctuation (which hides that bug), hyphens, periods, apostrophes, case, collapsing whitespace, and a
  * non-Latin script. Adding an input changes every identity, which is correct: it is a new distinction two folds may
  * differ on. Never reorder — identity is order-dependent.
  */
@@ -155,7 +155,7 @@ export const FOLD_PROBE_CORPUS: readonly string[] = [
 const IDENTITY_SEPARATOR = "\u0001"
 
 /**
- * Identify a fold by its BEHAVIOR over {@link FOLD_PROBE_CORPUS} — a name cannot do this job.
+ * Identify a fold by its behavior over {@link FOLD_PROBE_CORPUS} — a name cannot do this job.
  *
  * Two folds that compute the same answers are interchangeable and share an identity, which is the property the
  * exclusion check needs: it is asking "was this key built by a fold equivalent to mine", not "were these two functions

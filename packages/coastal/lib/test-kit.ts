@@ -7,19 +7,19 @@
  *   one with a hole, one narrower than a cell, plus a ground-instability polygon that must never answer an
  *   erosion question.
  *
- *   A PACKAGE SUBPATH RATHER THAN A `test/` FILE, for the same reason `packages/mailwoman/lib/test-kit` is one:
+ *   A package subpath rather than A `test/` file, for the same reason `packages/mailwoman/lib/test-kit` is one:
  *   the observation route's suite lives in another workspace, and a relative import across two TypeScript
  *   projects is refused outright (`TS2878`) because the compiled layout would not match the source layout.
  *
- *   NO NETWORK AND NO GDAL. The builder takes a {@linkcode CoastalFeatureSource}, so a fixture is a list of
+ *   no network and no gdal. The builder takes a {@linkcode CoastalFeatureSource}, so a fixture is a list of
  *   features — which is what lets this rung exercise the domain checks, the cell classification, the coverage
  *   rows, the manifest and the seal on every machine rather than only the ones with ogr2ogr.
  *
- *   THE COORDINATES ARE OFF THE ENGLISH COAST, and deliberately so. The bands sit in the North Sea east of
- *   Great Yarmouth where no real NCERM polygon interferes, but inside the extent the ingest asserts against —
+ *   the coordinates are off the english coast, and deliberately so. The bands sit in the North Sea east of
+ *   Great Yarmouth where no real ncerm polygon interferes, but inside the extent the ingest asserts against —
  *   so a fixture stays a fixture and still lives in the coordinate space the product occupies.
  *
- *   THE SAME FRONTAGE ID IS REUSED ON PURPOSE. The real product repeats a frontage id within one layer —
+ *   the same frontage ID is reused on purpose. The real product repeats a frontage id within one layer —
  *   `NCERM_NFI_2055_0CC` holds 7,379 features over 7,369 distinct frontage ids — so the fixture repeats one
  *   too, and a build keyed on the frontage rather than on the authority's feature id fails here rather than in
  *   production.
@@ -82,7 +82,7 @@ export function fixtureFeature(
 		defenceType: "Vertical Wall - Concrete",
 		publishedYear: 2024,
 		maxOverlap: 0,
-		// The real source's figure comes from GDAL. a fixture's comes from the same ring maths the build checks against,
+		// The real source's figure comes from gdal. a fixture's comes from the same ring maths the build checks against,
 		// so the fixture exercises the comparison rather than the tolerance.
 		sourceAreaM2: ringAreaReadings(polygons).nested,
 		polygons,
@@ -94,7 +94,7 @@ export function fixtureFeature(
  * The fixture erosion set: two adjacent bands in the no-intervention scenario (one of them holed), one band in the
  * with-plan scenario covering the same ground as the first, and one band narrower than a res-9 cell.
  *
- * THE OVERLAP BETWEEN SCENARIOS IS THE POINT. A point inside the first band must answer under both scenarios with
+ * The overlap between scenarios is the point. A point inside the first band must answer under both scenarios with
  * different distances, which is what proves the twelve layers stay separable rather than pooled.
  */
 export function fixtureFeatures(): CoastalSourceFeature[] {

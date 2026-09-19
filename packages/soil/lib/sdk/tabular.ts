@@ -3,24 +3,24 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   The pipe-delimited NASIS export inside a survey-area archive: which file holds which table, which
+ *   The pipe-delimited nasis export inside a survey-area archive: which file holds which table, which
  *   column sits at which position, and the authority's own declared domains.
  *
- *   THE FILES CARRY NO HEADER AND THE ARCHIVE SHIPS THE SCHEMA. `mstab.txt` maps a logical table name to
+ *   the files carry no header and the archive ships the schema. `mstab.txt` maps a logical table name to
  *   the file base name that holds it (`component` → `comp.txt`, `sacatalog` → `sacatlog.txt` — neither is
  *   guessable), and `mstabcol.txt` gives every column's ordinal position. So the reader looks the positions
- *   up rather than hard-coding them, and {@link readTable} THROWS on a requested column the shipped
+ *   up rather than hard-coding them, and {@link readTable} throws on a requested column the shipped
  *   dictionary does not declare. A reader that quietly returned `undefined` for a renamed column would turn
  *   "the source changed" into "there is none of it", at exactly the measurement boundary where that lie
  *   costs the most.
  *
- *   QUOTE HANDLING IS NOT OPTIONAL HERE, AND THE MEASUREMENT determines the result. `sacatlog.txt` holds 594 newline
+ *   quote handling is not optional here, and the measurement determines the result. `sacatlog.txt` holds 594 newline
  *   bytes and exactly one record: its `fgdcmetadata` column carries a 43,251-character XML document with
  *   embedded newlines. `mstabcol.txt` — the column dictionary itself — holds 913 newlines and 865 records.
  *   A line-splitting reader gets 594 malformed rows from a one-row file, every one of them well-formed
  *   enough to keep going.
  *
- *   THE DECLARED DOMAINS COME OUT OF THE ARCHIVE TOO, which is stronger than transcribing them.
+ *   the declared domains come OUT OF the archive too, which is stronger than transcribing them.
  *   `msdomdet.txt` carries every `Choice` column's members with the authority's own prose definition —
  *   capability classes 1 through 8, subclasses `c`/`e`/`s`/`w`, the 28 conditional farmland
  *   classifications, the six component kinds. The layer stores them and validates against them.
@@ -141,7 +141,7 @@ function assertWidth(rows: ReadonlyArray<TabularRow>, width: number, name: strin
 /**
  * A reader over one logical table, projecting the columns a caller names.
  *
- * The projection is by NAME and a missing name throws, which is the whole point: this is the shape that produced the
+ * The projection is by name and a missing name throws, which is the whole point: this is the shape that produced the
  * repository's worst measurement bugs, where a silently dropped column read downstream as an empty world.
  */
 export interface TabularTable {
@@ -156,7 +156,7 @@ export interface TabularTable {
 }
 
 /**
- * Read a logical SSURGO table, projecting `wanted` columns.
+ * Read a logical ssurgo table, projecting `wanted` columns.
  *
  * @throws {Error} When the archive declares no file for the table, when a requested column is not in the shipped
  *   dictionary, or when a record is narrower than the position a requested column sits at.
@@ -266,7 +266,7 @@ export function domainCodes(members: ReadonlyArray<DomainMember>, domain: string
 }
 
 /**
- * `M/D/YYYY H:MM:SS` (and the `MM/DD/YYYY HH:MM:SS` the tabular export writes) to an ISO date.
+ * `M/D/yyyy H:MM:SS` (and the `MM/DD/yyyy HH:MM:SS` the tabular export writes) to an ISO date.
  *
  * The two channels spell the same instant differently — Soil Data Access answers `9/9/2025 1:57:25 PM` and the shipped
  * `sacatlog.txt` writes `09/09/2025 13:57:25` — and the download URL needs `2025-09-09`. Parsing to a date rather than
@@ -276,7 +276,7 @@ export function domainCodes(members: ReadonlyArray<DomainMember>, domain: string
  *   a file that does not exist, and the host answers 400 rather than 404, which reads as a bad request rather than a
  *   bad date.
  */
-// repo-health-ignore export-name-affix -- parses the survey's M/D/YYYY form; `isoDate` formats a Date and reads none.
+// repo-health-ignore export-name-affix -- parses the survey's M/D/yyyy form; `isoDate` formats a Date and reads none.
 export function saverestToISODate(value: string): string {
 	const matched = /^(\d{1,2})\/(\d{1,2})\/(\d{4})/u.exec(value.trim())
 

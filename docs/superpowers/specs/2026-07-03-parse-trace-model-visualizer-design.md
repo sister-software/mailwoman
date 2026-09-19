@@ -44,9 +44,9 @@ trace JSON ───┼─ mailwoman parse --trace json|mermaid        … need 
     `buildSoftFeatures`): forks the feed choreography — the exact train/inference drift class the
     codebase forbids.
   - _Overloading `parseWithLogits`:_ muddies its documented purpose (per-span logit aggregation
-    for joint-reconcile) and perturbs existing callers' contract.
+    for joint-reconcile) and perturbs existing callers' interface.
 
-## 1. Trace contract
+## 1. Trace interface
 
 Types live where their producers live; the envelope composes them.
 
@@ -166,5 +166,5 @@ Each increment is independently shippable; 2 and 3 are parallel once 1 lands.
 - Resolver/gazetteer candidate traces (increment 4 reserves the key; design when it lands).
 - Any change to training-side Python or the ONNX export.
 - Exposing attention weights or other _inside-the-graph_ tensors — the trace covers the model's
-  I/O contract and the decode pipeline around it rather than transformer internals. (Netron already
+  I/O interface and the decode pipeline around it rather than transformer internals. (Netron already
   serves the op-graph view; revisit only if a concrete need appears.)

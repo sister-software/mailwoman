@@ -5,13 +5,13 @@
  *
  *   The `--debug` branch of `mailwoman geocode`. Two paths share one geocode:
  *
- *   - A piped/non-TTY invocation renders exactly ONE {@link DebugFrame} (the input row + the resolved output +
+ *   - A piped/non-TTY invocation renders exactly one {@link DebugFrame} (the input row + the resolved output +
  *     a rendered map pane) through {@link renderInkToString} and writes it out with `writeRawStdout` — the same
  *     #1577 posture as `geocode.tsx`'s one-shot JSON/text/jsonld path: nothing on the success path renders
  *     through Ink's live reconciler, so there is no frame for Ink to clear and no frame tall enough to wipe the
  *     scrollback.
  *   - A TTY invocation gets the interactive three-panel session, {@link DebugSessionApp}, rendered through an Ink
- *     instance THIS MODULE creates — see {@link DebugSessionHandoff}.
+ *     instance this module creates — see {@link DebugSessionHandoff}.
  *
  *   {@linkcode GeocodeDebugCommand} is itself a hook-free dispatcher between the two, the same shape
  *   `geocode.tsx`'s top-level `GeocodeCommand` uses to choose between this module and its own one-shot path.
@@ -152,7 +152,7 @@ function GeocodeDebugStatic(props: { input: string; options: GeocodeCommandOptio
  * 120×36, against 0.33 KB with it on**, all of it truecolor braille that the emulator (and, over SSH, the wire) has to
  * chew through. And Ink has no alternate-screen buffer unless it is asked for one, which is what forced the hand-rolled
  * escapes this component's callee used to carry — a frame exactly as tall as the terminal makes Ink emit `\x1b[3J`, and
- * that wipes the user's SCROLLBACK (#1577).
+ * that wipes the user's scrollback (#1577).
  *
  * Ink keeps one renderer per stdout (`ink/render.js`'s `getInstance`) and warns, then reuses the old one, if a second
  * `render()` arrives for the same stream. So the handoff is an unmount-then-render rather than a second mount: `exit()`
@@ -163,7 +163,7 @@ function GeocodeDebugStatic(props: { input: string; options: GeocodeCommandOptio
  * The command tree renders `null` throughout — height 0, so the primary buffer is never written to and there is nothing
  * left in the scrollback once the session exits.
  */
-/* oxlint-disable react-hooks/exhaustive-deps -- One-shot by contract, like `useCommandTask`: the handoff happens
+/* oxlint-disable react-hooks/exhaustive-deps -- One-shot by interface, like `useCommandTask`: the handoff happens
 	 once at mount, and a fresh `options` object per render must not repeat it. The empty deps array is the point. */
 
 function DebugSessionHandoff(props: { input: string; options: GeocodeCommandOptions }): React.ReactElement | null {

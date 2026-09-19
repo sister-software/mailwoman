@@ -159,8 +159,8 @@ def parse_user_defined_symbols_file(path: Path) -> list[str]:
     return out
 
 
-# U+2581 LOWER ONE EIGHTH BLOCK is SentencePiece's whitespace placeholder. UDS literals
-# that contain ASCII spaces must use this codepoint instead — SP normalizes all whitespace
+# U+2581 lower one eighth block is SentencePiece's whitespace placeholder. UDS literals
+# that contain ascii spaces must use this codepoint instead — SP normalizes all whitespace
 # to ▁ before matching, so a UDS like ``"PO Box"`` would never fire (the encoder sees
 # ``"PO▁Box"`` internally but the UDS in the vocab is still ``"PO Box"``). We substitute
 # transparently so callers can write natural strings.

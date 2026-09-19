@@ -124,7 +124,7 @@ began as a fork of Pelias Parser and ships wire-compatible drop-ins for the othe
 ## Drop-in servers
 
 Migrating off Nominatim, Photon, or libpostal? Each has a compatible server — same wire
-contract, from a SQLite file instead of a cluster. A hosted Photon-compatible endpoint is
+interface, from a SQLite file instead of a cluster. A hosted Photon-compatible endpoint is
 live for evaluation:
 
 ```bash
@@ -207,7 +207,7 @@ mailwoman poi "gas station near Springfield, IL" --db poi.db
 
 Mailwoman is dual-licensed:
 
-- **[AGPL-3.0-only](https://www.gnu.org/licenses/agpl-3.0.html)** for open-source use. You
+- **[AGPL-3.0-only](https://www.gnu.org/licenses/AGPL-3.0.html)** for open-source use. You
   may use, modify, and redistribute the software, but you must share your modifications and,
   for network services, your source.
 - **A commercial license** for closed-source/commercial use without the AGPL's source-sharing

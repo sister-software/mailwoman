@@ -20,7 +20,7 @@ import { type CommandSpec, CommandTaskResult, type CommandComponent, phaseReport
 import { DEFAULT_CANDIDATE_OUT } from "#gazetteer-pipeline/defaults"
 
 /**
- * Native command-line contract consumed by the filesystem command router.
+ * Native command-line interface consumed by the filesystem command router.
  */
 export const spec = {
 	name: "publish",

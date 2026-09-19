@@ -3,13 +3,13 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   The OWN-NAME VARIANT predicate (#1882): is an alias surface the holder's own primary name in
+ *   The own-name variant predicate (#1882): is an alias surface the holder's own primary name in
  *   another orthography — a romanization (`Брэст` → `brest`), a spacing/diacritic variant
  *   (`George Town` → `georgetown`), an abbreviation expansion (`St. George's` → `Saint George's`)
  *   — rather than a different name that merely shares the folded key?
  *
- *   The comparator is `levenshteinSimilarity`, NOT Jaro-Winkler: JW's common-prefix bonus scores
- *   the required NEGATIVE case (`chanchun` vs `cancun`, 0.925) above real positives
+ *   The comparator is `levenshteinSimilarity`, not Jaro-Winkler: JW's common-prefix bonus scores
+ *   the required negative case (`chanchun` vs `cancun`, 0.925) above real positives
  *   (`saint george s` vs `st georges` expanded, 0.914), so no JW threshold separates them.
  *   Measured on the #1882 census contests, edit similarity separates every case with margin:
  *
@@ -18,7 +18,7 @@
  *   - OUT: `lievin`/`levin` 0.833 (Liévin FR vs Levin NZ — different places with near-identical
  *       names. the panel's `41 Weraroa Road, Levin` row needs this side) · `chanchun`/`cancun` 0.75 ·
  *       `augsburg`/`augusta` 0.375 · `west bay`/`west end` 0.625 · `derry`/`londonderry` 0.455
- *       (Derry/Londonderry is a DUAL NAME rather than a variant — its own follow-up on #1882)
+ *       (Derry/Londonderry is a dual name rather than a variant — its own follow-up on #1882)
  *
  *   An unhandled script (Arabic, Hebrew, CJK — the romanizer covers Cyrillic only) answers NULL,
  *   never "different name": absence of a verdict must not stamp anything (the meaning-of-zero rule).
@@ -34,7 +34,7 @@ import { levenshteinSimilarity } from "@mailwoman/match/comparators"
 export const VARIANT_SIMILARITY_MIN = 0.85
 
 /**
- * BGN/PCGN-flavored Cyrillic romanization, folded to the name-key alphabet. Digraph outputs (zh, kh, ts, ch, sh, shch,
+ * BGN/pcgn-flavored Cyrillic romanization, folded to the name-key alphabet. Digraph outputs (zh, kh, ts, ch, sh, shch,
  * yu, ya) match the dominant transliteration conventions the gazetteer's Latin aliases actually use. the `w`/`v` and
  * `kh`/`h` style variance between systems is what the edit-similarity threshold absorbs.
  */
@@ -105,7 +105,7 @@ export function expandNameAbbreviations(key: string): string {
 
 /**
  * Romanize a folded name key to the a–z0–9/space alphabet. `null` when characters outside the covered scripts remain —
- * an unhandled script is NO VERDICT rather than a mismatch.
+ * an unhandled script is no verdict rather than a mismatch.
  */
 export function romanizeNameKey(key: string): string | null {
 	let out = ""

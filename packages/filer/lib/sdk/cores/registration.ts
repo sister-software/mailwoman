@@ -1,7 +1,7 @@
 /**
  * @copyright Sister Software.
  * @license AGPL-3.0
- * @file CORES registration page parsing.
+ * @file cores registration page parsing.
  */
 
 import { extractTableRows } from "@mailwoman/core/html/tables"
@@ -9,7 +9,7 @@ import { extractTableRows } from "@mailwoman/core/html/tables"
 import type { FRN } from "#frn"
 
 /**
- * One CORES registration record, exactly as the detail page states it. Every field is optional because the page omits a
+ * One cores registration record, exactly as the detail page states it. Every field is optional because the page omits a
  * row rather than emitting an empty one, and an absent contact fax says nothing about the entity.
  *
  * No field here is interpreted, derived or classified — see the file header's note 2 on why Nexus's name-sniffing
@@ -23,13 +23,13 @@ export interface CORESRegistration {
 	 */
 	entityName?: string
 	/**
-	 * CORES's own entity-type string, verbatim (e.g. `"Private Sector , Corporation"` — the stray space before the comma
+	 * Cores's own entity-type string, verbatim (e.g. `"Private Sector , Corporation"` — the stray space before the comma
 	 * is in the source). Deliberately not parsed into a union: the vocabulary is unenumerated and a caller that needs a
 	 * classification should corroborate rather than trust a string split.
 	 */
 	entityType?: string
 	/**
-	 * The organization the registered contact belongs to. In practice this is where the BRAND appears when it differs
+	 * The organization the registered contact belongs to. In practice this is where the brand appears when it differs
 	 * from the legal name — `"WOW! Internet, Cable and Phone"` against a legal name of `"Knology Total Communications,
 	 * Inc."` — which makes it a genuinely independent name surface rather than a duplicate of `entityName`.
 	 */
@@ -37,7 +37,7 @@ export interface CORESRegistration {
 	contactName?: string
 	contactPosition?: string
 	/**
-	 * The contact's postal address as one string. CORES renders it across several lines and appends `"United States"`;
+	 * The contact's postal address as one string. cores renders it across several lines and appends `"United States"`;
 	 * both are collapsed here, the country suffix included, since every record in scope is domestic and keeping it adds a
 	 * token every address-matching pass would have to strip again.
 	 */
@@ -46,7 +46,7 @@ export interface CORESRegistration {
 	contactPhone?: string
 	contactFax?: string
 	/**
-	 * Raw `MM/DD/YYYY hh:mm:ss AM/PM` timestamps exactly as served. Not parsed to a `Date` here — the same discipline
+	 * Raw `MM/DD/yyyy hh:mm:ss AM/PM` timestamps exactly as served. Not parsed to a `Date` here — the same discipline
 	 * `Form499Row.lastFiledAt` follows, so a caller that needs a temporal value performs (and can validate) its own
 	 * conversion rather than inheriting a silent one.
 	 */
@@ -55,7 +55,7 @@ export interface CORESRegistration {
 }
 
 /**
- * Maps a CORES row label to its {@linkcode CORESRegistration} field. Keyed on the label reduced to lowercase letters and
+ * Maps a cores row label to its {@linkcode CORESRegistration} field. Keyed on the label reduced to lowercase letters and
  * digits only, so `"ContactPhone:"` and `"Contact Phone:"` — the page ships both spellings, the phone and fax rows
  * having lost their space — land on one key without a separate alias per variant.
  */
@@ -83,7 +83,7 @@ const HAS_UPPERCASE_PATTERN = /[A-Z]/
 const CASE_SENSITIVE_PUNCTUATION_PATTERN = /[:@()-]/
 
 /**
- * Tokens that stay upper-case through the title-casing pass. Without these, `COMCAST CABLE COMMUNICATIONS, LLC`
+ * Tokens that stay upper-case through the title-casing pass. Without these, `comcast cable communications, LLC`
  * title-cases to `… , Llc`, which is not a spelling anyone uses and would reach a product surface verbatim.
  *
  * Deliberately only initialisms whose conventional rendering is all-caps. `Ltd`, `Corp` and `Inc` are absent because
@@ -93,8 +93,8 @@ const CASE_SENSITIVE_PUNCTUATION_PATTERN = /[:@()-]/
 const UPPERCASE_TOKENS = new Set(["llc", "lc", "lp", "llp", "pllc", "pc", "pa", "usa", "us", "dba", "inc's"])
 
 /**
- * Title-case a value that arrived UNIFORMLY cased, and leave everything else alone — Nexus's `normalizeDataCell` idea,
- * kept because FCC data mixes `WINDSTREAM SERVICES LLC` with `Lumen Technologies Inc.` in the same column.
+ * Title-case a value that arrived uniformly cased, and leave everything else alone — Nexus's `normalizeDataCell` idea,
+ * kept because FCC data mixes `windstream services LLC` with `Lumen Technologies Inc.` in the same column.
  *
  * The guard is what makes it safe. A string carrying both cases is already deliberately cased and is returned
  * untouched, so `WOW! Internet, Cable and Phone` survives. A string containing `:`, `@`, `(`, `)` or `-` is left alone
@@ -123,10 +123,10 @@ export function recaseUniform(value: string): string {
 }
 
 /**
- * Parse a CORES `searchDetail.do` page into a {@linkcode CORESRegistration}.
+ * Parse a cores `searchDetail.do` page into a {@linkcode CORESRegistration}.
  *
  * Returns `null` — never a stub record, and never a throw — when the page carries no recognizable registration table,
- * or when its `FRN:` row disagrees with the FRN that was requested. Both are ordinary: CORES serves a search form for
+ * or when its `FRN:` row disagrees with the FRN that was requested. Both are ordinary: cores serves a search form for
  * an unknown FRN, and an abstention here is a fact the caller counts rather than an error it handles.
  *
  * **The FRN cross-check is the required part.** Without it a page served for the wrong entity — a redirect, a cached
@@ -136,7 +136,7 @@ export function recaseUniform(value: string): string {
 export function parseCORESRegistration(frn: FRN, html: string): CORESRegistration | null {
 	const fields: Partial<Record<keyof CORESRegistration, string>> = {}
 
-	// The page states one label/value pair per row. Read as a GRID rather than by pattern: `/<td[^>]*>([\s\S]*?)<\/td>/`
+	// The page states one label/value pair per row. Read as a grid rather than by pattern: `/<td[^>]*>([\s\S]*?)<\/td>/`
 	// over a network-supplied page backtracks polynomially on a body with many `<td` repetitions and no closing partner
 	// (CodeQL `js/polynomial-redos`), and the parser answers the same question without a scan that can be made to spend
 	// the document.
@@ -167,7 +167,7 @@ export function parseCORESRegistration(frn: FRN, html: string): CORESRegistratio
 	for (const [field, value] of Object.entries(fields)) {
 		if (field === "frn") continue
 
-		// Timestamps and free-text contact details keep their source casing. only the NAME surfaces get the
+		// Timestamps and free-text contact details keep their source casing. only the name surfaces get the
 		// uniform-case tidy, since they are what a human reads and what a display layer renders.
 		registration[field as Exclude<keyof CORESRegistration, "frn">] =
 			field === "entityName" || field === "contactOrganization" || field === "contactName"

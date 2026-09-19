@@ -1,6 +1,6 @@
 # Earth Runtime Launch Implementation Plan
 
-> **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
+> **For agentic workers:** required sub-skill: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
 **Goal:** `packages/earth` runs the real browser geocoder with parity to today's docs page, the "demo" names in `@mailwoman/react/map` become product names, the browser test suite moves to the app, the docs site redirects `/demo`, `/debug` and `/trace` to `earth.mailwoman.ai`, and the geocoder page, its runtime assembly, its service worker and its dependencies leave `docs/`. Done includes the removal.
 
@@ -296,7 +296,7 @@ Expected: pass on the real deployment. The parity list from the spec's definitio
 
 - [ ] **Step 1: The redirects**
 
-Docusaurus deploys to GitHub Pages, which serves no server-side redirect, so each retired route is a page that forwards on the client and keeps the query:
+Docusaurus deploys to GitHub Pages, which serves no server-side redirect. Therefore, each retired route is a page that forwards on the client and keeps the query:
 
 ```tsx
 /**

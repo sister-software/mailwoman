@@ -43,7 +43,7 @@ One calibration note from the research: the incumbent moved. Senzing retrained l
 2. **TLA in `core/resources/libpostal.ts`** — the known fragility surface; `Graph.ts` already dodges the barrel import to avoid it. Lazy-load `availableLanguages` behind an async getter and the whole class of vitest/bundler cycle bugs disappears.
 3. **`__isCompiledTree` path-sniffing** (`core/utils/repo.ts:42`) — breaks on output-dir or symlink changes; discovered only at runtime.
 4. **Policy registry**: `applyPreferenceFilters` (~30 lines, the rule/neural dedup core) has no tests, and per-component neural rollout requires code changes — no config surface for A/B-ing `neural_preferred` per tag.
-5. **Reconcile's classifier contract is still a mock** — `ClassifierCandidate` top-k is hand-built in tests; no production path emits it yet. Flag before the real wiring lands.
+5. **Reconcile's classifier interface is still a mock** — `ClassifierCandidate` top-k is hand-built in tests; no production path emits it yet. Flag before the real wiring lands.
 6. Smaller: `ParseOpts` not exported (typo-silent options), gazetteer lexicon parsed without schema validation, grouper penalty hardcoded at 0.55.
 
 ---

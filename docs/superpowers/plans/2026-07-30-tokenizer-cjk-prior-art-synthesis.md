@@ -65,7 +65,7 @@ required finding. Verdicts first, receipts after.
 ## Found bugs / gaps in our own code (filed)
 
 - `normalize/cjk.ts` folds U+FF01–FF5E only: **half-width katakana (U+FF66–FF9F) passes through**
-  (篠ﾉ井 unfolded; ﾃﾞ→デ contracts string length — the offset map must handle it), and the hyphen
+  (篠ﾉ井 unfolded; ﾃﾞ→デ interfaces string length — the offset map must handle it), and the hyphen
   class folds only U+FF0D — **U+2212 (IME minus), U+30FC (prolonged-sound mark typed as hyphen),
   U+2010/2015/FE63/FF70 all survive** into real JP input. A hyphen-equivalence class is
   mandatory.
@@ -137,7 +137,7 @@ their coverage arcs (the coverage-not-retrain precedent).
 
 **OPERATOR DISPOSITION (2026-07-30): the KR framework is decided.** Parse = the no-juso recipe
 above (+ OSM-KR through the neutered-but-kept osm/ implementation, ODbL-quarantined per standing
-practice). Juso = a **plug-and-play build-local layer** on the layer contract: we ship
+practice). Juso = a **plug-and-play build-local layer** on the layer interface: we ship
 `gazetteer build juso` (written against the DOCUMENTED format + synthetic fixtures — we never
 touch real juso data ourselves pre-counsel), the customer acquires juso under their own grant and
 builds in-country, the layer manifest carries the juso obligations as structural notice, and the

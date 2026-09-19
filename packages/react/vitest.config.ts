@@ -4,8 +4,8 @@
  * @author Teffen Ellis, et al.
  *
  *   Vitest browser-mode config for `@mailwoman/react`. Runs the component + hook tests in a real
- *   headless Chromium via the Playwright provider — DOM APIs (clipboard, timers, layout) are genuine,
- *   which is the point: these components run in the browser, so they're tested there. Kept OUT of the
+ *   headless Chromium via the Playwright provider — DOM APIs (clipboard, timers, layout) are available there.
+ *   These components run in the browser, so the tests run there. Kept OUT of the
  *   repo-root `vitest.config.ts` sweep (that run excludes `react/**` test files), so this is the only
  *   entry that executes them.
  *
@@ -13,7 +13,7 @@
  *   Chromium lacks by default. The `--use-gl=angle --use-angle=swiftshader` flags (plus
  *   `--enable-unsafe-swiftshader`, required since Chromium began restricting software WebGL behind it) route
  *   GL through the bundled SwiftShader software rasterizer so the map mounts a real canvas offscreen.
- *   The MapCanvas test still guards the GL surface (asserts the component TREE, canvas only if present) so
+ *   The MapCanvas test still guards the GL surface (asserts the component tree, canvas only if present) so
  *   it can't flake if a future Chromium drops software GL — see `map/MapCanvas.test.tsx`.
  */
 

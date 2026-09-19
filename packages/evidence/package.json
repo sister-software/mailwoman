@@ -1,7 +1,7 @@
 {
 	"name": "@mailwoman/evidence",
 	"version": "10.0.0",
-	"description": "The typed-evidence contract — observation, relation and prior, and the epistemic-status axis that says what may be claimed about a value, kept separate from the mechanism that produced it.",
+	"description": "The typed-evidence interface — observation, relation and prior, and the epistemic-status axis that says what may be claimed about a value, kept separate from the mechanism that produced it.",
 	"keywords": [
 		"epistemic-status",
 		"evidence",

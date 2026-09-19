@@ -4,10 +4,10 @@
  * @author Teffen Ellis, et al.
  *
  *   Abbreviation expansion — a small bounded dictionary per locale: en-US street suffixes +
- *   directional prefixes, fr-FR and es-* street types, plus a locale-UNKNOWN set for the geocode path,
+ *   directional prefixes, fr-FR and es-* street types, plus a locale-unknown set for the geocode path,
  *   which has to expand before the parse that would establish the locale. Others added as needed.
  *
- *   This is the INVERSE of the corpus synthesis pass (which produces `Ave` from `Avenue` for
+ *   This is the inverse of the corpus synthesis pass (which produces `Ave` from `Avenue` for
  *   augmentation). Both sides should eventually share dictionaries. for v1 this dict is duplicated
  *   intentionally — refactoring sharing is a separate task.
  */
@@ -56,7 +56,7 @@ const FR_FR_DICT: ReadonlyArray<AbbreviationEntry> = [
 
 const ES_ES_DICT: ReadonlyArray<AbbreviationEntry> = [
 	// Spanish writes Avenida short as `Av.`, `Avda.` or `Avd.`. English never abbreviates it `Av` (it
-	// uses `Ave`), so there is no en collision — but FRENCH does, and there it means Avenue. That
+	// uses `Ave`), so there is no en collision — but french does, and there it means Avenue. That
 	// collision is why this table has to exist rather than the entry being folded into a shared set:
 	// the same three letters resolve to different words, and only the locale can decide which.
 	{ from: "Av", to: "Avenida" },
@@ -65,16 +65,16 @@ const ES_ES_DICT: ReadonlyArray<AbbreviationEntry> = [
 ]
 
 /**
- * #1002: the locale-UNKNOWN expansion set — the entries safe to apply when the input's locale hasn't been established
+ * #1002: the locale-unknown expansion set — the entries safe to apply when the input's locale hasn't been established
  * yet (the geocode path expands before the parse, which is what determines the locale). Safe = multi-char,
  * collision-free across the locale dictionaries, and never a plausible standalone token in the other locale (FR
- * `Bd`/`Bvd`/`Imp` have no EN reading). Deliberately EXCLUDED: the FR single letters (`R` → Rue would fire on
+ * `Bd`/`Bvd`/`Imp` have no EN reading). Deliberately excluded: the FR single letters (`R` → Rue would fire on
  * Washington DC's literal "R St") and the EN suffixes (`St`, `Ave`, `Dr`, … — the model is trained-robust on those, and
  * `St`/`Dr` are ambiguous with Saint/Doctor).
  *
- * `Av` VIOLATES that criterion and is here anyway — a tracked defect rather than an oversight. It was admitted on the
+ * `Av` violates that criterion and is here anyway — a tracked defect rather than an oversight. It was admitted on the
  * claim that it "reads Avenue in both", which is true of en/fr and false of es/pt, where it is Avenida. So Spanish
- * input through the geocode path acquires an ENGLISH street type: the 2026-08-05 gauntlet batch caught "Av. Los Meros"
+ * input through the geocode path acquires an english street type: the 2026-08-05 gauntlet batch caught "Av. Los Meros"
  * → "Avenue Los Meros" and "Av. Aurelio Ortega" → "Avenue Aurelio Ortega", and both rows
  * (`pr-op3-place-at-the-sea-ponce`, `mx-op3-san-miguel-canada-zapopan`) had to leave `street` unasserted because of it.
  * Dropping the entry is not a table edit: `fr-op3-halles-market-bonneuil` is a passing row that asserts street "Avenue

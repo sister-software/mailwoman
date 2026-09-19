@@ -10,11 +10,11 @@
  *   lookup the model trained against (`scripts/build-pilot-anchor-lookup.ts`), so the feature
  *   layout matches byte-for-byte.
  *
- *   The layout is ESSENTIAL and cross-language: a wrong locale order or centroid scale feeds the
+ *   The layout is essential and cross-language: a wrong locale order or centroid scale feeds the
  *   model garbage. `anchor-inference.test.ts` pins both `LOCALE_ORDER` and the vector to values
  *   emitted by the Python `anchor_feature_vector` — any drift fails the test.
  *
- *   The layout matched. the SPAN COLLECTION did not (2026-08-05,
+ *   The layout matched. the span collection did not (2026-08-05,
  *   `docs/records/evals/2026-08-05-en-gb-anchor-off.md`). Train keys a postcode as
  *   `raw[begin:end].replace(" ", "").upper()` over a shape-detected span, so a GB unit enters the
  *   lookup as `SW1A2AA`. Inference scanned `[A-Za-z0-9]+` runs, which can never produce a key
@@ -106,11 +106,11 @@ export function parseAnchorLookup(
  *   producing a key that contains a space-joined pair: `SW1A 2AA` is scanned as `SW1A` then `2AA`, never as the
  *   `SW1A2AA` the train painter writes. Every model shipped to date was trained against a DE/FR/US-only lookup whose
  *   keys are all five digits, so this never mattered — no space-containing postcode had a key.
- * - `shaped` — the postcode-SHAPED spans from {@linkcode collectMatches} (`neural/postcode-repair.ts`), keyed the way
+ * - `shaped` — the postcode-shaped spans from {@linkcode collectMatches} (`neural/postcode-repair.ts`), keyed the way
  *   `mailwoman_train/tokenizer.py::_paint_anchor_chars` keys them: `span.replace(" ", "").toUpperCase()`. This is the
- *   TRAIN-PARITY mode. Pair it with a lookup that has letter-containing keys and a model trained on both. on its own
- *   against a shipped model it is a no-op, because no shaped GB/NL span will resolve. The shape SCAN runs over an
- *   ASCII-uppercased copy of the text ({@linkcode asciiUpper}) — see #1512 there — so the register cannot silently cost
+ *   train-parity mode. Pair it with a lookup that has letter-containing keys and a model trained on both. on its own
+ *   against a shipped model it is a no-op, because no shaped GB/NL span will resolve. The shape scan runs over an
+ *   ascii-uppercased copy of the text ({@linkcode asciiUpper}) — see #1512 there — so the register cannot silently cost
  *   the channel. The KEY is unchanged.
  *
  * The train painter's shape source is `mailwoman_train/postcode_shapes.py::collect_matches`, a declared verbatim mirror
@@ -127,22 +127,22 @@ export type AnchorSpanMode = "alnum-run" | "shaped"
 const GB_UNIT_KEY = /^[A-Z]{1,2}\d[A-Z\d]?\d[A-Z]{2}$/
 
 /**
- * ASCII-only uppercase — the case fold the shaped keyer runs before shape DETECTION (#1512).
+ * Ascii-only uppercase — the case fold the shaped keyer runs before shape detection (#1512).
  *
  * The defect it closes: `POSTCODE_PATTERNS`' alphanumeric shapes require `[A-Z]` by design (they must not match
  * lowercase prose), so `collectMatches` finds nothing in the raw lowercase register. Measured on the 120-row gb-golden
- * board: 106/120 rows yield a shaped span as-written and UPPERCASE, **0/120** lowercase. The default parse path is
+ * board: 106/120 rows yield a shaped span as-written and uppercase, **0/120** lowercase. The default parse path is
  * saved only by `normalizeInputCase` (#690/#829) restoring the postcode's case first — every GB letter run is ≤2
  * characters, so `restoreLowerInput` uppercases all of them. A `normalizeCase: false` parse gets no such rescue and
- * loses the entire GB/NL anchor channel silently, and lowercase is the USER register.
+ * loses the entire GB/NL anchor channel silently, and lowercase is the user register.
  *
- * WHY ASCII-ONLY, and not `toUpperCase()`. The match offsets index into `text`, and `String.prototype.toUpperCase` is
+ * Why ascii-only, and not `toUpperCase()`. The match offsets index into `text`, and `String.prototype.toUpperCase` is
  * not length-preserving (`ß` → `SS`, `ﬁ` → `FI`): one such character upstream of a postcode shifts every subsequent
  * span and the anchor paints the wrong pieces. Folding `[a-z]` in place cannot change length, and every character the
- * alphanumeric patterns care about is ASCII anyway. Same reasoning, and the same guard, as `case-normalize.ts`.
+ * alphanumeric patterns care about is ascii anyway. Same reasoning, and the same guard, as `case-normalize.ts`.
  *
- * WHY THE FOLD IS ON DETECTION ONLY. The KEY was always uppercased (`span.replaceAll(" ", "").toUpperCase()`, the train
- * painter's normalization verbatim); it is the shape SCAN that was register-sensitive. Folding for the scan and keying
+ * Why the fold is on detection only. The KEY was always uppercased (`span.replaceAll(" ", "").toUpperCase()`, the train
+ * painter's normalization verbatim); it is the shape scan that was register-sensitive. Folding for the scan and keying
  * off the original text leaves the key byte-identical, so nothing about which lookup entry wins changes.
  */
 function asciiUpper(text: string): string {
@@ -155,7 +155,7 @@ function asciiUpper(text: string): string {
 const GB_INWARD_LENGTH = 3
 
 /**
- * How many of `lookup`'s keys the DEFAULT `alnum-run` scan can never reach — the SHIP OBLIGATION check (A2 of
+ * How many of `lookup`'s keys the default `alnum-run` scan can never reach — the ship obligation check (A2 of
  * ROAD_TO_V9 §1, from the `v4.2.0-base-anchor-v2` recipe header).
  *
  * The class is concrete rather than hypothetical. A GB unit key is written with a space in every real address (`SW1A
@@ -230,16 +230,16 @@ export function countShapedOnlyKeys(lookup: AnchorLookup): number {
 export const SHAPED_ONLY_KEY_SCAN_LIMIT = 1000
 
 /**
- * The SHIP OBLIGATION message for a card that omits `span_mode: "shaped"` while its package ships a lookup full of keys
+ * The ship obligation message for a card that omits `span_mode: "shaped"` while its package ships a lookup full of keys
  * only the shaped keyer can reach, or `null` when the pairing is coherent (A2 of ROAD_TO_V9 §1).
  *
  * This is the fail-closed for the one thing about `span_mode` a runtime can actually check. The mode itself is
  * unobservable from the ONNX graph — the inputs are identical either way — so the card is the only source of truth for
- * it, and a card that simply OMITS the field is indistinguishable from a legitimately-`alnum-run` bundle. What is
+ * it, and a card that simply omits the field is indistinguishable from a legitimately-`alnum-run` bundle. What is
  * observable is the artifact pairing: a lookup carrying GB unit keys next to a card that cannot reach them has no
  * legitimate reading and the exact shape a v4.2.0 promote would ship if the card were copied forward unchanged.
  *
- * `createScorer` throws on it (fail closed, the eval path); `loadFromWeights` warns once (tolerant by contract).
+ * `createScorer` throws on it (fail closed, the eval path); `loadFromWeights` warns once (tolerant by interface).
  */
 export function shapedKeyerObligationViolation(
 	lookup: AnchorLookup | undefined,
@@ -264,16 +264,16 @@ export function shapedKeyerObligationViolation(
 }
 
 /**
- * One-shot latch for {@linkcode warnShapedKeyerObligationOnce}. A mispackaged bundle is a property of the ARTIFACT SET,
+ * One-shot latch for {@linkcode warnShapedKeyerObligationOnce}. A mispackaged bundle is a property of the artifact SET,
  * so it is worth saying once per process and pointless to repeat per load — the same posture the unfed-channel warnings
  * take in `classifier.ts`.
  */
 let warnedShapedObligation = false
 
 /**
- * {@linkcode shapedKeyerObligationViolation}, emitted at most once per process. The TOLERANT half of the A2 pair:
+ * {@linkcode shapedKeyerObligationViolation}, emitted at most once per process. The tolerant half of the A2 pair:
  * `createScorer` throws on the same condition (the eval path fails closed), while a runtime parse says it once and
- * carries on — the loader contract this package has always had for a mis-shipped channel.
+ * carries on — the loader interface this package has always had for a mis-shipped channel.
  *
  * Called from `buildSoftFeatures`, not from a loader, and that placement is the point: it is the only site where the
  * loaded lookup and the card-declared mode are both in hand, so it covers every construction path (the Node loader, the

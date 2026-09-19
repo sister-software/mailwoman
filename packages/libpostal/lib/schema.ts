@@ -4,14 +4,14 @@
  * @author Teffen Ellis, et al.
  *
  *   Zod wire schemas for the libpostal-compatible surface. Key names and error bodies are the
- *   vendor contract — immutable. Presence of `query`/`address` is enforced in the handlers (not
+ *   vendor interface — immutable. Presence of `query`/`address` is enforced in the handlers (not
  *   the schemas) so validation failures keep libpostal's exact `{ error: "…" }` shape.
  */
 
 import { z } from "@hono/zod-openapi"
 
 /**
- * `POST /parse` JSON body — `address` is accepted as an alias for `query`.
+ * `post /parse` JSON body — `address` is accepted as an alias for `query`.
  */
 export const ParseRequestSchema = z
 	.object({
@@ -21,7 +21,7 @@ export const ParseRequestSchema = z
 	.openapi("ParseRequest")
 
 /**
- * `POST /expand` JSON body.
+ * `post /expand` JSON body.
  */
 export const ExpandRequestSchema = z
 	.object({

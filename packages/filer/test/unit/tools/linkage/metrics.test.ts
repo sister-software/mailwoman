@@ -59,7 +59,7 @@ describe("scorePairwiseGrouping", () => {
 		expect(score.truthPositivePairs).toBe(1) // {a,b}
 		expect(score.precision).toBeNull()
 		expect(score.recall).toBe(0)
-		// I2: precision is undefined here, so F1 is undefined too — NOT 0. "Made no positive call" is not "scored zero".
+		// I2: precision is undefined here, so F1 is undefined too — not 0. "Made no positive call" is not "scored zero".
 		expect(score.f1).toBeNull()
 	})
 

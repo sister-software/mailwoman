@@ -52,7 +52,7 @@ export type SameDataArm = (typeof SAME_DATA_ARMS)[number]
 
 /**
  * One stratum's registered rule. `correctIsAbstention` is the only per-stratum scoring difference, and it exists
- * because a stratum whose gold is withheld from the fixture has no correct SELECTION by construction.
+ * because a stratum whose gold is withheld from the fixture has no correct selection by construction.
  */
 export interface SameDataStratumDefinition {
 	id: SameDataStratum
@@ -102,7 +102,7 @@ export interface SameDataBenchmarkDefinition {
 		seed: number
 		order: string
 		/**
-		 * The TARGET row count per stratum. A stratum whose eligible pool cannot reach it is reported at its achieved n.
+		 * The target row count per stratum. A stratum whose eligible pool cannot reach it is reported at its achieved n.
 		 */
 		rowsPerStratum: number
 		/**

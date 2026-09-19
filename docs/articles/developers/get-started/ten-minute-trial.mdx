@@ -61,7 +61,7 @@ mailwoman doctor
 PASS — core checks ok (weights + runtime); parse is ready
 ```
 
-Four red crosses and it still exits `0`. That is the contract rather than a bug: the exit code tracks the
+Four red crosses and it still exits `0`. That is the interface rather than a bug: the exit code tracks the
 two core checks, weights and runtime. Everything marked `(optional)` is a data layer that parsing
 does not need, so a gap there is reported and costed rather than treated as a failure. The paths in
 your own output will name `$MAILWOMAN_DATA_ROOT`, which is wherever you point it.

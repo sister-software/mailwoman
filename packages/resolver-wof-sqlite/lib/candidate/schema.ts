@@ -3,16 +3,16 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Typed schema for the byte-range CANDIDATE gazetteer (`candidate.db`) — the single source of truth
- *   for the columns shared by the BUILDER ({@link buildCandidateTable}) and the READERS (the Node
+ *   Typed schema for the byte-range candidate gazetteer (`candidate.db`) — the single source of truth
+ *   for the columns shared by the builder ({@link buildCandidateTable}) and the readers (the Node
  *   {@link WOFCandidateTableLookup} + the browser `@mailwoman/resolver-wof-wasm/httpvfs/resolver`). Before this module each
  *   side hand-wrote the column list. a rename in one place broke the other at runtime. Now the
- *   contract is a Kysely `Database` interface (`new DatabaseClient<CandidateDatabase>(...)` for
+ *   interface is a Kysely `Database` interface (`new DatabaseClient<CandidateDatabase>(...)` for
  *   typed inserts) plus the table DDL as strings — so a column change is a compile error on every
  *   consumer.
  *
  *   `cand_stage` is the transient staging table the builder bulk-loads; `candidate` is the clustered
- *   `WITHOUT ROWID` B-tree it's materialized into (same columns). The reader queries `candidate`.
+ *   `without rowid` B-tree it's materialized into (same columns). The reader queries `candidate`.
  */
 
 import { sql, type Kysely } from "kysely"
@@ -65,15 +65,15 @@ export interface CandidateTable {
 	is_primary: number | null
 	/**
 	 * Blended place importance in [0, 1] — the toponym-fame prior the bare-city-name class is decided on (#28). NULL
-	 * means the score source had no row for this place: UNMEASURED, never "an importance of zero" (meaning-of-zero).
-	 * Constant across every row of one place — primary, alias and abbrev alike — because it is a property of the PLACE
+	 * means the score source had no row for this place: unmeasured, never "an importance of zero" (meaning-of-zero).
+	 * Constant across every row of one place — primary, alias and abbrev alike — because it is a property of the place
 	 * rather than of the name that reached it, which is what lets a bare `Moscow` inherit Москва's score through the
 	 * alias row.
 	 *
-	 * **THIS IS THE PRE-SPLIT CONFLATION, AND THE NAME SAYS SO.** It is `place_importance.importance` copied verbatim
+	 * **this is the PRE-split conflation, and the name says SO.** It is `place_importance.importance` copied verbatim
 	 * from the score source — the bounded blend `place-importance-schema.ts`'s `blendImportance` writes (the
 	 * concordance's encyclopedia-derived channel clamped around a population-derived base); that module calls the column
-	 * DEPRECATED. It is not the split `encyclopedic` channel, and the two must not be conflated in a future build:
+	 * deprecated. It is not the split `encyclopedic` channel, and the two must not be conflated in a future build:
 	 * writing the split value here instead was measured on 2026-08-10 and makes the ranking key inert on three of the
 	 * four rows it exists to fix. The reason is coverage rather than principle — the encyclopedia-concordance join in
 	 * `admin-global-priority-importance.db` reaches 133,888 of 702,709 scored places and only eleven countries
@@ -89,7 +89,7 @@ export interface CandidateTable {
 	 */
 	importance: number | null
 	/**
-	 * The NAME'S detected role on this row, or NULL (#1730). Two build-time detectors stamp `is_primary = 0` rows only:
+	 * The name'S detected role on this row, or NULL (#1730). Two build-time detectors stamp `is_primary = 0` rows only:
 	 *
 	 * - `'abbr'` — provenance-based: the surface is a WOF `variant` name in one of the place's country's official languages
 	 *   (or English) — the #936 signal, measured at a 13× key-collision rate vs preferred names.
@@ -99,7 +99,7 @@ export interface CandidateTable {
 	 *   (WOF imported both as `x_preferred`), which is why this detector is an anomaly test and stamps only the certain
 	 *   core.
 	 *
-	 * NULL = no role detected. The column is WRITE-ONLY in this build generation: no ranking consumer reads it — a rank
+	 * NULL = no role detected. The column is write-only in this build generation: no ranking consumer reads it — a rank
 	 * penalty is its own future, D-rule-conditional step with the `gloss_key` board as regression check.
 	 */
 	name_role: string | null
@@ -128,7 +128,7 @@ export interface PlacetypeCodeTable {
  */
 export interface CandidateDatabase extends CandidateAncestorsDatabase {
 	/**
-	 * The clustered `WITHOUT ROWID` lookup table the reader probes.
+	 * The clustered `without rowid` lookup table the reader probes.
 	 */
 	candidate: CandidateTable
 	/**
@@ -144,7 +144,7 @@ export interface CandidateDatabase extends CandidateAncestorsDatabase {
 }
 
 /**
- * The `candidate`/`cand_stage` columns in clustered-key order. The materialization `INSERT INTO candidate SELECT … FROM
+ * The `candidate`/`cand_stage` columns in clustered-key order. The materialization `insert into candidate select … from
  * cand_stage` derives its column list from this, so the two tables can't drift. Keep in sync with
  * {@link CandidateTable}.
  */
@@ -165,7 +165,7 @@ export const CANDIDATE_COLUMNS = [
 	"population",
 	"is_primary",
 	// Appended, never inserted mid-list: the first six entries are the clustered primary key, and the
-	// positional `INSERT INTO cand_stage VALUES (…)` in the builder binds by position.
+	// positional `insert into cand_stage values (…)` in the builder binds by position.
 	"importance",
 	"name_role",
 ] as const
@@ -211,7 +211,7 @@ export async function createCandidateStagingTables(db: Kysely<CandidateDatabase>
 }
 
 /**
- * Create the clustered `WITHOUT ROWID` lookup table — called after staging, before the VACUUM. The first six columns
+ * Create the clustered `without rowid` lookup table — called after staging, before the vacuum. The first six columns
  * form the clustered primary key (population-ranked via `neg_rank`).
  */
 export async function createCandidateTable(db: Kysely<CandidateDatabase>): Promise<void> {
@@ -242,7 +242,7 @@ export async function createCandidateTable(db: Kysely<CandidateDatabase>): Promi
 			"neg_rank",
 			"spr_id",
 		])
-		// `WITHOUT ROWID` has no first-class builder. the raw modifier is the idiomatic fallback.
+		// `without rowid` has no first-class builder. the raw modifier is the idiomatic fallback.
 		.modifyEnd(sql`without rowid`)
 		.execute()
 }

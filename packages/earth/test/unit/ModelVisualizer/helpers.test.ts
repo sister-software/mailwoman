@@ -63,7 +63,7 @@ describe("ModelVisualizer helpers", () => {
 		expect(trace.tokens).toHaveLength(trace.pieces.length)
 
 		// The label vocabulary may prefix-extend the model's emission width (Stage-prefix rule —
-		// see neural/labels.ts + assertEmissionWidth): rows are uniform and never WIDER than labels.
+		// see neural/labels.ts + assertEmissionWidth): rows are uniform and never wider than labels.
 		const width = trace.logits[0]?.length ?? 0
 
 		expect(width).toBeGreaterThan(0)

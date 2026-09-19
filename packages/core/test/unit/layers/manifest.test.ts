@@ -16,7 +16,7 @@ import {
 import {
 	createLayerCoverageTable,
 	createLayerManifestTable,
-	type LayerContractDatabase,
+	type layerschemadatabase,
 } from "@mailwoman/core/layers/schema"
 import { supportsExclusion, CoverageBasis } from "@mailwoman/evidence"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
@@ -39,8 +39,8 @@ const MANIFEST: LayerManifest = {
 	createdAt: "2026-07-18T00:00:00Z",
 }
 
-async function openContractDB(): Promise<DatabaseClient<LayerContractDatabase>> {
-	const db = DatabaseClient.temp<LayerContractDatabase>()
+async function openschemadb(): Promise<DatabaseClient<layerschemadatabase>> {
+	const db = DatabaseClient.temp<layerschemadatabase>()
 	await createLayerManifestTable(db)
 	await createLayerCoverageTable(db)
 
@@ -49,31 +49,31 @@ async function openContractDB(): Promise<DatabaseClient<LayerContractDatabase>> 
 
 describe("layer manifest IO", () => {
 	it("round-trips a manifest", async () => {
-		using db = await openContractDB()
+		using db = await openschemadb()
 		await writeLayerManifest(db, MANIFEST)
 		const back = await readLayerManifest(db)
 		expect(back).toEqual(MANIFEST)
 	})
 
 	it("rejects an unknown tier at write time", async () => {
-		using db = await openContractDB()
-		const offContract: Omit<LayerManifest, "tier"> & { tier: string } = { ...MANIFEST, tier: "bootleg" }
+		using db = await openschemadb()
+		const offInterface: Omit<LayerManifest, "tier"> & { tier: string } = { ...MANIFEST, tier: "bootleg" }
 
-		await expect(writeLayerManifest(db, offContract as LayerManifest)).rejects.toThrow(/tier/)
+		await expect(writeLayerManifest(db, offInterface as LayerManifest)).rejects.toThrow(/tier/)
 	})
 
 	it("rejects a manifest with no spine keys", async () => {
-		using db = await openContractDB()
+		using db = await openschemadb()
 		await expect(writeLayerManifest(db, { ...MANIFEST, spineKeys: {} })).rejects.toThrow(/spine/)
 	})
 
 	it("throws when reading a database with no manifest", async () => {
-		using db = await openContractDB()
+		using db = await openschemadb()
 		await expect(readLayerManifest(db)).rejects.toThrow(/manifest/)
 	})
 
 	it("round-trips a manifest with attribution absent", async () => {
-		using db = await openContractDB()
+		using db = await openschemadb()
 		const { attribution: _attribution, ...manifestWithoutAttribution } = MANIFEST
 		await writeLayerManifest(db, manifestWithoutAttribution)
 		const back = await readLayerManifest(db)
@@ -84,7 +84,7 @@ describe("layer manifest IO", () => {
 
 describe("layer coverage IO", () => {
 	it("round-trips cells and returns undefined for unsurveyed cells", async () => {
-		using db = await openContractDB()
+		using db = await openschemadb()
 
 		await writeLayerCoverage(db, [
 			{ h3Cell: 1001, completeness: 0.9, observedRows: 240 },
@@ -98,12 +98,12 @@ describe("layer coverage IO", () => {
 			observedRows: 240,
 		})
 
-		// Meaning-of-zero: an unsurveyed cell is UNKNOWN (undefined), never a zero-completeness record.
+		// Meaning-of-zero: an unsurveyed cell is unknown (undefined), never a zero-completeness record.
 		expect(await readLayerCoverage(db, 9999)).toBeUndefined()
 	})
 
 	it("distinguishes a surveyed-and-empty cell from an unsurveyed one", async () => {
-		using db = await openContractDB()
+		using db = await openschemadb()
 		await writeLayerCoverage(db, [{ h3Cell: 1003, completeness: 0, observedRows: 0 }])
 
 		expect(await readLayerCoverage(db, 1003)).toEqual({
@@ -115,7 +115,7 @@ describe("layer coverage IO", () => {
 	})
 
 	it("chunks inserts past a single statement's bound-variable limit", async () => {
-		using db = await openContractDB()
+		using db = await openschemadb()
 		// Continental-scale coverage: spans two full batches plus a partial third, per COVERAGE_INSERT_BATCH.
 		const cellCount = COVERAGE_INSERT_BATCH * 2 + 17
 
@@ -162,7 +162,7 @@ describe("layer coverage IO", () => {
 
 describe("coverage cell invariants", () => {
 	it("round-trips an exclusion-grade cell and answers supportsExclusion for it", async () => {
-		using db = await openContractDB()
+		using db = await openschemadb()
 
 		await writeLayerCoverage(db, [
 			{ h3Cell: 7, completeness: 0.6665, basis: CoverageBasis.Surveyed, observedRows: 0 },
@@ -176,7 +176,7 @@ describe("coverage cell invariants", () => {
 	})
 
 	it("refuses a completeness outside [0, 1] at write time", async () => {
-		using db = await openContractDB()
+		using db = await openschemadb()
 
 		await expect(writeLayerCoverage(db, [{ h3Cell: 1, completeness: 1.5, observedRows: 1 }])).rejects.toThrow(
 			/completeness/
@@ -192,20 +192,20 @@ describe("coverage cell invariants", () => {
 	})
 
 	it("refuses an unknown basis at write time", async () => {
-		using db = await openContractDB()
+		using db = await openschemadb()
 
-		const offContract: Omit<CoverageCell, "basis"> & { basis: string } = {
+		const offInterface: Omit<CoverageCell, "basis"> & { basis: string } = {
 			h3Cell: 1,
 			completeness: 1,
 			basis: "vibes",
 			observedRows: 1,
 		}
 
-		await expect(writeLayerCoverage(db, [offContract as CoverageCell])).rejects.toThrow(/unknown basis/)
+		await expect(writeLayerCoverage(db, [offInterface as CoverageCell])).rejects.toThrow(/unknown basis/)
 	})
 
 	it("refuses a negative or fractional observed-row count", async () => {
-		using db = await openContractDB()
+		using db = await openschemadb()
 
 		await expect(writeLayerCoverage(db, [{ h3Cell: 1, completeness: 1, observedRows: -1 }])).rejects.toThrow(
 			/observedRows/
@@ -217,7 +217,7 @@ describe("coverage cell invariants", () => {
 	})
 
 	it("refuses the whole batch rather than writing the well-formed half", async () => {
-		using db = await openContractDB()
+		using db = await openschemadb()
 
 		await expect(
 			writeLayerCoverage(db, [
@@ -230,11 +230,11 @@ describe("coverage cell invariants", () => {
 	})
 
 	it("refuses a corrupted row at READ time too", async () => {
-		using db = await openContractDB()
+		using db = await openschemadb()
 
 		await writeLayerCoverage(db, [{ h3Cell: 5, completeness: 0.5, basis: CoverageBasis.Surveyed, observedRows: 2 }])
 
-		// Corruption an in-contract writer cannot produce, standing in for a hand-built layer.
+		// Corruption an in-interface writer cannot produce, standing in for a hand-built layer.
 		await sql`update layer_coverage set completeness = 4.2 where h3_cell = 5`.execute(db)
 
 		await expect(readLayerCoverage(db, 5)).rejects.toThrow(/completeness/)
@@ -243,12 +243,12 @@ describe("coverage cell invariants", () => {
 
 describe("SpineKeys.street — the third layer shape", () => {
 	it("accepts a street spine as satisfying the at-least-one rule", async () => {
-		// The contract's first three keys describe the two shapes that existed when it was written: a cellular
+		// The interface's first three keys describe the two shapes that existed when it was written: a cellular
 		// layer (poi.db, H3) and an id-joined one. The situs extracts are a third — `address_point` and
 		// `street_segment` carry no H3 cell, no WOF id and no address-id, and are probed on
 		// (postcode | locality, street_norm, number). Before this key they could only be described by naming a
 		// column that does not exist, in the field a consumer uses to join.
-		const db = await openContractDB()
+		const db = await openschemadb()
 
 		await expect(
 			writeLayerManifest(db, { ...MANIFEST, spineKeys: { street: { column: "street_norm" } } })
@@ -256,7 +256,7 @@ describe("SpineKeys.street — the third layer shape", () => {
 	})
 
 	it("still refuses a manifest with NO spine at all", async () => {
-		const db = await openContractDB()
+		const db = await openschemadb()
 
 		await expect(writeLayerManifest(db, { ...MANIFEST, spineKeys: {} })).rejects.toThrow(/spine/)
 	})

@@ -28,13 +28,13 @@ import type { ProviderListRow } from "#sdk/provider-list"
 export const PUBLISHED_LINKAGE_EVAL_DATE = "2026-07-31"
 
 /**
- * The SHA-256 {@linkcode hashLinkageEvalInputs} produces over the WITHHELD run's inputs, as published in the committed
+ * The SHA-256 {@linkcode hashLinkageEvalInputs} produces over the withheld run's inputs, as published in the committed
  * scorecard. Asserted against the freshly computed value in `linkage-eval.test.ts`.
  */
 export const PUBLISHED_WITHHELD_INPUTS_SHA256 = "b20909439dcf6bc0d2b04da43b3b3fb11cdb9ff68313e12d3eeb78a24bacda58"
 
 /**
- * The same hash over the CONTROL run's inputs (the corpus with `holdingCompany` intact). Differs from
+ * The same hash over the control run's inputs (the corpus with `holdingCompany` intact). Differs from
  * {@linkcode PUBLISHED_WITHHELD_INPUTS_SHA256} by construction — if the two ever matched, the two runs would not
  * actually differ in the field this eval claims to withhold.
  */
@@ -225,7 +225,7 @@ export interface LinkageEvalInputs {
 }
 
 /**
- * The corpus verbatim — what the CONTROL run hands `buildFilerDatabase`. Named for what it is (an unfiltered
+ * The corpus verbatim — what the control run hands `buildFilerDatabase`. Named for what it is (an unfiltered
  * projection), so the withheld/control distinction is visible at every call site rather than implied.
  */
 export function buildControlEvalInputs(): LinkageEvalInputs {
@@ -233,7 +233,7 @@ export function buildControlEvalInputs(): LinkageEvalInputs {
 }
 
 /**
- * The WITHHELD run's entire input to the builder (decision 4) — the corpus with `holdingCompany` cleared on every row,
+ * The withheld run's entire input to the builder (decision 4) — the corpus with `holdingCompany` cleared on every row,
  * before anything reaches `buildFilerDatabase`. {@linkcode filerLinkageEval} calls exactly this function to build what
  * it hands the builder, so a test asserting the truth field's absence here is asserting it against the same code path
  * the eval actually runs — not a parallel copy that could drift out of sync with it.
@@ -246,7 +246,7 @@ export function buildFilteredEvalInputs(): LinkageEvalInputs {
 }
 
 /**
- * One REGISTRANT — the eval's unit of analysis. Usually one FRN, but an operator can hold several FRN registrations,
+ * One registrant — the eval's unit of analysis. Usually one FRN, but an operator can hold several FRN registrations,
  * and the corpus's `bdc_provider_id` linkage says when that's the case.
  */
 export interface LinkageEvalRegistrant {
@@ -341,7 +341,7 @@ function singletonTruthGroup(representative: FRN): string {
 }
 
 /**
- * The held-out ground truth (decision 4): which corporate family each REGISTRANT really belongs to, per the
+ * The held-out ground truth (decision 4): which corporate family each registrant really belongs to, per the
  * (never-stripped) `holdingCompany` field, canonicalized via {@linkcode mintFamilyID} — the exact rule
  * `buildFilerDatabase` itself applies, so the corpus's spelling variants collapse onto the same truth group.
  *
@@ -367,7 +367,7 @@ export function buildTruthFamilyGroups(
 
 	const families = createUnionFind()
 
-	// Accumulated per REGISTRANT, never per union-find root. Keying this on the root as it stands
+	// Accumulated per registrant, never per union-find root. Keying this on the root as it stands
 	// mid-loop means a later union that re-roots the component orphans the earlier key, and the family id recorded
 	// under it silently vanishes from the label — the label being what the corpus and pairs tables publish as truth. The
 	// partition stays right either way, so no score moves. the published string is what goes wrong. Unreachable on

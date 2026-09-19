@@ -1,52 +1,52 @@
-# === v0.9.6-unit-v2 (#451 v2) — FORMAT-DIVERSE unit recipe output, the v0.9.5 follow-up. =========
+# === v0.9.6-unit-v2 (#451 v2) — format-diverse unit recipe output, the v0.9.5 follow-up. =========
 # v0.9.5 (single-format unit recipe output) read unit F1 98.7% on the in-distribution VT eval but the
-# REAL-designator arena (unit-first, bare, venue-prefixed) stayed 0% — an in-distribution mirage,
+# real-designator arena (unit-first, bare, venue-prefixed) stayed 0% — an in-distribution mirage,
 # and house_number slipped -2pp. v2 changes one thing: the unit recipe now spreads designators across
 # positions (unit-after/first), drops the city/state tail on bare rows, and prefixes a venue —
-# corpus v0.4.5-unit-v2. CHECK TRUSTS THE ARENA secondary-unit class (real designators), not the VT
+# corpus v0.4.5-unit-v2. check trusts the arena secondary-unit class (real designators), not the VT
 # in-distribution number. also re-check house_number doesn't slip. Build: the unit recipe (`packages/corpus/lib/recipes/unit.ts`), v2.
 # ============================================================================================
 
 # Unit-coverage retrain — v0.9.5 (#451, the v0-parity `unit` gap). One variable vs v0.9.3-de-regiontail:
 # the corpus adds a 50K `synth-unit` source (US secondary-unit designators) and `synth-unit: 2.5` to
-# source_weights. Everything else held — same v0.9.3 recipe (anchor ON, self-cond ON, region-tail
+# source_weights. Everything else held — same v0.9.3 recipe (anchor on, self-cond on, region-tail
 # German, v0.7.2 base, seed 42). This is the "continue from v0.9.3 + the unit source" the DeepSeek recipe
 # consult (2026-06-08, 2 turns) signed off.
 #
-# WHY. The v0-parity assessment found `unit` at ~0% F1 — a corpus-COVERAGE gap (NAD carries units at
+# why. The v0-parity assessment found `unit` at ~0% F1 — a corpus-coverage gap (NAD carries units at
 # weight 1.0, but the tag is too rare + had no synth variety). #454 added the unit-designator synth
-# augmentation (USPS Pub-28 C2 codex); this run raises PREVALENCE with the unit-heavy recipe output. The
-# hypothesis is "negative space": giving the model the `unit` category should also REDUCE `street`
-# over-prediction (street currently swallows "Apt 456"), i.e. covering unit should RAISE street
+# augmentation (USPS Pub-28 C2 codex); this run raises prevalence with the unit-heavy recipe output. The
+# hypothesis is "negative space": giving the model the `unit` category should also reduce `street`
+# over-prediction (street currently swallows "Apt 456"), i.e. covering unit should raise street
 # precision. See docs/articles/concepts/negative-space-coverage.md.
 #
-# SINGLE VARIABLE: identical to v0.9.3-de-regiontail EXCEPT corpus v0.4.4-unit (= the v0.4.3 base parquet files
+# single variable: identical to v0.9.3-de-regiontail except corpus v0.4.4-unit (= the v0.4.3 base parquet files
 # referenced verbatim + the `synth-unit` overlay parquet file) and `synth-unit: 2.5` in source_weights. The
 # B-unit/I-unit class weights were already 1.5. no schema/model/anchor change.
 #
-# SOURCE PROVENANCE (eval-honesty): the train rows are real non-Vermont US OpenAddresses skeletons with
-# USPS Pub-28 C2 designators INJECTED (OA carries bare unit ids only); the held-out unit eval is real
-# VERMONT OA rows (the corpus defaultHoldout, never trained), measured separately via per-locale-f1 on
-# /tmp/unit-val.jsonl. Geographic split = no leakage. NOTE: designators are injected in both, so the VT
-# eval measures designator RECOGNITION on held-out addresses. the real-in-the-wild designator signal is
+# source provenance (eval-honesty): the train rows are real non-Vermont US OpenAddresses skeletons with
+# USPS Pub-28 C2 designators injected (OA carries bare unit ids only); the held-out unit eval is real
+# vermont OA rows (the corpus defaultHoldout, never trained), measured separately via per-locale-f1 on
+# /tmp/unit-val.jsonl. Geographic split = no leakage. note: designators are injected in both, so the VT
+# eval measures designator recognition on held-out addresses. the real-in-the-wild designator signal is
 # the libpostal/postal arenas (scripts/eval/external-arenas.ts). Read both lenses at the check.
 #
-# PRE-REGISTERED CHECK (DeepSeek-signed. stop at 20k):
+# PRE-registered check (DeepSeek-signed. stop at 20k):
 #   - `unit` F1 >= 20% (token-level) on the held-out VT unit eval — minimally measurable (was ~0%, but
 #     on 5 golden rows = noise. this is the first real read).
-#   - `street` precision >= +1pp vs v0.9.3 — CONFIRMS negative space (unit absorbed street false-positives).
-#   - NO-REGRESSION (all within ~1pp vs v0.9.3): US house_number >=73 / postcode >=80 / locality >=77 /
+#   - `street` precision >= +1pp vs v0.9.3 — confirms negative space (unit absorbed street false-positives).
+#   - no-regression (all within ~1pp vs v0.9.3): US house_number >=73 / postcode >=80 / locality >=77 /
 #     street >=86. FR comparable per-class floors. DE native postcode >=83 / street >=82. cross_pollution <1%.
 #   If unit moves but street precision is flat/down: negative space refuted for our model — keep the
 #     unit lift, note the result. If a US/FR/DE regression check trips: lower synth-unit weight (2.5 -> 1.5) + rerun.
 # Measure: per-locale-f1.ts (US/FR + the VT unit eval) + external-arenas.ts (real-designator arenas) +
 #   de-order-eval.ts (the DE native/intl × anchor 2x2 regression check).
 #
-# CORPUS: v0.4.4-unit — v0.4.3-de-regiontail base (686 parquet files) + 1 `synth-unit` parquet file (50K). Reproduce:
+# corpus: v0.4.4-unit — v0.4.3-de-regiontail base (686 parquet files) + 1 `synth-unit` parquet file (50K). Reproduce:
 #   built by the unit recipe (packages/corpus/lib/recipes/unit.ts) with --output /tmp/unit-train.jsonl --count 50000 --seed 42
 #   built by the unit recipe (packages/corpus/lib/recipes/unit.ts) with --output /tmp/unit-val.jsonl  --golden --count 2000 --seed 99
 #   python3 scripts/jsonl-to-parquet.py --input /tmp/unit-train.jsonl --output /tmp/part-unit-train.parquet
-#   # assemble overlay MANIFEST (v0.4.3 base + the unit parquet file), then:
+#   # assemble overlay manifest (v0.4.3 base + the unit parquet file), then:
 #   # Not `modal volume put`: a mounted container cannot see what it writes, so a run staged that
 #   # way trains on whatever was already there and reports success. Route it through R2 instead.
 #   mailwoman corpus upload --corpus-version v0.4.4-unit
@@ -74,7 +74,7 @@ data:
     usgov-hrsa-fqhc: 2.0
     usgov-imls-pls: 2.0
     usgov-nad: 1.0
-    state-ia-contractors: 2.0
+    state-ia-builders: 2.0
     state-tx-notaries: 1.5
     state-ny-notaries: 2.0
     deepseek-kryptonite: 3.0

@@ -291,7 +291,7 @@ Each names a face role and carries size, line height and weight. Apple's iOS met
 A control glyph is typeset — it inherits color and size and aligns to the baseline, so it belongs to a
 face role. An icon is artwork: the category markers in the reference are a colored disc carrying a white
 mark, which a monochrome icon font cannot express. So `glyph` is a font role and `icons` is an SVG sprite
-with a documented viewBox and a two-color contract.
+with a documented viewBox and a two-color interface.
 
 There are zero inline `<svg>` elements across `@mailwoman/react`, `packages/earth` and
 `packages/planetary` today. Every control glyph is a literal character — `✓` in `CopyButton`,

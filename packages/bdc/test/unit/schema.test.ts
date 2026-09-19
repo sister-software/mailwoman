@@ -18,15 +18,15 @@ import { DatabaseClient } from "@mailwoman/sqlite/client"
 import { describe, expect, it } from "vitest"
 
 describe("bdc schema", () => {
-	it("co-resides with the layer contract, accepts a typed availability row, and reads it back", async () => {
+	it("co-resides with the layer interface, accepts a typed availability row, and reads it back", async () => {
 		using db = DatabaseClient.temp<BDCDatabase>()
-		// `BDCDatabase extends LayerContractDatabase` structurally, but Kysely's `transaction()` makes
-		// `Kysely<DB>` INVARIANT in `DB` (see build-bdc.ts's `asContractDB` for the full rationale) —
-		// narrow the handle back down for these two shared layer-contract calls.
-		const contractDB = db
+		// `BDCDatabase extends layerschemadatabase` structurally, but Kysely's `transaction()` makes
+		// `Kysely<DB>` invariant in `DB` (see build-bdc.ts's `asschemadb` for the full rationale) —
+		// narrow the handle back down for these two shared layer-interface calls.
+		const schemadb = db
 
-		await createLayerManifestTable(contractDB)
-		await createLayerCoverageTable(contractDB)
+		await createLayerManifestTable(schemadb)
+		await createLayerCoverageTable(schemadb)
 		await createBDCAvailabilityTable(db)
 		await createBDCProviderTable(db)
 		await createBDCGeoidIndex(db)

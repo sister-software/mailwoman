@@ -5,7 +5,7 @@
  * @file Browser/SSR bundle policy for the geocoder page.
  *
  *   What remains here is Docusaurus-specific: the workspace source aliases for development, the SSR bundle's
- *   externals, the WASM asset rule, and a cache key that follows the alias map. Module resolution for `@mailwoman/*`
+ *   externals, the wasm asset rule, and a cache key that follows the alias map. Module resolution for `@mailwoman/*`
  *   is not rewritten here: a package the client reaches carries a `browser` export condition, and the `bundle-graph`
  *   health check refuses a Node builtin on the client's static path.
  */
@@ -53,7 +53,7 @@ function filesystemCache(config: Configuration, alias: Record<string, string>): 
 }
 
 /**
- * Docusaurus calls `configureWebpack` SYNCHRONOUSLY, so the alias map is resolved by the caller — the plugin factory,
+ * Docusaurus calls `configureWebpack` synchronously, so the alias map is resolved by the caller — the plugin factory,
  * which Docusaurus does await — and handed in here. Resolving it at this point would return a promise the lifecycle
  * never unwraps.
  */

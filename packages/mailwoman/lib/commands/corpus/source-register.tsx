@@ -17,7 +17,7 @@
  *   ```
  *
  *   The research CSVs are working documents rather than committed inputs, so the paths are arguments. The register is
- *   the committed copy, and `packages/corpus/data/PROVENANCE.md` records the invocation that produced it along with
+ *   the committed copy, and `packages/corpus/data/provenance.md` records the invocation that produced it along with
  *   each input's row count.
  *
  *   The build refuses to write a register that fails its own audit, so a research pass that leaves a jurisdiction
@@ -30,7 +30,7 @@ import { Text } from "ink"
 import { type CommandSpec, CommandTaskResult, type CommandComponent, useCommandTask } from "#cli-kit"
 
 /**
- * Native command-line contract consumed by the filesystem command router.
+ * Native command-line interface consumed by the filesystem command router.
  */
 export const spec = {
 	name: "source-register",

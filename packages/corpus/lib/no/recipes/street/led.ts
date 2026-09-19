@@ -4,8 +4,8 @@
  * @author Teffen Ellis, et al.
  *
  *   `no-street-led` — the Norwegian street-led recipe, third orthography of the #901
- *   leading-name-boundary family. The post-#920 NO row-read measured the residual as
- *   ORDER-SENSITIVE decode: street-led forms ("Tangavegen 40, 5620 Tørvikbygd") carry a 30%
+ *   leading-name-boundary family. The post-#920 no row-read measured the residual as
+ *   order-sensitive decode: street-led forms ("Tangavegen 40, 5620 Tørvikbygd") carry a 30%
  *   residual vs pc-first's 7% — the diacritic street head (…vegen/…veien with ø/å/æ) is the same
  *   leading-name-before-comma boundary the FR bare-street and SI village forms exercise, in a
  *   third orthography. All three real orders cycle per tuple (balanced polarity — the v1.9.9
@@ -40,10 +40,10 @@ export const noStreetLedRecipe: CorpusRecipe = {
 	async run(opts, write) {
 		makeMulberry32(opts.seed)
 
-		// THE SPLIT (ported from fr-fragment, #727 T2). Without it this recipe trains on all 10,697
+		// the split (ported from fr-fragment, #727 T2). Without it this recipe trains on all 10,697
 		// Norwegian surfaces, 1,952 of which the digit board reserves — so a Norway retrain would grade
 		// memorization of `Hallingrudveien` while claiming to measure the boundary form. There is no
-		// safe default: source-disjoint by street SURFACE is the discipline, so the flag throws.
+		// safe default: source-disjoint by street surface is the discipline, so the flag throws.
 		const excludePath = opts.excludeSurfaces
 
 		if (!excludePath) {

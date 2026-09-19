@@ -3,8 +3,8 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   `SubjectPanel` — renders the detected POI subject. For a CATEGORY: the category chip, the optional
- *   build-local badge + note. For a BRAND: the brand-name chip + a Wikidata QID chip (linked). Both
+ *   `SubjectPanel` — renders the detected POI subject. For a category: the category chip, the optional
+ *   build-local badge + note. For a brand: the brand-name chip + a Wikidata QID chip (linked). Both
  *   share the match-detail list (matched phrase, confidence, anchor). Presentational.
  */
 

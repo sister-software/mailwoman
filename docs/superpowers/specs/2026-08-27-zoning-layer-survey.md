@@ -20,9 +20,9 @@ shape the erosion survey established:
   their data may be copied** — measured at **85.0 % of 2,000 enumerated public zoning services carrying
   an empty license field** (§2.6), with the false-negative direction tested.
 
-The consuming implementation already exists, so nothing below proposes new architecture. The layer contract
+The consuming implementation already exists, so nothing below proposes new architecture. The layer interface
 (`layer_manifest` / `layer_coverage` on the H3 spine) is specified in
-[`../../engineering/reference/layer-contract.mdx`](../../engineering/reference/layer-contract.mdx); the
+[`../../engineering/reference/layer-interface.mdx`](../../engineering/reference/layer-interface.mdx); the
 exclusion-grade coverage pilot
 ([`2026-08-27-exclusion-grade-coverage-pilot.md`](./2026-08-27-exclusion-grade-coverage-pilot.md)) is the
 basis discipline; the flood survey
@@ -44,7 +44,7 @@ Settled here: the division between the three subjects the word "zoning" is used 
 inventory including the checked federal and national absences (§2); **the vocabulary decision and the
 measurement that forced it (§4), which is this survey's distinctive deliverable**; **the
 mixed-provenance rule as a schema constraint rather than a convention (§5)**; the storage shape and the
-resolution measurement, including the one place the inherited size contract does not reach (§6); the
+resolution measurement, including the one place the inherited size interface does not reach (§6); the
 pilot and the recorded threshold finding (§7); and the product requirement (§8).
 
 Not settled here, and named so nobody reads silence as a decision:
@@ -80,8 +80,8 @@ a layer that pooled them would be this record's invention rather than any author
 | **Land cover / observed land use** | What is measurably on the ground, from imagery or survey                                                    | A mapping agency, a satellite programme, a community mapping project | _What is here now?_               |
 
 The three disagree routinely, and one US state writes the disagreement into its own regulation. Florida
-Administrative Code Rule 12D-8.008(2)(a), which governs how a county property appraiser codes a parcel,
-says so directly (read 2026-08-27 at
+Administrative Code Rule 12D-8.008(2)(a) governs how a county property appraiser codes a parcel. The rule states this
+directly (read 2026-08-27 at
 [law.cornell.edu/regulations/florida/Fla-Admin-Code-Ann-R-12D-8-008](https://www.law.cornell.edu/regulations/florida/Fla-Admin-Code-Ann-R-12D-8-008),
 HTTP 200, 54,821 bytes):
 
@@ -174,7 +174,7 @@ to **Land Use Labs LLC**, a commercial arm, under a separate agreement.
 
 **Its coverage numbers are the best available, and both what they are and where they come from need
 stating.** The homepage renders them from `api.zoningatlas.org/nza_coverage`, which returns **HTTP 403**
-to this network plain and browser-headed, so the figures below are read from the page markup, **where they
+to this network plain and browser-headed. Therefore, the figures below are read from the page markup, **where they
 are the fallback values the page shows when the endpoint does not answer** (§10):
 
 | field                   |           value | the label it is published under                        |
@@ -1256,14 +1256,14 @@ zoning polygons, which is consistent with the authority's zones forming a partit
 
 ### 6.1 Which storage shape applies
 
-Zoning is polygon data, so **the polygon rule from the inherited size contract applies**: the authority's
+Zoning is polygon data, so **the polygon rule from the inherited size interface applies**: the authority's
 unsimplified rings are the truth table, an H3 cell table classifies containment above it, `compactCells`
 collapses uniform interiors, and the resolution is picked from measurement. §6.4 records the one place
-that contract's own decision procedure does not reach for this subject, and what replaces it.
+that interface's own decision procedure does not reach for this subject, and what replaces it.
 
 ### 6.2 Tables
 
-Seven domain tables plus the two contract tables, written as Kysely schema modules with the typed
+Seven domain tables plus the two interface tables, written as Kysely schema modules with the typed
 interface co-located with its `createXTable`, per the house database discipline.
 
 ```
@@ -1333,10 +1333,10 @@ zoning_mapped_extent        -- the authority's own statement of what it examined
                               -- only inside a map viewer, so layer_coverage carries source_present and
                               -- NEVER a negative claim.
 
-layer_manifest / layer_coverage   -- the contract tables, from @mailwoman/core/layers
+layer_manifest / layer_coverage   -- the interface tables, from @mailwoman/core/layers
 ```
 
-`WITHOUT ROWID` on `zoning_cell` and not on the geometry tables follows the contract's own guidance:
+`WITHOUT ROWID` on `zoning_cell` and not on the geometry tables follows the interface's own guidance:
 small fixed-width rows probed by their exact primary key belong in the B-tree; a row carrying a geometry
 blob does not.
 
@@ -1364,11 +1364,11 @@ Three schema points carry a measurement behind them.
 | `build_cmd` / `build_sha`   | the invocation and the commit that produced it                                                                     |
 | `freshness_policy`          | `versioned-refresh` — the Department re-issues under the same product; there is no published cadence (§10)         |
 | `spine_keys`                | `{ h3: { column: "h3_cell", resolution: … } }`, plus `wof_id` on `zoning_jurisdiction` — see §1                    |
-| `created_at`                | caller-supplied, per the contract                                                                                  |
+| `created_at`                | caller-supplied, per the interface                                                                                 |
 
-### 6.4 The resolution — and the one place the size contract's decision procedure does not reach
+### 6.4 The resolution — and the one place the size interface's decision procedure does not reach
 
-The inherited size contract says the resolution is picked from the measured `partial` share, never
+The inherited size interface says the resolution is picked from the measured `partial` share, never
 argued. **For this subject that statistic carries no signal, and the reason was measured.**
 
 **Zoning polygons are mostly smaller than a cell.** Computed over all 85,330 Irish features (planar
@@ -1398,7 +1398,7 @@ builder that indexed only the polyfill output would silently drop five of every 
 every dropped polygon would read downstream as "no zoning here" — a well-formed wrong answer at exactly
 the question this layer exists to answer.
 
-So this survey's addition to the size contract, for any layer whose polygons are near or below the cell
+So this survey's addition to the size interface, for any layer whose polygons are near or below the cell
 size:
 
 1. **Index cell-touches-polygon, never cell-center-in-polygon.** The index is the polyfill **union** every

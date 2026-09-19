@@ -4,7 +4,7 @@
  * @author Teffen Ellis, et al.
  *
  *   `mailwoman dev jsonl-to-parquet --input <labeled.jsonl> --output <database.parquet>` — convert a
- *   JSONL of LabeledRow objects to a Parquet database matching the v0.5.0 corpus schema. The #519
+ *   jsonl of LabeledRow objects to a Parquet database matching the v0.5.0 corpus schema. The #519
  *   char-offset span triple is required on every row. a row without it fails loudly with its line
  *   number.
  */
@@ -14,7 +14,7 @@ import { Text } from "ink"
 import { type CommandSpec, CommandTaskResult, type CommandComponent, reportToStderr, useCommandTask } from "#cli-kit"
 
 /**
- * Native command-line contract consumed by the filesystem command router.
+ * Native command-line interface consumed by the filesystem command router.
  */
 export const spec = {
 	name: "jsonl-to-parquet",

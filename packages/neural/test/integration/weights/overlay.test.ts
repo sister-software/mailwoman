@@ -11,7 +11,7 @@
  *
  *   The rung's own hazard is what most of this file tests. Only `model` and `tokenizer` throw. the ~11
  *   sibling artifacts resolve `existsSync → undefined` by design, so a checkout that finds the two binaries
- *   now PARSES while missing every lexicon and FST — scoring worse and saying nothing. The artifact report
+ *   now parses while missing every lexicon and FST — scoring worse and saying nothing. The artifact report
  *   is the answer, and a rung that shipped without it would trade a loud failure for a quiet one.
  */
 

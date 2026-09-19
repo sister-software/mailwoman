@@ -5,7 +5,7 @@
  *
  *   Build `gauntlet/cases/sg/register.jsonl`, the Singapore register board: a seeded draw of Overture-SG rooftop
  *   rows, each rendered in one of the four typed forms the `sg-register` corpus recipe renders (the HDB block line
- *   with a `#NN-NN` unit, the `S(NNNNNN)` postcode, the building-led line, the official line), balanced across the
+ *   with a `#NN-NN` unit, the `S(nnnnnn)` postcode, the building-led line, the official line), balanced across the
  *   four so a form the model has never seen cannot hide behind the ones it has.
  *
  *   The truth is the register row's own point and its fields. `expectComponents` carries what the recipe tagged, so the
@@ -13,7 +13,7 @@
  *   tolerance is the postcode's: a six-digit Singapore postcode names one building, and the register's postcode point
  *   sat within 1 km of the rooftop on 300 of 300 drawn rows.
  *
- *   Every row is GRADED through the gauntlet's own grader before it is written, and its `status` is what the shipped
+ *   Every row is graded through the gauntlet's own grader before it is written, and its `status` is what the shipped
  *   pipeline does today: `pass` when it passes, `improvement_target` when it does not. The board is therefore a
  *   regression pin for what already works and a target list for what does not, in one file, and the summary this
  *   prints per register is the board read.

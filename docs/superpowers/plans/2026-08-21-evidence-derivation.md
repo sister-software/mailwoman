@@ -1,6 +1,6 @@
 # Typed Evidence and Derivation Implementation Plan
 
-> **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
+> **For agentic workers:** required sub-skill: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
 **Goal:** Give the repository one vocabulary for typed evidence and epistemic status, wire the coverage-basis exclusion check that already exists and has never been called, and project a derivation into the geocode result.
 
@@ -199,7 +199,7 @@ Create `packages/evidence/package.json`:
 {
 	"name": "@mailwoman/evidence",
 	"version": "9.1.0",
-	"description": "The typed-evidence contract — observation, exclusion, relation and prior, the epistemic-status axis, the coverage-basis exclusion check, and the derivation graph. Pure, zero-runtime-dep: the shared home every claim-type package reaches for.",
+	"description": "The typed-evidence interface — observation, exclusion, relation and prior, the epistemic-status axis, the coverage-basis exclusion check, and the derivation graph. Pure, zero-runtime-dep: the shared home every claim-type package reaches for.",
 	"license": "AGPL-3.0-only OR LicenseRef-Commercial",
 	"repository": {
 		"type": "git",
@@ -265,7 +265,7 @@ Create `packages/evidence/status.ts`:
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   The epistemic axis — WHAT MAY BE CLAIMED about a value, kept strictly separate from the mechanism that
+ *   The epistemic axis — what may be claimed about a value, kept strictly separate from the mechanism that
  *   produced it. A geocode result's `resolution_tier` answers "how was this coordinate produced"
  *   (`address_point`, `interpolated`, …); this answers "what does the evidence permit us to say". A rooftop
  *   matched against a national register the authority declares complete is `designated`; the same rooftop
@@ -400,7 +400,7 @@ Create `packages/evidence/index.ts`:
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   The typed-evidence contract. Zero runtime dependencies BY DESIGN: `@mailwoman/bdc`,
+ *   The typed-evidence interface. Zero runtime dependencies BY DESIGN: `@mailwoman/bdc`,
  *   `@mailwoman/resolver`, `@mailwoman/filer` and `@mailwoman/match` all consume this, and two of them are
  *   leaves. Routing it through `@mailwoman/core` would drag core's shipped data behind every one of them —
  *   the same cost that makes `nuts-lookup` and `timezone-lookup` re-implement a ray cast rather than depend
@@ -585,7 +585,7 @@ Create `packages/evidence/coverage.ts`:
  *   the only one with no public constructor: {@link requireExclusionBasis} is the sole way to make one, and
  *   it refuses far more often than it admits.
  *
- *   FOLD PARITY IS A PRECONDITION rather than a detail. A key that "exists nowhere" may simply exist under a
+ *   fold parity is a precondition rather than a detail. A key that "exists nowhere" may simply exist under a
  *   surface we did not probe. The 2026-08-21 board decomposition found this class directly — `Tel Aviv-Yafo`,
  *   `São Paulo - SP`, `Co. Westmeath` are all real places reported as coverage misses — and it is
  *   indistinguishable from a true absence at the decision point. `street-evidence.ts` carries the same scar
@@ -1023,7 +1023,7 @@ cannot skip it.
 - Consumes: `requireExclusionBasis`, `foldIdentity`, `CoverageBasis`, `Exclusion` from Task 3; `shortCellToParentInt` from Task 3 step 11; the existing `UPRNLookup`, `UPRN_H3_RESOLUTION`, `UPRN_COVERAGE_H3_RESOLUTION`, `uprnH3Cell`
 - Produces:
   - `const UPRN_EXISTENCE_FOLD: string` — the identity of the point-keying used by both builder and probe
-  - `function uprnAbsenceAt(input: { lookup: UPRNLookup; contractDB: Kysely<LayerContractDatabase>; latitude: number; longitude: number; radiusM: number; country?: string }): Promise<Exclusion | null>`
+  - `function uprnAbsenceAt(input: { lookup: UPRNLookup; schemadb: Kysely<layerschemadatabase>; latitude: number; longitude: number; radiusM: number; country?: string }): Promise<Exclusion | null>`
 
 - [ ] **Step 1: Write the failing test**
 
@@ -1168,9 +1168,9 @@ comment — a future reader will otherwise read it as a stub.
 The function:
 
 1. `const cell = uprnH3Cell(latitude, longitude)` then `shortCellToParentInt(cell, UPRN_H3_RESOLUTION, UPRN_COVERAGE_H3_RESOLUTION)`.
-2. `const coverage = await readLayerCoverage(contractDB, coverageCell)` — `undefined` means absent.
+2. `const coverage = await readLayerCoverage(schemadb, coverageCell)` — `undefined` means absent.
 3. `if (lookup.nearestUPRN(latitude, longitude, radiusM)) return null` — a hit is presence; nothing to say.
-4. `const manifest = await readLayerManifest(contractDB)` for `source` and `sourceVintage`, read once by the caller and passed in if this is hot.
+4. `const manifest = await readLayerManifest(schemadb)` for `source` and `sourceVintage`, read once by the caller and passed in if this is hot.
 5. `return requireExclusionBasis({ layer: manifest.name, source: manifest.source, vintage: manifest.sourceVintage, h3Cell: coverageCell, cell: coverage, probeFold: UPRN_EXISTENCE_FOLD, layerFold: UPRN_EXISTENCE_FOLD, country, countries: new Set(["GB"]) })`.
 
 - [ ] **Step 5: Run the test to verify it passes**
@@ -1400,7 +1400,7 @@ In `packages/mailwoman/lib/geocode-core.ts`, add to `GeocodeResult` immediately 
 
 ```ts
 /**
- * WHAT MAY BE CLAIMED about this coordinate, orthogonal to {@link resolution_tier}, which says how it was
+ * what may be claimed about this coordinate, orthogonal to {@link resolution_tier}, which says how it was
  * PRODUCED. A rooftop matched against a register its authority declares complete is `designated`; the same
  * rooftop matched against a crowdsourced extract is `observed`. Same tier, different authority — and
  * reporting only the tier silently upgrades one into the other.

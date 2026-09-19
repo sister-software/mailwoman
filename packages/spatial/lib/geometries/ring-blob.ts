@@ -3,16 +3,16 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   The ring blob — how a polygon layer stores one authority feature's UNSIMPLIFIED coordinates, and the
+ *   The ring blob — how a polygon layer stores one authority feature's unsimplified coordinates, and the
  *   point test that reads it without materializing them.
  *
- *   THE GEOMETRY IS THE TRUTH TABLE. An H3 index above it answers a cell that lies wholly inside one
+ *   the geometry is the truth table. An H3 index above it answers a cell that lies wholly inside one
  *   feature. a cell a boundary crosses falls through to a ray cast against the few features the index
  *   already named. A rooftop answer at a boundary — which is where the answer usually matters most — has
  *   no other source, so the rings are stored at the resolution the authority published them and never
  *   simplified.
  *
- *   THE LAYOUT PUTS THE COORDINATES ON AN 8-BYTE BOUNDARY, so the reader takes a `Float64Array` view over
+ *   the layout puts the coordinates on an 8-byte boundary, so the reader takes a `Float64Array` view over
  *   them instead of a `DataView.getFloat64` per ordinate. Header is `u32 version`, `u32 ringCount`, then
  *   one `(u32 pointCount, u32 polygonIndex)` pair per ring — `8 + 8 × ringCount` bytes, a multiple of
  *   eight by construction. Coordinates follow as `[lon, lat]` pairs, ring by ring.
@@ -24,7 +24,7 @@
  *   inside another polygon's hole is inside the layer and would cancel to "outside" if every ring were
  *   pooled into one list.
  *
- *   SHARED BY EVERY POLYGON LAYER RATHER THAN COPIED INTO EACH. `@mailwoman/flood` and `@mailwoman/soil`
+ *   shared BY every polygon layer rather than copied into each. `@mailwoman/flood` and `@mailwoman/soil`
  *   both store an authority's rings this way, and a second copy of the alignment arithmetic or of the
  *   signed-area reading would be a second thing to get right — both failure modes are silent, since a
  *   mis-read blob answers a containment question wrongly and a hole-blind area reading answers "inside"
@@ -257,17 +257,17 @@ export function decodeRings(blob: Uint8Array): DecodedRings {
 const EARTH_RADIUS_M = 6_371_008.8
 
 /**
- * Signed spherical area of one linear ring, in square metres. **CLOCKWISE is positive**, counter-clockwise negative.
+ * Signed spherical area of one linear ring, in square metres. **clockwise is positive**, counter-clockwise negative.
  *
  * The sign is the whole point: an orientation-respecting sum over a polygon's rings subtracts its holes, while a sum of
  * absolute values adds them. Comparing the two against the source's own area figure is what tells a builder whether it
  * has read the holes at all — the failure mode is silent, because a hole read as an exterior ring produces a perfectly
  * well-formed polygon that simply covers more ground than the authority mapped.
  *
- * WHICH WINDING IS POSITIVE IS A CONTRACT rather than A DETAIL, because a builder whose source encodes hole roles by
- * ORIENTATION reads roles off this sign. It is the opposite of the standard planar shoelace: this sum runs `(lonᵢ −
+ * Which winding is positive is A interface rather than A detail, because a builder whose source encodes hole roles by
+ * orientation reads roles off this sign. It is the opposite of the standard planar shoelace: this sum runs `(lonᵢ −
  * lonⱼ)` against the shoelace's `(xⱼ − xᵢ)`, so a ring `@mailwoman/spatial`'s own {@link rectangleRing} builds
- * counter-clockwise answers NEGATIVE here. `@mailwoman/zoning` is the caller that depends on it, and
+ * counter-clockwise answers negative here. `@mailwoman/zoning` is the caller that depends on it, and
  * `packages/zoning/test/unit/ring-roles.test.ts` pins the sign directly.
  */
 export function ringSignedAreaM2(ring: ReadonlyArray<readonly number[]>): number {
@@ -299,7 +299,7 @@ export function ringAreaReadings(polygons: MultiPolygonRings): {
 	let allExterior = 0
 
 	for (const rings of polygons) {
-		// Per POLYGON rather than pooled: two disjoint polygons of one feature can wind opposite ways without either being a
+		// Per polygon rather than pooled: two disjoint polygons of one feature can wind opposite ways without either being a
 		// hole, and a pooled sum would silently cancel them against each other.
 		let signedTotal = 0
 
@@ -329,12 +329,12 @@ export interface DegreeExtent {
 /**
  * Refuse a feature whose reprojected vertices fall outside the publisher's own declared extent.
  *
- * THE CHECK A PROJECTION CHECK CANNOT MAKE. A swapped coordinate order survives an authority-code comparison — both
+ * The check A projection check cannot make. A swapped coordinate order survives an authority-code comparison — both
  * axes are still numbers in a plausible range — and a source read in its own metres as if they were degrees produces
  * perfectly well-formed coordinates in the wrong ocean. Both show up here on the first feature, before a whole layer is
  * written to the wrong side of the planet.
  *
- * SHARED BY EVERY POLYGON INGEST, because it is rectangle arithmetic over the ring types and knows nothing about any
+ * Shared BY every polygon ingest, because it is rectangle arithmetic over the ring types and knows nothing about any
  * product. `marginDegrees` is the caller's, because a declared extent is itself a rounded published value and how
  * tightly a source hugs its own is a fact about that source.
  *
@@ -389,7 +389,7 @@ export interface EncodedArea {
  * refused (`undefined`) rather than approximated, because a sample point that is not actually inside the polygon turns
  * an agreement check into a check on the sampler.
  *
- * SHARED BY EVERY POLYGON LAYER'S VERIFY, because it is bounding-box arithmetic over the ring blob and knows nothing
+ * Shared BY every polygon layer'S verify, because it is bounding-box arithmetic over the ring blob and knows nothing
  * about any product. `gridSteps` is the one thing that differs between them: a layer whose polygons are narrow strips
  * needs a finer grid than one whose polygons are compact, and the value is part of a layer's sampling receipt — two
  * runs of the same layer must draw the same points, so it is a caller's choice rather than a shared default nobody
@@ -438,7 +438,7 @@ export function bboxContains(
 }
 
 /**
- * A reproducible sample of interior points drawn by a deterministic STRIDE over a key list — the shape every polygon
+ * A reproducible sample of interior points drawn by a deterministic stride over a key list — the shape every polygon
  * layer's verification sampler shares.
  *
  * The keys are chosen before any geometry is read: selecting them alone is an index-only walk over the primary key, and

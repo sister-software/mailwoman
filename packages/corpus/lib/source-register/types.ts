@@ -29,8 +29,8 @@ import type { AddressRole } from "#types"
  * Each value records a position in the backlog, and the letters are the ones the global address corpus specification
  * uses in its own prose, so a reader can move between the two without a translation table. They are deliberately not
  * called a tier: this repository already has locale tiers 1 through 5 in `scope.config.json` and the `shipped` /
- * `build-local` / `private` tiers in the layer contract, and a third single-letter ladder under that name would be read
- * as one of those two.
+ * `build-local` / `private` tiers in the layer interface, and a third single-letter ladder under that name would be
+ * read as one of those two.
  */
 export const BackboneState = {
 	/**
@@ -222,7 +222,7 @@ export interface ElectedLicense {
 	 */
 	electedTerms: string
 	/**
-	 * An SPDX identifier when one applies. The mechanical exclude filter reads this in preference to
+	 * An spdx identifier when one applies. The mechanical exclude filter reads this in preference to
 	 * {@linkcode ElectedLicense.electedTerms}; see `electedLicenseLabel`.
 	 */
 	spdx?: string
@@ -267,7 +267,7 @@ export interface JurisdictionRecord {
 	bestPath: string
 	/**
 	 * The propositions the pass expected this jurisdiction's sources to carry, in its own prose. It is not the
-	 * `AssertedProposition` vocabulary — it uses wider words such as `ADMIN` and `GLOBAL GEOMETRY` — and is carried
+	 * `AssertedProposition` vocabulary — it uses wider words such as `admin` and `global geometry` — and is carried
 	 * verbatim rather than mapped, because mapping it would invent precision the pass did not have.
 	 */
 	assertionPlan: string
@@ -350,7 +350,7 @@ export interface RegisterProvenance {
 	source: string
 	sourceVersion?: string
 	/**
-	 * ISO 8601 calendar date, `YYYY-MM-DD`.
+	 * ISO 8601 calendar date, `yyyy-MM-DD`.
 	 */
 	authoredAt?: string
 	notes?: string

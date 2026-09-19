@@ -3,7 +3,7 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   The #1024 guard must not FAIL OPEN.
+ *   The #1024 guard must not fail open.
  *
  *   `assertShippedModelMatchesCard` blocks the release when the model about to be graded disagrees with
  *   `model-card.json`'s `files_md5`. It only runs inside `if (existsSync(effModel))`, so whatever names
@@ -17,7 +17,7 @@
  *   and nothing is reported: a silent ungating, which is #1024's own failure mode reproduced by the fix's
  *   own path literal.
  *
- *   This is a SOURCE check rather than a behavioural one because the property is about how the path is
+ *   This is a source check rather than a behavioural one because the property is about how the path is
  *   obtained, and the failure is an absence — there is no wrong answer to assert against, only a check that
  *   quietly stopped happening.
  */

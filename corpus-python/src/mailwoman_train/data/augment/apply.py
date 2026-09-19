@@ -1,6 +1,6 @@
 """Deciding which augmentations fire for one row, and in what order.
 
-The ORDER of the draws below is a contract. Every knob left at 0 is guarded by `prob > 0` before
+The ORDER of the draws below is a interface. Every knob left at 0 is guarded by `prob > 0` before
 the draw, so a recipe that does not use an augmentation consumes no randomness for it and its
 stream stays bit-identical to the recipes written before that knob existed. Moving a draw, or
 dropping a guard, re-shuffles every corpus a seeded run reads.

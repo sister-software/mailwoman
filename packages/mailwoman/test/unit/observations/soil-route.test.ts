@@ -6,12 +6,12 @@
  *   #1991: the soil-capability route on the geocode path, exercised through `geocodeAddress` with mock
  *   classifier/resolver deps and a fixture-built soil layer.
  *
- *   THE FIRST TEST IS THE ONE THAT MATTERS. With the layer absent — which is every default construction —
+ *   the first test is the one that matters. With the layer absent — which is every default construction —
  *   the geocode result must be identical to a run against a build without the field existing. That is a
  *   statement about construction rather than about a measurement, and it is what makes the option safe to
  *   configure: rollback is removing the argument.
  *
- *   THE REST PIN THE THREE READINGS' JOURNEY TO A CALLER: a rated cell becomes one additive marker naming
+ *   the rest PIN the three readings' journey TO A caller: a rated cell becomes one additive marker naming
  *   the verdict's own top kind and carrying the share the class rests on, a mapped-but-unrated cell becomes
  *   the same marker with no class and the absence shares that say why, and a location outside every built
  *   survey area raises nothing — an advisory there would report a survey nobody ran.
@@ -176,7 +176,7 @@ describe("#1991: the soil-capability route on the geocode path", () => {
 			const evidence = marker.evidence as Record<string, unknown>
 
 			expect(evidence.topClass).toBe("2")
-			// A 45% plurality. Reporting the class without this number would manufacture certainty NRCS itself declines to
+			// A 45% plurality. Reporting the class without this number would manufacture certainty nrcs itself declines to
 			// manufacture — its own aggregation ships the share beside the class, with an observed minimum of 2%.
 			expect(evidence.topClassShare as number).toBeLessThan(0.5)
 			expect(marker.message).toMatch(/not whether the land can be farmed/u)

@@ -4,7 +4,7 @@
  * @author Teffen Ellis, et al.
  *
  *   `mailwoman gazetteer build fst` — per-locale decode-bias FST gazetteers (`fst-<locale>.bin`,
- *   #1318) with build-time degenerate-surface curation. Artifacts land in a staging dir BESIDE the
+ *   #1318) with build-time degenerate-surface curation. Artifacts land in a staging dir beside the
  *   shipped `fst-per-locale/` (never overwriting); the swap is operator-approved after the battery. See
  *   `mailwoman/gazetteer-pipeline/fst.ts` for the curation policy.
  */
@@ -16,7 +16,7 @@ import { Text } from "ink"
 import { type CommandSpec, CommandTaskResult, type CommandComponent, useCommandTask } from "#cli-kit"
 
 /**
- * Native command-line contract consumed by the filesystem command router.
+ * Native command-line interface consumed by the filesystem command router.
  */
 export const spec = {
 	name: "fst",

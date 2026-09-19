@@ -3,7 +3,7 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   The floating chrome's contract, at a desktop and a phone width.
+ *   The floating chrome's interface, at a desktop and a phone width.
  *
  *   Every assertion stands for a defect that reached earth.mailwoman.ai and was found by a person looking at the page:
  *   a side sheet that opened over the button that opened it, so there was no way to close it. a footer strip that
@@ -13,7 +13,7 @@
  *   None of them were reachable by the suites that already ran here, which assert what the geocoder answers and
  *   nothing about what the page shows.
  *
- *   IT RUNS ON `?runtime=fake`. The chrome is the subject, and the canned runtime renders all of it and completes a
+ *   IT runs on `?runtime=fake`. The chrome is the subject, and the canned runtime renders all of it and completes a
  *   query without fetching the 38 MB model — so this suite stays fast, and it keeps reporting on the chrome on a day
  *   the model's origin is throttling.
  */
@@ -25,7 +25,7 @@ import {
 	expectNothingUnderTheFooter,
 	expectPointerQueriesStayScoped,
 	expectReachable,
-} from "@mailwoman/site-kit/playwright/chrome-contract"
+} from "@mailwoman/site-kit/playwright/chrome-interface"
 import { expect, test } from "@playwright/test"
 
 /**
@@ -114,7 +114,7 @@ test.describe("Chrome — the floating controls", () => {
 		await openChrome(page)
 
 		// The minifier collapses two declarations carrying the same value and keeps the last, so a standard property
-		// written before its `-webkit-` twin is dropped from the OUTPUT while the source still reads correctly. This is
+		// written before its `-webkit-` twin is dropped from the output while the source still reads correctly. This is
 		// the only place that difference is visible.
 		const href = await page.locator('link[rel="stylesheet"]').first().getAttribute("href")
 
@@ -143,7 +143,7 @@ test.describe("Chrome — the floating controls", () => {
 
 		const popover = page.locator(".mw-map-footer__popover")
 
-		// REACHABLE rather than merely visible. The popover shipped in the DOM carrying the right credits while the footer
+		// reachable rather than merely visible. The popover shipped in the DOM carrying the right credits while the footer
 		// strip's own `overflow-x` clipped it away, and both a `textContent` read and a `toBeVisible` assertion passed
 		// over that — a clipped element keeps its box. Only hit-testing tells the difference.
 		await expectReachable(page, ".mw-map-footer__popover")

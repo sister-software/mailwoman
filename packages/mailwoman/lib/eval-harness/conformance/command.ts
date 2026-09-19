@@ -7,30 +7,30 @@
  *   row through the Gauntlet's own deps, and report. Thin on purpose: it narrates and owns only the exit
  *   code, matching `eval invariance` and `eval promote`.
  *
- *   EVERY COMMITTED SUITE RUNS BY DEFAULT. {@linkcode CONFORMANCE_SUITES} is the register, and a default run
+ *   every committed suite runs BY default. {@linkcode CONFORMANCE_SUITES} is the register, and a default run
  *   is all of it: a default that named one suite would leave every later law executable only by someone who
  *   remembered to point `--suite` at it, and a law nobody runs reports as an absence rather than a failure.
  *   `--suite` narrows to a single file for an author iterating on one.
  *
- *   THE AUDIT RUNS BEFORE THE ENGINE LOADS. A law suite's rows can be wrong in ways no amount of geocoding
+ *   the audit runs before the engine loads. A law suite's rows can be wrong in ways no amount of geocoding
  *   reveals — a pair that differs by more than case still runs, still produces a reading, and still reports a
  *   violation, which a reader then attributes to the pipeline. Auditing first means an unrunnable suite costs
  *   a second rather than a model load, and costs nobody a wrong diagnosis.
  *
- *   A TRACKED ROW IS RUN. The verdict splits by status the way the Gauntlet regression layer splits: `pass`
+ *   A tracked row is RUN. The verdict splits by status the way the Gauntlet regression layer splits: `pass`
  *   rows check, tracked rows report, and a tracked row that starts holding prints a promotion instruction. A
  *   red row is never removed to make the exit code zero.
  *
- *   THE OBSERVER IS CHOSEN FROM THE ROWS. `candidate_admissibility` reads the resolver's interior, which the
+ *   the observer is chosen from the rows. `candidate_admissibility` reads the resolver's interior, which the
  *   walk records only when a sink asks it to. the other five comparators read the assembled answer and would
  *   pay for bookkeeping nobody reads. So the run picks the traced observer exactly when a loaded row names
  *   that comparator, and says which one it picked.
  *
- *   AN UNMEASURED ROW IS NOT A QUIET PASS. It is printed in its own section with the window that stopped the
+ *   an unmeasured row is not A quiet pass. It is printed in its own section with the window that stopped the
  *   reading, and it is removed from the row count the verdict is stated over — so the headline is a ratio of
  *   rows that were actually decided, and a suite that stops being able to decide anything reports a failure.
  *
- *   A LAW MAY REPORT ITS OWN BREADTH. A hold count answers "did the rows the suite states hold", never "how
+ *   A LAW may report its own breadth. A hold count answers "did the rows the suite states hold", never "how
  *   much of the population could the suite have stated" — and for a law whose eligibility is a property of the
  *   query text those are different numbers. `ConformanceSuite.coverage` prints the second one beside the
  *   first. the committed corpus is read only for a run that includes such a law.
@@ -90,7 +90,7 @@ function report(findings: readonly ConformanceFinding[]): void {
 
 export interface ConformanceCommandOptions extends GauntletDepsOptions {
 	/**
-	 * Suite JSONL path. Absent runs every suite in {@linkcode CONFORMANCE_SUITES}.
+	 * Suite jsonl path. Absent runs every suite in {@linkcode CONFORMANCE_SUITES}.
 	 */
 	suite?: string
 }
@@ -132,7 +132,7 @@ export interface ConformanceMeasurement {
  * Load, audit and run the law suites, and return the counts without printing a verdict.
  *
  * Extracted so a second consumer — the phase-2 decision ruler (#1967), which reads the laws as an inertness measurement
- * — takes the NUMBERS from the same run this command narrates, rather than re-deriving them from a second orchestration
+ * — takes the numbers from the same run this command narrates, rather than re-deriving them from a second orchestration
  * free to load a different suite set or a different observer.
  */
 export async function measureConformance(options: ConformanceCommandOptions = {}): Promise<ConformanceMeasurement> {
@@ -212,7 +212,7 @@ export async function measureConformance(options: ConformanceCommandOptions = {}
 }
 
 /**
- * Run the conformance-law suites from CLI-shaped options. Returns the process exit code (0 = PASS).
+ * Run the conformance-law suites from CLI-shaped options. Returns the process exit code (0 = pass).
  */
 export async function runConformanceCommand(options: ConformanceCommandOptions = {}): Promise<number> {
 	const { problems, measured } = await measureConformance(options)

@@ -16,7 +16,7 @@
  *   strip already folds the parent segment to a bare-city key. Its absence from that set is deliberate
  *   and should not be "completed".
  *
- *   THE FILE THIS BUILDS IS THE PACKAGE'S ENTIRE PAYLOAD. It is gitignored (derived), and a workspace
+ *   the file this builds is the package'S entire payload. It is gitignored (derived), and a workspace
  *   that has never run this script packs to three metadata files describing an artifact that is not
  *   there — which is exactly how v8.6.0 shipped. `packages/release-kit/lib/pack/verify-tarball.ts` now refuses that publish,
  *   but the fix is to run this first.

@@ -14,7 +14,7 @@
  *   - `"declined"` — the user said no, the download failed, or `--degraded` was passed. the caller
  *       renders its degraded (encoder-less) mode.
  *   - `"unavailable"` — weights absent + non-interactive stdin and no flag. the caller keeps its
- *       legacy fallback chain (pre-v7 behavior contract).
+ *       legacy fallback chain (pre-v7 behavior interface).
  *
  *   Installs `@latest` rather than pinning the CLI version: resolving `mailwoman/package.json` from
  *   both the source and compiled trees is the `__isCompiledTree` trap, and the post-install probe
@@ -77,7 +77,7 @@ export interface DownloadWeightsOpts {
 
 /**
  * Install the weights package into the cache prefix via the user's own npm (spawned as our own child. no pattern kills
- * anywhere near this). Success = npm exits 0 AND the post-install probe resolves — a metadata-only tarball (code-only
+ * anywhere near this). Success = npm exits 0 and the post-install probe resolves — a metadata-only tarball (code-only
  * release) installs "successfully" but carries no binaries, and must report as a failure with an actionable message.
  */
 export function downloadWeights(
@@ -148,7 +148,7 @@ export interface WeightsGuardProps {
 	 */
 	forceDegraded?: boolean
 	/**
-	 * TEST INJECTION POINT / non-default cache root.
+	 * Test injection point / non-default cache root.
 	 */
 	cacheRoot?: string
 	/**
@@ -164,7 +164,7 @@ type GuardPhase =
 	| { phase: "settled"; outcome: WeightsOutcome }
 
 /**
- * Interactive guard around model-requiring commands. See the module docstring for the outcome contract. The prompt
+ * Interactive guard around model-requiring commands. See the module docstring for the outcome interface. The prompt
  * renders only on a raw-mode-capable stdin. everything else settles immediately without painting UI.
  */
 export function WeightsGuard({

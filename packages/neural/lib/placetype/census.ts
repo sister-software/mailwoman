@@ -3,15 +3,15 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   PCN1 placetype census (hierarchy-evidence campaign, R4c). Per gazetteer PARENT surface, the
- *   distribution of its children's PROJECTED `ComponentTag`s — "this parent has 33 boroughs and 642
+ *   PCN1 placetype census (hierarchy-evidence campaign, R4c). Per gazetteer parent surface, the
+ *   distribution of its children's projected `ComponentTag`s — "this parent has 33 boroughs and 642
  *   neighbourhoods, i.e. 675 dependent-locality-class children". The general form of the shipped
  *   PIX1 pair index: where PIX1 answers "is this child known under this parent?", PCN1 answers "does
  *   this parent have children of this kind at all?" — the conditional prior that turns a globally
  *   rare tag into a conditionally common one (see plan/reference/placetype-evidence.mdx).
  *
  *   Why both artifacts exist, rather than folding the census's links into the pair index: a pair
- *   entry ASSERTS a surface is a dependent locality, so every batch of them needs a venue-confound
+ *   entry asserts a surface is a dependent locality, so every batch of them needs a venue-confound
  *   board before it ships (the law-1 directional class — "East Acton" opening a venue name). A
  *   census node asserts nothing about any surface. it can only tilt a reading the model already
  *   entertains under a parent it already identified. That makes the census the safe way to cover
@@ -61,7 +61,7 @@ export interface PlacetypeCensusNode {
 	 */
 	parent: string
 	/**
-	 * Child counts by PROJECTED tag — the placetype→`ComponentTag` projection is the BUILDER's job (see
+	 * Child counts by projected tag — the placetype→`ComponentTag` projection is the builder's job (see
 	 * `gazetteer-pipeline/placetype-census.ts`), so this artifact never carries a placetype vocabulary of its own.
 	 */
 	counts: Partial<Record<ComponentTag, number>>
@@ -91,9 +91,9 @@ export interface PlacetypeCensusHeader {
 	 */
 	buildDate: string
 	/**
-	 * GLOBAL share of each projected tag across every counted child in the country — the denominator a consumer needs to
-	 * turn a node's share into a LIFT (`nodeShare / baseRate`). Shipped in the header rather than recomputed by the
-	 * consumer because the base rate is a property of the BUILD (which placetypes were counted, over which source), and a
+	 * Global share of each projected tag across every counted child in the country — the denominator a consumer needs to
+	 * turn a node's share into a lift (`nodeShare / baseRate`). Shipped in the header rather than recomputed by the
+	 * consumer because the base rate is a property of the build (which placetypes were counted, over which source), and a
 	 * consumer re-deriving it from the node table would silently get a different number: the node table only carries
 	 * parents that cleared the build's inclusion rule, so its totals are not the country's totals.
 	 */
@@ -277,9 +277,9 @@ export class PlacetypeCensusResolver implements PlacetypeCensusLike {
 	}
 
 	/**
-	 * Look up one folded parent surface. Returns `null` when the parent has no census node — ABSENCE IS NOT EVIDENCE (the
+	 * Look up one folded parent surface. Returns `null` when the parent has no census node — absence is not evidence (the
 	 * meaning-of-zero rule): a missing node means the gazetteer has no counted children there, which is usually coverage,
-	 * so a consumer must treat `null` as neutral and never as a prohibition.
+	 * . Therefore, a consumer must treat `null` as neutral and never as a prohibition.
 	 */
 	probe(parent: string): PlacetypeCensusNode | null {
 		return this.#nodes.get(parent) ?? null

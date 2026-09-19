@@ -631,17 +631,17 @@ export interface StateDetails {
 	 */
 	FIPSCode: string
 	/**
-	 * The ANSI code for the state or territory.
+	 * The ansi code for the state or territory.
 	 *
-	 * @title ANSI Code
+	 * @title ansi Code
 	 */
 	ANSICode: string
 }
 
 /**
- * A US state as defined by the Census Bureau's TIGER system.
+ * A US state as defined by the Census Bureau's tiger system.
  *
- * @title Census TIGER State
+ * @title Census tiger State
  * @public
  */
 export interface TIGERState {

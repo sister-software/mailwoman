@@ -24,7 +24,7 @@ export const description = "Evaluate the coarse placer (#244): in-distribution |
 const kinds = ["in-distribution", "openset", "latin-offmap", "quant-compare"] as const
 
 /**
- * Native command-line contract consumed by the filesystem command router.
+ * Native command-line interface consumed by the filesystem command router.
  */
 export const spec = {
 	name: "eval",

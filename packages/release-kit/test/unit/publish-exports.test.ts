@@ -92,7 +92,7 @@ describe("transformExportsForPublish", () => {
 	})
 
 	it("rewrites every source-targeting condition, not only node", () => {
-		// A map whose Node target and browser target are different FILES, both source in the dev map. Rewriting only
+		// A map whose Node target and browser target are different files, both source in the dev map. Rewriting only
 		// `node` shipped browser and worker bundlers a raw `.ts`.
 		const result = transformExportsForPublish({
 			"./fs": {

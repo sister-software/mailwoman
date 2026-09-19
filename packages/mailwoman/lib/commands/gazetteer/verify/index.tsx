@@ -9,9 +9,9 @@
  *   on any failure — do not swap an artifact that fails here. `build admin` runs this automatically.
  *   the standalone command is for verifying an existing DB (e.g. before promoting a staging artifact).
  *
- *   It also prints a DERIVED-ARTIFACT FRESHNESS section (2026-08-05): which FST binaries were built
+ *   It also prints a derived-artifact freshness section (2026-08-05): which FST binaries were built
  *   from this exact database and which were built from some earlier generation of it. That section
- *   never touches the exit code. The admin DB is a sealed artifact a rebuild REPLACES, so every FST
+ *   never touches the exit code. The admin DB is a sealed artifact a rebuild replaces, so every FST
  *   derived from it goes stale silently and on its own schedule — the 2026-08-04 swap left
  *   `fst-global-priority.bin` at a 2026-05-28 build and nothing anywhere noticed. A stale FST is a
  *   decode-time bias list that is merely old rather than a reason to refuse a database that is fine, and dev
@@ -25,7 +25,7 @@ import { join } from "path-ts"
 import { CheckList, type CommandSpec, CommandTaskResult, type CommandComponent, useCommandTask } from "#cli-kit"
 
 /**
- * Native command-line contract consumed by the filesystem command router.
+ * Native command-line interface consumed by the filesystem command router.
  */
 export const spec = {
 	name: "verify",

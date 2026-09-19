@@ -17,8 +17,8 @@
  *   whatever `--arm` is called — and the receipt records which of the two actually happened, because a
  *   route dropped on the way in and a route that changed nothing produce the same numbers.
  *
- *   Report-only by design: the exit code is non-zero only when the HARNESS broke — a moved ruler, an
- *   unresolved control row, a missing database. A recorded STOP-REDESIGN is a result rather than a failure.
+ *   Report-only by design: the exit code is non-zero only when the harness broke — a moved ruler, an
+ *   unresolved control row, a missing database. A recorded stop-redesign is a result rather than a failure.
  */
 
 import { writeLocalJSONFile } from "@mailwoman/core/fs/writers"
@@ -28,7 +28,7 @@ import { type CommandSpec, harnessCommand } from "#cli-kit"
 export const description = "Pre-registered geographic-model semantic-utility probe (#1928)"
 
 /**
- * Native command-line contract consumed by the filesystem command router.
+ * Native command-line interface consumed by the filesystem command router.
  */
 export const spec = {
 	name: "semantic-utility-probe",

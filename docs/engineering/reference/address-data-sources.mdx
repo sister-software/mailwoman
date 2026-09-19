@@ -70,7 +70,7 @@ Measured GeoNames postal against the gap in the WOF postcode data (the postcodes
 | ES     | not built (orphan-heavy)   | ~full (11,150 codes, all with coords)                           | the clean way to add ES at all                                                                               |
 | NL     | 100% (own PC6 coords)      | no help — GeoNames is PC4-level (4,086), coarser than WOF's PC6 | keep WOF                                                                                                     |
 
-So GeoNames postal is the cheap, CC-BY fill for ES/IT (and roughly half of DE's remaining gap), and it corrects WOF's Italian mis-links as a side effect. Integration stays clean under the discipline above: match on the postcode string, keep the WOF id, write the GeoNames lat/lon as the centroid. (Overture was not probed — for _postcodes_ it folds in OpenAddresses, which we already use, so its differential value is the POI layer; that probe wants a DuckDB + S3-parquet setup and is the right next step for the generalized-anchor work rather than for postcodes.)
+So GeoNames postal is the cheap, CC-BY fill for ES/IT (and roughly half of DE's remaining gap), and it corrects WOF's Italian mis-links as a side effect. Integration stays clean under the discipline above: match on the postcode string, keep the WOF id, write the GeoNames lat/lon as the centroid. (Overture was not probed — for _postcodes_ it folds in OpenAddresses, which we already use. Therefore, its differential value is the POI layer; that probe wants a DuckDB + S3-parquet setup and is the right next step for the generalized-anchor work rather than for postcodes.)
 
 ### The modern entrant: Overture Maps
 

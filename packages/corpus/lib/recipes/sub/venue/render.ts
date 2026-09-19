@@ -96,7 +96,7 @@ export function renderGroups(
 const GROUP_BREAK = new Set([", ", "\n"])
 
 /**
- * The street + tail groups for a country, in that country's own order, taken from that country's LAYOUT.
+ * The street + tail groups for a country, in that country's own order, taken from that country's layout.
  *
  * The orders were restated here once — US and GB anglophone, everything else postcode-then-locality — and the `else`
  * caught Japan, Korea and Taiwan along with France. `@mailwoman/codex` holds the order per country as data and

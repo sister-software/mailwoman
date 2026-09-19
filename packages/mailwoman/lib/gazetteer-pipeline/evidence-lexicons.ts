@@ -12,11 +12,11 @@
  *   code_entries + rules) so the Python painter (`gazetteer_anchor.py`) and the future TS painter
  *   consume them identically — train and inference share one computation.
  *
- *   THE FOUR-LAW SELECTIVITY (laws 1–3 each bought with a falsified training run, v3.16→v3.18. law
+ *   the four-LAW selectivity (laws 1–3 each bought with a falsified training run, v3.16→v3.18. law
  *   4 + the hygiene clauses bought with the v3.19.0 golden-US collapse — the flip census in
  *   `.superpowers/sdd/progress.md` 2026-07-28):
  *
- *   1. Degenerate exclusion — bare function words, bare street-type words, bare DIRECTIONALS
+ *   1. Degenerate exclusion — bare function words, bare street-type words, bare directionals
  *      (libpostal `directionals.txt` — the v3.19 gap: US neighbourhoods literally named
  *      "Northeast"/"East" painted locality evidence onto street directionals, truncating "3rd Ave
  *      East" to "3rd"), and all-function-word compositions are never evidence (unselective evidence
@@ -29,18 +29,18 @@
  *      lists — clear the metropolis tier.
  *   4. Region-vocabulary exclusion — surfaces that are US state names/abbreviations are region
  *      vocabulary, never locality evidence (v3.19: homograph-flagged state-name surfaces taught a
- *      locality-evidence→REGION rotation — "Washington, DC" parsed region="Washington"
+ *      locality-evidence→region rotation — "Washington, DC" parsed region="Washington"
  *      locality=null; "Missouri Break Ln, WY" region="Missouri"; "Frannie, Wyoming" lost its
  *      locality). Washington-the-city rows parse correctly without evidence — withholding beats
  *      corrupting. Scoped to US while US is the only covered country with single-word region names
  *      colliding this way. revisit per-country at each locale fold.
  *
- *   ALT-NAME SUB-PHRASE HYGIENE (also v3.19 tuition): a names-table alias whose folded form is a
+ *   ALT-name SUB-phrase hygiene (also v3.19 tuition): a names-table alias whose folded form is a
  *   contiguous sub-phrase of its own primary name ("East" ⊂ "East Nashville", "Washington" ⊂
  *   "Mount Washington") adds ambiguity and zero discrimination — rejected. Genuine nicknames
  *   survive.
  *
- *   The locality lexicon's v4 register change (operator doctrine 2026-07-27): NEIGHBOURHOOD
+ *   The locality lexicon's v4 register change (operator doctrine 2026-07-27): neighbourhood
  *   surfaces fold in as single-token evidence — a web user types "montmartre" as a fragment, never
  *   "Montmartre, Paris", so neighbourhood value ships inside the bundle channel rather than as a
  *   pair index (see the pair-hierarchy design doc's dispositions).
@@ -82,8 +82,8 @@ export const PERSON_NAME_IMPORTANCE_FLOOR = 0.45
 const LOCALITY_BIT = { locality: 1, locality_homograph: 2 }
 
 /**
- * THE PAINTER FOLD (word_norm) — the rule both painters apply at lookup (`gazetteer_anchor.py` /
- * `neural/gazetteer-inference.ts`): per whitespace word, strip leading/trailing non-letter/digit chars (KEEP internal —
+ * The painter fold (word_norm) — the rule both painters apply at lookup (`gazetteer_anchor.py` /
+ * `neural/gazetteer-inference.ts`): per whitespace word, strip leading/trailing non-letter/digit chars (keep internal —
  * "saint-thomas", "d'azur"), lowercase, single-space join. Lexicon entry keys must use this fold or they are
  * unreachable at paint time. Not the FST fold (`normalizeTokens` strips internal punctuation too) — the FST and painter
  * worlds fold differently by design. caught at Phase 2 when the locality builder briefly used the FST fold
@@ -102,8 +102,8 @@ export function painterFold(surface: string): string[] {
  * to the evidence-lexicon policy). Each entry carries its receipt — a v3.19.0 flip-census row where the surface,
  * admitted through a WOF data-noise carrier, painted evidence that broke a golden parse:
  *
- * - `school` — WOF neighbourhood 85872377 / locality 1226662441 named "School" (pop-row 4019, parent-vouched); "MAPLEHILL
- *   SCHOOL, E HILL ROAD, PLAINFIELD, VT" parsed locality="School".
+ * - `school` — WOF neighbourhood 85872377 / locality 1226662441 named "School" (pop-row 4019, parent-vouched); "maplehill
+ *   school, E hill road, plainfield, VT" parsed locality="School".
  * - `state` — WOF alias rows pairing alt-name "State" with places primary-named "Manor" (85879785 et al., not a
  *   sub-phrase so hygiene passes it); "05857 State Rte 14, VT" truncated street to "Rte 14".
  */
@@ -111,14 +111,14 @@ export const EVIDENCE_SUPPLEMENTAL_DEGENERATE_SURFACES: readonly string[] = ["sc
 
 /**
  * Law-1 directional closure (v5): whole surfaces from libpostal `directionals.txt` per curation language. Loaded
- * separately from `loadDegenerateSurfaces` ON PURPOSE — that loader is the shipped FST curation policy
+ * separately from `loadDegenerateSurfaces` on purpose — that loader is the shipped FST curation policy
  * (degenerate-surface-exclusion v1.1, baked into FST artifact trailers); evidence-lexicon curation extends it without
  * moving the FST policy.
  */
 export async function loadDirectionalSurfaces(fold: (surface: string) => string[] = painterFold): Promise<Set<string>> {
 	// Memoized on the same grounds as loadPersonNameSurfaces: static dictionaries, process-lifetime,
 	// no invalidation key. Keyed by fold identity — the FST and painter folds must not share.
-	// The returned set is SHARED. every caller only iterates it.
+	// The returned set is shared. every caller only iterates it.
 	let hit = directionalSurfacesMemo.get(fold)
 
 	if (!hit) {
@@ -180,9 +180,9 @@ const DE_CITY_STATES: ReadonlySet<GermanStateCode> = new Set(["BE", "HB", "HH"])
 
 /**
  * Law-4 region vocabulary for DE (v7, the per-country revisit the law reserves at each locale fold): the 13
- * TERRITORIAL-state names — native, English exonym, and the everyday aliases the codex alias map carries (NRW,
+ * territorial-state names — native, English exonym, and the everyday aliases the codex alias map carries (NRW,
  * Thueringen, …) — are region vocabulary, never locality evidence. painting "bayern" as a locality teaches the same
- * evidence→REGION rotation the v3.19 US flip census measured for state names.
+ * evidence→region rotation the v3.19 US flip census measured for state names.
  *
  * The city-states (Berlin, Hamburg, Bremen) are deliberately absent from the exclusion: the US analogy does not
  * transfer — Washington-the-state and Washington-the-city are different places (a rotation hazard), while
@@ -251,7 +251,7 @@ export async function loadPersonNameSurfaces(): Promise<Set<string>> {
  * {@link computeSurfaceCountryCounts}, whose input is a rebuildable artifact. The FR and US locality-surface passes were
  * each re-reading and re-folding the whole given-names + surnames + personal-titles set.
  *
- * The returned set is SHARED. Every caller only probes it (`clearsProminenceFloor` takes it as `ReadonlySet`); a future
+ * The returned set is shared. Every caller only probes it (`clearsProminenceFloor` takes it as `ReadonlySet`); a future
  * caller that mutates must copy first.
  */
 let personNameSurfacesMemo: Set<string> | undefined
@@ -291,8 +291,8 @@ async function scanPersonNameSurfaces(): Promise<Set<string>> {
  * Law 2 + 3 combined: is a 1-token surface prominent enough to be evidence? Pure — the unit the selectivity tests
  * exercise.
  *
- * `ownImportance` = the surface's max importance across places NAMED it; `parentImportance` = the max PARENT-locality
- * importance across neighbourhoods named it (the v4 parent-prominence proxy). LAW-3 GUARD: person-name surfaces may
+ * `ownImportance` = the surface's max importance across places named it; `parentImportance` = the max parent-locality
+ * importance across neighbourhoods named it (the v4 parent-prominence proxy). LAW-3 guard: person-name surfaces may
  * only clear via own importance — a neighbourhood named after a person inside a metropolis is exactly the "Rue Joseph"
  * street-interior hazard, and parent prominence must never launder it (the v3.17→v3.18 tuition).
  */
@@ -394,9 +394,9 @@ export async function buildLocalitySurfaceLexicon(opts: BuildLocalitySurfaceLexi
 		}
 	}
 
-	// Neighbourhood prominence rides the PARENT locality (v4): neighbourhoods structurally lack
+	// Neighbourhood prominence rides the parent locality (v4): neighbourhoods structurally lack
 	// population rows, and refusing them on absent data is the meaning-of-zero trap — Montmartre is
-	// prominent BECAUSE Paris is. Resolved via the ancestors table. a neighbourhood surface's floor
+	// prominent because Paris is. Resolved via the ancestors table. a neighbourhood surface's floor
 	// input is max(own importance, parent locality/localadmin importance).
 	const parentImportanceByID = new Map<number, number>()
 
@@ -558,12 +558,12 @@ export interface BuildStreetTypeLexiconOpts {
 /**
  * Street-type surfaces from the codex per-locale tables (fr/us/gb/de/ca). Canonical words (rue/avenue/street/straße)
  * are case-insensitive regardless of length — "rue" is 3 letters and must match lowercase. short abbreviation variants
- * (r, av, ST) are case-SENSITIVE uppercase `code_entries` so they never fire on lowercase prose (the anchor-lexicon
+ * (r, av, ST) are case-sensitive uppercase `code_entries` so they never fire on lowercase prose (the anchor-lexicon
  * short-code discipline).
  *
- * V2 (the v3.19.0 flip-census fix, family F1): `code_entries` that are ALSO US state/territory abbreviations (CT/KY/
- * MT/PR/WY — Court/Key/Mount/Prairie/Way) are dropped. In US mail the state reading dominates ("MOUNTAIN WAY WY 82601",
- * "SUSIE CT WY 83101" — both lost their region to street-code evidence on the state token); a suffix abbreviated as one
+ * V2 (the v3.19.0 flip-census fix, family F1): `code_entries` that are also US state/territory abbreviations (CT/KY/
+ * MT/PR/WY — Court/Key/Mount/Prairie/Way) are dropped. In US mail the state reading dominates ("mountain WAY WY 82601",
+ * "susie CT WY 83101" — both lost their region to street-code evidence on the state token); a suffix abbreviated as one
  * of these is rare enough that withholding evidence costs ~nothing. Directional codes (N/S/E/W/NE/ NW/SE/SW) stay even
  * where one collides with a state (NE) — directional evidence is common and showed zero census flips.
  */

@@ -3,21 +3,21 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Browser ONNX inference wrapper. Implements the same `NeuralRunner` contract `@mailwoman/neural`'s
- *   classifier consumes, but backed by `onnxruntime-web` (WASM + optional WebGPU) instead of
+ *   Browser ONNX inference wrapper. Implements the same `NeuralRunner` interface `@mailwoman/neural`'s
+ *   classifier consumes, but backed by `onnxruntime-web` (wasm + optional WebGPU) instead of
  *   `onnxruntime-node`.
  *
  *   Execution provider strategy:
  *
- *   - Try WebGPU first when `useWebGPU !== false`. ~10× faster than WASM on supported devices, but
+ *   - Try WebGPU first when `useWebGPU !== false`. ~10× faster than wasm on supported devices, but
  *       availability depends on browser (Chromium 113+, Safari Tech Preview) and hardware. The
  *       runtime surfaces a clean error when WebGPU is unavailable, so the constructor falls back to
- *       WASM automatically.
- *   - WASM (SIMD when available) is the universal fallback. ~2× slower than WebGPU on the same model
+ *       wasm automatically.
+ *   - wasm (simd when available) is the universal fallback. ~2× slower than WebGPU on the same model
  *       but works everywhere onnxruntime-web does — including in Node, which is how the test
  *       harness exercises this file.
  *
- *   Tensor shape + I/O contract matches `ONNXRunner` exactly: the packing and the output decode are
+ *   Tensor shape + I/O interface matches `ONNXRunner` exactly: the packing and the output decode are
  *   the same functions (`ort-feeds.ts`), so the two hosts cannot drift. only the `ort.Tensor`
  *   construction is host-specific.
  */
@@ -64,7 +64,7 @@ export const DEFAULT_FIXED_SEQ_LEN = 128
 /**
  * Fetch a URL into bytes, throwing on any non-OK status.
  *
- * Raw `fetch`: this is the BROWSER runtime. `APIClient` carries axios, which has no place in the client bundle, and the
+ * Raw `fetch`: this is the browser runtime. `APIClient` carries axios, which has no place in the client bundle, and the
  * platform primitive is what the browser already has.
  */
 export async function fetchBytes(url: string, fetchImpl: typeof fetch = fetch): Promise<Uint8Array> {
@@ -86,7 +86,7 @@ function configureWASMPaths(root: string | undefined): void {
 }
 
 /**
- * The `{data, dims}` view `decodeInferOutput` reads. The float32 dtype is the export contract's rather than a runtime
+ * The `{data, dims}` view `decodeInferOutput` reads. The float32 dtype is the export interface's rather than a runtime
  * check.
  */
 function outputTensor(tensor: ort.Tensor): OutputTensor {
@@ -165,7 +165,7 @@ export class WebONNXRunner implements NeuralRunner {
 
 						return session
 					} catch {
-						// WebGPU probe failed — fall through to WASM
+						// WebGPU probe failed — fall through to wasm
 					}
 				}
 
@@ -188,13 +188,13 @@ export class WebONNXRunner implements NeuralRunner {
 	/**
 	 * Free the session's native memory.
 	 *
-	 * An `InferenceSession` holds its weights and arenas in the WASM heap (or on the GPU), which the JavaScript garbage
+	 * An `InferenceSession` holds its weights and arenas in the wasm heap (or on the GPU), which the JavaScript garbage
 	 * collector does not own and cannot reclaim — dropping the last reference to a runner frees the wrapper and leaves
 	 * the model resident. `release()` is the only thing that gives it back, and before this it was called nowhere in the
 	 * repository.
 	 *
 	 * That matters because a release bundle is reloaded whenever the version or the backend force changes, so picking a
-	 * different model version, toggling "Force WASM", or entering compare mode each added a model's worth of native
+	 * different model version, toggling "Force wasm", or entering compare mode each added a model's worth of native
 	 * memory that never came back. Safari is the first browser to complain, because it kills a tab on memory pressure
 	 * rather than swapping.
 	 *

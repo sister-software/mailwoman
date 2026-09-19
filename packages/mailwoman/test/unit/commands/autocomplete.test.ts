@@ -7,7 +7,7 @@
  *
  *   Fixture FST is built in-memory with a tiny hand-coded trie so tests don't depend on a live WOF
  *   DB. The trie is built using `normalizeTokens` (exactly as the real builder does) to honour the
- *   symmetry contract from issue #190.
+ *   symmetry interface from issue #190.
  */
 
 import { dataRootPath, tempRootPath } from "@mailwoman/core/data-root"
@@ -128,7 +128,7 @@ describe("normalizeTokens symmetry", () => {
 	})
 
 	it("applies NFKC — composed characters are normalized but diacritics are preserved", () => {
-		// normalizeTokens applies NFKC + lowercase + punctuation strip. It does not decompose or
+		// normalizeTokens applies nfkc + lowercase + punctuation strip. It does not decompose or
 		// strip diacritics — that's intentional so that "José" and "Jose" are treated as distinct
 		// tokens at both build time and query time (symmetry preserved).
 		const tokens = normalizeTokens("San José")

@@ -3,7 +3,7 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   The six-role frontmatter contract for the docs-reorg site (docs-architecture cleanup, Phase 0,
+ *   The six-role frontmatter interface for the docs-reorg site (docs-architecture cleanup, Phase 0,
  *   task 2 — `docs/superpowers/plans/2026-08-03-docs-reorg.md`). Every published page declares which
  *   of six roles it plays, and each role carries required fields on top of `role:` itself:
  *
@@ -17,7 +17,7 @@
  *   `check-docs-structure.test.ts`. The check (`check-docs-structure.ts`) wires it against the real
  *   corpus under `--strict`; without the flag the check keeps enforcing the old seven-role vocabulary
  *   (guide/tutorial/concept/reference/decision/evidence/landing) this module deliberately does not
- *   know about — that vocabulary is retired by this contract rather than extended by it.
+ *   know about — that vocabulary is retired by this interface rather than extended by it.
  */
 
 /**
@@ -52,7 +52,7 @@ function isDeclared(frontmatter: Record<string, unknown>, key: string): boolean 
 }
 
 /**
- * Validate one page's frontmatter against the six-role contract.
+ * Validate one page's frontmatter against the six-role interface.
  *
  * Returns human-readable failure strings prefixed with `path`, or `[]` when the page is valid. A missing or
  * unrecognized `role:` short-circuits — the role-conditional field rules below don't apply until the role itself is

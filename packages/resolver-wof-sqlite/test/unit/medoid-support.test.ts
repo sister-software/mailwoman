@@ -2,7 +2,7 @@
  * @copyright Sister Software
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
- * @file The #920 medoid law under duplicate points. GeoNames postal coordinates are frequently COMPUTED — matched from
+ * @file The #920 medoid law under duplicate points. GeoNames postal coordinates are frequently computed — matched from
  *   place names and admin divisions, averaged from neighbours where the match fails — so rows sharing a coordinate to
  *   the digit carry one value rather than N. The collapse must leave the scattered case untouched: those are the rows the law
  *   was measured on.

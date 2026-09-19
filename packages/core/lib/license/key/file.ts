@@ -4,7 +4,7 @@
  * @author Teffen Ellis, et al.
  *
  *   The two files under `$MAILWOMAN_CONFIG_ROOT/license/` a self-service license leaves on a machine: the key, which
- *   `verifyConfiguredLicenseKey` reads after `MAILWOMAN_LICENSE_KEY`, so a refreshed token applies without an
+ *   `verifyConfiguredLicenseKey` reads after `MAILWOMAN_LICENSE_KEY`. Therefore, a refreshed token applies without an
  *   environment change. and the refresh credentials, the lid and per-license secret `mailwoman license refresh`
  *   presents, created 0600 because the secret is what fetches renewals. The key is a signed assertion rather than a secret,
  *   and is written with the ordinary writer.

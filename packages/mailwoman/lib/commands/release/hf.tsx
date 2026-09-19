@@ -8,7 +8,7 @@ import { type CommandSpec, CommandTaskResult, type ParsedCommandComponent, useCo
 import type { PublishHFOptions } from "#release-tools/publish-hf"
 
 /**
- * Native command-line contract consumed by the filesystem command router.
+ * Native command-line interface consumed by the filesystem command router.
  */
 export const spec = {
 	name: "hf",

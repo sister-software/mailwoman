@@ -86,8 +86,8 @@ export function buildSettings(addressFrequency: TermFrequencyTable): Setting[] {
 		},
 		// A5 (#625): the taxonomy code-set discriminator — set-overlap agreement over the NPI's 15 taxonomy
 		// slots. The named "still-more-distinctive identifier" from the 2026-06-16 report: co-located
-		// DISTINCT providers usually have disjoint sets (the over-merge separator) while an entity's own
-		// records always share theirs (never splits). Stacked on the BEST prior classical config (A1 +
+		// distinct providers usually have disjoint sets (the over-merge separator) while an entity's own
+		// records always share theirs (never splits). Stacked on the best prior classical config (A1 +
 		// authorized-official. A3 phone + A4 avg-linkage were measured neutral-to-negative and are left off).
 		{
 			label: "+ taxonomy code-set discriminator (A5, #625)",

@@ -1,12 +1,12 @@
 # Runtime Pipeline Stages
 
-The formal contract for the six-stage runtime pipeline. Pairs with [`INTERFACES.md`](./INTERFACES.mdx) (classifier-level contracts) and [`SCHEMA.md`](./SCHEMA.mdx) (component vocabulary) — this document covers the **stage boundaries** that compose them into a working pipeline.
+The formal interface for the six-stage runtime pipeline. Pairs with [`INTERFACES.md`](./INTERFACES.mdx) (classifier-level interfaces) and [`SCHEMA.md`](./SCHEMA.mdx) (component vocabulary) — this document covers the **stage boundaries** that compose them into a working pipeline.
 
 For the narrative / why-it-exists framing, read [`concepts/the-staged-pipeline`](../../records/site-2026-08/understanding/our-approach/the-staged-pipeline.mdx). For the bitter-lesson-safe sub-system used by stages 2 and 2.5, read [`QUERY_SHAPE.md`](./QUERY_SHAPE.mdx).
 
 ## Status
 
-- **Canonical:** this file is the canonical interface contract for the runtime pipeline. Any stage implementation must conform.
+- **Canonical:** this file is the canonical interface interface for the runtime pipeline. Any stage implementation must conform.
 - **Last edited:** 2026-05-25.
 - **Implementation state (frozen 2026-05-25):**
   - **Shipped and wired as default:** Stage 1 (normalize), Stage 2.5 (kind classifier), Stage 2.7 (phrase grouper, rule-based), Stage 3 (neural classifier + CRF Viterbi), Stage 4a (CRF structural mask), Stage 6 (WOF SQLite resolver).
@@ -261,7 +261,7 @@ Per "possibilities not constraints", the grouper emits overlapping proposals fre
 
 **Today.** `@mailwoman/phrase-grouper` workspace shipped 2026-05-23 (v0.5.0 Thread E). Rule-based: per-kind scorers over token-level structural cues (proximity, punctuation, capitalization, hyphenation, format-shape repetition from QueryShape). Bitter-lesson-safe — no place-name dictionaries. Wired as the default `groupPhrases` in `mailwoman/runtime-pipeline.ts::createRuntimePipeline` (hard dep in v0.5.0 rather than an opt-in shim — there are no v0.4.0 users to migrate). Result surfaced on `PipelineResult.phraseProposals`.
 
-**Future.** Learned 1-2M-param span proposer trained on segment-boundary labels derived from corpus-v0.4.0 + the kryptonite catalogue. Same `PhraseProposal[]` output contract; the consumers (Stages 3, 5) don't need to know which implementation produced the proposals. See [`PHASE_8_E_learned_span_proposer.md`](../../records/plan/phases/PHASE_8_E_learned_span_proposer.mdx) for the scope.
+**Future.** Learned 1-2M-param span proposer trained on segment-boundary labels derived from corpus-v0.4.0 + the kryptonite catalogue. Same `PhraseProposal[]` output interface; the consumers (Stages 3, 5) don't need to know which implementation produced the proposals. See [`PHASE_8_E_learned_span_proposer.md`](../../records/plan/phases/PHASE_8_E_learned_span_proposer.mdx) for the scope.
 
 **Failure classes owned.** Boundary discovery on mid-position postcodes (`Paris 75008`), hyphenated compounds (`NY-NY Steakhouse`), multi-word localities (`Saint Petersburg`), repetition tokens (`Buffalo Buffalo`). Addresses v0.4.0's bio_slip class at source rather than via decoder post-trim.
 
@@ -373,7 +373,7 @@ export function reconcileSpans(inputs: ReconcileInputs): ParseTree
 export interface ReconcileInputs {
 	raw: string
 	phraseProposals: ReadonlyArray<PhraseProposal> // from Stage 2.7
-	classifierTopK: ReadonlyArray<ClassifierCandidate> // from Stage 3 (Thread C-s contract)
+	classifierTopK: ReadonlyArray<ClassifierCandidate> // from Stage 3 (Thread C-s interface)
 	resolverCandidates?: ResolverCandidatesLookup // from Stage 6, (span, tag) → ResolvedPlace[]
 	parentChain?: ParentChainLookup // from Stage 6, place → ancestor list
 	opts?: ReconcileOpts
@@ -582,7 +582,7 @@ The packaging is intentional: a consumer can pull just `@mailwoman/core` + `@mai
 - **Stage interfaces** (this file): semver-major bump on any breaking change. The `Components` shape change from flat dict to typed `{ value, confidence, span, … }` will be a breaking change.
 - **Stage implementations**: independently versioned per workspace. Weights packages get major bumps on label-vocabulary changes (Tier 1 → Tier 2 was the v2 → v3 bump).
 - **Pipeline coordinator**: lives in `@mailwoman/core`; semver-major on any change to `PipelineResult` shape.
-- **Adding a new stage**: requires editing this file with new interface + Today/Future block + failure classes + open questions, then a contract test in `@mailwoman/core` proving the new stage composes with the existing ones.
+- **Adding a new stage**: requires editing this file with new interface + Today/Future block + failure classes + open questions, then a interface test in `@mailwoman/core` proving the new stage composes with the existing ones.
 - **Removing a stage**: requires the operator's written sign-off in `DECISIONS.md`. Don't.
 
 ## Open questions across the pipeline
@@ -597,11 +597,11 @@ These don't belong to one stage; they affect composition.
 
 ## How this relates to existing files
 
-- [`INTERFACES.md`](./INTERFACES.mdx) defines the **classifier-level** contracts (`Classifier`, `ClassificationProposal`, `PolicyRegistry`, etc.). This file is the **stage-level** contract that composes them.
+- [`INTERFACES.md`](./INTERFACES.mdx) defines the **classifier-level** interfaces (`Classifier`, `ClassificationProposal`, `PolicyRegistry`, etc.). This file is the **stage-level** interface that composes them.
 - [`SCHEMA.md`](./SCHEMA.mdx) defines the **component vocabulary** (`ComponentTag`, `BioLabel`). Both files key off it.
 - [`ARCHITECTURE.md`](./ARCHITECTURE.mdx) describes the **existing system shape** narratively. Some of its diagrams predate this staging picture; reconcile gradually.
 - [`QUERY_SHAPE.md`](./QUERY_SHAPE.mdx) defines the **`QueryShape` sub-system** in detail. This file references it but does not duplicate.
-- [`concepts/the-staged-pipeline`](../../records/site-2026-08/understanding/our-approach/the-staged-pipeline.mdx) is the **public-facing narrative** version. This file is the implementer's contract.
+- [`concepts/the-staged-pipeline`](../../records/site-2026-08/understanding/our-approach/the-staged-pipeline.mdx) is the **public-facing narrative** version. This file is the implementer's interface.
 
 ## What's next
 

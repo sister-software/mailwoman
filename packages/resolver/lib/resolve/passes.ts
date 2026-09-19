@@ -37,7 +37,7 @@ const TRACE_CANDIDATE_CAP = 10
 /**
  * The fine end of the probe window: `microhood` and no finer.
  *
- * Everything above it — `postalcode`, `venue`, `campus`, `building`, `address` — is excluded because a mislabeled ADMIN
+ * Everything above it — `postalcode`, `venue`, `campus`, `building`, `address` — is excluded because a mislabeled admin
  * span lands on another admin band, and probing every venue in a country per miss provides a long tail of coincidental
  * name matches for a diagnostic that is meant to be read.
  */
@@ -219,7 +219,7 @@ export interface ResolutionState {
 	 */
 	postcodePrefixPrior: boolean
 	/**
-	 * #1589 — the countries the parsed postcode's FORMAT implies (the #928 singles plus the shared `NNN NN` family). When
+	 * #1589 — the countries the parsed postcode's format implies (the #928 singles plus the shared `NNN NN` family). When
 	 * set and no explicit country selection applies, the `postalcode` lookup probes exactly these countries and abstains
 	 * if all miss — never falling through to an unconstrained probe, whose space-stripped fold collides across systems
 	 * (`100 00` folded to `10000` answers Troyes FR while Prague sits in the artifact under both keyings).
@@ -301,20 +301,20 @@ export interface ResolutionState {
 	 */
 	resolvedRegion: CoordinateOptionalPlace | null
 	/**
-	 * The decorated region NODE that produced {@link resolvedRegion} — completion pushes the locality interpretation onto
+	 * The decorated region node that produced {@link resolvedRegion} — completion pushes the locality interpretation onto
 	 * it in place (no synthesized sibling).
 	 */
 	resolvedRegionNode: AddressNode | null
 }
 
 /**
- * Pick the completion locality when an admin maps to several coincident same-name candidates (#405). REFERENTIAL
- * likelihood is the PRIMARY signal — the principal city is the populous one, and it can sit FARTHER from the admin
+ * Pick the completion locality when an admin maps to several coincident same-name candidates (#405). referential
+ * likelihood is the primary signal — the principal city is the populous one, and it can sit farther from the admin
  * centroid than a tiny same-name hamlet (the Niigata case from #403). Nearest centroid breaks a referential tie. a
  * genuine tie (same population and distance) abstains rather than guess.
  *
- * ROAD_TO_V9 §2: `compareReferential` is referential DESC with raw population as its own tiebreak, which is the SAME
- * ORDER as the plain `b.population - a.population` it replaced — referential is strictly increasing in population below
+ * ROAD_TO_V9 §2: `compareReferential` is referential desc with raw population as its own tiebreak, which is the same
+ * order as the plain `b.population - a.population` it replaced — referential is strictly increasing in population below
  * saturation and constant above it. The abstention check below still reads raw population, deliberately: two megacities
  * that saturate to the same referential score are not tied, and abstaining there would be a new behavior.
  */
@@ -353,8 +353,8 @@ export function firstPostcodeValue(roots: readonly AddressNode[]): string | unde
 /**
  * Span-rescore tier (#370): opt-in last-resort locality recovery. Runs only when the tree resolved nothing (the #685
  * brake — never disturb a working coordinate). Enumerates raw-token spans, exact- matches the same-country gazetteer
- * (longest-wins + postcode-consistency check. see `span-rescore.ts`), and on a hit INJECTS a resolved `locality` node
- * decorated exactly like a normally-resolved one. Default-ON (#370, promoted 2026-06-25); byte-stable opt-out via
+ * (longest-wins + postcode-consistency check. see `span-rescore.ts`), and on a hit injects a resolved `locality` node
+ * decorated exactly like a normally-resolved one. Default-on (#370, promoted 2026-06-25); byte-stable opt-out via
  * `opts.spanRescore: false`. Async (it queries the backend), so it's awaited.
  */
 export async function applySpanRescore(
@@ -367,7 +367,7 @@ export async function applySpanRescore(
 	// working: a pick the gazetteer recorded no population for, or one that failed the query's own containment check,
 	// is not a coordinate the brake was written to guard.
 	if (hasResolvedPlace(roots, opts.spanRescoreWeakResolution ?? false)) return
-	// Default-ON since 2026-06-25, so this runs on every unresolved tree — a backend hiccup here must
+	// Default-on since 2026-06-25, so this runs on every unresolved tree — a backend hiccup here must
 	// degrade to no-rescore, never crash the resolve (the same fall-through the main walk gives).
 	let hit
 
@@ -376,7 +376,7 @@ export async function applySpanRescore(
 			country: opts.defaultCountry,
 			postcode: firstPostcodeValue(roots),
 			thresholdKm: opts.spanRescoreThresholdKm,
-			// Default-ON (promoted 2026-07-03); explicit `false` opts out — the spanRescore idiom.
+			// Default-on (promoted 2026-07-03); explicit `false` opts out — the spanRescore idiom.
 			postalCompoundRecovery: opts.postalCompoundRecovery !== false,
 			spanRescoreRequireContextRemainder: opts.spanRescoreRequireContextRemainder,
 		})
@@ -387,7 +387,7 @@ export async function applySpanRescore(
 	// #942 postal-compound recovery, part 2: when no city span matched, decorate the failed postcode
 	// node from its code-shaped token subset ("1382 Kožljek" → the bare "1382" row) — a postcode-tier
 	// coordinate floor, strictly subordinate to a recovered locality. Only-on-miss matters: a GeoNames
-	// medoid postcode centroid is COARSER than the exact village centroid, and consumers that rank
+	// medoid postcode centroid is coarser than the exact village centroid, and consumers that rank
 	// postcode above locality (the eval harness does) would otherwise trade a 0.2 km village pin for a
 	// 5 km area centroid. Same unresolved tree, so the #685 brake semantics hold.
 	if (!hit && opts.postalCompoundRecovery !== false) {
@@ -416,7 +416,7 @@ export async function applySpanRescore(
 	// dominance margin `declared_ambiguity` reads was uncomputable for exactly the famous-homonym class.
 	// The winner is unchanged (see findRescoreCandidate); this is additive.
 	decorateNode(node, hit.place, hit.alternatives)
-	// `rescore_postcode_verified` carries the check's precision signal as an EXPLICIT handle — NOT folded into the
+	// `rescore_postcode_verified` carries the check's precision signal as an explicit handle — not folded into the
 	// calibrated `confidence`, which would violate the isotonic bound (a true calibrated 0.83 must not
 	// be confused with a rescore plug-in estimate. DeepSeek 2026-06-23). true = postcode check fired
 	// (high-precision); false = unrestricted (no postcode→point coverage for this country, ~83%-precision).
@@ -438,7 +438,7 @@ export async function applySpanRescore(
 }
 
 /**
- * #942: find the first confident-but-UNRESOLVED postcode node whose value is a polluted compound ("1382 Kožljek"),
+ * #942: find the first confident-but-unresolved postcode node whose value is a polluted compound ("1382 Kožljek"),
  * resolve its code-shaped token subset as a `postalcode`, and decorate the node from that hit
  * (`postal_compound_recovered` metadata marks the provenance). No-op when every postcode node resolved, the value has
  * no digit-containing tokens, or the subset equals the full value (then the walk already tried it).
@@ -480,7 +480,7 @@ async function recoverPostcodeNode(
 /**
  * How far step 3 below may move a coordinate before the answer keeps the locality it selected instead.
  *
- * Above the 99th percentile (153.3 km) of postcode-to-settlement distance for pairs that AGREE — 800,762 rows across 33
+ * Above the 99th percentile (153.3 km) of postcode-to-settlement distance for pairs that agree — 800,762 rows across 33
  * countries, admin1 corroborating — so a correct postcode is never refused. Measured on 5,300 real addresses published
  * with their government point, no arm from a cap of zero upward differs from unbounded by a single row, because the
  * pass's wins there are all step-2 re-picks: `docs/records/evals/2026-09-15-postcode-move-cap.md`.
@@ -489,7 +489,7 @@ export const DEFAULT_POSTCODE_MAX_MOVE_KM = 300
 
 /**
  * Postcode-disambiguated locality selection (#370 "Change A"). The single biggest miss on the EU/AU panel is a
- * same-named town resolved to the WRONG instance — "06260 Saint-Pierre" lands 617 km off — while the postcode that
+ * same-named town resolved to the wrong instance — "06260 Saint-Pierre" lands 617 km off — while the postcode that
  * would disambiguate it (06260 → Alpes-Maritimes) sits resolved in the same tree, discarded because the
  * coordinate-picker prefers the (wrong) locality node and never cross- checks it. This post-walk pass closes that loop,
  * backend-agnostically and with no extra query:
@@ -497,12 +497,12 @@ export const DEFAULT_POSTCODE_MAX_MOVE_KM = 300
  * 1. Find the resolved postcode's coordinate (the trustworthy anchor — a postcode is unambiguous within a country in a way
  *    a town name is not).
  * 2. For each resolved locality node farther than `thresholdKm` from it: re-pick the same-named candidate from the node's
- *    already-captured `alternatives` that is NEAREST the postcode and within the radius. This keeps locality
- *    granularity at the CORRECT instance.
+ *    already-captured `alternatives` that is nearest the postcode and within the radius. This keeps locality
+ *    granularity at the correct instance.
  * 3. If no alternative reconciles, the locality instance is unreliable — fall its coordinate back to the postcode point
  *    (right area, the safe answer) and flag `postcode_city_mismatch`.
  *
- * Step 3 rests on the postcode being the more reliable of the two, which holds while the postcode is CORRECT. A
+ * Step 3 rests on the postcode being the more reliable of the two, which holds while the postcode is correct. A
  * postcode carries no checksum, so a transposed one is a valid code naming a real place and the step relocates the
  * answer there; `maxMoveKm` bounds that relocation, at {@link DEFAULT_POSTCODE_MAX_MOVE_KM} unless a caller names one.
  * Past the bound the coordinate stays on the selected locality and the node is still flagged, because the components
@@ -510,7 +510,7 @@ export const DEFAULT_POSTCODE_MAX_MOVE_KM = 300
  * Port Blair while keeping Nawada's place id.
  *
  * Only fires where the postcode resolved to a point, so it composes with postcode coverage (#193) — add a country's
- * postcodes and this immediately disambiguates its same-named towns. **Default-ON** since the #370 operator promotion
+ * postcodes and this immediately disambiguates its same-named towns. **Default-on** since the #370 operator promotion
  * (2026-07-04, commit `0010bb8c`) — `opts.postcodeConsistency: false` opts out, and the pass is byte-stable on every
  * tree with no resolved postcode point (the `!anchor` early return below).
  */

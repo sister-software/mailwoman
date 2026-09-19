@@ -5,21 +5,21 @@
  *
  *   Running a conformance-law suite, and saying what a violation was.
  *
- *   NO SECOND HARNESS. A fixture is graded by running the same pipeline the Gauntlet runs, through an
+ *   no second harness. A fixture is graded by running the same pipeline the Gauntlet runs, through an
  *   observer the caller supplies — `gauntletObserver` wraps `buildGauntletDeps`'s own `geocode` and projects
  *   it with `toGauntletResult`, the projection the board's grader and the warm-engine tools already share. A
  *   law suite is therefore a Gauntlet layer's worth of implementation plus a fixture file rather than a parallel runner
  *   with its own model loading, its own weights ladder and its own idea of what a result is.
  *
- *   BOTH SIDES ARE OBSERVED, EVERY TIME. Nothing here caches by query, because a fixture whose base and
+ *   both sides are observed, every time. Nothing here caches by query, because a fixture whose base and
  *   variant are the same string is the identity law — two independent runs that must agree — and answering
  *   the second one from a cache would turn the strongest available nondeterminism check into a tautology.
  *
- *   `undecidable` IS A VIOLATION. A comparator that could not read its axis has not found a law holding. it
+ *   `undecidable` is A violation. A comparator that could not read its axis has not found a law holding. it
  *   has found nothing, and a suite that counted it as a pass would report the same total as a suite that
  *   genuinely held.
  *
- *   `unmeasured` IS NEITHER, AND LEAVES THE DENOMINATOR. It is the reading of a comparator that did read its
+ *   `unmeasured` is neither, and leaves the denominator. It is the reading of a comparator that did read its
  *   axis and found the observation too small to decide — `candidate_admissibility` is the only one that can
  *   report it, when a candidate left a table already sitting at its fetch window. Counting it as a failure
  *   would report the observer's blind spot as the pipeline's defect. counting it as a hold would report a
@@ -74,7 +74,7 @@ export function gauntletObserver(geocode: GauntletDeps["geocode"]): ConformanceO
  * The same observer with the resolver's interior attached — one trace record per backend lookup, which is what
  * `candidate_admissibility` reads.
  *
- * A SECOND observer rather than a flag on the first, because the walk's trace bookkeeping is a real cost the four
+ * A second observer rather than a flag on the first, because the walk's trace bookkeeping is a real cost the four
  * answer-axis laws have no use for. `command.ts` chooses between them by reading the comparators the loaded rows
  * actually name, so a run that states no candidate law pays nothing.
  */
@@ -137,7 +137,7 @@ export interface ConformanceSummary {
 	 */
 	unmeasured: ConformanceFinding[]
 	/**
-	 * How many rows were ADMITTED and DECIDED — the denominator a reader needs before the pass count means anything.
+	 * How many rows were admitted and decided — the denominator a reader needs before the pass count means anything.
 	 */
 	decided: number
 	pass: boolean

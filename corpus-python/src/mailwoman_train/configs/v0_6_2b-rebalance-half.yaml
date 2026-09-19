@@ -1,4 +1,4 @@
-# v0.6.2b — synth-no-street weight HALVED (1.0 → 0.5).
+# v0.6.2b — synth-no-street weight halved (1.0 → 0.5).
 #
 # Parallel companion to v0.6.2 (`v0_6_2-stage3-rebalance.yaml`). The 2026-05-28
 # step-20K eval of v0.6.2 showed:
@@ -8,7 +8,7 @@
 #   ✗ street_suffix hallucinations: 0 → 357 (the model over-emits this label)
 #   ✗ locality hallucinations: +192
 #
-# Diagnostic: the regressions persist with the morphology FST OFF (street_suffix
+# Diagnostic: the regressions persist with the morphology FST off (street_suffix
 # 310 hallucinations without FST), so the model itself learned to over-decompose,
 # not the inference-time prior.
 #
@@ -48,7 +48,7 @@ data:
     usgov-hrsa-fqhc: 2.0
     usgov-imls-pls: 2.0
     usgov-nad: 1.0
-    state-ia-contractors: 2.0
+    state-ia-builders: 2.0
     state-tx-notaries: 1.5
     state-ny-notaries: 2.0
     deepseek-kryptonite: 3.0
@@ -63,7 +63,7 @@ data:
     # street decomposition entirely. The 4:1 anti-decompose ratio that would
     # come from 0.25 here would overcorrect (per DeepSeek turn 7).
     synth-street: 0.5
-    # === v0.6.2b: HALVED from v0.6.2's 1.0 ===
+    # === v0.6.2b: halved from v0.6.2's 1.0 ===
     # 1.0 in v0.6.2 produced step-20K street recall regression and street_suffix
     # hallucination explosion (357 hallucinations). 0.5 gives a 1:1 anti-decompose-
     # to-decompose ratio with synth-street at 0.5 — symmetric pressure.

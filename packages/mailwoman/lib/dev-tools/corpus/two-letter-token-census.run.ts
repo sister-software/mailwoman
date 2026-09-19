@@ -6,16 +6,16 @@
  *   What a two-letter uppercase token teaches: a region, a country, a street suffix, or something else (#2311).
  *
  *   `Marble Falls, AR 72648` answers no locality while `Beacon Falls, CT 06403` answers one, and a 2x2 over the same
- *   60 Arkansas names shows the region code carrying about half the recovery. The mixture's region MASS does not
+ *   60 Arkansas names shows the region code carrying about half the recovery. The mixture's region mass does not
  *   explain which regions it favours — Arkansas holds 2.59% of US exposure and reads 2.3%, Vermont 0.05% and 100.0%.
  *   What is left is the surface: a code that opens a `country` span as often as a `region` one teaches both readings,
  *   and the decode has to pick.
  *
- *   No code list is typed. Every two-letter uppercase token that COVERS a whole span is counted with the tag it
+ *   No code list is typed. Every two-letter uppercase token that covers a whole span is counted with the tag it
  *   carries, and the contested set falls out of the data — `CT` is Connecticut and Court, `NL` is Newfoundland and the
  *   Netherlands, `AR` is Arkansas and Argentina. A typed list can only confirm a collision someone already suspected.
  *
- *   This counts the corpus POOL. `census_region_code_token` in `mailwoman_train.audits` counts the EMITTED mixture,
+ *   This counts the corpus pool. `census_region_code_token` in `mailwoman_train.audits` counts the emitted mixture,
  *   which is the pool after `source_weights` and after `augment_region_prob` writes region surfaces onto rows that
  *   carried none. The two answer different questions and the emitted one is the one an exposure decision is set
  *   against. this one needs no GPU, no Modal volume and no config.
@@ -66,7 +66,7 @@ const { db, fileList } = await openMixture(mixture.files, {
 })
 
 /**
- * Unnesting three parallel lists in one SELECT zips them positionally, so each row of `spans` is one span with its own
+ * Unnesting three parallel lists in one select zips them positionally, so each row of `spans` is one span with its own
  * offsets and tag. `regexp_full_match` keeps only a span whose entire text is two uppercase letters, which is the
  * surface an address line writes a region code as.
  */

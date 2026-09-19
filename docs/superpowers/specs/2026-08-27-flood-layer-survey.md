@@ -6,8 +6,8 @@ be allowed to claim, and which single source and region the first build should t
 follow-up issue, outlined in §7 and not filed here.
 
 The consuming implementation already exists, so nothing below proposes new architecture. The layer
-contract (`layer_manifest` / `layer_coverage` on the H3 spine) is specified in
-[`../../engineering/reference/layer-contract.mdx`](../../engineering/reference/layer-contract.mdx);
+interface (`layer_manifest` / `layer_coverage` on the H3 spine) is specified in
+[`../../engineering/reference/layer-interface.mdx`](../../engineering/reference/layer-interface.mdx);
 `packages/bdc` is the worked federal-provider shape; the exclusion-grade coverage pilot
 ([`2026-08-27-exclusion-grade-coverage-pilot.md`](./2026-08-27-exclusion-grade-coverage-pilot.md), PR
 #1973) is the basis discipline; and the observation carrier that shipped with PR #1979 delivers an
@@ -21,13 +21,13 @@ filled in with a plausible reading.
 ## 1. What this record settles, and what it deliberately does not
 
 Settled here: the verified inventory (§2), what each source's own coverage statement licenses a
-`layer_coverage` row to say (§3), the schema shape a flood layer takes under the existing contract
+`layer_coverage` row to say (§3), the schema shape a flood layer takes under the existing interface
 (§4), the pilot's source, region, verification ladder and consumer shape (§5), and the product
 requirement (§6).
 
 Not settled here, and named so nobody reads silence as a decision: the H3 resolution the containment
 index is built at (§4.4 — it is a measurement the pilot takes rather than a choice this record makes); the
-spine-key declaration for a polygon layer (§4.5 — the contract has met this shape before and the
+spine-key declaration for a polygon layer (§4.5 — the interface has met this shape before and the
 answer is the builder's); whether the observation's advisory code extends the existing query-intent
 vocabulary or widens the carrier (§5.5); and any distribution decision for a FEMA-derived artifact,
 which §2.2 shows rests on a license statement FEMA does not publish.
@@ -414,7 +414,7 @@ pharmacy class in the #1964 pilot; a class boundary is not incompleteness, and e
 fractional completeness would invent a measurement nobody took.
 
 That reasoning only holds if the layer cannot be read as covering a class it does not hold, and the
-contract has already met this problem. `absence-route.ts` records it — a coverage table
+interface has already met this problem. `absence-route.ts` records it — a coverage table
 carries a completeness per cell and no class, so a completeness measured over pharmacies would license
 a claim about cafés if nothing stopped it — and solves it by reading the held class out of the artifact
 and refusing unless the answered class is exactly it. The flood layer inherits the same rule: one
@@ -535,7 +535,7 @@ neighbour or to null converts "the source changed" into "there is nothing here".
 
 ### 4.2 Tables
 
-Four domain tables plus the two contract tables. Written as Kysely schema modules with the typed
+Four domain tables plus the two interface tables. Written as Kysely schema modules with the typed
 interface co-located with its `createXTable`, per the house database discipline.
 
 ```
@@ -566,10 +566,10 @@ flood_zone_vocabulary    -- the authority's declared domain, as shipped, so the 
   definition     TEXT     -- the authority's own words
   definition_url TEXT
 
-layer_manifest / layer_coverage   -- the contract tables, from @mailwoman/core/layers
+layer_manifest / layer_coverage   -- the interface tables, from @mailwoman/core/layers
 ```
 
-`WITHOUT ROWID` on `flood_zone_cell` and not on `flood_zone_area` follows the contract's own guidance
+`WITHOUT ROWID` on `flood_zone_cell` and not on `flood_zone_area` follows the interface's own guidance
 — small fixed-width rows probed by their exact primary key belong in the B-tree; a row carrying a
 geometry blob does not.
 
@@ -592,7 +592,7 @@ polygons.
 | `build_cmd` / `build_sha`   | the invocation and the commit that produced it                                                   |
 | `freshness_policy`          | `versioned-refresh` — the EA states an intent to republish, and re-issues under the same product |
 | `spine_keys`                | `{ h3: { column: …, resolution: … } }` — see §4.5                                                |
-| `created_at`                | caller-supplied, per the contract                                                                |
+| `created_at`                | caller-supplied, per the interface                                                               |
 
 A FEMA-sourced artifact could not take `tier: shipped` on the evidence in §2.2, because "access
 constraints: None" plus an acknowledgement request is not a redistribution license, and choosing to
@@ -629,7 +629,7 @@ reports the number at each resolution it tries and picks from the measurement.
 
 ### 4.5 A polygon row is not addressable by one spine key
 
-The contract requires every domain row to be addressable by at least one spine key, and a polygon is
+The interface requires every domain row to be addressable by at least one spine key, and a polygon is
 not: it spans several cells. `SpineKeys` has already grown once for precisely this reason — the situs
 extracts carry no cell, no WOF id and no address-id, so `street` was added rather than naming a column
 that does not exist. A cell-indexed geometry layer is the same kind of event, and this record does not
@@ -731,7 +731,7 @@ map assigns at the location, never whether the property is at risk.
 
 ### 5.5 The carrier, and the one place it does not fit
 
-`QueryIntentMarker` is the carrier. Its contract is already the requirement: a marker is additive,
+`QueryIntentMarker` is the carrier. Its interface is already the requirement: a marker is additive,
 attributed, always accompanied by the ordinary answer, and never changes which answer wins. It carries
 `mechanism` in the `family:rule` form and an `evidence` record, which is where everything in the
 paragraph above goes. `coverage_qualified_absence` is the same architecture, already shipped.

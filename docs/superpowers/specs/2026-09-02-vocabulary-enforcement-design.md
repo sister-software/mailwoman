@@ -14,7 +14,7 @@ claim is wider than the enforcement:
 | Surface                                                                  | Config            | Rules applied                            |
 | ------------------------------------------------------------------------ | ----------------- | ---------------------------------------- |
 | `docs/articles`, `docs/src/pages`, `writing-system.md`, `page-templates` | `.vale.ini`       | the full `Mailwoman` style               |
-| Root contracts, `docs/engineering`, package `README.md`                  | `.vale-vocab.ini` | `AmbiguousShorthand` only; six rules off |
+| Root interfaces, `docs/engineering`, package `README.md`                 | `.vale-vocab.ini` | `AmbiguousShorthand` only; six rules off |
 | Agent replies                                                            | `.vale-chat.ini`  | `Mailwoman` + `MailwomanChat`            |
 | **`.ts`, `.tsx`, `.py` comments and docstrings**                         | **none**          | **none**                                 |
 | `CHANGELOG.md`, `.github/`, `scripts/` markdown                          | none              | none                                     |
@@ -61,7 +61,7 @@ files:
 
 | Action         | Count | What it means                                                                                                                                                                                                                                                   | Judgement                            |
 | -------------- | ----- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------ |
-| `backtick`     | 163   | The site names a contract-tied identifier — `@mailwoman/locale-hint`, `promotion-eval.ts`, `mailwoman eval promote`, `mwdev_promotion_eval`. Vale skips inline code, so backticks are both the fix and correct markdown.                                        | none                                 |
+| `backtick`     | 163   | The site names a interface-tied identifier — `@mailwoman/locale-hint`, `promotion-eval.ts`, `mailwoman eval promote`, `mwdev_promotion_eval`. Vale skips inline code, so backticks are both the fix and correct markdown.                                       | none                                 |
 | `rename-check` | 956   | The modifier carries the check's real name: `street-context check` → `the street-context check`. Top modifiers: `street-context` 32, `delta` 20, `test` 19, `country` 27, `acceptance` 11, `postcode` 9, `§7-3b` 9, `existence` 8, `interval` 7, `detection` 6. | verify the modifier is the real name |
 | `read-context` | 895   | The site says only "the check" / "a check". Which check it means is learnable solely from the surrounding paragraph.                                                                                                                                            | full                                 |
 
@@ -100,10 +100,10 @@ order below keeps every intermediate state shippable and every diff reviewable.
 
 ## Two tensions the sweep will hit, decided here
 
-**`source of truth` (9 hits) is flagged by `StockPhrases`,** and `AGENTS.md` uses it as contract
+**`source of truth` (9 hits) is flagged by `StockPhrases`,** and `AGENTS.md` uses it as interface
 language: "`SCHEMA.mdx` is the single authoritative record for the `ComponentTag` union." The phrase names
 a real property — which document wins when two disagree. Keep the phrase; add it to the accept list
-rather than reword nine contracts.
+rather than reword nine interfaces.
 
 **`names the` (10 hits) is flagged by `StockPhrases`,** while "name the concrete thing" is the
 house instruction that the `AmbiguousShorthand` rule's own message gives. A rule that forbids the

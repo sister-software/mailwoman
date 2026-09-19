@@ -10,7 +10,7 @@ Prereqs: PR #1154 (the span-decode surface on main). Companion receipts:
 The span head's k-best list contains the right street parse far more frequently than rank 1 shows it
 (oracle@5 0.723 vs seg@1 0.577 on parity). Phase 4a measured the planned arbiter signal —
 full-geocode resolution tier — at exactly **zero** collected headroom: the failing class is
-context-free fragments, which never reach rooftop layers, so every hypothesis ties at admin tier
+context-free fragments, which never reach rooftop layers. Therefore, every hypothesis ties at admin tier
 (evidence rate 3.4%). The corrected signal is **street-NAME existence**: "does this hypothesis's
 street surface exist as a street name in the national register?" — queryable for fragments, and
 measured on the FR fragment board (n=1600) at **street@1 0.619 → 0.711 (+9.3pp), bare-street
@@ -78,7 +78,7 @@ Index backends, in build order:
 3. **PT/RO/NO/…** — per the registry-backed-structured-prediction doctrine tiers; each new index
    is data work only, no code change.
 
-Fold parity is a CONTRACT: the index builder and the runtime prober must share the fold function
+Fold parity is a INTERFACE: the index builder and the runtime prober must share the fold function
 (export it beside the interface). The 4 original G2 breaks were fold mismatches (`pillet-will`
 stored unhyphenated); the builder should normalize hyphens/apostrophes to spaces on both sides —
 re-measure the 3 residual breaks after that change, it likely reduces them further.

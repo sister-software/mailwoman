@@ -3,21 +3,21 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Build a per-country OSM ROOFTOP address-point extract from a Geofabrik `.osm.pbf` extract, on the
- *   SHARED situs schema (`@mailwoman/resolver-wof-sqlite/address-point-schema`) so the existing
- *   `AddressPointSqliteLookup` reads it with zero changes. Address-POINT-first by design: we write the
+ *   Build a per-country OSM rooftop address-point extract from a Geofabrik `.osm.pbf` extract, on the
+ *   shared situs schema (`@mailwoman/resolver-wof-sqlite/address-point-schema`) so the existing
+ *   `AddressPointSqliteLookup` reads it with zero changes. Address-point-first by design: we write the
  *   exact `addr:housenumber` coordinate (node, or building-polygon centroid). Points with no
- *   `addr:street` are COUNTED and skipped (the association gap DeepSeek flagged) — we size that gap
+ *   `addr:street` are counted and skipped (the association gap DeepSeek flagged) — we size that gap
  *   before deciding whether to build the `associatedStreet` / point-in-polygon recovery pass.
  *
- *   ⚠ ODbL: the OUTPUT extract is an OpenStreetMap Derived Database (share-alike). This code carries no
+ *   ⚠ ODbL: the output extract is an OpenStreetMap Derived Database (share-alike). This code carries no
  *   OSM bytes. the obligation rides on the built `.db`. Source = `openstreetmap:<cc>`. See
- *   `osm/README.md` for the licensing boundary + the counsel sign-off required before any extract ships.
+ *   `osm/readme.md` for the licensing boundary + the counsel sign-off required before any extract ships.
  *
  *   Usage:
  *     node osm/scripts/build-rooftop-extract.ts \
  *       --country fr --slug idf --release 260627 \
- *       --created-at 2026-06-27T00:00:00.000Z --build-sha $(git rev-parse HEAD) \
+ *       --created-at 2026-06-27T00:00:00.000Z --build-sha $(git rev-parse head) \
  *       --pbf $MAILWOMAN_DATA_ROOT/osm/geofabrik/ile-de-france-260627.osm.pbf
  */
 
@@ -181,7 +181,7 @@ async function main(): Promise<void> {
 				recovered++
 			}
 
-			// Per-SURFACE locale routing (the Québec finishing move): a French-lead surface folds under the fr
+			// Per-surface locale routing (the Québec finishing move): a French-lead surface folds under the fr
 			// rules whatever the country default. the probe side routes with the same shared function.
 			const streetNorm = normalizeStreetForKeyLocale(street, streetLocaleForSurface(street, locale))
 			const number = rec.housenumber.trim().toLowerCase()

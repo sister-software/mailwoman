@@ -1,21 +1,21 @@
 # === v1.4.0-charoffset (the first char-offset-corpus run) =======================================
 # Identical recipe to v1.3.0-boundary-consolidation (the v4.4.0 ship), retargeted at the v0.5.0
-# CHAR-OFFSET corpus. This is the format-change run: same changes, same source mix, same checks — the
+# char-offset corpus. This is the format-change run: same changes, same source mix, same checks — the
 # one variable is that labels now come from the #519 span triple (span_starts/ends/tags) instead of
 # per-token BIO. The loader's span path (PR #534) trains from the spans. encode_row realigns them to
 # SentencePiece pieces. Holding the recipe fixed is deliberate: it isolates "did the format change
 # move anything?" from any recipe drift.
 #
-# WHY THIS RUN EXISTS — the bridge-retirement test. The decode-side span bridge (adjacent same-tag
+# why this RUN exists — the bridge-retirement test. The decode-side span bridge (adjacent same-tag
 # merge) has been carrying dotted po_box / cedex since the token era. Char-offset labels let the model
-# learn those spans INTRINSICALLY. The check (scripts/eval/checks/v0.5.0-bridge.json) asks: does dotted
+# learn those spans intrinsically. The check (scripts/eval/checks/v0.5.0-bridge.json) asks: does dotted
 # po_box hold >= 89.1 with the bridge off? If yes, the bridge retires. That test is only meaningful
 # because the po_box signal is now a char-span the model can learn — which is exactly why the corpus
 # had to carry the re-emitted synth-po-box-cedex overlay (it does: 50k rows, char-offset, source-tagged).
 #
-# CORPUS: /data/corpus/versioned/v0.5.0/corpus-v0.5.0 — 676.62M train (676.13M base + 484.8k overlay),
+# corpus: /data/corpus/versioned/v0.5.0/corpus-v0.5.0 — 676.62M train (676.13M base + 484.8k overlay),
 # 1.89M val, 1.89M test. 18 weighted sources, all present (11 base + 7 re-emitted parity overlays).
-# KNOWN CAVEAT (stopgap rather than a recipe choice): the corpus stores UTF-16 span offsets (#519); the
+# known caveat (stopgap rather than a recipe choice): the corpus stores UTF-16 span offsets (#519); the
 # ~0.06% astral-script rows are skipped at load by the #558 iter_encoded guard. The lasting fix
 # (code-point re-align → corpus-v0.5.1) is DeepSeek's follow-on. it does not check this run.
 # Launch: cd corpus-python && modal run -d -m launch.train_remote --config v1.4.0-charoffset.yaml --resume none
@@ -36,7 +36,7 @@ data:
     usgov-hrsa-fqhc: 2.0
     usgov-imls-pls: 2.0
     usgov-nad: 1.0
-    state-ia-contractors: 2.0
+    state-ia-builders: 2.0
     state-tx-notaries: 1.5
     state-ny-notaries: 2.0
     deepseek-kryptonite: 3.0

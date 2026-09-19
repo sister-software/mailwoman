@@ -4,12 +4,12 @@
  * @author Teffen Ellis, et al.
  *
  *   Learned-scorer probe (#603) — does a model over the Fellegi-Sunter feature vector separate
- *   matches from non-matches BETTER than the FS scorer itself? This is the honest, rigorous answer
+ *   matches from non-matches better than the FS scorer itself? This is the honest, rigorous answer
  *   to "is the learned-scorer path worth it?" before investing in a full GBM/training pipeline.
  *
  *   The over-merge (co-located distinct providers fused. co-located same-entity name-drift split) is
- *   a FIELD-INTERACTION effect FS can't express: it scores each field independently. A learned
- *   model with INTERACTION features (spatial-agreement × name-disagreement) can. We test that
+ *   a field-interaction effect FS can't express: it scores each field independently. A learned
+ *   model with interaction features (spatial-agreement × name-disagreement) can. We test that
  *   directly, with a clean methodology — no clustering confound, no leakage:
  *
  *   1. Generate the same NPI-keyed records as the dedup benchmark (real registry + name-drift +
@@ -22,11 +22,11 @@
  *        gradient-boosted shallow trees (non-linear — the model #603 names). Both pure-Node.
  *   5. Score the test pairs with (a) the EM-fitted FS scorer, (b) the LR, (c) the GBT. Report pairwise
  *        ROC-AUC + best-threshold F1 for each, averaged over N seeds. AUC is threshold-free: does
- *        the learned scorer RANK matches above non-matches better than FS — and does the TREE beat
- *        the LINEAR model (i.e. is there non-linear signal the hand-crafted interaction features
+ *        the learned scorer rank matches above non-matches better than FS — and does the tree beat
+ *        the linear model (i.e. is there non-linear signal the hand-crafted interaction features
  *        miss)?
  *
- *   Honest caveats are printed: in-domain (TX), a modest sample, PAIRWISE (not the clustering
+ *   Honest caveats are printed: in-domain (TX), a modest sample, pairwise (not the clustering
  *   metric). The definitive test is a GBM A/B on the dedup clustering metric with a
  *   train-TX/eval-held-out-state split (#603 Tier 2); this probe bounds the pairwise-ranking improvement
  *   cheaply first.
@@ -91,7 +91,7 @@ export interface ScorerPairwiseEvalOptions {
 	 */
 	npis?: number
 	/**
-	 * Base PRNG seed. Default 1.
+	 * Base prng seed. Default 1.
 	 */
 	seed?: number
 	/**
@@ -129,7 +129,7 @@ export async function scorerPairwiseEval(
 	report?.("[C] geocoding…")
 	const geocoder = await options.createGeocoder()
 
-	// `auth`/`taxonomy` ride as attributes so the SHARED featurizer's #625 roll-up features can read the
+	// `auth`/`taxonomy` ride as attributes so the shared featurizer's #625 roll-up features can read the
 	// authorized official. the FS arm ignores them (no discriminators configured).
 	const mapping: ColumnMapping = {
 		id: "npi",
@@ -154,7 +154,7 @@ export async function scorerPairwiseEval(
 	const patterns = pairs.map(([a, b]) => agreementPattern(model.comparisons, a, b))
 	const fsModel = estimateParameters(model, patterns).model
 
-	// The SHARED production featurizer (createMatchFeaturizer) — train ≡ eval ≡ inference, one definition.
+	// The shared production featurizer (createMatchFeaturizer) — train ≡ eval ≡ inference, one definition.
 	const featurize = createMatchFeaturizer({ comparisons: model.comparisons, addressFrequency })
 
 	interface Sample {
@@ -213,7 +213,7 @@ export async function scorerPairwiseEval(
 		const sampleWeights = train.map((s) => (s.y === 1 ? 1 - posWeight : posWeight))
 
 		// L2-regularized logistic regression (batch gradient descent), rare class up-weighted — the
-		// SHARED trainer.
+		// shared trainer.
 		const lrScore = trainLogisticRegression(
 			train.map((s) => s.x),
 			train.map((s) => s.y),

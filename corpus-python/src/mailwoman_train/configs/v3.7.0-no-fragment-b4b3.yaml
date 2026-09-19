@@ -1,35 +1,35 @@
-# === v3.7.0-no-fragment-b4b3 — Track B, knob 3: LONG-NUMBER OVERSAMPLE. 2k PROBE rather than a ship. ===
-# THE LAST corpus probe for digit-ownership. If it misses, the defect is exhaustively closed.
+# === v3.7.0-no-fragment-b4b3 — Track B, knob 3: long-number oversample. 2k probe rather than a ship. ===
+# the last corpus probe for digit-ownership. If it misses, the defect is exhaustively closed.
 #
-# PRE-REGISTERED READ (written before the numbers exist. graded on the Norway digit board, board 3,
-# scratchpad/run-digit-board.run.ts, package-shaped int8, vs the registered SHIPPED-v310 baselines).
+# PRE-registered read (written before the numbers exist. graded on the Norway digit board, board 3,
+# scratchpad/run-digit-board.run.ts, package-shaped int8, vs the registered shipped-v310 baselines).
 #
-# THE ONE VARIABLE vs v3.3.0: --long-number-boost 4 (min 3 digits). bare-street-prob is back at 0.30
-# (knob 1 at 0.70 was FALSIFED — it starved the street+number rows and CAUSED street-absorption. see
-# scratchpad/deepparse-cmp/B4B-verdict.md). This knob does the OPPOSITE: it emits 4 copies of each
+# the one variable vs v3.3.0: --long-number-boost 4 (min 3 digits). bare-street-prob is back at 0.30
+# (knob 1 at 0.70 was falsifed — it starved the street+number rows and caused street-absorption. see
+# scratchpad/deepparse-cmp/B4B-verdict.md). This knob does the opposite: it emits 4 copies of each
 # street+number row whose number has >=3 digits. Composition: street-hn 59% (of which 2,768 rows are
 # >=3-digit, oversampled 4x), bare-street 17% (measured, scratchpad/build-no-fragment-b4b3.run.ts).
 #
-# WHY. B4b knob 1 revealed the target bare-street-hn is DUAL-MODE: (1) digit->postcode (Leppdalsvegen
-# 1285 -> postcode: the tokenizer length prior) and (2) number absorbed into street. Knob 3 attacks BOTH
-# directly — oversampling street + LONG number teaches the street/number boundary (kills absorption) and
-# fights the length prior with volume (the only on-board fix for mode 1 was numsplice, which CLOSED as a
+# why. B4b knob 1 revealed the target bare-street-hn is dual-mode: (1) digit->postcode (Leppdalsvegen
+# 1285 -> postcode: the tokenizer length prior) and (2) number absorbed into street. Knob 3 attacks both
+# directly — oversampling street + long number teaches the street/number boundary (kills absorption) and
+# fights the length prior with volume (the only on-board fix for mode 1 was numsplice, which closed as a
 # golden-check trade — this is the corpus alternative, uphill against the same prior).
 #
-# THE MEASURED PROBLEM (board 3, n=400/class, 95% Wilson, shipped v310, zero Norwegian rows pre-#1145):
-#     bare-street-hn   "Leppdalsvegen 1285"   0.693 [0.646, 0.736]   <- TARGET (no postcode competing)
+# the measured problem (board 3, n=400/class, 95% Wilson, shipped v310, zero Norwegian rows pre-#1145):
+#     bare-street-hn   "Leppdalsvegen 1285"   0.693 [0.646, 0.736]   <- target (no postcode competing)
 #
-# MOVE  : bare-street-hn CLEARS the bar the corpus change has missed twice — clear motion, its lower CI
+# move  : bare-street-hn clears the bar the corpus change has missed twice — clear motion, its lower CI
 #         above v310's upper CI (0.736), so ~>=0.78. Falsifier: if long-number oversample also misses,
-#         the corpus change is exhaustively refuted and digit-ownership CLOSES (numsplice already a bad
+#         the corpus change is exhaustively refuted and digit-ownership closes (numsplice already a bad
 #         trade, knob 1 falsified) — a real, decision-ending result. This is the last probe.
-# GUARD : bare-pc (negative class) stays at 1.000 — the model must not stop emitting postcode.
-# GUARD : street-led-hn / city-first-hn / pc-first-hn do not regress from 0.94-0.968.
-# GUARD : the FR fragment board (board 2) does not re-drift below FR OVERALL ~0.725 (v310 0.733).
-# GUARD : GOLDEN (post-numsplice lesson — an on-board win can hide an off-board cost). If board 3 passes,
+# guard : bare-pc (negative class) stays at 1.000 — the model must not stop emitting postcode.
+# guard : street-led-hn / city-first-hn / pc-first-hn do not regress from 0.94-0.968.
+# guard : the FR fragment board (board 2) does not re-drift below FR overall ~0.725 (v310 0.733).
+# guard : golden (post-numsplice lesson — an on-board win can hide an off-board cost). If board 3 passes,
 #         run the golden check delta vs v310. fr.house_number / us.unit_real must not regress >2pp.
 #
-# NOT A SHIP. A pass justifies a full 8k pre-registered against the same board. Promotion is operator's.
+# not A ship. A pass justifies a full 8k pre-registered against the same board. Promotion is operator's.
 #
 # init_from v310 step-008000, fresh optimizer, LR 1.0e-5 constant, 2000 steps, warmup 200.
 #
@@ -72,7 +72,7 @@ data:
     usgov-hrsa-fqhc: 2.0
     usgov-imls-pls: 2.0
     usgov-nad: 1.0
-    state-ia-contractors: 2.0
+    state-ia-builders: 2.0
     state-tx-notaries: 1.5
     state-ny-notaries: 2.0
     deepseek-kryptonite: 3.0
@@ -92,9 +92,9 @@ data:
     synth-no-street-led: 0.0
     synth-cz-pcfirst-preposition: 12.0
     synth-nl-postcode: 6.0
-    # PROBE 1: the fragment/autocomplete source (assay weight — moderate precedent).
+    # probe 1: the fragment/autocomplete source (assay weight — moderate precedent).
     synth-fragment: 6.0
-    # #727 T2 NEW — the one variable. 12.0 = the targeted-fix precedent (fr-bare-street,
+    # #727 T2 new — the one variable. 12.0 = the targeted-fix precedent (fr-bare-street,
     # si-bare-village, no-street-led are all 12.0). Streets with no house number + the
     # bare-locality counter.
     synth-fr-fragment: 12.0
@@ -136,12 +136,12 @@ model: # Verbatim from v2.4.1.
   use_postcode_anchor: true
   use_gazetteer_anchor: true
   gazetteer_feature_dim: 5
-  # #1104 country channel ON — dedicated 2-dim [country_surface, country_ambiguous] soft feed with its
+  # #1104 country channel on — dedicated 2-dim [country_surface, country_ambiguous] soft feed with its
   # own projection + confidence (must equal the lexicon's feature_dim). Default-False elsewhere, so a
   # resume from a pre-country checkpoint stays byte-identical until this flips.
   use_country_anchor: true
   country_feature_dim: 2
-  # #1104 homograph-guard SOFTENER — the one variable vs v263. Scales the country_ambiguous dim by 0.5
+  # #1104 homograph-guard softener — the one variable vs v263. Scales the country_ambiguous dim by 0.5
   # before the country_projection (bakes into the exported ONNX. no lexicon/inference change). v263's
   # hard guard (scale 1.0) over-suppressed homograph countries Georgia/Jordan (country-homograph F1
   # 89.8->82.6); softening should recover homograph recall without giving back the country F1 the

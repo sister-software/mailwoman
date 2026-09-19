@@ -3,15 +3,15 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Typed schema for the TIGER STREET-SEGMENT interpolation extracts (`street-segments-<cc>-<st>.db`,
- *   built by `scripts/build-interpolation-extract.ts` from TIGER EDGES) — the #483 Method-3 fallback
+ *   Typed schema for the tiger street-segment interpolation extracts (`street-segments-<cc>-<st>.db`,
+ *   built by `scripts/build-interpolation-extract.ts` from tiger edges) — the #483 Method-3 fallback
  *   the resolver drops to when the address-point tier (Method 2) can't bracket. Single source of
- *   truth for the columns the BUILDER writes and the READER ({@link StreetInterpolator}) probes, so
+ *   truth for the columns the builder writes and the reader ({@link StreetInterpolator}) probes, so
  *   a column rename in one is a compile error in the other.
  *
  *   The builder reads geometry from shapefiles via DuckDB's spatial extension (raw `ST_Read` — see
- *   AGENTS.md "Database / inline SQL") and writes here through `node:sqlite`. The hot positional
- *   INSERT (a county's worth of edges) stays raw. its column list is derived from
+ *   agents.md "Database / inline SQL") and writes here through `node:sqlite`. The hot positional
+ *   insert (a county's worth of edges) stays raw. its column list is derived from
  *   {@link STREET_SEGMENT_COLUMNS} so it can't drift from the DDL.
  */
 
@@ -20,20 +20,20 @@ import type { Kysely } from "kysely"
 import type { RouteKey } from "#street/normalize"
 
 /**
- * One TIGER street-segment edge: a `(from_hn, to_hn)` house-number range on one `side` of a named street, with the
+ * One tiger street-segment edge: a `(from_hn, to_hn)` house-number range on one `side` of a named street, with the
  * geometry the interpolator walks. `min_hn`/`max_hn` are the sorted bounds (the probe filters on them); `parity` is
  * `odd`/`even`/`mixed`.
  */
 export interface StreetSegmentTable {
 	/**
-	 * `canonicalizeRouteKey(normalizeStreetForKey(street))` — the build/query-consistent probe key. The column NAME says
+	 * `canonicalizeRouteKey(normalizeStreetForKey(street))` — the build/query-consistent probe key. The column name says
 	 * `street_norm`, but the value carries the route fold on top of the street fold, which is why the brand is
 	 * {@link RouteKey}: builder and probe both apply both folds, and a plain street key bound here misses every
 	 * numbered-route row.
 	 */
 	street_norm: RouteKey
 	/**
-	 * `L` or `R` — the TIGER side the address range sits on.
+	 * `L` or `R` — the tiger side the address range sits on.
 	 */
 	side: string
 	from_hn: number
@@ -56,7 +56,7 @@ export interface StreetSegmentTable {
 	 */
 	county_fips: string
 	/**
-	 * The street as it appeared in TIGER (kept for display / debugging).
+	 * The street as it appeared in tiger (kept for display / debugging).
 	 */
 	street_raw: string
 	/**
@@ -68,14 +68,14 @@ export interface StreetSegmentTable {
 	 */
 	source: string
 	/**
-	 * The pinned TIGER release the edge was ingested from.
+	 * The pinned tiger release the edge was ingested from.
 	 */
 	release: string
 }
 
 /**
  * The extract's single-row calibration metadata (#374 doctrine, 2026-07-26): the conformal radius multiplier is a
- * property of the CALIBRATION SET the artifact was built against — so it ships IN the artifact (the pair-index δ
+ * property of the calibration SET the artifact was built against — so it ships IN the artifact (the pair-index δ
  * precedent, `neural/pair-index-resolver.ts`), not in caller code. Written once by the builder. read at open time by
  * {@link StreetInterpolator}. Extracts built before this table exists simply lack it — the reader degrades to
  * `undefined` and callers fall back to the in-code per-region table (never patch shipped DBs — rebuild).
@@ -104,7 +104,7 @@ export interface StreetSegmentDatabase {
 }
 
 /**
- * The `street_segment` columns in INSERT order. The builder's positional prepared statement derives its placeholder
+ * The `street_segment` columns in insert order. The builder's positional prepared statement derives its placeholder
  * list from this, so the positional order can't drift from the DDL / the reader.
  */
 export const STREET_SEGMENT_COLUMNS = [
@@ -148,7 +148,7 @@ export async function createStreetSegmentTable(db: Kysely<StreetSegmentDatabase>
 /**
  * Create + populate the single-row `interp_calibration` metadata table (see {@link InterpCalibrationRow}) — called once
  * by the extract builder, after the value is selected from the calibration source of record. Build-time only (async
- * Kysely is fine here); the READ side is the raw sync probe in {@link StreetInterpolator}'s constructor, per the
+ * Kysely is fine here); the read side is the raw sync probe in {@link StreetInterpolator}'s constructor, per the
  * sync-by-interface doctrine.
  */
 export async function writeInterpCalibration(

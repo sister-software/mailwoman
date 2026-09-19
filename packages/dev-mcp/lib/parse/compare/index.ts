@@ -3,20 +3,20 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   What is this string MADE OF — mailwoman's reading against libpostal's, on the same input.
+ *   What is this string made OF — mailwoman's reading against libpostal's, on the same input.
  *
  *   `mwdev_compare` grades geocoders on a coordinate, and libpostal produces none: it is a parser rather than a geocoder, so
  *   an arm that scored it there would record a miss on every row at every threshold. It is also the only genuinely
- *   like-for-like PARSE comparison available — it is Pelias's parser, and `@mailwoman/libpostal` implements its exact
- *   `/parse` contract — which is why the question gets its own surface rather than a column in a distance table.
+ *   like-for-like parse comparison available — it is Pelias's parser, and `@mailwoman/libpostal` implements its exact
+ *   `/parse` interface — which is why the question gets its own surface rather than a column in a distance table.
  *
  *   **Both sides are expressed in libpostal's label vocabulary, using the drop-in's own converter.** Mailwoman's tree
  *   goes through `treeToParseMatches` + `toLibpostalComponents`, the same pair `@mailwoman/libpostal` serves from, so
  *   the two readings are compared in one vocabulary and no inverse map is re-typed here.
  *
- *   That mapping is LOSSY AND MANY-TO-ONE, and every reading of this output depends on knowing it. `neighbourhood` and
+ *   That mapping is lossy and many-TO-one, and every reading of this output depends on knowing it. `neighbourhood` and
  *   `dependent_locality` both become `suburb`; `macroregion` and `subregion` both become `state_district`; `venue` and
- *   `house` both become `house`; `intersection_a` and `intersection_b` both become `road`. So agreement on a LABEL is
+ *   `house` both become `house`; `intersection_a` and `intersection_b` both become `road`. So agreement on a label is
  *   not agreement on a TAG, and the mailwoman side carries its original tag beside the mapped label rather than
  *   letting the collapse pass for consensus.
  *
@@ -118,7 +118,7 @@ export function mailwomanSpans(tree: AddressTree): LabelledSpan[] {
 }
 
 /**
- * One libpostal endpoint, paced and mapped the way every other HTTP caller in this repo is.
+ * One libpostal endpoint, paced and mapped the way every other http caller in this repo is.
  */
 export function libpostalClient(endpoint: string): APIClient {
 	return new APIClient({
@@ -135,7 +135,7 @@ export function libpostalClient(endpoint: string): APIClient {
 /**
  * Ask an endpoint for its reading.
  *
- * `address` rather than `query`: it is the parameter the reference libpostal REST server takes, and `@mailwoman/
+ * `address` rather than `query`: it is the parameter the reference libpostal rest server takes, and `@mailwoman/
  * libpostal` accepts it as an alias, so one spelling reaches both.
  */
 export async function libpostalSpans(client: APIClient, input: string): Promise<LabelledSpan[]> {

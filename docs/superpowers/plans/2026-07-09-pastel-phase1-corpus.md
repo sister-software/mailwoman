@@ -1,10 +1,10 @@
 # Pastel Arc Phase 1: corpus Implementation Plan
 
-> **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
+> **For agentic workers:** required sub-skill: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
 **Goal:** `corpus/scripts/` deleted; every corpus tool lives in `corpus/src/tools/` behind a `mailwoman corpus …` command; the fetch family shares one download/manifest util built on Phase 0's `sha256File`.
 
-**Architecture:** Tool modules follow the spec's contract — `export async function run(options, report?)`, no argv, no `process.exit`, throw on failure. Commands are thin TSX using `useCommandTask` from `mailwoman/cli-kit`. The corpus workspace (the `src/`-nested exception) gains a `./tools` subpath export (dual maps). `mailwoman/corpus-tools/` absorbs into `corpus/src/tools/` so the corpus workspace owns all corpus logic.
+**Architecture:** Tool modules follow the spec's interface — `export async function run(options, report?)`, no argv, no `process.exit`, throw on failure. Commands are thin TSX using `useCommandTask` from `mailwoman/cli-kit`. The corpus workspace (the `src/`-nested exception) gains a `./tools` subpath export (dual maps). `mailwoman/corpus-tools/` absorbs into `corpus/src/tools/` so the corpus workspace owns all corpus logic.
 
 **Tech Stack:** Phase 0 helpers (`sha256File`, `readJSONL`/`writeJSONL`), `useCommandTask`/`CheckList`, Pastel zod options, vitest.
 

@@ -6,7 +6,7 @@
  *   Reader and audit for the address-source register.
  *
  *   {@linkcode readAddressSourceRegister} refuses a register that fails {@linkcode auditAddressSourceRegister}, the
- *   same contract `@mailwoman/activity-lexicon` uses: a table nobody can check is a claim, and a consumer that
+ *   same interface `@mailwoman/activity-lexicon` uses: a table nobody can check is a claim, and a consumer that
  *   silently accepted a broken one would report a missing source as an absent source.
  *
  *   Nothing here ranks, scores or orders. The register reports what is known about a source and what remains

@@ -3,7 +3,7 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   `filing_landscape` reader — the FOUR PRE-REGISTERED ACCEPTANCE CRITERIA this whole phase
+ *   `filing_landscape` reader — the four PRE-registered acceptance criteria this whole phase
  *   is judged by. See `filing-landscape.test.ts` for the criterion tests. this module is only the reader.
  *
  *   Coverage check (the meaning-of-zero rule): a queried block counts as surveyed only when its res-6
@@ -16,16 +16,16 @@
  *     "unknown geoid" discipline in `build-bdc.ts`), so it falls straight to unknown.
  *   - For an `h3Cells` query, the caller supplies the res-9 cell directly, so coverage can be checked
  *     even for a cell with no filing rows of its own — a genuine "surveyed, zero providers here" result,
- *     the meaning-of-zero rule's POSITIVE case (covered but empty is not the same as never surveyed).
+ *     the meaning-of-zero rule's positive case (covered but empty is not the same as never surveyed).
  *
- *   The res-6 parent is reconstructed from the STORED res-9 cell (`@mailwoman/spatial`'s `expandH3Cell`
+ *   The res-6 parent is reconstructed from the stored res-9 cell (`@mailwoman/spatial`'s `expandH3Cell`
  *   back to a full index, then `cellToParent`) rather than recomputed from the block centroid. See
  *   {@link res9ShortCellToRes6Parent}.
  *
  *   This same formula is exactly what `build-bdc.ts` must use (and does) to derive the
  *   coverage cell it writes at build time — H3's cell hierarchy is not geometrically exact, so a
  *   `latLngToCell(centroid, 6)` computed independently of the stored res-9 cell disagrees with
- *   `cellToParent(res9Cell, 6)` for a real fraction of points (verified ~6% over CONUS). Builder and
+ *   `cellToParent(res9Cell, 6)` for a real fraction of points (verified ~6% over conus). Builder and
  *   reader deriving the res-6 parent differently is a self-contradiction waiting to happen: a
  *   genuinely-surveyed block (real rows, real `layer_coverage` entry) reads back as
  *   `unknown_block_count` while its own rows still populate `filings`. `filings` is scoped to units that
@@ -49,13 +49,13 @@ export interface FilingLandscapeQuery {
 }
 
 /**
- * One provider/technology/speed-bucket group's block count within the query — `block_count` is the number of DISTINCT
+ * One provider/technology/speed-bucket group's block count within the query — `block_count` is the number of distinct
  * queried blocks carrying this exact combination, never a raw row count. A block can carry multiple `bdc_availability`
  * rows for the same (provider_id, technology_code) pair even in the default (non-`includeLocationIDs`) build mode:
  * `build-bdc.ts`'s materialize-time collapse merges to one row per distinct (geoid, provider_id, technology_code,
  * speeds, low_latency, business_residential_code) tuple rather than one row per (geoid, provider_id, technology_code)
  * triple — so Broadband Serviceable Locations at the same triple with differing speeds/flags survive as separate rows
- * and can land in different `speed_bucket`s here (see that file's docstring). This `block_count`'s DISTINCT is exactly
+ * and can land in different `speed_bucket`s here (see that file's docstring). This `block_count`'s distinct is exactly
  * what keeps that from double-counting the block itself when it does.
  */
 export interface ProviderFilingSummary {
@@ -114,7 +114,7 @@ export const BDC_SPEED_BUCKET_THRESHOLD_100_MBPS = 100
 export const BDC_SPEED_BUCKET_THRESHOLD_GIGABIT_MBPS = 1000
 
 /**
- * Pure mirror of the SQL `CASE` expression below ({@link speedBucketCaseSQL}) — same thresholds, same labels, exported
+ * Pure mirror of the SQL `case` expression below ({@link speedBucketCaseSQL}) — same thresholds, same labels, exported
  * so the boundary logic can be asserted directly without a database round trip.
  */
 export function speedBucketForDownloadSpeed(maxAdvertisedDownloadSpeed: number): string {
@@ -128,8 +128,8 @@ export function speedBucketForDownloadSpeed(maxAdvertisedDownloadSpeed: number):
 }
 
 /**
- * The same bucketing as {@link speedBucketForDownloadSpeed}, expressed as a `CASE` over `max_advertised_download_speed`
- * so the GROUP BY below can group directly on the bucket.
+ * The same bucketing as {@link speedBucketForDownloadSpeed}, expressed as a `case` over `max_advertised_download_speed`
+ * so the group BY below can group directly on the bucket.
  */
 const speedBucketCaseSQL = sql<string>`CASE
 	WHEN max_advertised_download_speed < ${BDC_SPEED_BUCKET_THRESHOLD_25_MBPS} THEN ${BDC_SPEED_BUCKET_UNDER_25}

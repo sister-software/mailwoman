@@ -43,7 +43,7 @@ doctrine (operator-ratified) is required: evidence value peaks in the register u
 - ONNX export gains the two graph inputs (`export_onnx` wiring); node + browser classifiers feed
   them; `neural-web` parity.
 - The zero-feature path must be byte-identical to a no-channel model for back-compat weights (the
-  probe's smoke-test contract, now a standing test).
+  probe's smoke-test interface, now a standing test).
 
 ### Phase 3 — the production training run (M)
 

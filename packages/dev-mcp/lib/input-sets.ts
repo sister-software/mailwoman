@@ -5,7 +5,7 @@
  *
  *   Which inputs a measurement runs over, and what that choice costs.
  *
- *   The design rule (spec §5.1) is that the well-powered thing must be the CHEAPEST thing to type. `{kind:"board"}` is
+ *   The design rule (spec §5.1) is that the well-powered thing must be the cheapest thing to type. `{kind:"board"}` is
  *   the shortest legal value and default everywhere. A hand-picked list requires an array and a `why` string,
  *   so choosing a small sample is a deliberate act that leaves a record in the result. This inverts the incentive that
  *   produced nine one-off probe scripts in a day, each with a panel its author chose and nobody reviewed.
@@ -53,7 +53,7 @@ export type InputSetRef =
 	  }
 
 /**
- * Held-out truth sources. `fr` is BAN, `us` is FDIC — the two `gauntlet/holdout.ts` defines, named here so a caller
+ * Held-out truth sources. `fr` is BAN, `us` is fdic — the two `gauntlet/holdout.ts` defines, named here so a caller
  * gets a closed set rather than a string that fails at read time.
  */
 export const HOLDOUT_SOURCES = ["fr", "us"] as const
@@ -85,7 +85,7 @@ type GoldenSplit = (typeof GOLDEN_SPLITS)[number]
 /**
  * A hand-picked input that carries its own truth point.
  *
- * `lat`/`lon` are an ASSERTION by whoever wrote the call. Nothing here verifies them, so the set's `why` has to say
+ * `lat`/`lon` are an assertion by whoever wrote the call. Nothing here verifies them, so the set's `why` has to say
  * where they came from — a resolved map link, an oracle, a survey. An invented pin grades nothing and looks identical
  * to a real one in the output.
  */
@@ -120,11 +120,11 @@ export interface ResolvedInput {
 	status?: string
 	/**
 	 * The case's expectations, when it has any. Present so a caller can grade. absent for literal inputs, which have no
-	 * truth attached and therefore cannot be graded — only observed.
+	 * truth attached. Therefore, it cannot be graded — only observed.
 	 */
 	seed?: SeedCase
 	/**
-	 * Truth COORDINATE, when the row carries one — the only axis a cross-engine comparison has.
+	 * Truth coordinate, when the row carries one — the only axis a cross-engine comparison has.
 	 *
 	 * Populated here for every corpus rather than read off `seed` by the caller, because only the board has a `SeedCase`
 	 * and a panel row does not. One field means `mwdev_compare` does not have to know which corpus a row came from, which
@@ -172,7 +172,7 @@ export interface ResolvedInputSet {
 	/**
 	 * How many rows carry each kind of truth.
 	 *
-	 * The per-kind counts OVERLAP — a row can pin components and a coordinate and a tier — so they must never be summed.
+	 * The per-kind counts overlap — a row can pin components and a coordinate and a tier — so they must never be summed.
 	 * `any` is the distinct row count and `none` its complement. those two are what add up to `n`. An earlier draft
 	 * summed the three and reported 839 rows carrying truth on a 558-row board, which is the shape of every
 	 * double-counted denominator.
@@ -263,11 +263,11 @@ export async function resolveInputSet(ref: InputSetRef): Promise<ResolvedInputSe
 /**
  * The autocomplete ladder over a board filter (#2154): every board row that carries a coordinate truth, expanded into
  * its prefix rungs — the input truncated at each token boundary plus the first three single characters — with each rung
- * graded against the ROW's truth and tolerance. This is what lets `mwdev_compare` run two arms over partial queries
+ * graded against the row's truth and tolerance. This is what lets `mwdev_compare` run two arms over partial queries
  * under the same grading and significance report as a finished one; `mailwoman eval autocomplete` reads the ladder in
  * its own top-k terms, and the full-string rung here must equal the ordinary board grade for the row.
  *
- * The locale hint is part of the input contract: a two-letter prefix carries no country evidence of its own, so every
+ * The locale hint is part of the input interface: a two-letter prefix carries no country evidence of its own, so every
  * rung runs with the row's country as its route, its fuzzy scope and its default country. A rung measured without the
  * hint would grade the gazetteer's population prior rather than autocomplete.
  */
@@ -323,13 +323,13 @@ async function resolveLadder(ref: Extract<InputSetRef, { kind: "ladder" }>): Pro
 /**
  * A fresh draw from a held-out truth source — the only set here the model cannot have memorized.
  *
- * REPRODUCIBILITY IS OPT-IN, and the default is the unseeded draw. A seeded default would be the more convenient choice
+ * Reproducibility is OPT-IN, and the default is the unseeded draw. A seeded default would be the more convenient choice
  * and it would quietly convert the one generalization measure in this file into a fixed corpus that the next training
  * run can absorb. `seed` is there for the case that genuinely needs it — re-running one arm later, or a
  * `{kind:"recorded"}` comparison, both of which require the two runs to see the same rows — and the result says which
  * of the two happened.
  *
- * COST, measured 2026-08-16 on this box, because a reservoir draw reads the entire source: **`us` 113 ms over 77,442
+ * Cost, measured 2026-08-16 on this box, because a reservoir draw reads the entire source: **`us` 113 ms over 77,442
  * parseable rows; `fr` 45.5 s over 26,721,353 rows** (BAN is a 5.06 GB CSV). The FR draw is therefore a per-call cost
  * on the order of a minute rather than a cached one — there is nowhere to cache it that would not defeat the freshness
  * the set exists for.
@@ -407,7 +407,7 @@ async function resolveLiteral(ref: Extract<InputSetRef, { kind: "literal" }>): P
 		)
 	}
 
-	// A row may carry its own truth point. That is what turns this from an observation set into the AUTHORING loop
+	// A row may carry its own truth point. That is what turns this from an observation set into the authoring loop
 	// for a new board row: measure the candidates against real coordinates first, then write the case file with the
 	// status you measured — rather than writing rows and discovering the score afterwards.
 	const rows: ResolvedInput[] = ref.inputs.map((entry, index) =>
@@ -424,7 +424,7 @@ async function resolveLiteral(ref: Extract<InputSetRef, { kind: "literal" }>): P
 	)
 
 	const graded = rows.filter((row) => row.truthLat !== undefined).length
-	// The digest keys on what was MEASURED — input plus its truth point — so two sets that share inputs but pin
+	// The digest keys on what was measured — input plus its truth point — so two sets that share inputs but pin
 	// different coordinates cannot collide on `setID` and be read as the same run.
 	const digest = rows.map((row) => `${row.input}\u0000${row.truthLat ?? ""}\u0000${row.truthLon ?? ""}`)
 
@@ -525,7 +525,7 @@ async function resolveBoard(ref: Extract<InputSetRef, { kind: "board" }>): Promi
 }
 
 /**
- * One JSONL corpus row, read loosely because these files are operator artifacts rather than a schema this repo owns.
+ * One jsonl corpus row, read loosely because these files are operator artifacts rather than a schema this repo owns.
  */
 interface CorpusRow {
 	id?: string
@@ -542,7 +542,7 @@ interface CorpusRow {
 }
 
 /**
- * Read a JSONL corpus, or say precisely which file was missing.
+ * Read a jsonl corpus, or say precisely which file was missing.
  *
  * A corpus that cannot be read must not resolve to an empty set: a measurement over zero rows reports zero differences,
  * which reads as "no effect" rather than "nothing ran".

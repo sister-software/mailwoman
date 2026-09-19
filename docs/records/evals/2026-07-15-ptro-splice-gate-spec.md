@@ -1,6 +1,6 @@
 # PT/RO diacritic splice — pre-registered check spec (#900 accept-overlap)
 
-**Status: PRE-REGISTRATION**, per the #900 splice-safety-check contract
+**Status: PRE-REGISTRATION**, per the #900 splice-safety-check interface
 (`CONTRIBUTING_MODEL_WORK.mdx` § Splice safety check): accepting a codepoint-overlapping locale is a
 commitment to a per-locale non-inferiority leg, declared in advance. The FR n=3000 coordinate leg
 from v5.1.0 is the template.

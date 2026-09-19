@@ -46,7 +46,7 @@ export interface OpenAPIDocInfo {
  * the read and the mapping live here rather than four times over. A manifest missing any of the three raises: the
  * document has no meaningful form without them, and every manifest here carries all three.
  *
- * @param base The CALLER's `import.meta.url`. The package resolves through the graph of the workspace that declares it,
+ * @param base The caller's `import.meta.url`. The package resolves through the graph of the workspace that declares it,
  *   which is what `resolve-from` exists for. resolving from here would answer through `@mailwoman/api-kit`'s instead.
  */
 export async function readServedDocumentInfo(

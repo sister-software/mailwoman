@@ -3,7 +3,7 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- * @file The orientation listing is injected at the top of every session, so its SIZE is part of its contract: a
+ * @file The orientation listing is injected at the top of every session, so its size is part of its interface: a
  *   listing that displaces the work it serves is worse than none. The budget below is the one the design rests on.
  */
 

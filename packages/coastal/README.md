@@ -5,7 +5,7 @@ England as a sealed spatial layer: acquisition, the `coastal-england.db` build, 
 answers what the authority's mapping assigns at a coordinate **under a named scenario**.
 
 Design record: [`docs/superpowers/specs/2026-08-27-erosion-layer-survey.md`](../../docs/superpowers/specs/2026-08-27-erosion-layer-survey.md).
-Contract: [`docs/engineering/reference/layer-contract.mdx`](../../docs/engineering/reference/layer-contract.mdx).
+Interface: [`docs/engineering/reference/layer-interface.mdx`](../../docs/engineering/reference/layer-interface.mdx).
 
 ## What it reports, and what it refuses to
 
@@ -278,7 +278,7 @@ the same rule the flood layer states for the same reason.
 Two further limits the coverage row cannot express, both from the authority's own text: the product
 "considers the predominant risk at the coast" and generally excludes foreshore features, so an NCERM
 answer is silent about flooding; and the 87 anomalous rows carry blank policy and defence fields with
-`published = 0`, which the Environment Agency documents no meaning for.
+`published = 0`; the Environment Agency documents no policy or defence fields for those rows.
 
 ## Building it
 

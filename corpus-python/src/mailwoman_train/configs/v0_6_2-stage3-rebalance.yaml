@@ -4,7 +4,7 @@
 #
 #   1. synth-street weight 2.0 → 0.5
 #      Reduces the "decompose mode" gradient pressure that v0.6.1 picked up.
-#      NOT going lower than 0.5 — the model still needs to learn legitimate US
+#      not going lower than 0.5 — the model still needs to learn legitimate US
 #      street decomposition. Counter-distribution comes from #2 rather than from
 #      depressing the synth-street signal further.
 #
@@ -42,8 +42,8 @@
 #   | -------------- | ------------------------- | ---------------------------- |
 #   | Pass           | ≥ 25%                     | Promote to default (HF)      |
 #   | Pass           | 15-24%                    | Ship as experimental         |
-#   | Pass           | ≤ 14.4% (v0.6.0 baseline) | HOLD (sidegrade not release) |
-#   | Fail           | any                       | HOLD                         |
+#   | Pass           | ≤ 14.4% (v0.6.0 baseline) | hold (sidegrade not release) |
+#   | Fail           | any                       | hold                         |
 #
 # Cost: ~5h on A100 at v0.6.0 throughput.
 #
@@ -66,7 +66,7 @@ data:
     usgov-hrsa-fqhc: 2.0
     usgov-imls-pls: 2.0
     usgov-nad: 1.0
-    state-ia-contractors: 2.0
+    state-ia-builders: 2.0
     state-tx-notaries: 1.5
     state-ny-notaries: 2.0
     deepseek-kryptonite: 3.0
@@ -81,7 +81,7 @@ data:
     # street decomposition entirely. The 4:1 anti-decompose ratio that would
     # come from 0.25 here would overcorrect (per DeepSeek turn 7).
     synth-street: 0.5
-    # NEW. 122K-row counter-example source. Weight 1.0 paired with synth-street
+    # new. 122K-row counter-example source. Weight 1.0 paired with synth-street
     # at 0.5 gives a 2:1 anti-decompose-to-decompose ratio after the
     # row-count-weighted contribution shakes out (100K × 1.0 ≈ 100K effective
     # steps vs 100K × 0.5 = 50K).

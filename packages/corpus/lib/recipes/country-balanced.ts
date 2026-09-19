@@ -3,17 +3,17 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   `country-balanced` recipe — the BALANCED, MODEL-FIRST country-coverage recipe (#464). The
- *   shipped model is STARVED on `country` (P=R=F1=0 on the homograph eval), so this fills the void
- *   the way the `unit` recipe did, but built to AVOID over-firing "trailing token ⇒ country". Three
+ *   `country-balanced` recipe — the balanced, model-first country-coverage recipe (#464). The
+ *   shipped model is starved on `country` (P=R=F1=0 on the homograph eval), so this fills the void
+ *   the way the `unit` recipe did, but built to avoid over-firing "trailing token ⇒ country". Three
  *   ingredients, ported faithfully from the root build script it replaced:
  *
  *   1. Breadth/recall — real OA skeletons (US/DE/FR/IT/NL) with a country token in a varied surface form
- *        from `@mailwoman/codex/country` (canonical / endonym / ISO code), + ~30% country-ABSENT
+ *        from `@mailwoman/codex/country` (canonical / endonym / ISO code), + ~30% country-absent
  *        negatives (teach O-emission, the precision floor).
- *   2. Homograph CONTRAST pairs — each true country-name homograph (Georgia, Jordan, Lebanon, Mexico,
+ *   2. Homograph contrast pairs — each true country-name homograph (Georgia, Jordan, Lebanon, Mexico,
  *        Peru, Turkey) rendered both ways: as `country` (foreign-city context) and as the US
- *        `region`/`locality` (US-ZIP context). Teaches that the label is CONTEXTUAL rather than
+ *        `region`/`locality` (US-ZIP context). Teaches that the label is contextual rather than
  *        positional.
  *   3. Code-as-region negatives — 2-letter codes that are both a US state abbrev and an ISO country code
  *        (CA/GA/IN/MA/PA/AL) in US-ZIP context → must read as `region`, never `country`.
@@ -38,7 +38,7 @@ import { readOATuples, type CorpusRecipe } from "#recipes/scaffold"
 import type { CanonicalRow } from "#types"
 import { alignRow } from "#utils"
 
-// v2: the country TOKEN is decoupled from the skeleton's locale and drawn from a BROAD pool — every
+// v2: the country token is decoupled from the skeleton's locale and drawn from a broad pool — every
 // ISO canonical name + every curated surface form (endonyms/abbrevs). Surface forms are over-weighted
 // so endonyms/abbrevs ("Deutschland","USA","NL") get strong signal.
 
@@ -172,7 +172,7 @@ async function readTuples(source: CountrySource, limit: number): Promise<Country
 const SURFACE_FORM_SHARE = 0.6
 
 /**
- * Pick a country token from the BROAD pool, or null (a country-absent negative). v2.
+ * Pick a country token from the broad pool, or null (a country-absent negative). v2.
  */
 function pickCountry(random: () => number): string | null {
 	if (random() < COUNTRY_ABSENT_PROB) return null // negative — teaches "trailing token != always country"
@@ -186,7 +186,7 @@ const FULL_CUTOFF = 0.8
 const FULL_NEWLINE_CUTOFF = 0.92
 
 /**
- * Render the address body in native-ish order. `country` null → a country-ABSENT negative row.
+ * Render the address body in native-ish order. `country` null → a country-absent negative row.
  */
 function renderCountry(
 	random: () => number,
@@ -210,7 +210,7 @@ function renderCountry(
 		const regPc = [reg, pc].filter(isPresent).join(" ")
 		body = `${hn} ${street}, ${loc}${regPc ? ", " + regPc : ""}`
 	} else if (order === "fr") {
-		// French is NUMBER-street, postcode-city: "84 Route de la Fontaine, 75008 Paris".
+		// French is number-street, postcode-city: "84 Route de la Fontaine, 75008 Paris".
 		body = `${hn} ${street}, ${[pc, loc].filter(isPresent).join(" ")}`
 	} else {
 		// DE/IT/NL: street-number, postcode-city: "Pariser Platz 1, 10117 Berlin".
@@ -241,7 +241,7 @@ function renderCountry(
 
 // ── Homograph contrast (the model-first addition) ───────────────────────────────────────────────
 // True country-name homographs: the surface form is both a country and a US state/locality. Rendering
-// each both ways (foreign-city → country. US-ZIP → region/locality) is what teaches the CONTEXTUAL
+// each both ways (foreign-city → country. US-ZIP → region/locality) is what teaches the contextual
 // distinction. role: how the surface reads in US context.
 interface Homograph {
 	surface: string
@@ -324,8 +324,8 @@ const houseNo = (random: () => number): string => String(1 + Math.floor(random()
 const HOMOGRAPH_WITH_STREET_SHARE = 0.6
 
 /**
- * A homograph CONTRAST row: ~half render the surface as `country` (foreign city), half as the US `region`/`locality`
- * (US ZIP, NO country). Returns iso2 for provenance.
+ * A homograph contrast row: ~half render the surface as `country` (foreign city), half as the US `region`/`locality`
+ * (US ZIP, no country). Returns iso2 for provenance.
  */
 function renderHomograph(random: () => number): {
 	fmt: string
@@ -353,7 +353,7 @@ function renderHomograph(random: () => number): {
 	const pc = sample(h.us.postcodes, random)
 
 	if (h.us.role === "region") {
-		// surface is the US STATE: "123 Oak Ave, Atlanta, Georgia 30309" → region, no country
+		// surface is the US state: "123 Oak Ave, Atlanta, Georgia 30309" → region, no country
 		return {
 			fmt: "homograph-us-region",
 			raw: `${hn} ${street}, ${h.us.locality}, ${h.surface} ${pc}`,
@@ -362,7 +362,7 @@ function renderHomograph(random: () => number): {
 		}
 	}
 
-	// surface is the US CITY: "123 Oak Ave, Lebanon, TN 37087" → locality, no country
+	// surface is the US city: "123 Oak Ave, Lebanon, TN 37087" → locality, no country
 	return {
 		fmt: "homograph-us-locality",
 		raw: `${hn} ${street}, ${h.surface}, ${h.us.region} ${pc}`,
@@ -372,7 +372,7 @@ function renderHomograph(random: () => number): {
 }
 
 /**
- * An abbrev-as-region negative: "123 Main St, Los Angeles, CA 90012" → region CA, NO country.
+ * An abbrev-as-region negative: "123 Main St, Los Angeles, CA 90012" → region CA, no country.
  */
 function renderAbbrevRegion(random: () => number): {
 	fmt: string

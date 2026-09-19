@@ -133,7 +133,7 @@ describe("unfedAnchorDetail — whether an unfed anchor channel is worth a warni
 	it("stays SILENT for a package that declares no binary — the #1516 false alarm", async () => {
 		// en-gb's shape. Its card says `requires.anchor.required: true` (about the shared encoder) and ships no
 		// binary on purpose, and the old condition read only the first half — so every process that loaded this
-		// overlay printed an anchor-OFF warning naming no package, which an operator whose primary bin was
+		// overlay printed an anchor-off warning naming no package, which an operator whose primary bin was
 		// present and feeding could only read as being about the primary.
 		const dir = packageDir({
 			requires: { anchor: { required: true } },

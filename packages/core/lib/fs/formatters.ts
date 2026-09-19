@@ -12,7 +12,7 @@ export const BYTES_PER_KIB = 1024
 
 export interface ByteFormatterOptions {
 	/**
-	 * Prefix an explicit `+` on a positive value. For a DELTA, where the sign is the information. A negative always
+	 * Prefix an explicit `+` on a positive value. For a delta, where the sign is the information. A negative always
 	 * carries its own sign.
 	 */
 	signed?: boolean
@@ -28,8 +28,8 @@ export interface ByteFormatterOptions {
  * Both bases, spelled correctly. A formatter that divides by 1024 and prints `KB` is off by 2.4% at KB and 10% by TB,
  * and the label is the only thing telling a reader which it did — so the choice is named at the call site:
  *
- * - {@linkcode ByteFormatter.formatIEC} for anything a MACHINE measured — heap, file size on disk, buffer length.
- * - {@linkcode ByteFormatter.formatSI} for a size a VENDOR reports. Disk capacity, download sizes and GitHub's own API
+ * - {@linkcode ByteFormatter.formatIEC} for anything a machine measured — heap, file size on disk, buffer length.
+ * - {@linkcode ByteFormatter.formatSI} for a size a vendor reports. Disk capacity, download sizes and GitHub's own API
  *   are quoted in powers of ten. rendering GitHub's `41.3 GB` as `38.5 GiB` is correct arithmetic and the wrong
  *   answer.
  *

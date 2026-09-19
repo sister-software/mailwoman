@@ -4,7 +4,7 @@
  * @author Teffen Ellis, et al.
  * @file Model-card channel declarations and per-tag capability reading — which evidence channels a weights bundle
  *   requires, which it merely ships, and what the runtime must warn about when one goes unfed. Split from
- *   `weights.ts`, which answers the different question of WHERE the artifacts are.
+ *   `weights.ts`, which answers the different question of where the artifacts are.
  */
 
 import { pathExists, readLocalBuffer, readLocalJSONFile, readLocalTextFile } from "@mailwoman/core/fs/readers"
@@ -20,8 +20,8 @@ import { PostcodeBinaryResolver } from "#postcode/binary-resolver"
 export { inferRequiredChannelsFromInputs } from "#ort-feeds"
 
 /**
- * The structured `requires` block of a `model-card.json` (#718) — the declared SHIP-CONFIG the model was trained
- * against. The ProductionScorer reads this and FAILS CLOSED when a declared channel isn't actually fed (silent OOD is
+ * The structured `requires` block of a `model-card.json` (#718) — the declared ship-config the model was trained
+ * against. The ProductionScorer reads this and fails closed when a declared channel isn't actually fed (silent OOD is
  * the #566/#685 trap). Each channel is optional. a missing channel means "not declared" (treated as not-required).
  */
 export interface RequiredChannels {
@@ -54,12 +54,12 @@ export interface RequiredChannels {
 	 */
 	suppress_gazetteer_near_postcode?: boolean
 	/**
-	 * Street-type evidence channel (Option-A bundle, Phase 3). `lexicon` NAMES the artifact generation the model trained
+	 * Street-type evidence channel (Option-A bundle, Phase 3). `lexicon` names the artifact generation the model trained
 	 * against — see {@linkcode EVIDENCE_LEXICON_FAMILIES}.
 	 */
 	street_type?: { required: boolean; lexicon?: string }
 	/**
-	 * Locality-surface evidence channel (Option-A bundle, Phase 3). `lexicon` NAMES the artifact generation the model
+	 * Locality-surface evidence channel (Option-A bundle, Phase 3). `lexicon` names the artifact generation the model
 	 * trained against — see {@linkcode EVIDENCE_LEXICON_FAMILIES}.
 	 */
 	locality_surface?: { required: boolean; lexicon?: string }
@@ -72,7 +72,7 @@ export interface RequiredChannels {
 export const ANCHOR_ARTIFACT_CARD_KEYS = ["postcode_anchor", "anchor_lookup"] as const
 
 /**
- * An artifact a package's own model-card DECLARES it ships, and whether it is actually there.
+ * An artifact a package's own model-card declares it ships, and whether it is actually there.
  */
 export interface DeclaredArtifact {
 	/**
@@ -98,7 +98,7 @@ export interface DeclaredArtifact {
  * inherits the base model. Conflating the two is the #1516 defect: en-gb's card declares `requires.anchor.required:
  * true` (a true statement about the encoder) while deliberately shipping no `postcode-gb.bin` under the #1476
  * mitigation, so a guard keyed on `requires` alone calls a supported configuration broken, and — because the old
- * warning fired once per PROCESS and named no package — the operator reads that as the PRIMARY locale's bin being
+ * warning fired once per process and named no package — the operator reads that as the primary locale's bin being
  * missing.
  *
  * Reads the package's own card only, never the `baseWeights` fallback: an overlay that ships no card of its own is
@@ -146,8 +146,8 @@ export async function readDeclaredArtifactFile(
 
 /**
  * Read + parse a `model-card.json` into a plain object, or `undefined` when the card is absent, unreadable, or not an
- * object — the shared DEFENSIVE preamble of every card reader below. Each reader keeps its own "present but corrupt"
- * checks: a malformed declared contract is a loud artifact bug rather than a silent re-default.
+ * object — the shared defensive preamble of every card reader below. Each reader keeps its own "present but corrupt"
+ * checks: a malformed declared interface is a loud artifact bug rather than a silent re-default.
  */
 async function readModelCardObject(
 	modelCardPath: PathBuilderLike | undefined
@@ -192,9 +192,9 @@ const warnedUnfedChannels = new Set<string>()
  * Build the loud-degrade warner for one weights package (#718 D1) — the Node mirror of the web loader's
  * `warnOnUnfedTrainedChannels`. A card that declares a channel required, paired with a package that didn't ship (or
  * could not parse) its data, runs that channel off. Structural fallback (the parse still works), loud console (a
- * silently anchor-OFF anchor-trained model is the #566/#685 OOD crater this exists to surface).
+ * silently anchor-off anchor-trained model is the #566/#685 OOD crater this exists to surface).
  *
- * BOUND TO A PACKAGE, and deduped per (channel, package) — it was once per channel per PROCESS until #1516. One process
+ * Bound TO A package, and deduped per (channel, package) — it was once per channel per process until #1516. One process
  * routinely loads several packages (the gauntlet grades six locale overlays), so channel-only dedupe meant the first
  * degraded package spoke and every later one was suppressed, while the line named no package at all. Both halves
  * produced the same wrong reading: an operator whose `postcode-us.bin` was present and feeding, watching a different
@@ -222,13 +222,13 @@ export function unfedChannelWarner(weightsPackage: string): (channel: UnfedChann
  * Why an unfed anchor channel is worth a warning for this package, or `undefined` when it is not.
  *
  * The condition the #1516 fix turns on, in one place because it is the whole substance of the fix. The old test was
- * `requires.anchor.required && nothing loaded`, and `requires` describes the trained ENCODER — shared by every overlay
+ * `requires.anchor.required && nothing loaded`, and `requires` describes the trained encoder — shared by every overlay
  * that inherits the base model. So the en-gb overlay, which ships no `postcode-gb.bin` on purpose under the #1476
- * mitigation, warned on every load. the line named no package and fired once per PROCESS, so an operator whose
+ * mitigation, warned on every load. the line named no package and fired once per process, so an operator whose
  * `postcode-us.bin` was present and feeding read it as the primary locale's binary having gone missing.
  *
  * Declared-and-missing is a broken package and stays loud. Declared-nothing is a supported posture and is silent —
- * `buildGauntletDeps` asserts the presence a GRADING run needs, which is the only place that knows whether this
+ * `buildGauntletDeps` asserts the presence a grading run needs, which is the only place that knows whether this
  * particular run needs GB anchors.
  */
 export async function unfedAnchorDetail(packageDir: PathBuilderLike | undefined): Promise<string | undefined> {
@@ -242,10 +242,10 @@ export async function unfedAnchorDetail(packageDir: PathBuilderLike | undefined)
 }
 
 /**
- * Read the structured `requires` block from a `model-card.json` (#718). DEFENSIVE: returns `undefined` when the card is
- * absent, unreadable, or has no `requires` field (callers then INFER the required channels from the ONNX graph — see
+ * Read the structured `requires` block from a `model-card.json` (#718). defensive: returns `undefined` when the card is
+ * absent, unreadable, or has no `requires` field (callers then infer the required channels from the ONNX graph — see
  * `inferRequiredChannelsFromInputs`). Throws only when the field is present but corrupt (not an object, or a channel
- * entry with a non-boolean `required`) — a malformed declared contract is a loud artifact bug rather than a silent
+ * entry with a non-boolean `required`) — a malformed declared interface is a loud artifact bug rather than a silent
  * re-default.
  */
 /**
@@ -302,7 +302,7 @@ export async function readRequiredChannels(
 		}
 	}
 
-	// `requires.<evidence channel>.lexicon` NAMES the trained artifact generation (#1510). A non-string
+	// `requires.<evidence channel>.lexicon` names the trained artifact generation (#1510). A non-string
 	// there would resolve to nothing and silently fall back to the legacy filename — the exact downgrade
 	// the field exists to prevent — so it is a loud artifact bug like the shapes above.
 	for (const channel of ["street_type", "locality_surface"] as const) {
@@ -349,15 +349,15 @@ export interface TagCapability {
 	 */
 	maskOffF1: number
 	/**
-	 * Measured per-tag F1 (percent) with the mask ON. Present only for codex-forbidden tags.
+	 * Measured per-tag F1 (percent) with the mask on. Present only for codex-forbidden tags.
 	 */
 	maskOnF1?: number
 }
 
 /**
- * The `capabilities` block of a `model-card.json` (#718/#719): per serving TIER (`server` = anchor+gazetteer; `pocket`
+ * The `capabilities` block of a `model-card.json` (#718/#719): per serving tier (`server` = anchor+gazetteer; `pocket`
  * = anchor-only) × per codex address-system × per tag, the model's certified per-tag capability. The `createScorer`
- * loader reads this to FAIL CLOSED when a conventions mask would forbid a tag the model is certified to emit — the
+ * loader reads this to fail closed when a conventions mask would forbid a tag the model is certified to emit — the
  * structural fix that makes the D2/#719 bug-class (a mask destroying a demonstrated capability) impossible.
  *
  * Shape: `capabilities[tier][system][tag] = { maskOffF1, maskOnF1? }`. A `$comment` provenance key may sit alongside
@@ -366,10 +366,10 @@ export interface TagCapability {
 export type CapabilityManifest = Record<string, Record<string, Record<string, TagCapability>>>
 
 /**
- * Read the `capabilities` block from a `model-card.json` (#718/#719). DEFENSIVE, mirroring `readRequiredChannels`:
+ * Read the `capabilities` block from a `model-card.json` (#718/#719). defensive, mirroring `readRequiredChannels`:
  * returns `undefined` when the card is absent, unreadable, or has no `capabilities` field (a pre-#718 card → the
  * loader's delta check is skipped, back-compat). Throws only when the field is present but not an object — a corrupt
- * declared contract is a loud artifact bug rather than a silent skip. Tier/system/tag sub-shapes are read leniently (a
+ * declared interface is a loud artifact bug rather than a silent skip. Tier/system/tag sub-shapes are read leniently (a
  * malformed cell simply yields no capability claim — `undefined` from `lookupTagCapability`).
  */
 export async function readCapabilityManifest(
@@ -458,8 +458,8 @@ export async function readCRFTransitions(crfPath: PathBuilderLike | undefined): 
 /**
  * Read the `labels` array from a `model-card.json` file. Returns `undefined` when the file is missing, unreadable,
  * malformed, or has no `labels` field — callers should fall back to their compile-time default in that case (the loader
- * contract: the JS-side default tracks the most recent shipped stage, so a card without `labels` is always a pre-v0.4.0
- * card whose label vocab matches that default by construction).
+ * interface: the JS-side default tracks the most recent shipped stage, so a card without `labels` is always a
+ * pre-v0.4.0 card whose label vocab matches that default by construction).
  *
  * Validates shape: must be a non-empty array of strings. Throws on a present-but-malformed `labels` field — a card that
  * emits e.g. `labels: 21` rather than `labels: [...]` is a corrupted artifact and should be loud rather than silently
@@ -508,7 +508,7 @@ export async function packageHasBinaries(dir: PathBuilderLike): Promise<boolean>
  * Refuse a directory holding a character vocabulary whose card does not declare the char encoder that reads it.
  *
  * The two ship together, so the pairing is the whole signal that this is a character-path family. Answering `false` for
- * a half-materialized one degrades it to a Latin model and the parse is merely WRONG — a bare kanji line comes back as
+ * a half-materialized one degrades it to a Latin model and the parse is merely wrong — a bare kanji line comes back as
  * one locality — where a refusal names the file that is missing.
  */
 async function assertNoOrphanedCharVocab(dir: PathBuilderLike, cardPath: PathBuilderLike): Promise<void> {

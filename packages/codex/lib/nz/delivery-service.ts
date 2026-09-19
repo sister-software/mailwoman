@@ -25,7 +25,7 @@
  *       space-free (eg. 'PO Box 23226', not 'PO Box 23 226')", "'PO' is space-free … and
  *       punctuation-free".
  *
- *   All six types are CURRENT in the October 2021 ADV358 (including CMB — no legacy flag is needed
+ *   All six types are current in the October 2021 ADV358 (including CMB — no legacy flag is needed
  *   for the NZ address system).
  *
  *   **"Private Box" — colloquial alias, officially invalid:** ADV358 does not list "Private Box" as a
@@ -114,7 +114,7 @@ export const NZ_PRIVATE_BOX_ALIAS = {
 	 */
 	type: "Private Box",
 	/**
-	 * The description of validity status — NOT a valid ADV358 Delivery Service Type. a colloquial NZ synonym for a
+	 * The description of validity status — not a valid ADV358 Delivery Service Type. a colloquial NZ synonym for a
 	 * numbered PO Box (same format as "PO Box <number>").
 	 */
 	description: "Colloquial NZ synonym for a numbered PO Box — NOT a valid ADV358 Delivery Service Type",
@@ -131,7 +131,7 @@ export const NZ_PRIVATE_BOX_ALIAS = {
 /**
  * Per-type surface patterns (designator phrase only). Recognition is deliberately wider than the prescriptive standard
  * — mail in the wild writes "P.O. Box" even though ADV358 says `PO` is punctuation-free — but it does not admit forms
- * the standard names as errors of TYPE (`PB`).
+ * the standard names as errors of type (`PB`).
  *
  * The colloquial "Private Box" alias is included for recognition (see {@link NZ_PRIVATE_BOX_ALIAS} and operator ruling
  * 2026-06-11); it maps to a distinct synthetic type string so callers can distinguish it from the ADV358 types.

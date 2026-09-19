@@ -3,7 +3,7 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   The two-path agreement check, driven against a SCRIPTED service.
+ *   The two-path agreement check, driven against a scripted service.
  *
  *   The check's value is that it compares two verdicts rather than a file against itself, and its own logic
  *   is what decides which of three outcomes a point gets. A live run can only show that today's numbers
@@ -132,7 +132,7 @@ describe("verifyFloodDatabase", () => {
 
 	it("reports a containing polygon with no zone label as service_unlabelled, never as agreement", async () => {
 		// The artifact reads FZ3 here. the service's polygon contains the point and says nothing. Reading that as `null`
-		// would let it agree with an absence reading elsewhere, which is the manufactured Zone 1 the contract forbids.
+		// would let it agree with an absence reading elsewhere, which is the manufactured Zone 1 the interface forbids.
 		const result = await verifyFloodDatabase({
 			databasePath,
 			readServiceFeatures: scriptedService(undefined),

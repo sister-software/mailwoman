@@ -3,15 +3,15 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Tests for the Gauntlet ABLATION layer at fixture scale. Everything here is pure — variant generation, slot
+ *   Tests for the Gauntlet ablation layer at fixture scale. Everything here is pure — variant generation, slot
  *   classification, cell aggregation, rendering — because the layer's own run needs the ~9 GB database set and a loaded
  *   ONNX, and because every one of these three has a silent failure mode:
  *
- *   - a deletion that carves a span out of its NEIGHBOUR still produces a number, and the number looks like evidence
+ *   - a deletion that carves a span out of its neighbour still produces a number, and the number looks like evidence
  *       about the component named in the row;
  *   - a slot refilled by a different token looks identical to an empty slot unless something compares the values;
  *   - a (component, locale) pair nobody measured renders as `0` unless the renderer is told that zero support is
- *       ABSENCE. That last one is the house's meaning-of-zero rule and the only rule here a reader of the
+ *       absence. That last one is the house's meaning-of-zero rule and the only rule here a reader of the
  *       finished table can be misled by.
  */
 
@@ -212,7 +212,7 @@ describe("classifySlot — substitution is not the same as absence", () => {
 		expect(classifySlot("BT3 9QQ", "bt39qq")).toBe("recovered")
 	})
 
-	// The S-2 finding-3 class, which is the reason this field exists: the postcode slot came back FILLED, with the
+	// The S-2 finding-3 class, which is the reason this field exists: the postcode slot came back filled, with the
 	// house number. A completion nudge reading that slot would abstain for the wrong reason, or confirm it.
 	it("reads a different token in the slot as a substitution", () => {
 		expect(classifySlot("94043", "1600")).toBe("substituted")
@@ -360,7 +360,7 @@ describe("aggregateCells", () => {
 		}
 	})
 
-	// The absence rule, enforced at the SOURCE as well as at the renderer: an unmeasured pair must not exist as a
+	// The absence rule, enforced at the source as well as at the renderer: an unmeasured pair must not exist as a
 	// zero-support cell that a consumer could average into a ranking.
 	it("emits no cell at all for a (component, locale) pair with no rows", () => {
 		const cells = aggregateCells([row({ component: "postcode", locale: "GB" })], meta)
@@ -388,7 +388,7 @@ describe("the support-0-is-absence rendering rule", () => {
 	it("renders a measured cell as broken/support — including a genuine zero BROKEN count", () => {
 		const [cell] = aggregateCells([row({ broken: false }), row({ caseID: "b", broken: false })], meta)
 
-		// This is the distinction the rule guards: 0 of 2 broken is a MEASUREMENT that the component did not
+		// This is the distinction the rule guards: 0 of 2 broken is a measurement that the component did not
 		// matter here, and it must not read like the unmeasured cell above.
 		expect(formatAblationCell(cell)).toBe("0/2")
 		expect(formatAblationCell(cell)).not.toBe(ABLATION_ABSENT)
@@ -410,7 +410,7 @@ describe("the support-0-is-absence rendering rule", () => {
 		expect(md).toContain(`\`${ABLATION_ABSENT}\` means NOT MEASURED`)
 	})
 
-	// The tail threshold folds thin locales into a list. Folding is only acceptable because they are PRINTED —
+	// The tail threshold folds thin locales into a list. Folding is only acceptable because they are printed —
 	// and a zero-column matrix must say why it is empty rather than emit a headerless table.
 	it("says so when no locale cleared the matrix threshold, instead of rendering an empty table", () => {
 		const md = renderAblationMarkdown(aggregateCells([row({})], meta), [], {

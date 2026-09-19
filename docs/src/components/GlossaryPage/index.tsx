@@ -136,7 +136,7 @@ export default function GlossaryPage({ glossaryData, tagMeta, backlinks }: Gloss
 	}, [visibleTerms, tagMeta, enabled])
 
 	// TOC: a back-to-top "Glossary" entry, then categories (level 2) with their visible terms
-	// nested beneath (level 3). TOCItems renders `value` as HTML, so entity-escape the strings.
+	// nested beneath (level 3). TOCItems renders `value` as html, so entity-escape the strings.
 	const toc = useMemo(() => {
 		return [
 			{ value: "Glossary", id: TOP_ANCHOR, level: 2 },

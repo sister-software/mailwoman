@@ -6,23 +6,23 @@
  *   USPS Publication 28, Appendix C2 — Secondary Unit Designators.
  *
  *   The sibling of {@link ./street-suffix.ts}: where that table standardizes the trailing street
- *   _type_ (AVENUE → AVE), this one standardizes the _secondary unit_ designator that introduces an
- *   apartment / suite / floor / room (APARTMENT → APT, SUITE → STE). For each canonical designator
+ *   _type_ (avenue → AVE), this one standardizes the _secondary unit_ designator that introduces an
+ *   apartment / suite / floor / room (apartment → APT, suite → STE). For each canonical designator
  *   the value lists recognized variants in USPS order. the first is the approved USPS abbreviation
  *   (what the post office prints).
  *
  *   Used by `@mailwoman/corpus`'s synthesis layer (the `unit-{expand,abbreviate}` augmentations) to
  *   vary the designator in a `unit` component while preserving the identifier — the data-generation
  *   counterpart to the runtime `UnitDesignatorClassifier` (which matches the broader libpostal
- *   `unit_types` lexicon). Designators are LEADING ("Apt 4B"), unlike street suffixes which trail.
+ *   `unit_types` lexicon). Designators are leading ("Apt 4B"), unlike street suffixes which trail.
  *
  *   `US_UNIT_DESIGNATOR_REQUIRES_RANGE` (added for #1100, the secondary-address epic. retrieved from
- *   Appendix C2 2026-07-13) is Pub-28's own "Requires a Secondary Number" column: APT, BLDG, DEPT,
- *   FL, HNGR, KEY, LOT, PIER, RM, SLIP, SPC, STOP, STE, TRLR, and UNIT must be followed by an
- *   identifier ("Apt 4B", never bare "Apt"); BSMT, FRNT, LBBY, LOWR, OFC, PH, REAR, SIDE, and UPPR
+ *   Appendix C2 2026-07-13) is Pub-28's own "Requires a Secondary Number" column: APT, bldg, dept,
+ *   FL, hngr, KEY, LOT, pier, RM, slip, SPC, stop, STE, trlr, and unit must be followed by an
+ *   identifier ("Apt 4B", never bare "Apt"); bsmt, frnt, lbby, lowr, OFC, PH, rear, side, and uppr
  *   may stand alone. This formalizes, as provenance-tracked reference data, the split that
  *   `corpus/src/recipes/unit.ts` previously hand-rolled (and only partially covered) as
- *   in-file `ID_DESIGNATORS`/`STANDALONE_DESIGNATORS` arrays for synthesis weighting. A SEPARATE rather than-yet-built deliverable of #1100 is the per-locale *level-semantics* table (étage/RDC, EG/OG/UG,
+ *   in-file `ID_DESIGNATORS`/`STANDALONE_DESIGNATORS` arrays for synthesis weighting. A separate rather than-yet-built deliverable of #1100 is the per-locale *level-semantics* table (étage/RDC, EG/OG/UG,
  *   planta/piso/bajo, piano/terra, 階/F/B1, …) — this module stays US/Pub-28 only.
  *
  *   Data is verbatim USPS Pub-28 C2.
@@ -32,7 +32,7 @@
 /**
  * Canonical USPS secondary unit designator → recognized variants. The first variant is the approved USPS abbreviation.
  * Keys + values uppercase per the publication. The designators marked by USPS as "requires a secondary number" (APT,
- * BLDG, FL, …) and the standalone ones (BSMT, LBBY, PH, …) are both included — synthesis treats them uniformly.
+ * bldg, FL, …) and the standalone ones (bsmt, lbby, PH, …) are both included — synthesis treats them uniformly.
  */
 export const US_UNIT_DESIGNATOR_VARIANTS = {
 	APARTMENT: ["APT", "APRT", "APMT"],
@@ -68,7 +68,7 @@ export type USUnitDesignator = keyof typeof US_UNIT_DESIGNATOR_VARIANTS
 
 /**
  * Inverse lookup: every variant abbreviation or full canonical word → its canonical key, built once at module load,
- * lowercase-keyed for case-insensitive matching (`apt` → `"APARTMENT"`, `ste` → `"SUITE"`, `suite` → `"SUITE"`).
+ * lowercase-keyed for case-insensitive matching (`apt` → `"apartment"`, `ste` → `"suite"`, `suite` → `"suite"`).
  */
 export const US_UNIT_DESIGNATOR_LOOKUP: ReadonlyMap<string, USUnitDesignator> = (() => {
 	const out = new Map<string, USUnitDesignator>()
@@ -88,7 +88,7 @@ export const US_UNIT_DESIGNATOR_LOOKUP: ReadonlyMap<string, USUnitDesignator> = 
 })()
 
 /**
- * Approved USPS abbreviation per canonical (`APARTMENT → "APT"`, `SUITE → "STE"`).
+ * Approved USPS abbreviation per canonical (`apartment → "APT"`, `suite → "STE"`).
  */
 export const US_UNIT_DESIGNATOR_PREFERRED_ABBR: Readonly<Record<USUnitDesignator, string>> = Object.fromEntries(
 	(Object.keys(US_UNIT_DESIGNATOR_VARIANTS) as USUnitDesignator[]).map((k) => [k, US_UNIT_DESIGNATOR_VARIANTS[k][0]])
@@ -96,8 +96,8 @@ export const US_UNIT_DESIGNATOR_PREFERRED_ABBR: Readonly<Record<USUnitDesignator
 
 /**
  * Canonical designators Appendix C2 marks as "Requires a Secondary Number" — the designator must be followed by an
- * identifier ("Apt 4B", "Rm 12"), never appearing bare. The remaining designators (BASEMENT, FRONT, LOBBY, LOWER,
- * OFFICE, PENTHOUSE, REAR, SIDE, UPPER) may stand alone with no trailing identifier. Verbatim from USPS Pub-28 C2. see
+ * identifier ("Apt 4B", "Rm 12"), never appearing bare. The remaining designators (basement, front, lobby, lower,
+ * office, penthouse, rear, side, upper) may stand alone with no trailing identifier. Verbatim from USPS Pub-28 C2. see
  * the module header for provenance (#1100).
  */
 export const US_UNIT_DESIGNATOR_REQUIRES_RANGE: Readonly<Record<USUnitDesignator, boolean>> = {
@@ -149,7 +149,7 @@ export function matchLeadingDesignator(unit: string): { canonical: USUnitDesigna
  */
 export interface UnitDesignatorRangeMatch {
 	/**
-	 * The matched canonical designator, i.e. "APARTMENT", "SUITE".
+	 * The matched canonical designator, i.e. "apartment", "suite".
 	 */
 	canonical: USUnitDesignator
 	/**
@@ -171,7 +171,7 @@ export interface UnitDesignatorRangeMatch {
 
 /**
  * Like {@link matchLeadingDesignator}, but also captures the secondary range/identifier token immediately following the
- * designator, if present ("Apt 4B" → designator "APARTMENT", range "4B"; "Basement" → range `undefined`). Mirrors
+ * designator, if present ("Apt 4B" → designator "apartment", range "4B"; "Basement" → range `undefined`). Mirrors
  * `street-suffix`/`street-directional`'s designator+adjacent-token matchers.
  */
 export function matchLeadingDesignatorWithRange(unit: string): UnitDesignatorRangeMatch | null {
@@ -197,7 +197,7 @@ export function matchLeadingDesignatorWithRange(unit: string): UnitDesignatorRan
  */
 export interface UnitDesignatorMatch<D extends USUnitDesignator = USUnitDesignator> {
 	/**
-	 * The matched canonical designator, i.e. "APARTMENT", "SUITE".
+	 * The matched canonical designator, i.e. "apartment", "suite".
 	 */
 	designator: D
 	/**

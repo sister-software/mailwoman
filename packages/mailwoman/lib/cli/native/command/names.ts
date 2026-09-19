@@ -2,14 +2,14 @@
  * @copyright Sister Software
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
- * @file What a command is CALLED, separated from where its file sits.
+ * @file What a command is called, separated from where its file sits.
  *
- *   The router used to read a command's name off its filename, which made the layout a contract: moving
+ *   The router used to read a command's name off its filename, which made the layout a interface: moving
  *   `gazetteer/build/postcode-codepoint.tsx` into `build/postcode/` renamed the command, silently, and
  *   `mailwoman gazetteer build postcode-codepoint` — a name written into built databases as their `builder`
  *   provenance — stopped existing. A file's location is this repository's business. a command's name is the user's.
  *
- *   So a PREFIX DIRECTORY is transparent to the command path: `build/postcode/codepoint.js` answers
+ *   So a prefix directory is transparent to the command path: `build/postcode/codepoint.js` answers
  *   `build postcode-codepoint`. That is the same convention `repo-health`'s `prefix-directories` check enforces —
  *   siblings sharing a hyphen prefix live in a directory named for it — read from the other end, which is why moving
  *   those files is free.
@@ -62,7 +62,7 @@ export function isPrefixDirectory(directory: string, name: string): boolean {
 const DECLARED_NAME = /\bspec\s*=\s*\{\s*name\s*:\s*["'`]([^"'`]+)["'`]/u
 
 /**
- * The command name a compiled module declares, READ rather than imported.
+ * The command name a compiled module declares, read rather than imported.
  *
  * Importing a command module to learn its name runs the module: it pulls Ink, a resolver, sometimes a database handle,
  * and `mw gazetteer build` — which needs nothing but a list of names — stopped answering at all. Reading the text has

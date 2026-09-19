@@ -5,17 +5,17 @@
  *
  *   Build `postalcode-nl-pc6.db` — the NL full-postcode (PC6) database, #977 tier 2. WOF NL carries no
  *   `postalcode` tier at all, so `1012 LG` could only resolve to the Amsterdam locality centroid.
- *   Source: the CBS "Postcode6 statistieken" GeoPackage via PDOK (CC-BY 4.0 — provenance in `meta`),
+ *   Source: the CBS "Postcode6 statistieken" GeoPackage via pdok (CC-BY 4.0 — provenance in `meta`),
  *   pre-extracted to a centroid CSV with ogr2ogr:
  *
  *     ogr2ogr -f CSV pc6-centroids.csv cbs_pc6_2024.gpkg -dialect sqlite \
- *       -sql "SELECT postcode6 AS pc6, ST_X(ST_Centroid(ST_Transform(geom, 4326))) AS lon,
- *             ST_Y(ST_Centroid(ST_Transform(geom, 4326))) AS lat FROM postcode6"
+ *       -sql "select postcode6 AS pc6, ST_X(ST_Centroid(ST_Transform(geom, 4326))) AS lon,
+ *             ST_Y(ST_Centroid(ST_Transform(geom, 4326))) AS lat from postcode6"
  *
  *   One `spr` row per PC6 (placetype `postalcode`, country NL, polygon centroid, degenerate bbox),
  *   the normalized form (`1012LG`) as `name` + the display form (`1012 LG`) as an extra `names` row —
  *   the same convention as `ingestGeonamesPostal`. The lookup's NL PC6 ladder (`lookup.ts` — full code
- *   → joined → 4-digit stem) was already built and is waiting on exactly this data. FTS + ANALYZE via
+ *   → joined → 4-digit stem) was already built and is waiting on exactly this data. FTS + analyze via
  *   the canonical `buildPlaceSearchFTS`. Readonly artifact: build to `.tmp`, swap into place
  *   (build-on-copy — the previous version moves aside, never mutated).
  *
@@ -50,7 +50,7 @@ export interface BuildNLPC6Options {
 export async function buildNLPC6Database(
 	opts: BuildNLPC6Options = {}
 ): Promise<{ out: string; inserted: number; skipped: number }> {
-	// resolver-wof-sqlite is an OPTIONAL peer — lazy import (the gazetteer-pipeline convention).
+	// resolver-wof-sqlite is an optional peer — lazy import (the gazetteer-pipeline convention).
 	const { buildPlaceSearchFTS } = await import("@mailwoman/resolver-wof-sqlite")
 	const { normalizePostcodeName } = await import("@mailwoman/resolver-wof-sqlite/geonames")
 	const { createUnifiedIndexes, createUnifiedSchema } = await import("@mailwoman/resolver-wof-sqlite/unified-schema")
@@ -79,7 +79,7 @@ export async function buildNLPC6Database(
 
 		db.exec("BEGIN")
 
-		// `header: false` so the header row arrives as data and can be CHECKED — the CBS export has
+		// `header: false` so the header row arrives as data and can be checked — the CBS export has
 		// reordered its columns before, and a silent lon/lat swap puts every Dutch postcode in Somalia.
 		let headerSeen = false
 

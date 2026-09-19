@@ -3,7 +3,7 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Minimal static file server that honours HTTP Range requests (206) — Python's `http.server` does
+ *   Minimal static file server that honours http Range requests (206) — Python's `http.server` does
  *   not, and PMTiles reads via Range, so it can't be served by it. Used to preview/render a local
  *   `.pmtiles` tileset (e.g. the race-dot map, via `mailwoman tiger race-dots-map --serve`). Not for
  *   production. the deployed tiles go through the tile worker.
@@ -50,7 +50,7 @@ const TYPES: Record<string, string> = {
 }
 
 /**
- * Serve `dir` over localhost with HTTP Range support. Resolves once the server is listening. the caller owns the
+ * Serve `dir` over localhost with http Range support. Resolves once the server is listening. the caller owns the
  * lifetime (dispose it to stop. commands typically hold the process open instead).
  */
 export async function serveWithRangeSupport(

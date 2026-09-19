@@ -147,12 +147,12 @@ describe("DebugFrame", () => {
 			140
 		)
 
-		// Each row's LABEL, so the frame is asserted to have a place for the datum...
+		// Each row's label, so the frame is asserted to have a place for the datum...
 		for (const label of ["system", "locale-head", "tokens", "channels", "decode"]) {
 			expect(text).toContain(label)
 		}
 
-		// ...and each row's VALUE, so a label with nothing behind it fails.
+		// ...and each row's value, so a label with nothing behind it fails.
 		expect(text).toContain("us (auto)")
 		expect(text).toContain("mode formatted")
 		expect(text).toContain("US 0.95")

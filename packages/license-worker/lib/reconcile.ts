@@ -14,7 +14,7 @@
  *   latest paid invoice is minted if no token holds it, however long ago it was created or paid: a lost renewal
  *   webhook, or a renewal refused while issuance was off, is minted on the next pass with issuance on. A subscription
  *   the ledger has never seen (its checkout webhook lost and its success page never visited) is found only through
- *   the invoice list, which Stripe filters by creation time, so it is recovered while its first invoice was created
+ *   the invoice list. It Stripe filters by creation time. Therefore, it is recovered while its first invoice was created
  *   within `sinceSeconds`; past that the action is to resend the `invoice.paid` event from the Stripe dashboard.
  */
 

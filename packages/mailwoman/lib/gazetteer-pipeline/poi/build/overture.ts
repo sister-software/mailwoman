@@ -14,14 +14,14 @@ const MIN_CONFIDENCE = 0.85
 const S3_GLOB = (release: string) => `s3://overturemaps-us-west-2/release/${release}/theme=places/type=place/*.parquet`
 
 /**
- * A row of `DESCRIBE SELECT * FROM read_parquet(...)` — just the column name matters for the schema probe.
+ * A row of `describe select * from read_parquet(...)` — just the column name matters for the schema probe.
  */
 export interface DescribeColumn {
 	column_name: string
 }
 
 /**
- * Pure column-choice logic over a `DESCRIBE` result — no DuckDB/network in this function, so it's unit-testable on its
+ * Pure column-choice logic over a `describe` result — no DuckDB/network in this function, so it's unit-testable on its
  * own. Overture's places-theme category struct has gone by `taxonomy` (newer) and `categories` (older); prefer
  * `taxonomy.primary` when the column is present.
  */
@@ -32,38 +32,38 @@ export function chooseCategoryColumn(
 }
 
 /**
- * Pure: whether the `brand` STRUCT column is present in this release's places schema.
+ * Pure: whether the `brand` struct column is present in this release's places schema.
  */
 export function hasBrandColumn(describeRows: readonly DescribeColumn[]): boolean {
 	return describeRows.some((r) => r.column_name === "brand")
 }
 
 /**
- * The expression pair {@link chooseCountryExpression} resolves — one for the `WHERE`, one for the `SELECT`.
+ * The expression pair {@link chooseCountryExpression} resolves — one for the `where`, one for the `select`.
  */
 export interface CountryExpression {
 	/**
-	 * Bare expression to compare against `'<cc>'` in the `WHERE` clause (a column or a struct/list access).
+	 * Bare expression to compare against `'<cc>'` in the `where` clause (a column or a struct/list access).
 	 */
 	filterExpr: string
 	/**
-	 * The same expression, aliased to `country` for the `SELECT` list.
+	 * The same expression, aliased to `country` for the `select` list.
 	 */
 	selectExpr: string
 }
 
 /**
- * Pure column-choice logic over a `DESCRIBE` result — no DuckDB/network in this function, so it's unit-testable on its
+ * Pure column-choice logic over a `describe` result — no DuckDB/network in this function, so it's unit-testable on its
  * own (mirrors {@link chooseCategoryColumn}'s pattern). The Overture places-theme has, as of the 2026-05-20.0 release,
  * no top-level `country` column (unlike the addresses theme, whose SQL this one is templated from) — country instead
- * lives inside the `addresses` LIST<STRUCT<...>> column. Prefers a top-level `country` column when present (a future
+ * lives inside the `addresses` list<struct<...>> column. Prefers a top-level `country` column when present (a future
  * release may add one back), falling back to `addresses[1].country` (DuckDB lists are 1-based).
  *
  * Deviation to note at the call site: under the `addresses`-based expression, a row with a NULL/empty `addresses` list
  * has `addresses[1]` evaluate to NULL, so `addresses[1].country = '<cc>'` is NULL (never true) and the row is dropped
  * from every per-country subset — rows with no address struct are simply excluded from country-filtered ingests.
  * Acceptable for v1. the excluded-row count is visible as the delta between a per-country subset's row count and an
- * unfiltered `COUNT(*)` over the same Parquet, if this ever needs auditing.
+ * unfiltered `count(*)` over the same Parquet, if this ever needs auditing.
  */
 export function chooseCountryExpression(describeRows: readonly DescribeColumn[]): CountryExpression {
 	if (describeRows.some((r) => r.column_name === "country")) {
@@ -112,9 +112,9 @@ export interface IngestPlacesResult {
 }
 
 /**
- * Overture places-theme ingest: predicate-pushdown per-country COPY into local Parquet, mirroring `overture-ingest.tsx`
+ * Overture places-theme ingest: predicate-pushdown per-country copy into local Parquet, mirroring `overture-ingest.tsx`
  * (lazy DuckDB, `s3_region='us-west-2'`, `threads=4`, `memory_limit='8GB'`). Probes the release's places schema once
- * (`DESCRIBE`) via the PURE {@link chooseCategoryColumn}/{@link hasBrandColumn} before issuing the per-country COPYs.
+ * (`describe`) via the pure {@link chooseCategoryColumn}/{@link hasBrandColumn} before issuing the per-country COPYs.
  */
 export async function ingestPlaces(opts: IngestPlacesOptions): Promise<IngestPlacesResult> {
 	const release = opts.release ?? DEFAULT_RELEASE

@@ -6,9 +6,9 @@
  *   #1510 — the evidence-bundle lexicons resolve from the model-card rather than a hard-coded filename.
  *
  *   The defect: `resolveWeights` probed the literal `locality-surface-lexicon-v6.json` while both the
- *   shipped v4.0.1 recipe and the v4.2.0 candidate TRAIN against v7. Serving fed the channel a
+ *   shipped v4.0.1 recipe and the v4.2.0 candidate train against v7. Serving fed the channel a
  *   different lexicon generation than training painted, and nothing said so — the v6 file exists, the
- *   channel loads, the parse works. The Run B check had to stage v7's CONTENT under the v6 FILENAME to
+ *   channel loads, the parse works. The Run B check had to stage v7's content under the v6 filename to
  *   score faithfully.
  *
  *   These tests build synthetic package layouts under a `cacheRoot.path` (the same injection point

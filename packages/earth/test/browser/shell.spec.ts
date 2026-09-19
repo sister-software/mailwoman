@@ -43,7 +43,7 @@ test.describe("Mailwoman Earth shell", () => {
 			"https://mailwoman.ai/docs"
 		)
 
-		// The commit link resolves against build.json, which only a built deployment serves — so this asserts the shape
+		// The commit link resolves against build.json. It only a built deployment serves. Therefore, this asserts the shape
 		// rather than a particular sha.
 		const commit = footer.locator("a[href*='/commit/']")
 

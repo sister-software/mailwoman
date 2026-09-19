@@ -22,7 +22,7 @@ export interface DMS {
 }
 
 /**
- * Web Mercator (EPSG:3857) coordinate.
+ * Web Mercator (epsg:3857) coordinate.
  */
 export interface Mercator {
 	x: number
@@ -39,7 +39,7 @@ export interface CurrencyInfo {
 }
 
 /**
- * IANA timezone + current offset.
+ * Iana timezone + current offset.
  */
 export interface TimezoneInfo {
 	name: string
@@ -66,7 +66,7 @@ export interface Iso3166 {
 }
 
 /**
- * EU NUTS statistical-region codes.
+ * EU nuts statistical-region codes.
  */
 export interface NUTS {
 	level1?: string
@@ -102,7 +102,7 @@ export interface AnnotationSet {
 	iso3166?: Iso3166
 	nuts?: NUTS
 	/**
-	 * UN/LOCODE, e.g. "US NYC".
+	 * UN/locode, e.g. "US NYC".
 	 */
 	unLocode?: string
 	/**
@@ -130,7 +130,7 @@ export interface AnnotatorInput {
 	 */
 	countryCode?: string
 	/**
-	 * The resolved place's name (locality), when known — feeds name-keyed annotators (UN/LOCODE).
+	 * The resolved place's name (locality), when known — feeds name-keyed annotators (UN/locode).
 	 */
 	placeName?: string
 	/**
@@ -373,7 +373,7 @@ export interface SchemaOrgInput {
 
 /**
  * Collapse parsed street parts into one opaque `streetAddress` line — the schema.org lossy-by-design collapse (house
- * number + street + unit → a single space-joined string). Parts are number-FIRST, correct for the shipped en-US / fr-FR
+ * number + street + unit → a single space-joined string). Parts are number-first, correct for the shipped en-US / fr-FR
  * tiers. callers with `@mailwoman/formatter` render locale-aware (e.g. de-DE number-last) instead. Blank parts are
  * dropped. an all-empty input yields `""`.
  */
@@ -386,7 +386,7 @@ export function composeStreetAddress(parts: { houseNumber?: string; street?: str
 
 /**
  * Serialize a resolved address into a schema.org `Place` JSON-LD object — `Place { geo: GeoCoordinates, address:
- * PostalAddress }` (#1052). An OUTPUT PROJECTION, lossy by design: `streetAddress` is one opaque string, and
+ * PostalAddress }` (#1052). An output projection, lossy by design: `streetAddress` is one opaque string, and
  * tiers/confidence/provenance don't fit the core vocabulary, so they're dropped rather than shoehorned into an
  * extension property. Only populated fields are emitted — absent fields are omitted entirely (never `null`).
  * `addressCountry` is ISO-3166 alpha-2 (uppercased). `geo` is emitted only when both coordinates are finite. the

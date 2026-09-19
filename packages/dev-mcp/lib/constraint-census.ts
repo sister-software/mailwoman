@@ -3,24 +3,24 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   The CONSTRAINT census — what our checks COST, measured per constraint rather than per row.
+ *   The constraint census — what our checks cost, measured per constraint rather than per row.
  *
- *   `census.ts` asks whether a mechanism in the PARSE path fires at all (L0/L1). This asks the resolver-path question
+ *   `census.ts` asks whether a mechanism in the parse path fires at all (L0/L1). This asks the resolver-path question
  *   underneath it: of the lookups that resolved nothing, which constraint was in force, and did we hold the row
  *   anyway. Both are needed and neither substitutes for the other — a constraint can be perfectly alive and still be
  *   the reason an answer was lost.
  *
- *   THE SPLIT THAT MAKES THIS A MEASUREMENT rather than a miss count: a lookup that missed in band X while the same
- *   key sits in band Y is a REACHABILITY failure — the gazetteer had the row and the query went to the wrong shelf.
- *   A key that exists nowhere is a COVERAGE fact. Both currently reach a caller as `null`, and they call for opposite
+ *   the split that makes this A measurement rather than a miss count: a lookup that missed in band X while the same
+ *   key sits in band Y is a reachability failure — the gazetteer had the row and the query went to the wrong shelf.
+ *   A key that exists nowhere is a coverage fact. Both currently reach a caller as `null`, and they call for opposite
  *   work: one is a retrieval fix, the other is a data acquisition. They are never summed here.
  *
  *   The raw material has existed since #1721 and nothing consumed it: `ResolveNodeTrace.checks` records mechanism
  *   events in execution order, and `picked: null` is — in that type's own words — "a claim rather than an omission". The
  *   first run over the board found `parent_fallback_retry` firing 194 times and converting zero, because it relaxes
- *   the PARENT while the BAND is what blocks (#1756).
+ *   the parent while the band is what blocks (#1756).
  *
- *   KEYED WITH `normalizeLocalityForKey`, the fold the candidate build writes and its readers probe. A `toLowerCase()`
+ *   keyed with `normalizeLocalityForKey`, the fold the candidate build writes and its readers probe. A `toLowerCase()`
  *   approximation silently moves rows from the reachability column into the coverage one, which is the exact error
  *   this census exists to stop other people making.
  */
@@ -42,7 +42,7 @@ interface ConstraintMiss {
 	value: string
 	name_key: string
 	/**
-	 * The placetype band the query was scoped to. Chosen by the MODEL'S TAG, which is the whole point: a wrong tag makes
+	 * The placetype band the query was scoped to. Chosen by the model'S TAG, which is the whole point: a wrong tag makes
 	 * a row we hold unreachable, and the miss is indistinguishable from the row not existing.
 	 */
 	band: string
@@ -111,7 +111,7 @@ export interface ConstraintCensusResult {
 }
 
 /**
- * Above this, an eval that never once accompanies a successful pick is called INERT rather than merely unlucky.
+ * Above this, an eval that never once accompanies a successful pick is called inert rather than merely unlucky.
  *
  * Small on purpose: the claim is about a mechanism that has never worked, and at n below this the honest report is "not
  * enough firings to say", which the rendering states instead.

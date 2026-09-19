@@ -3,8 +3,8 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   NOTE(de-shell): forwarding shim. The country-homograph scorer now lives at
- *   `mailwoman/eval-harness/score-country-homograph.ts` and `promotion-eval.ts` calls it IN-PROCESS.
+ *   note(de-shell): forwarding shim. The country-homograph scorer now lives at
+ *   `mailwoman/eval-harness/score-country-homograph.ts` and `promotion-eval.ts` calls it IN-process.
  *   This shim keeps standalone invocation — `node packages/mailwoman/lib/dev-tools/score/country-homograph.run.ts --model
  *   <onnx> [--file <jsonl>]` — working unchanged. Output is byte-identical because the module owns
  *   every printed line. Do not add logic here.

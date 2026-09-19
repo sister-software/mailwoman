@@ -4,7 +4,7 @@
  * @author Teffen Ellis, et al.
  *
  *   Tests for the German synthesizer (night-shift 2026-06-02, DE-1). Validates the {raw, components}
- *   contract and the BIO output via the real `alignRow`: the model must see German order — street →
+ *   interface and the BIO output via the real `alignRow`: the model must see German order — street →
  *   house_number (house after street) and postcode → locality (postcode before city) — the
  *   convention the US/FR-trained model never learned.
  */
@@ -183,8 +183,8 @@ describe("synthesizeLocaleRow order option (order-robustness)", () => {
 })
 
 describe("NZ dependent_locality (suburb below city)", () => {
-	// NZ envelopes carry both a suburb and a city: "31 Rawene Road, Birkenhead, Auckland". The OA DISTRICT
-	// column holds the city (Auckland), CITY the suburb (Birkenhead) — see `readTuples` districtAsLocality.
+	// NZ envelopes carry both a suburb and a city: "31 Rawene Road, Birkenhead, Auckland". The OA district
+	// column holds the city (Auckland), city the suburb (Birkenhead) — see `readTuples` districtAsLocality.
 	const AUCKLAND: LocaleBaseTuple = {
 		house_number: "31",
 		street: "Rawene Road",

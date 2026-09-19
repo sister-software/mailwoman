@@ -135,9 +135,9 @@ def select_rows(parquet: Path, args: argparse.Namespace, rng: random.Random, sur
     train_source = selected[: args.train_rows]
     val_source = selected[args.train_rows : args.train_rows + args.val_rows]
 
-    # Attested-row weight (#2178): a municipality NAME shape the head under-serves — 市 inside a 町 / 村 name
+    # Attested-row weight (#2178): a municipality name shape the head under-serves — 市 inside a 町 / 村 name
     # (市川三郷町, 市貝町, 余市町, 高市郡…) — is five municipalities and 21,043 of 19,587,889 source rows, about 0.1% of
-    # train after selection. `--upweight-pattern REGEX:K` appends K-1 further copies of every selected train row
+    # train after selection. `--upweight-pattern regex:K` appends K-1 further copies of every selected train row
     # whose municipality matches, each rendered in its own draw of register, so the shape reaches the head at
     # K× its natural share without a synthetic name. Val and the board are untouched, so the read stays honest.
     upweighted = 0
@@ -326,7 +326,7 @@ def build(args: argparse.Namespace) -> dict[str, Any]:
     board_records = write_board(out_dir, selection, encoder)
     train_prefectures, board_munis = check_stratification(args, selection)
 
-    # Char vocab (D2): sealed, rebuilt from the TRAIN split only, min_count=2.
+    # Char vocab (D2): sealed, rebuilt from the train split only, min_count=2.
     def train_raws() -> Iterator[str]:
         for path in sorted((out_dir / "train").glob("*.parquet")):
             table = pq.read_table(path, columns=["raw"])

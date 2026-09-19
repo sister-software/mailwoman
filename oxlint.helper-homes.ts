@@ -23,7 +23,7 @@
  * substring a re-typed shell-out cannot avoid: the git subcommand it runs, in a plain string, a template literal, or a
  * `$\`…`` command.
  *
- * A `descending-swap-loop` names a CONTROL SHAPE rather than a token, for the helpers whose re-typed copy carries no
+ * A `descending-swap-loop` names a control shape rather than a token, for the helpers whose re-typed copy carries no
  * distinctive literal at all. The three token kinds above can only report a re-typed generator, never a re-typed
  * shuffle: the loop writes no constant of its own and calls whatever generator it was handed.
  *

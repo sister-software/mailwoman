@@ -7,7 +7,7 @@
  *
  *   The components under test do async state updates (autocomplete debounce timers, runtime-load and
  *   parse promises, the clipboard write + its transient "copied" flag). A test triggers an interaction
- *   and then asserts, but the resulting `setState` settles in a LATER microtask/timer — outside any
+ *   and then asserts, but the resulting `setState` settles in a later microtask/timer — outside any
  *   `act()` scope — so React logs "An update to <X> inside a test was not wrapped in act(...)".
  *
  *   Rather than sprinkle `await act(async () => …)` across ~150 call sites, we wrap the two APIs every
@@ -20,7 +20,7 @@
  *
  *     • `vi.waitFor` (from `vitest`) — the settle surface. Reimplemented as a poll that completes one
  *       full `act()` per iteration and checks the assertion synchronously between iterations. Completing
- *       a fresh act each round is what lets an effect CHAIN advance (a held-open act swallows the passive
+ *       a fresh act each round is what lets an effect chain advance (a held-open act swallows the passive
  *       effect flushes between steps — e.g. `useReleaseRuntime`'s manifest → assets → ready effects would
  *       stall). Because the only code outside act is the synchronous callback invocation (no await, so
  *       no microtask/timer can interleave there), every async `setState` — a debounce firing, a runtime
@@ -106,7 +106,7 @@ const DEFAULT_WAIT_INTERVAL = 50
 /**
  * Poll `callback` until it stops throwing (or `timeout` elapses), advancing React inside act() between tries. Each
  * iteration awaits a full `act()` (draining that round's microtasks + a timer tick), so effect chains flush a step at a
- * time. the callback then runs SYNCHRONOUSLY outside act — the only out-of-act code, and being sync it offers no point
+ * time. the callback then runs synchronously outside act — the only out-of-act code, and being sync it offers no point
  * for a stray update to escape the act scope.
  *
  * Drop-in for `vi.waitFor` over this suite's usage (synchronous assertion callbacks). An async callback is still
@@ -175,7 +175,7 @@ function wrapWaitFor(): void {
 
 /**
  * Advance `ms` of real time inside act(). For the rare "wait, then assert nothing happened" case a negative assertion
- * can't route through `vi.waitFor` (which waits for a condition to BECOME true): the digit-leading autocomplete test
+ * can't route through `vi.waitFor` (which waits for a condition to become true): the digit-leading autocomplete test
  * waits past the debounce to prove the fetcher never fired, and the debounce's own `setDebouncedValue` + the abstaining
  * effect still run during that wait — so the wait itself must hold an act scope. Use this instead of a bare `await new
  * Promise(setTimeout)`.

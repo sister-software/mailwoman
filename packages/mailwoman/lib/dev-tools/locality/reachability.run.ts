@@ -5,8 +5,8 @@
  *
  *   Can the gazetteer answer the key the decode asked with? (#2309)
  *
- *   A locality miss has two causes that a rate cannot tell apart. RANKING: the right place is in the candidate set and
- *   something else outranked it. REACHABILITY: the right place carries no row under that key, so no ranking could have
+ *   A locality miss has two causes that a rate cannot tell apart. ranking: the right place is in the candidate set and
+ *   something else outranked it. reachability: the right place carries no row under that key, so no ranking could have
  *   reached it at any position. The fixes are opposite — one is a weight, the other is data — and every board rate in
  *   this repository pools them.
  *
@@ -14,12 +14,12 @@
  *   WOF `85940805` (population 15,667) carries 19 `name_key` rows and none of them is bare `grange`, so the three rows
  *   that come back are score-0 rural places and the pick among them is arbitrary. Re-weighting changes nothing there.
  *
- *   So this asks, per panel row: the key the RESOLVER was sent (`ResolveNodeTrace.value`, not the input and not the
+ *   So this asks, per panel row: the key the resolver was sent (`ResolveNodeTrace.value`, not the input and not the
  *   parse), and whether the gold place carries that key. The gold place is identified by its own name and the panel's
  *   coordinate, never by what the run answered — reading the answer back would make every row reachable by
  *   construction.
  *
- *   The QUESTION is not American, so neither is the rendering. A row is written through
+ *   The question is not American, so neither is the rendering. A row is written through
  *   `formatAddress(components, country, { singleLine: true })` — the per-country layouts in `@mailwoman/codex` — rather
  *   than a template literal. `${locality}, ${region} ${postcode}` is the United States postal order and nothing else:
  *   it prints Japan's admin run backwards, drops the country's own separator convention, and puts a postcode after a
@@ -229,7 +229,7 @@ console.log(`| --- | --: | --: |`)
 for (const verdict of ["matched", "reachable_not_picked", "unreachable", "not_asked", "gold_not_found"] as const) {
 	const n = tally.get(verdict) ?? 0
 
-	// Denominated on GRADED rows rather than on the panel: an unrenderable row was never asked and counting it would move
+	// Denominated on graded rows rather than on the panel: an unrenderable row was never asked and counting it would move
 	// every share below by an amount the table does not explain.
 	console.log(`| ${verdict} | ${n} | ${formatPercent(n, outcomes.length)} |`)
 }

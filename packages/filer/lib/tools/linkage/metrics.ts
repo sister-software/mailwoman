@@ -3,15 +3,15 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Pairwise grouping precision/recall/F1 (§7-3b decision 4) — scores a PREDICTED "same group"
- *   judgment against a TRUTH partition over the same id universe. Built for {@linkcode filerLinkageEval}
+ *   Pairwise grouping precision/recall/F1 (§7-3b decision 4) — scores a predicted "same group"
+ *   judgment against a truth partition over the same id universe. Built for {@linkcode filerLinkageEval}
  *   (`linkage-eval.ts`), which scores the corporate-family membership a `filer.db` build asserts
  *   (`filer_family`) against held-out `holdingCompany` truth. The types here are generic — nothing below is
  *   filer-specific — because the same shape ("does this grouping recover a held-out one?") recurs anywhere
  *   this SDK adds a linkage eval.
  *
  *   **Why pairwise rather than a group-alignment metric (B-cubed, the Hungarian algorithm):** a "positive" here is
- *   an unordered PAIR of ids judged to belong to the same group — true/false positive/negative are counted
+ *   an unordered pair of ids judged to belong to the same group — true/false positive/negative are counted
  *   over pairs, never over groups, so no group-to-group correspondence ever has to be chosen. That matters
  *   for {@linkcode filerLinkageEval}'s use: a predicted family's id is derived from the canonicalized
  *   parent name, so there is no correspondence problem to solve and no alignment step to get wrong — the
@@ -33,7 +33,7 @@
  *
  *   **`f1` propagates that `null` rather than collapsing it.** `f1` is the one field a reader quotes as
  *   the headline, so an `f1: 0` fallback whenever `truePositivePairs === 0` throws the distinction above
- *   away again at exactly the point it matters most. Worked example: a PERFECT prediction over an
+ *   away again at exactly the point it matters most. Worked example: a perfect prediction over an
  *   all-singleton truth partition (nothing to merge, nothing merged) has no defined precision and no
  *   defined recall, so an `f1` of `0` would be arithmetically indistinguishable from a linkage that got
  *   every call wrong. So `f1` is `null` whenever
@@ -44,7 +44,7 @@
  */
 
 /**
- * {@linkcode scorePairwiseGrouping}'s result. Every count is over UNORDERED pairs drawn from the `ids` passed in — see
+ * {@linkcode scorePairwiseGrouping}'s result. Every count is over unordered pairs drawn from the `ids` passed in — see
  * the module docstring for why pairs rather than aligned clusters.
  */
 export interface PairwiseGroupingScore {
@@ -96,11 +96,11 @@ export interface PairwiseGroupingScore {
  * Both predicates are called once per pair (`ids.length` choose 2 — O(n²)) — fine for an eval-scale id universe (this
  * SDK's callers run this over tens of FRNs rather than millions); not intended for production-scale record linkage.
  *
- * Accepting predicates rather than two group-id maps is deliberate: a TRUTH grouping is usually a clean partition (one
- * group id per id — see {@linkcode groupPredicateFromMap}), but a PREDICTED grouping need not be a partition at all.
- * {@linkcode filerLinkageEval} is the worked case: a registrant can belong to SEVERAL corporate families at once
+ * Accepting predicates rather than two group-id maps is deliberate: a truth grouping is usually a clean partition (one
+ * group id per id — see {@linkcode groupPredicateFromMap}), but a predicted grouping need not be a partition at all.
+ * {@linkcode filerLinkageEval} is the worked case: a registrant can belong to several corporate families at once
  * (`filer_family` admits more than one membership per node), and two registrants are predicted-same when their family
- * SETS intersect — an overlap relation rather than an equivalence class. A single group-id map cannot express that. a
+ * sets intersect — an overlap relation rather than an equivalence class. A single group-id map cannot express that. a
  * predicate can.
  */
 export function scorePairwiseGrouping<ID>(
@@ -138,7 +138,7 @@ export function scorePairwiseGrouping<ID>(
 	const precision = predictedPositivePairs > 0 ? truePositivePairs / predictedPositivePairs : null
 	const recall = truthPositivePairs > 0 ? truePositivePairs / truthPositivePairs : null
 
-	// `null` in, `null` out — never `0`. `0` is reserved for the case both components are DEFINED and the
+	// `null` in, `null` out — never `0`. `0` is reserved for the case both components are defined and the
 	// prediction still recovered nothing, which is a measurement. an undefined component is the absence of one.
 	let f1: number | null = null
 

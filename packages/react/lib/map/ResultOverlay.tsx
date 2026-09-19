@@ -10,7 +10,7 @@
  *   unmount" lifecycle, so the hand-rolled `isStyleLoaded()` / `styledata` races disappear.
  *
  *   Pass the `outline` straight from a {@link MapPlaceRenderSpec}; a `null` outline renders nothing (the
- *   bare-point case). NODE-IMPORT SAFETY: imports `react-map-gl/maplibre` — `@mailwoman/react/map` only.
+ *   bare-point case). node-import safety: imports `react-map-gl/maplibre` — `@mailwoman/react/map` only.
  */
 
 import type { ReactNode } from "react"

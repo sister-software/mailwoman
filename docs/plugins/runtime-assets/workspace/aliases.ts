@@ -35,9 +35,9 @@ const FILE_SUBPATHS: ReadonlyArray<readonly [packageName: string, subpath: strin
 	// `geo` was here until 2026-09-01 and had been dead for some time: `@mailwoman/resolver-wof-sqlite` dropped
 	// the `./geo` subpath when its geometry helpers moved to `@mailwoman/spatial`, and `lib/geo.ts` went with
 	// them. Nothing noticed, because a missing target only warned. {@link requireAlias} now refuses instead —
-	// a HAND-LISTED entry naming a module that does not exist is a bug by definition, and this list is the
+	// a hand-listed entry naming a module that does not exist is a bug by definition, and this list is the
 	// mirror that goes stale every time a subpath moves.
-	// These are the BROWSER-SAFE LEAVES: each keeps a per-file subpath so the site bundle never pulls
+	// These are the browser-safe leaves: each keeps a per-file subpath so the site bundle never pulls
 	// the Node-only siblings that share its directory entry.
 	...["fst/deserialize-web", "fst/matcher", "fst/types", "street/normalize", "fst/autocomplete", "fts/index"].map(
 		(subpath) => ["@mailwoman/resolver-wof-sqlite", subpath] as const
@@ -66,7 +66,7 @@ export async function buildWorkspaceAliases(): Promise<Record<string, string>> {
 	}
 
 	/**
-	 * Alias a specifier this file NAMED, refusing a target that does not resolve.
+	 * Alias a specifier this file named, refusing a target that does not resolve.
 	 *
 	 * The lists below are a hand-maintained mirror of several packages' `exports` maps, so they go stale every time a
 	 * subpath moves — and the failure was silent: `resolvePackageFile` answers `null` and the alias was simply skipped,
@@ -115,7 +115,7 @@ export async function buildWorkspaceAliases(): Promise<Record<string, string>> {
 		requireAlias(`${packageName}/${subpath}`, await resolvePackageDirectoryEntry(packageName, subpath))
 	}
 
-	// The resolver root deliberately bypasses its barrel: the browser graph only needs the core resolver contracts,
+	// The resolver root deliberately bypasses its barrel: the browser graph only needs the core resolver interfaces,
 	// while runtime resolution enters through the explicit `@mailwoman/resolver/resolve` alias above.
 	setAlias("@mailwoman/resolver$", await resolvePackageFile("@mailwoman/core", "resolver/types"))
 

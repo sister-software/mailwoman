@@ -6,7 +6,7 @@
  *   downstream clients' tests (`filer/sdk/sec-client.test.ts`).
  *
  *   Lifted from `98c4dda1:filer/sdk/sec-client.test.ts`, where the two-clock split was worked out: a
- *   naive clock is fine for sequential assertions and actively MASKS concurrency bugs, so anything
+ *   naive clock is fine for sequential assertions and actively masks concurrency bugs, so anything
  *   testing how concurrent waiters interleave needs the deadline-ordered one.
  */
 
@@ -16,10 +16,10 @@ import type { ClockLike } from "#api/clock"
  * How much real time {@linkcode VirtualClock.runUntilSettled} tolerates with nothing pending before declaring the work
  * stuck. Finite, so a genuinely blocked test reports what happened instead of timing out.
  *
- * This used to be a budget of 1000 idle event-loop TURNS, on the stated assumption that "a real `readFile` resolves in
+ * This used to be a budget of 1000 idle event-loop turns, on the stated assumption that "a real `readFile` resolves in
  * a handful of turns". Turns are not time: an idle turn is a `setImmediate` round-trip costing microseconds, so the
  * whole budget expired in single-digit milliseconds while the I/O it was waiting for took tens. On an unloaded machine
- * the race happened to go the right way. Under load it did not, and the guard fired on WORKING code — observed
+ * the race happened to go the right way. Under load it did not, and the guard fired on working code — observed
  * 2026-08-02 on the lab at load 15.25 and then on a hosted GitHub runner, in `filer/sdk/sec-client.test.ts` and
  * `bdc/sdk/client.test.ts`.
  *
@@ -33,7 +33,7 @@ const IDLE_BUDGET_MS = 5000
  * Idle turns to spin on {@linkcode drainMicrotasks} before backing off to real sleeps.
  *
  * The spin is the fast path — work that is one promise-chain away settles within a few turns and should not pay a
- * timer. Past that the wait is on something real, and continuing to spin actively HARMS it: back-to-back `setImmediate`
+ * timer. Past that the wait is on something real, and continuing to spin actively harms it: back-to-back `setImmediate`
  * turns monopolize the event loop and starve the very I/O the loop is waiting for. That feedback loop is why the old
  * guard got worse exactly when the machine was busiest.
  */
@@ -102,9 +102,9 @@ export function createFakeClock(startAt = 0): FakeClock {
 }
 
 /**
- * A virtual-time clock that resolves concurrent `sleep()`s ONE AT A TIME, strictly in deadline order, only when
+ * A virtual-time clock that resolves concurrent `sleep()`s one AT A time, strictly in deadline order, only when
  * explicitly driven via {@linkcode VirtualClock.advance} — unlike {@linkcode createFakeClock}, which bumps `now()`
- * synchronously the INSTANT `sleep()` is called (fine when nothing else races the clock, but not a faithful model of "N
+ * synchronously the instant `sleep()` is called (fine when nothing else races the clock, but not a faithful model of "N
  * callers all waiting on the same deadline").
  *
  * This fidelity is exactly what a pacing regression needs: a coarser clock that resolves every same-deadline sleeper
@@ -136,10 +136,10 @@ export class VirtualClock implements ClockLike {
 	 * earliest deadline first (ties broken by registration order), draining the microtask queue after each wakeup so the
 	 * woken continuation runs to quiescence before the next deadline is considered.
 	 *
-	 * The drain is a `setImmediate` (a MACROTASK), not a fixed number of `await Promise.resolve()` turns. A woken
+	 * The drain is a `setImmediate` (a macrotask), not a fixed number of `await Promise.resolve()` turns. A woken
 	 * continuation that runs through a library's own promise chain — Axios's request/response interceptors, say — needs
 	 * more microtask turns than any hardcoded count, and coming up short lets the clock run ahead of an in-flight
-	 * dispatch: the request then records a LATER deadline's timestamp, and two dispatches appear to share an instant when
+	 * dispatch: the request then records a later deadline's timestamp, and two dispatches appear to share an instant when
 	 * they didn't.
 	 */
 	public async advance(ms: number): Promise<void> {

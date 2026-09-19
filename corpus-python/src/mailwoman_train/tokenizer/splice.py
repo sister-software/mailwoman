@@ -52,7 +52,7 @@ from sentencepiece import sentencepiece_model_pb2 as sp_pb2
 # Deterministic sample size + seed so the corpus (and therefore the spliced vocab) is reproducible.
 _CORPUS_SAMPLE = 350_000
 _SEED = 42
-# A held-out English sample can be any ASCII address list. the assertion only needs English strings.
+# A held-out English sample can be any ascii address list. the assertion only needs English strings.
 _ENGLISH_PROBE = [
     "109 Seminary Dr, Mill Valley, CA 94941",
     "5210 South Ingleside Avenue, Chicago, IL 60615",
@@ -107,9 +107,9 @@ def build_slavic_corpus(
     corpus = [ln for ln in lines if ln and len(ln) < 80]
     random.Random(_SEED).shuffle(corpus)
     corpus = corpus[:_CORPUS_SAMPLE]
-    # Exonym awareness (#912 change 4's Åbo lesson): OA STREET/CITY text carries only the NATIVE
+    # Exonym awareness (#912 change 4's Åbo lesson): OA street/city text carries only the native
     # names, so an exonym like "Åbo" (Swedish for Turku) never warrants a piece and its decode drop
-    # survives the splice. extra_text feeds gazetteer ALIAS names in, repeated extra_repeat× so a
+    # survives the splice. extra_text feeds gazetteer alias names in, repeated extra_repeat× so a
     # once-per-name list has enough unigram mass to compete for vocab slots.
     if extra_text is not None and extra_text.is_file():
         extra = [ln.strip() for ln in extra_text.read_text(encoding="utf-8").splitlines()]

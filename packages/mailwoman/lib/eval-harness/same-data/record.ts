@@ -54,7 +54,7 @@ function stripWithheld(place: ResolvedPlace): SameDataCandidate {
 /**
  * A backend that answers from the real one and records every question and answer.
  *
- * The recorded answer is the STRIPPED form, so what the fixture holds is what the arms will later read — recording the
+ * The recorded answer is the stripped form, so what the fixture holds is what the arms will later read — recording the
  * full answer and stripping at write time would leave the recording and the replay disagreeing about what the walk
  * saw.
  */
@@ -77,13 +77,13 @@ function recordingBackend(
 			const key = canonicalQueryKey(query)
 
 			if (!into.has(key)) {
-				// The stored query is parsed BACK from the key rather than kept by reference. The walk reuses and MUTATES
+				// The stored query is parsed back from the key rather than kept by reference. The walk reuses and mutates
 				// its query object after the call returns — it adds `parentID` once a parent resolves — so a stored
 				// reference ends up describing a question that was never asked, and the fixture's key and query disagree.
 				// Round-tripping through the key also makes the two agree by construction.
 				into.set(key, {
 					key,
-					// A throw is the contract: the key is this process's own canonical JSON, so a parse failure means the
+					// A throw is the interface: the key is this process's own canonical JSON, so a parse failure means the
 					// encoder is broken and every recorded row after it would be wrong.
 					query: parseJSONStrict<SameDataQuery>(key),
 					candidates: answer.map((place) => stripWithheld(place)),
@@ -127,7 +127,7 @@ export interface RecordInputs {
 	 */
 	armOptions: ReadonlyArray<ResolveOpts>
 	/**
-	 * Withhold every row DENOTING the gold place rather than only the ids the concordance linked. Off by default, and the
+	 * Withhold every row denoting the gold place rather than only the ids the concordance linked. Off by default, and the
 	 * default is what keeps `same-data-resolver-v1` and `prominence-floor-v1` byte-stable on a re-record.
 	 *
 	 * Why it exists: the gold identity set is built from the `gn:id` concordance, and the gazetteer carries **285,478 of
@@ -218,7 +218,7 @@ export async function recordFixture(inputs: RecordInputs): Promise<RecordResult>
 		const withheld = withholdPredicate(row, inputs.withholdEveryDenotingRow === true)
 
 		// One recording backend for the row, shared across the arm option sets: the lookup map and the withheld count are
-		// per ROW, and building the closure inside the loop would capture the counter afresh each pass.
+		// per row, and building the closure inside the loop would capture the counter afresh each pass.
 		const recorder = createWOFResolver(
 			recordingBackend(backend, lookups, withheld, (count) => {
 				removedGold += count

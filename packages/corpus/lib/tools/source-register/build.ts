@@ -7,13 +7,13 @@
  *
  *   The register is a build output of the research documents, and this module is the only thing that writes it, so
  *   re-running the research means re-running this rather than editing 639 rows by hand. See
- *   `mailwoman corpus source-register` for the invocation and `packages/corpus/data/PROVENANCE.md` for the command
+ *   `mailwoman corpus source-register` for the invocation and `packages/corpus/data/provenance.md` for the command
  *   that produced the committed copy.
  *
  *   Two inputs, and the second one is mostly not input. The functional-authority CSV carries eight global discovery
- *   lookups repeated once per jurisdiction — a GLEIF index probe, a health-facility-list probe, and six more — which is
+ *   lookups repeated once per jurisdiction — a gleif index probe, a health-facility-list probe, and six more — which is
  *   2,000 of its 2,389 rows and collapses to eight distinct row bodies. Those name a lookup to perform, never a
- *   national source, so they are dropped here and written once as prose in the package README. The remainder is the
+ *   national source, so they are dropped here and written once as prose in the package readme. The remainder is the
  *   register.
  *
  *   The audit runs before the write. A register that fails it is never committed, which is the point of having one.
@@ -224,7 +224,7 @@ export interface BuildSourceRegisterOptions {
 	outPath: PathBuilderLike
 	version: string
 	/**
-	 * ISO 8601 calendar date the research pass was taken, `YYYY-MM-DD`.
+	 * ISO 8601 calendar date the research pass was taken, `yyyy-MM-DD`.
 	 */
 	authoredAt: string
 	/**

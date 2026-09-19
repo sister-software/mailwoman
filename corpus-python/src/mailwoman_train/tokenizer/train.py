@@ -11,7 +11,7 @@ imports don't load when the train loop just wants to encode.
 
 Why a new module (not extending ``scripts/train_tokenizer.py``)?
 
-- The legacy script is stdin-or-file driven. the harness contract is "give me a corpus
+- The legacy script is stdin-or-file driven. the harness interface is "give me a corpus
   version + vocab budget, do the sampling and training and measurement end-to-end."
 - The harness writes a richer ``model_card.json`` (sentencepiece flags, UDS preview,
   byte-fallback rate per script) the legacy ``META.json`` doesn't carry.
@@ -387,7 +387,7 @@ def train_tokenizer(cfg: TrainerConfig) -> dict[str, Any]:
     )
     card_path = cfg.output_dir / "model_card.json"
     card_path.write_text(json.dumps(card, indent=2) + "\n", encoding="utf-8")
-    # Keep a META.json compatibility shim — older Phase 1 scripts looked for this name.
+    # Keep a meta.json compatibility shim — older Phase 1 scripts looked for this name.
     (cfg.output_dir / "META.json").write_text(json.dumps(card, indent=2) + "\n", encoding="utf-8")
 
     logger.info(

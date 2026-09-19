@@ -4,7 +4,7 @@
  * @author Teffen Ellis, et al.
  *
  *   `mailwoman dev lint slice-vocab --parquet <recipe-output.parquet>` — the #511 base-consistency lint,
- *   country-scoped (v2): flags any token a synthetic recipe output labels one tag while the BASE corpus
+ *   country-scoped (v2): flags any token a synthetic recipe output labels one tag while the base corpus
  *   dominantly labels it another. Affix-split rows (the recipe output's street_suffix/_prefix vs base
  *   "street") are surfaced separately — the loader's affix-relabel handles them. Exits 1 on any real
  *   contradiction.
@@ -18,7 +18,7 @@ import { Text } from "ink"
 import { type CommandSpec, CommandTaskResult, type CommandComponent, useCommandTask } from "#cli-kit"
 
 /**
- * Native command-line contract consumed by the filesystem command router.
+ * Native command-line interface consumed by the filesystem command router.
  */
 export const spec = {
 	name: "slice-vocab",

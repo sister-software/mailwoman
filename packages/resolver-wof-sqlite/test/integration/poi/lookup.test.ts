@@ -8,7 +8,7 @@
  *   cafes at increasing distance from a Springfield, IL center, one branded McDonald's (`Q38076`),
  *   seven rows clustered ~280 km away in Chicago (a distinct res-9 cell far outside the default
  *   ring budget, including the only `museum`-category rows in the fixture), and one uncategorized
- *   named row ("Pier 39") for the FTS name path. All twelve rows land in the FINAL `poi` table via
+ *   named row ("Pier 39") for the FTS name path. All twelve rows land in the final `poi` table via
  *   typed Kysely inserts — not the `poi_stage` mirror, which is the builder's concern rather than the
  *   reader's.
  */
@@ -58,7 +58,7 @@ const CATEGORY_IDS: Record<string, number> = { cafe: 1, fast_food: 2, museum: 3,
 
 // A sparse-category instance placed at exactly gridDistance 13 from the Springfield origin cell — the nm-04 boundary. A
 // res-9 disk of radius r covers gridDistance ≤ r, and the reader's loop over `maxRings` rings covers gridDistance ≤
-// `maxRings - 1`; so this cell first appears at maxRings 14 and is MISSED by the old 12-ring default (covers ≤ 11). The
+// `maxRings - 1`; so this cell first appears at maxRings 14 and is missed by the old 12-ring default (covers ≤ 11). The
 // coordinate is derived from h3-js (a real ring-13 cell's center), never hardcoded — same discipline as `cellFor`. This
 // mirrors "hiking trail near Marseille", whose nearest `trail` sits at gridDistance 13 (~3.9 km) in the real poi.db.
 const TRAIL_GRID_DISTANCE = 13
@@ -108,7 +108,7 @@ const MCDONALDS: FixtureRow = {
 	longitude: -89.651,
 }
 
-// A SECOND McDonald's (same Q38076) ~280 km away in Chicago — far outside the default ~4 km ring budget. The brand
+// A second McDonald's (same Q38076) ~280 km away in Chicago — far outside the default ~4 km ring budget. The brand
 // path is a brand-wide fetch (no k-ring), so both must surface, distance-sorted (Springfield one first).
 const MCDONALDS_CHICAGO: FixtureRow = {
 	name: "McDonald's (Loop)",
@@ -381,7 +381,7 @@ describe("POILookup", () => {
 			.get("poi_brand_wikidata") as { sql: string } | undefined
 
 		expect(found).toBeDefined()
-		// PARTIAL: the DDL carries the `WHERE brand_wikidata IS NOT NULL` predicate.
+		// partial: the DDL carries the `where brand_wikidata is not NULL` predicate.
 		expect(found!.sql.toLowerCase()).toContain("where")
 		expect(found!.sql.toLowerCase()).toContain("brand_wikidata")
 	})

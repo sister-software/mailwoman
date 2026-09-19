@@ -10,7 +10,7 @@ Two defects pinned here:
    probabilities, affix-relabel pass, and source weights regardless of split, so the headline
    validation metric scores an augmented, training-filtered sample rather than held-out data.
 
-Contract pinned here (the repair): for any split other than ``"train"``, ``iter_rows``
+Interface pinned here (the repair): for any split other than ``"train"``, ``iter_rows``
 yields every row of every parquet file exactly as authored — no source bucketing/filtering, no
 source weighting, no augmentation, no online label mutation.
 """

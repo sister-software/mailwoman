@@ -5,7 +5,7 @@
  * #101, Athens, GA 30601` answers a city centroid, because the word designators are attested and the bare `#` is not.
  * The rows below hold everything else constant and vary only the designator.
  *
- * THE PRIVATE-MAILBOX ARM IS NOT DECORATION. `#` reads as a unit designator on a street address and as a
+ * The private-mailbox ARM is not decoration. `#` reads as a unit designator on a street address and as a
  * private-mailbox leader in `synthesizers/po-box.ts` — `US_PMB_LEADERS` excludes it for exactly that reason — so
  * teaching one reading can be paid for with the other. A run that reports the unit rows recovering and says nothing
  * about `PMB 123` has measured half of the change.
@@ -66,7 +66,7 @@ const PMB_ROWS: ReadonlyArray<{ input: string; expectPOBox: string }> = [
 const METRES_PER_KM = 1000
 
 // A probe written to price a corpus change has to be able to point at the model that change produced. without this it
-// can only ever grade the installed one, which is the arm the change is measured AGAINST.
+// can only ever grade the installed one, which is the arm the change is measured against.
 const deps = await buildGauntletDeps(values["weights-cache"] ? { weightsCacheRoot: values["weights-cache"] } : {})
 const unitReport = []
 const pmbReport = []

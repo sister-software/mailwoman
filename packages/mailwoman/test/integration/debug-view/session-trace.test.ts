@@ -4,7 +4,7 @@
  * @author Teffen Ellis, et al.
  *
  *   The `trace: true` session, against the real classifier: what it records, and — the required half — that
- *   recording it changes no answer. The debug view is an INSPECTION surface. the moment its extra decode could move a
+ *   recording it changes no answer. The debug view is an inspection surface. the moment its extra decode could move a
  *   coordinate, every reading taken through it would be about a different pipeline than the one that ships.
  *
  *   Guarded on the same prerequisites as `static.test.ts` (weights + a WOF admin distribution), and skipping for the

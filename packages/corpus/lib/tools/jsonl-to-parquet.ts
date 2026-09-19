@@ -3,14 +3,14 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Convert a JSONL of LabeledRow objects to a Parquet file matching the v0.5.0 schema.
+ *   Convert a jsonl of LabeledRow objects to a Parquet file matching the v0.5.0 schema.
  *
  *   Ported faithfully from scripts/jsonl-to-parquet.py. The Python original wrote Parquet through
- *   PyArrow. this writes it through DuckDB (`@duckdb/node-api`) — `read_json` with an EXPLICIT
- *   `columns` type map projects the validated rows to the v0.5.0 schema, then `COPY … TO … (FORMAT
- *   PARQUET, COMPRESSION SNAPPY, ROW_GROUP_SIZE …)` emits the file. DuckDB reproduces the exact
- *   logical schema PyArrow did — `VARCHAR` (UTF8) scalars, `VARCHAR[]` (LIST<UTF8>) for the string
- *   arrays, and `INTEGER[]` (LIST<INT32>) for the span offsets — in the exact column order below.
+ *   PyArrow. this writes it through DuckDB (`@duckdb/node-api`) — `read_json` with an explicit
+ *   `columns` type map projects the validated rows to the v0.5.0 schema, then `copy … TO … (format
+ *   parquet, compression snappy, ROW_GROUP_SIZE …)` emits the file. DuckDB reproduces the exact
+ *   logical schema PyArrow did — `varchar` (UTF8) scalars, `varchar[]` (list<UTF8>) for the string
+ *   arrays, and `integer[]` (list<INT32>) for the span offsets — in the exact column order below.
  *   Verified field-for-field against the PyArrow original (same column order, same logical types,
  *   same `list<element: …>` child naming, same values), so a PyArrow reader sees an identical
  *   table. The trainer in any case reads parquet files by column name (`pq.read_table(...).to_pylist()`),
@@ -60,8 +60,8 @@ const SPAN_COLUMNS = ["span_starts", "span_ends", "span_tags"] as const
 /**
  * The v0.5.0 DuckDB type for each column, in {@link REQUIRED_COLUMNS} order.
  *
- * Mirrors the PyArrow schema the Python original declared: `pa.string()` → `VARCHAR`, `pa.list_(pa.string())` →
- * `VARCHAR[]`, `pa.list_(pa.int32())` → `INTEGER[]`. The span offsets are INT32 (#519): parallel arrays over `raw`
+ * Mirrors the PyArrow schema the Python original declared: `pa.string()` → `varchar`, `pa.list_(pa.string())` →
+ * `varchar[]`, `pa.list_(pa.int32())` → `integer[]`. The span offsets are INT32 (#519): parallel arrays over `raw`
  * (UTF-16 code units, `[start, end)` exclusive-end, sorted, non-overlapping); `raw` is a short address string, so INT32
  * round-trips as a plain integer where INT64 would surface as bigint.
  */
@@ -87,7 +87,7 @@ const COLUMN_TYPES: Record<(typeof REQUIRED_COLUMNS)[number], string> = {
  */
 export interface JSONLToParquetOptions {
 	/**
-	 * The labeled-row JSONL to convert.
+	 * The labeled-row jsonl to convert.
 	 */
 	input: string
 	/**
@@ -110,7 +110,7 @@ export interface JSONLToParquetSummary {
 }
 
 /**
- * Enforce the #519 span contract per row: all three present, parallel lengths.
+ * Enforce the #519 span interface per row: all three present, parallel lengths.
  *
  * A row with span_starts but no span_tags is a corrupt row — never a silent fallback.
  */
@@ -138,7 +138,7 @@ function assertSpanTriple(row: Record<string, unknown>, lineNo: number): void {
 }
 
 /**
- * Convert a labeled-row JSONL to a v0.5.0-schema Parquet file.
+ * Convert a labeled-row jsonl to a v0.5.0-schema Parquet file.
  */
 export async function jsonlToParquet(
 	options: JSONLToParquetOptions,
@@ -150,7 +150,7 @@ export async function jsonlToParquet(
 		throw new Error(`rowGroupSize must be a positive integer (got ${stringifyJSON(rowGroupSize)})`)
 	}
 
-	// Stage the validated rows to a temp NDJSON, then let DuckDB type + write them. Streaming keeps
+	// Stage the validated rows to a temp ndjson, then let DuckDB type + write them. Streaming keeps
 	// memory O(1) on the Node side (the Python original buffered every column into memory first). The
 	// staging directory owns the write stream, so it is closed before the directory is removed — and a
 	// mid-stream span-triple failure leaves no orphan.
@@ -163,7 +163,7 @@ export async function jsonlToParquet(
 
 	// TextSpliterator rather than JSONSpliterator: the staging write below streams the RAW line bytes to
 	// DuckDB verbatim (the parse here only validates), so a re-serialized JSONSpliterator row would
-	// defeat the point. CRLF is handled by the existing `rawLine.trim()` (strips a trailing \r),
+	// defeat the point. crlf is handled by the existing `rawLine.trim()` (strips a trailing \r),
 	// same as readline's crlfDelay:Infinity did.
 	for await (const rawLine of TextSpliterator.fromAsync(options.input)) {
 		lineNo++

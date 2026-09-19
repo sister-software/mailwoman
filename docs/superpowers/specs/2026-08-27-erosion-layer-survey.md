@@ -7,9 +7,9 @@ outcome, and this record delivers a split verdict: **one viable coastal pilot, a
 that no surveyed source supports a soil-erosion layer.** Both are completions, and the second is not a
 consolation — it is the answer to the question the issue asked first.
 
-The consuming implementation already exists, so nothing below proposes new architecture. The layer contract
+The consuming implementation already exists, so nothing below proposes new architecture. The layer interface
 (`layer_manifest` / `layer_coverage` on the H3 spine) is specified in
-[`../../engineering/reference/layer-contract.mdx`](../../engineering/reference/layer-contract.mdx); the
+[`../../engineering/reference/layer-interface.mdx`](../../engineering/reference/layer-interface.mdx); the
 exclusion-grade coverage pilot
 ([`2026-08-27-exclusion-grade-coverage-pilot.md`](./2026-08-27-exclusion-grade-coverage-pilot.md)) is
 the basis discipline; the flood survey
@@ -36,7 +36,7 @@ product the first survey chose.
 Settled here: the verified inventory (§2); **the resolution-supports-what statement per source (§3.2),
 which is this survey's distinctive deliverable**; what each source's own coverage statement licenses a
 `layer_coverage` row to say (§3.3–§3.5); which storage shape each source takes, including the third
-shape the inherited size contract does not cover (§4.2); the pilot's source, region, verification ladder
+shape the inherited size interface does not cover (§4.2); the pilot's source, region, verification ladder
 and consumer shape (§5); the recorded negative finding for soil erosion (§5.6); and the product
 requirement (§6).
 
@@ -875,7 +875,7 @@ Realignment` in `lt_smp`.
 
 ### 4.2 Which storage shape each source takes — and the third shape
 
-The inherited size contract settles two shapes: the **polygon rule** (#1989) and the **raster rule**
+The inherited size interface settles two shapes: the **polygon rule** (#1989) and the **raster rule**
 (#1984). Erosion introduces a source geometry neither covers, so this record states the third.
 
 | source                                              | geometry               | shape that applies                                 |
@@ -912,7 +912,7 @@ it. The USGS transect layer is where it would first be used.
 
 ### 4.3 Tables
 
-Five domain tables plus the two contract tables, written as Kysely schema modules with the typed
+Five domain tables plus the two interface tables, written as Kysely schema modules with the typed
 interface co-located with its `createXTable`, per the house database discipline.
 
 ```
@@ -963,10 +963,10 @@ erosion_scenario_vocabulary -- the authority's declared scenario and policy doma
   definition       TEXT      -- the authority's own words
   definition_url   TEXT
 
-layer_manifest / layer_coverage   -- the contract tables, from @mailwoman/core/layers
+layer_manifest / layer_coverage   -- the interface tables, from @mailwoman/core/layers
 ```
 
-`WITHOUT ROWID` on `erosion_zone_cell` and not on the geometry tables follows the contract's own
+`WITHOUT ROWID` on `erosion_zone_cell` and not on the geometry tables follows the interface's own
 guidance — small fixed-width rows probed by their exact primary key belong in the B-tree; a row carrying
 a geometry blob does not.
 
@@ -995,7 +995,7 @@ erosion zones would let a reader answer an erosion question from a landslide pol
 | `build_cmd` / `build_sha`   | the invocation and the commit that produced it                                                                                                                            |
 | `freshness_policy`          | `versioned-refresh` — ISO maintenance is `annually`, and the EA re-issues under the same product                                                                          |
 | `spine_keys`                | `{ h3: { column: "h3_cell", resolution: … } }` — see §1                                                                                                                   |
-| `created_at`                | caller-supplied, per the contract                                                                                                                                         |
+| `created_at`                | caller-supplied, per the interface                                                                                                                                        |
 
 A USGS-sourced artifact could take `tier: shipped` on its CC0 statement; a NOAA-sourced one could not,
 because "as is" and "NOT FOR LEGALLY BINDING APPLICATIONS" is a disclaimer rather than a grant.
@@ -1132,7 +1132,7 @@ carrier reads no candidate, no coordinate and no ordering — and a test pins it
 cumulative erosion distance as published; the Shoreline Management Plan policy and its interpretation
 where the scenario carries one; the defence type; the product and authority; the edition and its dates;
 the containment reading (`whole` cell, or a ray-cast against a named polygon); and the coverage basis,
-which in the pilot is `source_present` and therefore licenses no negative claim. Enough for a reader to
+which in the pilot is `source_present` and. Therefore, licenses no negative claim. Enough for a reader to
 re-derive the claim rather than take it.
 
 And the wording carries §3.1's constraint: it reports what the Environment Agency's mapping assigns at
@@ -1142,7 +1142,7 @@ Agency declines that second statement in writing.
 ### 5.5 The carrier, and the one place it does not fit
 
 `QueryIntentMarker` is the carrier, for the same reasons and with the same reservation both sibling
-surveys record. Its contract is already the requirement: additive, attributed, always accompanied by the
+surveys record. Its interface is already the requirement: additive, attributed, always accompanied by the
 ordinary answer, never changing which answer wins, carrying `mechanism` in the `family:rule` form and an
 `evidence` record where everything above goes.
 

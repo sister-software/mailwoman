@@ -23,7 +23,7 @@ import type { WOFDatabase } from "#schema"
 /**
  * Pass 3b — the ancestors sidecar: closure rows + interval labels (candidate-ancestors-schema.ts owns the encoding
  * decision and the DAG/absence semantics). Reads the same source `ancestors` table the region stamp reads,
- * denormalizing each edge with the parent's name/key from `attrs`, streamed `ORDER BY id` so the clustered `(spr_id,
+ * denormalizing each edge with the parent's name/key from `attrs`, streamed `order BY id` so the clustered `(spr_id,
  * depth)` insert is sorted — the contiguous-leaves discipline of the candidate table itself.
  *
  * Excluded by policy: self rows, and placetypes outside the containment ladder (continent, empire, …: `placetypeDepth` 0)
@@ -173,7 +173,7 @@ export async function buildAncestorsSidecar(ctx: {
 		}
 	}
 
-	// A canonical-parent CYCLE (corrupt source ancestry) leaves its members unreachable from any
+	// A canonical-parent cycle (corrupt source ancestry) leaves its members unreachable from any
 	// root: they simply receive no label, and containment against them reads unverifiable — the
 	// absence semantics the schema module states. Counted so a jump is visible across rebuilds.
 	const cycleSkipped = forest.size - preOf.size

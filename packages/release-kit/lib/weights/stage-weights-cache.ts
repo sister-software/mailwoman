@@ -3,7 +3,7 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Assemble a package-shaped weights directory under a `cacheRoot`, so a CANDIDATE model can be graded
+ *   Assemble a package-shaped weights directory under a `cacheRoot`, so a candidate model can be graded
  *   with its sibling channels fed — `<cacheRoot>/node_modules/@mailwoman/neural-weights-<locale>`, the
  *   layout `resolveWeights`' cache rung finds and the posture `score-anchor-v2-boards.run.ts` and
  *   `overlay-channel-smoke.ts` both take.
@@ -72,7 +72,7 @@ export async function stageWeightsCache(options: StageWeightsCacheOptions): Prom
 
 	const cacheRoot = resolvePath(repoRoot, options.out)
 	// The layout comes from the resolver's own `weightsCachePackageDir` rather than a re-typed literal —
-	// this operation's whole contract is "lay out the directory `resolveWeights`' cache rung finds", so the
+	// this operation's whole interface is "lay out the directory `resolveWeights`' cache rung finds", so the
 	// two must not be able to drift.
 	const packageDir = weightsCachePackageDir(cacheRoot, options.locale)
 

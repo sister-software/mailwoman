@@ -1,7 +1,7 @@
 """Building the output heads, and the weight initialization that follows them.
 
-Construction order is a contract: `_init_weights` walks `self.parameters()`, which yields in
-registration order and draws from the global RNG for each, so moving a head's construction changes
+Construction order is a interface: `_init_weights` walks `self.parameters()`, which yields in
+registration order and draws from the global RNG for each. Therefore, moving a head's construction changes
 the initial weights of everything registered after it.
 """
 
@@ -85,7 +85,7 @@ class CoarseEncoderHeads(CoarseEncoderState):
         """Heads whose logits replace columns of the classifier's output."""
         # Dedicated affix head (#492): MLP over [final hidden ; raw gazetteer 5-dim skip] ->
         # {O, B-street_prefix, I-street_prefix, B-street_suffix, I-street_suffix}. The gaz vector
-        # skip-connects PAST the encoder so the head owns the clue->affix mapping (consult
+        # skip-connects past the encoder so the head owns the clue->affix mapping (consult
         # 2026-06-10); independent dropout on the skip layers robustness locally. Its 4 affix
         # logits replace the main classifier's affix columns in forward (merge-in-forward).
         # Train-time conventions pairing (#478): per-locale forbidden-label mask applied to the
@@ -157,9 +157,9 @@ class CoarseEncoderHeads(CoarseEncoderState):
         use_crf: bool,
     ) -> None:
         """Heads that score or decode the classifier's output without replacing any of it."""
-        # Span-boundary auxiliary head (#727, GLiNER-lite probe). A TRAINING-ONLY 2-logit head over the
-        # final hidden state predicting, per token, whether an entity span STARTS (a B-* tag) and whether
-        # one ENDS here (an entity token whose successor doesn't continue it). The BIO head places tags.
+        # Span-boundary auxiliary head (#727, GLiNER-lite probe). A training-only 2-logit head over the
+        # final hidden state predicting, per token, whether an entity span starts (a B-* tag) and whether
+        # one ends here (an entity token whose successor doesn't continue it). The BIO head places tags.
         # this head places boundaries, and the shared encoder must satisfy both — the pressure targets the
         # boundary-absorption residual (a region token pulled into an adjacent street span, "05149 VT
         # Tucker Road" → "VT" absorbed into street). It never touches the exported inference graph (like the
@@ -178,7 +178,7 @@ class CoarseEncoderHeads(CoarseEncoderState):
 
         # #727 stage-2 phase 1: the semi-Markov span scorer. Unlike stage-1's aux head (which only
         # shapes the encoder via BCE pressure and is never exported), this is a real scoring path —
-        # Phase 2 exports it, Phase 3 decodes it in JS. Default-OFF ⇒ byte-identical: the BIO logits
+        # Phase 2 exports it, Phase 3 decodes it in JS. Default-off ⇒ byte-identical: the BIO logits
         # path never reads it, which `test_span_scorer_off_is_byte_identical_to_baseline` enforces.
         self.use_span_scorer = use_span_scorer
         self.span_loss_weight = float(span_loss_weight)

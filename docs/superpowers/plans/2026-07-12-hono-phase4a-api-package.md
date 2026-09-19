@@ -1,6 +1,6 @@
 # Hono API surface, Phase 4a: api-kit enrichment + the `@mailwoman/api` native package — Implementation Plan
 
-> **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
+> **For agentic workers:** required sub-skill: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
 **Goal:** Enrich api-kit (generic metrics, native error envelope, full-info OpenAPI documents that pass redocly's default ruleset) and ship the new `@mailwoman/api` workspace — the engine-agnostic native surface (`/v1/parse`, `/v1/geocode`, `/v1/batch`, `/v1/resolve`, `/v1/format`, `/health`, `/metrics`) — WITHOUT touching any consumer. Phase 4b does the `mailwoman serve` cutover, `mailwoman/server` deletion, and RemoteResolver repoint.
 
@@ -41,13 +41,13 @@ The native surface is OURS (no vendor constraint): fresh `/v1/*` paths per the a
   - `OpenAPIDocInfo` grows OPTIONAL fields (existing callers unaffected): `description?`, `summary?`, `license?: { name: string; identifier?: string }`, `contact?: { name?: string; url?: string }`, `externalDocs?: { description?: string; url: string }`, `servers?: Array<{ url: string; description?: string; variables?: Record<string, { default: string; description?: string }> }>`, `tags?: Array<{ name: string; description?: string }>`, `security?: unknown[]`. `attachOpenAPIDocs`/`emitOpenAPIDocuments` map them into the document config (info-block fields under `info`, the rest top-level; keep the `as never` boundary casts).
 
 - [ ] **Step 1: Failing tests.** `api-kit/metrics.test.ts` ports the assertions from `mailwoman/server/metrics.test.ts` (read it) onto the generic names — record across two tiers + an error, snapshot percentiles over a known latency set, reset. Add to `api-kit/index.test.ts`: a doc-enrichment test — `emitOpenAPIDocuments(app, { title, version, servers: [{ url: "http://localhost" }], security: [], license: { name: "AGPL-3.0-only" }, tags: [{ name: "meta" }] })` → the v31 document carries `servers`, `security`, `info.license.name`, `tags`.
-- [ ] **Step 2:** RED run (`yarn vitest run --dir ./api-kit`), implement `metrics.ts` (ported logic per the Produces contract), `error.ts`, and the `openapi.ts` extension; re-export both new modules from `index.ts`; GREEN (expect 7 prior + new all passing).
+- [ ] **Step 2:** RED run (`yarn vitest run --dir ./api-kit`), implement `metrics.ts` (ported logic per the Produces interface), `error.ts`, and the `openapi.ts` extension; re-export both new modules from `index.ts`; GREEN (expect 7 prior + new all passing).
 - [ ] **Step 3: Micro-fixes.** In `photon/routes.ts` + `nominatim/routes.ts`, the `legacyQuery` docstring line containing the mangled `?**proto**=` becomes ``a repeated `?__proto__=` param must create an own property``; verify `yarn oxfmt` does not re-mangle (backticks guard it) — if it does, rephrase to "a repeated dunder-proto param". Spec strike per Global Constraints. Run `yarn vitest run --dir ./photon` and `--dir ./nominatim` (comment-only changes; suites stay green).
 - [ ] **Step 4:** `yarn compile`; `yarn oxfmt api-kit photon nominatim docs/superpowers/specs`; commit `feat(api-kit): generic timing metrics, native error envelope, full-info OpenAPI documents`.
 
 ---
 
-### Task 2: Scaffold `@mailwoman/api` (5-point registration) + engine contract + schemas
+### Task 2: Scaffold `@mailwoman/api` (5-point registration) + engine interface + schemas
 
 **Files:**
 
@@ -58,7 +58,7 @@ The native surface is OURS (no vendor constraint): fresh `/v1/*` paths per the a
 
 - Produces:
   - Workspace `@mailwoman/api` (version `5.10.1`, dual exports maps, files `out/**` + README, publishConfig access public — mirror `api-kit/package.json` exactly, adding deps: `@hono/zod-openapi`, `@mailwoman/api-kit`, `@mailwoman/core` (workspace:_), `@mailwoman/formatter` (workspace:_), `hono`, `zod`).
-  - `api/engine.ts` — the engine contract (all methods optional; absent → 501, drop-in convention):
+  - `api/engine.ts` — the engine interface (all methods optional; absent → 501, drop-in convention):
 
 ```ts
 /**
@@ -66,7 +66,7 @@ The native surface is OURS (no vendor constraint): fresh `/v1/*` paths per the a
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   The native-surface engine contract. Engine-agnostic like the drop-ins: the `mailwoman` CLI
+ *   The native-surface engine interface. Engine-agnostic like the drop-ins: the `mailwoman` CLI
  *   wires the real parse/geocode/resolve stack (phase 4b); tests inject fixtures. `format` is the
  *   exception — it's wired in-package from `@mailwoman/formatter` (the surface exists to expose it).
  */
@@ -104,9 +104,9 @@ export interface MailwomanAPIEngine {
 }
 ```
 
-- `api/schema.ts` — zod wire schemas: `ParseRequestSchema` (`{ address: z.string(), debug: z.boolean().optional() }`), `ParseOutcomeSchema` (loose mirror), `GeocodeRequestSchema` (`{ address: z.string() }`), `GeocodeOutcomeSchema` (`z.looseObject({})`), `BatchRequestSchema` (`{ addresses: z.array(z.string()) }`), `BatchResponseSchema`, `ResolveRequestSchema` (`{ tree: z.looseObject({ roots: z.array(z.unknown()) }), opts: z.looseObject({}).optional() }`), `ResolveResponseSchema`, `FormatRequestSchema` (`{ components: z.record(z.string(), z.union([z.string(), z.array(z.string())])), country: z.string(), options: z.looseObject({}).optional() }`), `FormatResponseSchema` (`{ formatted: z.string(), canonicalKey: z.string() }`), `HealthResponseSchema` (loose), re-export `APIErrorSchema` usage from api-kit (import, don't redefine). This surface is ours: bodies are required and validator-enforced (no legacy tolerance to preserve) — validation failures map through a `defaultHook` to the api-kit envelope (`apiError(c, 400, "invalid request body", <zod summary>)`). This is the documented pattern boundary from phase 2: where no legacy contract exists, the validator may speak, but only in our envelope.
+- `api/schema.ts` — zod wire schemas: `ParseRequestSchema` (`{ address: z.string(), debug: z.boolean().optional() }`), `ParseOutcomeSchema` (loose mirror), `GeocodeRequestSchema` (`{ address: z.string() }`), `GeocodeOutcomeSchema` (`z.looseObject({})`), `BatchRequestSchema` (`{ addresses: z.array(z.string()) }`), `BatchResponseSchema`, `ResolveRequestSchema` (`{ tree: z.looseObject({ roots: z.array(z.unknown()) }), opts: z.looseObject({}).optional() }`), `ResolveResponseSchema`, `FormatRequestSchema` (`{ components: z.record(z.string(), z.union([z.string(), z.array(z.string())])), country: z.string(), options: z.looseObject({}).optional() }`), `FormatResponseSchema` (`{ formatted: z.string(), canonicalKey: z.string() }`), `HealthResponseSchema` (loose), re-export `APIErrorSchema` usage from api-kit (import, don't redefine). This surface is ours: bodies are required and validator-enforced (no legacy tolerance to preserve) — validation failures map through a `defaultHook` to the api-kit envelope (`apiError(c, 400, "invalid request body", <zod summary>)`). This is the documented pattern boundary from phase 2: where no legacy interface exists, the validator may speak, but only in our envelope.
 
-- [ ] Steps: package.json + tsconfig (mirror api-kit + core/formatter refs + `resolveJsonModule`/`files` for the self-referencing import) → ALL FIVE registration points → `yarn install` → `engine.ts`/`schema.ts` → placeholder `index.ts` re-exports → `yarn compile` → `node scripts/smoke-clean-install.ts` (expect pass with the new package packed) → oxfmt → commit `feat(api): scaffold @mailwoman/api — engine contract + wire schemas (5-point registration)`.
+- [ ] Steps: package.json + tsconfig (mirror api-kit + core/formatter refs + `resolveJsonModule`/`files` for the self-referencing import) → ALL FIVE registration points → `yarn install` → `engine.ts`/`schema.ts` → placeholder `index.ts` re-exports → `yarn compile` → `node scripts/smoke-clean-install.ts` (expect pass with the new package packed) → oxfmt → commit `feat(api): scaffold @mailwoman/api — engine interface + wire schemas (5-point registration)`.
 
 ---
 
@@ -121,7 +121,7 @@ export interface MailwomanAPIEngine {
 
 - Produces: `createMailwomanAPI(engine: MailwomanAPIEngine, options?: MailwomanAPIOptions): OpenAPIHono` where `MailwomanAPIOptions = { cors?: boolean; bodyLimitBytes?: number }` (cors default true; bodyLimit default 2 MiB — carried from the express `express.json({ limit: "2mb" })`); `registerMailwomanAPIRoutes(app, engine)`.
 
-Route/wire contract:
+Route/wire interface:
 
 - `POST /v1/parse` (body `ParseRequestSchema`) + `GET /v1/parse?address=&debug=` — 200 `ParseOutcomeSchema`; 400 envelope `"address is required"` when absent/empty (GET reads via `legacyQuery`-style first-value; this surface accepts simple single params, no tolerance theater — use `c.req.query()` directly); 501 when `engine.parse` absent.
 - `POST /v1/geocode` — 200 GeocodeOutcome passthrough; 400 `"address is required"`; 503 envelope `"geocoder not available"` when `engine.geocode` absent (NOTE: 503 not 501 — carried from express `DEPS_UNAVAILABLE` semantics: the engine method is expected in production; absence means deps missing). Metrics: wrap with `recordTimed` from api-kit, tier from `outcome["resolution_tier"] ?? "admin"`, `"error"` on throw (rethrow into the 500 net after recording).
@@ -134,7 +134,7 @@ Route/wire contract:
 - `app.onError` → 500 envelope `"internal error"` (+ `detail` carrying `err.message` — ours, so we can be helpful).
 - CORS default on (`GET, POST, OPTIONS`); `attachOpenAPIDocs` with full info: title/version from the self-referencing package.json, license `{ name: "AGPL-3.0-only OR LicenseRef-Commercial", identifier: "AGPL-3.0-only" }`, contact Sister Software + https://mailwoman.ai, servers `[{ url: "http://{host}:{port}", variables: { host: { default: "127.0.0.1" }, port: { default: "3000" } } }]`, `security: []`, tags.
 
-- [ ] Steps (TDD): write `api/index.test.ts` first — fixture engines pinning: every endpoint's happy path; 400/413/501/503 envelopes with exact bodies; format round-trip (`{ components: { house_number: "1600", road: "Pennsylvania Ave NW", city: "Washington" }, country: "US" }` → formatted string contains "1600" and canonicalKey is non-empty — do not pin the full formatted string, the formatter template owns it); health-with/without-engine; metrics endpoint reflects a recorded geocode; validation failure → envelope not zod-shape; `/openapi.json` has all 8 paths; **redocly check**: emit the v31 document to a temp file (scratchpad) and `npx --yes @redocly/cli@latest lint <file>` → zero errors (execute via node child_process in the test? NO — keep it a Task-5-style manual receipt: run it as a step rather than a test). RED → implement `routes.ts`/`app.ts` → GREEN → compile → oxfmt → README (short, factual: engine contract, endpoints table, serveNode snippet with hostname) → commit `feat(api): the native /v1 surface — parse, geocode, batch, resolve, format, health, metrics`.
+- [ ] Steps (TDD): write `api/index.test.ts` first — fixture engines pinning: every endpoint's happy path; 400/413/501/503 envelopes with exact bodies; format round-trip (`{ components: { house_number: "1600", road: "Pennsylvania Ave NW", city: "Washington" }, country: "US" }` → formatted string contains "1600" and canonicalKey is non-empty — do not pin the full formatted string, the formatter template owns it); health-with/without-engine; metrics endpoint reflects a recorded geocode; validation failure → envelope not zod-shape; `/openapi.json` has all 8 paths; **redocly check**: emit the v31 document to a temp file (scratchpad) and `npx --yes @redocly/cli@latest lint <file>` → zero errors (execute via node child_process in the test? NO — keep it a Task-5-style manual receipt: run it as a step rather than a test). RED → implement `routes.ts`/`app.ts` → GREEN → compile → oxfmt → README (short, factual: engine interface, endpoints table, serveNode snippet with hostname) → commit `feat(api): the native /v1 surface — parse, geocode, batch, resolve, format, health, metrics`.
 - [ ] Final step: the redocly receipt — boot nothing; `node -e` emit the document to the scratchpad, lint it, capture output in the report. Zero errors required (this is the Global-Constraints check).
 
 ---

@@ -9,7 +9,7 @@
  *   template names `suburb` or `quarter` or neither, whether a connector survived an empty slot, whether a missing line
  *   could be spliced back in afterwards. None of those questions exist once the order is data: a layout that declares a
  *   `dependent_locality` slot has one, and a line assembled from present values writes no connector around an absent
- *   one. What survives here is the BEHAVIOUR those mechanisms were reaching for, asserted on output.
+ *   one. What survives here is the behaviour those mechanisms were reaching for, asserted on output.
  */
 
 import {

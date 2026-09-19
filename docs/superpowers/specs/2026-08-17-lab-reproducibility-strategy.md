@@ -26,7 +26,7 @@ The eight are `poi.db` and its variants plus four OSM address-point extracts. Th
 `candidate.db`, `admin-global-priority.db`, every postcode extract, timezone, nuts, un-locode, bdc, filer —
 carries no provenance at all.
 
-The contract already exists. `docs/engineering/reference/layer-contract.mdx` specifies `layer_manifest` /
+The interface already exists. `docs/engineering/reference/layer-interface.mdx` specifies `layer_manifest` /
 `layer_coverage`, with source, `asOf`, and the meaning-of-zero coverage rule. **It is implemented on 13% of
 the built databases.** That is the whole finding: this is not a missing design, it is an unfinished rollout.
 
@@ -187,7 +187,7 @@ Four builders stamp a `layer_manifest`, through one shared `stampLayerManifest` 
 Plus a fix to the OSM rooftop builder, whose `build_cmd` recorded a path the workspace regroup moved — the
 defect phase 1 surfaced.
 
-**The contract gained a third spine shape.** `SpineKeys` offered `h3`, `wofID` and `addressID` — the two
+**The interface gained a third spine shape.** `SpineKeys` offered `h3`, `wofID` and `addressID` — the two
 layer shapes that existed when it was written, a cellular one and an id-joined one. `address_point` and
 `street_segment` carry none of the three; they are probed on `(postcode | locality, street_norm, number)`.
 A first draft declared `addressID: "address_id"`, a column that does not exist, caught by reading the table

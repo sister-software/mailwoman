@@ -4,21 +4,21 @@
  * @author Teffen Ellis, et al.
  *
  *   The committed punctuation suite, checked against the corpus it was drawn from. No model, no gazetteer —
- *   two JSONL files and the pure law module, so this runs wherever the repo does.
+ *   two jsonl files and the pure law module, so this runs wherever the repo does.
  *
- *   THE POINT IS THAT NOTHING HERE IS AUTHORED. Every `base` must be the verbatim `input` of the committed
+ *   the point is that nothing here is authored. Every `base` must be the verbatim `input` of the committed
  *   board row its `rowRef` names, and every `variant` must be exactly the named transformation applied to
  *   that base. A hand-typed variant is how a "punctuation" row quietly acquires a dropped accent, and the law
  *   then reports on a transformation nobody declared — so the suite is re-derived here rather than trusted.
  *
- *   AND THAT NO ARM IS MISSING BY ACCIDENT. The cross product of the committed bases and five transformations
+ *   and that no ARM is missing BY accident. The cross product of the committed bases and five transformations
  *   is what the law claims to state. every absent arm has to name the applicability rule that refuses it, and
  *   all three declared rules have to refuse at least one real arm. A suite that could quietly drop the arms it
  *   fails would report a smaller violation count, and a smaller count is indistinguishable from a law that
  *   holds.
  *
- *   THIS LEG SUPPLIES THE HALF THE AUDIT CANNOT. `punctuationApplicability` refuses a removal whose mark the
- *   row's own comparator would read back out of a component value. deciding that needs the row's ASSERTED
+ *   this LEG supplies the half the audit cannot. `punctuationApplicability` refuses a removal whose mark the
+ *   row's own comparator would read back out of a component value. deciding that needs the row's asserted
  *   spans, which live in the corpus rather than in the fixture. The audit applies the declared half, and the
  *   reading here applies both.
  *

@@ -4,7 +4,7 @@
  * @author Teffen Ellis, et al.
  *
  *   The `mwdev_coverage` tool definition — the description an agent reads, the input schema, and the handler wiring.
- *   The census itself lives in `../coverage-census.ts`; this file is the CONTRACT.
+ *   The census itself lives in `../coverage-census.ts`; this file is the interface.
  */
 
 import { repoRootPath } from "@mailwoman/core/paths"
@@ -108,7 +108,7 @@ export const coverageTool = async (_deps: DevToolDeps): Promise<DevTool> => ({
 /**
  * Project a {@linkcode CoverageReport} into the tool's response shape.
  *
- * Pure and exported so the projection can be TESTED. It builds its result field by field, which means a field the
+ * Pure and exported so the projection can be tested. It builds its result field by field, which means a field the
  * report grows and this function does not name is dropped in silence — and the consumer reads that as the field not
  * existing. The corpus-mismatch guard shipped inert for exactly that reason: the census computed it, fifteen tests
  * passed, and the first live call showed nothing, because this function did not carry it.
@@ -140,7 +140,7 @@ export function projectCoverage(report: CoverageReport, wantedCountries?: string
 		...(missing.length ? { requested_but_absent_everywhere: missing } : {}),
 		mismatches: report.mismatches,
 		summary:
-			// A mismatch LEADS. A caller reads the first sentence, and every count after it is about a corpus the run
+			// A mismatch leads. A caller reads the first sentence, and every count after it is about a corpus the run
 			// does not read.
 			(report.corpusMismatch ? `CORPUS MISMATCH — ${report.corpusMismatch} ` : "") +
 			`${trained.length} countries train (${withStreet.length} with street-level rows); ` +

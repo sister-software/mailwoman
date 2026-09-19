@@ -5,7 +5,7 @@
  *
  *   Route definitions + handlers for the libpostal-compatible surface. The OpenAPI document is
  *   emitted from these definitions — there is no handwritten spec. Wire shapes (bodies, error
- *   envelopes, status codes) are the vendor contract. see schema.ts.
+ *   envelopes, status codes) are the vendor interface. see schema.ts.
  */
 
 import { createRoute, type OpenAPIHono, z } from "@hono/zod-openapi"
@@ -23,8 +23,8 @@ import {
 } from "#schema"
 
 /**
- * A friendly HTML landing page for `GET /` (#1022). libpostal's own REST server has no root page, so there's no wire
- * contract to match — pure courtesy for browser visitors. Relative example URLs so they resolve against whatever
+ * A friendly html landing page for `GET /` (#1022). libpostal's own rest server has no root page, so there's no wire
+ * interface to match — pure courtesy for browser visitors. Relative example URLs so they resolve against whatever
  * host/port serves this.
  */
 const ROOT_HTML = `<!doctype html>
@@ -148,7 +148,7 @@ const expandPostRoute = createRoute({
 /**
  * Read the JSON body if present and parseable. a missing/malformed body is `{}` (legacy tolerance).
  *
- * The try/catch here re-guards what `canonicalizeJSONBody` already guarantees (well-formed JSON, string-only contract
+ * The try/catch here re-guards what `canonicalizeJSONBody` already guarantees (well-formed JSON, string-only interface
  * fields) — deliberate defense in depth. Don't drop this side's tolerance just because the middleware upstream makes it
  * look redundant. the two are meant to fail safe independently.
  */
@@ -168,14 +168,14 @@ async function readBody(c: Context): Promise<Record<string, unknown>> {
  * coalescing).
  *
  * The `typeof value === "string"` check re-guards what `canonicalizeJSONBody` already guarantees (only string-typed
- * contract fields survive) — deliberate defense in depth rather than a redundancy to simplify away.
+ * interface fields survive) — deliberate defense in depth rather than a redundancy to simplify away.
  */
 const rawParam = (value: unknown): string | undefined => (typeof value === "string" ? value : undefined)
 
 /**
  * The zod-openapi auto body validator runs before the handlers and would reject or throw on request shapes the legacy
  * endpoint tolerated (malformed JSON, non-JSON content types, non-string fields, bodyless POSTs). Canonicalize every
- * POST body into well-formed JSON carrying only the string-typed contract fields, so validation can never fail and
+ * post body into well-formed JSON carrying only the string-typed interface fields, so validation can never fail and
  * every wire decision stays in the handlers.
  */
 const canonicalizeJSONBody: MiddlewareHandler = async (c, next) => {
@@ -184,7 +184,7 @@ const canonicalizeJSONBody: MiddlewareHandler = async (c, next) => {
 
 		try {
 			const raw = c.req.raw.body ? await c.req.raw.text() : ""
-			// oxlint-disable-next-line no-restricted-properties -- `@mailwoman/libpostal` reaches @mailwoman/core for TYPES only. a runtime import would be a new dependency.
+			// oxlint-disable-next-line no-restricted-properties -- `@mailwoman/libpostal` reaches @mailwoman/core for types only. a runtime import would be a new dependency.
 			const parsed = raw ? (JSON.parse(raw) as unknown) : {}
 
 			if (typeof parsed === "object" && parsed !== null) {
@@ -216,7 +216,7 @@ const canonicalizeJSONBody: MiddlewareHandler = async (c, next) => {
 
 /**
  * The zod-openapi auto query validator rejects array-valued repeated params (`?query=a&query=b`) with its own error
- * shape before the handlers run. Keep only the first value of each contract param — the value `c.req.query()` reads
+ * shape before the handlers run. Keep only the first value of each interface param — the value `c.req.query()` reads
  * anyway — so query validation can never fail either.
  */
 const canonicalizeQueryParams: MiddlewareHandler = async (c, next) => {

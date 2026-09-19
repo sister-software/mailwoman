@@ -3,12 +3,12 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   The freshness contract between the committed corpus (`cases/<cc>/*.jsonl`) and its built artifact
- *   (`$MAILWOMAN_DATA_ROOT/gauntlet/regression.db`). The builder STAMPS what it wrote. every runner that
- *   grades against the DB REFUSES when the stamp disagrees with the corpus on disk right now.
+ *   The freshness interface between the committed corpus (`cases/<cc>/*.jsonl`) and its built artifact
+ *   (`$MAILWOMAN_DATA_ROOT/gauntlet/regression.db`). The builder stamps what it wrote. every runner that
+ *   grades against the DB refuses when the stamp disagrees with the corpus on disk right now.
  *
- *   MEASURED FAILURE, 2026-08-06: `eval gauntlet-build regression-db` was run from a compiled tree whose
- *   `out/` loader still contained the deleted pre-JSONL case array. It read that array, wrote a DB, and printed
+ *   measured failure, 2026-08-06: `eval gauntlet-build regression-db` was run from a compiled tree whose
+ *   `out/` loader still contained the deleted pre-jsonl case array. It read that array, wrote a DB, and printed
  *   "[gauntlet] built … cases". The artifact was wrong, the exit code was 0, and the check that ran next
  *   reported a verdict about a corpus that no longer existed. Nothing in the pipeline could have said
  *   otherwise: a derived artifact carried no evidence of what it derived from. This module is that evidence,
@@ -16,9 +16,9 @@
  *
  *   Two guards, deliberately different in kind:
  *
- *   - CONTENT — `corpus_hash` vs the live {@linkcode regressionCorpusHash}. Catches the artifact that is stale
+ *   - content — `corpus_hash` vs the live {@linkcode regressionCorpusHash}. Catches the artifact that is stale
  *       (or, equally, the working tree that moved after the build).
- *   - EMPTINESS — the builder refuses a corpus of zero rows outright ({@linkcode assertCorpusIsNonEmpty}).
+ *   - emptiness — the builder refuses a corpus of zero rows outright ({@linkcode assertCorpusIsNonEmpty}).
  *       A hash comparison alone cannot catch this, because an empty loader on both sides agrees with itself.
  *       That is precisely the stale-tree shape: the loader resolved no `.jsonl` at all.
  */

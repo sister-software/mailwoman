@@ -2,17 +2,17 @@
  * @copyright Sister Software
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
- * @file A scripted stub Axios ADAPTER for testing {@linkcode APIClient} subclasses, and the
+ * @file A scripted stub Axios adapter for testing {@linkcode APIClient} subclasses, and the
  *   Axios-shaped error builder it rejects with. The sibling of `./test-clocks.ts`: that module makes
  *   time deterministic, this one makes the network deterministic, and a pacing test needs both.
  *
  *   Extracted from `filer/sdk/sec-client.test.ts` and `bdc/sdk/client.test.ts`, which had grown
  *   near-identical copies of it. That is the expected shape of the duplication rather than a
- *   surprise: `AGENTS.md` names those two as the worked examples for the `APIClient` migration, so
+ *   surprise: `agents.md` names those two as the worked examples for the `APIClient` migration, so
  *   the second client's tests were written from the first's, and every client migrated after them
  *   would have copied it again.
  *
- *   Everything here is built STRUCTURALLY — `isAxiosError: true` plus `config`/`code`/`response`,
+ *   Everything here is built structurally — `isAxiosError: true` plus `config`/`code`/`response`,
  *   and the adapter typed through `APIClientConfig["axios"]` — because the packages under test
  *   depend on neither `axios` nor `axios-cache-interceptor`, reaching both only through
  *   `@mailwoman/core`. A test file is not a reason to breach that, so this module does not import
@@ -52,14 +52,14 @@ export interface StubOutcome {
 	statusText?: string
 	/**
 	 * The RAW body, as the transport would hand it to Axios's `transformResponse`. A string here is what an upstream
-	 * serving HTML under a 200 actually looks like. a `Buffer` is what Axios's Node adapter produces for `responseType:
+	 * serving html under a 200 actually looks like. a `Buffer` is what Axios's Node adapter produces for `responseType:
 	 * "arraybuffer"`. Anything else is JSON-serialized the way a JSON endpoint would.
 	 */
 	body?: unknown
 	headers?: Record<string, string>
 	/**
-	 * A transport-level failure — no HTTP response ever arrives. `code` picks the class: `ERR_NETWORK` for a dropped
-	 * socket, `ECONNABORTED` for this attempt's own timeout firing.
+	 * A transport-level failure — no http response ever arrives. `code` picks the class: `ERR_NETWORK` for a dropped
+	 * socket, `econnaborted` for this attempt's own timeout firing.
 	 */
 	throws?: { message: string; code: string }
 }
@@ -105,7 +105,7 @@ export interface StubTransportOptions {
 /**
  * Build an Axios-shaped rejection without importing `axios`. `isAxiosError(payload)` is `isObject(payload) &&
  * payload.isAxiosError === true`, and everything downstream reads `config`, `code`, and `response` — so this is the
- * full contract that matters.
+ * full interface that matters.
  */
 export function axiosLikeError(message: string, code: string, config: StubRequestConfig, response?: unknown): Error {
 	const error = new Error(message) as Error & Record<string, unknown>
@@ -124,7 +124,7 @@ export function axiosLikeError(message: string, code: string, config: StubReques
 /**
  * A stub Axios adapter that replays `outcomes` (holding on the last entry once exhausted) and records every dispatch.
  *
- * It reproduces what Axios's real adapters do on a failing status — reject with an Axios-shaped error CARRYING the
+ * It reproduces what Axios's real adapters do on a failing status — reject with an Axios-shaped error carrying the
  * response — because `validateStatus` is applied by the adapter rather than by the interceptor chain. A test that
  * resolves with a 4xx instead would exercise a path the real transport never takes.
  */
@@ -155,7 +155,7 @@ export function stubTransport(outcomes: StubOutcome[], options: StubTransportOpt
 
 		const response = {
 			// Axios's `transformResponse` runs on the RAW body, so hand it exactly what the wire would: a
-			// string passes through untouched (that is how an HTML error page under a 200 actually arrives),
+			// string passes through untouched (that is how an html error page under a 200 actually arrives),
 			// bytes pass through untouched, and anything else is serialized the way a JSON endpoint would.
 			data:
 				typeof outcome.body === "string" || Buffer.isBuffer(outcome.body)

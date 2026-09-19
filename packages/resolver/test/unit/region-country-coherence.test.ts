@@ -8,7 +8,7 @@
  *   qualifier naming a foreign subdivision ("QC" under a US locale) resolves to nothing and is discarded —
  *   and the locality is force-matched to the populous US namesake ("Montreal" → Montreal, WI). This pass
  *   expands the region token to its country via codex's ISO-3166-2 subdivision table (QC → Quebec / CA),
- *   confirms both the subdivision and a same-named locality resolve UNDER that country, and swaps the pair.
+ *   confirms both the subdivision and a same-named locality resolve under that country, and swaps the pair.
  *
  *   Byte-stable on the domestic path: a US region resolves fine under `US`, so the "region unresolved"
  *   trigger never fires for "Springfield, IL" / "Portland, ME".

@@ -68,7 +68,7 @@ describe("extractDeclaredSymbols", () => {
 
 	it("ignores a constant that is not a function", () => {
 		// A duplicated table or literal is a different problem with a different answer. reporting them would bury the
-		// duplicated LOGIC this exists to surface.
+		// duplicated logic this exists to surface.
 		expect(extractDeclaredSymbols('const MAX_SAMPLES = 1024\nconst NAME = "x"')).toEqual([])
 	})
 })
@@ -186,7 +186,7 @@ describe("formatFindings", () => {
 	})
 
 	it("says the existing implementation may be the wrong one to reuse", () => {
-		// api-kit's `percentile` takes a FRACTION where core's takes [0, 100]. A hint phrased as an instruction would
+		// api-kit's `percentile` takes a fraction where core's takes [0, 100]. A hint phrased as an instruction would
 		// have an author collapse those two and silently change a unit.
 		const text = formatFindings([
 			{ name: "percentile", sites: [declarationSite("packages/core/utils/stats.ts", true, 12)] },

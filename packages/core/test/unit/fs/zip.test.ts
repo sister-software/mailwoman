@@ -3,7 +3,7 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- * @file The streaming zip readers' two contracts that nothing else checks: a consumer may stop early, and a member name
+ * @file The streaming zip readers' two interfaces that nothing else checks: a consumer may stop early, and a member name
  *   the archive never declared an encoding for can still be read.
  *
  *   Both were broken. Stopping early raised `Cannot close while reading in progress` from yauzl, because the archive was
@@ -19,7 +19,7 @@ import ADMZip from "adm-zip"
 import { afterAll, beforeAll, describe, expect, it } from "vitest"
 
 /**
- * Big and INCOMPRESSIBLE. A member that inflates in one pass is already finished when the consumer breaks, and yauzl
+ * Big and incompressible. A member that inflates in one pass is already finished when the consumer breaks, and yauzl
  * has released its read — such a fixture passes whether or not the disposal waits, which is what a 400 KB run of one
  * repeated character did. Random bytes keep the stream genuinely open across the break.
  */

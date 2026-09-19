@@ -12,7 +12,7 @@ Repo entry points:
 
 - `scripts/build-unified-wof.ts` - current GeoJSON -> SQLite builder.
 - `resolver-wof-sqlite/unified-schema.ts` - current schema/index helper. Use or extend this as the authoritative record.
-- `resolver-wof-sqlite/schema.ts` - downstream Kysely contract for WOF-style tables.
+- `resolver-wof-sqlite/schema.ts` - downstream Kysely interface for WOF-style tables.
 - `resolver-wof-sqlite/fts.ts` and `resolver-wof-sqlite/build-fts-cli.ts` - downstream FTS5/R\*Tree/population index lifecycle.
 
 The pipeline should:
@@ -371,9 +371,9 @@ If durability across power loss matters on macOS, consider `PRAGMA fullfsync = O
 
 ## 7. Design decisions — resolved 2026-05-28
 
-Reviewed with DeepSeek, grounded in existing codebase behavior and downstream consumer contracts.
+Reviewed with DeepSeek, grounded in existing codebase behavior and downstream consumer interfaces.
 
-### 1. Table contract
+### 1. Table interface
 
 **Ship: `spr`, `names`, `concordances`, `place_population`, `ancestors`. `geojson` ephemeral only. No `geometries`.**
 
@@ -415,7 +415,7 @@ This is the fix for the database lock bug that blocked the current `wof/prepare`
 
 - **Current builder:** `scripts/build-unified-wof.ts`.
 - **Current schema helper:** `resolver-wof-sqlite/unified-schema.ts`.
-- **Downstream resolver contract:** `resolver-wof-sqlite/schema.ts`, `resolver-wof-sqlite/lookup.ts`, `resolver-wof-sqlite/fts.ts`.
+- **Downstream resolver interface:** `resolver-wof-sqlite/schema.ts`, `resolver-wof-sqlite/lookup.ts`, `resolver-wof-sqlite/fts.ts`.
 - **WOF official SQLite bundles:** [https://dist.whosonfirst.org/sqlite/](https://dist.whosonfirst.org/sqlite/) or [https://www.whosonfirst.org/download/](https://www.whosonfirst.org/download/). Download one and run `.schema` on it.
 - **`whosonfirst/go-whosonfirst-sqlite-features`:** [https://github.com/whosonfirst/go-whosonfirst-sqlite-features](https://github.com/whosonfirst/go-whosonfirst-sqlite-features). Reference schema/table builders.
 - **Node.js `node:sqlite` docs:** [https://nodejs.org/api/sqlite.html](https://nodejs.org/api/sqlite.html).

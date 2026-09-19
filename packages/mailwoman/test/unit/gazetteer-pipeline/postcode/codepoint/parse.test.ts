@@ -80,7 +80,7 @@ test("readCodePointCSV keeps a quoted multiline field in one logical record and 
 })
 
 test("normalizeCodePointSpacing collapses the fixed-width padded form", () => {
-	// Code-Point is SPECIFIED as a 7-character field with the outward code left-justified, so a short
+	// Code-Point is specified as a 7-character field with the outward code left-justified, so a short
 	// postcode is padded to `B1  1AA`. Left alone that is a different string from `B1 1AA` and would land
 	// as a second, duplicate place.
 	expect(normalizeCodePointSpacing('"B1  1AA"'.replaceAll('"', ""))).toBe("B1 1AA")
@@ -120,7 +120,7 @@ test("parseCodePointMetadata reads the header fields and the per-area row manife
 })
 
 test("parseCodePointMetadata survives an unknown header field", () => {
-	// OS has added header rows before (RM UPDATE DATE postdates the product). A new one must not be fatal
+	// OS has added header rows before (RM update date postdates the product). A new one must not be fatal
 	// and must not be mistaken for an area count.
 	const metadata = parseCodePointMetadata(
 		["PRODUCT: OS CODE-POINT_03.02", "SOME NEW FIELD: whatever", "      AB\t17403"].join("\n")

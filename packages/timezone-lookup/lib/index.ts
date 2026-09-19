@@ -3,7 +3,7 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   `@mailwoman/timezone-lookup` — coordinate → IANA timezone, server-side. Point-in-polygon over the
+ *   `@mailwoman/timezone-lookup` — coordinate → iana timezone, server-side. Point-in-polygon over the
  *   timezone-boundary-builder polygons stored in a `node:sqlite` DB (bbox-prefilter + ray-cast),
  *   mirroring the resolver's PIP pattern. The UTC offset comes from `Intl.DateTimeFormat` — no tz
  *   database dependency. Build the DB with `mailwoman-timezone build` (see `./build.ts`).
@@ -24,7 +24,7 @@ export type MultiPolygonCoords = number[][][][]
 /**
  * Ray-cast point-in-ring (even-odd rule). `ring` is `[[lon, lat], …]`.
  *
- * DELIBERATE DUPLICATE of `@mailwoman/spatial`'s `pointInRing`, kept local on purpose. This package has exactly one
+ * Deliberate duplicate of `@mailwoman/spatial`'s `pointInRing`, kept local on purpose. This package has exactly one
  * dependency — zero-dep `@mailwoman/annotations` — and importing spatial to reach a fifteen-line ray cast would pull
  * `@mailwoman/core` with it, whose published tarball carries ~11 MB of libpostal/WOF/chromium-i18n data. Eleven
  * megabytes for fifteen lines is the wrong trade for a leaf lookup package. If this package ever gains a real spatial
@@ -72,7 +72,7 @@ export function pointInMultiPolygon(lon: number, lat: number, polygons: MultiPol
 }
 
 /**
- * The current UTC offset (seconds) for an IANA timezone, via `Intl` (no tz-db dependency). Returns `undefined` if the
+ * The current UTC offset (seconds) for an iana timezone, via `Intl` (no tz-db dependency). Returns `undefined` if the
  * runtime can't resolve the zone.
  */
 export function offsetSecForTimezone(tzid: string, date: Date = new Date()): number | undefined {
@@ -118,7 +118,7 @@ export class TimezoneLookup implements Disposable {
 	}
 
 	/**
-	 * The IANA timezone id containing `(lat, lon)`, or `null` if none (shouldn't happen with oceans).
+	 * The iana timezone id containing `(lat, lon)`, or `null` if none (shouldn't happen with oceans).
 	 */
 	explore(lat: number, lon: number): string | null {
 		const rows = this.#stmt.all(lat, lat, lon, lon) as Array<{ tzid: string; geom: string }>

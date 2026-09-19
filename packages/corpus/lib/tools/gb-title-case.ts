@@ -1,8 +1,8 @@
 /**
- * Title-case an ALL-CAPS GB place/street string (#690 — all-caps is OOD for the model). PPD ships every field
+ * Title-case an all-caps GB place/street string (#690 — all-caps is OOD for the model). PPD ships every field
  * upper-case. the model trains on natural casing. Particles (upon, super, next, …) stay lowercase mid-name, both
  * between words and between hyphen segments. Each apostrophe-separated segment is capitalized on its own (D'Arcy,
- * James'), except a bare trailing possessive 's, which stays lowercase (BISHOP'S → Bishop's).
+ * James'), except a bare trailing possessive 's, which stays lowercase (bishop'S → Bishop's).
  */
 const GB_PARTICLES = new Set([
 	"upon",

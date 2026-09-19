@@ -3,10 +3,10 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   The RESOLVED-address → Nominatim-schema formatter: rendering a {@link ResolvedAddress} into a
+ *   The resolved-address → Nominatim-schema formatter: rendering a {@link ResolvedAddress} into a
  *   {@link NominatimResult} (`toNominatimResult`), the `format=geojson` FeatureCollection envelope
  *   (`toFeatureCollection`), and the `format=jsonld` schema.org projection
- *   (`nominatimResultToSchemaOrg`). Wire types + the engine contract live in `engine.ts`.
+ *   (`nominatimResultToSchemaOrg`). Wire types + the engine interface live in `engine.ts`.
  */
 
 import { composeStreetAddress, type SchemaOrgPlace, toSchemaOrg } from "@mailwoman/annotations"
@@ -41,7 +41,7 @@ export function toFeatureCollection(results: readonly NominatimResult[]): Nomina
 	const features: NominatimFeatureCollection["features"] = []
 
 	for (const r of results) {
-		// `toNominatimResult` writes "" for a missing coordinate, never null, so EMPTINESS is the condition that
+		// `toNominatimResult` writes "" for a missing coordinate, never null, so emptiness is the condition that
 		// matters. A `== null` check alone lets a coordinate-less row through as Point [0, 0] — a real place in the
 		// Gulf of Guinea rather than an absence.
 		if (!r.lat || !r.lon) continue
@@ -83,7 +83,7 @@ export interface ResolvedAddress {
 	placeRank?: number
 	boundingbox?: [string, string, string, string]
 	/**
-	 * A stable id from the resolver (WOF/GERS); a deterministic hash is used when absent.
+	 * A stable id from the resolver (WOF/gers); a deterministic hash is used when absent.
 	 */
 	placeID?: string | number
 }
@@ -153,7 +153,7 @@ export function toNominatimResult(r: ResolvedAddress, opts: { addressdetails?: b
 }
 
 /**
- * Project a Nominatim result into a schema.org `Place` JSON-LD object (`format=jsonld`, #1052) — the OUTPUT-format
+ * Project a Nominatim result into a schema.org `Place` JSON-LD object (`format=jsonld`, #1052) — the output-format
  * projection. Reads the result's `address` breakdown (populated because the router forces `addressdetails` for
  * `jsonld`) plus the coordinate, re-serializing the same resolved place. `streetAddress` is the plain
  * house-number-first join (house_number + road); `addressCountry` is ISO-3166 alpha-2 (uppercased).

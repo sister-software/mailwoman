@@ -4,7 +4,7 @@
  * @author Teffen Ellis, et al.
  *
  *   `mailwoman registry gold-set-sample` — sample the hard co-located name-collision stratum (#625
- *   gold-set P3) as JSONL rows for adjudication. Without `--out-jsonl` the first 10 rows print to
+ *   gold-set P3) as jsonl rows for adjudication. Without `--out-jsonl` the first 10 rows print to
  *   stdout.
  */
 
@@ -13,7 +13,7 @@ import { Text } from "ink"
 import { type CommandSpec, CommandTaskResult, type CommandComponent, useCommandTask } from "#cli-kit"
 
 /**
- * Native command-line contract consumed by the filesystem command router.
+ * Native command-line interface consumed by the filesystem command router.
  */
 export const spec = {
 	name: "gold-set-sample",

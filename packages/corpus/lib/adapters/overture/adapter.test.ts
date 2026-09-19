@@ -22,7 +22,7 @@ const scratch = useScratchDir("ov")
 const loadRows = () => readCanonicalRows(scratch.path, OVERTURE_ADAPTER_ID)
 
 /**
- * Write a per-country Overture corpus JSONL fixture (the shape `ingest-overture-addresses.ts --corpus-jsonl` emits).
+ * Write a per-country Overture corpus jsonl fixture (the shape `ingest-overture-addresses.ts --corpus-jsonl` emits).
  */
 async function writeFixture(rows: Record<string, unknown>[]): Promise<string> {
 	const p = join(scratch.path, "overture-es.corpus.jsonl")

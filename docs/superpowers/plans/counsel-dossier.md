@@ -16,7 +16,7 @@ built databases) ODbL derivative databases subject to share-alike?
 **Facts:** the osm/ workspace is complete but publish-blocked (its README records the posture);
 OSM-derived corpus extracts are quarantined into their own license bucket at build time
 (`.notes/data-sources.md` build sheet); poi.db ships ODbL-attributed as a **build-local** artifact
-on the layer contract's tiers.
+on the layer interface's tiers.
 
 **Interim posture:** publish-block holds; quarantine discipline holds; poi.db stays build-local.
 The KR framework (item 4) reuses this exact posture.
@@ -143,7 +143,7 @@ on the free channel) and marks every point where an instrument would be needed.
    attribution condition and sitting correctly on top of the upstream licenses.
 3. **L3 — can we condition a compiled artifact whose inputs are public domain?** The working
    assumption is that the attribution condition rides the download agreement rather than a copyright
-   claim over facts; EU database-compilation right vs US contract likely differ. **This is the
+   claim over facts; EU database-compilation right vs US interface likely differ. **This is the
    required question for the whole Lite line.**
 4. **L4 — the WOF license, and it is fact-finding first.** The repo contradicts itself: the
    licensing pages say CC0, `resolver-wof-sqlite/README.md` and the HF dataset card say CC-BY 4.0,

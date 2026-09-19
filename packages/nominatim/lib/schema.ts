@@ -4,7 +4,7 @@
  * @author Teffen Ellis, et al.
  *
  *   Zod wire schemas for the Nominatim-compatible surface. Key names and envelopes are the vendor
- *   contract — immutable. Query schemas are validator-proof (string|string[] unions, all optional)
+ *   interface — immutable. Query schemas are validator-proof (string|string[] unions, all optional)
  *   with doc-exact `.openapi()` overrides. every wire decision lives in the handlers (see
  *   routes.ts's legacyQuery adapter, the photon-established pattern).
  */
@@ -89,7 +89,7 @@ export const NominatimFeatureCollectionSchema = z
 
 /**
  * One database the deployment is serving from, and what its embedded `layer_manifest` says about it. `manifest:
- * "absent"` is an artifact built before the layer contract — it is listed rather than dropped, so a reader can tell an
+ * "absent"` is an artifact built before the layer interface — it is listed rather than dropped, so a reader can tell an
  * unstamped artifact from one nobody opened.
  */
 const NominatimStatusArtifactSchema = z

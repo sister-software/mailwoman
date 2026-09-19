@@ -6,7 +6,7 @@
  *   Geographic distance as a scoring feature — the other half of geocode-first matching.
  *
  *   Blocking uses geography to _propose_ candidates. this scores them on it. The research is explicit
- *   that an address must be matched as a SPATIAL attribute rather than by string similarity (a
+ *   that an address must be matched as a spatial attribute rather than by string similarity (a
  *   one-character edit can be 650 m apart), and that distance measurably helps as a comparison
  *   feature. So we bucket the great-circle distance between two records' coordinates into ordered
  *   Fellegi-Sunter agreement levels (Splink's `DistanceInKMAtThresholds`): "same building" / "same
@@ -33,7 +33,7 @@ export const haversineKm = (a: LatLon, b: LatLon): number =>
 
 /**
  * A geo-distance comparison: bucket the great-circle distance between two records' coordinates into ordered agreement
- * levels. Levels must be ordered NEAREST first by `maxKm`, the last acting as the `far` catch-all (`maxKm` omitted →
+ * levels. Levels must be ordered nearest first by `maxKm`, the last acting as the `far` catch-all (`maxKm` omitted →
  * unbounded). A missing/invalid coordinate on either side yields no evidence.
  */
 export function distanceComparison<R>(config: {
@@ -76,7 +76,7 @@ export const DEFAULT_DISTANCE_LEVELS: ComparisonLevel[] = [
 ]
 
 /**
- * The collapsed spatial-agreement comparison — ONE non-redundant geographic signal.
+ * The collapsed spatial-agreement comparison — one non-redundant geographic signal.
  *
  * The first matcher carried two spatial comparisons: canonical-address-key similarity and great-circle distance. They
  * double-count — an exact key match implies distance ≈ 0, so a co-located pair banked the same evidence twice, and the
@@ -86,7 +86,7 @@ export const DEFAULT_DISTANCE_LEVELS: ComparisonLevel[] = [
  * - **level 0 `same-key`** — an exact canonical-key match: the strongest tier, and the one the inverse-address-frequency
  *   adjustment rides ({@link withTermFrequency} on level 0), so agreement on a crowded shared key is down-weighted
  *   toward worthless while a rare one keeps full weight.
- * - **levels 1…n** — great-circle distance buckets for pairs whose keys DIFFER, so "123 Main St" vs "123 Main Street Apt
+ * - **levels 1…n** — great-circle distance buckets for pairs whose keys differ, so "123 Main St" vs "123 Main Street Apt
  *   2" that geocode to the same rooftop still warrants near-agreement (the geo-first point of the whole design).
  * - Keys differ and no usable coordinate → no evidence.
  *

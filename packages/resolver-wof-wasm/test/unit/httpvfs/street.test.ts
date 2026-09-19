@@ -5,7 +5,7 @@
  *
  *   Unit tests for the demo's street tier: the httpvfs situs/interp lookups
  *   (HTTPVFSAddressPointLookup, HTTPVFSInterpolator) against a node:sqlite-backed stub worker that
- *   mimics sql.js-httpvfs's `db.exec` contract ([] on no rows, else [{columns, values}]), plus
+ *   mimics sql.js-httpvfs's `db.exec` interface ([] on no rows, else [{columns, values}]), plus
  *   `resolveStreet`'s tier ordering with stub lookups. Synthetic in-memory extracts — no /mnt/playpen
  *   dependency, CI-safe. Integration against real extracts is the docs site's street-tier browser
  *   spec.
@@ -38,7 +38,7 @@ function situsDB(): DatabaseClient<AddressPointDatabase> {
 			"CREATE TABLE address_point(street_norm TEXT, street_key TEXT, number TEXT, unit TEXT, postcode TEXT, locality_norm TEXT, street_raw TEXT, lat REAL, lon REAL, source TEXT, release TEXT)"
 		)
 
-		// street_norm is the SHARED normalizer output; "Main St" → "main street".
+		// street_norm is the shared normalizer output; "Main St" → "main street".
 		d.prepare(
 			"INSERT INTO address_point(street_norm, number, postcode, locality_norm, lat, lon, source, release) VALUES(?,?,?,?,?,?,?,?)"
 		).run("main street", "100", "10001", "new york", 40.75, -73.99, "overture:test", "2026-05-20.0")

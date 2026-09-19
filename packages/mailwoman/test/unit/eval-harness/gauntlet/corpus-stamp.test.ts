@@ -7,7 +7,7 @@
  *   corpus to state B, and check that a runner refuses to grade against it.
  *
  *   The real 2026-08-06 incident needed a stale `out/` tree to reach. That is not reproducible in a test — but
- *   the SHAPE is exactly this: the DB says one corpus, the disk says another, and until this stamp existed
+ *   the shape is exactly this: the DB says one corpus, the disk says another, and until this stamp existed
  *   nothing in the pipeline could tell them apart.
  */
 

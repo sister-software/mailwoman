@@ -12,7 +12,7 @@ import { mostSpecificResolved } from "@mailwoman/resolver"
 /**
  * A resolver-attributed node: the WOF place it landed on, that place's name/placetype, and its coordinate.
  *
- * `value` is the PARSED span, kept beside the resolver's own `name` because ranking a `postalcode` needs both — a full
+ * `value` is the parsed span, kept beside the resolver's own `name` because ranking a `postalcode` needs both — a full
  * unit shape the resolver answered with a coarser stem is area-grade, whatever the user typed.
  */
 export interface Resolved {
@@ -79,7 +79,7 @@ export function collectResolved(tree: AddressTree): Resolved[] {
 		}
 
 		// Multi-role completion (#415/#416): a dual-role region carries extra roles (e.g. `locality`) as
-		// INTERPRETATIONS on the same node rather than separate children. Surface each resolved interpretation as
+		// interpretations on the same node rather than separate children. Surface each resolved interpretation as
 		// its own Resolved so the eval finds the completed locality (placetype/coord/name come from the
 		// interpretation).
 		for (const interp of (n.interpretations ?? []) as ReadonlyArray<{

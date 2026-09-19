@@ -5,7 +5,7 @@
  *
  *   Affix miss-form audit (#492 endgame): the width run falsified the capacity hypothesis (48M lands
  *   at exactly 29M's 64.9-prefix equilibrium at matched density, P=100/R≈48 on both), which points
- *   the ladder's last finger at the DATA. This script classifies every real-affix-eval miss by
+ *   the ladder's last finger at the data. This script classifies every real-affix-eval miss by
  *   surface-form features and compares them against what the extract builder actually varies
  *   (abbr/full per affix, Title-case, four layouts) — the #487 audit method, applied to affix.
  *
@@ -45,7 +45,7 @@ if (!args.model) throw new Error("--model required")
 
 const rows = await JSONSpliterator.fromAsync<{ raw: string; components: Record<string, string> }>(args.file!).toArray()
 
-// Mirror score-affix's SHIP-CONFIG construction exactly — loadFromWeights ignores a modelPath
+// Mirror score-affix's ship-config construction exactly — loadFromWeights ignores a modelPath
 // and grades the default symlink with no anchor channel (the zero-fill crash signature this
 // audit's first run produced — caught by the misses-vs-scorer discrepancy).
 const card = await import("@mailwoman/neural-weights-en-us/model-card.json", { with: { type: "json" } }).then(

@@ -1,19 +1,19 @@
 /**
  * @file Production functional-smoke — the check the 2026-07-04 demo triple outage went missing for.
- *   `version-parity.yml` confirmed the demo's PINNED VERSION tracked npm, and stayed green for three days while the
+ *   `version-parity.yml` confirmed the demo's pinned version tracked npm, and stayed green for three days while the
  *   demo served no WOF hits, no FST, and no street tier — version parity is not functional parity. Every one of those
  *   three failures produced zero console errors. the only symptom was degraded results. So this smoke grades the
- *   RESULTS rather than the absence of errors. Tagged `@smoke`: `earth-smoke.yml` runs this spec (and only this)
+ *   results rather than the absence of errors. Tagged `@smoke`: `earth-smoke.yml` runs this spec (and only this)
  *   against the deployed app daily via `MAILWOMAN_EARTH_URL`. It also runs in the local build check like every other
  *   browser spec, so a refactor that breaks the cascade fails in CI before it ships. Two addresses, chosen to light up
  *   all three tiers at once:
  *
- *   - 1600 Pennsylvania Ave NW → the STREET tier (situs/interp extracts) + an address_point rooftop.
+ *   - 1600 Pennsylvania Ave NW → the street tier (situs/interp extracts) + an address_point rooftop.
  *   - Zabiče 8, 6250 Zabiče → the WOF admin cascade and the #942/#961 postal-compound floor. If either regresses to
  *     admin-only (or drops its marker), a tier is dead — exactly what shipped silently before.
  *   - 1012 LG Amsterdam → the #924 NL digits-first postcode fix (v5.4.0). If the model regresses to parsing `1012` as a
  *     house number + `LG` as a street, the spurious street context drags it to the US situs tier (Amsterdam, NY) — so
- *     this asserts the coordinate lands in the NETHERLANDS, the exact bug v5.4.0 shipped to fix.
+ *     this asserts the coordinate lands in the netherlands, the exact bug v5.4.0 shipped to fix.
  */
 
 import { expect, test } from "../e2e/index.ts"

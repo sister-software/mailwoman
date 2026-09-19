@@ -5,8 +5,8 @@
  *
  *   Cached archive download + subprocess capture, shared by `fetch.ts` and `redistricting.ts`.
  *
- *   RAW `fetch` HERE IS DELIBERATE. `AGENTS.md` requires HTTP clients to extend or instantiate
- *   `APIClient`, and that rule is about API REQUESTS — small bodies, repeated calls, rate-limited
+ *   RAW `fetch` here is deliberate. `agents.md` requires http clients to extend or instantiate
+ *   `APIClient`, and that rule is about API requests — small bodies, repeated calls, rate-limited
  *   hosts, where its pacing, bounded retry, response caching and `ResourceError` mapping all earn
  *   their keep. This is a multi-gigabyte file transfer streamed straight to disk. Response caching
  *   would be nonsense at that size, pacing has nothing to pace (one request), and axios buffers a
@@ -20,7 +20,7 @@ import { movePath } from "@mailwoman/core/fs/writers"
 import { verifyZipIntegrity } from "@mailwoman/core/fs/zip"
 
 /**
- * Download `url` to `dest` unless a VALID copy is already there. Returns `true` when the cache was reused, `false` when
+ * Download `url` to `dest` unless a valid copy is already there. Returns `true` when the cache was reused, `false` when
  * a download happened.
  *
  * "Valid" means every member's CRC-32 checks out — an existence check alone is not enough, because an interrupted

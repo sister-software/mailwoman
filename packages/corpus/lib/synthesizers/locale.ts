@@ -9,9 +9,9 @@
  *   The neural model is out-of-distribution on German: it truncates `Straußstraße`→`Strau` (exits at
  *   the ß-piece boundary), absorbs the house number into the street (`Hauptstraße 5` → one span),
  *   and mis-tags the native-order house number as a postcode (`Prenzlauer Allee 36, 10405 Berlin` →
- *   postcode `36`). The cause is ORDER: the model was trained US+FR (house-number-FIRST,
- *   postcode-AFTER-city), and never saw the German convention (house-number-AFTER-street,
- *   postcode-BEFORE-city). DE-0 confirmed the tokenizer round-trips German orthography cleanly, so
+ *   postcode `36`). The cause is order: the model was trained US+FR (house-number-first,
+ *   postcode-after-city), and never saw the German convention (house-number-after-street,
+ *   postcode-before-city). DE-0 confirmed the tokenizer round-trips German orthography cleanly, so
  *   this is a coverage gap rather than a tokenizer ceiling.
  *
  *   The original German generator produced the missing signal as a small targeted supplement source
@@ -41,8 +41,8 @@ export interface LocaleBaseTuple {
 	street: string
 	locality: string
 	/**
-	 * A sub-locality that sits below the locality (a suburb / district). NZ is the case that needs it: the OA DISTRICT
-	 * column holds the city (`Auckland`) and CITY holds the suburb (`Birkenhead`), so the real envelope carries both (`31
+	 * A sub-locality that sits below the locality (a suburb / district). NZ is the case that needs it: the OA district
+	 * column holds the city (`Auckland`) and city holds the suburb (`Birkenhead`), so the real envelope carries both (`31
 	 * Rawene Road, Birkenhead, Auckland`). Rendered between street and locality in both orders when present.
 	 */
 	dependent_locality?: string
@@ -70,7 +70,7 @@ export interface LocaleSynthesisOpts {
 	random?: () => number
 	/**
 	 * Rendering order for the same components. `"native"` (default) uses the country's own template (DE →
-	 * house-AFTER-street, postcode-BEFORE-city). `"international"` renders house-FIRST, postcode-AFTER-city — the US/GB
+	 * house-after-street, postcode-before-city). `"international"` renders house-first, postcode-after-city — the US/GB
 	 * layout that international feeds, US-centric systems, and our own OpenAddresses de-sample impose on non-US
 	 * addresses. Training both teaches the model that a German address can arrive either way, so the eval's US-order
 	 * rendering stops reading as a collapse. See `docs/articles/evals/resolver-geo/2026-06-06-anchor-pilot.md` (the
@@ -86,8 +86,8 @@ export interface LocaleSynthesisOpts {
 	 */
 	postcodeShape?: "conventional" | "as-source"
 	/**
-	 * How the NATIVE-order render joins street and house number. The OpenCage ES template comma-joins (`Calle Mayor, 12`
-	 * — the official Spanish convention); OA-derived feeds and our ES eval space-join (`CALLE MAYOR 12`, the observed
+	 * How the native-order render joins street and house number. The OpenCage ES template comma-joins (`Calle Mayor, 12`
+	 * — the official Spanish convention); OA-derived feeds and our ES eval space-join (`calle mayor 12`, the observed
 	 * form on all 3,000 eval rows). `"template"` (default) keeps the template's own join; `"space"` collapses `<street>,
 	 * <house_number>` → `<street> <house_number>` after rendering. Countries whose template already space-joins
 	 * (DE/IT/NL) render identically under both. Mixing both stops an ES recipe output from teaching the comma as the
@@ -162,8 +162,8 @@ function tokenPresent(raw: string, value: string): boolean {
  * with light variation (drop house number / postcode some of the time). Returns `null` when the tuple is too thin or a
  * component wouldn't align cleanly.
  *
- * Region handling is order-dependent: NATIVE order omits it (the native template absorbs the admin region into the
- * postcode/city line, so it rarely renders verbatim and would break BIO alignment), while INTERNATIONAL order includes
+ * Region handling is order-dependent: native order omits it (the native template absorbs the admin region into the
+ * postcode/city line, so it rarely renders verbatim and would break BIO alignment), while international order includes
  * it in the tail ("City, Region Postcode" — the US/feed layout the eval uses. v0.9.3 / #327).
  *
  * Pass `opts.order: "international"` to render the same components house-first / postcode-after-city instead (see
@@ -201,7 +201,7 @@ export function synthesizeLocaleRow(
 		components.postcode = normalizePostcode(base.postcode, country)
 	}
 
-	// International order carries the REGION in the tail ("City, Region Postcode") — the layout real
+	// International order carries the region in the tail ("City, Region Postcode") — the layout real
 	// US/feed renderings (and our OA eval) use. v0.9.2 rendered international order without the region,
 	// so the model never learned to segment the tail and mangled it at eval (region absorbed into the
 	// locality / locality dropped); v0.9.3 closes that gap (#327). Native order still drops the region

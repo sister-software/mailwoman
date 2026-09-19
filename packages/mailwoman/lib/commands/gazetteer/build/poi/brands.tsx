@@ -6,7 +6,7 @@
  *   `mailwoman gazetteer build poi-brands` — the POI brand lexicon builder, part 1 of 2 (part 2 wires
  *   `lookupPOIBrand` into the runtime pipeline. no pipeline wiring here). Thin wiring only: the read +
  *   aggregate + write logic lives in `gazetteer-pipeline/poi/build-brands.ts`, mirroring `build/poi.tsx`'s
- *   thin-command style. Reads a BUILT `poi.db` READ-ONLY — never writes one.
+ *   thin-command style. Reads a built `poi.db` read-only — never writes one.
  *
  *   `writeBrandTable`'s plain `JSON.stringify` doesn't collapse short primitive arrays onto one line the
  *   way `oxfmt` does (e.g. `"aliases": ["Foo"]` vs a 3-line array) — the process-y bit (shelling out, like
@@ -21,7 +21,7 @@ import { type CommandSpec, CommandTaskResult, type CommandComponent, useCommandT
 import { DEFAULT_DOMINANCE, DEFAULT_MIN_ROWS } from "#gazetteer-pipeline/poi/defaults"
 
 /**
- * Native command-line contract consumed by the filesystem command router.
+ * Native command-line interface consumed by the filesystem command router.
  */
 export const spec = {
 	name: "poi-brands",

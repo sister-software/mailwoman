@@ -22,7 +22,7 @@ Rooftop fidelity is a data problem rather than a model problem. The parser is a 
 model shared world-wide (every locale overlay ships the same bytes); adding a country never
 grows it. Fidelity grows by adding **layers** — sealed, read-only, memory-mapped SQLite
 artifacts probed by parse-derived keys (see
-[the layer contract](./layer-contract.mdx)). Because retrieval is a keyed probe — house
+[the layer interface](./layer-interface.mdx)). Because retrieval is a keyed probe — house
 number + street within an already-resolved locality — rather than fuzzy full-text recall,
 there is no query-time index that must be resident in RAM. Disk holds the data; the page
 cache holds whatever the query traffic touches.

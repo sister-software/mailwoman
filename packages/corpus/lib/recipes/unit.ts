@@ -11,12 +11,12 @@
  *   sits. The inline synthesis (the OA-CSV reader, the designator tables, `makeUnit`/`renderUnit`)
  *   is ported faithfully from the root build script it replaced.
  *
- *   `--golden`: a held-out eval over the VERMONT source only (the corpus `defaultHoldout`, never
+ *   `--golden`: a held-out eval over the vermont source only (the corpus `defaultHoldout`, never
  *   trained) with a different seed, emitting `{raw, components, country}` for per-locale-f1. Train
  *   uses every NON-Vermont US source. Designators are injected in both (OA carries none), so the
  *   eval measures designator recognition on held-out addresses.
  *
- *   NOTE: this is a `generate`-mode recipe but it still reads real tuples off disk (`unzip` of the
+ *   note: this is a `generate`-mode recipe but it still reads real tuples off disk (`unzip` of the
  *   cached OA zips) — `--count` bounds the output rather than the input. The passed `random` (the
  *   framework LCG) is consumed in the exact call order the legacy script used.
  */
@@ -105,7 +105,7 @@ async function readTuples(source: UnitSource): Promise<UnitTuple[]> {
 }
 
 /**
- * Title-case a canonical/abbrev designator ("APARTMENT" → "Apartment", "APT" → "Apt").
+ * Title-case a canonical/abbrev designator ("apartment" → "Apartment", "APT" → "Apt").
  */
 const title = (s: string): string => s.charAt(0).toUpperCase() + s.slice(1).toLowerCase()
 
@@ -131,7 +131,7 @@ export function makeUnit(random: () => number, oaUnit: string): string {
 }
 
 /**
- * Synthetic recipient/venue prefixes — the "JOHN DOE, ACME INC, ..." arena pattern.
+ * Synthetic recipient/venue prefixes — the "john DOE, acme INC, ..." arena pattern.
  */
 const VENUES: readonly string[] = [
 	"John Doe",
@@ -149,8 +149,8 @@ const VENUES: readonly string[] = [
 /**
  * Share of tails that write a comma before the postcode — `Athens, GA, 30601`.
  *
- * This is the COUNTER-READING of the bare unit below, and it is here because nothing else in the corpus carries it.
- * Counted over one epoch of the shipped mixture, a bare number standing alone in a LATER comma segment appears zero
+ * This is the counter-reading of the bare unit below, and it is here because nothing else in the corpus carries it.
+ * Counted over one epoch of the shipped mixture, a bare number standing alone in a later comma segment appears zero
  * times at either level, so the position is unattested in both directions: teaching `…, 101, …` as a unit without this
  * would make the unit reading the only evidence a model has for a segment users also write a postcode into.
  */
@@ -195,8 +195,8 @@ const BARE_AFTER_CUTOFF = 0.68
 const BARE_FIRST_CUTOFF = 0.84
 
 /**
- * Render a unit row in a RANDOM layout — units spread across positions, the city/state tail dropped on bare rows, a
- * recipient/venue prefixed on the venue format — so the model learns to RECOGNIZE the designator wherever it sits.
+ * Render a unit row in a random layout — units spread across positions, the city/state tail dropped on bare rows, a
+ * recipient/venue prefixed on the venue format — so the model learns to recognize the designator wherever it sits.
  * Returns {fmt, raw, components}.
  */
 export function renderUnit(
@@ -305,7 +305,7 @@ export const unitRecipe: CorpusRecipe = {
 			const base = pool[Math.floor(random() * N)]!
 			const unit = makeUnit(random, base.oaUnit)
 			const { raw, components } = renderUnit(random, base, unit)
-			// The RENDERED component rather than the designator form handed in: `full-comma-bare` writes the identifier alone,
+			// The rendered component rather than the designator form handed in: `full-comma-bare` writes the identifier alone,
 			// so checking the pre-render string would refuse every row of that layout.
 			const rendered = components.unit
 

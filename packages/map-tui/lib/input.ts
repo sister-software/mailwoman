@@ -11,7 +11,7 @@
  * caller owns the only state there is, the unresolved trailing fragment the function hands back — so one chunk in gives
  * the same events out every time.
  *
- * THE FALLBACK IS THE DANGEROUS PART. An ESC this decoder had no rule for used to mean "the Esc key", i.e. QUIT, which
+ * The fallback is the dangerous part. An ESC this decoder had no rule for used to mean "the Esc key", i.e. quit, which
  * made every unrecognized escape sequence a quit: F1 (`ESC O P`), an OSC reply the terminal sends unasked (`ESC ] 11 ;
  * rgb:… BEL`), and — worst, because it needs no exotic key at all — a mouse report split across two stdin reads, whose
  * first half ends inside the sequence. So the fallback now separates three cases:
@@ -20,7 +20,7 @@
  * - A sequence it does not recognize is consumed whole and ignored: CSI (`ESC [ … final`), SS3 (`ESC O final`), and the
  *   string family (OSC/DCS/SOS/PM/APC, terminated by BEL or ST). Re-scanning their bodies as characters is how a `q`
  *   inside a cursor-position report quit the app.
- * - A chunk that ENDS mid-sequence — including a lone trailing ESC, which is byte-for-byte the start of one — is not
+ * - A chunk that ends mid-sequence — including a lone trailing ESC, which is byte-for-byte the start of one — is not
  *   decoded at all: it comes back as {@link DecodedInput.pending} for the caller to prepend to the next chunk. Quit is
  *   emitted only for an ESC that is neither, i.e. one whose following byte cannot continue a sequence.
  *
@@ -50,7 +50,7 @@ export const MOUSE_DISABLE = "\u001B[?1006l\u001B[?1002l\u001B[?1000l"
 export type MapTUIInput =
 	| { kind: "quit" }
 	/**
-	 * Ctrl+C. Distinct from `quit` because the process must exit 130, and because raw mode means no SIGINT is raised.
+	 * Ctrl+C. Distinct from `quit` because the process must exit 130, and because raw mode means no sigint is raised.
 	 */
 	| { kind: "interrupt" }
 	| { kind: "pan"; dx: number; dy: number }
@@ -90,7 +90,7 @@ const UNKNOWN_SS3_PATTERN = /\u001BO[\u0040-\u007E]/y
 
 /**
  * The string-sequence family: OSC (`ESC ]`), DCS (`ESC P`), SOS (`ESC X`), PM (`ESC ^`), APC (`ESC _`), each running to
- * a BEL or an ST (`ESC \`). A terminal sends these UNASKED — an OSC colour or clipboard reply lands on stdin with no
+ * a BEL or an ST (`ESC \`). A terminal sends these unasked — an OSC colour or clipboard reply lands on stdin with no
  * key pressed — so consuming them is not a nicety.
  */
 const STRING_SEQUENCE_PATTERN = /\u001B[P\]X^_][\s\S]*?(?:\u0007|\u001B\\)/y
@@ -102,7 +102,7 @@ const STRING_SEQUENCE_PATTERN = /\u001B[P\]X^_][\s\S]*?(?:\u0007|\u001B\\)/y
 const UNRECOGNIZED_PATTERNS = [UNKNOWN_CSI_PATTERN, UNKNOWN_SS3_PATTERN, STRING_SEQUENCE_PATTERN] as const
 
 /**
- * A chunk that STOPS inside a sequence. The end-anchors are what make these "incomplete" rather than "unrecognized":
+ * A chunk that stops inside a sequence. The end-anchors are what make these "incomplete" rather than "unrecognized":
  * each requires the whole remainder of the chunk to be a legal prefix and nothing more. The first covers both a lone
  * trailing ESC and an `ESC O` still waiting for its final byte.
  */
@@ -138,8 +138,8 @@ const ARROW_INPUTS: Record<string, MapTUIInput> = {
 
 /**
  * Single-character bindings. `a`/`z` are mapscii's zoom keys, `+`/`-` the ones every other map uses, and `hjkl` the vim
- * pan set mapscii also accepts. `y` joins `z` for zoom-out because on a QWERTZ keyboard it sits where `z` does on
- * QWERTY — mapscii binds both for the same reason.
+ * pan set mapscii also accepts. `y` joins `z` for zoom-out because on a qwertz keyboard it sits where `z` does on
+ * qwerty — mapscii binds both for the same reason.
  */
 const CHARACTER_INPUTS: Record<string, MapTUIInput> = {
 	q: { kind: "quit" },
@@ -183,7 +183,7 @@ function consumeUnrecognized(buffer: string, index: number): number | null {
 }
 
 /**
- * True when everything from `index` to the end of the chunk is a legal PREFIX of a sequence — i.e. the terminal is
+ * True when everything from `index` to the end of the chunk is a legal prefix of a sequence — i.e. the terminal is
  * mid-sequence and the rest is in the next read.
  */
 function isIncompleteSequence(buffer: string, index: number): boolean {

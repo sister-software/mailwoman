@@ -4,7 +4,7 @@
  * @author Teffen Ellis, et al.
  * @file Tests for the CIK corroboration check.
  *
- *   Every CIK and SIC below was pulled live from EDGAR's submissions API on 2026-08-03/07, including both
+ *   Every CIK and SIC below was pulled live from edgar's submissions API on 2026-08-03/07, including both
  *   false matches the check exists to reject.
  */
 
@@ -82,7 +82,7 @@ describe("corroborateCIK — pins", () => {
 
 describe("corroborateCIK — abstention is not denial", () => {
 	it("reports a missing SIC as its own basis, distinct from a rejecting one", () => {
-		// EDGAR published nothing to corroborate against. That is a gap in the source rather than a judgment
+		// edgar published nothing to corroborate against. That is a gap in the source rather than a judgment
 		// about the company, and a caller reporting a run must be able to tell the two apart.
 		for (const absent of [null, undefined, "", "   "]) {
 			expect(corroborateCIK(cik("0000018926"), absent)).toEqual({

@@ -3,21 +3,21 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   COST OF THE §4 INTENT VOCABULARY. Stage 2.5 runs on every query on the hot per-query path
+ *   cost OF the §4 intent vocabulary. Stage 2.5 runs on every query on the hot per-query path
  *   (`geocode-core.ts`'s `deriveGeocodeRegister` calls `classifyKindSync` on every geocode, and
  *   `runPipeline` calls it on every parse), so three new scorers is a claim that has to be
  *   measured rather than asserted.
  *
  *   Two assertions, and they measure different failure modes:
  *
- *   1. **Growth** — the intent rules must stay LINEAR in input length. All three are
+ *   1. **Growth** — the intent rules must stay linear in input length. All three are
  *       lexicon-lookup-cheap by construction (a bounded regex over the tail, a Set membership test
  *       per word, a length check that rejects anything over 30 characters before any of it runs), and
  *       the ratio is what proves that rather than the docstring saying so. A ratio assertion also
  *       survives a loaded runner in a way a millisecond budget does not.
  *   2. **Absolute overhead vs the pre-§4 scorer set** — the number the reader of ROAD_TO_V9 §4
  *       actually wants: what did adding intent cost per query? Measured on the corpus register mix
- *       rather than on a synthetic string, and asserted as a RATIO against the same replayed
+ *       rather than on a synthetic string, and asserted as a ratio against the same replayed
  *       baseline the invariance receipt uses, for the same reason: an absolute microsecond budget
  *       flakes, a doubling does not.
  */
@@ -43,7 +43,7 @@ import { expect, test } from "vitest"
 
 /**
  * Timing samples per measurement. Best-of, for the reason `phrase-grouper/rules.scaling.test.ts` gives: contention only
- * ever ADDS time, so the minimum is the sample least polluted by the neighbours.
+ * ever adds time, so the minimum is the sample least polluted by the neighbours.
  */
 const TIMING_SAMPLES = 5
 
@@ -71,7 +71,7 @@ function bestOf(run: () => void): number {
 }
 
 /**
- * Median of per-pair ratios, with the two arms measured BACK-TO-BACK inside each pair. Measuring all small trials then
+ * Median of per-pair ratios, with the two arms measured back-TO-back inside each pair. Measuring all small trials then
  * all large trials (even as best-of-N) leaves the ratio exposed to a load burst that arrives between the two blocks —
  * on a host that also runs the CI fleet, that is the common case, and it fired the 3x bar three times in one night at
  * 3.19–3.25x with both arms individually healthy. Pairing puts any burst into both arms of the affected pair, and the
@@ -202,7 +202,7 @@ test("intent adds a bounded fraction to the per-query classify cost", () => {
 	const perQueryIntentUs = (withIntent * 1000) / (PASSES * prepared.length)
 	const ratio = withIntent / Math.max(baseline, 0.001)
 
-	// Printed rather than only asserted: the docstring rule in AGENTS.md is that a measured value includes its number, and this
+	// Printed rather than only asserted: the docstring rule in agents.md is that a measured value includes its number, and this
 	// is the number ROAD_TO_V9 §4's cost line is reporting.
 	// oxlint-disable-next-line no-console -- the measurement is the deliverable here.
 	console.log(
@@ -211,13 +211,13 @@ test("intent adds a bounded fraction to the per-query classify cost", () => {
 			`over ${prepared.length} queries x ${PASSES} passes`
 	)
 
-	// The BAR IS ABSOLUTE, and the ratio above is reported rather than asserted, because the ratio's denominator is the
+	// The BAR is absolute, and the ratio above is reported rather than asserted, because the ratio's denominator is the
 	// unstable half of the pair: the baseline arm is a bare score-and-max with no allocation, which V8 optimizes
 	// aggressively and inconsistently — measured at 0.354, 0.585 and 0.663 us/query across three consecutive runs of
 	// this file, moving the ratio from 1.94x to 3.48x while the numerator barely moved (1.185-1.284 us/query). Asserting
 	// on the ratio measures the JIT's mood. asserting on the absolute measures Stage 2.5.
 	//
-	// 10 us is ~8x the measured cost. It is set to catch an ORDER-OF-MAGNITUDE regression (someone adding a lexicon
+	// 10 us is ~8x the measured cost. It is set to catch an order-OF-magnitude regression (someone adding a lexicon
 	// load, a gazetteer probe, or an unbounded scan to an intent rule), not to police a microsecond, and it sits far
 	// enough above the measurement to survive a loaded CI runner. For scale: the classifier's own neighbour on this path
 	// is a ~3 ms ONNX inference, so Stage 2.5 in full is ~0.04% of a parse.

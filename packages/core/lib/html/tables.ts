@@ -3,15 +3,15 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Reading an HTML `<table>` as a grid of cells, for documents that state tabular data as markup and
+ *   Reading an html `<table>` as a grid of cells, for documents that state tabular data as markup and
  *   nothing more — no schema, no column meanings, no domain vocabulary. What a caller gets back is the
  *   grid the document states. deciding what a column means is the caller's, in the caller's package.
  *
  *   The whole document is parsed once, with `htmlparser2`, and every question below is answered against
  *   that tree. The regex readings this module replaced could not answer any of the three questions that
  *   actually decide a grid — is this table nested inside a cell, does this row belong to this table, does
- *   this cell belong to this row — because each is a question about ANCESTRY, and a depth counter over a
- *   token stream loses ancestry the moment the markup is malformed. EDGAR markup is malformed constantly.
+ *   this cell belong to this row — because each is a question about ancestry, and a depth counter over a
+ *   token stream loses ancestry the moment the markup is malformed. edgar markup is malformed constantly.
  */
 
 import render from "dom-serializer"
@@ -30,7 +30,7 @@ export interface TableCell {
 	tag: "td" | "th"
 	text: string
 	/**
-	 * The cell's text SPLIT WHERE THE SOURCE BROKE IT — one entry per block-level boundary (`</p>`, `</div>`, `<br>`,
+	 * The cell's text split where the source broke IT — one entry per block-level boundary (`</p>`, `</div>`, `<br>`,
 	 * `</li>`), blanks dropped. {@linkcode TableCell.text} is these joined by a space, and a caller that must tell one
 	 * long value from several stacked ones reads this instead of re-parsing the cell's markup.
 	 */
@@ -73,7 +73,7 @@ function readCell(cell: Element): TableCell {
 }
 
 /**
- * Reads every TOP-LEVEL table in `html` as rows of cells, in document order, or `null` when the document states no
+ * Reads every TOP-level table in `html` as rows of cells, in document order, or `null` when the document states no
  * table at all (the caller decides what to do with a document that is not tabular). A row with no `<td>`/`<th>` at all
  * — formatting cruft, an empty `<tr></tr>` — reads as `[]`, never `null`.
  *
@@ -109,7 +109,7 @@ export function extractTableRows(html: string): TableCell[][][] | null {
 	}
 
 	for (const row of findAll((element) => element.name === "tr", document)) {
-		// A row inside a NESTED table has that table as its nearest ancestor, which is not a key here — so the
+		// A row inside a nested table has that table as its nearest ancestor. It is not a key here. Therefore, the
 		// row stays with the cell it decorates instead of leaking into the top-level grid.
 		const table = nearestAncestor(row, TABLE_ANCESTOR)
 
@@ -136,7 +136,7 @@ export function widestRow(rows: readonly TableCell[][]): number {
 
 /**
  * Right-pads every row to the table's widest row, then drops each column index that is blank in every row. Per table,
- * and column-wise — never per row. A row-by-row "filter out the blanks" loses the fact that a row's LEADING cell was
+ * and column-wise — never per row. A row-by-row "filter out the blanks" loses the fact that a row's leading cell was
  * blank, which is often the difference between a top-level row and an indented child row, and no single row carries
  * enough evidence to tell those apart.
  */

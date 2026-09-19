@@ -133,7 +133,7 @@ export interface CompareDeps {
 	 * How an external arm's client is built.
 	 *
 	 * The transport interface, and the only one: a test replaces the Axios adapter through this, so the real client, its
-	 * pacing and its response parsing all still run against a scripted wire. A test that stubbed the ANSWER instead would
+	 * pacing and its response parsing all still run against a scripted wire. A test that stubbed the answer instead would
 	 * be asserting its own hypothesis about the protocol.
 	 */
 	createExternalClient?: (arm: ExternalArm) => ExternalGeocoderClient
@@ -395,7 +395,7 @@ async function mailwomanRunner(
 /**
  * A mailwoman result as an arm answer.
  *
- * Reads the GAUNTLET projection rather than the raw `GeocodeResult`, so the two-mailwoman path — which already holds
+ * Reads the gauntlet projection rather than the raw `GeocodeResult`, so the two-mailwoman path — which already holds
  * `GauntletResult`s — and the cross-engine path answer through one function. Two projections of the same run is how a
  * recorded arm and the live arm it was recorded from stop agreeing.
  */
@@ -463,7 +463,7 @@ function oracleRunner(
 /**
  * A stored run replayed row by row.
  *
- * MATCHED BY INPUT STRING rather than by row id. A row id is only meaningful inside the corpus that minted it, and a
+ * Matched BY input string rather than by row id. A row id is only meaningful inside the corpus that minted it, and a
  * recorded arm exists to compare across time — the board may have gained rows, or the comparison may be against a
  * different set entirely. The input string is the one key that means the same thing in both runs.
  *
@@ -689,7 +689,7 @@ async function scoreGeoRows(context: GeoScoringContext): Promise<unknown> {
 			differed: armsDiffered(a, b, distanceA, distanceB, hasTruth, item.toleranceM ?? null),
 			// Tri-state, and separate from `differed` on purpose: identity comparison runs only when both
 			// arms state a place-identity chain (absent = incomparable, never "same"), and it does not feed
-			// `arms_differed_on` — a battery pinned on the coordinate-level zero-diff contract keeps its
+			// `arms_differed_on` — a battery pinned on the coordinate-level zero-diff interface keeps its
 			// meaning, while a wrong-instance swap under a stable coordinate becomes visible beside it.
 			...(a.place_ids && b.place_ids ? { identity_differed: a.place_ids.join(">") !== b.place_ids.join(">") } : {}),
 			...(tierDiffered(a, b) === undefined ? {} : { tier_differed: tierDiffered(a, b) }),
@@ -884,7 +884,7 @@ async function scoreGeoRows(context: GeoScoringContext): Promise<unknown> {
 			ungradeable: rows.filter((row) => row.grade === "ungradeable").length,
 		},
 		thresholds,
-		// A significance test and an equivalence claim are both VERDICTS, so a diff-only result includes neither. Emitting
+		// A significance test and an equivalence claim are both verdicts, so a diff-only result includes neither. Emitting
 		// them over an empty graded set would print a test at n = 0, which reads as a test that was run.
 		significance: mode === "truth" ? test : null,
 		equivalence: mode === "truth" ? equivalence : null,

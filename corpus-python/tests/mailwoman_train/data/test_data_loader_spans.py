@@ -1,6 +1,6 @@
 """Loader wiring for the v0.5.0 char-offset span triple (#519, rebuild-plan step 4).
 
-Pins the loader-side contract:
+Pins the loader-side interface:
 
 1. Rows from a span-schema parquet file stream the triple end-to-end — ``iter_rows`` carries it,
    ``iter_encoded`` hands it to ``encode_row`` (which trains from the spans).

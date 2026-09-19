@@ -3,7 +3,7 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   The premise-linkage row and report contract (#1902) — fixed before any controlled data arrives, so
+ *   The premise-linkage row and report interface (#1902) — fixed before any controlled data arrives, so
  *   a provider's file populates an adapter rather than reshaping the evaluation after results are
  *   seen.
  *
@@ -85,7 +85,7 @@ export interface PremiseLinkageObjectID {
 }
 
 /**
- * PRIVATE. One controlled row as the adapter reads it — licensed fields included. Held in memory for one run and never
+ * Private. One controlled row as the adapter reads it — licensed fields included. Held in memory for one run and never
  * serialized: nothing in this repository writes this type to disk.
  */
 export interface PremiseLinkageInputRow extends PremiseLinkagePresence {
@@ -98,13 +98,13 @@ export interface PremiseLinkageInputRow extends PremiseLinkagePresence {
 	 */
 	expectedObjectID: PremiseLinkageObjectID
 	/**
-	 * Truth coordinate, when the row has one. Absent means UNMEASURED, never zero: a row without a truth coordinate is
+	 * Truth coordinate, when the row has one. Absent means unmeasured, never zero: a row without a truth coordinate is
 	 * excluded from the coordinate table rather than counted as a miss.
 	 */
 	expectedLat?: number
 	expectedLon?: number
 	/**
-	 * Whether the provider's terms permit a coordinate ERROR to appear in a published aggregate. False keeps the row in
+	 * Whether the provider's terms permit a coordinate error to appear in a published aggregate. False keeps the row in
 	 * every identifier metric and out of every coordinate one.
 	 */
 	coordinatePublishable: boolean
@@ -114,7 +114,7 @@ export interface PremiseLinkageInputRow extends PremiseLinkagePresence {
 /**
  * What one arm did with one row.
  *
- * `refused` and `ambiguous` are first-class, exactly as the #1901 contract makes them: a refusal is an arm that
+ * `refused` and `ambiguous` are first-class, exactly as the #1901 interface makes them: a refusal is an arm that
  * declined to name a premise, and an ambiguous answer keeps its candidates. Neither is ever recorded as `wrong`, and an
  * ambiguous answer is never recorded as `exact`.
  *
@@ -134,7 +134,7 @@ export const PremiseLinkageOutcome = {
 export type PremiseLinkageOutcome = (typeof PremiseLinkageOutcome)[keyof typeof PremiseLinkageOutcome]
 
 /**
- * Why a row was not `exact`, from a CLOSED set. Deliberately not free text: a free-text reason field is where an
+ * Why a row was not `exact`, from a closed set. Deliberately not free text: a free-text reason field is where an
  * address, a provider payload, or a stack trace carrying either one ends up.
  */
 export const PremiseLinkageFailureCategory = {
@@ -169,7 +169,7 @@ export type PremiseLinkageFailureCategory =
 	(typeof PremiseLinkageFailureCategory)[keyof typeof PremiseLinkageFailureCategory]
 
 /**
- * PERSISTABLE. One arm's graded answer for one row, carrying nothing that can be joined back to a premise without the
+ * Persistable. One arm's graded answer for one row, carrying nothing that can be joined back to a premise without the
  * run's salt.
  */
 export interface PremiseLinkageResultRow extends PremiseLinkagePresence {
@@ -181,7 +181,7 @@ export interface PremiseLinkageResultRow extends PremiseLinkagePresence {
 	inputShapeClass: PremiseLinkageInputShapeClass
 	outcome: PremiseLinkageOutcome
 	/**
-	 * Carried so the report writer can REFUSE a coordinate on a row whose terms forbid one. A permission flag is not a
+	 * Carried so the report writer can refuse a coordinate on a row whose terms forbid one. A permission flag is not a
 	 * licensed value. the check it enables is only possible if the flag travels with the row.
 	 */
 	coordinatePublishable: boolean
@@ -247,7 +247,7 @@ export interface PremiseLinkageRates {
 }
 
 /**
- * One coordinate threshold and how many gradable rows met it. The denominator is rows carrying PUBLISHABLE coordinate
+ * One coordinate threshold and how many gradable rows met it. The denominator is rows carrying publishable coordinate
  * truth, which is smaller than the run — stated here rather than assumed equal to the row count.
  */
 export interface PremiseLinkageCoordinateThreshold {

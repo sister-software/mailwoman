@@ -8,16 +8,16 @@
  *
  *   Label-F1 on non-US is confounded by labeling convention — where a Spanish "Calle Mayor" street
  *   boundary falls is a judgement rather than a fact — so these rows carry the truth lat/lon and are graded
- *   on the ASSEMBLED COORDINATE by `packages/mailwoman/lib/dev-tools/fr/admin/split/eval.run.ts --default-country <CC>`.
+ *   on the assembled coordinate by `packages/mailwoman/lib/dev-tools/fr/admin/split/eval.run.ts --default-country <CC>`.
  *
- *   Expects a countrywide CSV with `LON,LAT,NUMBER,STREET,CITY,POSTCODE[,REGION]` (IT/FR/most OA
+ *   Expects a countrywide CSV with `LON,LAT,number,street,city,postcode[,region]` (IT/FR/most OA
  *   collections). The Spanish dump uses a cadastral schema and is not handled here.
  *
- *   Rows are bucketed by REGION — or the postcode's first two characters when REGION is absent — so
+ *   Rows are bucketed by region — or the postcode's first two characters when region is absent — so
  *   the set spans the country rather than whichever province leads the file, and rendered in three
  *   natural orders so the model is not graded against one rigid template.
  *
- *   The seeded shuffle is distribution-faithful to the Python original but NOT CPython-bit-identical
+ *   The seeded shuffle is distribution-faithful to the Python original but not CPython-bit-identical
  *   (see `python-random.ts`), so a set rebuilt here will not match one built by the retired script
  *   row for row.
  *
@@ -46,7 +46,7 @@ import { Globerator } from "spliterator/node/fs"
  * Approximates Python's default `csv.DictReader` dialect.
  *
  * `normalizeKeys: false` keeps the source's own header spelling, which is what the row reader indexes by —
- * OpenAddresses ships ALL-CAPS headers.
+ * OpenAddresses ships all-caps headers.
  */
 const CSV_OPTIONS = {
 	normalizeKeys: false,
@@ -91,7 +91,7 @@ interface Address {
 /**
  * A usable address, or `null` for a row missing a field the eval needs.
  *
- * The street must OPEN with a letter: OA rows whose STREET is a bare number or a lone punctuation mark are parse noise
+ * The street must open with a letter: OA rows whose street is a bare number or a lone punctuation mark are parse noise
  * rather than addresses. House number `"0"` is the dump's placeholder for "no number known".
  */
 function parseRow(row: CSVRecord): Address | null {

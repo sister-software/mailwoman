@@ -3,7 +3,7 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Node reader for `uprn.db` — the OS Open UPRN layer (`uprn-schema.ts`). Two probes:
+ *   Node reader for `uprn.db` — the OS Open uprn layer (`uprn-schema.ts`). Two probes:
  *
  *   - **`coordinateOf(uprn)`**: rowid B-tree hit on the `uprn` integer PK.
  *   - **`nearestUPRN(lat, lon, radiusM)`**: bounded nearest-point search over the res-9 `h3_cell`
@@ -14,11 +14,11 @@
  *
  *   ## `null` is a claim, scoped by coverage
  *
- *   OS designates Open UPRN complete for GB (every UPRN in AddressBase Premium with geometry), and
+ *   OS designates Open uprn complete for GB (every uprn in AddressBase Premium with geometry), and
  *   the builder writes `layer_coverage` with basis `designated` for every cell the product touches.
  *   So a `null` from either probe inside a covered cell is evidence of absence — "no such published
- *   GB UPRN" / "no UPRN within the radius". Outside coverage (Northern Ireland, the Isle of Man, the
- *   Channel Islands, open water) it is UNKNOWN, per the meaning-of-zero rule — callers building
+ *   GB uprn" / "no uprn within the radius". Outside coverage (Northern Ireland, the Isle of Man, the
+ *   Channel Islands, open water) it is unknown, per the meaning-of-zero rule — callers building
  *   negative evidence must consult `readLayerCoverage`, not this reader alone.
  *
  *   `latLngToCell`/`gridDisk` come from `h3-js`; the 48-bit short-cell packing is
@@ -33,7 +33,7 @@ import { gridDisk } from "h3-js"
 import type { UPRNDatabase } from "#uprn/schema"
 import { uprnFullCell } from "#uprn/schema"
 /**
- * Conservative FLOOR on how much CENTRE distance one unit of res-9 GRID distance buys, metres. Adjacent centres sit √3
+ * Conservative floor on how much centre distance one unit of res-9 grid distance buys, metres. Adjacent centres sit √3
  * × edge apart (avg edge 174.4 m → ≈302 m); the worst direction across a ring costs a further ×0.866, and H3's
  * projection distortion shrinks edges by well under the slack this leaves (the true worst is ≈217 m per grid step).
  * Dividing a radius by this over-counts rings and can never miss a cell. multiplying a grid distance by it under-states
@@ -42,8 +42,8 @@ import { uprnFullCell } from "#uprn/schema"
 const RES9_CENTER_SPACING_FLOOR_M = 150
 
 /**
- * Conservative CEILING on a res-9 cell's centre-to-vertex distance, metres (avg edge 174.4 m. distortion stays well
- * under this). A point within `radiusM` of the query sits in a cell whose CENTRE is within `radiusM` + this.
+ * Conservative ceiling on a res-9 cell's centre-to-vertex distance, metres (avg edge 174.4 m. distortion stays well
+ * under this). A point within `radiusM` of the query sits in a cell whose centre is within `radiusM` + this.
  */
 const RES9_CELL_RADIUS_CEILING_M = 300
 
@@ -120,7 +120,7 @@ export class UPRNLookup implements Disposable {
 	}
 
 	/**
-	 * The WGS84 point OS publishes for `uprn`, or `null` when the layer holds no such UPRN (see the module docstring for
+	 * The WGS84 point OS publishes for `uprn`, or `null` when the layer holds no such uprn (see the module docstring for
 	 * what that `null` claims).
 	 */
 	coordinateOf(uprn: number): UPRNCoordinate | null {
@@ -130,7 +130,7 @@ export class UPRNLookup implements Disposable {
 	}
 
 	/**
-	 * The single nearest UPRN within `radiusM` metres of the query point, or `null` when no UPRN lies inside the radius.
+	 * The single nearest uprn within `radiusM` metres of the query point, or `null` when no uprn lies inside the radius.
 	 *
 	 * Bounded two ways: `radiusM` is capped at {@link UPRN_MAX_NEAREST_RADIUS_M}, and rings expand outward only until no
 	 * unprobed cell could beat the best hit found so far (or the radius, when nothing has been found). The stop rule is

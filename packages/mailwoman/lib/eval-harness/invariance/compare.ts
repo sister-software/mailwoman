@@ -5,20 +5,20 @@
  *
  *   Component-level comparison for the invariance mini-suite — pure, no model, no I/O. Compares two
  *   decoded component maps (order-insensitive: a plain key→value record has no order) and classifies the
- *   pair INVARIANT / DEGRADED / LOST.
+ *   pair invariant / degraded / lost.
  *
- *   `house_number` / `street` / `postcode` are treated as CRITICAL: they're the required tags a
+ *   `house_number` / `street` / `postcode` are treated as critical: they're the required tags a
  *   downstream geocoder needs to resolve a rooftop (the same three the #251/#1101 DIR-test failures broke
  *   on). A value change on a critical tag that's present in the original — including one token bleeding
- *   from a neighboring tag, e.g. a stripped comma pulling a directional suffix into the locality — is `LOST`
+ *   from a neighboring tag, e.g. a stripped comma pulling a directional suffix into the locality — is `lost`
  *   even when the transformed parse is non-empty, because the address is no longer resolvable to the same
  *   place. A drift confined to non-critical tags (locality, region, dependent_locality, unit, …) is
- *   DEGRADED: recoverable, worth flagging rather than ship-blocking on its own.
+ *   degraded: recoverable, worth flagging rather than ship-blocking on its own.
  *
  *   A critical tag that's absent in the original parse but present in the transformed one — a hallucination
- *   — is also `LOST`, not `DEGRADED` and not ignored. A missing
+ *   — is also `lost`, not `degraded` and not ignored. A missing
  *   critical tag degrades gracefully to a coarser admin-tier fallback. a hallucinated one can resolve to a
- *   SPECIFIC WRONG rooftop with high apparent confidence — worse than falling back, because nothing
+ *   specific wrong rooftop with high apparent confidence — worse than falling back, because nothing
  *   downstream knows to distrust it.
  */
 
@@ -31,16 +31,16 @@ export const CRITICAL_TAGS = ["house_number", "street", "postcode"] as const
 export type Verdict = "INVARIANT" | "DEGRADED" | "LOST"
 
 /**
- * Ordinal severity — INVARIANT < DEGRADED < LOST. Used by the runner's `--baseline` regression check to decide whether
+ * Ordinal severity — invariant < degraded < lost. Used by the runner's `--baseline` regression check to decide whether
  * a candidate's verdict on a (row, transform) pair is "at least as bad as" the baseline's rather than merely "also
- * non-INVARIANT" (see runner.ts's `preExisting` computation).
+ * non-invariant" (see runner.ts's `preExisting` computation).
  */
 export const VERDICT_SEVERITY: Record<Verdict, number> = { INVARIANT: 0, DEGRADED: 1, LOST: 2 }
 
 export interface CompareResult {
 	verdict: Verdict
 	/**
-	 * Human-readable per-tag diff lines, empty for INVARIANT.
+	 * Human-readable per-tag diff lines, empty for invariant.
 	 */
 	diff: string[]
 }
@@ -65,7 +65,7 @@ export function compareComponents(
 	const originalKeys = Object.keys(original).filter((k) => normVal(original[k]))
 	const transformedKeys = Object.keys(transformed).filter((k) => normVal(transformed[k]))
 
-	// The `LOST` verdict: the transformed parse is empty (or all-blank) while the original had components at all.
+	// The `lost` verdict: the transformed parse is empty (or all-blank) while the original had components at all.
 	// "unresolvable-shaped": a fully collapsed decode, the parse-level analog of a resolver falling back
 	// to an admin-only tier with no coordinate.
 	if (!transformedKeys.length && originalKeys.length) {
@@ -80,7 +80,7 @@ export function compareComponents(
 		const t = normVal(transformed[tag])
 
 		if (!o) {
-			// Not present in the original. A hallucinated value on the transformed side still yields the `LOST`
+			// Not present in the original. A hallucinated value on the transformed side still yields the `lost`
 			// verdict — see the header doc comment (a wrong-but-confident rooftop is worse than a graceful fallback).
 			if (t) {
 				criticalBroken = true

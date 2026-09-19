@@ -13,7 +13,7 @@
  *
  *   Nothing caught it because the camera is the one thing the map tests turn off: `Geocoder.test.tsx` and
  *   `overlays.test.tsx` both pass `applyCamera=false`, and their comments blame "a zero-size headless canvas" for the
- *   NaN LngLat. The canvas was innocent. So the guard here mounts the camera ON, with a bounds target, and lets a
+ *   NaN LngLat. The canvas was innocent. So the guard here mounts the camera on, with a bounds target, and lets a
  *   thrown RAF frame fail the run.
  */
 
@@ -106,7 +106,7 @@ test("a bounds target drives the live map to the box without a NaN ease frame", 
 	// Read the ref lazily: it is assigned in a callback TypeScript cannot see, so reading it directly narrows to `never`.
 	const getMap = () => mapRef?.getMap()
 
-	// The map must actually ARRIVE. Under the bug the flight throws on frame 1 and the camera never leaves (0, 51.5) —
+	// The map must actually arrive. Under the bug the flight throws on frame 1 and the camera never leaves (0, 51.5) —
 	// so a moved center is the assertion, and the thrown RAF frame surfaces as an unhandled error besides.
 	const arrived = await settle(() => {
 		const center = getMap()?.getCenter()

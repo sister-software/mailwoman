@@ -6,7 +6,7 @@
  *   Shared `family_id` derivation — pulled out of `build-filer.ts`, mirroring
  *   `guards.ts`'s own extraction precedent (that module's docstring: "a writer importing another writer's
  *   whole module just to borrow a guard is a coupling that gets worse with every new filer.db writer").
- *   `mintFamilyID` used to be `build-filer.ts`-only, correct while only the WRITER needed it — but
+ *   `mintFamilyID` used to be `build-filer.ts`-only, correct while only the writer needed it — but
  *   `filer-lookup.ts`'s `readFamilyDisplayNames` now also needs this exact
  *   canonicalization rule, to tell apart which target node's edge actually names a given `family_id` when a
  *   member carries more than one holding-/management-company edge under the same provenance tuple. Two
@@ -18,8 +18,8 @@
 import { canonicalizeOrganizationName } from "@mailwoman/record"
 
 /**
- * Derive a stable `filer_family.family_id` from a holding-/management-company name's CANONICAL form — never the raw
- * string — so `"Acme Holdings Inc"` and `"ACME HOLDINGS, INC."` (same underlying entity, different casing/
+ * Derive a stable `filer_family.family_id` from a holding-/management-company name's canonical form — never the raw
+ * string — so `"Acme Holdings Inc"` and `"acme holdings, INC."` (same underlying entity, different casing/
  * punctuation/legal suffix) collapse onto the same family, the identical reduction `cluster-filers.ts`'s inferred pass
  * already relies on (`canonicalizeOrganizationName`, `@mailwoman/record`). Namespaced by `identifierType`
  * (`holding_company_name` vs `management_company_name`) so a holding company and a different management company that

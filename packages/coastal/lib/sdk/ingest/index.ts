@@ -6,30 +6,30 @@
  *   Read the published file geodatabase as a stream of WGS84 features, through ogr2ogr — one scenario layer
  *   at a time.
  *
- *   OGR IS BUILD TOOLING, NEVER A SERVE DEPENDENCY (SCOPE invariant 6). It converts the authority's geometry
- *   into the structure the runtime probes, and nothing downstream of this module knows GDAL exists.
+ *   OGR is build tooling, never A serve dependency (scope invariant 6). It converts the authority's geometry
+ *   into the structure the runtime probes, and nothing downstream of this module knows gdal exists.
  *
- *   THE SOURCE IS NOT IN WGS84 AND SAYING SO IS THE CHECK. Every NCERM layer is published in OSGB36 /
- *   British National Grid — metres, easting/northing, EPSG:27700 — so a builder that read the coordinates as
+ *   the source is not IN WGS84 and saying SO is the check. Every ncerm layer is published in OSGB36 /
+ *   British National Grid — metres, easting/northing, epsg:27700 — so a builder that read the coordinates as
  *   degrees would place every polygon off the west coast of Africa. The projection is asserted against each
  *   layer's declared authority code before a single feature is read, and the reprojected stream is asserted
  *   against the collection's own declared bounding box, which is the check that catches a coordinate-order
  *   mistake the projection check cannot see.
  *
- *   THE DATUM SHIFT NEEDS A GRID, AND ITS ABSENCE IS SILENT. OSGB36 to WGS84 is accurate to a metre only
- *   through the OSTN15 grid. without it PROJ substitutes a ballpark offset and produces coordinates that are
+ *   the datum shift needs A grid, and its absence is silent. OSGB36 to WGS84 is accurate to a metre only
+ *   through the OSTN15 grid. without it proj substitutes a ballpark offset and produces coordinates that are
  *   metres wrong and indistinguishable from correct ones. On the sibling flood product that showed up only as
  *   eight disagreements out of 59 against the authority's own service.
  *   {@linkcode assertDatumTransformationAvailable} refuses the build rather than letting the whole layer
  *   shift.
  *
- *   `OGR_GEOM_AREA` RIDES ALONG AS THE INDEPENDENT AREA WITNESS. GDAL computes it on the SOURCE geometry in
+ *   `OGR_GEOM_AREA` rides along AS the independent area witness. gdal computes it on the source geometry in
  *   the source's own metres, before reprojection and before this package has touched a ring — so comparing it
  *   against an area computed from the encoded rings is a two-path check on ring nesting and hole handling,
  *   which are otherwise silent when wrong.
  *
- *   THE DISTANCE COLUMN IS NAMED PER LAYER AND IS ALIASED HERE. `nfi2055_0` on NFI/2055/0CC, `smp2105_95` on
- *   SMP/2105/95CC — twelve names for one quantity. The `SELECT` aliases whichever one this scenario declares
+ *   the distance column is named PER layer and is aliased here. `nfi2055_0` on NFI/2055/0CC, `smp2105_95` on
+ *   SMP/2105/95CC — twelve names for one quantity. The `select` aliases whichever one this scenario declares
  *   to `distance_m`, so nothing downstream carries twelve branches, and a scenario whose column has been
  *   renamed fails as a SQL error naming the column rather than as a stream of null distances.
  */
@@ -49,7 +49,7 @@ import {
 } from "#vocabulary"
 
 /**
- * The ring types and the PROJ guard, both re-exported from `@mailwoman/spatial`: neither is coastal-specific, and a
+ * The ring types and the proj guard, both re-exported from `@mailwoman/spatial`: neither is coastal-specific, and a
  * second copy of the `projinfo` parse would be a second place for the ballpark check to stop refusing.
  */
 
@@ -58,7 +58,7 @@ import {
  */
 export interface CoastalSourceFeature {
 	/**
-	 * `<scenario key>:<OBJECTID>`.
+	 * `<scenario key>:<objectid>`.
 	 */
 	areaID: string
 	scenario: CoastalScenario
@@ -75,7 +75,7 @@ export interface CoastalSourceFeature {
 	publishedYear: number | null
 	maxOverlap: number | null
 	/**
-	 * GDAL's own area of the SOURCE geometry, in square metres of the source projection.
+	 * Gdal's own area of the source geometry, in square metres of the source projection.
 	 */
 	sourceAreaM2: number
 	polygons: MultiPolygonRings
@@ -110,7 +110,7 @@ export interface CoastalIngestOptions {
 	 */
 	limit?: number
 	/**
-	 * The EPSG code the source must declare. A source declaring anything else is a product change rather than a variation
+	 * The epsg code the source must declare. A source declaring anything else is a product change rather than a variation
 	 * to absorb.
 	 */
 	expectEPSG?: number
@@ -122,17 +122,17 @@ export interface CoastalIngestOptions {
 	/**
 	 * Read only the authority's feature ids in `[objectIDFrom, objectIDTo]`, inclusive.
 	 *
-	 * This is what makes a bounded build possible: h3's WASM heap cannot be reset from JavaScript, so the classification
-	 * runs one child process per range of the authority's own ids. Ranges rather than an offset because `OBJECTID` is the
+	 * This is what makes a bounded build possible: h3's wasm heap cannot be reset from JavaScript, so the classification
+	 * runs one child process per range of the authority's own ids. Ranges rather than an offset because `objectid` is the
 	 * source's stable key — a range names the same features on every run, which an offset into a result set does not.
-	 * Each layer numbers its own `OBJECTID` from 1, so a range is per layer.
+	 * Each layer numbers its own `objectid` from 1, so a range is per layer.
 	 */
 	objectIDFrom?: number
 	objectIDTo?: number
 }
 
 /**
- * What one layer declares about itself — including the ATTRIBUTE FIELDS IT ACTUALLY HAS, because the fourteen published
+ * What one layer declares about itself — including the attribute fields IT actually has, because the fourteen published
  * layers do not share one schema.
  */
 export interface CoastalLayerIdentity {
@@ -140,7 +140,7 @@ export interface CoastalLayerIdentity {
 	featureCount: number
 	layer: string
 	/**
-	 * The layer's own attribute field names. A `SELECT` naming a column this set does not hold is refused by ogr2ogr
+	 * The layer's own attribute field names. A `select` naming a column this set does not hold is refused by ogr2ogr
 	 * outright, so the query is built from the set rather than from a schema read off a sibling layer.
 	 */
 	fields: ReadonlySet<string>
@@ -163,7 +163,7 @@ const BBOX_MARGIN_DEGREES = 0.01
 /**
  * What one layer declares about itself: its authority code and its feature count, read before any feature is.
  *
- * @throws {Error} When the layer is missing, or its declared EPSG is not `expectEPSG`.
+ * @throws {Error} When the layer is missing, or its declared epsg is not `expectEPSG`.
  */
 export async function readCoastalSourceIdentity(
 	layer: string,
@@ -186,7 +186,7 @@ export async function readCoastalSourceIdentity(
 }
 
 /**
- * The id-range predicate shared by both `SELECT` builders.
+ * The id-range predicate shared by both `select` builders.
  */
 function idBounds(options: CoastalIngestOptions): string {
 	const bounds: string[] = []
@@ -205,10 +205,10 @@ function idBounds(options: CoastalIngestOptions): string {
 /**
  * The attribute columns an erosion-zone layer is read for where it has them, and as literal `NULL` where it does not.
  *
- * THE FOURTEEN LAYERS DO NOT SHARE ONE SCHEMA, AND THE EXCEPTION IS A SINGLE COLUMN ON A SINGLE LAYER.
+ * The fourteen layers do not share one schema, and the exception is A single column on A single layer.
  * `NCERM_SMP_2105_0CC` carries no `smp_name`; the other eleven scenario layers and both ground-instability layers do. A
  * builder that read the schema from one layer — the survey read `NCERM_SMP_2105_95CC` — and generalized it fails on the
- * twelfth layer with `ERROR 1: Unrecognized field name smp_name`, 66,000 features into a run. Loud, and only because
+ * twelfth layer with `error 1: Unrecognized field name smp_name`, 66,000 features into a run. Loud, and only because
  * ogr2ogr refuses an unknown column: a source that answered NULL instead would have shipped.
  *
  * The four policy columns are the same shape for a different reason: the six NFI layers omit them because under a
@@ -231,14 +231,14 @@ const OPTIONAL_SCENARIO_FIELDS: ReadonlyArray<string> = [
 ]
 
 /**
- * The erosion-zone `SELECT` for one scenario, built against the layer's own field list.
+ * The erosion-zone `select` for one scenario, built against the layer's own field list.
  */
 function scenarioSelectSQL(
 	scenario: CoastalScenario,
 	identity: CoastalLayerIdentity,
 	options: CoastalIngestOptions
 ): string {
-	// The policy asymmetry is REGULAR across the product — the six NFI layers omit all four columns and the six SMP
+	// The policy asymmetry is regular across the product — the six NFI layers omit all four columns and the six SMP
 	// layers carry all four — so a layer that disagrees with its own scenario is a source-schema change rather than the
 	// `smp_name` kind of irregularity, and it is worth hearing about rather than absorbing into a NULL.
 	const carriesPolicy = identity.fields.has("mt_smp")
@@ -289,7 +289,7 @@ const OPTIONAL_INSTABILITY_FIELDS: ReadonlyArray<string> = [
 ]
 
 /**
- * The ground-instability `SELECT`, built against the layer's own field list.
+ * The ground-instability `select`, built against the layer's own field list.
  */
 function instabilitySelectSQL(layer: string, identity: CoastalLayerIdentity, options: CoastalIngestOptions): string {
 	const attributes = OPTIONAL_INSTABILITY_FIELDS.map((field) =>
@@ -376,7 +376,7 @@ export async function* readCoastalScenarioFeatures(
 	options: CoastalIngestOptions,
 	identity?: CoastalLayerIdentity
 ): AsyncGenerator<CoastalSourceFeature> {
-	// The layer's own field list decides the `SELECT`, because the fourteen layers do not share one schema — see
+	// The layer's own field list decides the `select`, because the fourteen layers do not share one schema — see
 	// `OPTIONAL_SCENARIO_FIELDS`. Read here when the caller has not already read it, which costs one `ogrinfo -so` per
 	// layer against a build that streams thousands of features from it.
 	const layerIdentity = identity ?? (await readCoastalSourceIdentity(scenario.layer, options))
@@ -465,7 +465,7 @@ export async function* readCoastalInstabilityFeatures(
  * Where a build's features come from, and what the source declares about itself.
  *
  * The builder takes one of these rather than a path, which is what makes the fixture rung possible: hand-built geometry
- * with no network and no GDAL still exercises the whole database half — the domain checks, the cell classification, the
+ * with no network and no gdal still exercises the whole database half — the domain checks, the cell classification, the
  * coverage rows, the manifest and the seal. A fixture rung that could only run through ogr2ogr would test the
  * conversion on the machines that have it and nothing at all on the ones that do not.
  */
@@ -526,8 +526,8 @@ export async function createGeodatabaseFeatureSource(options: GeodatabaseSourceO
 	let declared = 0
 	let epsg = NCERM_SOURCE_EPSG
 
-	// Every layer's identity is read UP FRONT and kept, because the fourteen layers do not share one schema and the
-	// `SELECT` for each is built from its own field list. Re-reading it per stream would work and would cost a second
+	// Every layer's identity is read up front and kept, because the fourteen layers do not share one schema and the
+	// `select` for each is built from its own field list. Re-reading it per stream would work and would cost a second
 	// `ogrinfo` per layer. keeping it makes the identity the source declared and the identity the query was built from
 	// the same object.
 	const identities = new Map<string, CoastalLayerIdentity>()
@@ -542,7 +542,7 @@ export async function createGeodatabaseFeatureSource(options: GeodatabaseSourceO
 	}
 
 	return {
-		// A RANGE's own count is supplied by the caller, because `ogrinfo` reports a layer's total and nothing narrower.
+		// A range's own count is supplied by the caller, because `ogrinfo` reports a layer's total and nothing narrower.
 		declaredFeatureCount: options.declaredFeatureCount ?? declared,
 		epsg,
 		origin: options.geodatabasePath,

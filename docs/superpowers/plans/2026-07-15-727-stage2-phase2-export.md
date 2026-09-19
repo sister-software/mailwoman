@@ -1,6 +1,6 @@
 # #727 stage-2 Phase 2 — ONNX export of the span scores + the #378 SLO check
 
-> **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:executing-plans. Steps use checkbox (`- [ ]`) syntax.
+> **For agentic workers:** required sub-skill: Use superpowers:executing-plans. Steps use checkbox (`- [ ]`) syntax.
 
 **Goal:** The v301 span scorer's outputs become consumable outside torch: `span_scores` as a named
 ONNX output, the segment-transition table as a JSON sidecar, and a measured verdict on the #378

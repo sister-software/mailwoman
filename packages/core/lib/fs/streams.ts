@@ -49,15 +49,15 @@ export function openReadStream(path: PathBuilderLike, options?: Parameters<typeo
  * file Shift_JIS. `spliterator` splits UTF-8 bytes, so the decode happens upstream of the split rather than after it —
  * a line boundary found in CP949 bytes is not a line boundary.
  *
- * Not `TextDecoder`, and the difference is not small. Node's WHATWG `euc-kr` implements EUC-KR proper (KS X 1001) and
+ * Not `TextDecoder`, and the difference is not small. Node's whatwg `euc-kr` implements EUC-KR proper (KS X 1001) and
  * not the UHC extension CP949 adds in lead bytes 0x81–0xA0. Of the 17,048 two-byte sequences Python's `cp949` accepts,
- * `TextDecoder('euc-kr')` reads 8,824 differently: 6,475 become U+FFFD and 2,349 become a different character with no
+ * `TextDecoder('euc-kr')` reads 8,824 differently: 6,475 become U+fffd and 2,349 become a different character with no
  * error raised. `iconv-lite` disagrees with `cp949` on none of the 17,048.
  *
  * It is not a rare corner. One row in 48,000 of the Korean address register carries such a sequence — `더샾오피스텔`, bytes
  * `b4 f5 98 de bf c0 c7 c7 bd ba c5 da`, which `TextDecoder` reads as `더乍의퓰뵀�`.
  *
- * The decoder is STREAMING for the same reason a `TextDecoder` would need `{ stream: true }`: a multi-byte character
+ * The decoder is streaming for the same reason a `TextDecoder` would need `{ stream: true }`: a multi-byte character
  * split across two chunks must be held until its tail arrives, where a per-chunk decode emits a replacement character
  * and corrupts the row. `iconv-lite`'s stream decoder holds that state, and `end()` flushes what is left.
  *

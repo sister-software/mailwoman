@@ -44,6 +44,12 @@
 						"command": "node \"$CLAUDE_PROJECT_DIR/packages/dev-mcp/lib/hooks/session-orientation.ts\"",
 						"timeout": 15,
 						"statusMessage": "Workspace orientation"
+					},
+					{
+						"type": "command",
+						"command": "node \"$CLAUDE_PROJECT_DIR/packages/dev-mcp/lib/hooks/vale/session/digest.ts\"",
+						"timeout": 15,
+						"statusMessage": "Prose rules"
 					}
 				]
 			}

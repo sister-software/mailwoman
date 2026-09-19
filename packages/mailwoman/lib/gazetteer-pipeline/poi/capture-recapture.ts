@@ -16,7 +16,7 @@
  *   number is wrong in:
  *
  *   1. **The recorded value is a lower confidence bound rather than a point estimate.** `N̂` sits in the
- *      denominator, so the conservative completeness comes from the UPPER end of `N̂`'s interval.
+ *      denominator, so the conservative completeness comes from the upper end of `N̂`'s interval.
  *   2. **The protocol is a grid rather than a threshold.** A single match rule makes the completeness an artifact
  *      of one threshold choice; {@link completenessAcrossProtocols} runs a pre-registered grid and reports
  *      the weakest bound any of them supports.
@@ -24,7 +24,7 @@
  *   What it does not correct, and no two-source design can: positive dependence between the sources. If
  *   the same POI is more likely to be in both inventories than chance would have it — a chain branch on a
  *   high street against a single pharmacy on a village lane — then `m` runs high, `N̂` runs low, and
- *   completeness runs HIGH. That is the direction that turns a data gap into confident negative evidence,
+ *   completeness runs high. That is the direction that turns a data gap into confident negative evidence,
  *   so the estimate bounds sampling error only. Breadth past a pilot needs a third source or an
  *   authoritative register rather than a wider run of this.
  */
@@ -43,7 +43,7 @@ export interface CaptureRow {
 }
 
 /**
- * One match rule. A candidate pair is accepted when it clears the NEAR band, or the FAR band, or — when either row is
+ * One match rule. A candidate pair is accepted when it clears the near band, or the FAR band, or — when either row is
  * unnamed, so no name evidence exists — the unnamed distance alone.
  *
  * The two named bands express one idea: the further apart two rows are, the more the names have to agree. The unnamed
@@ -80,8 +80,8 @@ export const MATCH_PROTOCOL_GRID: readonly MatchProtocol[] = [
 
 /**
  * `@mailwoman/codex`'s match-key fold, widened to the nullable name a POI row carries. The fold itself is not
- * re-implemented here: it is the same lossy ASCII key the codex tables are probed by, and a private copy would drift
- * from it silently — `Pharmacie de l'Église` and `PHARMACIE DE L EGLISE` have to reach the comparator as one string.
+ * re-implemented here: it is the same lossy ascii key the codex tables are probed by, and a private copy would drift
+ * from it silently — `Pharmacie de l'Église` and `pharmacie DE L eglise` have to reach the comparator as one string.
  */
 function foldPOIName(name: string | null): string {
 	return name ? foldName(name) : ""
@@ -140,7 +140,7 @@ export interface CapturePair {
 /**
  * One-to-one greedy assignment over the accepted pairs, best first (highest similarity, then closest).
  *
- * One-to-one is required rather than tidiness: `m` is a count of AGREEMENTS between two inventories, so letting one row
+ * One-to-one is required rather than tidiness: `m` is a count of agreements between two inventories, so letting one row
  * of the first inventory answer for three rows of the second counts one agreement three times, deflates `N̂`, and
  * inflates completeness — again in the direction that turns a gap into negative evidence.
  *
@@ -234,7 +234,7 @@ export interface ProtocolCompleteness {
 	 */
 	completeness: number
 	/**
-	 * The conservative reading: `n2` over the UPPER end of the population interval.
+	 * The conservative reading: `n2` over the upper end of the population interval.
 	 */
 	completenessLowerBound: number
 }
@@ -256,7 +256,7 @@ export interface CoverageCompleteness {
 /**
  * Run the whole grid and report the weakest lower bound it supports, which is the value a `surveyed` cell records.
  *
- * Taking the MINIMUM across the grid rather than a chosen protocol's value is what keeps the threshold choice out of
+ * Taking the minimum across the grid rather than a chosen protocol's value is what keeps the threshold choice out of
  * the claim: every protocol in the grid is a defensible reading of "the same POI", so the claim is only as strong as
  * the weakest of them.
  */

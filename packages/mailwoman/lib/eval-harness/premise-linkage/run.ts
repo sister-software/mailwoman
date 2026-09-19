@@ -8,21 +8,21 @@
  *   a configured authoritative provider (#1901). Nothing else differs between the arms, which is what
  *   makes the arm-to-arm delta attributable to the provider rather than to the harness.
  *
- *   THE OPEN ARM REFUSES ON IDENTITY, BY CONSTRUCTION. It has no authoritative namespace to answer in,
+ *   the open ARM refuses on identity, BY construction. It has no authoritative namespace to answer in,
  *   so its identifier outcome is `refused` on every row — recorded in the same vocabulary as the other
  *   arm, and never as `wrong`. That is the size of the gap the authoritative arm exists to close,
  *   stated rather than hidden: the open arm's comparable metric is the coordinate table, and grading
  *   its identity by distance instead would answer a different question than the one asked.
  *
- *   FOUR DISTINCTIONS THE MAPPING KEEPS, all of them the #1901 contract's:
+ *   four distinctions the mapping keeps, all of them the #1901 interface's:
  *
- *   - A REFUSAL is not a miss. It enters the eligible denominator only when the registered policy says
+ *   - A refusal is not a miss. It enters the eligible denominator only when the registered policy says
  *       a unique answer was required, and even then it stays `refused`.
- *   - An AMBIGUOUS answer is never `exact`. The provider declined to choose. collapsing to its first
+ *   - An ambiguous answer is never `exact`. The provider declined to choose. collapsing to its first
  *       candidate would manufacture the certainty it withheld.
- *   - A TRANSPORT FAILURE is not a refusal. It is `errored`: out of every rate, reported as its own
+ *   - A transport failure is not a refusal. It is `errored`: out of every rate, reported as its own
  *       count.
- *   - A MATCH THAT NAMES NO IDENTIFIER in the graded scheme is not `wrong` either. It is ungradable —
+ *   - A match that names no identifier in the graded scheme is not `wrong` either. It is ungradable —
  *       also `errored` — because reading "I could not check this" as "this was incorrect" is the
  *       measurement-boundary lie this repository keeps finding.
  */
@@ -81,7 +81,7 @@ const DEFAULT_COORDINATE_THRESHOLDS_M: readonly number[] = [5, 25, 100]
 /**
  * The ladder improvement and regression are measured on.
  *
- * A confidently WRONG identifier is the worst thing an arm can do — worse than declining, because a consumer acts on
+ * A confidently wrong identifier is the worst thing an arm can do — worse than declining, because a consumer acts on
  * it. An abstention is worse than candidates, which at least narrow the answer. A committed correct identifier is best.
  * Ungradable rows have no rank: they are excluded from the comparison rather than assigned one.
  */
@@ -157,7 +157,7 @@ export function outcomeFor(
 /**
  * The coordinate this arm is graded on.
  *
- * The #1901 contract includes the provider's coordinate BESIDE Mailwoman's own and leaves the choice to the consumer.
+ * The #1901 interface includes the provider's coordinate beside Mailwoman's own and leaves the choice to the consumer.
  * This harness is that consumer, and the choice is stated here rather than implied: when the provider committed to a
  * premise, its coordinate is the one the authoritative arm asserted. everywhere else the arm's answer is Mailwoman's.
  */
@@ -375,7 +375,7 @@ function compareArms(
 export interface PremiseLinkageRunConfig {
 	adapter: PremiseLinkageAdapter
 	/**
-	 * The deps the OPEN arm runs on — the production pipeline and artifacts. The authoritative arm receives these plus
+	 * The deps the open arm runs on — the production pipeline and artifacts. The authoritative arm receives these plus
 	 * the provider and nothing else.
 	 */
 	deps: GeocodeDeps

@@ -123,7 +123,7 @@ describe("buildStreetComponents", () => {
 
 describe("buildCensusComponents", () => {
 	it("recovers the house number from matchedAddress", () => {
-		// `addressComponents` carries the address RANGE (4600–4698) but never the matched number, so a
+		// `addressComponents` carries the address range (4600–4698) but never the matched number, so a
 		// Census-sourced record came out of the original with a street and no number on it.
 		expect(buildCensusComponents(match()).house_number).toBe("4600")
 	})
@@ -227,7 +227,7 @@ describe("createCensusGeocoderClient", () => {
 	})
 
 	it("issues no request at all for a PO Box", async () => {
-		// The original short-circuited a `PO BOX` input to a LOCAL parse and returned an address record
+		// The original short-circuited a `PO BOX` input to a local parse and returned an address record
 		// with no coordinate, under the same return type as a real match. An oracle must not do that:
 		// a PO Box now takes the normal path and comes back as the same 404 as any other no-match.
 		const transport = stubTransport([{ body: NO_MATCH_BODY }])

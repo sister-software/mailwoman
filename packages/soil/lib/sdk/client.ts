@@ -3,29 +3,29 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Soil Data Access — NRCS's live SQL service, and the two things this layer asks it: which survey areas
+ *   Soil Data Access — nrcs's live SQL service, and the two things this layer asks it: which survey areas
  *   exist with what version date, and which map unit covers a point.
  *
- *   THIS IS AN API REQUEST AND IT GOES THROUGH {@linkcode APIClient}. Small bodies, repeated calls, a
+ *   this is an API request and IT goes through {@linkcode APIClient}. Small bodies, repeated calls, a
  *   third-party host with a server-side query timeout and no published rate limit — the pacing, bounded
  *   retry, response caching and `ResourceError` mapping are exactly what it needs. The survey-area
- *   ARCHIVES are not: they are 13 to 41 MB file transfers, they stream to disk on raw `fetch`, and
+ *   archives are not: they are 13 to 41 MB file transfers, they stream to disk on raw `fetch`, and
  *   `download.ts` says so in place.
  *
- *   FAILURES COME BACK AS XML, INCLUDING ON A TIMEOUT, AND A JSON-ONLY PARSER MIS-READS THEM. A bad column,
+ *   failures come back AS XML, including on A timeout, and A JSON-only parser MIS-reads them. A bad column,
  *   a blocked query and a query that exceeded the server's own timeout all return an OGC
  *   `ServiceExceptionReport` document. Measured messages: `Invalid query: Invalid column name
- *   'nosuchcolumn'.` (HTTP 400), `Invalid query - access denied.`, and `Your query timed out.` — and the
- *   last one arrives on an HTTP 200. So every response is read as TEXT and checked for the report before
+ *   'nosuchcolumn'.` (http 400), `Invalid query - access denied.`, and `Your query timed out.` — and the
+ *   last one arrives on an http 200. So every response is read as text and checked for the report before
  *   anything tries to parse it as JSON. A client that branched on the status code alone would read a
  *   timeout as a successful empty answer, which is the exact shape of lie this program keeps writing down.
  *
- *   SCHEMA INTROSPECTION IS REFUSED, SO THE COLUMN NAMES ARE THE PUBLISHED DATA DICTIONARY'S.
- *   `SELECT COLUMN_NAME FROM INFORMATION_SCHEMA.COLUMNS` answers `Invalid query - access denied.` The
+ *   schema introspection is refused, SO the column names are the published data dictionary'S.
+ *   `select COLUMN_NAME from INFORMATION_SCHEMA.columns` answers `Invalid query - access denied.` The
  *   columns this file names were each verified by querying them successfully.
  *
- *   FRESHNESS IS `sacatalog.saverest` AND NEVER A LENGTH PROBE. The download host answers `HEAD` with HTTP
- *   405 and IGNORES `Range` — a request with `Range: bytes=0-0` returned HTTP 200 and transferred the whole
+ *   freshness is `sacatalog.saverest` and never A length probe. The download host answers `head` with http
+ *   405 and ignores `Range` — a request with `Range: bytes=0-0` returned http 200 and transferred the whole
  *   27,598,377 bytes — so "just check the size" starts a real download. The tabular service answers the
  *   freshness question directly instead, and the version date it returns is what the archive's filename
  *   embeds.
@@ -49,7 +49,7 @@ export const SDA_POST_REST_URL = "https://sdmdataaccess.nrcs.usda.gov/Tabular/po
 /**
  * Minimum spacing between Soil Data Access requests, in milliseconds.
  *
- * NRCS publishes no rate limit for this service and returned no rate-limit header on any request, so this is courtesy
+ * Nrcs publishes no rate limit for this service and returned no rate-limit header on any request, so this is courtesy
  * pacing rather than a published ceiling — stated as such rather than dressed up as a measured limit. It costs an
  * acquisition run nothing: a whole-state build makes one catalogue call, and the verification's per-point calls are
  * measured at 1.8 s each anyway.
@@ -59,7 +59,7 @@ export const SDA_MIN_REQUEST_INTERVAL_MS = 500
 /**
  * How long a cached Soil Data Access response stays fresh.
  *
- * Twelve hours, chosen against the product's cadence rather than a wall-clock intuition: NRCS performs one coordinated
+ * Twelve hours, chosen against the product's cadence rather than a wall-clock intuition: nrcs performs one coordinated
  * Annual Soils Refresh, on October 1. Grouping `sacatalog` by year of `saverest` returns 2016: 1, 2025: 3,323, 2026: 56
  * — 98.3% of survey areas carry a single version date from one refresh rather than a per-area drift. A shorter TTL buys
  * nothing.
@@ -86,14 +86,14 @@ export class SoilDataAccessClient extends APIClient<APIClientConfig> {
 	/**
 	 * Run one query and return its rows.
 	 *
-	 * @throws {OGCServiceError} When the service answers with an exception report — including on an HTTP 200, which is
+	 * @throws {OGCServiceError} When the service answers with an exception report — including on an http 200, which is
 	 *   what a server-side timeout does.
 	 */
 	public async query(sql: string): Promise<string[][]> {
 		const { data } = await this.fetch<string>({
 			method: "POST",
 			url: SDA_POST_REST_URL,
-			// TEXT rather than JSON, and that is the whole trap. A JSON response type hands a failure body to a JSON parser,
+			// text rather than JSON, and that is the whole trap. A JSON response type hands a failure body to a JSON parser,
 			// which either throws something unrelated to what went wrong or — on a 200 — yields nothing at all.
 			responseType: "text",
 			headers: { "Content-Type": "application/json" },

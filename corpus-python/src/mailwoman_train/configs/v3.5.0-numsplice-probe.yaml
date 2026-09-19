@@ -1,26 +1,26 @@
-# === v3.5.0-numsplice-probe — B4c: the number-piece vocab splice. 2k PROBE. ===
+# === v3.5.0-numsplice-probe — B4c: the number-piece vocab splice. 2k probe. ===
 #
-# THE ONE VARIABLE vs v310: the tokenizer. v0.11.0-numsplice adds word-start number pieces 10-9999
+# the one variable vs v310: the tokenizer. v0.11.0-numsplice adds word-start number pieces 10-9999
 # to v0.9.0-multisplice, so `178` -> `▁178` (one piece, zero postcode-leaning continuations) instead
-# of `[▁1,7,8]` (two continuations). Attacks the ROOT of the cross-lingual length-conditioned digit
+# of `[▁1,7,8]` (two continuations). Attacks the root of the cross-lingual length-conditioned digit
 # defect: the model faithfully reproduced its corpus's P(I-postcode|continuation) prior (0.043@2d ->
 # 0.879@5d, docs/.../digit-incoherence-is-cross-lingual.md) because digits tokenized per-character.
 # Single-piece numbers remove the continuations the postcode mass lived on.
 #
 # init_from /data/models/numsplice-expanded (v310's step-008000 with token_embeddings FVT mean-init'd
 # to 83,131 — each number row = mean of its digit constituents. encoder/heads byte-identical). English
-# LETTERS tokenize byte-identically. only numeric spans change (verified, scratchpad/build-number-splice.py).
+# letters tokenize byte-identically. only numeric spans change (verified, scratchpad/build-number-splice.py).
 #
-# PRE-REGISTERED READ:
-#   PRIMARY — the digit defect: `aleja Wojska Polskiego 178` -> house_number (not postcode); board 3
+# PRE-registered read:
+#   primary — the digit defect: `aleja Wojska Polskiego 178` -> house_number (not postcode); board 3
 #     bare-street-hn (0.693) and slash-hn (0.650) rise. This is the mechanism test.
-#   GUARD (the 5-digit risk) — a 5-digit US ZIP now tokenizes `▁9021,0` (4-digit piece + 1), fewer
+#   guard (the 5-digit risk) — a 5-digit US ZIP now tokenizes `▁9021,0` (4-digit piece + 1), fewer
 #     continuations than before, so postcode recognition could regress. The 6 demo presets (20500,
 #     10118, 94133, 60613, 98109, 90210) and board 3 bare-pc (Norwegian 4-digit postcodes, the
 #     negative class) must not drop. If US 5-digit postcode drops, the splice range needs 5-digit pieces
 #     or a different reduce.
-#   DO-NO-HARM — FR fragment board + global parity hold.
-#   NEGATIVE — if the digit rows do not improve after single-piece-ing the numbers, the vocab is not
+#   do-no-harm — FR fragment board + global parity hold.
+#   negative — if the digit rows do not improve after single-piece-ing the numbers, the vocab is not
 #     the mechanism and B4c is refuted (a big finding — it would point back to the head/decoder).
 #
 # Not a ship. A pass justifies an 8k + the 5-digit range decision. Promotion is the operator's act.
@@ -63,7 +63,7 @@ data:
     usgov-hrsa-fqhc: 2.0
     usgov-imls-pls: 2.0
     usgov-nad: 1.0
-    state-ia-contractors: 2.0
+    state-ia-builders: 2.0
     state-tx-notaries: 1.5
     state-ny-notaries: 2.0
     deepseek-kryptonite: 3.0
@@ -83,9 +83,9 @@ data:
     synth-no-street-led: 12.0
     synth-cz-pcfirst-preposition: 12.0
     synth-nl-postcode: 6.0
-    # PROBE 1: the fragment/autocomplete source (assay weight — moderate precedent).
+    # probe 1: the fragment/autocomplete source (assay weight — moderate precedent).
     synth-fragment: 6.0
-    # #727 T2 NEW — the one variable. 12.0 = the targeted-fix precedent (fr-bare-street,
+    # #727 T2 new — the one variable. 12.0 = the targeted-fix precedent (fr-bare-street,
     # si-bare-village, no-street-led are all 12.0). Streets with no house number + the
     # bare-locality counter.
     synth-fr-fragment: 12.0
@@ -124,12 +124,12 @@ model: # Verbatim from v2.4.1.
   use_postcode_anchor: true
   use_gazetteer_anchor: true
   gazetteer_feature_dim: 5
-  # #1104 country channel ON — dedicated 2-dim [country_surface, country_ambiguous] soft feed with its
+  # #1104 country channel on — dedicated 2-dim [country_surface, country_ambiguous] soft feed with its
   # own projection + confidence (must equal the lexicon's feature_dim). Default-False elsewhere, so a
   # resume from a pre-country checkpoint stays byte-identical until this flips.
   use_country_anchor: true
   country_feature_dim: 2
-  # #1104 homograph-guard SOFTENER — the one variable vs v263. Scales the country_ambiguous dim by 0.5
+  # #1104 homograph-guard softener — the one variable vs v263. Scales the country_ambiguous dim by 0.5
   # before the country_projection (bakes into the exported ONNX. no lexicon/inference change). v263's
   # hard guard (scale 1.0) over-suppressed homograph countries Georgia/Jordan (country-homograph F1
   # 89.8->82.6); softening should recover homograph recall without giving back the country F1 the

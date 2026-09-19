@@ -3,7 +3,7 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   `<GraticuleLayer>` — a meridian/parallel grid drawn UNDER the basemap, so the globe has a readable surface before
+ *   `<GraticuleLayer>` — a meridian/parallel grid drawn under the basemap, so the globe has a readable surface before
  *   a single tile has arrived.
  *
  *   Without it the first seconds of a visit are a black disc: the projection is drawing a sphere, the sphere has no
@@ -15,7 +15,7 @@
  *   It sits under the basemap rather than over it, so a loaded tile hides its own patch of grid and the grid survives
  *   only where there is nothing else to show — which is precisely where it is doing work.
  *
- *   NODE-SAFE: pure React over a pure geometry builder, no maplibre import.
+ *   node-safe: pure React over a pure geometry builder, no maplibre import.
  */
 
 import { type ReactNode, useMemo } from "react"
@@ -38,7 +38,7 @@ export interface GraticuleLayerProps {
 export function GraticuleLayer({ beforeID, hidden = false }: GraticuleLayerProps): ReactNode {
 	const data = useMemo(() => buildGraticule(), [])
 
-	// `<Source>` and `<Layer>` as SIBLINGS with an explicit `source`, matching `OverlayLayers`. Nesting the layer
+	// `<Source>` and `<Layer>` as siblings with an explicit `source`, matching `OverlayLayers`. Nesting the layer
 	// inside the source renders nothing here — no source, no layer, and no error to say so.
 	return (
 		<>

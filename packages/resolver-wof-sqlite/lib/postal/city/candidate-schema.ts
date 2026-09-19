@@ -3,13 +3,13 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Typed schema for the POSTAL-CITY CANDIDATE side-index (#741 / #475) — a small `(name_key,
+ *   Typed schema for the postal-city candidate side-index (#741 / #475) — a small `(name_key,
  *   postcode) → geo-locality` table that lives alongside the byte-range `candidate` table so the
  *   candidate-backend resolver (the demo/CLI default) can do what the FTS coordinate-first scorer
- *   does: resolve a user-typed POSTAL city ("Antioch", 37013) to the geographic locality the
+ *   does: resolve a user-typed postal city ("Antioch", 37013) to the geographic locality the
  *   postcode sits in ("Nashville").
  *
- *   Why a SIDE-INDEX rather than cloned `candidate` rows: the `candidate` B-tree is keyed `(name_key,
+ *   Why a side-index rather than cloned `candidate` rows: the `candidate` B-tree is keyed `(name_key,
  *   country_id, region_id, placetype_id, …)` and ranked population-first — it has no postcode
  *   dimension. A cloned alias row was tested (#741) and falsified: a sentinel rank is
  *   bare-name-safe but then loses to any in-region homonym, and there is no single rank that is
@@ -60,7 +60,7 @@ export interface PostalCityCandidateDatabase {
 export const POSTAL_CITY_CANDIDATE_TABLE = "postal_city_candidate"
 
 /**
- * Column order for the builder's positional INSERT.
+ * Column order for the builder's positional insert.
  */
 export const POSTAL_CITY_CANDIDATE_COLUMNS = [
 	"name_key",
@@ -72,9 +72,9 @@ export const POSTAL_CITY_CANDIDATE_COLUMNS = [
 ] as const
 
 /**
- * Create the side-index — a clustered `WITHOUT ROWID` B-tree on `(name_key, postcode)` so the resolve is a single exact
- * probe. Idempotent (`IF NOT EXISTS`); pass a {@link DatabaseClient} (or any `Kysely`) over the candidate DB. The
- * Kysely schema-builder is the house idiom for table creation — see `AGENTS.md` (inline-SQL → Kysely).
+ * Create the side-index — a clustered `without rowid` B-tree on `(name_key, postcode)` so the resolve is a single exact
+ * probe. Idempotent (`if not exists`); pass a {@link DatabaseClient} (or any `Kysely`) over the candidate DB. The
+ * Kysely schema-builder is the house idiom for table creation — see `agents.md` (inline-SQL → Kysely).
  */
 export async function createPostalCityCandidateTable(db: Kysely<PostalCityCandidateDatabase>): Promise<void> {
 	await db.schema
@@ -87,7 +87,7 @@ export async function createPostalCityCandidateTable(db: Kysely<PostalCityCandid
 		.addColumn("latitude", "real", (c) => c.notNull())
 		.addColumn("longitude", "real", (c) => c.notNull())
 		.addPrimaryKeyConstraint("postal_city_candidate_pk", ["name_key", "postcode"])
-		// `WITHOUT ROWID` has no first-class builder. the raw modifier is the idiomatic fallback.
+		// `without rowid` has no first-class builder. the raw modifier is the idiomatic fallback.
 		.modifyEnd(sql`without rowid`)
 		.execute()
 }

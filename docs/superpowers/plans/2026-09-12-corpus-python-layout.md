@@ -10,7 +10,7 @@
 > above. One deviation from the spec is deliberate and documented there: the package is `evaluation/`,
 > not `eval/`.
 
-> **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
+> **For agentic workers:** required sub-skill: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
 **Goal:** Restructure `corpus-python/` from 48 flat modules plus a 5,278-line launcher into role directories at the package root with `countries/<cc>/` for country-specific code, adding declared protocols and training callbacks.
 

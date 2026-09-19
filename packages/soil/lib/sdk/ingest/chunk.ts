@@ -4,18 +4,18 @@
  * @author Teffen Ellis, et al.
  *
  *   The streaming pass — every delineation into `soil_map_unit_area` and into the build's touch table — as a
- *   unit of work that can run over PART of one survey area.
+ *   unit of work that can run over part of one survey area.
  *
- *   WHY THIS IS A CHUNK RATHER THAN A WHOLE FILE. h3's WASM heap cannot be reset from JavaScript, and it does
+ *   why this is A chunk rather than A whole file. h3's wasm heap cannot be reset from JavaScript, and it does
  *   not survive an unbounded number of polyfill calls: over the flood layer's real product, runs died after
  *   roughly 510,000 and 798,000 features on geometry that classifies in milliseconds in a fresh process. A
  *   build that completes only when fragmentation happens to stay low is not a reproducible build, so the
  *   classification is bounded by construction — {@linkcode buildSoilDatabase} runs one of these per range of
  *   the shapefile's own FIDs, each in its own process, and each therefore against a heap that starts empty.
  *   Iowa's 99 survey areas hold far more delineations together than any one of them does, which is why the
- *   bound is per RANGE rather than per area.
+ *   bound is per range rather than per area.
  *
- *   THE CHUNK OWNS NO ARTIFACT. It appends rows to a database the parent created and will seal, and returns
+ *   the chunk owns no artifact. It appends rows to a database the parent created and will seal, and returns
  *   counts the parent adds up. Chunks run one at a time against that file, so there is no concurrent writer
  *   and no locking to reason about.
  */
@@ -57,7 +57,7 @@ export interface SoilChunkResult {
 	/**
 	 * The same, counting only delineations whose map unit has soil mapping behind it.
 	 *
-	 * Separate from the total because the coverage rule turns on it: a coverage cell reached only by `NOTCOM` and
+	 * Separate from the total because the coverage rule turns on it: a coverage cell reached only by `notcom` and
 	 * access-denied polygons is inside a published survey area and carries no digitized soil mapping, and the survey's
 	 * §3.2 gives it no row.
 	 */
@@ -73,7 +73,7 @@ export interface IngestSoilChunkOptions {
 	indexResolution: number
 	coverageResolution: number
 	/**
-	 * The map units with no soil mapping behind them — `NOTCOM`, `NOTPUB`, access denied, or no readable component
+	 * The map units with no soil mapping behind them — `notcom`, `notpub`, access denied, or no readable component
 	 * weights. Passed in rather than joined here so the chunk stays a streaming pass over geometry.
 	 */
 	noMappingMukeys: ReadonlySet<string>

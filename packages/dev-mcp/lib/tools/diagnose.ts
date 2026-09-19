@@ -4,7 +4,7 @@
  * @author Teffen Ellis, et al.
  *
  *   The `mwdev_diagnose` tool definition — the description an agent reads, the input schema, and the handler wiring.
- *   The measurement itself lives in the package root. this file is the CONTRACT, and the description is the
+ *   The measurement itself lives in the package root. this file is the interface, and the description is the
  *   required half of it.
  */
 

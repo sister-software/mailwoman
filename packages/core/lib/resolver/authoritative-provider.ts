@@ -3,7 +3,7 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   The authoritative-provider contract (#1901): a typed boundary for handing a structured query to an
+ *   The authoritative-provider interface (#1901): a typed boundary for handing a structured query to an
  *   external reference service — OS Places, an OS NGD-backed service, any national equivalent — and
  *   carrying the provider's identity, licensing, and provenance back through the result without the
  *   provider's assertions and Mailwoman's inferences ever blurring.
@@ -16,7 +16,7 @@
  *   - **Refusal and ambiguity are first-class outcomes**, not degenerate matches: a refusal is a
  *     provider that declined to answer, an ambiguous response keeps every candidate, and neither is a
  *     parse failure or an open-gazetteer miss.
- *   - **Provider assertions never overwrite Mailwoman's own answer.** The response is carried BESIDE
+ *   - **Provider assertions never overwrite Mailwoman's own answer.** The response is carried beside
  *     the open result. the consumer chooses which identity to act on.
  *   - **No provider product names in this module.** Product-specific mapping lives in an adapter
  *     package. these shapes are what every adapter maps into.
@@ -64,7 +64,7 @@ export interface AuthoritativeQuery {
 	locale?: string
 	/**
 	 * Mailwoman's own confidence in the parse, [0, 1], when the decode produced one — an adapter may use it to choose
-	 * between a strict and a fuzzy provider query. Absent means UNMEASURED, never zero.
+	 * between a strict and a fuzzy provider query. Absent means unmeasured, never zero.
 	 */
 	parseConfidence?: number
 }
@@ -80,7 +80,7 @@ export const AuthoritativeMatchStatus = {
 export type AuthoritativeMatchStatus = (typeof AuthoritativeMatchStatus)[keyof typeof AuthoritativeMatchStatus]
 
 /**
- * One place the provider asserted. Every field is the PROVIDER'S claim, carried verbatim — nothing here is a Mailwoman
+ * One place the provider asserted. Every field is the provider'S claim, carried verbatim — nothing here is a Mailwoman
  * inference, which is exactly what makes the block auditable downstream.
  */
 export interface AuthoritativeMatch {
@@ -95,7 +95,7 @@ export interface AuthoritativeMatch {
 	objectIDs?: Readonly<Record<string, string>>
 	/**
 	 * Canonical address fields as the provider returned them, keyed by the provider's own field names. Deliberately not
-	 * remapped to {@link ComponentTag}: a lossy remap would overwrite the assertion this contract exists to preserve. An
+	 * remapped to {@link ComponentTag}: a lossy remap would overwrite the assertion this interface exists to preserve. An
 	 * adapter may additionally offer a mapped view. this field is the record.
 	 */
 	canonicalFields?: Readonly<Record<string, string>>
@@ -148,7 +148,7 @@ export interface AuthoritativeResponse {
 	 */
 	attribution?: string
 	/**
-	 * License or terms identifier suitable for downstream display (an SPDX id, a product terms name). Carried so a
+	 * License or terms identifier suitable for downstream display (an spdx id, a product terms name). Carried so a
 	 * consumer can keep provider-derived records under the provider's terms without consulting anything outside the
 	 * result.
 	 */
@@ -166,7 +166,7 @@ export interface AuthoritativeResponse {
 /**
  * A configured authoritative provider. One method, asynchronous, backend-neutral.
  *
- * A thrown error is a TRANSPORT failure (network, auth, timeout) and is the adapter's to surface — it is not a refusal,
+ * A thrown error is a transport failure (network, auth, timeout) and is the adapter's to surface — it is not a refusal,
  * which is a well-formed {@link AuthoritativeResponse} with `status: "refused"`. Consumers keep the two apart the same
  * way the resolver keeps a backend error apart from a miss.
  */

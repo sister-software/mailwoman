@@ -204,13 +204,13 @@ describe("scriptForCodepoint", () => {
 	/**
 	 * The converse, and the direction the first version of this suite did not check.
 	 *
-	 * Asserting only that what we CLAIM is a script really is one stops the table over-claiming and says nothing about
+	 * Asserting only that what we claim is a script really is one stops the table over-claiming and says nothing about
 	 * what it misses — and a range cannot express an exception, so a block holding two scripts gets drawn through. Both
 	 * of this file's misses were that: `COMMON_RANGES` took `0x3000..0x303f` whole, and Unicode assigns 々 (U+3005) and 〇
 	 * (U+3007) inside it to Han. it took `0x3099..0x30a0` whole, and U+309D..309F are Hiragana.
 	 *
 	 * The allowance is per script rather than global, and each number is a measurement of what is left uncovered rather
-	 * than a target. Tightening one is a change with its own evidence. a number that GROWS is a script the table stopped
+	 * than a target. Tightening one is a change with its own evidence. a number that grows is a script the table stopped
 	 * answering for.
 	 */
 	const UNCOVERED_ALLOWANCE: Readonly<Record<string, number>> = {
@@ -248,7 +248,7 @@ describe("scriptForCodepoint", () => {
 
 	it("reads the two characters that were drawn through a block boundary", () => {
 		// 々 in 代々木 and 佐々木, 〇 in an all-zero ward number, ゝ in a name written with the hiragana iteration mark.
-		// Each sat inside a range this file called Common because the BLOCK is mostly common.
+		// Each sat inside a range this file called Common because the block is mostly common.
 		expect(scriptForCodepoint(0x30_05)).toBe("Hani")
 		expect(scriptForCodepoint(0x30_07)).toBe("Hani")
 		expect(scriptForCodepoint(0x30_9d)).toBe("Hira")
@@ -318,7 +318,7 @@ describe("classifyTokenScript", () => {
 
 describe("foldInputScripts", () => {
 	it("names both scripts of a mixed input, which the character class folds to one word", () => {
-		// `foldInputClass` answers `mixed` here, and `mixed` names no script at all — so the Han venue in a London
+		// `foldInputClass` answers `mixed` here, and `mixed` names no script at all . Therefore, the Han venue in a London
 		// address was invisible to every consumer reading the fold.
 		const scripts = foldInputScripts("金龍酒家, 12 Gerrard Street, London WC2H 7JS")
 

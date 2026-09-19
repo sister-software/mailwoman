@@ -5,7 +5,7 @@
  *
  *   Presentation only — no copy lives here.
  *
- *   UNMOUNTED as of the docs-reorg Task 5 skeleton cutover. Its only consumer was the old
+ *   unmounted as of the docs-reorg Task 5 skeleton cutover. Its only consumer was the old
  *   `licensing/pricing.mdx`, which is now parked unpublished under
  *   `docs/records/site-2026-08/licensing/pricing.mdx`; the live page is `docs/articles/pricing.mdx`
  *   and it renders the tiers as prose. Kept rather than deleted because the card styling is real

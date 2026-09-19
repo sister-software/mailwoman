@@ -24,7 +24,7 @@ them have drifted.
 Four sources define it. They agree more than they conflict, and where they conflict the conflict is
 informative.
 
-### 1.1 The contract — epic #488's definition of done
+### 1.1 The interface — epic #488's definition of done
 
 This is the only place the project writes a finish line as a sentence. Verbatim:
 

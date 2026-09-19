@@ -3,7 +3,7 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Train the ORG-LEVEL cross-source link scorer (#655 follow-on, 2026-07-06). The practitioner
+ *   Train the ORG-level cross-source link scorer (#655 follow-on, 2026-07-06). The practitioner
  *   cross-source GBT does not transfer to organization records (its person-name features go dark),
  *   so the org-level cross-dataset flows pin the FS baseline. The org anchor: **CMS Provider of
  *   Services joins Care Compare by CCN** — the same facility in two separately-maintained CMS
@@ -12,8 +12,8 @@
  *   system-vs-facility / acquisition class the org objective exists for.
  *
  *   Pipeline: national CCN join → one record per source per facility (Phases A/B here), then the
- *   SHARED `trainCrossSourceModel` runs Phases C–F — geocode → block the UNION, keep only
- *   CROSS-source pairs → the SHARED featurizer → label by CCN → held-out-CCN calibration (max
+ *   shared `trainCrossSourceModel` runs Phases C–F — geocode → block the union, keep only
+ *   cross-source pairs → the shared featurizer → label by CCN → held-out-CCN calibration (max
  *   recall s.t. precision ≥ bar) → train on all pairs → emit
  *   `registry/models/org-crosssource-gbt-en-us.ts`.
  *

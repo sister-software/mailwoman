@@ -4,7 +4,7 @@
  * @author Teffen Ellis, et al.
  *
  *   `mailwoman gazetteer build tw-districts` — Taiwan's 鄉鎮市區 locality database from the Overture Maps addresses
- *   parquet (the civil-affairs registers, CDLA-Permissive-2.0 AND OGDL-Taiwan-1.0), each row scoped to its 縣市's WOF
+ *   parquet (the civil-affairs registers, cdla-Permissive-2.0 and ogdl-Taiwan-1.0), each row scoped to its 縣市's WOF
  *   region. Sealed 0444. The pipeline module is lazy-imported so `--help` never faults without the optional
  *   `@mailwoman/resolver-wof-sqlite` peer or the DuckDB dev dependency.
  */
@@ -12,7 +12,7 @@
 import { type CommandSpec, CommandTaskResult, type CommandComponent, useCommandTask } from "#cli-kit"
 
 /**
- * Native command-line contract consumed by the filesystem command router.
+ * Native command-line interface consumed by the filesystem command router.
  */
 export const spec = {
 	name: "tw-districts",

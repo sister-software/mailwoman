@@ -7,21 +7,21 @@
  *   Address File — Geoscape Australia, Open G-NAF licence. any derived artifact must attribute
  *   "Geoscape Australia"). G-NAF is a relational PSV distribution (~16.9M addresses);
  *   reconstructing a street address joins three tables — ADDRESS_DETAIL (number, postcode, the
- *   PIDs) → STREET_LOCALITY (street name + type) → LOCALITY (suburb). State is the per-file prefix
+ *   PIDs) → STREET_LOCALITY (street name + type) → locality (suburb). State is the per-file prefix
  *   (ACT/NSW/…).
  *
- *   Streaming + in-memory join via the house {@link PSVSpliterator} (pipe-separated. header names key each row) — NOT
+ *   Streaming + in-memory join via the house {@link PSVSpliterator} (pipe-separated. header names key each row) — not
  *   raw `read_csv` SQL, which a flat-file join doesn't need and
- *   which the #183–190 cleanup retired. The two lookup tables (STREET_LOCALITY ~765k rows, LOCALITY
+ *   which the #183–190 cleanup retired. The two lookup tables (STREET_LOCALITY ~765k rows, locality
  *   ~16k) fit as Maps. ADDRESS_DETAIL is streamed once and reservoir-sampled, so memory stays
  *   bounded (the OOM lesson from the Overture ingest).
  *
- *   No coordinates: the output feeds the PARSER ({@link ../gnaf/adapter}, #208) — teaching the model
+ *   No coordinates: the output feeds the parser ({@link ../gnaf/adapter}, #208) — teaching the model
  *   AU's postcode-first / house-number-last word order, the gap `scripts/eval/au-order-probe.ts`
  *   pinned (65%→87% if the parse were order-robust). The parser needs the address string +
  *   component labels rather than lat/lon.
  *
- *   Output: component tuples as JSONL, consumed by the `gnaf` corpus adapter (which renders them in
+ *   Output: component tuples as jsonl, consumed by the `gnaf` corpus adapter (which renders them in
  *   multiple orders + the corpus aligner BIO-labels them). An optional held-out eval set is
  *   excluded by (street, locality, postcode) so the training corpus never overlaps the benchmark.
  */
@@ -41,11 +41,11 @@ export interface GNAFAssembleOptions {
 	 */
 	sampleSize: number
 	/**
-	 * Output JSONL path.
+	 * Output jsonl path.
 	 */
 	out: string
 	/**
-	 * Optional held-out eval JSONL (rows with a `components` field) — its (street,locality,postcode) are excluded.
+	 * Optional held-out eval jsonl (rows with a `components` field) — its (street,locality,postcode) are excluded.
 	 */
 	holdoutPath?: string
 	/**
@@ -62,7 +62,7 @@ export interface GNAFAssembleResult {
 }
 
 /**
- * UPPERCASE → Title Case, preserving intra-word apostrophes/hyphens (O'Brien, Coff's Harbour).
+ * Uppercase → Title Case, preserving intra-word apostrophes/hyphens (O'Brien, Coff's Harbour).
  */
 export function titlecase(s: string): string {
 	return s
@@ -104,7 +104,7 @@ async function loadMap<V>(paths: string[], keyCol: string, pick: (r: Row) => V):
 }
 
 /**
- * Build the held-out key set from an eval JSONL whose rows carry a `components` object.
+ * Build the held-out key set from an eval jsonl whose rows carry a `components` object.
  */
 async function loadHoldout(path: string): Promise<Set<string>> {
 	const keys = new Set<string>()

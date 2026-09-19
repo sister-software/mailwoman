@@ -3,8 +3,8 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   `mailwoman tiger race-dots` — race-by-dot-density NDJSON builder (the Cooper Center "Racial Dot
- *   Map" recipe) from a TIGER DB built by `tiger fetch` + `tiger redistricting`. Pipe the output
+ *   `mailwoman tiger race-dots` — race-by-dot-density ndjson builder (the Cooper Center "Racial Dot
+ *   Map" recipe) from a tiger DB built by `tiger fetch` + `tiger redistricting`. Pipe the output
  *   through tippecanoe, then render with `tiger race-dots-map`.
  */
 
@@ -14,7 +14,7 @@ import { Text } from "ink"
 import { type CommandSpec, CommandTaskResult, type CommandComponent, reportToStderr, useCommandTask } from "#cli-kit"
 
 /**
- * Native command-line contract consumed by the filesystem command router.
+ * Native command-line interface consumed by the filesystem command router.
  */
 export const spec = {
 	name: "race-dots",

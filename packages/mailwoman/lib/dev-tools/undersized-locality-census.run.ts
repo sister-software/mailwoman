@@ -11,7 +11,7 @@
  *   ranker can read and opposite in which bearer the query means, so correcting the population resolves one and
  *   changing the ranking to accommodate the wrong number improves nothing.
  *
- *   TWO SIGNALS, BECAUSE THE RATIO ALONE DOES NOT SEPARATE THE CLASS. A mis-recorded city and a namesake village
+ *   two signals, because the ratio alone does not separate the class. A mis-recorded city and a namesake village
  *   inside a large district both read as "small locality under big parent". What separates them is how common the
  *   name is — India carries 312 localities called `Sultanpur` and more than sixty called `Aurangabad` — and
  *   whether a second register agrees, which the `gn:id` concordance makes reachable.

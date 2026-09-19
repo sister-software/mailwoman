@@ -5,21 +5,21 @@
  *
  *   The canonical-form law's guard, its two exclusion rules, and the failure line a violation produces.
  *
- *   THE GUARD IS THE SCOPE. `canonicalFormKey` is `NFD`, so a pair whose decompositions match is canonically
+ *   the guard is the scope. `canonicalFormKey` is `NFD`, so a pair whose decompositions match is canonically
  *   equivalent and a pair whose decompositions differ is not — which is the whole of what this law claims, and
  *   the reason the relations it must not absorb are refused by construction rather than by a list.
  *   Compatibility normalization, a removed accent, a transliteration and a case change each move the key, and
  *   each is asserted here to move it.
  *
- *   INDEPENDENCE IS ASSERTED IN BOTH DIRECTIONS, and that is what makes a seeded normalization regression
+ *   independence is asserted IN both directions, and that is what makes a seeded normalization regression
  *   attributable. A case, spacing or punctuation change is refused by this law's audit, and a canonical-form
  *   pair is refused by the other three classifiers — so a failing arm here cannot be a mis-filed row from
  *   another suite, and no other suite can absorb this one.
  *
- *   NO DECOMPOSED STRING IS TYPED IN THIS FILE, and `nfc-nfd-suite.test.ts` holds that line for the whole
+ *   no decomposed string is typed IN this file, and `nfc-nfd-suite.test.ts` holds that line for the whole
  *   directory. The composed and decomposed spellings of `Köln` render identically, so a hand-typed decomposed
  *   literal is a value a reviewer cannot check and an editor can silently rewrite. Every one is built from a
- *   composed literal by the law's own transformation, and a decomposition's CONTENT is stated in code points.
+ *   composed literal by the law's own transformation, and a decomposition's content is stated in code points.
  *
  *   Every case is stated over a real committed board input rather than an invented string: the Cologne row for
  *   the umlaut, the Paris street for the acute and the typographic apostrophe it must leave alone, the Hanoi

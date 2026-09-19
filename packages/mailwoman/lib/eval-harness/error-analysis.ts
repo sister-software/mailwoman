@@ -17,11 +17,11 @@
  *   This is the pre-publish 2pp promote eval (night-shift skill: "run the full per-tag error analysis
  *   and compare against the current default release. abort the upload if any tag regresses >2pp").
  *   It therefore builds the classifier via the canonical `createScorer`
- *   (`@mailwoman/neural/scorer`, #718) in STRICT mode, so the model is fed the full SHIP-CONFIG it
- *   was TRAINED against — anchor + gazetteer + conventions, per the model-card's `requires` block.
+ *   (`@mailwoman/neural/scorer`, #718) in strict mode, so the model is fed the full ship-config it
+ *   was trained against — anchor + gazetteer + conventions, per the model-card's `requires` block.
  *   The prior `--model` path built a raw `new NeuralAddressClassifier` with no anchor/gazetteer, so
- *   a freshly-trained STAGE3 checkpoint was graded ANCHOR-OFF (admin tags collapse) while the
- *   no-`--model` default (loadFromWeights) was anchor-ON — the candidate was scored OOD against an
+ *   a freshly-trained STAGE3 checkpoint was graded anchor-off (admin tags collapse) while the
+ *   no-`--model` default (loadFromWeights) was anchor-on — the candidate was scored OOD against an
  *   in-distribution baseline, the #566/#685 trap this very check exists to prevent. `--no-strict`
  *   warns-and-continues for ad-hoc/legacy (pre-anchor) models instead of failing closed.
  *
@@ -80,7 +80,7 @@ export interface ErrorAnalysisOptions {
 	 */
 	wordConsistency?: boolean
 	/**
-	 * STRICT ship-config feed (#718): fail closed if a model-card-declared channel can't be fed. Default true.
+	 * Strict ship-config feed (#718): fail closed if a model-card-declared channel can't be fed. Default true.
 	 */
 	strict?: boolean
 }
@@ -142,7 +142,7 @@ export async function evalErrorAnalysis(options: ErrorAnalysisOptions): Promise<
 		? (repairOpts as Parameters<NeuralAddressClassifier["parse"]>[1])
 		: undefined
 
-	// Full SHIP-CONFIG via the canonical ProductionScorer (#718) — feed the anchor + gazetteer +
+	// Full ship-config via the canonical ProductionScorer (#718) — feed the anchor + gazetteer +
 	// conventions channels the model was trained against (per the model-card `requires` block) so a
 	// `--model` candidate is graded in-distribution, the same as the dev-weights default. createScorer
 	// fails closed in strict mode if a declared channel can't actually be fed; `--no-strict` opts out.

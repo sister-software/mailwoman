@@ -11,14 +11,14 @@ import glossaryRemarkPlugin from "./plugins/glossary/remark.ts"
  * Surfaces the glossary auto-linker must never link, whatever term claims them. Two false-positive classes warrant a
  * word a place here, both measured across the built site:
  *
- * 1. A common English word that is also a glossary ALIAS. `state` is an alias of `region`, so every ordinary use — "the
+ * 1. A common English word that is also a glossary alias. `state` is an alias of `region`, so every ordinary use — "the
  *    state of the pipeline", "stateless", "US state law" — tooltipped the address component. It fired on 38 pages, and
  *    almost none of them meant the component.
- * 2. A common English word that is also a glossary TERM in a narrower sense. `tier` is defined as the model's label tier,
+ * 2. A common English word that is also a glossary term in a narrower sense. `tier` is defined as the model's label tier,
  *    but the site's own vocabulary uses the word for geocode-cascade tiers, locale tiers and pricing tiers. It fired on
  *    39 pages including pricing.mdx, where the definition on offer is the wrong one every time.
  *
- * Suppression is by SURFACE rather than by term: `region` still links, and so does a multi-word phrase that merely
+ * Suppression is by surface rather than by term: `region` still links, and so does a multi-word phrase that merely
  * contains a suppressed word, like the FST alias `finite-state transducer` (contains "state", still links in full).
  * Multi-word terms like `input register` are untouched — they carry their sense in the phrase, which is exactly what
  * keeps them out of this list.
@@ -75,7 +75,7 @@ const config: Config = {
 			},
 		},
 		// The four faces that paint above the fold, preloaded. Without these the chain is
-		// HTML -> styles.css -> parse -> discover @font-face -> cross-origin fetch, which measured ~1.57 s to first
+		// html -> styles.css -> parse -> discover @font-face -> cross-origin fetch, which measured ~1.57 s to first
 		// font byte on a warm cache. with `font-display: swap` on every face that is a guaranteed flash of the
 		// fallback plus a full-page reflow. `preconnect` above only removes the handshake rather than the discovery.
 		// Any face not listed here still loads lazily off the stylesheet, which is what we want for the other 44.
@@ -144,7 +144,7 @@ const config: Config = {
 		[
 			// `/docs` is `routeBasePath`, not a page: the docs plugin routes `/docs/<slug>` and leaves the
 			// bare prefix with nothing on it, so a reader who trims the path to `/docs` — or follows the
-			// link that CHANGELOG.md used to carry — gets a 404 on a site that is up. This sends it to the
+			// link that changelog.md used to carry — gets a 404 on a site that is up. This sends it to the
 			// first page of the get-started trio, which is where the sidebar opens anyway.
 			"@docusaurus/plugin-client-redirects",
 			{

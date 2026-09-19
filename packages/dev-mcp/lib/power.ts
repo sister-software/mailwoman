@@ -3,7 +3,7 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   What a sample can and cannot support, expressed as a SENTENCE rather than a field.
+ *   What a sample can and cannot support, expressed as a sentence rather than a field.
  *
  *   The measured failure this exists for: on 2026-08-15 a probe fed 10 self-chosen addresses through a mechanism, saw
  *   no differences, and published "zero effect". Re-run over all 837 board inputs, the mechanism moved 24. Zero events
@@ -51,7 +51,7 @@ export function wilsonInterval(successes: number, n: number, z = 1.96): { low: n
 /**
  * How tight the upper bound must be before a zero may be read as a real absence.
  *
- * A JUDGEMENT rather than a measurement — there is no experiment that fixes it. It is set at 1% because that is roughly
+ * A judgement rather than a measurement — there is no experiment that fixes it. It is set at 1% because that is roughly
  * the `n = 300` mark (`1 − 0.05^(1/300) = 0.99%`), i.e. the point where a zero rests on a set larger than any panel
  * anyone has assembled by hand here. The 2026-08-15 probe used 10, whose bound is 25.9%.
  */
@@ -84,7 +84,7 @@ export interface ObservedRate {
 	n: number
 	selection: Selection
 	/**
-	 * What one event IS, in the caller's own words, e.g. "differed" or "regressed". Used to build the sentence.
+	 * What one event is, in the caller's own words, e.g. "differed" or "regressed". Used to build the sentence.
 	 */
 	eventLabel: string
 	/**

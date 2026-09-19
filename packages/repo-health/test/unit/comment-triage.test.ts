@@ -4,10 +4,10 @@ import { describe, expect, it } from "vitest"
 
 describe("sourceComments", () => {
 	it("keeps every TypeScript scanner comment with its source range", () => {
-		const comments = sourceComments("fixture.ts", "/** API contract. */\nconst a = 1 // this\n/* TODO: revisit */")
+		const comments = sourceComments("fixture.ts", "/** API interface. */\nconst a = 1 // this\n/* TODO: revisit */")
 
 		expect(comments.map(({ kind, startLine, text }) => ({ kind, startLine, text }))).toEqual([
-			{ kind: "jsdoc", startLine: 1, text: "/** API contract. */" },
+			{ kind: "jsdoc", startLine: 1, text: "/** API interface. */" },
 			{ kind: "line", startLine: 2, text: "// this" },
 			{ kind: "block", startLine: 3, text: "/* TODO: revisit */" },
 		])

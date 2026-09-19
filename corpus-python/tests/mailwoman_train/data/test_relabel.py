@@ -1,4 +1,4 @@
-"""Contract tests for the affix-split relabel pass (#511).
+"""Interface tests for the affix-split relabel pass (#511).
 
 The critical property is BUILDER PARITY: split_street_span must agree with the affix recipe's
 ``parseStreet`` (`packages/corpus/lib/recipes/street/affix.ts`) on every case, or the pass introduces a third
@@ -45,7 +45,7 @@ LEX = AffixRelabelLexicon(
         "lane": "LANE",
     },
     version="test",
-    # v2 licensing vocabulary (see TestPositionalLicensing). AVENUE et al. deliberately absent —
+    # v2 licensing vocabulary (see TestPositionalLicensing). avenue et al. deliberately absent —
     # suffix-shaped but not name-prone.
     name_prone=frozenset({"PARK", "HILL"}),
 )
@@ -82,10 +82,10 @@ class TestSplitBuilderParity:
         assert split("W Park Ave") is None
 
     def test_multiword_name_prone_tail_is_licensed_by_the_true_suffix(self):
-        # CONTRACT CHANGE 2026-08-10 (#1569 five-whys): this case was the blanket rejection that
+        # interface change 2026-08-10 (#1569 five-whys): this case was the blanket rejection that
         # taught the training feed to absorb true suffixes ('Cherry Hill' ends name-prone-shaped,
-        # but the trailing TRUE suffix licenses the split — TS allowNameProneTail semantics).
-        # Previously pinned as None. see TestPositionalLicensing for the full new contract.
+        # but the trailing true suffix licenses the split — TS allowNameProneTail semantics).
+        # Previously pinned as None. see TestPositionalLicensing for the full new interface.
         assert split("W Cherry Hill Rd") == (1, 1)
 
     def test_period_not_stripped(self):
@@ -249,7 +249,7 @@ class TestRelabelSpans:
         assert row["span_starts"] == [0] and row["span_ends"] == [27] and row["span_tags"] == ["street"]
 
     def test_dotted_suffix_is_conservative_on_the_span_path(self):
-        # "Main St.": the corpus tokenizer dropped the period, so the TOKEN path sees "St" and
+        # "Main St.": the corpus tokenizer dropped the period, so the token path sees "St" and
         # splits. the span path sees the whitespace word "St." (builder parity: parseStreet
         # splits raw words, "St." is not in the lexicon) and leaves the span whole. The span path
         # is the v0.5.0 source of truth — conservative beats a third labeling.
@@ -390,7 +390,7 @@ class TestPositionalLicensing:
         assert split("Industrial Park Rd") == (0, 1)
 
     def test_directional_prefix_plus_name_prone_tail_splits(self):
-        # Flips the old blanket rejection: the trailing TRUE suffix licenses 'Cherry Hill'.
+        # Flips the old blanket rejection: the trailing true suffix licenses 'Cherry Hill'.
         assert split("W Cherry Hill Rd") == (1, 1)
 
     def test_single_word_name_prone_name_still_refused(self):

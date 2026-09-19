@@ -176,14 +176,14 @@ export function foldExtract(ctx: {
 	//
 	// The delivery-city names GeoNames supplies for a ZIP ("Brooklyn" for 11201) are written into
 	// the extract's `names` table by `postcode/centroid-fills.ts`'s `geonamesNameFill`. Everything
-	// downstream of `names` picked them up EXCEPT this build: `fts.ts` unions `spr.name` with every
+	// downstream of `names` picked them up except this build: `fts.ts` unions `spr.name` with every
 	// `names` row into `place_search.alt_names`, so the FTS backend resolved "Brooklyn" → 11201
 	// while the candidate backend — whose every row is an exact-tier row — had no key for it at
-	// all. Pass 2 does the equivalent fold for admin places, but reads the ADMIN `place_search`,
+	// all. Pass 2 does the equivalent fold for admin places, but reads the admin `place_search`,
 	// and `attrs` holds admin ids only, so a postcode extract could never reach it.
 	//
 	// Same discipline as pass 2: `is_primary = 0` (so `rankByPrimaryPreference` treats it as an
-	// alias rather than a canonical postcode name), the row stays denormalized onto the POSTCODE's own
+	// alias rather than a canonical postcode name), the row stays denormalized onto the postcode's own
 	// spr_id/coords/bbox, and the display `name` stays the postcode — resolving "brooklyn" answers
 	// with place 11201, it does not rename the place to its delivery city.
 	const hasNames = tableExists(pc, "names")
@@ -198,7 +198,7 @@ export function foldExtract(ctx: {
 
 			const k = normalizeLocalityForKey(String(r.name ?? ""))
 
-			// The postcode's own key is already staged as the primary; `INSERT OR IGNORE` at
+			// The postcode's own key is already staged as the primary; `insert or ignore` at
 			// materialization dedupes repeats, so this only skips the obvious self-alias.
 			if (!k || k === a.pkey) continue
 

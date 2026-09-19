@@ -3,14 +3,14 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   #42 coverage bound: for which countries can the postcode-country coherence pass see a postcode AT ALL, on a given
+ *   #42 coverage bound: for which countries can the postcode-country coherence pass see a postcode AT all, on a given
  *   backend? That bounds where default-on could ever matter, independently of how well the mechanism works.
  *
  *   Two things are measured, because one without the other misleads:
  *
- *   1. ROWS — `placetype = 'postalcode'` counts per country, read straight off the backend's own table. A count is not
+ *   1. rows — `placetype = 'postalcode'` counts per country, read straight off the backend's own table. A count is not
  *      reachability (an indexed row the query path never returns is still zero evidence), so it is reported as a bound rather than as coverage.
- *   2. REACHABILITY — one real (postcode, locality) pair per codex system, run through the same `findPlace` calls the
+ *   2. reachability — one real (postcode, locality) pair per codex system, run through the same `findPlace` calls the
  *      pass itself makes, reporting whether the postcode resolved, whether an exact same-named locality came back, and
  *      whether the pair was therefore coherent. This is the number that decides whether the pass can speak.
  *
@@ -130,7 +130,7 @@ for (const probe of PROBES) {
 	const exact = localityHits.some((p) => p.exactMatch && (p.lat !== 0 || p.lon !== 0))
 
 	// The verdict the pass itself would reach, via the impossible-default probe (step 1 always fails, so the
-	// alternatives alone decide) — the one number that says whether this country is REACHABLE evidence.
+	// alternatives alone decide) — the one number that says whether this country is reachable evidence.
 	const scope = await findPostcodeCountryScope(
 		[
 			{ tag: "postcode", value: probe.postcode, start: 0, end: probe.postcode.length, confidence: 0.95, children: [] },

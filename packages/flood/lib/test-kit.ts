@@ -6,15 +6,15 @@
  *   `@mailwoman/flood/test-kit` — hand-built geometry for the fixture rung: a square zone polygon, an
  *   adjacent one, one with a hole, and a mapped-extent rectangle bigger than the cells the polygons reach.
  *
- *   A PACKAGE SUBPATH RATHER THAN A `test/` FILE, for the same reason `packages/mailwoman/lib/test-kit` is one:
+ *   A package subpath rather than A `test/` file, for the same reason `packages/mailwoman/lib/test-kit` is one:
  *   the observation route's suite lives in another workspace, and a relative import across two TypeScript
  *   projects is refused outright (`TS2878`) because the compiled layout would not match the source layout.
  *
- *   NO NETWORK AND NO GDAL. The builder takes a {@linkcode FloodFeatureSource}, so a fixture is a list of
+ *   no network and no gdal. The builder takes a {@linkcode FloodFeatureSource}, so a fixture is a list of
  *   features — which is what lets this rung exercise the vocabulary check, the cell classification, the
  *   coverage rows, the manifest and the seal on every machine rather than only the ones with ogr2ogr.
  *
- *   THE COORDINATES ARE OVER ENGLAND, and deliberately so. The extent rectangle sits in the North Sea off
+ *   the coordinates are over england, and deliberately so. The extent rectangle sits in the North Sea off
  *   Great Yarmouth where no real EA polygon interferes, but inside the declared extent the ingest asserts
  *   against — so a fixture stays a fixture and still lives in the coordinate space the product occupies.
  */
@@ -56,7 +56,7 @@ export function fixtureFeature(
 		zoneCode,
 		zoneSource: "river",
 		origin: "modelled",
-		// The real source's figure comes from GDAL. a fixture's comes from the same ring maths the build checks against,
+		// The real source's figure comes from gdal. a fixture's comes from the same ring maths the build checks against,
 		// so the fixture exercises the comparison rather than the tolerance.
 		sourceAreaM2: ringAreaReadings(polygons).nested,
 		polygons,

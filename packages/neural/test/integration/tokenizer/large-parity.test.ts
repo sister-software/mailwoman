@@ -114,10 +114,10 @@ describe.skipIf(!haveLargeFixture)("MailwomanTokenizer — large-scale parity (1
 		// script and Latin-with-diacritics dominate).
 		expect(supported).toBeGreaterThan(fixture.length * 0.95)
 
-		// Allow up to 0.1% slack for Unicode normalization edge cases — SentencePiece NFKC-
-		// normalizes pieces (e.g. fullwidth ＝ → ASCII =, precomposed Hangul → decomposed Jamo),
-		// so the piece TEXT may differ from `raw.slice` even when the offset itself is correct.
-		// Properly handling this needs an NFKC-aware comparator. current sweep shows ≤ 0.05% rate.
+		// Allow up to 0.1% slack for Unicode normalization edge cases — SentencePiece nfkc-
+		// normalizes pieces (e.g. fullwidth ＝ → ascii =, precomposed Hangul → decomposed Jamo),
+		// so the piece text may differ from `raw.slice` even when the offset itself is correct.
+		// Properly handling this needs an nfkc-aware comparator. current sweep shows ≤ 0.05% rate.
 		const mismatchRate = mismatches / supported
 
 		if (mismatchRate >= 0.001) {

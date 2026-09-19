@@ -6,12 +6,12 @@
  *   Generate `@mailwoman/codex`'s per-country layout table from the two reference sources, so the table is derived
  *   rather than transcribed and a refresh of either source shows up as a reviewable diff.
  *
- *   TWO SOURCES, because neither alone says what a layout needs:
+ *   two sources, because neither alone says what a layout needs:
  *
  *   1. **libaddressinput** (`core/data/chromium-i18n/ssl-address/<CC>.json`, Apache-2.0, already shipped and already
- *      refreshable through `mailwoman dev download ssl-address`) supplies the line SKELETON in its `fmt` field — which
+ *      refreshable through `mailwoman dev download ssl-address`) supplies the line skeleton in its `fmt` field — which
  *      fields print, in what order, with the line breaks between them.
- *   2. **`street-orders.ts`**, beside this file, supplies the street ORDER, because libaddressinput models the street
+ *   2. **`street-orders.ts`**, beside this file, supplies the street order, because libaddressinput models the street
  *      address as one opaque `%A` field and says nothing about whether the house number leads or follows. That table
  *      was read once from the OpenCage `address-formatting` templates and committed as data, so this generator needs no
  *      third-party package. its own header says how to refresh it.
@@ -44,7 +44,7 @@ import { NO_SUB_LOCALITY_LINE_COUNTRIES } from "#dev-tools/codex/sub-locality-li
 interface AddressMetadata {
 	readonly fmt?: string
 	/**
-	 * The LATIN-script print order, where the country writes one differently from its own script.
+	 * The latin-script print order, where the country writes one differently from its own script.
 	 *
 	 * Eight of the 252 shipped records carry one that differs from `fmt`: CN, HK, JP, KP, KR, MO, TH, TW. Hong Kong is
 	 * the worked case — `%S%n%C%n%A%n%O%n%N` largest-first against `%N%n%O%n%A%n%C%n%S` smallest-first — and reading
@@ -55,7 +55,7 @@ interface AddressMetadata {
 
 /**
  * Libaddressinput placeholder → the slot a layout names. `%A` is the street line, which each system expands into this
- * project's finer tags, so it maps to a marker the emitter replaces with a street node.
+ * project's finer tags. Therefore, it maps to a marker the emitter replaces with a street node.
  */
 const FIELD: Readonly<Record<string, string>> = {
 	N: "attention",
@@ -152,7 +152,7 @@ function layoutSource(
 
 	if (!lines.length) return null
 
-	// The sub-locality line is AUTHORED wherever `%D` is absent, because the formatter this table replaces printed one
+	// The sub-locality line is authored wherever `%D` is absent, because the formatter this table replaces printed one
 	// for 202 of its 213 countries. It goes directly above the locality, which is where every template that has one
 	// puts it; `NO_SUB_LOCALITY_LINE_COUNTRIES` names the eleven that print none.
 	//
@@ -184,7 +184,7 @@ function layoutSource(
 		}
 	}
 
-	// The country line is AUTHORED rather than transcribed: libaddressinput leaves `%R` out of nearly every `fmt` because its
+	// The country line is authored rather than transcribed: libaddressinput leaves `%R` out of nearly every `fmt` because its
 	// consumers add the destination country themselves. It closes a small-first address and opens a large-first one,
 	// and it renders only when a caller supplies the name — an intra-country row carries none and prints none.
 	if (!named.has("country")) {
@@ -262,16 +262,16 @@ const emitted = `/**
  * @author Teffen Ellis, et al.
  * @generated
  *
- *   GENERATED — run \`node packages/mailwoman/lib/dev-tools/codex/address-layouts.ts\` to refresh. Do not edit by hand.
+ *   generated — run \`node packages/mailwoman/lib/dev-tools/codex/address-layouts.ts\` to refresh. Do not edit by hand.
  *
  *   One layout per country, derived from libaddressinput's \`fmt\` skeleton (which fields print, in what order) and the
  *   street order read once from the OpenCage templates (which slot leads). The \`fmt\` each was derived from is quoted
  *   above it, so a reader can compare the two without opening the dataset.
  *
- *   The locales this project publishes weights for are NOT here: those are hand-authored in the sibling \`index.ts\` and
+ *   The locales this project publishes weights for are not here: those are hand-authored in the sibling \`index.ts\` and
  *   checked against real addresses on a board, because a generated skeleton is a starting point rather than a verdict.
  *
- *   The Latin table below is the exception to that split. A hand-authored entry states ONE order per country, so a
+ *   The Latin table below is the exception to that split. A hand-authored entry states one order per country, so a
  *   country whose two scripts disagree cannot carry its second order there — Hong Kong's hand-authored layout is the
  *   Latin one, which leaves the Chinese order with nowhere to live. The Latin skeletons are therefore generated for
  *   every country that has one, hand-authored or not.
@@ -291,7 +291,7 @@ ${entries.join("\n\n")}
 }
 
 /**
- * LATIN-script layouts, for the countries whose Latin print order differs from the one in their own script.
+ * latin-script layouts, for the countries whose Latin print order differs from the one in their own script.
  *
  * Keyed by ISO 3166-1 alpha-2, and sparse on purpose: a country absent here writes one order in both scripts, so its
  * country-keyed layout serves both. The \`lfmt\` each was derived from is quoted above it.
@@ -301,9 +301,9 @@ ${latinEntries.join("\n\n")}
 }
 
 /**
- * LOCAL-script layouts for the same countries — the \`fmt\` skeleton, emitted even where the country is hand-authored.
+ * local-script layouts for the same countries — the \`fmt\` skeleton, emitted even where the country is hand-authored.
  *
- * A hand-authored entry states ONE order, and for Hong Kong that order is the Latin one, so its own script's order has
+ * A hand-authored entry states one order, and for Hong Kong that order is the Latin one, so its own script's order has
  * nowhere else to live. Sparse for the same reason as the Latin table: a country absent here writes one order in both.
  */
 export const GENERATED_LOCAL_ADDRESS_LAYOUTS: Readonly<Record<string, AddressLayout>> = {

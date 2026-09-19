@@ -31,23 +31,23 @@ def collate(batch: list[EncodedExample]) -> dict[str, Any]:
     if batch and batch[0].anchor_features is not None:
         out["anchor_features"] = [ex.anchor_features for ex in batch]
         out["anchor_confidence"] = [ex.anchor_confidence for ex in batch]
-    # Gazetteer-anchor channel (#464): same presence contract as the postcode anchor.
+    # Gazetteer-anchor channel (#464): same presence interface as the postcode anchor.
     if batch and batch[0].gazetteer_features is not None:
         out["gazetteer_features"] = [ex.gazetteer_features for ex in batch]
         out["gazetteer_confidence"] = [ex.gazetteer_confidence for ex in batch]
-    # Country-lexicon channel (#1104): same presence contract.
+    # Country-lexicon channel (#1104): same presence interface.
     if batch and batch[0].country_features is not None:
         out["country_features"] = [ex.country_features for ex in batch]
         out["country_confidence"] = [ex.country_confidence for ex in batch]
-    # Street-type channel (P-A / Option A): same presence contract.
+    # Street-type channel (P-A / Option A): same presence interface.
     if batch and batch[0].street_type_features is not None:
         out["street_type_features"] = [ex.street_type_features for ex in batch]
         out["street_type_confidence"] = [ex.street_type_confidence for ex in batch]
-    # Locality-surface channel (v3.16.0): same presence contract.
+    # Locality-surface channel (v3.16.0): same presence interface.
     if batch and batch[0].locality_surface_features is not None:
         out["locality_surface_features"] = [ex.locality_surface_features for ex in batch]
         out["locality_surface_confidence"] = [ex.locality_surface_confidence for ex in batch]
-    # CharCNN input path (#825 / v8 CJK): same presence contract — set iff char_mode != "off".
+    # CharCNN input path (#825 / v8 CJK): same presence interface — set iff char_mode != "off".
     if batch and batch[0].char_ids is not None:
         out["char_ids"] = [ex.char_ids for ex in batch]
     return out

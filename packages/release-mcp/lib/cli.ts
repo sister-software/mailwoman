@@ -6,7 +6,7 @@
  * @file `mwrelease-mcp` — the release registry over stdio. Start it from an MCP client's config with no flags for the
  *   read and local-write operations. add `--allow-external-write` to also expose `release_publish_workspace` and
  *   `release_bless_package`, which then still demand a plan file from `release_plan` whose digest matches on an
- *   unmoved, clean HEAD. `--repo-root` names the checkout when the server is not started inside one.
+ *   unmoved, clean head. `--repo-root` names the checkout when the server is not started inside one.
  */
 
 import { repoRootPath } from "@mailwoman/core/paths"

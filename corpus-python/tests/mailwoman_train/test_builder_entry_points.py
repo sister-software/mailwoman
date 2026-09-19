@@ -80,7 +80,7 @@ def test_a_usage_string_names_the_module_it_is_written_in(path: Path) -> None:
     name = _invocation_name(path)
     docstring = ast.get_docstring(ast.parse(path.read_text(encoding="utf-8"))) or ""
     for line in docstring.splitlines():
-        # A line that BEGINS with the command is a usage line. Prose that mentions the command in
+        # A line that begins with the command is a usage line. Prose that mentions the command in
         # passing — `cli.py` describing what `python -m mailwoman_train` dispatches to — is a
         # reference to another module's entry point and correct as written.
         stripped = line.strip().removeprefix("uv run ")

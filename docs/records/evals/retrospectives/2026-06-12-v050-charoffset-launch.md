@@ -78,7 +78,7 @@ a confirmed NO-OP for this model (it never fragments po_box, so there's nothing 
   container-visible model history (every `output-*` checkpoint). The R2 path is non-destructive and
   reusable. Chose it without waiting on the operator since it risks only bandwidth rather than data.
 - **Bridge-retirement check: inherit v4.4.0 floors verbatim, flag the unpinned thresholds.** Rather
-  than fabricate numbers for "over-merge precision" + "#518 lens", encoded what's contractually
+  than fabricate numbers for "over-merge precision" + "#518 lens", encoded what's by agreement
   pinned and flagged the rest for the operator/DeepSeek. No silent check drift.
 - **Enabled `--trackio`** for operator visibility (degrades to CSV-only on failure — which is what
   happened, harmlessly).

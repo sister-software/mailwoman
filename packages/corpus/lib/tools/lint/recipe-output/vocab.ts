@@ -3,7 +3,7 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   #511 base-consistency lint, GENERALIZED + COUNTRY-SCOPED (v2) — any synthetic recipe output vs
+ *   #511 base-consistency lint, generalized + country-scoped (v2) — any synthetic recipe output vs
  *   the base.
  *
  *   Ported from the Python original (pyarrow → @duckdb/node-api); behavior preserved
@@ -12,7 +12,7 @@
  *   (core/utils/data-root.ts) and `$MAILWOMAN_DATA_ROOT` is honored. with the env unset it equals
  *   the Python default.
  *
- *   The #511 lesson: a synthetic recipe output must not label a token a tag the BASE dominantly
+ *   The #511 lesson: a synthetic recipe output must not label a token a tag the base dominantly
  *   labels something else, or training gets conflicting gradients on the same token and the minority
  *   (the recipe output) loses. This reads a recipe output's own (token -> tag) and checks each token
  *   against the base.
@@ -23,13 +23,13 @@
  *
  *   1. A cross-country aggregate mis-judges any country-specific token (v1 uniform and a proportional
  *        retry both false-flagged FR cities as "street" from US street-contexts).
- *   2. A SMALL sample is street-BIASED regardless, because the street sources (tiger 39 + nad 378 parts)
+ *   2. A small sample is street-biased regardless, because the street sources (tiger 39 + nad 378 parts)
  *        dwarf the locality sources (a small US-scoped spot-check read Indianapolis 54% street vs
- *        its true 219700:29 LOCALITY). The fix: tally each recipe-output token's base tag SCOPED to
+ *        its true 219700:29 locality). The fix: tally each recipe-output token's base tag scoped to
  *        the country the recipe output uses it in (the base has a `country` column), over a
- *        LARGE/FULL scan (`fraction`, default 1.0). Pure-numeric tokens excluded (house_number/postcode
+ *        large/full scan (`fraction`, default 1.0). Pure-numeric tokens excluded (house_number/postcode
  *        are context-determined). An affix-split flag (recipe output street_suffix/_prefix vs base
- *        "street") is EXPECTED — the loader's affix-relabel handles it. weigh those separately.
+ *        "street") is expected — the loader's affix-relabel handles it. weigh those separately.
  *
  *   Usage: mailwoman dev lint slice-vocab --slice <recipe-output.parquet>
  *   [--base-version v0.5.0] [--base-root <dir>] [--fraction 1.0] [--threshold 0.7] [--min-count
@@ -214,7 +214,7 @@ export interface LintRecipeVocabSummary {
 	 */
 	errors: number
 	/**
-	 * Affix-split rows (EXPECTED — the loader's affix-relabel handles them).
+	 * Affix-split rows (expected — the loader's affix-relabel handles them).
 	 */
 	warnings: number
 	findings: { contradictions: VocabRow[]; affixSplits: VocabRow[] }
@@ -232,7 +232,7 @@ export async function lintRecipeVocab(options: LintRecipeVocabOptions): Promise<
 
 	const con = await connectDuckDB()
 
-	// 1. the recipe output's own (token -> dominant tag) + the COUNTRIES it uses each token in
+	// 1. the recipe output's own (token -> dominant tag) + the countries it uses each token in
 	const outputRows = await readRows(con, options.recipeOutputPath)
 	const outputTags = new Map<string, Map<string, number>>()
 	const outputCountries = new Map<string, Set<string | null>>()
@@ -261,7 +261,7 @@ export async function lintRecipeVocab(options: LintRecipeVocabOptions): Promise<
 
 	console.log(`recipe output: ${outputRows.length} rows, ${outputVocab.size} unique tokens`)
 
-	// 2. base parts — FULL by default. fraction<1 takes a proportional per-source sample (still big)
+	// 2. base parts — full by default. fraction<1 takes a proportional per-source sample (still big)
 	const trainDir = join(baseRoot, baseVersion, `corpus-${baseVersion}`, "train")
 
 	let parts = (
@@ -307,7 +307,7 @@ export async function lintRecipeVocab(options: LintRecipeVocabOptions): Promise<
 		`base ${baseVersion}: scanning ${parts.length} parts (fraction=${formatPyFloat(fraction)}), COUNTRY-scoped`
 	)
 
-	// 3. tally each recipe-output token's base tag, SCOPED to the country the recipe output uses it in
+	// 3. tally each recipe-output token's base tag, scoped to the country the recipe output uses it in
 	const baseTags = new Map<string, Map<string, number>>()
 
 	for (let i = 0; i < parts.length; i++) {

@@ -3,7 +3,7 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- * The identifying User-Agent strings the SEC EDGAR and FCC CORES clients send.
+ * The identifying User-Agent strings the SEC edgar and FCC cores clients send.
  */
 
 import { $private as corePrivate, liveEnv } from "@mailwoman/core/env"
@@ -22,7 +22,7 @@ export const PrivateFilerEnvSchema = z.object({
 			examples: ["Company Name AdminContact@domain.com"],
 		}),
 	/**
-	 * Descriptive User-Agent for the FCC CORES lookup (`filer/lib/sdk/cores-client.ts`). Optional in a way
+	 * Descriptive User-Agent for the FCC cores lookup (`filer/lib/sdk/cores-client.ts`). Optional in a way
 	 * `SEC_EDGAR_USER_AGENT` is not: SEC 403s a request that fails to identify itself, FCC does not. Falls back to
 	 * `SEC_EDGAR_USER_AGENT` — the same contact address — when unset.
 	 */

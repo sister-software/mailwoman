@@ -15,19 +15,19 @@
  *   authority on context-dependent calls (the "Buffalo Wild Wings, Buffalo, NY" disambiguation);
  *   the QueryShape prior helps on the easy cases (a 5-digit token is _probably_ a postcode).
  *
- *   RETIRED 2026-07-17 — the LOCALITY bias (regionAbbreviations → boost B/I-locality on preceding
+ *   retired 2026-07-17 — the locality bias (regionAbbreviations → boost B/I-locality on preceding
  *   tokens). The M1 stack ablation (docs/articles/evals/2026-07-17-m1-stack-ablation.md) measured the
  *   full prior at −2.3 micro / −7.8 locality on golden-us, and the three-arm sub-ablation attributed
  *   100% of the damage to the locality half: stripping it recovered locality exact-match 0.7822 →
  *   0.8546 (= the no-prior arm), while the known-format half was exactly neutral. The failure mode was
- *   venue/org absorption on registry-style rows ("DANVILLE HEALTH CENTER, 26 Cedar Lane, Danville VT"
+ *   venue/org absorption on registry-style rows ("danville health center, 26 Cedar Lane, Danville VT"
  *   → locality "danville health center"): the backward walk from a detected region abbreviation
  *   crossed comma gaps and dragged venue text into locality. The WOF bare-name over-emission it was
  *   built to counter no longer reproduces — the model outgrew it (same lifecycle as the #956-era
  *   near-postcode suppression, also measured negative in M1). The known-format boosts below remain.
  *
- *   Uses structural typing for the QueryShape VALUE so a caller may pass any compatible object — the shape
- *   itself is never imported. The format-NAME convention is imported from its owner rather than restated,
+ *   Uses structural typing for the QueryShape value so a caller may pass any compatible object — the shape
+ *   itself is never imported. The format-name convention is imported from its owner rather than restated,
  *   because a restated convention drops the formats added after it was restated and reports nothing.
  */
 
@@ -95,7 +95,7 @@ export interface BuildPriorsOpts {
 	 */
 	biasScale?: number
 	/**
-	 * Raw input text — enables the SCOPED locality bias (bare admin doubletons only. see `applyScopedLocalityBias`).
+	 * Raw input text — enables the scoped locality bias (bare admin doubletons only. see `applyScopedLocalityBias`).
 	 * Without it the digit guard cannot run, so the locality bias never fires.
 	 */
 	inputText?: string
@@ -150,18 +150,18 @@ export function buildEmissionPriors(
 }
 
 /**
- * The SCOPED locality bias — the 2026-07-17 rebuild of the retired backward-walk version (see the header). It fires
+ * The scoped locality bias — the 2026-07-17 rebuild of the retired backward-walk version (see the header). It fires
  * only on the bare admin doubleton the original was built for ("New York, NY", "Washington, DC" — a region-ambiguous
  * city name before its state abbreviation, the gauntlet `us-new-york-nyc` regression case) and structurally cannot
  * reach the venue/street inputs the old walk broke on. Guards, in order:
  *
- * 1. NO DIGITS anywhere in the input — any house number / postcode means this is not an admin-only query, and the M1
+ * 1. No digits anywhere in the input — any house number / postcode means this is not an admin-only query, and the M1
  *    failure class ("… 26 Cedar Lane, Danville VT") always carries digits.
- * 2. The abbreviation is the FINAL token — the doubleton shape rather than a mid-sentence state mention.
+ * 2. The abbreviation is the final token — the doubleton shape rather than a mid-sentence state mention.
  * 3. At most 4 tokens precede it ("Salt Lake City, UT" fits; "Community Health Service Inc - Grafton ND" does not).
  *
- * The retired version also carried a "name is the region" guard ("Washington, WA" stays region). It was DEAD in
- * production — the classifier passes tokenizer PIECES whose spans include the trailing comma, so the string comparison
+ * The retired version also carried a "name is the region" guard ("Washington, WA" stays region). It was dead in
+ * production — the classifier passes tokenizer pieces whose spans include the trailing comma, so the string comparison
  * never matched (and "New York, NY", the gauntlet regression case, needs the bias despite naming its own state).
  * Deliberately dropped. the bias is soft, so a confident region emission on a true state restatement still wins.
  */

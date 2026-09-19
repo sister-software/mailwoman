@@ -1,6 +1,6 @@
 # Earth Shell Implementation Plan
 
-> **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
+> **For agentic workers:** required sub-skill: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
 **Goal:** A private workspace, `packages/earth`, that builds a React + Vite installable PWA for Cloudflare Workers Static Assets, mounts the geocoder UI from `@mailwoman/react/map` on a fake runtime, serves `/`, `/debug`, `/trace` and `/build.json`, and is ready for a Workers Builds project at `earth.mailwoman.ai`. No real runtime moves in this plan; that is the second Earth plan.
 

@@ -16,7 +16,7 @@ DP-simplified admin polygons), the R\*Tree bbox index (`place_bbox` in the hot D
 same honesty convention as the demo circles) → (3) ancestor chain from the resolver's existing
 walk. Node first (`resolver-wof-sqlite`), browser via the same httpvfs split the demo proved.
 **Eval**: the OA holdout rows are the eval (coordinates → known gold address components); the
-direct-eval harness inverts almost for free. **Open question:** placetype granularity contract
+direct-eval harness inverts almost for free. **Open question:** placetype granularity interface
 (stop at locality vs descend to neighborhood where WOF has it).
 
 ## #483 House-number interpolation — the coverage jump

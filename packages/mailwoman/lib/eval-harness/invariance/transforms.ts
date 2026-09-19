@@ -4,7 +4,7 @@
  * @author Teffen Ellis, et al.
  *
  *   The invariance mini-suite's perturbation classes — pure functions, no model, no I/O. Each class is
- *   imported from the METAMORPHIC-TESTING literature (Chen et al. 1998's original MR framing. Segura et
+ *   imported from the metamorphic-testing literature (Chen et al. 1998's original MR framing. Segura et
  *   al. 2016's survey of MR classes. Ribeiro et al. 2020 CheckList's INV taxonomy for NLP specifically),
  *   deliberately not derived from this project's own historical failures — the five-whys premise is that
  *   failure-derived cases only ever catch failures we've already had. `apply` returns `null` when the
@@ -48,7 +48,7 @@ function commaDrop(raw: string): string | null {
  * than the full `normalize/abbreviations.ts` dictionary the gauntlet's metamorphic layer uses. Keeping it small and
  * separate means this suite exercises a different, independent perturbation source than the gauntlet — two
  * implementations of the same literature class rather than one shared with an inherited bug. FR/DE street types (Rue,
- * Boulevard, Straße, …) are deliberately OUT OF SCOPE for this table. a row without an Ave/St/Rd token gets no
+ * Boulevard, Straße, …) are deliberately OUT OF scope for this table. a row without an Ave/St/Rd token gets no
  * abbreviation-swap case (documented per-row in suite.jsonl).
  */
 const LONG_TO_SHORT = new Map([
@@ -82,11 +82,11 @@ const SECONDARY_DESIGNATOR_WORDS = new Set(["apt", "ste", "suite", "unit", "fl",
  *
  * 1. The "st" token itself must not be phrase-final (no trailing comma/period of its own). A Saint-prefix is always
  *    immediately adjacent to the name it prefixes ("St Andrews", "St Ives") and so never carries its own trailing
- *    punctuation. a street SUFFIX often closes a phrase right before the next address component ("...Salmon St,
+ *    punctuation. a street suffix often closes a phrase right before the next address component ("...Salmon St,
  *    Portland, ..."). This is what lets the guard tell "St Andrews" apart from "...Salmon St, Portland" even though
  *    both have "St" followed by a capitalized non-suffix word.
  * 2. The next token must be capitalized and not itself a street-suffix word or a secondary-address designator — the shape
- *    of "St Andrews", "St Ives", "St Bedes". This is a FOLLOWING-token heuristic rather than a positional one: a
+ *    of "St Andrews", "St Ives", "St Bedes". This is a following-token heuristic rather than a positional one: a
  *    Saint-prefix isn't always string-initial (`"The Vicarage, St Andrews Street"` has "St" as the third token rather
  *    than index 0 — a purely positional guard misses it and corrupts the name).
  *
@@ -151,7 +151,7 @@ function abbreviationSwap(raw: string): string | null {
 }
 
 /**
- * Expand every Ave/St/Rd token in a component VALUE to its long form. Used by the runner to canonicalize both sides of
+ * Expand every Ave/St/Rd token in a component value to its long form. Used by the runner to canonicalize both sides of
  * an `abbreviation-swap` pair before comparing: the transform legitimately changes what text a span-extraction parser
  * copies into `street`/`street_suffix` (that's the point of it — "Ave" swapped to "Avenue" should reappear as
  * "Avenue"), so comparing raw values would flag the transform's own intended effect as a false violation.
@@ -176,7 +176,7 @@ export function canonicalizeAbbreviations(value: string): string {
 //#region case-fold (ALL-CAPS) / lowercase
 
 /**
- * ALL-CAPS the input. Always applicable — every string has a casing.
+ * All-caps the input. Always applicable — every string has a casing.
  */
 function caseFold(raw: string): string | null {
 	return raw.toUpperCase()
@@ -196,7 +196,7 @@ function lowercase(raw: string): string | null {
 /**
  * Double every literal space character. Applicable only when the input carries a literal space — the guard checks the
  * same class of whitespace the mutation acts on (` `, not any `\s`), so a row whose only whitespace is e.g. a tab never
- * silently reports a no-op INVARIANT (the guard used to accept any `\s` while the mutation only ever touched `" "`, a
+ * silently reports a no-op invariant (the guard used to accept any `\s` while the mutation only ever touched `" "`, a
  * mismatch that could pass a row through untouched and misreport it as holding).
  */
 function whitespaceJitter(raw: string): string | null {
@@ -235,7 +235,7 @@ function wrapInQuotes(raw: string): string | null {
 /**
  * Append an irrelevant bracketed aside — the paired-punctuation sibling of `trailing-punct`'s "add innocuous trailing
  * content" idiom (Ribeiro et al. 2020's INV class explicitly covers appending irrelevant clauses/asides). The
- * parenthetical content ("main entrance") never appears in any golden component for these rows, so every EXISTING
+ * parenthetical content ("main entrance") never appears in any golden component for these rows, so every existing
  * component (house_number, street, locality, postcode, …) must survive unchanged. the aside itself getting no tag (or a
  * `venue`/`unit`-shaped one) is not itself a violation — the runner's `compareComponents` only flags a degradation/loss
  * on components that were present before and change or vanish after.
@@ -249,7 +249,7 @@ function addParenthetical(raw: string): string | null {
 //#region idempotence
 
 /**
- * Identity — the text is not perturbed. The runner special-cases this id: it parses the ORIGINAL string twice (two
+ * Identity — the text is not perturbed. The runner special-cases this id: it parses the original string twice (two
  * independent classifier calls, never reusing a cached result) and compares the two outputs. This is Chen et al.'s
  * original metamorphic identity relation (`f(x)` computed twice must agree), repurposed to catch nondeterminism in the
  * decode path rather than a text perturbation.

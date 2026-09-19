@@ -120,8 +120,8 @@ def _parquet_paths(corpus_dir: Path, split: str) -> list[Path]:
                 rerooted += 1
             else:
                 missing.append(str(raw))
-        # STRICT partial-resolution guard (#480, the v0.7.1 trap): a manifest that declares files
-        # this loop cannot find means the corpus is BROKEN (an overlay missing its base, a moved
+        # strict partial-resolution guard (#480, the v0.7.1 trap): a manifest that declares files
+        # this loop cannot find means the corpus is broken (an overlay missing its base, a moved
         # volume) — training on the survivors silently measures the wrong corpus. There is no
         # legitimate partial case. fail with the full missing list. All-missing falls through to
         # the legacy glob (monolithic corpora whose manifests never resolved here).
@@ -165,7 +165,7 @@ def file_source_counts(path: Path) -> dict[str, int]:
     column = pq.ParquetFile(path).read(columns=["source"])["source"]
     counts: dict[str, int] = {}
 
-    # `value_counts` groups inside Arrow. Walking `to_pylist()` instead materializes one Python string per ROW, and
+    # `value_counts` groups inside Arrow. Walking `to_pylist()` instead materializes one Python string per row, and
     # on a 1,000,000-row file that alone is the difference between 67 ms and 200 ms.
     for pair in pc.value_counts(column.combine_chunks()):
         value = pair["values"].as_py()

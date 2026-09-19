@@ -7,7 +7,7 @@
  *   documents (mailwoman/photon/nominatim/libpostal — 3.1 + the progenitor-diet 3.0), generate a
  *   Python package (openapi-python-client, the salvaged `mailwoman_client` layout from the retired
  *   `feat/api-clients` branch) and a Rust crate (progenitor `generate_api!`, the salvaged Cargo.toml
- *   / lib.rs pattern), then VERIFY both actually build (`uv build` + a wheel import-check, `cargo
+ *   / lib.rs pattern), then verify both actually build (`uv build` + a wheel import-check, `cargo
  *   check --examples`). Output lands under the gitignored `clients-build/` — nothing generated here
  *   is committed. This is the local, receipt-verified proof the conditional CI job replays on dispatch.
  *   See `docs/articles/api.mdx` "Client libraries" for install/usage snippets
@@ -28,7 +28,7 @@ import {
 export const description = "Generate + verify the Python and Rust API clients from the emitted OpenAPI specs"
 
 /**
- * Native command-line contract consumed by the filesystem command router.
+ * Native command-line interface consumed by the filesystem command router.
  */
 export const spec = {
 	name: "generate",

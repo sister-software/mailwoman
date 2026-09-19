@@ -9,7 +9,7 @@
  *
  * `MapRenderer.renderFrame` is the package's single public entry point: given a `Viewport` (center lon/lat, zoom, cell
  * columns/rows), it fetches the covering tiles from a `TileSource`, rasterizes styled geometry (./style.ts,
- * ./raster.ts) into a subpixel RGBA grid, converts that grid to braille cells (./frame.ts), then overlays collected
+ * ./raster.ts) into a subpixel rgba grid, converts that grid to braille cells (./frame.ts), then overlays collected
  * labels and marker/ring annotations on top. Draw order is fill → line → label per the layer style table, with overlays
  * (ring, labels, markers) layered afterward in that order — markers deliberately skip the label collision bitmap so a
  * requested marker always wins the cell.

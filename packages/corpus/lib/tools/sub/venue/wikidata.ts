@@ -3,14 +3,14 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   @file The Wikidata leg of the sub-venue lexicon — turning the designator-label SPARQL payload into
+ *   @file The Wikidata leg of the sub-venue lexicon — turning the designator-label sparql payload into
  *   surfaces.
  *
  *   Reads an already-parsed payload rather than issuing a query: the acquisition lives in
  *   `fetch/wikidata-subvenue.ts`, and keeping the conversion a pure function of parsed input is what
  *   lets the builder stay deterministic and testable with no network and no fixture on disk.
  *
- *   Wikidata gives a CONCEPT NAME per language rather than a designator as addressed. Q849706's Spanish label
+ *   Wikidata gives a concept name per language rather than a designator as addressed. Q849706's Spanish label
  *   is `terminal aeroportuaria`; the addressed form is `Terminal`. So every surface produced here lands
  *   `curated: false`, and the head-noun derivation is what proposes the addressed form from it.
  */
@@ -19,7 +19,7 @@ import { normalizeSurface } from "#tools/sub/venue/surfaces"
 import { CONCEPT_QIDS, type SubVenueSurface } from "#tools/sub/venue/table"
 
 /**
- * The SPARQL results envelope, narrowed to the columns the designator-label query produces.
+ * The sparql results envelope, narrowed to the columns the designator-label query produces.
  */
 interface SPARQLBinding {
 	item?: { value: string }

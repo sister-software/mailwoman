@@ -6,7 +6,7 @@
  *
  *   Release-time fail-fast check: verify the shipped model's metadata has propagated to every human-
  *   facing surface before a publish goes out. Mirrors the Hugging Face weight-staging preflight in
- *   `.github/workflows/publish.yml` — HEAD-check the surfaces, and on any miss print the exact
+ *   `.github/workflows/publish.yml` — head-check the surfaces, and on any miss print the exact
  *   remediation and stop, rather than shipping silently and backfilling a release later.
  *
  *   Why this exists (2026-07-17). When 6.4.0 shipped, three metadata surfaces were never updated and
@@ -17,21 +17,21 @@
  *   - `docs/records/site-2026-08/releases.mdx` — the version matrix, stuck showing an old `(current)` row.
  *   - `docs/articles/developers/status.mdx` — the status info box, citing a superseded release.
  *
- *   THE MODEL-vs-npm DISTINCTION (see the "Two version series" intro of releases.mdx). Two version
+ *   the model-vs-npm distinction (see the "Two version series" intro of releases.mdx). Two version
  *   series exist: the npm version (what `npm install` gives you, bumped in lockstep across all
  *   workspaces on every release) and the trained-model lineage recorded in the weights bundle's
  *   `model-card.json`. A code-only release bumps npm but not the model card — the model didn't
- *   change, so the ledger/docs shouldn't be forced to grow a new MODEL row. This eval therefore keys
- *   off the MODEL version (the `version` field of `neural-weights-en-us/model-card.json`), not npm /
- *   package.json, and asserts the ledger + docs are current FOR THAT MODEL. A code-only npm bump on
+ *   change, so the ledger/docs shouldn't be forced to grow a new model row. This eval therefore keys
+ *   off the model version (the `version` field of `neural-weights-en-us/model-card.json`), not npm /
+ *   package.json, and asserts the ledger + docs are current FOR that model. A code-only npm bump on
  *   top of an unchanged model still passes, provided every release newer than the model version is
  *   itself a documented "model unchanged" row.
  *
- *   THE THREE CHECKS (keyed off the model-card version V):
+ *   the three checks (keyed off the model-card version V):
  *
  *   1. `evals/scores-by-version.json` has a run whose `model_version === V`.
- *   2. `docs/records/site-2026-08/releases.mdx` has a matrix row for V, AND the `(current)` marker sits on V's
- *      row — OR on a newer row when every release above V is a "model unchanged" (code-only) row.
+ *   2. `docs/records/site-2026-08/releases.mdx` has a matrix row for V, and the `(current)` marker sits on V's
+ *      row — or on a newer row when every release above V is a "model unchanged" (code-only) row.
  *   3. `docs/articles/developers/status.mdx` cites V in its `:::info[Verified as of …]` box.
  *
  *   On any failure: one actionable error per surface (the exact command / file+section to fix), then
@@ -111,9 +111,9 @@ const PUBLISHED_STATUS_PAGE = `${PUBLISHED_DOCS_ROOT}developers/status.mdx`
 /**
  * Refuse a status path outside the published tree.
  *
- * This check verifies that A FILE cites the shipped version, and for four releases it verified the archived August copy
+ * This check verifies that A file cites the shipped version, and for four releases it verified the archived August copy
  * while the live page said 8.6.0 and model 7.0.0 (#2259). A target that can move out from under a check while still
- * RESOLVING reports success from the wrong place, and absence of failure was read as propagation — so the path is
+ * resolving reports success from the wrong place, and absence of failure was read as propagation — so the path is
  * constrained rather than merely defaulted.
  */
 function assertPublishedStatusPage(statusPath: string): void {
@@ -289,7 +289,7 @@ async function checkReleases(version: string, releasesPath: string): Promise<Sur
 		}
 	}
 
-	// current BELOW V (larger index) — the marker is stuck on an OLDER release than the shipped model.
+	// current below V (larger index) — the marker is stuck on an older release than the shipped model.
 	return {
 		surface,
 		ok: false,
@@ -356,7 +356,7 @@ export async function verifyReleaseMetadata(
 		cardPath: resolvePath(repoRoot, options.card ?? "packages/neural-weights-en-us/model-card.json"),
 		ledgerPath: resolvePath(repoRoot, options.ledger ?? "evals/scores-by-version.json"),
 		// Not an archive, despite the directory. `docs/records/site-2026-08/releases.mdx` is the maintained release
-		// matrix — AGENTS.md names it as where a version with no ledger row carries its headline, and it took 10.0.0
+		// matrix — agents.md names it as where a version with no ledger row carries its headline, and it took 10.0.0
 		// in `76c08d950`. It is deliberately unpublished, so there is no live page to move this to.
 		releasesPath: resolvePath(repoRoot, options.releases ?? "docs/records/site-2026-08/releases.mdx"),
 		statusPath: resolvePath(repoRoot, statusRelative),

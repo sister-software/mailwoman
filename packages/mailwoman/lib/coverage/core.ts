@@ -3,20 +3,20 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Builder for the demo map's "fog of war" address-COVERAGE overlay — an H3 hexbin tileset that
+ *   Builder for the demo map's "fog of war" address-coverage overlay — an H3 hexbin tileset that
  *   shades each area by how much address-point data we hold (covered → clear, empty → gray fog).
  *   Backs the `mailwoman coverage build` command. kept React-free here so the logic is testable and
  *   the command is a thin Ink wrapper (mirrors `geocode-core.ts`).
  *
- *   Pipeline: ATTACH the per-state address-point databases (+ interpolation databases) read-only → DuckDB's
+ *   Pipeline: attach the per-state address-point databases (+ interpolation databases) read-only → DuckDB's
  *   H3 community extension bins points to a fine resolution and rolls up to coarser ones →
- *   boundaries stream to NDJSON → `tippecanoe` bakes one `coverage` source-layer into a single
+ *   boundaries stream to ndjson → `tippecanoe` bakes one `coverage` source-layer into a single
  *   PMTiles. Publish the result with `mailwoman tiles publish`.
  *
- *   FOG MODEL — each cell carries two baked values in [0,1] (0 = covered/clear, 1 = empty/gray): •
+ *   FOG model — each cell carries two baked values in [0,1] (0 = covered/clear, 1 = empty/gray): •
  *   fine cell: fog = 1 − blended coverage score (address-point density, plus a weaker
  *   street-segment interpolation signal so a street-only cell reads as partial coverage, never a
- *   full gap). • coarse cell: fog = 1 − the MEAN child coverage — "on average, how covered are the
+ *   full gap). • coarse cell: fog = 1 − the mean child coverage — "on average, how covered are the
  *   blocks here" — so a region reads clear when zoomed out and the specific gaps surface as you
  *   zoom into the fine res. • `fog_opt = fog ** OPTIMISTIC_GAMMA` (γ>1) lifts partial coverage
  *   toward clear for an optimistic "looks covered until you zoom in" reading. the demo toggles
@@ -91,14 +91,14 @@ export interface CoverageBuildOptions {
 	 */
 	optimisticGamma: number
 	/**
-	 * GeoNames postal file (12-col tab-separated) — the GLOBAL postcode COVERAGE signal that clears the "where do we need
+	 * GeoNames postal file (12-col tab-separated) — the global postcode coverage signal that clears the "where do we need
 	 * data" holes. Null to skip. A postcode is area-scale, so centroids bin at the domain resolution and a domain cell
 	 * holding ≥1 postcode reads as postcode-resolvable (covered).
 	 */
 	geonamesPostalFile: string | null
 	/**
 	 * WOF SQLite DB (the admin gazetteer) holding `spr` (place coords + placetype) + `place_population` /
-	 * `place_importance` — the CIVILIZATION/salience backdrop. Settlement places, weighted by salience, mark "where
+	 * `place_importance` — the civilization/salience backdrop. Settlement places, weighted by salience, mark "where
 	 * civilization is": a salient place we DON'T cover is a gray hole = work to do. Null to skip the global holes layer
 	 * (US rooftop fine map is independent of it).
 	 */
@@ -124,7 +124,7 @@ export interface CoverageBuildOptions {
 	 */
 	out: string
 	/**
-	 * Keep the intermediate NDJSON (for re-tiling without re-aggregating).
+	 * Keep the intermediate ndjson (for re-tiling without re-aggregating).
 	 */
 	keepNdjson: boolean
 	/**
@@ -207,7 +207,7 @@ function buildBands(allRes: number[], tileMaxZoom: number): Map<number, [number,
 
 /**
  * True if a GeoJSON polygon's outer ring spans >180° of longitude — the antimeridian-wrap artifact.
- * `h3_cell_to_boundary_wkt` emits UNWRAPPED lon for cells straddling ±180, smearing a polygon across the whole map. a
+ * `h3_cell_to_boundary_wkt` emits unwrapped lon for cells straddling ±180, smearing a polygon across the whole map. a
  * normal hex spans a fraction of a degree, so a >180° span is unambiguously a wrap. Cheaper than round-tripping through
  * the spatial extension. covers AK/RU/FJ/NZ-Chathams.
  */
@@ -264,7 +264,7 @@ export async function buildCoverageTiles(
 
 	await duck.run("INSTALL h3 FROM community; LOAD h3; INSTALL spatial; LOAD spatial; INSTALL sqlite; LOAD sqlite;")
 
-	// ATTACH every database read-only (address-points as st<i>, interpolation as ip<i> when present).
+	// attach every database read-only (address-points as st<i>, interpolation as ip<i> when present).
 	for (const [i, s] of states.entries()) {
 		await duck.run(`ATTACH '${s.file}' AS st${i} (TYPE sqlite, READ_ONLY)`)
 
@@ -273,13 +273,13 @@ export async function buildCoverageTiles(
 		}
 	}
 
-	// ATTACH the WOF gazetteer read-only for the global civilization/salience backdrop (if requested).
+	// attach the WOF gazetteer read-only for the global civilization/salience backdrop (if requested).
 	if (opts.wofDB) {
 		await duck.run(`ATTACH '${opts.wofDB}' AS wof (TYPE sqlite, READ_ONLY)`)
 	}
 
-	// data_pt: res-FINE address-point counts. UNION ALL the RAW (lat, lon) across states and bin + count
-	// once in the outer query. Do not pre-aggregate per UNION arm: DuckDB mis-binds structurally-identical
+	// data_pt: res-fine address-point counts. union all the RAW (lat, lon) across states and bin + count
+	// once in the outer query. Do not pre-aggregate per union arm: DuckDB mis-binds structurally-identical
 	// aggregating sqlite subqueries to the first ATTACHed DB, collapsing every state onto the first one's
 	// cells. Raw-then-aggregate is correct.
 	onProgress("aggregate", "address points → fine cells…")
@@ -289,7 +289,7 @@ export async function buildCoverageTiles(
 		`CREATE TEMP TABLE data_pt AS SELECT h3_latlng_to_cell(lat, lon, ${opts.fineRes}) AS cell, count(*)::BIGINT AS cnt FROM (${ptAgg}) GROUP BY 1`
 	)
 
-	// data_seg: res-FINE street-segment counts. The geometry is a JSON coordinate array. bin its first
+	// data_seg: res-fine street-segment counts. The geometry is a JSON coordinate array. bin its first
 	// vertex (a segment is ~block-length). Same raw-then-aggregate discipline as data_pt.
 	const segIdx = states.map((s, i) => (s.interp ? i : -1)).filter((i) => i >= 0)
 
@@ -347,7 +347,7 @@ export async function buildCoverageTiles(
 		`${domainCells.toLocaleString()} cells · ${withPoints.toLocaleString()} with points · ${streetOnly.toLocaleString()} street-only`
 	)
 
-	// Stream coverage features to NDJSON.
+	// Stream coverage features to ndjson.
 	await makeDirectories(dirname(opts.out))
 	const ndjsonPath = opts.out.replace(/\.pmtiles$/, "") + ".ndjson"
 	const sink = openWriteStream(ndjsonPath)
@@ -390,7 +390,7 @@ export async function buildCoverageTiles(
 		`SELECT pt, seg, 1.0 - cov AS fog, ST_AsGeoJSON(ST_GeomFromText(h3_cell_to_boundary_wkt(cell))) AS geom FROM domain9`
 	)
 
-	// Rollups: coarse fog = 1 − the MEAN coverage of the fine children.
+	// Rollups: coarse fog = 1 − the mean coverage of the fine children.
 	for (const res of opts.rollup) {
 		await emitResolution(
 			res,
@@ -401,19 +401,19 @@ export async function buildCoverageTiles(
 
 	// Build the global civilization-minus-coverage holes layer.
 	// The map's job worldwide: make it obvious where human civilization is and whether we cover it. A
-	// SALIENT place we don't cover is a gray hole = work to do. We model it as fog = salience·(1−cov):
+	// salient place we don't cover is a gray hole = work to do. We model it as fog = salience·(1−cov):
 	//   • salience ∈ [0,1] — WOF settlement places weighted by population/importance (a 1-ring halo), so
 	//     a big uncovered city is a dark hole, a hamlet a faint one, the empty steppe nothing.
 	//   • cov ∈ [0,1] — postcode presence (GeoNames) clears the hole (a postcode = we can geocode here).
 	//     US is excluded — the rooftop fine map above already covers it at street level.
 	// Only cells with residual fog (uncovered salient places) are emitted, so the layer is just the
-	// HOLES — covered + empty stay clear (basemap). Same `coverage` layer + fog props as the US tier, so
+	// holes — covered + empty stay clear (basemap). Same `coverage` layer + fog props as the US tier, so
 	// the demo renders it unchanged, at res-domainRes [onset…max] + a res-4 low-zoom rollup.
 	if (opts.geonamesPostalFile && opts.wofDB) {
 		const exclude = opts.postcodeExcludeCountries.map((c) => `'${c.toUpperCase()}'`).join(", ") || "''"
 		onProgress("holes", "postcode coverage + civilization salience → holes…")
 
-		// pc_cov: postcode COVERAGE per domain cell — flat presence (postcode ∪ 1-ring), clears the hole.
+		// pc_cov: postcode coverage per domain cell — flat presence (postcode ∪ 1-ring), clears the hole.
 		await duck.run(`
 			CREATE TEMP TABLE pc_cov AS
 			WITH data_pc AS (
@@ -428,7 +428,7 @@ export async function buildCoverageTiles(
 			SELECT DISTINCT UNNEST(h3_grid_disk(cell, 1)) AS cell, ${opts.postcodeCeiling}::DOUBLE AS cov FROM data_pc
 		`)
 
-		// sal: CIVILIZATION salience per domain cell — WOF settlement places weighted by IMPORTANCE
+		// sal: civilization salience per domain cell — WOF settlement places weighted by importance
 		// (Wikipedia notability via place_importance, with a population fallback baked in by
 		// build-importance). importance is already ∈ [0,1] with major cities ≈ 0.85–0.99, so it is the
 		// salience: a big uncovered city → dark hole, a hamlet → faint. Only places carrying a signal

@@ -4,9 +4,9 @@
  * @author Teffen Ellis, et al.
  *
  *   Administrative-boundary extractor — pull one named `boundary=administrative` multipolygon out of a
- *   Geofabrik `.osm.pbf` extract via GDAL/ogr2ogr and hand back its GeoJSON geometry. Mirrors
+ *   Geofabrik `.osm.pbf` extract via gdal/ogr2ogr and hand back its GeoJSON geometry. Mirrors
  *   `extract-poi.ts`'s process-spawn + GeoJSONSeq-over-stdout idiom. the differences are that it keeps the
- *   GEOMETRY rather than reducing it to a representative point, and that it refuses anything other than
+ *   geometry rather than reducing it to a representative point, and that it refuses anything other than
  *   exactly one match.
  *
  *   Why the geometry and not a bounding box: a coverage claim keyed on a rectangle asserts survey over
@@ -31,13 +31,13 @@ const BOUNDARY_LAYER = "multipolygons"
 
 /**
  * Same allowlist discipline as `extract-poi.ts`'s `SAFE_TAG_TOKEN`, widened to the characters a real place name carries
- * (`Île-de-France`, `Provence-Alpes-Côte d'Azur`). The value is interpolated into an OGRSQL string literal, so an
+ * (`Île-de-France`, `Provence-Alpes-Côte d'Azur`). The value is interpolated into an ogrsql string literal, so an
  * apostrophe is admissible only because it is doubled below. every other quoting metacharacter is refused outright.
  */
 const SAFE_NAME = /^[\p{L}\p{N} '’\-.()/]+$/u
 
 /**
- * `admin_level` is compared as an OGRSQL string literal. OSM only ever carries small integers here.
+ * `admin_level` is compared as an ogrsql string literal. OSM only ever carries small integers here.
  */
 const SAFE_ADMIN_LEVEL = /^[0-9]{1,2}$/
 
@@ -64,7 +64,7 @@ export interface OSMBoundary extends OSMBoundaryQuery {
 }
 
 /**
- * Build the OGRSQL SELECT+WHERE for one boundary query. Exported for unit testing — no `ogr2ogr` involved.
+ * Build the ogrsql select+where for one boundary query. Exported for unit testing — no `ogr2ogr` involved.
  *
  * Throws if `name` or `adminLevel` falls outside the allowlists above, before any string concatenation happens.
  */

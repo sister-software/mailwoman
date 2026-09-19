@@ -14,7 +14,7 @@
 #   - log_every_steps: 100 → 50 (denser loss curve)
 #
 # Unchanged from v0.5.2:
-#   - h384, batch=128 direct, CE-only, phrase priors ON
+#   - h384, batch=128 direct, CE-only, phrase priors on
 #   - cosine LR, wof-admin: 0.3, ban: 3.0, tiger: 4.0
 #   - v0.5.0-a1 tokenizer (48K vocab)
 #
@@ -37,7 +37,7 @@ data:
     usgov-hrsa-fqhc: 2.0
     usgov-imls-pls: 2.0
     usgov-nad: 1.0
-    state-ia-contractors: 2.0
+    state-ia-builders: 2.0
     state-tx-notaries: 1.5
     state-ny-notaries: 2.0
     deepseek-kryptonite: 3.0

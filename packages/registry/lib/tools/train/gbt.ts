@@ -74,7 +74,7 @@ export interface TrainDedupGBTOptions {
 	 */
 	locale?: string
 	/**
-	 * Cost-sensitive training (#625): up-weight the NEGATIVE (distinct-pair) class by this factor so the model is more
+	 * Cost-sensitive training (#625): up-weight the negative (distinct-pair) class by this factor so the model is more
 	 * conservative about merging — directly trades recall for precision to reduce over-merge. 1 = the symmetric
 	 * class-balanced default; >1 penalizes a false merge more than a missed one.
 	 */
@@ -150,7 +150,7 @@ export async function trainDedupGBT(
 	// Calibrate the default link threshold. the GBT logit is not in FS-weight units.
 	// trained with class-balanced weights, so logit 0 (the balanced boundary) ignores the ~1% match base
 	// rate and over-merges. Split the NPIs 80/20, fit a calibration GBT on the 80%, and sweep the
-	// CLUSTERING threshold on the held-out 20% (the metric resolveEntities actually optimizes) for F1-max.
+	// clustering threshold on the held-out 20% (the metric resolveEntities actually optimizes) for F1-max.
 	// The shipped full-data model has near-identical logit calibration, so the threshold transfers. ---
 	report?.("[E] calibrating the default link threshold on a held-out NPI split…")
 	const rnd = makeLcg(20_260_615)

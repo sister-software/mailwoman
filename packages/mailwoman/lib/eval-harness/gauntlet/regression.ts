@@ -4,9 +4,9 @@
  * @author Teffen Ellis, et al.
  *
  *   Gauntlet regression runner — the conditional, curated layer (the executable bug log). Loads `regression.db`,
- *   runs every `status=pass` case through the full pipeline, and asserts the ASSEMBLED output: coordinate
+ *   runs every `status=pass` case through the full pipeline, and asserts the assembled output: coordinate
  *   within tolerance, resolution tier, resolved place identity, and admin components (case-insensitive). A
- *   fixed bug must stay fixed — any drift fails the run. This corpus is DELIBERATELY SMALL (curated-set
+ *   fixed bug must stay fixed — any drift fails the run. This corpus is deliberately small (curated-set
  *   capture is the Pelias trap); the metamorphic + held-out layers carry breadth.
  *
  *   The grading itself lives in `check-case.ts` (pure, unit-tested); the freshness refusal that runs before
@@ -32,7 +32,7 @@ import type { GauntletDatabase } from "#eval-harness/gauntlet/schema"
 /**
  * Candidate-model selection shared by the regression + metamorphic layers.
  *
- * `tokenizer`/`card`: a tokenizer-SPLICE candidate (#444/#884/#912) needs its new vocab paired with the model, or the
+ * `tokenizer`/`card`: a tokenizer-splice candidate (#444/#884/#912) needs its new vocab paired with the model, or the
  * new embedding rows stay dormant (shipped tokenizer emits no ids for them) and the splice is invisible to the layer.
  * Model-only bumps omit them.
  */
@@ -44,7 +44,7 @@ export interface GauntletLayerOptions {
 	/**
 	 * Override the card's near-postcode gazetteer choreography.
 	 *
-	 * A DECLARED ABLATION. The choreography pairs with the train-time half, so a board run under `false` measures what
+	 * A declared ablation. The choreography pairs with the train-time half, so a board run under `false` measures what
 	 * the channel is worth on every tag at once — which is the only way to price the locality it recovers against the
 	 * postcode it was added to guard.
 	 */
@@ -64,7 +64,7 @@ export interface GauntletLayerOptions {
 	 */
 	weightsCacheRoot?: string
 	/**
-	 * RESOLVER-side pin pins (#42's `postcodeCountryCoherence` today) — the resolver counterpart to the model swaps
+	 * Resolver-side pin pins (#42's `postcodeCountryCoherence` today) — the resolver counterpart to the model swaps
 	 * above, so a resolver pin can be graded by the standard eval instead of by a bespoke probe. Omitted → production
 	 * defaults.
 	 */
@@ -104,7 +104,7 @@ export function layerDepsOptions(options: GauntletLayerOptions): GauntletDepsOpt
  */
 export async function runRegressionLayer(options: GauntletLayerOptions = {}): Promise<{ pass: boolean }> {
 	using kdb = new DatabaseClient<GauntletDatabase>(dataRootPath("gauntlet", "regression.db"), { readOnly: true })
-	// Before a single address is graded: does this DB hold the corpus that is committed RIGHT NOW? A check
+	// Before a single address is graded: does this DB hold the corpus that is committed right now? A check
 	// reading a stale artifact reports a verdict about a corpus nobody has — see corpus-stamp.ts.
 	await assertCorpusStampFresh(kdb)
 	const cases = await kdb.selectFrom("gauntlet_case").selectAll().execute()

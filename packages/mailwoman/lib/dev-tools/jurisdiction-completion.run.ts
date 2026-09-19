@@ -3,8 +3,8 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Completion per POSTAL JURISDICTION, which is the unit a parser is built for. Address systems follow
- *   postal, cadastral and administrative boundaries rather than sovereignty, the way UN/LOCODE lists
+ *   Completion per postal jurisdiction, which is the unit a parser is built for. Address systems follow
+ *   postal, cadastral and administrative boundaries rather than sovereignty, the way UN/locode lists
  *   countries and territories together, so Hong Kong, Greenland, Jersey, Curaçao, the French overseas
  *   departments and the UK Overseas Territories each count as their own row. None of them can inherit
  *   its sovereign state's parser: a Jersey postcode is not a GB postcode shape, and Greenland's layout
@@ -12,7 +12,7 @@
  *
  *   `mwdev_coverage` answers the same question for the countries that appear in at least one register.
  *   This tool differs in the denominator: it enumerates every ISO 3166-1 alpha-2 code first, then joins
- *   the registers onto it, so a jurisdiction absent from all of them is a ROW READING ZERO rather than a
+ *   the registers onto it, so a jurisdiction absent from all of them is a row reading zero rather than a
  *   row that does not exist. That distinction is the whole point — an absence nobody has looked at and an
  *   absence somebody measured are different readings, and a union-of-registers denominator cannot tell
  *   them apart.
@@ -115,7 +115,7 @@ const report = await censusCoverage({
 const byCountry = new Map(report.countries.map((c) => [c.country, c]))
 
 /**
- * The conventions table is keyed by address SYSTEM rather than by country, and a system serves several countries. `us`
+ * The conventions table is keyed by address system rather than by country, and a system serves several countries. `us`
  * covers US; `gb` covers GB. No system currently spans more than its own code, so the lookup is the lower-cased code —
  * when one does, this is the line that has to learn about it.
  */

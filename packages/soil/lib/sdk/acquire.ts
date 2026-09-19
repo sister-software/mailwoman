@@ -6,15 +6,15 @@
  *   Acquisition, end to end: which survey areas a region holds, their archives, and the inputs the builder
  *   takes.
  *
- *   THE FRESHNESS QUESTION IS ANSWERED BY THE TABULAR SERVICE rather than BY THE FILE HOST. `sacatalog.saverest` is
+ *   the freshness question is answered BY the tabular service rather than BY the file host. `sacatalog.saverest` is
  *   the version-established date, and it is also what the archive's filename embeds — so one catalogue call
- *   both decides what to download and names the file. The download host cannot answer it: it refuses `HEAD`
+ *   both decides what to download and names the file. The download host cannot answer it: it refuses `head`
  *   with 405 and ignores `Range`, so a length probe there is a full transfer.
  *
- *   THE VINTAGE IS THE REFRESH THE BUILD INGESTED, AND IT IS ONE DATE FOR THE WHOLE ARTIFACT. NRCS performs
+ *   the vintage is the refresh the build ingested, and IT is one date FOR the whole artifact. nrcs performs
  *   one coordinated Annual Soils Refresh, each October 1. grouping `sacatalog` by year of `saverest` returns
  *   2016: 1, 2025: 3,323, 2026: 56. So a region's areas share a refresh and the manifest can carry one
- *   `source_vintage` — the LATEST of the areas built, because that is the date after which nothing in the
+ *   `source_vintage` — the latest of the areas built, because that is the date after which nothing in the
  *   artifact changed. Every area's own date is kept per row in `soil_survey_area`, and so is the far older
  *   field-survey date, which is the number a currency claim actually turns on.
  */
@@ -112,7 +112,7 @@ export async function acquireRegion(options: AcquireRegionOptions): Promise<Acqu
 		})
 	}
 
-	// The LATEST refresh among the areas built, because that is the date after which nothing in this artifact changed.
+	// The latest refresh among the areas built, because that is the date after which nothing in this artifact changed.
 	// Taking the earliest would claim a currency the newest area does not have. taking today's date would claim one no
 	// area has.
 	const sourceVintage = selected

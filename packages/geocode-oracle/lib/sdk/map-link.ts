@@ -4,7 +4,7 @@
  * @author Teffen Ellis, et al.
  * @file Resolve a Google Maps share link to the place PIN it names, for gauntlet-case authoring.
  *
- *   The sibling clients in this package ask a geocoder where an address STRING is. This one reads a coordinate a
+ *   The sibling clients in this package ask a geocoder where an address string is. This one reads a coordinate a
  *   human already picked, out of a link they already have — which is a different and often better oracle, because
  *   somebody chose that place deliberately rather than a matcher guessing at a string.
  *
@@ -16,14 +16,14 @@
  *   A resolved link carries two coordinate pairs and they are different quantities:
  *
  *       .../place/Donkey's+Place/@39.9942189,-74.792132,1062m/data=...!3d39.9933298!4d-74.7902421
- *                                ^^^^^^^^^^^^^^^^^^^^^^^ map VIEWPORT centre     ^^^^^^^^^^^^^^^^ the PLACE PIN
+ *                                ^^^^^^^^^^^^^^^^^^^^^^^ map viewport centre     ^^^^^^^^^^^^^^^^ the place PIN
  *
  *   The `@` pair is where the camera sits — offset from the pin by however the view was framed, and carrying a zoom
  *   suffix. Reading it instead of `!3d`/`!4d` is a silent accuracy loss of tens to hundreds of metres, which is the
  *   whole tolerance budget of a rooftop case. So the viewport is used only as a labelled fallback, and a row that
  *   fell back says so in `source` rather than blending in.
  *
- *   ## A link that does not resolve is REPORTED
+ *   ## A link that does not resolve is reported
  *
  *   `resolved: false` with a reason, never a coordinate of `0,0` and never a silent drop. A batch that quietly loses
  *   rows produces a case file whose denominator nobody can reconstruct.
@@ -40,9 +40,9 @@ import { APIClient, type APIClientConfig, type ClockLike, systemClock } from "@m
 export const MAP_LINK_MIN_INTERVAL_MS = 1200
 
 /**
- * The status range this resolver treats as a successful ANSWER: 2xx and 3xx.
+ * The status range this resolver treats as a successful answer: 2xx and 3xx.
  *
- * A share link answers with a REDIRECT, so the usual "2xx only" predicate would classify the one status we are here for
+ * A share link answers with a redirect, so the usual "2xx only" predicate would classify the one status we are here for
  * as a failure. Written as plain constants rather than taken from axios's `HttpStatusCode`, because pulling a runtime
  * dependency into this package for two integers is a worse trade than naming them.
  */
@@ -93,7 +93,7 @@ const VIEWPORT_PATTERN = /@(-?\d+(?:\.\d+)?),(-?\d+(?:\.\d+)?)/
 const NAME_PATTERN = /\/place\/([^/@]+)/
 
 /**
- * Parse an EXPANDED Google Maps URL. Exported separately from the fetch so the parsing rules are testable without a
+ * Parse an expanded Google Maps URL. Exported separately from the fetch so the parsing rules are testable without a
  * network, which is the half that actually carries the defects.
  */
 export function parseMapURL(url: string, expandedURL: string): MapLinkResolution {
@@ -176,7 +176,7 @@ export function createMapLinkResolver(options: CreateMapLinkResolverOptions = {}
 		 */
 		async resolve(url: string): Promise<MapLinkResolution> {
 			try {
-				// `maxRedirects: 0` — the LOCATION header is the answer. Following the redirect fetches a page we do not
+				// `maxRedirects: 0` — the location header is the answer. Following the redirect fetches a page we do not
 				// want and would have to parse instead.
 				const response = await client.fetch({
 					url,

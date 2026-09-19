@@ -217,7 +217,7 @@ char_filter provides most of it.
 
 - **Google**: no published normalization pipeline. The docs steer input shape instead:
   format per the national postal service, and "avoid … business names and unit, suite or floor
-  numbers" — i.e. the punctuation-heavy sub-premise tail is contractually out of scope
+  numbers" — i.e. the punctuation-heavy sub-premise tail is by agreement out of scope
   ([Geocoding best practices](https://developers.google.com/maps/documentation/geocoding/best-practices)).
   Abbreviation interpretation is acknowledged as language-dependent. Everything else is a
   black box; nothing citable about brackets or slashes.
@@ -229,7 +229,7 @@ char_filter provides most of it.
   semicolon-separated `field=value` pairs; punctuation normalization inside free-form queries
   is not documented ([HERE Geocoding & Search docs](https://www.here.com/docs/category/geocoding-search-v7)).
 
-The direct summary: commercial systems document punctuation as _input contract_ (what you may
+The direct summary: commercial systems document punctuation as _input interface_ (what you may
 send) rather than _mechanism_ (what they do with it). No design evidence to mine beyond "they
 reserve list delimiters and discourage sub-premise content."
 
@@ -273,7 +273,7 @@ A one-table summary of who does what:
 | Pelias parser      | as _positions/constraints_; punct-only tokens get a blocking label           | quotes = unpaired hard boundaries (pair-matching is a TODO); parens ignored | **dual-path token graph** (fused + split both alive), solvers choose | defer-the-decision via token graph + solvers        |
 | Nominatim          | no (folded to breaks); comma survives as query phrase boundary               | **strip-brace-terms index-time alias**                                      | become token breaks; data-side sanitizers split lists                | normalize-away + index-time variants                |
 | Photon             | no (symmetric index/query analyzers)                                         | none                                                                        | word_delimiter with preserve_original (fused + split indexed)        | index-time canonicalization                         |
-| Google/Mapbox/HERE | undocumented                                                                 | undocumented                                                                | undocumented                                                         | input contract rather than mechanism                |
+| Google/Mapbox/HERE | undocumented                                                                 | undocumented                                                                | undocumented                                                         | input interface rather than mechanism               |
 
 ### Quadrant: bracketed annotations (v0 +13.9 over neural)
 
@@ -338,7 +338,7 @@ punctuation-context channel.
 
 **What:** balanced-pair detection (`()`, `""`, `«»`, `[]`) in the Stage 2.7 proposer emitting
 typed spans (`ANNOTATION_PHRASE` / `QUOTED_NAME_PHRASE`, confidence from balance + content
-shape), consumed two ways: as phrase priors (the existing contract), and as a **decode
+shape), consumed two ways: as phrase priors (the existing interface), and as a **decode
 constraint that no component span may straddle a delimiter boundary** — the span bridge's
 mirror image (bridge merges across weak punctuation; this blocks merging across structural
 punctuation).

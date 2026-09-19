@@ -10,8 +10,8 @@
 #
 # Hand off:
 #   HSA_OVERRIDE_GFX_VERSION=11.0.0 \
-#     CONFIG=src/mailwoman_train/configs/v0_4_0-smoke.yaml \
-#     ~/training-venv/bin/python -m mailwoman_train train --config "$CONFIG"
+#     config=src/mailwoman_train/configs/v0_4_0-smoke.yaml \
+#     ~/training-venv/bin/python -m mailwoman_train train --config "$config"
 #
 # Expected: ~2 minutes wall, ~50 steps, train_log.csv shows finite + decreasing loss.
 
@@ -32,7 +32,7 @@ data:
     usgov-hrsa-fqhc: 2.0
     usgov-imls-pls: 2.0
     usgov-nad: 1.0
-    state-ia-contractors: 2.0
+    state-ia-builders: 2.0
     state-tx-notaries: 1.5
     state-ny-notaries: 2.0
   # Cap rows per epoch so smoke doesn't accidentally pull a giant batch on resume.
@@ -83,7 +83,7 @@ train:
   # Separate output dir so smoke checkpoints don't collide with the real run.
   output_dir: /data/models/checkpoints/v0_4_0-smoke
   seed: 42
-  # Tiny batch so the smoke doesn't burn VRAM unnecessarily.
+  # Tiny batch so the smoke doesn't burn vram unnecessarily.
   batch_size: 8
   eval_batch_size: 16
   grad_accum_steps: 1

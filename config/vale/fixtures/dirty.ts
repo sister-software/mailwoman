@@ -9,8 +9,9 @@
 // BACKTICKS DO NOT EXEMPT A CODE COMMENT. This is the negative assertion that matters most:
 // Vale's markdown parser skips inline code, its comment scanner does not, so `the gate` below
 // MUST still fire. If it ever stops firing, the Code rule has been replaced by the markdown one
-// and every contract in the exceptions list is being protected by the wrong mechanism.
+// and every interface in the exceptions list is being protected by the wrong mechanism.
 // Here it is: `the gate` and `a seam`.
+// The loader reads each row, which validates the fields and records the result, so the report can compare runs.
 
 // A dosage is not a metric; describe the measured rows.
 // Anchored, not bare.

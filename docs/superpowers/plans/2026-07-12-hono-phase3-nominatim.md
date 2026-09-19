@@ -1,6 +1,6 @@
 # Hono API surface, Phase 3: nominatim migration — Implementation Plan
 
-> **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
+> **For agentic workers:** required sub-skill: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
 **Goal:** Migrate `@mailwoman/nominatim` from express to Hono + `@hono/zod-openapi` with the OpenAPI document emitted from the route table, retiring `nominatim/openapi.yaml` (the last handwritten drop-in spec) through the parity check.
 
@@ -16,7 +16,7 @@
 - **`addressdetails` forcing:** `parseBool(q) || format === "jsonld"` on `/search` and `/reverse`; plain `parseBool` on `/lookup`.
 - **Param parsing verbatim:** `asString` (repeated param → array → undefined, silently treated as absent — pin it), `parseBool` (`"1"`/`"true"`), `countrycodes`/`osm_ids` comma-split, `limit` = `Number(x ?? 10) || 10` (DEFAULT 10 rather than photon's 15), `accept-language` kebab param. `/search` has no required params — bare `/search` reaches the engine with `q: undefined` (engine returns what it returns; pin with a fixture). `NominatimSearchParams.viewbox` exists on the interface but was never parsed and is not in the yaml — leave unparsed/undeclared (photon's bbox precedent).
 - **Engine + formatter exports move verbatim** (public API): `NominatimFormat`, `NominatimAddressDetails`, `NominatimResult`, `NominatimSearchParams`, `NominatimReverseParams`, `NominatimLookupParams`, `NominatimStatus`, `NominatimEngine`, `NominatimFeatureCollection`, `toFeatureCollection`, `ResolvedAddress`, `MAILWOMAN_LICENCE`, `toNominatimResult`, `nominatimResultToSchemaOrg` (module-private `stableID`, `DEFAULT_LIMIT`, `parseFormat`, `parseBool`, `asString` move with their consumers). `createNominatimRouter`/`NominatimRouterOptions` deleted, no shim.
-- **Adjudication consistency** with phases 1–2 (ledger `.superpowers/sdd/progress.md`): repeated single-valued params are never-contract-tolerated (legacy: `asString(array)` → undefined → param absent — that is the observable contract, pin it, no 400); the yaml uses `$ref`-shared `components.parameters` (limit/addressdetails/format/accept-language) — the parity test must dereference them (phase-2 lesson, resolver code included below).
+- **Adjudication consistency** with phases 1–2 (ledger `.superpowers/sdd/progress.md`): repeated single-valued params are never-interface-tolerated (legacy: `asString(array)` → undefined → param absent — that is the observable interface, pin it, no 400); the yaml uses `$ref`-shared `components.parameters` (limit/addressdetails/format/accept-language) — the parity test must dereference them (phase-2 lesson, resolver code included below).
 - `erasableSyntaxOnly`; `.ts` imports; acronym casing; both exports maps; lockfile deltas commit with their change; compile before `out/`; `yarn oxfmt` before commit; vitest takes one `--dir` per invocation; no raw `process.env`/argv.
 - No new workspace; registration checklist N/A; Task 6 runs `smoke-clean-install` as the receipt.
 - `nominatim/tsconfig.json` needs the phase-2 additions upfront: `"resolveJsonModule": true`, `"files": ["./package.json"]`, `../api-kit` reference.
@@ -58,7 +58,7 @@
  * @author Teffen Ellis, et al.
  *
  *   Zod wire schemas for the Nominatim-compatible surface. Key names and envelopes are the vendor
- *   contract — immutable. Query schemas are validator-proof (string|string[] unions, all optional)
+ *   interface — immutable. Query schemas are validator-proof (string|string[] unions, all optional)
  *   with doc-exact `.openapi()` overrides; every wire decision lives in the handlers (see
  *   routes.ts's legacyQuery adapter, the photon-established pattern).
  */

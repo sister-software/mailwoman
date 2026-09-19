@@ -7,10 +7,10 @@
  *   the out-dir, checks every number against the eval spec's floors, enforces the fp32↔int8 delta
  *   cap, and writes verdict.json. `failed: false` = all floors met.
  *
- *   Parsing contract: the scorers emit pipe-tables (`| tag | P | R | F1 |` from the affix scorers, `|
+ *   Parsing interface: the scorers emit pipe-tables (`| tag | P | R | F1 |` from the affix scorers, `|
  *   tag | golden | … |` from per-locale-f1, the de-order summary line). If a harness output format
  *   changes, this file is the single place the check's parsing breaks — loudly (a floor whose number
- *   can't be found is a `FAIL`, never a skip).
+ *   can't be found is a `fail`, never a skip).
  */
 
 import { readLocalJSONFile, readLocalTextFile } from "@mailwoman/core/fs/readers"
@@ -61,13 +61,13 @@ function tableCells(line: string): string[] {
 }
 
 /**
- * Read a named column for a named arena row from the arena summary pipe-table, by HEADER — never a fixed offset.
+ * Read a named column for a named arena row from the arena summary pipe-table, by header — never a fixed offset.
  *
  * The table shape is not stable across the arena's own history: before the #1151 rules-parser deletion the summary
  * carried the v0 comparison columns (`| arena | n | v0 | neural | both | … |`); after it, `summarize-arenas.ts` emits
  * the neural-only shape (`| arena | n | neural | fail | tree-valid |`). A fixed column offset silently reads the wrong
  * cell across that boundary — the pre-#1151 offset for `neural` lands on `fail` in the new table, turning an 80% neural
- * pass into a phantom 20% FAIL. Locating the column from the header row is robust to both shapes (and any future column
+ * pass into a phantom 20% fail. Locating the column from the header row is robust to both shapes (and any future column
  * addition).
  */
 export function arenaColumn(md: string, arena: string, column: string): number | undefined {
@@ -77,7 +77,7 @@ export function arenaColumn(md: string, arena: string, column: string): number |
 }
 
 /**
- * Pull the per-locale table's per-tag percentage for one locale, by HEADER — the same discipline as
+ * Pull the per-locale table's per-tag percentage for one locale, by header — the same discipline as
  * {@linkcode arenaColumn}. `per-locale-f1` emits `| Tag | <locale> … | Δ |` with one column per answer-key file, so a
  * locale is found by its column name. a reordered or added locale column then cannot swap one locale's number for
  * another's. A missing table, tag or column reads `undefined`, and so does an empty (`—`) cell.
@@ -87,7 +87,7 @@ function perLocale(md: string, tag: string, locale: string): number | undefined 
 }
 
 /**
- * One cell of a markdown pipe-table, located by header COLUMN name and first-column ROW name in a single pull over the
+ * One cell of a markdown pipe-table, located by header column name and first-column row name in a single pull over the
  * lines: the header must come first, and the row is searched only after it, so a row can only belong to the table its
  * header opened. A missing table, column or row reads `undefined`; the caller parses the cell text.
  */
@@ -131,7 +131,7 @@ interface ScorerSidecar {
 export interface PromotionVerdict {
 	label: string
 	/**
-	 * WHICH ARTIFACT THE FLOORS WERE READ FROM — not which flag was passed. `weights-cache` is its own value because a
+	 * Which artifact the floors were read from — not which flag was passed. `weights-cache` is its own value because a
 	 * package-shaped cache's `model.onnx` is whatever the package ships (int8, in every shipped weights package), and
 	 * calling that "fp32" invites exactly the confound `baselines.json`'s $precision_comparability documents: someone
 	 * diffs two verdicts, sees fp32-vs-int8, and attributes a quantization delta to the model. It said "fp32" for a
@@ -217,8 +217,8 @@ export async function assemblePromotionVerdict(
 			sidecar("cascade-smoke.json"),
 		])
 
-		// Capture the anchor-ON native-DE locality (the conditional value) regardless of the anchor-OFF cell —
-		// the anchor-OFF cell is a diagnostic and is empty when the zeroed-anchor run can't satisfy the card's
+		// Capture the anchor-on native-DE locality (the conditional value) regardless of the anchor-off cell —
+		// the anchor-off cell is a diagnostic and is empty when the zeroed-anchor run can't satisfy the card's
 		// `anchor.required` strict scorer (`[^|]*` tolerates that empty cell instead of false-failing).
 		const deNative = deorder.match(/native DE\s*\|[^|]*\|\s*([\d.]+)%/)
 		// Locale summary row: `| us | <n> | <macro>% | <micro>% | <exact>% |`
@@ -240,7 +240,7 @@ export async function assemblePromotionVerdict(
 			"fr.region": perLocale(pl, "region", "fr"),
 			"us.po_box_real": poboxJ?.tags?.po_box?.f1 ?? (pobox ? scorerF1(pobox, "po_box") : undefined),
 			"fr.cedex_real": poboxJ?.tags?.cedex?.f1 ?? (pobox ? scorerF1(pobox, "cedex") : undefined),
-			// Graded as the WEAKER of the two spans — an intersection parse needs both.
+			// Graded as the weaker of the two spans — an intersection parse needs both.
 			"us.intersection_real": intersectionJ
 				? Math.min(intersectionJ.tags?.intersection_a?.f1 ?? 0, intersectionJ.tags?.intersection_b?.f1 ?? 0)
 				: intersection
@@ -263,15 +263,15 @@ export async function assemblePromotionVerdict(
 	const int8 = options.withInt8 ? await collect("int8") : undefined
 	const graded = int8 ?? fp32 // floors are graded on the ship artifact when present
 
-	// Floors owned by a DEDICATED leg in promotion-eval.ts (not a per-tag F1 in `graded`) — that leg
-	// runs the check and exits non-zero on failure, so the per-tag aggregator here must SKIP them or it
-	// spuriously reports "NOT FOUND" for a floor that already passed (#949's fr.bare_street_intact).
+	// Floors owned by a dedicated leg in promotion-eval.ts (not a per-tag F1 in `graded`) — that leg
+	// runs the check and exits non-zero on failure, so the per-tag aggregator here must skip them or it
+	// spuriously reports "not found" for a floor that already passed (#949's fr.bare_street_intact).
 	const LEG_HANDLED_FLOORS = new Set(["fr.bare_street_intact"])
 
 	const results: Record<string, { floor: number; actual: number | undefined; pass: boolean }> = {}
 	let failed = false
 
-	// A leg-handled floor is ENFORCED by its leg but was absent from `results` entirely, so a reader
+	// A leg-handled floor is enforced by its leg but was absent from `results` entirely, so a reader
 	// counting floors here saw 17 where the spec declares 18 — and a floor that is missing from a report
 	// reads as a floor that did not run. Enforcement stays with the leg. this only completes the record,
 	// from the sidecar the leg already writes. Reaching this function at all means the leg passed, since

@@ -32,7 +32,7 @@ the postcode shape at once, so the same tooling covers it, but the postcode form
 in the eval.
 
 GB is the one that does not fit. British addresses already run house-number-first, which is what the
-model was trained on, so it tags house and street correctly. What it cannot do is recognize
+model was trained on. Therefore, it tags house and street correctly. What it cannot do is recognize
 `SW1A 2AA` as a postcode, so the postcode lands inside the locality. An order extract would do nothing
 for GB. It needs postcode coverage, which is closer to the existing postcode-repair work than to the
 German order extract.

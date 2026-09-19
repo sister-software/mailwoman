@@ -8,7 +8,7 @@
  *   libpostal), nothing here mimics a vendor's legacy query-parsing tolerance: request bodies are
  *   validator-enforced, and a validation failure always answers through the shared api-kit envelope
  *   (`apiError`), never the raw zod shape. `GET /v1/parse` is the one query-string route, and it
- *   reads `c.req.query()` directly — a query string has no repeated-value contract worth preserving
+ *   reads `c.req.query()` directly — a query string has no repeated-value interface worth preserving
  *   here (contrast the drop-ins' `legacyQuery` adapter), so there's nothing to tolerate.
  *
  *   Per-route validation hooks (the 3rd arg to `app.openapi(route, handler, hook)`) override the
@@ -51,7 +51,7 @@ import {
 } from "#schema"
 
 /**
- * Default `POST /v1/batch` row cap when {@link RegisterMailwomanAPIRoutesOptions.batchMax} is omitted. This is the
+ * Default `post /v1/batch` row cap when {@link RegisterMailwomanAPIRoutesOptions.batchMax} is omitted. This is the
  * standalone-engine default rather than derived from env — `mailwoman serve` always passes the env-derived value
  * explicitly (`$public.MAILWOMAN_BATCH_MAX`, default 1000. see `mailwoman/lib/env/schema.ts`).
  */
@@ -64,7 +64,7 @@ const startedAt = Date.now()
  */
 export interface RegisterMailwomanAPIRoutesOptions {
 	/**
-	 * Max `addresses` rows accepted by `POST /v1/batch`. Default {@link DEFAULT_BATCH_MAX}.
+	 * Max `addresses` rows accepted by `post /v1/batch`. Default {@link DEFAULT_BATCH_MAX}.
 	 */
 	batchMax?: number
 
@@ -363,7 +363,7 @@ export function registerMailwomanAPIRoutes<T extends Partial<GeocodeOutcome> = G
 				return geocoderUnavailableError(c)
 			}
 
-			// Whole-call latency, recorded under the "batch" tier. Per-row tier metrics are the ENGINE's
+			// Whole-call latency, recorded under the "batch" tier. Per-row tier metrics are the engine's
 			// responsibility (phase 4b) — this app only times the call as a unit.
 			const t0 = performance.now()
 
@@ -390,7 +390,7 @@ export function registerMailwomanAPIRoutes<T extends Partial<GeocodeOutcome> = G
 
 	app.openapi(
 		resolveRoute,
-		// Metrics are the ENGINE's responsibility here (phase 4b): the express predecessor recorded the
+		// Metrics are the engine's responsibility here (phase 4b): the express predecessor recorded the
 		// street node's stamped resolution tier per call — the wired engine must carry that over, and
 		// must trim batch rows the same way (the route passes raw input through).
 		async (c) => {

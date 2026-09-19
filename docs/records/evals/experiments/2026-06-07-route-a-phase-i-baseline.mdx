@@ -23,7 +23,7 @@ The check (from #421) wants a regression rate **≤ 0.5%** to even consider flip
 
 ## Why — the phrase grouper, exactly as predicted
 
-the result and the loss have the same root. The reconciler decodes over the spans the phrase grouper proposes; when those proposals don't cover a multi-word component, it falls back to single-token spans. That's a _feature_ for the city-state collision (`…, Berlin, Berlin 10115` — the second `Berlin` is a single token the reconciler can re-tag as a locality, which argmax drops — hence +25pp). It's a _disaster_ for native-order locales whose place names are multi-word:
+the result and the loss have the same root. The reconciler decodes over the spans the phrase grouper proposes; when those proposals don't cover a multi-word component, it falls back to single-token spans. That's a _feature_ for the city-state collision (`…, Berlin, Berlin 10115` — the second `Berlin` is a single token the reconciler can re-tag as a locality, which argmax drops . Therefore, +25pp). It's a _disaster_ for native-order locales whose place names are multi-word:
 
 ```
 "Reggio nell'Emilia"          argmax → "Reggio nell'Emilia" ✓     joint → "Reggio"        (fragmented)

@@ -25,7 +25,7 @@ harness becomes the per-customer acceptance battery.
    base model's Fisher information over the base distribution. Computed during the from-scratch
    run, it is a side artifact (one extra pass, stored beside the checkpoint); retrofitted later, it
    is a separate expensive job against a distribution we no longer sample. If B11 ships, the
-   Fisher diagonal becomes part of the _weights bundle contract_ — every customer fine-tune gets
+   Fisher diagonal becomes part of the _weights bundle interface_ — every customer fine-tune gets
    forgetting-protection against the base capabilities for free, and "your fine-tune cannot break
    core parsing" becomes a **sellable guarantee** instead of a hope. That artifact can only ride a
    from-scratch run.

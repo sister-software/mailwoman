@@ -6,7 +6,7 @@
  *   Tests for the v0.7 #35 postcode regex repair pass. Each case constructs a char-aligned
  *   DecoderToken sequence (offsets must match the raw text) and asserts the repaired postcode span.
  *   Covers the four failure modes from the 2026-05-29 diagnostic plus the precision guards
- *   (longest-match-wins, SNAP-only for numeric shapes, no-add-over-structural, local smear-clip).
+ *   (longest-match-wins, snap-only for numeric shapes, no-add-over-structural, local smear-clip).
  */
 
 import type { BIOLabel } from "@mailwoman/codex/component"
@@ -138,7 +138,7 @@ describe("repairPostcodeLabels", () => {
 	it("keeps a BR CEP whole: NNNNN-NNN is a shape, not a 5-digit postcode with a stray tail (#35)", () => {
 		// The model emits the full CEP (verified against the shipped model on both BR world-structures
 		// rows). Without a BR shape the generic 5-digit pattern matched only "95090", snapped the span to
-		// it, and the trailing-smear clip discarded "-020" — the repair pass TRUNCATED a correct parse.
+		// it, and the trailing-smear clip discarded "-020" — the repair pass truncated a correct parse.
 		const text = "Caxias do Sul, RS 95090-020, Brazil"
 
 		const tokens = [

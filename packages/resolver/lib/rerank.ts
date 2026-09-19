@@ -3,14 +3,14 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   #727 stage-2 Phase 4a — reranking a k-best parse list on RESOLUTION EVIDENCE.
+ *   #727 stage-2 Phase 4a — reranking a k-best parse list on resolution evidence.
  *
  *   The arc's thesis, stated by the operator (2026-07-15): the arbiter for a k-best list is the
  *   resolver rather than hand-weights. A rank-2 parse that resolves to a real place beats a rank-1 that
  *   resolves to a country centroid.
  *
  *   The measured case for this existing at all: on the triaged parity corpus the shipped decode gets
- *   street 0.573 while the span decode's top-10 CONTAINS the right answer 0.775 of the time
+ *   street 0.573 while the span decode's top-10 contains the right answer 0.775 of the time
  *   (oracle@5 0.723). Rank-1 cannot reach that headroom. only a reranker can.
  *
  *   ## Why this is deliberately, almost embarrassingly small
@@ -26,7 +26,7 @@
  *   function and are comparable within an input — the reranker's job is not to re-score them, it is to
  *   veto the ones the world says are wrong.
  *
- *   Adding a second signal here requires the same bar the first one cleared: a MEASURED win on the
+ *   Adding a second signal here requires the same bar the first one cleared: a measured win on the
  *   parity + Paris fixtures, stated in a verdict doc. Not a plausible story.
  */
 
@@ -44,7 +44,7 @@ export interface RerankCandidate<T = unknown> {
 	 */
 	score: number
 	/**
-	 * The parse tree, UNRESOLVED — `rerankByResolution` resolves it via the injected resolver.
+	 * The parse tree, unresolved — `rerankByResolution` resolves it via the injected resolver.
 	 */
 	tree: AddressTree
 	/**
@@ -70,7 +70,7 @@ export interface RerankedCandidate<T = unknown> extends RerankCandidate<T> {
 
 export interface RerankResult<T = unknown> {
 	/**
-	 * Candidates in FINAL order: plausible ones first (model order preserved), vetoed ones after.
+	 * Candidates in final order: plausible ones first (model order preserved), vetoed ones after.
 	 */
 	ranked: Array<RerankedCandidate<T>>
 	/**
@@ -98,7 +98,7 @@ export interface RerankOpts {
 	 */
 	maxResolve?: number
 	/**
-	 * ISO-2 country the resolutions are EXPECTED to land in — the parse's own country node, the `--locale` scope, or a
+	 * ISO-2 country the resolutions are expected to land in — the parse's own country node, the `--locale` scope, or a
 	 * caller hint. Threaded to {@link isImplausibleResolution} as guard B: a coordinate outside that country's coarse box
 	 * is vetoed, which is the cross-country-jump class guard A structurally cannot see.
 	 *
@@ -117,7 +117,7 @@ export interface RerankOpts {
 /**
  * Rerank a k-best parse list on resolution evidence.
  *
- * Resolves up to `maxResolve` candidates IN MODEL ORDER and returns the first whose resolution is plausible. Candidates
+ * Resolves up to `maxResolve` candidates IN model order and returns the first whose resolution is plausible. Candidates
  * beyond `maxResolve` are never resolved (and never vetoed — they simply keep their model rank behind the resolved
  * ones).
  *

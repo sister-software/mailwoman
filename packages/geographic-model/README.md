@@ -89,7 +89,7 @@ Each of these is owned elsewhere, and naming the owner is what keeps a second co
 | Dataset identity and coverage epistemics                                                                     | `@mailwoman/core/layers`                                                                                 |
 | Empirical, spatial activity-affordance statistics                                                            | Fitted from data elsewhere in the program — against the identifiers owned here                           |
 
-Two rules are enforced by tests rather than assumed: `@mailwoman/core` must not depend on this package (core ships the pipeline contract plus ~9 MB of reference data to every consumer, and a world-semantics dependency there is one every drop-in API inherits without asking), and the public surface carries no ranking policy — a binding whose name announces a boost, penalty, weight, rank, score, or ordering fails the suite.
+Two rules are enforced by tests rather than assumed: `@mailwoman/core` must not depend on this package (core ships the pipeline interface plus ~9 MB of reference data to every consumer, and a world-semantics dependency there is one every drop-in API inherits without asking), and the public surface carries no ranking policy — a binding whose name announces a boost, penalty, weight, rank, score, or ordering fails the suite.
 
 The operating rule for the whole boundary is one sentence: **knowledge creates observations; it never overrides learned interpretation.** A record here may create a fact, an anomaly, a contradiction, or a coverage-qualified absence. It may not create an imperative.
 

@@ -3,12 +3,12 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Coverage reconciliation (#621) — THE PRODUCT OUTPUT: what replaces inspecting the map by eye.
+ *   Coverage reconciliation (#621) — the product output: what replaces inspecting the map by eye.
  *
- *   Over the entities resolved across sources (#618), classify each by which KIND of source its
+ *   Over the entities resolved across sources (#618), classify each by which kind of source its
  *   records come from:
  *
- *   - **eligibility** sources — entities that exist as providers / facilities: NPPES org NPIs, TX HHSC
+ *   - **eligibility** sources — entities that exist as providers / facilities: NPPES org NPIs, TX hhsc
  *       nursing facilities.
  *   - **funding** source — entities enrolled in a funding program: FCC Rural Health Care filings.
  *
@@ -16,7 +16,7 @@
  *
  *   - **enrolled** — resolves to both an eligibility and a funding record.
  *   - **eligible rather than enrolled** — an eligibility record with no funding record resolving to it (the
- *       ANTI-JOIN: the set you currently find by eye).
+ *       anti-join: the set you currently find by eye).
  *   - **funded rather than in the eligibility set** — a funding record with no eligibility record resolving to
  *       it.
  *
@@ -150,7 +150,7 @@ export async function coverageReconciliation(
 	report?.(`    ${records.length} records; geocoded ${geo}/${total} (${((100 * geo) / total).toFixed(1)}%)`)
 
 	report?.("[D] resolving + reconciling…")
-	// learnedScorer:false — reconciliation joins eligibility ↔ funding ACROSS datasets (recall-oriented):
+	// learnedScorer:false — reconciliation joins eligibility ↔ funding across datasets (recall-oriented):
 	// the same facility under different operational names is the signal we want, which the dedup-calibrated
 	// GBT default rejects (measured: "enrolled" overlap 22→6). Use the FS baseline for this cross-dataset join.
 	const { entities } = resolveEntities(records, { trainEM: true, collapseSpatial: true, learnedScorer: false })

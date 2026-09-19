@@ -43,7 +43,7 @@ export interface BaseFetchOptions {
 	 * Pause between transfer retries, in milliseconds. Defaults to {@linkcode DEFAULT_RETRY_DELAY_MS}.
 	 *
 	 * A test that exercises the failure path pays this delay once per retry in real time — measured at 20.1 s for the two
-	 * failing-transfer cases in `geonames-postal.test.ts`, which is the whole cost of that file. The retry COUNT is the
+	 * failing-transfer cases in `geonames-postal.test.ts`, which is the whole cost of that file. The retry count is the
 	 * behaviour under test there. the pause between attempts is not, so it is a caller's to shorten.
 	 */
 	retryDelayMs?: number
@@ -60,7 +60,7 @@ export interface FetchSummary {
 }
 
 /**
- * The sibling `MANIFEST.json` shape the single-file fetch modules write: origin URL + fetch timestamp + byte count +
+ * The sibling `manifest.json` shape the single-file fetch modules write: origin URL + fetch timestamp + byte count +
  * sha256, so downstream adapters can verify provenance.
  */
 export interface SourceManifest {
@@ -75,7 +75,7 @@ export interface SourceManifest {
  * A status worth retrying: rate limiting or a server-side failure.
  */
 /**
- * An HTTP failure that CARRIES its status, so callers branch on `error.status` rather than on message prose. The prose
+ * An http failure that carries its status, so callers branch on `error.status` rather than on message prose. The prose
  * route shipped a real flake: a caller classified "not published upstream" with `message.includes("404")`, and the
  * message contains the URL — an ephemeral test-server port such as `:40453` satisfies it while the actual status is 500.
  * Roughly 1–2% of ephemeral ports contain the substring, which is exactly the kind of sometimes-failure that burns a CI
@@ -115,7 +115,7 @@ export interface DownloadOptions {
 }
 
 /**
- * Download `url` to `dest` with per-attempt timeout and transient-status retry. Throws on a non-transient HTTP status
+ * Download `url` to `dest` with per-attempt timeout and transient-status retry. Throws on a non-transient http status
  * or once retries are exhausted. Returns the byte count written.
  */
 export async function downloadToFile(options: DownloadOptions): Promise<{ bytes: number }> {
@@ -140,7 +140,7 @@ export async function downloadToFile(options: DownloadOptions): Promise<{ bytes:
 		let res: Response
 
 		try {
-			// Raw `fetch`, deliberately: this is the shared FILE downloader and the body is piped to disk below.
+			// Raw `fetch`, deliberately: this is the shared file downloader and the body is piped to disk below.
 			// `APIClient` is the repo default for API requests — small bodies, repeated calls — and buffers a
 			// non-stream response in memory, which is the one thing a multi-gigabyte transfer must not do.
 			res = await fetch(url, { headers, signal: AbortSignal.timeout(timeoutMs) })
@@ -182,11 +182,11 @@ export interface StreamDownloadOptions {
 }
 
 /**
- * Stream an HTTP download to disk, returning the final HTTP status (0 on network error after retries). Follows
+ * Stream an http download to disk, returning the final http status (0 on network error after retries). Follows
  * redirects (the Census and OpenAddresses endpoints both 302 to their real hosts).
  *
  * Kept separate from {@link downloadToFile} on purpose: this one streams a multi-GB body to disk (the buffered helper
- * reads via `arrayBuffer()`) and returns the HTTP status instead of throwing, which the per-file result collectors and
+ * reads via `arrayBuffer()`) and returns the http status instead of throwing, which the per-file result collectors and
  * two-URL fallback ladders consume.
  */
 export async function streamDownload(url: string, dest: string, opts: StreamDownloadOptions): Promise<number> {

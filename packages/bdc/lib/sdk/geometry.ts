@@ -2,7 +2,7 @@
  * @copyright Sister Software
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
- * @file Centroid and TIGER lookup utilities for BDC block geometry.
+ * @file Centroid and tiger lookup utilities for BDC block geometry.
  */
 
 import { tryParsingJSON } from "@mailwoman/core/json"
@@ -22,14 +22,14 @@ interface GeoJSONMultiPolygon {
 }
 
 /**
- * Area-weighted (shoelace) centroid of a GeoJSON `Polygon`/`MultiPolygon`'s EXTERIOR ring(s), area-weighted across
+ * Area-weighted (shoelace) centroid of a GeoJSON `Polygon`/`MultiPolygon`'s exterior ring(s), area-weighted across
  * rings for a MultiPolygon. Interior rings/holes are still ignored — a hole moves a block's centroid far less than the
  * vertex-density skew this replaces, and only 1.0% of measured blocks carry one.
  *
- * This REPLACED the first version's vertex-average, whose "same res-9 cell for all but pathological shapes" claim was
- * falsified by measurement over every real TIGER 2020 block in LA + Orange county (118,360 blocks, 2026-08-11): the
+ * This replaced the first version's vertex-average, whose "same res-9 cell for all but pathological shapes" claim was
+ * falsified by measurement over every real tiger 2020 block in LA + Orange county (118,360 blocks, 2026-08-11): the
  * vertex-average landed in a different res-9 cell for 11.6% of blocks, p99 displacement 286 m (past the ~174 m cell
- * edge), max 3.7 km — the tail is TIGER's elongated rural/mountain blocks, whose boundary vertices cluster on the
+ * edge), max 3.7 km — the tail is tiger's elongated rural/mountain blocks, whose boundary vertices cluster on the
  * squiggly natural edge and drag a vertex-average toward it.
  *
  * A degenerate geometry with zero total ring area (a sliver the shoelace annihilates) falls back to the vertex average
@@ -102,10 +102,10 @@ export function geometryCentroid(geometryJSON: string | null): { lat: number; lo
 }
 
 /**
- * The production `blockCentroids` supplier: opens the TIGER blocks database READ-ONLY and probes `tabblock20.GEOID`
+ * The production `blockCentroids` supplier: opens the tiger blocks database read-only and probes `tabblock20.geoid`
  * (uppercase) per lookup, decoding its GeoJSON `geometry` column via {@linkcode geometryCentroid}. The factory awaits
  * its read-only open. the per-lookup probe and the `BuildBDCOptions.blockCentroids` interface stay synchronous — a
- * plain sync function (the same sync-by-interface discipline AGENTS.md documents for the resolver ladder), so the
+ * plain sync function (the same sync-by-interface discipline agents.md documents for the resolver ladder), so the
  * returned closure uses `node:sqlite`'s raw `.prepare()`/`.get()` directly rather than Kysely. The connection is left
  * open for the caller's process lifetime (a read-path lookup rather than a build) — same lifecycle as the
  * resolver-wof-sqlite lookups.

@@ -93,7 +93,7 @@ describe("readTriplesFromGeonames", () => {
 
 	it("drops a place the gazetteer does not know as a locality", async () => {
 		// `Zona Centro` is a colonia and now correctly lands in `dependentLocality`; the check applies to admin2, the
-		// locality, so a row whose CITY the gazetteer does not know is the one that drops.
+		// locality, so a row whose city the gazetteer does not know is the one that drops.
 		const path = await writeExport("mx.txt", [
 			["MX", "20000", "Zona Centro", "Aguascalientes", "Unknownville"],
 			["MX", "20010", "Colonia Norte", "Aguascalientes", "Aguascalientes"],
@@ -113,7 +113,7 @@ describe("readTriplesFromGeonames", () => {
 		const [row] = await readTriplesFromGeonames("IN", path, "India", acceptAll)
 
 		// `…, Bengaluru, Karnataka 560038, India` — the `in_structured` board row. Column 3 is `Mahatma Gandhi Road`, a
-		// STREET, which is exactly why it must not be read as the locality.
+		// street, which is exactly why it must not be read as the locality.
 		expect(row?.locality).toBe("Bengaluru")
 		expect(row?.dependentLocality).toBe("Mahatma Gandhi Road")
 		expect(row?.postcodePlacement).toBe("after_region")
@@ -136,7 +136,7 @@ describe("readTriplesFromGeonames", () => {
 	})
 
 	it("takes the CITY from the column that country's export puts it in, which is inverted for the US", async () => {
-		// `US 94901 San Rafael California CA Marin` — column 3 is the city and admin2 is the COUNTY, the inverse of
+		// `US 94901 San Rafael California CA Marin` — column 3 is the city and admin2 is the county, the inverse of
 		// PT/MX/IN. The default mapping would emit `Marin` as the locality and train a county as a city, which is the
 		// `Mahatma Gandhi Road` defect this reader's header records, from the other direction.
 		const path = await writeExport("us.txt", [

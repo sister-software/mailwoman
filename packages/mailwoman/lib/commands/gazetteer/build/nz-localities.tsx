@@ -4,7 +4,7 @@
  * @author Teffen Ellis, et al.
  *
  *   `mailwoman gazetteer build nz-localities` — the NZ suburb/locality database (#1564, #1585's data
- *   half) from the LINZ-derived OpenAddresses countrywide extract (CC-BY 4.0, attribution LINZ).
+ *   half) from the linz-derived OpenAddresses countrywide extract (CC-BY 4.0, attribution linz).
  *   Sealed 0444. The pipeline module is lazy-imported so `--help` never faults without the optional
  *   `@mailwoman/resolver-wof-sqlite` peer.
  */
@@ -12,7 +12,7 @@
 import { type CommandSpec, CommandTaskResult, type CommandComponent, useCommandTask } from "#cli-kit"
 
 /**
- * Native command-line contract consumed by the filesystem command router.
+ * Native command-line interface consumed by the filesystem command router.
  */
 export const spec = {
 	name: "nz-localities",

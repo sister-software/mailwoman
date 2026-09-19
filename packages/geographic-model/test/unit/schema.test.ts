@@ -9,10 +9,10 @@
  *
  *   The fixtures below are typed with the package's own record types on purpose. A document assembled
  *   through `ConceptRecord`, `RelationRecord`, and the brand helpers, and then accepted by the
- *   validator, is the evidence that the schema can STATE the record set — a plain JSON literal cast at the
+ *   validator, is the evidence that the schema can state the record set — a plain JSON literal cast at the
  *   end would prove only that the validator accepts some object.
  *
- *   This file holds the whole suite rather than splitting by concern: the package contract forbids a
+ *   This file holds the whole suite rather than splitting by concern: the package interface forbids a
  *   relative import between test files, and a fixture copied into a second file is a fixture that
  *   drifts.
  */

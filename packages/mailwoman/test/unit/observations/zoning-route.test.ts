@@ -6,17 +6,17 @@
  *   #1995: the zoning route on the geocode path, exercised through `geocodeAddress` with mock
  *   classifier/resolver deps and a fixture-built zoning layer.
  *
- *   THE FIRST TEST IS THE ONE THAT MATTERS. With the layer absent — which is every default construction —
+ *   the first test is the one that matters. With the layer absent — which is every default construction —
  *   the geocode result must be identical to a run against a build without the field existing. That is a
  *   statement about construction rather than about a measurement, and it is what makes the option safe to
  *   configure: rollback is removing the argument.
  *
- *   THE REST PIN WHAT THIS LAYER SAYS AND, MORE IMPORTANTLY, WHAT IT REFUSES TO. A designation becomes one
- *   additive marker naming the verdict's own top kind. the AUTHORITY'S OWN CODE is in the sentence with the
+ *   the rest PIN what this layer says and, more importantly, what IT refuses TO. A designation becomes one
+ *   additive marker naming the verdict's own top kind. the authority'S own code is in the sentence with the
  *   generic type beside it rather than instead of it. the plan and its window ride on the evidence. and a
  *   location with no zoning polygon raises nothing. That last one is the hardest case of the meaning-of-zero
  *   rule: an absent zoning polygon is one of at least four different things, and the publisher proves the
- *   asymmetry by stating `UNZ - Unzoned` as a POSITIVE value where it means it.
+ *   asymmetry by stating `UNZ - Unzoned` as a positive value where it means it.
  */
 
 import type { AddressNode } from "@mailwoman/core/decoder"
@@ -88,7 +88,7 @@ const INSIDE_ZONE = {
 const NO_DESIGNATION = { latitude: FIXTURE_ORIGIN.lat + 0.2, longitude: FIXTURE_ORIGIN.lon + 0.2 }
 
 /**
- * Inside the zone the authority states as UNZONED — a positive designation rather than an absence.
+ * Inside the zone the authority states as unzoned — a positive designation rather than an absence.
  */
 const INSIDE_UNZONED = {
 	latitude: FIXTURE_ORIGIN.lat + FIXTURE_SIDE / 2,
@@ -157,14 +157,14 @@ describe("#1995: the zoning route on the geocode path", () => {
 			expect(marker.mechanism).toBe("layer:zoning")
 			expect(marker.kind).toBe(TEST_VERDICT_KIND)
 
-			// The LOCAL code leads and the generic type follows. A message that led with the generic type would report the
+			// The local code leads and the generic type follows. A message that led with the generic type would report the
 			// national summary as the designation, and the local half is the one that cannot be reconstructed from it.
 			expect(marker.message).toMatch(/"R2 - Existing Residential"/u)
 			expect(marker.message).toMatch(/IE-GZT R2/u)
 			expect(marker.message.indexOf("R2 - Existing Residential")).toBeLessThan(marker.message.indexOf("IE-GZT R2"))
 			expect(marker.message).toMatch(/not what may be built there/u)
 
-			// And the PLAN is in the sentence, because a zone exists inside one.
+			// And the plan is in the sentence, because a zone exists inside one.
 			expect(marker.message).toContain(FIXTURE_PLANS.development.name)
 		} finally {
 			route[Symbol.dispose]()
@@ -190,7 +190,7 @@ describe("#1995: the zoning route on the geocode path", () => {
 			for (const designation of decision.observation.designations) {
 				expect(designation.plan.validFrom).toBeTruthy()
 				expect(designation.plan.validTo).toBeTruthy()
-				// `1` means NOT SUPERSEDED, which is a different fact from "in force today".
+				// `1` means not superseded, which is a different fact from "in force today".
 				expect(designation.plan.currentPlan).toBe(1)
 				expect(designation.provenanceGrade).toBe("authoritative")
 			}

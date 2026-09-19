@@ -21,7 +21,7 @@ import { sql } from "kysely"
 /**
  * Overture division subtypes that map to the resolver's admin placetypes. `country` is included (#1015) so an
  * Overture-backfilled locale gets its country node — without it the reverse geocoder has no country tier to anchor to
- * (Brussels → nearest FOREIGN place across the border), and forward resolution can't country-restrict the locale.
+ * (Brussels → nearest foreign place across the border), and forward resolution can't country-restrict the locale.
  */
 export const OVERTURE_DIVISION_SUBTYPES = ["country", "locality", "region", "county", "localadmin"]
 
@@ -37,10 +37,10 @@ export const OVERTURE_DIVISION_SUBTYPES = ["country", "locality", "region", "cou
  * `borough` is the projection because a borough is a first-class locality answer by that group's own rule (Brooklyn),
  * and a city-state's planning area is its borough.
  *
- * DECLARED RATHER THAN DERIVED, because the derived rule is refused by the rows it would admit. Counted over every
+ * Declared rather than derived, because the derived rule is refused by the rows it would admit. Counted over every
  * country in the promoted candidate table, three hold more `county` places than tag-reachable ones — KW 137/13, QA
- * 79/46, SG 55/5 — and their names say they are different problems. Kuwait's county names are underscore-joined ASCII
- * (`Abdulla_Al-Salem`, `Airport_District`) while its Arabic names sit on `locality`; Qatar's are bare NUMBERS (`13`,
+ * 79/46, SG 55/5 — and their names say they are different problems. Kuwait's county names are underscore-joined ascii
+ * (`Abdulla_Al-Salem`, `Airport_District`) while its Arabic names sit on `locality`; Qatar's are bare numbers (`13`,
  * `14`, `18-19`) — Doha's zones, and admitting them would make every stray integer a candidate place. Only Singapore's
  * county tier carries names a person writes.
  */
@@ -73,11 +73,11 @@ const NAME_NOISE = /[()[\]{}<>|/\\_@#$%^*+=~`"]/u
 const NAME_MAX_LENGTH = 120
 
 /**
- * Whether a `names.common` entry is a NAME. Admission never tests which script writes it.
+ * Whether a `names.common` entry is a name. Admission never tests which script writes it.
  *
  * The rule this replaced kept Latin-script entries only, reasoning that the local-script form survives as
  * `names.primary` — which it does, and required: Russia keeps Москва because Москва is Overture's primary for Moscow.
- * That premise fails for a country whose primary is ALREADY Latin, where `common` is the only place the local script
+ * That premise fails for a country whose primary is already Latin, where `common` is the only place the local script
  * lives. Measured on the shipped artifact over the fold's own id range: Singapore 0 of 228 names in Han, Sri Lanka 0 of
  * 6,588 in Sinhala, Malaysia 6 of 9,111 in Jawi — against Russia's 159,478 Cyrillic and Myanmar's 54,835, which the old
  * rule never touched.
@@ -90,7 +90,7 @@ export function isDivisionName(value: string): boolean {
 }
 
 /**
- * Digest bytes to draw per GERS id. Six (48 bits, ~2.8e14) overshoots {@link OVERTURE_ID_SPAN} comfortably, so the
+ * Digest bytes to draw per gers id. Six (48 bits, ~2.8e14) overshoots {@link OVERTURE_ID_SPAN} comfortably, so the
  * modulo costs nothing in collision terms, and the value stays exactly representable as a JS number.
  */
 const ID_DIGEST_BYTES = 6
@@ -101,15 +101,15 @@ const ID_DIGEST_BYTES = 6
 const HEX_RADIX = 16
 
 /**
- * Map each Overture GERS id to a synthetic integer id, derived from the GERS id itself.
+ * Map each Overture gers id to a synthetic integer id, derived from the gers id itself.
  *
  * Consumers store these ids — gold rows, cached results, cross-artifact joins — so an id has to be a function of the
- * PLACE rather than of the build that emitted it. GERS ids are stable by design. parquet scan order is not, and
- * DuckDB's is a threaded read over a LEFT JOIN.
+ * place rather than of the build that emitted it. gers ids are stable by design. parquet scan order is not, and
+ * DuckDB's is a threaded read over a left join.
  *
- * Assignment is `idBase + (hash(gers) mod span)`. Two GERS ids can land on the same slot — at ~1.6 M rows in a 1e12
+ * Assignment is `idBase + (hash(gers) mod span)`. Two gers ids can land on the same slot — at ~1.6 M rows in a 1e12
  * span the birthday expectation is about one collision per build — so the loser probes forward. Probing is order-
- * dependent, which is exactly what this function exists to avoid, so the input is SORTED first: a given GERS id's
+ * dependent. It is exactly what this function exists to avoid. Therefore, the input is sorted first: a given gers id's
  * outcome then depends only on the set of ids that hash near it rather than on how the query happened to return them.
  *
  * Re-ingesting a division already present recomputes the same id, so an incremental augment is idempotent.
@@ -137,7 +137,7 @@ export function assignSyntheticIDs(gersIDs: readonly string[], idBase: number = 
 }
 
 /**
- * Columns each bulk INSERT below writes, in the order its positional `run()` supplies them.
+ * Columns each bulk insert below writes, in the order its positional `run()` supplies them.
  *
  * `satisfies` checks every name against Kysely's `WOFDatabase` — the same interface `createUnifiedSchema` builds these
  * tables from — so a renamed or dropped column is a compile error here rather than a runtime `no such column` in the
@@ -183,7 +183,7 @@ const CONCORDANCE_COLUMNS = ["id", "other_id", "other_source", "lastmodified"] a
 >
 
 /**
- * Compile a positional INSERT for one of the tuples above.
+ * Compile a positional insert for one of the tuples above.
  *
  * Built through Kysely's `sql` helper rather than by concatenation: `sql.table`/`sql.ref` quote the identifiers, and
  * the placeholder list is generated from the column list, so the two cannot fall out of step. The result is a plain SQL
@@ -234,9 +234,9 @@ export function prepareInserts(db: DatabaseClient<WOFDatabase>): {
  * {@link OVERTURE_ID_BASE} so the two sources never collide — so the caller's Freeze phase (ancestors closure,
  * coincident_roles, indexes, FTS) treats them uniformly. The Overture sub-tree is self-contained (locality → region →
  * county via `parent_division_id`); a division whose parent we didn't ingest tops out at -1. Country scoping rides
- * `spr.country` (set on every row), not the ancestry — but the `country` subtype ships the country NODE too (#1015).
+ * `spr.country` (set on every row), not the ancestry — but the `country` subtype ships the country node too (#1015).
  *
- * The heavy native `@duckdb/node-api` dependency is loaded LAZILY (the `overture-ingest.tsx` convention) so importing
+ * The heavy native `@duckdb/node-api` dependency is loaded lazily (the `overture-ingest.tsx` convention) so importing
  * the pipeline module never faults when the optional binding isn't installed.
  *
  * @returns The number of divisions ingested.
@@ -247,16 +247,16 @@ export async function ingestOvertureDivisions(
 	release: string,
 	/**
 	 * Starting synthetic id. Defaults to {@link OVERTURE_ID_BASE} (a single full build). An incremental augment of a DB
-	 * that already holds Overture rows must pass `max(spr.id) + 1` so the new ids don't collide with — and `INSERT OR
-	 * REPLACE` clobber — the existing ones.
+	 * that already holds Overture rows must pass `max(spr.id) + 1` so the new ids don't collide with — and `insert or
+	 * replace` clobber — the existing ones.
 	 */
 	idBase: number = OVERTURE_ID_BASE
 ): Promise<number> {
 	const inlist = countries.map((c) => `'${c.replaceAll("'", "''")}'`).join(",")
 	const subtypes = OVERTURE_DIVISION_SUBTYPES.map((s) => `'${s}'`).join(",")
 	const glob = `s3://overturemaps-us-west-2/release/${release}/theme=divisions/type=division/*`
-	// #1015: the real boundary EXTENT lives in the sibling `type=division_area` (the polygon). The `type=division`
-	// row is the label POINT — its `bbox` is a degenerate point, so relying on it left every Overture-backfilled
+	// #1015: the real boundary extent lives in the sibling `type=division_area` (the polygon). The `type=division`
+	// row is the label point — its `bbox` is a degenerate point, so relying on it left every Overture-backfilled
 	// place with a point bbox, invisible to the reverse geocoder's bbox-containment (Brussels resolved to a foreign
 	// cross-border neighbour). Join the area's extent by `division_id`, falling back to the point bbox when a
 	// division has no area row (so nothing regresses).
@@ -267,7 +267,7 @@ export async function ingestOvertureDivisions(
 	const con = await instance.connect()
 
 	await con.run(
-		/* sql */ `INSTALL httpfs; LOAD httpfs; INSTALL spatial; LOAD spatial; INSTALL json; LOAD json; SET s3_region='us-west-2';`
+		/* sql */ `install httpfs; load httpfs; install spatial; load spatial; install json; load json; SET s3_region='us-west-2';`
 	)
 
 	await con.run(/* sql */ `SET memory_limit='4GB'; SET threads=4;`)
@@ -332,7 +332,7 @@ export async function ingestOvertureDivisions(
 		// on a tier no admin tag queries.
 		const placetype = foldedPlacetype(String(r.subtype), country)
 
-		// SELECT aliases: min_lat=ymin, min_lon=xmin, max_lat=ymax, max_lon=xmax → spr (lat, lon,
+		// select aliases: min_lat=ymin, min_lon=xmin, max_lat=ymax, max_lon=xmax → spr (lat, lon,
 		// min_latitude, min_longitude, max_latitude, max_longitude).
 		sprInsert.run(
 			nid,

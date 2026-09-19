@@ -3,7 +3,7 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   The license message's copy, once, as sections: the text body and the HTML body render the same list, so neither
+ *   The license message's copy, once, as sections: the text body and the html body render the same list, so neither
  *   can say something the other does not. It walks the buyer from the key to what comes after it: install it on each
  *   machine, let the subscription renew and fetch the renewed key, change the card or cancel at the portal, and where
  *   to write. It never names an amount or a Stripe id.

@@ -2,7 +2,7 @@
  * @copyright Sister Software.
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
- * @file Tests for the Form 499 XLSX reader.
+ * @file Tests for the Form 499 xlsx reader.
  *
  *   The fixture is four real rows lifted verbatim from the FCC's 2025-12-07 filer database, with the
  *   workbook's own 122-column header — not a hand-authored sheet. They were chosen to cover the shapes the
@@ -184,7 +184,7 @@ describe("readOperatingStates", () => {
 
 describe("the fixture itself", () => {
 	it("is a real workbook, not a hand-authored one", async () => {
-		// XLSX is a ZIP. the magic bytes are the cheapest proof the file was not stubbed out.
+		// xlsx is a ZIP. the magic bytes are the cheapest proof the file was not stubbed out.
 		expect((await readLocalBuffer(WORKBOOK_PATH)).subarray(0, 2).toString("latin1")).toBe("PK")
 	})
 })

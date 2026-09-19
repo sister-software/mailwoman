@@ -5,7 +5,7 @@
  *
  *   The index measurement, and the number it is chosen on.
  *
- *   THE POINT OF THIS FILE IS THE ALTERNATIVE INDEX. `classifyFeatureCells` takes overlapping containment and
+ *   the point OF this file is the alternative index. `classifyFeatureCells` takes overlapping containment and
  *   refuses a feature that reaches no cell, so this index cannot produce a zero-cell feature. What it can
  *   report is how many features the obvious index — `polygonToCells`, cell-centre-in-polygon — would have
  *   returned nothing for, and every one of those would read downstream as an absence of zoning. On the real

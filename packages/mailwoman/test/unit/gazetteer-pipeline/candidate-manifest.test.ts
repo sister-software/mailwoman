@@ -3,7 +3,7 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   The candidate manifest's provenance CHAIN, and the four ways it can fail to have one.
+ *   The candidate manifest's provenance chain, and the four ways it can fail to have one.
  *
  *   The lab holds thirteen candidate builds and about ten admin builds, and which pairs with which is
  *   recorded nowhere. That is the gap the chain closes, and it is only closed if an absent ancestor reads
@@ -55,14 +55,14 @@ describe("ancestorIdentity — the four states", () => {
 		expect(await ancestorIdentity(join(root, "admin.db"))).toBe("admin-global-priority@2026-08-17.0")
 	})
 
-	it("says the ancestor PREDATES the contract, which is the live state today", async () => {
+	it("says the ancestor PREDATES the interface, which is the live state today", async () => {
 		// Every admin build before phase 3 has no manifest. This is measured rather than hypothetical.
 		const root = await scratch()
 		using db = new DatabaseClient<WOFDatabase>(join(root, "admin.db"))
 
 		db.exec("CREATE TABLE spr (id INTEGER PRIMARY KEY)")
 
-		expect(await ancestorIdentity(join(root, "admin.db"))).toContain("predates the layer contract")
+		expect(await ancestorIdentity(join(root, "admin.db"))).toContain("predates the layer interface")
 	})
 
 	it("distinguishes a MISSING ancestor from an unmanifested one", async () => {
@@ -128,7 +128,7 @@ describe("candidateLayerManifest", () => {
 	})
 
 	it("declares the spine that joins back to the ancestor", async () => {
-		// `spr_id` only means something against a KNOWN admin build, which is the reason the chain is worth
+		// `spr_id` only means something against a known admin build, which is the reason the chain is worth
 		// having at all.
 		const manifest = await candidateLayerManifest({ ...BASE, adminDBPath: join(await scratch(), "n.db") })
 

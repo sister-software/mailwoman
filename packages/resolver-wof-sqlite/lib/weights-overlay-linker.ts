@@ -35,7 +35,7 @@ import { $public } from "#env"
 import { fstFreshnessWarning } from "#fst/freshness"
 
 /**
- * Replicate `ln -sf SRC DEST` ATOMICALLY: symlink under a temp name, then rename over the destination. A plain
+ * Replicate `ln -sf SRC dest` atomically: symlink under a temp name, then rename over the destination. A plain
  * unlink-then-symlink leaves a no-file window that concurrent vitest workers can hit mid-suite — bit CI on 2026-07-24.
  * rename(2) replaces the destination atomically.
  */
@@ -68,7 +68,7 @@ export async function removeIfPresent(dest: string): Promise<void> {
 /**
  * Symlink one soft-feed sibling into an overlay, warning rather than failing when the source is absent.
  *
- * Every one of these artifacts is OPTIONAL by design — the runtime has a fallback for each, so a fresh worktree that
+ * Every one of these artifacts is optional by design — the runtime has a fallback for each, so a fresh worktree that
  * has not built the gazetteer still geocodes. That is why the miss prints the consequence instead of throwing: the
  * operator needs to know which channel just resolved off rather than to have the link step abort.
  */
@@ -97,14 +97,14 @@ export async function linkSoftFeedSibling(
 export const PAIR_INDEX_DELTA = 10
 
 /**
- * The decoder transition-entry bonus (TRANSITION-BETA build, 2026-07-24 — operator-approved β=5 from the
+ * The decoder transition-entry bonus (transition-beta build, 2026-07-24 — operator-approved β=5 from the
  * transition-level probe). en-nz deliberately builds without one (unmeasured there): the two magnitudes are calibrated
  * independently, and a locale earning one says nothing about the other.
  */
 export const PAIR_INDEX_TRANSITION_BETA = 5
 
 /**
- * The WHOLE-EDGE parent-bias magnitude (#46, default-on 2026-08-04) at the verdict's recommended δ=5 — see
+ * The whole-edge parent-bias magnitude (#46, default-on 2026-08-04) at the verdict's recommended δ=5 — see
  * `docs/records/evals/2026-08-04-pix1-whole-edge-verdict.md`. Only the measured locales (us/gb/nz/fr) pass it. the
  * D-rule's answer to an unmeasured locale is a per-locale absence rather than an inherited magnitude.
  */
@@ -127,13 +127,13 @@ export interface PairIndexOverlay {
 	 * Calibrated magnitudes the locale's bars were measured at. Baked into the artifact's PIX1 header, which is how the
 	 * freshness check notices a change to any of them. An absent `transitionBeta`/`parentDelta` means the flag is not
 	 * passed and the header carries no such key — a real state, distinct from zero (see `PairIndexHeader.parentDelta`).
-	 * The whole calibration feeds both the build FLAGS and the staleness EXPECTATION, so the two cannot disagree.
+	 * The whole calibration feeds both the build flags and the staleness expectation, so the two cannot disagree.
 	 */
 	delta: number
 	transitionBeta?: number
 	parentDelta?: number
 	/**
-	 * Source FILES whose md5s the build records, in the order `gazetteer pair-index` records them. The freshness guard
+	 * Source files whose md5s the build records, in the order `gazetteer pair-index` records them. The freshness guard
 	 * compares every one against the existing header (#1734): a partial comparison leaves the guard blind to the rest,
 	 * and a stale artifact then keeps reporting itself fresh while the data it was built from has moved. Empty means the
 	 * build's source cannot be file-hashed (fr's BAN directory) and freshness rests on the magnitudes alone. Default: the
@@ -151,7 +151,7 @@ export interface PairIndexOverlay {
 	 */
 	extraArgs?: string[]
 	/**
-	 * Refuse to trust an existing artifact smaller than this. fr-fr's guard: a pair index built from the WRONG source can
+	 * Refuse to trust an existing artifact smaller than this. fr-fr's guard: a pair index built from the wrong source can
 	 * carry matching magnitudes, and size is the one signal the header cannot fake.
 	 */
 	minimumPlausibleBytes?: number
@@ -260,7 +260,7 @@ export interface PairIndexCalibration {
 
 /**
  * Why an existing `pair-index-*.bin` is stale against `expected`, or `undefined` when its header matches. Covers the
- * FORMAT (schemaVersion) and every calibrated magnitude. source-md5 freshness stays with the caller, because each base
+ * format (schemaVersion) and every calibrated magnitude. source-md5 freshness stays with the caller, because each base
  * linker passes a different set of sources and only it knows what they are.
  *
  * One place so a magnitude added to the header cannot be checked by some linkers and not others — which is exactly how
@@ -304,8 +304,8 @@ export const REQUIRED_PAIR_INDEX_SCHEMA = 3
  * Warn when the per-locale FST a linker just symlinked was built from a different admin database than the one on disk
  * now.
  *
- * WHY IT WARNS RATHER THAN REBUILDS, unlike its pair-index sibling above. A pair index is seconds of work and the
- * linker owns its whole recipe. A locale FST is a multi-minute build whose output goes to a STAGING dir on purpose —
+ * Why IT warns rather than rebuilds, unlike its pair-index sibling above. A pair index is seconds of work and the
+ * linker owns its whole recipe. A locale FST is a multi-minute build whose output goes to a staging dir on purpose —
  * the swap into `fst-per-locale/` is operator-approved after the battery, because an FST changes decoder behaviour and
  * the D-rule does not let that land unmeasured. So the guard's job is to make the drift impossible to miss, and to name
  * the command that starts fixing it. It is also why a stale FST is never fatal: the artifact is a decode-time bias
@@ -362,7 +362,7 @@ export async function linkStreetMorphologyFST(destDir: string): Promise<void> {
 }
 
 /**
- * Why an existing artifact may be TRUSTED without a rebuild, or `undefined` when it must be rebuilt (with the reason
+ * Why an existing artifact may be trusted without a rebuild, or `undefined` when it must be rebuilt (with the reason
  * already printed). The skip requires both halves (#1734): the header magnitudes + format (`pairIndexStaleReason`) and
  * the header's `sourceMD5s` against the current sources' md5s. Magnitudes alone read a source change as "current"
  * whenever pair counts happen not to move the calibrated numbers — the R5 freshness-guard lesson, which resurfaced in
@@ -451,7 +451,7 @@ async function pairIndexIsFresh(
  * these magnitudes from the sources on disk (see {@link pairIndexIsFresh}). The calibration object drives both the
  * staleness expectation and the CLI flags, so a magnitude cannot be checked by the guard and dropped from the build.
  *
- * Exits non-zero on a failed build. Missing INPUTS (an unbuilt CLI, an absent source) warn and return instead: a fresh
+ * Exits non-zero on a failed build. Missing inputs (an unbuilt CLI, an absent source) warn and return instead: a fresh
  * clone has neither, and `yarn test` invokes this to verify auto-resolve, so a hard failure there would be a failure to
  * have run a build yet rather than a real fault.
  */
@@ -459,7 +459,7 @@ export async function buildPairIndexOverlay(overlay: PairIndexOverlay): Promise<
 	const { packageDir, country, delta, transitionBeta, parentDelta } = overlay
 	const CLI = String(workspacePath("mailwoman", "out", "cli", "index.js"))
 	const ARTIFACT = `pair-index-${country}.bin`
-	// Built into the data-root OVERLAY rather than into the tracked package. The locale is recovered from the
+	// Built into the data-root overlay rather than into the tracked package. The locale is recovered from the
 	// workspace name (`neural-weights-en-gb` → `en-gb`) so callers keep passing the one identifier they
 	// already had.
 	const PKG_DIR = String(weightsOverlayPath(packageDir.replace(/^neural-weights-/, "")))
@@ -547,7 +547,7 @@ export interface SoftFeedLink {
 /**
  * The committed soft-feed lexicons as links, by channel, read from `release.config.json` so the filename a manifest
  * links is the one the release ships. `streetType` is offered for completeness. the manifests link the evidence
- * lexicons by the generation their CARD names instead (`evidenceLexiconsFromCard`).
+ * lexicons by the generation their card names instead (`evidenceLexiconsFromCard`).
  */
 export async function committedSoftFeedLinks(): Promise<{
 	anchor: SoftFeedLink
@@ -605,7 +605,7 @@ export interface DevOverlayManifest {
 	 * `$MAILWOMAN_DEV_TOKENIZER` override them), and when `digestCard` names a workspace the linked default bytes must
 	 * match that workspace's card `files_md5` — the #397 drift guard, which fails loud instead of grading the wrong
 	 * model. an override skips the check and says so. `inherit`: the package declares `mailwoman.baseWeights`, so any
-	 * local pair is REMOVED — a stale local file shadows the base fallback and silently serves outdated bytes. Omitted:
+	 * local pair is removed — a stale local file shadows the base fallback and silently serves outdated bytes. Omitted:
 	 * the pair is left to `packages/release-kit/lib/weights/link-weights-overlay.ts`, the recipe writer.
 	 */
 	model?: { kind: "link"; digestCard?: string } | { kind: "inherit" } | { kind: "char"; family: string }

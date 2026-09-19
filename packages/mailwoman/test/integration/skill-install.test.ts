@@ -7,7 +7,7 @@
  *   and asserts it copies the packaged Claude Code skill (`skills/mailwoman/`, shipped inside this
  *   package) into `<dest>/.claude/skills/mailwoman/`. Covers the default (cwd-rooted) destination, a
  *   second idempotent run, the explicit `--dest` override, and the clean-slate reinstall (a stale file
- *   a newer shipped skill dropped must be REMOVED rather than left behind by a merge-only copy — the finding
+ *   a newer shipped skill dropped must be removed rather than left behind by a merge-only copy — the finding
  *   the task review caught: `cpSync` alone never deletes).
  */
 
@@ -120,7 +120,7 @@ describe.skipIf(!hasCLICompiled)("mailwoman skill install", () => {
 		const skillDir = join(cwd, ".claude", "skills", "mailwoman")
 		const staleFile = join(skillDir, "stale-reference.md")
 
-		// Plant a file that a hypothetical OLDER install left behind and the current shipped skill no
+		// Plant a file that a hypothetical older install left behind and the current shipped skill no
 		// longer carries — a merge-only copy (bare cpSync) would leave this in place forever.
 		await makeDirectories(skillDir)
 		await writeLocalTextFile("belongs to an older skill version; must not survive a reinstall", staleFile)

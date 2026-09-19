@@ -6,7 +6,7 @@
  *   The three decisions `--debug`'s two surfaces have to agree on: which zoom the map pane opens at, which flag
  *   combinations are a usage error, and how small a frame is too small to render. Both the static capture
  *   (`command.tsx`) and the interactive session (`DebugSessionApp.tsx`) enforce all three, and they enforce them
- *   differently — the static path rejects a bad `--debug-size`, the session degrades a too-small TERMINAL to a note —
+ *   differently — the static path rejects a bad `--debug-size`, the session degrades a too-small terminal to a note —
  *   so the shared part is the verdict rather than the reaction to it.
  *
  *   Their own module because the alternative is a cycle: the session is imported BY the command module and would have
@@ -29,8 +29,8 @@ import type { GeocodeResult } from "#geocode/result"
 export function initialZoomForTier(result: GeocodeResult): number {
 	if (result.resolution_tier === "address_point" || result.resolution_tier === "interpolated") return 15
 
-	// `hierarchy` is ordered MOST SPECIFIC FIRST (`GeocodeResult.hierarchy`: "locality → country"), so the head is the
-	// finest place the resolver decorated. Reading `.at(-1)` took the COUNTRY instead and opened every admin-tier
+	// `hierarchy` is ordered most specific first (`GeocodeResult.hierarchy`: "locality → country"), so the head is the
+	// finest place the resolver decorated. Reading `.at(-1)` took the country instead and opened every admin-tier
 	// answer at the whole-country zoom 4: a bare "Portland, Oregon" resolved its locality and then showed North
 	// America.
 	const leaf = result.hierarchy.at(0)?.tag

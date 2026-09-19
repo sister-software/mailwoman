@@ -3,14 +3,14 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   The database build lifecycle every sealed gazetteer artifact shares: the staging PRAGMA block, the
- *   stale-staging cleanup, the freeze + `VACUUM INTO` publish, the FTS pass over the published file, the
+ *   The database build lifecycle every sealed gazetteer artifact shares: the staging pragma block, the
+ *   stale-staging cleanup, the freeze + `vacuum into` publish, the FTS pass over the published file, the
  *   in-place close ceremony for the builders that write their output directly, and the acquisition-sidecar
  *   reader the offline rebuilds recover provenance from.
  *
  *   Extracted from the postcode database builders (`geonames-tail`, `codepoint-database`, `ni-osm-database`) and the
- *   CJK postcode-locality builders, which each carried a byte-identical copy. The PRAGMA strings are part of
- *   the artifacts' build contract — keep them byte-identical when touching this file.
+ *   CJK postcode-locality builders, which each carried a byte-identical copy. The pragma strings are part of
+ *   the artifacts' build interface — keep them byte-identical when touching this file.
  */
 
 import { pathExists, readLocalTextFile } from "@mailwoman/core/fs/readers"
@@ -23,7 +23,7 @@ import { join } from "path-ts"
 import { buildFTS, type BuildFTSResult } from "#gazetteer-pipeline/fts"
 
 /**
- * The staging-database PRAGMA block the ingest-then-`VACUUM INTO` builders open with.
+ * The staging-database pragma block the ingest-then-`vacuum into` builders open with.
  */
 export function applyStagingPragmas<DB>(db: DatabaseClient<DB>): void {
 	db.exec(`
@@ -38,7 +38,7 @@ export function applyStagingPragmas<DB>(db: DatabaseClient<DB>): void {
 
 /**
  * Remove a staging database and its WAL/SHM sidecars — run before a build (a stale partial staging file would be
- * reopened as a half-ingested database) and after the `VACUUM INTO` publish (the staging tree is scratch, and the
+ * reopened as a half-ingested database) and after the `vacuum into` publish (the staging tree is scratch, and the
  * sidecars would otherwise outlive the file they belong to).
  */
 export async function removeStagingArtifacts(ingestPath: string): Promise<void> {
@@ -60,8 +60,8 @@ export function freezeStagingDatabase<DB>(db: DatabaseClient<DB>): void {
 }
 
 /**
- * Publish the frozen staging database to `out` via `VACUUM INTO`, replacing any previous artifact at that path first —
- * `VACUUM INTO` refuses to overwrite.
+ * Publish the frozen staging database to `out` via `vacuum into`, replacing any previous artifact at that path first —
+ * `vacuum into` refuses to overwrite.
  */
 export async function vacuumDatabaseInto<DB>(db: DatabaseClient<DB>, out: string): Promise<void> {
 	if (await pathExists(out)) {
@@ -86,8 +86,8 @@ export async function buildDatabaseFTS<DB>(
 }
 
 /**
- * The close ceremony for a builder that writes its output database IN PLACE (no staging + `VACUUM INTO`): drop to a
- * sidecar-free journal mode, ANALYZE, check integrity, compact. The caller seals afterwards.
+ * The close ceremony for a builder that writes its output database IN place (no staging + `vacuum into`): drop to a
+ * sidecar-free journal mode, analyze, check integrity, compact. The caller seals afterwards.
  */
 export function finalizeSealedBuild<DB>(db: DatabaseClient<DB>, path: string): void {
 	db.exec("PRAGMA journal_mode = DELETE")
@@ -98,7 +98,7 @@ export function finalizeSealedBuild<DB>(db: DatabaseClient<DB>, path: string): v
 }
 
 /**
- * What a database records when a rebuild cannot recover a provenance field. A sentinel STRING rather than an empty one:
+ * What a database records when a rebuild cannot recover a provenance field. A sentinel string rather than an empty one:
  * a consumer reading `source_release: ""` cannot tell "no release label exists" from "nobody looked", and the
  * meaning-of-zero rule says those are different claims.
  */

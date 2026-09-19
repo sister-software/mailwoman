@@ -4,7 +4,7 @@
  * @author Teffen Ellis, et al.
  *
  *   The abstention-threshold curve (#2264) re-grades frozen results rather than re-running a resolver, so the
- *   two properties worth pinning are that it converts a withheld selection into an ABSTENTION rather than a
+ *   two properties worth pinning are that it converts a withheld selection into an abstention rather than a
  *   wrong answer, and that it leaves an errored row alone — a harness failure is not a selection, and folding
  *   one into abstention is the confusion the benchmark's strata exist to measure.
  *

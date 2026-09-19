@@ -8,7 +8,7 @@
  *   pooled sequence. v1.1.0+ exports surface it as the `locale_logits` ONNX output. This module
  *   turns that posterior into a `SystemCode` the conventions layer can act on.
  *
- *   Conservative by contract: below the confidence threshold, or for locales without a codex address
+ *   Conservative by interface: below the confidence threshold, or for locales without a codex address
  *   system, detection returns null and the parse proceeds exactly as before. The mask must never
  *   fire on a guess.
  */
@@ -86,7 +86,7 @@ export function detectAddressSystem(
 }
 
 /**
- * The locale head's confident COUNTRY verdict, or null — {@link detectAddressSystem} minus the system mapping, so the
+ * The locale head's confident country verdict, or null — {@link detectAddressSystem} minus the system mapping, so the
  * three head countries without a `SystemCode` (ES/IT/NL) still yield a verdict. Same threshold posture: below it the
  * head abstains rather than acting on a coin flip. The head is a 9-way classifier — its verdict is evidence that the
  * text is shaped like that country's addressing, never a resolved country (a Chinese address may read GB: right about

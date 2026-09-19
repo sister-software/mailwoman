@@ -2,7 +2,7 @@
  * @copyright Sister Software
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
- * @file The epistemic axis — WHAT MAY BE CLAIMED about a value, kept strictly separate from the mechanism that
+ * @file The epistemic axis — what may be claimed about a value, kept strictly separate from the mechanism that
  *   produced it. A geocode result's `resolution_tier` answers "how was this coordinate produced" (`address_point`,
  *   `interpolated`, …); this answers "what does the evidence permit us to say". A rooftop matched against a national
  *   register the authority declares complete is `designated`; the same rooftop matched against a crowdsourced extract
@@ -20,7 +20,7 @@
  */
 export const EpistemicStatus = {
 	/**
-	 * An authority assigned this. A UPRN, a BAN address, an official postcode.
+	 * An authority assigned this. A uprn, a BAN address, an official postcode.
 	 */
 	Designated: "designated",
 	/**
@@ -71,8 +71,8 @@ export type Assertion = (typeof Assertion)[keyof typeof Assertion]
  */
 export const AssertedProposition = {
 	/**
-	 * An entity or object exists under an identifier the publisher issues or regulates. A UPRN, an NPI, an LEI, a company
-	 * number, a SIRET.
+	 * An entity or object exists under an identifier the publisher issues or regulates. A uprn, an NPI, an LEI, a company
+	 * number, a siret.
 	 */
 	Identity: "identity",
 	/**
@@ -93,7 +93,7 @@ export const AssertedProposition = {
 	 */
 	Grammar: "grammar",
 	/**
-	 * Postal routing that is not geographic hierarchy. BFPO, APO/FPO/DPO, a foreign postcode prefix.
+	 * Postal routing that is not geographic hierarchy. bfpo, APO/FPO/DPO, a foreign postcode prefix.
 	 */
 	Routing: "routing",
 } as const

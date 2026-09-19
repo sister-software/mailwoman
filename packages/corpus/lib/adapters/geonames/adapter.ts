@@ -5,10 +5,10 @@
  *
  *   `geonames`: GeoNames populated-places consumer (https://www.geonames.org/, CC-BY-4.0).
  *
- *   GeoNames is a global gazetteer of ~12M features. This adapter ingests the POPULATED PLACES
+ *   GeoNames is a global gazetteer of ~12M features. This adapter ingests the populated places
  *   (`feature_class = "P"`, excluding historical/abandoned/destroyed variants) from a per-country
  *   dump file — global locality coverage, including the small towns and villages a coarser admin
- *   gazetteer (WOF) lacks. It's the cheapest path to broadening the corpus's LOCALE coverage.
+ *   gazetteer (WOF) lacks. It's the cheapest path to broadening the corpus's locale coverage.
  *
  *   Input: a per-country tab-separated dump (e.g. `US.txt` from
  *   `https://download.geonames.org/export/dump/`, 19 columns, no header). Two sibling files in the
@@ -48,7 +48,7 @@ export const GEONAMES_ADAPTER_ID = "geonames"
 export const GEONAMES_DEFAULT_LICENSE = "CC-BY-4.0"
 
 /**
- * GeoNames main-table column indices (0-based. see the export README).
+ * GeoNames main-table column indices (0-based. see the export readme).
  *
  * Exported because the register's layout is one fact with more than one reader — `@mailwoman/mailwoman`'s same-data
  * benchmark panel reads `cities15000.txt`, which is the same table filtered by population. A second hand-typed copy

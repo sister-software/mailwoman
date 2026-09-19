@@ -1,5 +1,5 @@
 ---
-license: agpl-3.0
+license: AGPL-3.0
 language:
   - en
 library_name: onnx
@@ -74,7 +74,7 @@ The Mailwoman model expects its soft channels fed at inference. Running them
 off is out-of-distribution and silently collapses the admin tags
 (country/region/locality/postcode). Construct the scorer through
 `@mailwoman/neural`'s `createScorer` (the canonical `ProductionScorer`), which
-reads the bundle's `requires`/channel contract and **fails closed** if a
+reads the bundle's `requires`/channel interface and **fails closed** if a
 declared channel isn't fed. Do not hand-wire the raw ONNX session with an
 input zero-filled.
 
@@ -137,9 +137,9 @@ output is byte-stable when calibration is omitted.
 
 ## License & links
 
-- **License:** [AGPL-3.0-only](https://www.gnu.org/licenses/agpl-3.0.html).
+- **License:** [AGPL-3.0-only](https://www.gnu.org/licenses/AGPL-3.0.html).
 - **Docs & concepts:** https://mailwoman.ai
 - **Loader / scorer API:** `@mailwoman/neural` (`createScorer`).
-- The functional contract for this bundle is `model-card.json` (added
+- The functional interface for this bundle is `model-card.json` (added
   2026-07-23, now that a GB-graded checkpoint exists); this `README.md` is the
   HuggingFace-facing card.

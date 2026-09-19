@@ -1,6 +1,6 @@
 # License Posture Reporting Implementation Plan
 
-> **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
+> **For agentic workers:** required sub-skill: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
 **Goal:** Every mailwoman output that leaves the process says which license branch produced it: a two-line stderr notice from the CLI and the servers, an `engine` object in JSON bodies, and `Server` + `Link: rel="license"` headers on every HTTP response.
 
@@ -722,7 +722,7 @@ const output = booleanValue(parsed.values, "json")
 
 and change the `json` option description to `"Emit { engine, entries } as JSON instead of formatted text."`.
 
-- [ ] **Step 5: Record the contract change**
+- [ ] **Step 5: Record the interface change**
 
 In `CHANGELOG.md` under `## Unreleased`, add a `### Changed` section (or extend the existing one):
 
@@ -1582,4 +1582,4 @@ Claude-Session: https://claude.ai/code/session_011sdRccUsbdDyqumVDfHnvg"
 git push -u origin feat/license-posture-reporting
 ```
 
-Then open the PR against `main` with the spec linked, the `parse --format json` decision stated, the `autocomplete --json` contract change stated, and the session link `https://claude.ai/code/session_011sdRccUsbdDyqumVDfHnvg` as the last line.
+Then open the PR against `main` with the spec linked, the `parse --format json` decision stated, the `autocomplete --json` interface change stated, and the session link `https://claude.ai/code/session_011sdRccUsbdDyqumVDfHnvg` as the last line.

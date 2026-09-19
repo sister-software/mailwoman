@@ -10,7 +10,7 @@
  *   pulls its `.node` binaries along and fails parsing them. Resolution picks the module rather than the importer
  *   guarding the import, so a caller names one specifier and never has to know which runtime it is in.
  *
- *   NOTE FOR BUNDLER CONFIG: a webpack SSR compile resolves under the `node` condition rather than `browser` — correctly, since
+ *   note FOR bundler config: a webpack SSR compile resolves under the `node` condition rather than `browser` — correctly, since
  *   it targets Node — so a Docusaurus-style server bundle reaches the real runner unless its config aliases this module
  *   explicitly. That is a property of building FOR Node rather than a gap in this map.
  *

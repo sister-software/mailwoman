@@ -26,7 +26,7 @@
 ## covers both surfaces; chat coverage is unchanged, because .vale-chat.ini
 ## loads the Mailwoman style too.
 ##
-## Contracts survive by being written as contracts. Vale's markdown parser
+## Interfaces survive by being written as interfaces. Vale's markdown parser
 ## skips inline code and fenced blocks natively, so `mailwoman eval promote`,
 ## the MANIFEST's `slices` key, `@mailwoman/locale-hint` and
 ## `promotion-eval.ts` all pass when they are backticked — which is how an
@@ -44,7 +44,7 @@
 ##
 ## A BARE `promotion-eval` in running prose does trip this rule:
 ## tokens carry word boundaries, and a hyphen is a word boundary, so the
-## remedy is the backticks, not a rename. Renaming a contract-tied
+## remedy is the backticks, not a rename. Renaming a interface-tied
 ## identifier is a separate, operator-approved change.
 extends: existence
 message: "'%s' is ambiguous shorthand — name the concrete thing (the check by its name, the artifact by its filename, the boundary by its interface) or use a plain verb; backtick it if it is an identifier, path, or command."

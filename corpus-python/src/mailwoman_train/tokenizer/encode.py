@@ -186,12 +186,12 @@ def encode_row(
 
     if country_lexicon is not None:
         # Country-lexicon channel (#1104): per-piece [country_surface, country_ambiguous] painted from
-        # the RAW SURFACE only (never labels. identical at train + inference). Independent of the
+        # the RAW surface only (never labels. identical at train + inference). Independent of the
         # near-postcode gazetteer choreography — a trailing "…12345 USA" keeps its country clue.
         put("country", realign_country_to_pieces(raw, list(spans), country_lexicon), COUNTRY_FEATURE_DIM)
 
     if street_type_lexicon is not None:
-        # Street-type channel (P-A / Option A): per-piece street_type clue painted from the RAW SURFACE
+        # Street-type channel (P-A / Option A): per-piece street_type clue painted from the RAW surface
         # by the codex street-type lexicon. Same schema as the gazetteer lexicon, so it reuses the same
         # generic realign. Independent of the near-postcode choreography (a street-type word is a street
         # fact wherever it sits). Positive-evidence-only — absence paints zero.
@@ -200,7 +200,7 @@ def encode_row(
 
     if locality_surface_lexicon is not None:
         # Locality-surface channel (v3.16.0 evidence bundle): per-piece [locality, locality_homograph]
-        # painted from the RAW SURFACE. Same lexicon schema as the gazetteer → same generic realign.
+        # painted from the RAW surface. Same lexicon schema as the gazetteer → same generic realign.
         painted = realign_gazetteer_to_pieces(raw, list(spans), locality_surface_lexicon)
         put("locality_surface", painted, locality_surface_lexicon.feature_dim)
     return out

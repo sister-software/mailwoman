@@ -26,7 +26,7 @@ export const BAN_LICENSE = "Licence Ouverte / Open Licence 2.0 (Etalab)"
 export const BAN_ATTRIBUTION = "© les contributeurs de la Base Adresse Nationale (adresse.data.gouv.fr)"
 
 /**
- * The download URL of one département's BAN dump. `dept` is the INSEE département code — `01`…`95`, the Corsica codes
+ * The download URL of one département's BAN dump. `dept` is the insee département code — `01`…`95`, the Corsica codes
  * `2A`/`2B`, or an overseas code (`971`…`976`). Pass the code exactly as BAN names the file.
  */
 export function banDepartementURL(dept: string): string {

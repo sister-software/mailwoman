@@ -140,7 +140,7 @@ to a census child, adjacent to the anchor) — the one configuration the anchor 
 cannot reject, because the geometry in fact matches. The discriminator there is exactly "the
 model reads this occurrence as `street`" (healthy head on GB, unlike venue).
 
-Contract: veto a child candidate only when the first-pass argmax over its span is
+Interface: veto a child candidate only when the first-pass argmax over its span is
 `street`/`house_number`/`unit` with margin above a calibrated threshold. **Fail-open** (uncertain
 → allow) so recall never depends on the weak heads; **child-side only**, never veto the parent
 (post town locality is the desired read); exclude `venue` from the veto set (measured inert —
@@ -184,7 +184,7 @@ What does transplant directly:
 
 The #690 all-caps precedent is real but does not transfer: case folding is OFFSET-PRESERVING;
 comma insertion is not. Inserting characters shifts every downstream character offset — the
-pieces' offset contract that `computeGroupSegments`, the repair passes, and span projection all
+pieces' offset interface that `computeGroupSegments`, the repair passes, and span projection all
 depend on — so the normalization leg pays an offset-remapping tax through the entire decode path,
 plus a full metamorphic-invariance re-verification of a component that now EDITS user input.
 Worse, it solves the same segmentation problem with the same weak evidence: comma insertion IS

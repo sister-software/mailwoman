@@ -3,11 +3,11 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Which SOURCE a gazetteer place id came from, and therefore whether it is a real Who's On First id.
+ *   Which source a gazetteer place id came from, and therefore whether it is a real Who's On First id.
  *
  *   `spr` is WOF's own table name — Standard Place Response, the flat one-row-per-place projection they ship
  *   beside the GeoJSON — and we keep their schema, so `spr.id` is the WOF id for a WOF-sourced row. It is not
- *   for the rest: the Overture and GeoNames folds mint SYNTHETIC ids in reserved ranges above every real WOF
+ *   for the rest: the Overture and GeoNames folds mint synthetic ids in reserved ranges above every real WOF
  *   id, and those look exactly like WOF ids while resolving to nothing on spelunker.
  *
  *   Every place row a maintainer tool emits therefore carries {@link PlaceIDProvenance}, because the failure
@@ -32,7 +32,7 @@ export const PlaceIDSource = {
 	 */
 	WOF: "wof",
 	/**
-	 * Minted by the Overture `divisions` backfill for a locale with no WOF repo (`assignSyntheticIDs` hashes the GERS id
+	 * Minted by the Overture `divisions` backfill for a locale with no WOF repo (`assignSyntheticIDs` hashes the gers id
 	 * into the reserved span). Not a WOF id.
 	 */
 	Overture: "overture",
@@ -41,7 +41,7 @@ export const PlaceIDSource = {
 	 */
 	GeoNames: "geonames",
 	/**
-	 * Minted by the GeoNames POSTAL fold, which reserves its own span above the alias fold. Not a WOF id.
+	 * Minted by the GeoNames postal fold, which reserves its own span above the alias fold. Not a WOF id.
 	 */
 	GeoNamesPostal: "geonames-postal",
 } as const

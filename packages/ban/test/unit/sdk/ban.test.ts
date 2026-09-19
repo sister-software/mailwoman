@@ -3,7 +3,7 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   The two contracts the BAN ingest must hold: (1) the extract locates its columns BY NAME off the
+ *   The two interfaces the BAN ingest must hold: (1) the extract locates its columns BY name off the
  *   header (never by fixed position) and drops coordinate-less / streetless rows; (2) the provider is
  *   FR-only and keys with the FR street locale — never a silent fold with the wrong rules. Build/probe
  *   street-key consistency is covered by `@mailwoman/osm`'s `street-locale.test.ts` (same normalizer).

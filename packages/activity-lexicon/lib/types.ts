@@ -25,7 +25,7 @@ export interface ActivityLexiconProvenance {
 	sourceRecord?: string
 	sourceURL?: string
 	/**
-	 * ISO 8601 calendar date the record was authored, `YYYY-MM-DD`.
+	 * ISO 8601 calendar date the record was authored, `yyyy-MM-DD`.
 	 */
 	authoredAt?: string
 	notes?: string
@@ -127,7 +127,7 @@ export interface ActivityPhraseEntry {
 	 * BCP-47 tags where the phrasing is in active use, following the `@mailwoman/variant-aliases` semantics: an exact tag
 	 * match is a full match, a language-only match is a weaker one, and nothing else matches.
 	 *
-	 * ABSENT MEANS UNSCOPED, and is not the same as an empty list: a phrase used everywhere carries no tags, while a
+	 * Absent means unscoped, and is not the same as an empty list: a phrase used everywhere carries no tags, while a
 	 * phrase scoped to nowhere is a record that can never fire, which the audit refuses.
 	 */
 	locales?: ReadonlyArray<Intl.UnicodeBCP47LocaleIdentifier>

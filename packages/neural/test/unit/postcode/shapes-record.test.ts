@@ -14,7 +14,7 @@
  *   caught by `yarn test` rather than only by a suite somebody may not run.
  *
  *   It lives in this package rather than in codex, because codex is deliberately zero-dependency and the check needs a repo
- *   root resolver. The consumer is the right home for a cross-language contract the consumer depends on.
+ *   root resolver. The consumer is the right home for a cross-language interface the consumer depends on.
  */
 
 import { POSTCODE_SHAPES, POSTCODE_SHAPES_VERSION } from "@mailwoman/codex/postcode-shapes"

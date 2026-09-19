@@ -4,7 +4,7 @@
  * @author Teffen Ellis, et al.
  *
  *   Probe-1 read-out (parity campaign): score a checkpoint on the held-out fragment-dev split with
- *   the pre-registered SEPARATOR metrics (campaign runbook / DeepSeek prediction 2):
+ *   the pre-registered separator metrics (campaign runbook / DeepSeek prediction 2):
  *
  *   - Token-level tag accuracy vs span-level exact match — a token-F1 rise with a lagging
  *       span-exact-match confirms the #727 span-head ceiling.

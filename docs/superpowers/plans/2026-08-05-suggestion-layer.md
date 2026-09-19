@@ -123,7 +123,7 @@ copies of `normalize(input, {expandAbbreviations: true, locale: "und"}).normaliz
 package's own tests.
 
 The `postcodeCountryCoherence` row is the template the rest should follow. It is the one mechanism
-whose provenance survives the whole way to the OpenAPI contract, and it got there because #42 needed
+whose provenance survives the whole way to the OpenAPI interface, and it got there because #42 needed
 a firing receipt to be gradeable at all — the same reason a suggestion needs one to be auditable.
 
 ### A.4 The entity-snap tier — batch-shaped, and that is the gap
@@ -161,7 +161,7 @@ single-record path either ships a prebuilt table or drops the adjustment and say
 The mailfail fixture's own commit message says it was committed "so these cases can become a check".
 It never did — there is no `mailfail-board.ts` beside `digit-board.ts` / `fragment-board.ts` /
 `poi-board.ts`. The only executable residue is `core/pipeline/runtime-pipeline.test.ts:803-882`,
-which asserts the fault contract against synthetic throwing stubs and says nothing about the 105
+which asserts the fault interface against synthetic throwing stubs and says nothing about the 105
 rows.
 
 The Gauntlet's shared runner has no boundary for abstention either. `GauntletResult`
@@ -301,7 +301,7 @@ postcode-free arm re-emitted A postcode     16 / 139
 Per locale, which is the ablation map's first row:
 
 > **Correction 2026-08-05 (ablation run, PR #1500):** the GB row below was measured without the GB
-> weight artifacts — the S-2 worktree carried no `pair-index-gb` and no `fst-en-gb`, so GB graded
+> weight artifacts — the S-2 worktree carried no `pair-index-gb` and no `fst-en-gb`. Therefore, GB graded
 > through the bare base package. The other locales reproduce byte-for-byte under the full
 > environment; GB corrects to **26/47 (55.3%) within 5 km, 17/47 (36.2%) over 100 km, p50 1.97 km**.
 > Finding 1's "roughly four times" becomes **roughly 2.5×** — direction unchanged, magnitude
@@ -512,7 +512,7 @@ interface AbstainReason {
 ```
 
 `abstainReasons` is modeled on `PipelineResult.faults` deliberately, down to the always-present
-array — same contract, same docstring discipline, and the same reason: an empty array is the layer
+array — same interface, same docstring discipline, and the same reason: an empty array is the layer
 stating it checked.
 
 ### C.1 Mechanism 1 — the format nudge (free, offline)
@@ -530,7 +530,7 @@ Concretely, the classes S-1 found: the missing locality/region comma (7 rows), t
 and BOM folds, `Str.` → `Str`, `Av.` → `Avenue`, and the country-line decision — which is
 conditioned on whether the input carried a country token rather than on the formatter's default.
 
-**Artifact.** None. Two contract changes it wants, both additive:
+**Artifact.** None. Two interface changes it wants, both additive:
 
 - `NormalizedInputLite` (`core/pipeline/types.ts:112`) gains `transforms`. The data already exists at
   runtime; this is a type widening and a stop to the three `.normalized` discards in
@@ -822,7 +822,7 @@ all.
   names the schema gap in its own note (`cases/regression.ts:3223`). B3-1 needs it; adding it is a
   runner change rather than a mechanism.
 - **A `suggestions` field on `GeocodeResult`.** The suggestion layer is a separate call. Threading it
-  through the geocode result would put an advisory surface inside a resolution contract, and
+  through the geocode result would put an advisory surface inside a resolution interface, and
   `postcode_country_scope` is the precedent for how narrow that channel should stay.
 
 ## Reproduce the measurements

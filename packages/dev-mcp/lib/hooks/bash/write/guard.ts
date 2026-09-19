@@ -7,11 +7,11 @@
  *   PreToolUse hook: refuse a Bash command that `bash-write-rules.ts` does not admit, so an edit to a tracked file goes
  *   through the Write and Edit tools and reaches the symbol precheck.
  *
- *   This file is the ADAPTER — the payload, the repository root, and the refusal document. Which commands are admitted
+ *   This file is the adapter — the payload, the repository root, and the refusal document. Which commands are admitted
  *   and why lives in the rules module, so a test drives the judgement without spawning a process. Importing a hook that
  *   reads stdin at load hangs whatever imports it, which is what happened when the two lived together.
  *
- *   ON FAILURE THIS ADMITS. An unreadable payload, a missing dependency or a throw all let the command through, and the
+ *   on failure this admits. An unreadable payload, a missing dependency or a throw all let the command through, and the
  *   session then runs unguarded with one line on stderr. That is deliberate — a hook that halts the shell over its own
  *   bug is worse than one that misses a write — and it is why the rules module describes itself as raising the cost of
  *   a Bash edit rather than preventing one.

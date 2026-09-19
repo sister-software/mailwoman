@@ -106,7 +106,7 @@ Foundry. Streamed via `CSVSpliterator`; no SQLite step needed.
 > **Source-availability caveat.** As of 2026-05-22 the Open Data Foundry
 > bulk CSV is no longer publicly distributed (see
 > [Source availability (deferral)](#source-availability-deferral)).
-> The column contract below remains the canonical input shape an
+> The column interface below remains the canonical input shape an
 > operator-supplied CSV must conform to.
 
 ### Expected columns

@@ -15,7 +15,7 @@ import { type CommandSpec, harnessCommand } from "#cli-kit"
 export const description = "Mask-regression check (#718) — mask-off vs mask-on per-tag F1, 2pp lock"
 
 /**
- * Native command-line contract consumed by the filesystem command router.
+ * Native command-line interface consumed by the filesystem command router.
  */
 export const spec = {
 	name: "mask-regression",
@@ -37,7 +37,7 @@ export const spec = {
 	},
 } as const satisfies CommandSpec
 
-// The check narrates its own ✓ PASS / ✗ FAIL lines on stderr, so no `json`.
+// The check narrates its own ✓ pass / ✗ fail lines on stderr, so no `json`.
 const EvalMaskRegression = harnessCommand(
 	spec,
 	async (options) => {

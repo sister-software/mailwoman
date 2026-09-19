@@ -3,7 +3,7 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   The collision contract for the address-point normalizer (#476): variants that refer to the same
+ *   The collision interface for the address-point normalizer (#476): variants that refer to the same
  *   street must normalize identically. distinct streets must not. Build-side and lookup-side both
  *   import the same function, so these tests are the whole correctness story for the keying.
  */
@@ -78,7 +78,7 @@ describe("normalizeLocalityForKey", () => {
 
 describe("canonicalizeRouteKey", () => {
 	it("folds TIGER and E911/Overture route spellings to the same key", () => {
-		// TIGER "State Rte 100" → normalizeStreetForKey → "state route 100" already. the E911
+		// tiger "State Rte 100" → normalizeStreetForKey → "state route 100" already. the E911
 		// spelling needs the designator fold to meet it.
 		expect(canonicalizeRouteKey(normalizeStreetForKey("State Rte 100"))).toBe("state route 100")
 		expect(canonicalizeRouteKey(normalizeStreetForKey("VT ROUTE 100"))).toBe("state route 100")
@@ -235,7 +235,7 @@ describe("the zh branch — the Taiwanese register's Han keys", () => {
 	it("keys a street as its Han fold: no whitespace, kanji section numerals as written", () => {
 		expect(normalizeStreetForKeyLocale("重慶南路一段", "zh")).toBe("重慶南路一段")
 		expect(normalizeStreetForKeyLocale("重慶南路 一段", "zh")).toBe("重慶南路一段")
-		// Full-width Latin or digits inside a name fold to ASCII, as they do in the number.
+		// Full-width Latin or digits inside a name fold to ascii, as they do in the number.
 		expect(normalizeStreetForKeyLocale("中山路２段", "zh")).toBe("中山路2段")
 	})
 

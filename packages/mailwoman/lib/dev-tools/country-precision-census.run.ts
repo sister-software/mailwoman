@@ -3,34 +3,34 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   COUNTRY PRECISION: when the input NAMES a country, does the parse answer that country?
+ *   country precision: when the input names a country, does the parse answer that country?
  *
- *   Operator framing, 2026-09-15: a tier is a claim about BEHAVIOR rather than about coverage, and
+ *   Operator framing, 2026-09-15: a tier is a claim about behavior rather than about coverage, and
  *   "it would be a massive failure if given an address that had a country in it that we somehow got
  *   that wrong at parsing time." This measures exactly that failure, and it needs no new truth — the
  *   country is IN the string, so the string is its own gold.
  *
- *   WHY IT IS NOT ALREADY GRADED. 375 of the 982 regression-board rows name a country in their input
+ *   why IT is not already graded. 375 of the 982 regression-board rows name a country in their input
  *   and only 41 both check (`status: pass`) and assert a `country` in `expectComponents`; 118 of the
  *   129 board directories have no country-asserting checking row at all. `componentOf`
  *   (`gauntlet/check-case.ts:35`) grades `country` only where that expectation is written, and a
  *   case's top-level `country` field is routing metadata — `routing.ts:28` reads it to pick a locale
  *   — never an assertion. So a row can name Venezuela, answer with the country dropped, and pass.
  *
- *   TRUTH IS THE ROW'S OWN `country` FIELD rather than A REGEX OVER THE INPUT. The first version of this
- *   census matched country NAMES in the string and reported 9 contradictions. 7 of the 9 were the
+ *   truth is the row'S own `country` field rather than A regex over the input. The first version of this
+ *   census matched country names in the string and reported 9 contradictions. 7 of the 9 were the
  *   parser being right — `China Red` is a restaurant in Manchester, `Luxembourg House` a building in
  *   London, `Masala India` a curry house in Leyton, `Venezuela` a street in San Juan. That is the
  *   place-shaped-venue class the board already names in its own notes, and an instrument that cannot
  *   see it measures its own ambiguity rather than the parser's. The board states each row's country
  *   as an ISO alpha-2 code, so the comparison is code to code and a venue's name cannot enter it.
  *
- *   THREE OUTCOMES, kept apart. `agreed` is the parse naming the row's country. `contradicted` is the
+ *   three outcomes, kept apart. `agreed` is the parse naming the row's country. `contradicted` is the
  *   parse naming a different one, which is the failure the operator called massive. `dropped` is the
  *   parse naming none — a lesser failure and a different one, because a consumer can see an absent
  *   field and cannot see a wrong one. Folding the last two into one miss rate would hide which moved.
  *
- *   THE POPULATION IS THE QUESTION, and it is 361 of the 982 rows: those whose input names a country
+ *   the population is the question, and it is 361 of the 982 rows: those whose input names a country
  *   and whose named country is the row's own. The other 621 either name none (`Kabul`, `Al Wasl
  *   Road`) or name a decoy inside a venue, and counting either as a miss measures the board's
  *   composition rather than the parser's behavior.
@@ -66,10 +66,10 @@ const NAME_PATTERN = new RegExp(
 )
 
 /**
- * The country an input NAMES, or null.
+ * The country an input names, or null.
  *
  * Deliberately exact-name only: no ISO codes, no abbreviations. `GA` is Georgia the US state and Gabon's alpha-2 at
- * once. Used to SELECT the population — a row is in scope when its input names the country the board declares for it —
+ * once. Used to select the population — a row is in scope when its input names the country the board declares for it —
  * never as truth about what the parse should answer, for the reason the file header states.
  */
 function namedCountry(input: string): string | null {
@@ -77,8 +77,8 @@ function namedCountry(input: string): string | null {
 }
 
 /**
- * Name-to-alpha-2, folded for lookup. The parse answers a SURFACE FORM (`Canada`, `United Kingdom`, `España`) and the
- * board states a CODE, so one side has to cross over. crossing the parse's side keeps the board's field untouched as
+ * Name-to-alpha-2, folded for lookup. The parse answers a surface form (`Canada`, `United Kingdom`, `España`) and the
+ * board states a code, so one side has to cross over. crossing the parse's side keeps the board's field untouched as
  * the reference.
  */
 const CODE_BY_FOLDED_NAME = new Map(
@@ -153,7 +153,7 @@ for (const seed of cases) {
 
 	const named = namedCountry(seed.input)
 
-	// THE POPULATION IS THE QUESTION. "Did we get a named country wrong" is only askable where the input
+	// the population is the question. "Did we get a named country wrong" is only askable where the input
 	// names one, and where the one it names is the row's own — 361 of the 982 rows. The other 621 either
 	// name no country (`Kabul`, `Al Wasl Road`) or name a decoy inside a venue, and scoring either as a
 	// miss measures the board's composition rather than the parser.

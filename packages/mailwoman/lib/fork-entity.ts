@@ -6,7 +6,7 @@
  *   The declared_fork marker's first consumer (#1585's entity half): when the decoder declares that a
  *   surface reads two ways and the incumbent resolution produced no coordinate, ask the entity layer
  *   whether it simply knows the thing — positive evidence only, per the registry doctrine (registries
- *   are soft priors that add candidates. they never veto). `COMER parís.méxico` is the worked case:
+ *   are soft priors that add candidates. they never veto). `comer parís.méxico` is the worked case:
  *   structure cannot decide it, no gazetteer row bears the name, and poi.db holds the exact
  *   restaurant 6 m from truth under a worldwide-unique name key.
  *
@@ -52,7 +52,7 @@ export interface ForkEntityHit {
 
 export interface ForkEntityProbeOpts {
 	/**
-	 * The poi.db reader (`POILookup` satisfies this) — absent handled by the CALLER (no lookup, no probe).
+	 * The poi.db reader (`POILookup` satisfies this) — absent handled by the caller (no lookup, no probe).
 	 */
 	lookup: POIExecutorLookup
 	/**
@@ -173,22 +173,22 @@ function applyForkEntityAnswer(
 
 /**
  * How far a venue entity may sit from the resolved admin anchor and still be "this address's venue", meters. Wide on
- * purpose: the anchor is a LOCALITY centroid (a metro's centroid can sit 20+ km from its edges), and the check exists
+ * purpose: the anchor is a locality centroid (a metro's centroid can sit 20+ km from its edges), and the check exists
  * to separate the local bearer from same-named entities in other cities rather than to assert rooftop precision.
  */
 const VENUE_ANCHOR_THRESHOLD_M = 30_000
 
 /**
- * The same bound when the anchor is a UNIT-GRADE postcode hit rather than a centroid, meters. A unit postcode names a
+ * The same bound when the anchor is a unit-grade postcode hit rather than a centroid, meters. A unit postcode names a
  * handful of doors, so a same-named entity kilometers from it is another bearer (a second campus, a chain's other
  * branch), and the locality bound admits exactly that: it replaced an answer 80 m from a venue with its namesake 9.9 km
- * away. Every board row the tier improves moves its answer under 1.6 km from a LOCALITY anchor. a unit anchor is finer
+ * away. Every board row the tier improves moves its answer under 1.6 km from a locality anchor. a unit anchor is finer
  * still, so the bound is tighter than any of those moves.
  */
 const VENUE_UNIT_ANCHOR_THRESHOLD_M = 1000
 
 /**
- * The anchor the venue tier measures from, with the reach its GRADE allows. The answer coordinate is the anchor;
+ * The anchor the venue tier measures from, with the reach its grade allows. The answer coordinate is the anchor;
  * `radiusM` defaults to {@link VENUE_ANCHOR_THRESHOLD_M} and {@link venueAnchorRadiusM} tightens it.
  */
 export interface VenueAnchor {
@@ -280,7 +280,7 @@ export function probeVenueNearAnchor(
  * The entity answers, applied in tier order — extracted from `geocodeAddressOnce` as one cohesive unit (the
  * ceiling-extraction discipline):
  *
- * 1. The fork→entity probe (#1585's entity half): a DECLARED fork whose incumbent resolution produced no coordinate takes
+ * 1. The fork→entity probe (#1585's entity half): a declared fork whose incumbent resolution produced no coordinate takes
  *    the worldwide-unique entity. Default-on under the D-rule — a null is the only thing that can change.
  * 2. The venue tier (#1684's POI half) — opt-in, default off: a venue-led address that resolved only to its admin anchor
  *    upgrades to the entity with the venue's exact name-key near that anchor ({@link probeVenueNearAnchor} owns the
@@ -344,7 +344,7 @@ export function applyEntityTiers(
 }
 
 /**
- * The head segment of a QUALIFIER-DECORATED venue name: everything before the first dash-style separator, with any
+ * The head segment of a qualifier-decorated venue name: everything before the first dash-style separator, with any
  * trailing parenthetical dropped. Board-measured classes (2026-08-19): the input carries the marketing string while the
  * poi row carries the bare name or a differently-combined one — "Mischicks Day Spa - St Andrews Lakes - Rochester,
  * Kent" vs the row "Mischicks Day Spa - St Andrews Lakes"; "The North Face - Covent Garden" vs the row "The North
@@ -387,7 +387,7 @@ function venueHeadSegment(venueRaw: string): string | null {
 
 /**
  * {@link probeVenueNearAnchor} with the qualifier-folding second leg: the exact leg runs first and an exact local-unique
- * hit is never second-guessed. only when it abstains does the probe retry comparing HEAD SEGMENTS on both sides ({@link
+ * hit is never second-guessed. only when it abstains does the probe retry comparing head segments on both sides ({@link
  * venueHeadSegment}). Local uniqueness binds on the folded key exactly as on the exact one — a chain with two branches
  * in the metro ("The North Face" twice in London) abstains.
  */

@@ -11,7 +11,7 @@ source-of-truth: generated — docs/scripts/generate-cli-reference.ts
 
 ## Scope
 
-This page is the flag contract for the `mailwoman` command-line interface. Each table is generated from
+This page is the flag interface for the `mailwoman` command-line interface. Each table is generated from
 the command's own schema, and each description is that flag's help text verbatim, so this page and
 `mailwoman <command> --help` cannot disagree.
 
@@ -269,7 +269,7 @@ mailwoman data coverage [options]
 
 ### `mailwoman data inventory`
 
-Report every database in the data root and whether it records how it was built. `layer_manifest` is the contract (docs/engineering/reference/layer-contract.mdx); this says how much of the root implements it.
+Report every database in the data root and whether it records how it was built. `layer_manifest` is the interface (docs/engineering/reference/layer-interface.mdx); this says how much of the root implements it.
 
 ```
 mailwoman data inventory [options]
@@ -534,7 +534,7 @@ mailwoman registry viz [options] <figure>
 
 ## Exit codes
 
-Every command shares one exit-code contract, owned by `useCommandTask` in `packages/mailwoman/lib/cli/kit`.
+Every command shares one exit-code interface, owned by `useCommandTask` in `packages/mailwoman/lib/cli/kit`.
 
 | Code | Meaning                                                                     | Next step                                                                  |
 | ---- | --------------------------------------------------------------------------- | -------------------------------------------------------------------------- |

@@ -15,7 +15,7 @@
  *   Systems are exposed as namespaces (`import { us } from "@mailwoman/codex"`) and as subpaths
  *   (`import { lookupStreetSuffix } from "@mailwoman/codex/us"`). The cross-system
  *   `candidateSystemsForPostcode` (the inverse of the per-system postcode patterns) is a top-level
- *   export. `levels` is the per-locale LEVEL/floor ordinal-semantics table (#1100) — like
+ *   export. `levels` is the per-locale level/floor ordinal-semantics table (#1100) — like
  *   `candidateSystemsForPostcode`, it's inherently multi-locale, so it lives at the codex root
  *   (`./level-semantics.ts`) and is namespaced rather than given its own `@mailwoman/codex/<x>`
  *   subpath.

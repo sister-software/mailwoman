@@ -4,13 +4,13 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Materialize a release's weights artifacts from the PUBLIC Hugging Face bucket — the `--source hf`
+ *   Materialize a release's weights artifacts from the public Hugging Face bucket — the `--source hf`
  *   half of the #1894 preflight, and the recipe `.github/workflows/publish.yml` now calls in place of
  *   the curl-and-cp block it used to carry inline. One recipe, two callers: the preflight points it at
  *   a staging tree, the publish job points it at the checkout. `copy-weights.ts` is the same shape for
  *   the operator's data root. both take a destination root and touch nothing else.
  *
- *   WHAT IS FETCHED IS DERIVED rather than LISTED. A `neural-weights-<locale>` package's `files` array is its
+ *   what is fetched is derived rather than listed. A `neural-weights-<locale>` package's `files` array is its
  *   author stating which artifacts the tarball carries, and `git ls-files` says which of those a
  *   checkout already has. the difference is exactly the set something must materialize — the same
  *   predicate `verify-tarball.ts` refuses a publish over (`literalFilesEntries`, shared with it). The
@@ -18,7 +18,7 @@
  *   `@mailwoman/neural-weights-en-au`, whose four declared lexicons the YAML's hand-maintained copy
  *   list did not name. A derived list cannot fall behind a manifest that way.
  *
- *   NO CREDENTIALS, NO WRITES ANYWHERE BUT THE DESTINATION ROOT. The bucket is public — the same files
+ *   no credentials, no writes anywhere but the destination root. The bucket is public — the same files
  *   the browser demo loads. Nothing here writes to Hugging Face, npm, git, or R2.
  */
 
@@ -32,7 +32,7 @@ import type { WeightsArtifactPlan } from "#weights/fetch-hf-weights/plan"
 /**
  * The bucket client.
  *
- * The house rule routes API REQUESTS through `APIClient` and exempts multi-gigabyte file transfers, where a buffered
+ * The house rule routes API requests through `APIClient` and exempts multi-gigabyte file transfers, where a buffered
  * body is untenable and response caching is nonsense. These objects sit on the API side of that line: the largest is
  * `model.onnx` at 39,419,629 bytes and the whole set is under ~70 MB (measured 2026-08-25 against the v9.1.0
  * directory), each one is md5-checked after arrival, and each is fetched exactly once per run — so a buffered body
@@ -48,8 +48,8 @@ import type { WeightsArtifactPlan } from "#weights/fetch-hf-weights/plan"
 const bucketClient = new APIClient({ displayName: "release-hf-weights", retry: true })
 
 /**
- * HEAD-probe one bucket object. Returns the failure's message rather than a bare boolean: a throttled or unroutable
- * probe is indistinguishable from an unstaged artifact at the call site, and "MISSING" is the answer that would send an
+ * Head-probe one bucket object. Returns the failure's message rather than a bare boolean: a throttled or unroutable
+ * probe is indistinguishable from an unstaged artifact at the call site, and "missing" is the answer that would send an
  * operator to re-run a staging step that already succeeded.
  */
 export async function probeRemote(url: string): Promise<string | null> {
@@ -76,10 +76,10 @@ export async function downloadRemote(url: string): Promise<Buffer> {
 /**
  * Write `bytes` to a workspace file.
  *
- * Unlink first. `writeFileSync` FOLLOWS a symlink at the destination and writes THROUGH it, leaving the symlink in
- * place — and the registry refuses a tarball containing one (HTTP 415, YN0035). A dev checkout's weights workspaces are
+ * Unlink first. `writeFileSync` follows a symlink at the destination and writes through it, leaving the symlink in
+ * place — and the registry refuses a tarball containing one (http 415, YN0035). A dev checkout's weights workspaces are
  * full of symlinks, and the staging tree can inherit one, so the discipline applies to both destinations. Same rule as
- * `copy-weights.ts`; see AGENTS.md "symlinks in the publish tarball".
+ * `copy-weights.ts`; see agents.md "symlinks in the publish tarball".
  */
 export async function writeArtifact(destination: string, bytes: Buffer): Promise<void> {
 	await makeDirectories(resolvePath(destination, ".."))

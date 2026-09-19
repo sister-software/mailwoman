@@ -1,24 +1,24 @@
-# v5.1.0 — ISOLATION RUN. One variable against v5.0.0: the four admitted countries that carry
+# v5.1.0 — isolation RUN. One variable against v5.0.0: the four admitted countries that carry
 # corpus rows but zero street rows (CN 11,357,947 / JP 2,092,821 / KR 1,083,156 / TW 678,660) are
 # dropped. 134 -> 130 admitted. every other weight is byte-identical, same corpus, same seed 42,
 # same 60k schedule, no init_from, no EWC.
 #
-# WHY. v5.0.0 graded net +2 on the 649-row board (37 improved, 35 regressed) with a clean
+# why. v5.0.0 graded net +2 on the 649-row board (37 improved, 35 regressed) with a clean
 # self-control (0/649), and was held by the D-rule: FR 2, GB 4, DE 1. The regressions share one
 # shape — a multi-word phrase is split and its tail retagged, and the locality is then lost:
 #
 #   Unter den Linden              street=<whole>  ->  street="Unter"     + locality="den Linden"
 #   St Andrew Undershaft Church   street=<whole>  ->  street="St Andrew" + dep_locality="Undershaft Church"
-#   30 St Mary Axe (The Gherkin)  venue="St Mary Axe" -> venue="Axe" + street="St Mary", locality="London" DELETED
+#   30 St Mary Axe (The Gherkin)  venue="St Mary Axe" -> venue="Axe" + street="St Mary", locality="London" deleted
 #
 # Two variables moved between the shipped model and v5.0.0 — the corpus (v0.19.0 -> v0.27.0) and the
 # admission set (25 -> 134) — so neither is attributable from that run alone. This isolates the
 # second. The street-less rows are 2.23% of the admitted pool (US share 73.13% -> 71.50%), which is
-# a SMALL exposure for the damage observed. the hypothesis is that a consistent street-less label
+# a small exposure for the damage observed. the hypothesis is that a consistent street-less label
 # distribution teaches early street termination rather than that the exposure is large.
 #
-# READ THE RESULT AS AN ANSWER EITHER WAY. If the FR/GB/DE regressions clear, admission is the
-# cause and this is the ship candidate. If they persist, the admission hypothesis is FALSIFIED and
+# read the result AS an answer either WAY. If the FR/GB/DE regressions clear, admission is the
+# cause and this is the ship candidate. If they persist, the admission hypothesis is falsified and
 # the corpus change is the remaining suspect — do not re-run this with a different exposure.
 
 data:

@@ -4,7 +4,7 @@
  * @author Teffen Ellis, et al.
  *
  *   The Cloudflare provider over a scripted binding: the message goes out from the configured sender to the buyer with
- *   the shared subject, text and HTML, the invoice id rides as a header, and the binding's message id is the one
+ *   the shared subject, text and html, the invoice id rides as a header, and the binding's message id is the one
  *   recorded. The two bodies render the same sections, so each is held to what the buyer needs from it.
  */
 

@@ -6,13 +6,13 @@
  *   #1278 phase 2 — the browser-side per-parse country selection. Two concerns, no ORT/classifier mock
  *   needed (the units under test are pure):
  *
- *   1. BROWSER-SAFETY SCOPE (the hard check): the two Stage-2 modules the loader now imports —
+ *   1. browser-safety scope (the hard check): the two Stage-2 modules the loader now imports —
  *      `@mailwoman/locale-hint` + `@mailwoman/query-shape` — must be free of any `node:*` / fs / path /
  *      process runtime import across their full non-test source, or they'd break the browser bundle. A
  *      static scan of the shipped source asserts it (a type-only re-export of `@mailwoman/core/pipeline`
  *      erases at compile and is explicitly allowed).
  *
- *   2. PER-PARSE SELECTION: `detectPairIndexCountry` maps an input's STRUCTURAL shape to a country subtag
+ *   2. PER-parse selection: `detectPairIndexCountry` maps an input's structural shape to a country subtag
  *      (postcode format / script only — never place names), and `resolvePairIndexForText` selects the
  *      loaded index whose header country matches (or the explicit `{ country }` override), returning the
  *      byte-stable `undefined` on no match.
@@ -102,7 +102,7 @@ describe("browser-safety scope — locale-hint + query-shape are node-free (#127
 						offenders.push(`${file}: runtime import of "${spec}"`)
 					}
 
-					// A VALUE import of @mailwoman/core would drag the ~9MB data package into the bundle.
+					// A value import of @mailwoman/core would drag the ~9MB data package into the bundle.
 					// only a type-only re-export (erased) is allowed.
 					if (spec.startsWith("@mailwoman/core")) {
 						offenders.push(

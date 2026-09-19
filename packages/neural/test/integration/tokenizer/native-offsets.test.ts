@@ -6,7 +6,7 @@
  *   Convention pins for the SP 0.2.2 native-offsets runtime (task #26 — the
  *   `@mailwoman/sentencepiece-wasm` swap). Three behaviors are pinned:
  *
- *   1. **Non-BMP correctness** — the old reconstruction's DEFERRED hazard ("surrogate-pair
+ *   1. **Non-BMP correctness** — the old reconstruction's deferred hazard ("surrogate-pair
  *      codepoints would need `Array.from(s).length` accounting"): a piece following a non-BMP
  *      character now lands on the correct UTF-16 range, and alignment holds for the rest of the
  *      input. This was wrong before the swap, by one code unit per preceding non-BMP char.
@@ -14,8 +14,8 @@
  *      includes the whitespace the sentinel consumed. the TS layer trims to the word start,
  *      keeping decoder behavior compatible the shipped model was decoded with. The bare-`▁` piece
  *      collapses to the zero-width-after-space range the word grouper expects.
- *   3. **Normalizer-granular alignment is the TRAINING convention rather than a bug** — on inputs where
- *      the model's normalizer aligns coarsely (the ALL-CAPS class: `CALLE` → `▁C`[0,0) +
+ *   3. **Normalizer-granular alignment is the training convention rather than a bug** — on inputs where
+ *      the model's normalizer aligns coarsely (the all-caps class: `calle` → `▁C`[0,0) +
  *      `AL`[0,3)), the native offsets match what `EncodeAsImmutableProto` fed the trainer
  *      (corpus-python/src/mailwoman_train/tokenizer.py builds BIO gold from the same proto
  *      spans). The old TS reconstruction disagreed with training on exactly this class — 102 of
@@ -56,7 +56,7 @@ describe("MailwomanTokenizer — native offsets (SP 0.2.2)", () => {
 		const text = "«12» Main St"
 		const { pieces } = tokenizer.encode(text)
 
-		// ▁Main starts at "M" (index 5), not at the preceding space — the decoder contract.
+		// ▁Main starts at "M" (index 5), not at the preceding space — the decoder interface.
 		const main = pieces.find((p) => p.piece === "▁Main")!
 		expect(text.slice(main.start, main.end)).toBe("Main")
 

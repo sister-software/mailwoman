@@ -3,8 +3,8 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   NOTE(de-shell): forwarding shim. The demo-cascade smoke eval (#524) now lives at
- *   `mailwoman/eval-harness/demo-cascade-smoke.ts` and `promotion-eval.ts` calls it IN-PROCESS. This
+ *   note(de-shell): forwarding shim. The demo-cascade smoke eval (#524) now lives at
+ *   `mailwoman/eval-harness/demo-cascade-smoke.ts` and `promotion-eval.ts` calls it IN-process. This
  *   shim keeps standalone invocation working unchanged. Output is byte-identical because the module
  *   owns every printed line.
  *

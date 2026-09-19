@@ -5,37 +5,37 @@
  *
  *   Read the Department's bulk export as a stream of WGS84 features, through ogr2ogr.
  *
- *   OGR IS BUILD TOOLING, NEVER A SERVE DEPENDENCY (SCOPE invariant 6). It converts the authority's geometry
- *   into the structure the runtime probes, and nothing downstream of this module knows GDAL exists.
+ *   OGR is build tooling, never A serve dependency (scope invariant 6). It converts the authority's geometry
+ *   into the structure the runtime probes, and nothing downstream of this module knows gdal exists.
  *
- *   THE STREAM IS WKT rather than GEOJSON, AND THAT IS A CORRECTNESS CHOICE RATHER THAN A TASTE ONE. This service
- *   encodes hole roles by ring ORIENTATION — clockwise exterior, the inverse of RFC 7946 — and puts each ring
- *   in its own `MultiPolygon` part on the features that carry holes that way. GDAL's GeoJSON writer enforces
- *   the RFC 7946 winding unconditionally: `-lco RFC7946=NO` is not a GeoJSONSeq option, and
- *   `--config OGR_ORGANIZE_POLYGONS SKIP` changes nothing. Measured on the largest feature in the country,
+ *   the stream is WKT rather than geojson, and that is A correctness choice rather than A taste one. This service
+ *   encodes hole roles by ring orientation — clockwise exterior, the inverse of RFC 7946 — and puts each ring
+ *   in its own `MultiPolygon` part on the features that carry holes that way. gdal's GeoJSON writer enforces
+ *   the RFC 7946 winding unconditionally: `-lco RFC7946=no` is not a GeoJSONSeq option, and
+ *   `--config OGR_ORGANIZE_POLYGONS skip` changes nothing. Measured on the largest feature in the country,
  *   Meath's `RA - Rural Area`: through GeoJSONSeq it arrives as 107 counter-clockwise rings totalling
  *   2,371.9 km², through CSV/WKT as the source's own 5 clockwise and 102 counter-clockwise totalling
  *   2,223.1 km² against the Department's published 2,232.1 km². The GeoJSON path has silently turned 102
  *   holes into 102 zoned areas.
  *
- *   AND THE TRANSPORT IS NOT THE SLOW HALF. Measured on this lab over the whole national export: ogr2ogr
+ *   and the transport is not the slow half. Measured on this lab over the whole national export: ogr2ogr
  *   reprojects to 224,066,621 bytes of WKT CSV in 13.2 s, and `CSVSpliterator` plus the WKT parse reads
  *   85,330 rows, 93,483 rings and 6,327,256 positions back out of it in 2.2 s.
  *
- *   THE SOURCE IS NOT IN WGS84 AND SAYING SO IS THE CHECK. The bulk export is IRENET95 / Irish Transverse
- *   Mercator — metres, easting/northing, EPSG:2157 — declared in a top-level `crs` member RFC 7946 removed
- *   from the format. GDAL honours the legacy member. a strict reader ignores it and places Ireland's zoning
+ *   the source is not IN WGS84 and saying SO is the check. The bulk export is IRENET95 / Irish Transverse
+ *   Mercator — metres, easting/northing, epsg:2157 — declared in a top-level `crs` member RFC 7946 removed
+ *   from the format. gdal honours the legacy member. a strict reader ignores it and places Ireland's zoning
  *   at latitude 735,435. So the projection is asserted against the source's declared authority code before a
  *   single feature is read, and every reprojected vertex is asserted inside the Department's own declared
  *   extent — which is the check that catches a coordinate-order mistake the projection check cannot see.
  *
- *   THE DATUM SHIFT NEEDS A GRID, AND ITS ABSENCE IS SILENT. PROJ substitutes a ballpark offset when the
+ *   the datum shift needs A grid, and its absence is silent. proj substitutes a ballpark offset when the
  *   accurate transformation is unavailable and produces coordinates that are metres wrong and
  *   indistinguishable from correct ones. {@linkcode assertDatumTransformationAvailable} asks `projinfo` what
- *   PROJ would choose and refuses a ballpark. for this source it names
+ *   proj would choose and refuses a ballpark. for this source it names
  *   `Inverse of Irish Transverse Mercator + IRENET95 to WGS 84 (1), 1 m`.
  *
- *   THE PUBLISHER'S OWN AREA COLUMN IS NOT IN THE ARCHIVE. `Shape__Area` is a service field and the export
+ *   the publisher'S own area column is not IN the archive. `Shape__Area` is a service field and the export
  *   drops it, so the area cross-check reads it from the live service instead — which makes it a genuine
  *   two-path check rather than the archive agreeing with itself. See `sdk/client.ts`.
  */
@@ -55,7 +55,7 @@ import { GZT_DECLARED_BBOX, GZT_SOURCE_EPSG } from "#vocabulary"
  */
 export interface ZoningSourceFeature {
 	/**
-	 * The authority's own `OBJECTID`, as a string.
+	 * The authority's own `objectid`, as a string.
 	 */
 	areaID: string
 	/**
@@ -103,7 +103,7 @@ export interface ZoningIngestOptions {
 	 */
 	limit?: number
 	/**
-	 * The EPSG code the source must declare. A source declaring anything else is a product change rather than a variation
+	 * The epsg code the source must declare. A source declaring anything else is a product change rather than a variation
 	 * to absorb.
 	 */
 	expectEPSG?: number
@@ -114,11 +114,11 @@ export interface ZoningIngestOptions {
 	/**
 	 * Read only the authority's feature ids in `[objectIDFrom, objectIDTo]`, inclusive.
 	 *
-	 * This is what makes a bounded build possible: h3's WASM heap cannot be reset from JavaScript, so the classification
-	 * runs one child process per range of the authority's own ids. Ranges rather than an offset because `OBJECTID` is the
+	 * This is what makes a bounded build possible: h3's wasm heap cannot be reset from JavaScript, so the classification
+	 * runs one child process per range of the authority's own ids. Ranges rather than an offset because `objectid` is the
 	 * source's stable key — a range names the same features on every run, which an offset into a result set does not.
 	 *
-	 * A NARROWER RANGE COSTS A WHOLE PASS. The source is one GeoJSON document rather than an indexed store, so ogr2ogr
+	 * A narrower range costs A whole pass. The source is one GeoJSON document rather than an indexed store, so ogr2ogr
 	 * scans all 247 MB for every range. The national set fits inside one chunk at the default bound, so that cost is not
 	 * paid on a full build.
 	 */
@@ -184,7 +184,7 @@ export const ZONING_SOURCE_FIELDS: ReadonlyArray<string> = [
 /**
  * What the source declares about itself: its authority code, its feature count and its field list.
  *
- * @throws {Error} When the export is unreadable, its declared EPSG is not `expectEPSG`, or it is missing a field the
+ * @throws {Error} When the export is unreadable, its declared epsg is not `expectEPSG`, or it is missing a field the
  *   ingest reads.
  */
 export async function readZoningSourceIdentity(options: ZoningIngestOptions): Promise<ZoningSourceIdentity> {
@@ -231,7 +231,7 @@ function whereClause(options: ZoningIngestOptions): string[] {
 }
 
 /**
- * A published value, as a string or null. An EMPTY STRING IS NOT NULL HERE for the local code, which is the one column
+ * A published value, as a string or null. An empty string is not NULL here for the local code, which is the one column
  * this layer exists to repeat: a blank one is refused by the ingest rather than stored.
  */
 function blankToNull(value: string | undefined): string | null {
@@ -317,7 +317,7 @@ export async function* readZoningFeatures(options: ZoningIngestOptions): AsyncGe
 				planFrom: blankToNull(row.plan_from),
 				planTo: blankToNull(row.plan_to),
 				currentPlan: Number(row.current_plan ?? 0),
-				// VERBATIM, and deliberately un-trimmed: `Proposed Residential ` carries a trailing space in the source, and
+				// verbatim, and deliberately un-trimmed: `Proposed Residential ` carries a trailing space in the source, and
 				// five of the 581 distinct strings collide with another only on case or that space.
 				localCode,
 				localDescription: blankToNull(row.zone_desc),
@@ -350,7 +350,7 @@ function normalizePolygons(wkt: string, label: string): MultiPolygonRings {
  * Where a build's features come from, and what the source declares about itself.
  *
  * The builder takes one of these rather than a path, which is what makes the fixture rung possible: hand-built geometry
- * with no network and no GDAL still exercises the whole database half — the domain checks, the ring-role resolution,
+ * with no network and no gdal still exercises the whole database half — the domain checks, the ring-role resolution,
  * the cell classification, the coverage rows, the manifest and the seal. A fixture rung that could only run through
  * ogr2ogr would test the conversion on the machines that have it and nothing at all on the ones that do not.
  */
@@ -379,7 +379,7 @@ export async function createExportFeatureSource(options: ExportSourceOptions): P
 	const identity = await readZoningSourceIdentity(options)
 
 	return {
-		// A RANGE's or an authority's own count is supplied by the caller, because `ogrinfo` reports a layer's total and
+		// A range's or an authority's own count is supplied by the caller, because `ogrinfo` reports a layer's total and
 		// nothing narrower.
 		declaredFeatureCount: declaredFeatureCount({
 			declared: options.declaredFeatureCount,

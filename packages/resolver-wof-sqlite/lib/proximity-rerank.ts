@@ -8,7 +8,7 @@
  *   filter. Byte-identical to plain population order when no bias is passed.
  *
  *   This lives in its own platform-free module because it has to run identically in two places: the Node candidate
- *   reader and the browser byte-range twin. That is the #861 server↔demo parity contract and the second thing
+ *   reader and the browser byte-range twin. That is the #861 server↔demo parity interface and the second thing
  *   here held by construction rather than by comment (`primary-preference.ts` was the first). Constants alone were not
  *   enough — the two copies agreed on every literal and still diverged on which field the population term reads and on
  *   whether the combined value is written back, which is the half that actually decides the answer.
@@ -18,7 +18,7 @@
  *   1. The population base is `prominence ?? score`, not `score`. `prominence` carries the bounded cross-country
  *      primary preference, so reading raw score lets a coincidental foreign alias ride population back over a primary
  *      whenever a viewport hint happens to be present.
- *   2. The combined value is PERSISTED into `prominence`. The resolver walk re-sorts by `prominence ?? score`, so a
+ *   2. The combined value is persisted into `prominence`. The resolver walk re-sorts by `prominence ?? score`, so a
  *      caller that only returns the array in bias order has its ordering silently discarded downstream.
  */
 
@@ -43,7 +43,7 @@ export const POP_SCALE_LOG10 = 6
 /**
  * Distance at which the nearness term halves.
  *
- * SHARPER than the FTS reader's 100 km on purpose: the candidate backend's score is log-population ALONE, with no bm25
+ * Sharper than the FTS reader's 100 km on purpose: the candidate backend's score is log-population alone, with no bm25
  * document term, so the population signal is weaker relative to the bias and a gentle 100 km decay let a 230 km-distant
  * alias-exact township ("Paris Township", OH) edge out a global city ("Paris", FR) from a nearby view. At ~30 km the
  * boost reaches only candidates the user is actually looking at: an in-view namesake still wins (Dublin, OH from an

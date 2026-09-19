@@ -5,31 +5,31 @@
  *
  *   The negative-evidence route, observation-only: where the compiled artifact asserts that the
  *   answered category affords an activity and the coverage layer surveyed the cell the search was centred
- *   on, an answer holding nothing in that cell may be recorded as an ABSENCE — a coverage-qualified
+ *   on, an answer holding nothing in that cell may be recorded as an absence — a coverage-qualified
  *   statement that the thing asked for is not there, carrying the assertion's provenance and the coverage
  *   cell's basis together.
  *
- *   THE ROUTE READS. IT NEVER ANSWERS. It takes a finished {@linkcode POIIntentOutcome} and returns a
+ *   the route reads. IT never answers. It takes a finished {@linkcode POIIntentOutcome} and returns a
  *   record beside it. Nothing here is wired into the pipeline, no result is added, removed, re-ordered or
  *   suppressed, and no abstain is reached or avoided because of it. The pipeline that produced the outcome
  *   is byte-identical to the pipeline that runs with this module unloaded, which is what makes the
  *   inertness receipt a statement about construction rather than about a measurement.
  *
- *   BOTH HALVES OF THE CONJUNCTION ARE required, and each has its own refusal. The artifact half
+ *   both halves OF the conjunction are required, and each has its own refusal. The artifact half
  *   answers "what does this category afford, and on whose authority" — a category no concept both affords
  *   with and maps to is not a category this route can say anything about. The coverage half answers "may a
  *   miss here be read as absence" — {@linkcode supportsExclusion} over the cell's own basis, never over
  *   `completeness` alone, because `source_present` records that the source returned rows and says nothing
- *   about what it missed. Outside exclusion-grade coverage the route is silent: a `[]` there is silence rather than absence, and that asymmetry is the whole contract.
+ *   about what it missed. Outside exclusion-grade coverage the route is silent: a `[]` there is silence rather than absence, and that asymmetry is the whole interface.
  *
- *   A COVERAGE LAYER IS CLASS-SCOPED, AND THE TABLE DOES NOT SAY SO. `layer_coverage` carries a
+ *   A coverage layer is class-scoped, and the table does not SAY SO. `layer_coverage` carries a
  *   completeness per cell and no class, so a completeness measured over pharmacies would license an
  *   absence claim about cafés if nothing stopped it. What stops it is read from the artifact rather than
  *   declared: the layer's own `poi_category_codes` names every class it holds, and the route refuses
  *   unless that set is exactly one class and the answered category is it. A layer holding many classes has
  *   a pooled completeness that cannot support a per-class exclusion, and saying so is the refusal.
  *
- *   A SEARCHED UNION MUST BE COVERED WHOLE. The POI branch searches every category the subject reaches, so
+ *   A searched union must be covered whole. The POI branch searches every category the subject reaches, so
  *   an activity afforded by two establishment classes puts two classes in one search. The layer surveys
  *   one, and its completeness says nothing about the other — so "no establishment affording this activity
  *   is here" would be a claim about premises the survey never looked for, which is the unsupported
@@ -37,16 +37,16 @@
  *   same reading as the single-class case: the searched set has to be the surveyed class. Widening the
  *   layer to survey the second class is what would make such a cell decidable again.
  *
- *   THE COVERAGE RESOLUTION IS DERIVED rather than ASSUMED. `layer_manifest.spine_keys.h3.resolution` states the
- *   resolution the layer's ROWS are keyed at (res 9 for `poi.db`); the coverage cells are coarser (res 6).
+ *   the coverage resolution is derived rather than assumed. `layer_manifest.spine_keys.h3.resolution` states the
+ *   resolution the layer's rows are keyed at (res 9 for `poi.db`); the coverage cells are coarser (res 6).
  *   A reader that probed coverage at the manifest's resolution would miss every cell and read the misses
  *   as unsurveyed — a false negative shaped exactly like the real absence this route exists to detect. So
  *   the resolution is recovered from the stored cells themselves: a short cell sets every digit past its
- *   own resolution to `7`, which no valid digit is, so exactly one resolution expands it into a valid
+ *   own resolution to `7`. It no valid digit is. Therefore, exactly one resolution expands it into a valid
  *   index. Measured over the pilot layer: 290 of 290 cells expand at resolution 6 and at no other.
  *
- *   WHERE THE OBSERVATION GOES. Through the one carrier both routes share — `observation-marker.ts` turns
- *   an absence observation into a `QueryIntentMarker`, the additive advisory whose contract states that a
+ *   where the observation goes. Through the one carrier both routes share — `observation-marker.ts` turns
+ *   an absence observation into a `QueryIntentMarker`, the additive advisory whose interface states that a
  *   marker never changes which answer wins. A second private path from here to the caller would be the
  *   duplication that carrier exists to prevent.
  *
@@ -168,7 +168,7 @@ export interface AbsenceObservation {
 }
 
 /**
- * Why a query produced no absence observation. Every one of these is a SILENCE the route owes an account of — an
+ * Why a query produced no absence observation. Every one of these is a silence the route owes an account of — an
  * unnamed silence and a silence for the right reason read identically on a receipt, and the control rows are graded on
  * exactly which one occurred.
  */
@@ -325,12 +325,12 @@ function indexAffordingCategories(model: CompiledGeographicModel): Map<string, A
  * The resolution a layer's coverage cells were captured at, recovered from the cells themselves.
  *
  * A short cell does not name its own resolution, so it cannot simply be read. It can be recovered: the digits past a
- * cell's own resolution are all `7`, which is not a valid digit, so exactly one resolution expands a given short cell
- * into a valid index. Every stored cell is probed rather than a sample of them, and a table whose cells disagree throws
- * — a mixed-resolution coverage table has no single resolution to probe at, and picking one would silently answer
- * "unsurveyed" for every cell at the other.
+ * cell's own resolution are all `7`. It is not a valid digit. Therefore, exactly one resolution expands a given short
+ * cell into a valid index. Every stored cell is probed rather than a sample of them, and a table whose cells disagree
+ * throws — a mixed-resolution coverage table has no single resolution to probe at, and picking one would silently
+ * answer "unsurveyed" for every cell at the other.
  *
- * THE IMPLEMENTATION LIVES IN `@mailwoman/spatial` because a second layer reader needed it and the two failure modes it
+ * The implementation lives IN `@mailwoman/spatial` because a second layer reader needed it and the two failure modes it
  * refuses are silent in a copy. This name and its message prefix are kept so callers and their receipts read the same.
  *
  * @throws {Error} When the table is empty, when a cell expands at no resolution, or when the cells disagree.

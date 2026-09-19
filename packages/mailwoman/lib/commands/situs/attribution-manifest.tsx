@@ -3,16 +3,16 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   `mailwoman situs attribution-manifest` — regenerate a COMPLETE situs attribution manifest from
+ *   `mailwoman situs attribution-manifest` — regenerate a complete situs attribution manifest from
  *   the address-point databases on disk. The national build driver (`mailwoman situs build`) only
  *   records the states it built in a given run, so after incremental / resumed builds its
- *   `ATTRIBUTION.json` undercounts. This reads every `address-points-us-*.db` in the directory and
+ *   `attribution.json` undercounts. This reads every `address-points-us-*.db` in the directory and
  *   aggregates the per-row `source` (`overture:<dataset>`) provenance into a full ledger — the
  *   document we owe consumers for the OpenAddresses attribution obligation (NAD is US public
  *   domain. the named OA sources want credit).
  *
  *   This regenerates a small JSON manifest from read-only databases (it builds no large DB), so — as in
- *   the original script — `ATTRIBUTION.json` is written directly in place. Per-database progress
+ *   the original script — `attribution.json` is written directly in place. Per-database progress
  *   streams to stderr. the summary lands on stdout.
  */
 
@@ -28,7 +28,7 @@ import { Globerator } from "spliterator/node/fs"
 import { type CommandSpec, CommandTaskResult, type CommandComponent, useCommandTask } from "#cli-kit"
 
 /**
- * Native command-line contract consumed by the filesystem command router.
+ * Native command-line interface consumed by the filesystem command router.
  */
 export const spec = {
 	name: "attribution-manifest",

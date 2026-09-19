@@ -7,7 +7,7 @@
 #   1. Does `load_anchor_lookup` survive the v2 artifact at scale? 1.32 GB resident / 1.37 GB peak
 #      measured locally — the loader pays it once per worker at init. An OOM or a silent fallback
 #      to the pilot lookup shows up in the first minute.
-#   2. Does the startup census DRAW the GB/NL/ES/IT sources, and do GB anchor spans PAINT at
+#   2. Does the startup census draw the GB/NL/ES/IT sources, and do GB anchor spans paint at
 #      runtime? (The v383 gap: a truncated census log hid a source drawing zero rows. the #1467
 #      root cause was a slot that never saw gradient. Zero painted GB rows here = the defect
 #      repeating, silently.)
@@ -19,7 +19,7 @@
 # Deliberate deviations from v4.2.0-base-anchor-v2.yaml (curves are not directly comparable):
 #   * `warmup_steps: 200` instead of 1000 — half-warmup probes read as stalls.
 #   * cosine fully anneals inside the probe. the full run is 3.3% through its cosine at step 2,000.
-#   * `eval_every_steps: 250` — the point is the SHAPE of the curve rather than the endpoint.
+#   * `eval_every_steps: 250` — the point is the shape of the curve rather than the endpoint.
 #   * `save_every_steps: 1000` — saves twice, insurance against a save-path crash surfacing at
 #     step 5,000 of the real run.
 # Everything else is byte-identical to v4.2.0-base-anchor-v2.yaml. If you change that file, change
@@ -27,7 +27,7 @@
 #
 # Launch: cd corpus-python && modal run -d -m launch.train_remote --config v4.2.0-base-anchor-v2-2k.yaml --resume none
 data:
-  # v0.17.0-batch = v0.15.0-venue + TWO overlay parquet files (manifest chain assembled 2026-08-05):
+  # v0.17.0-batch = v0.15.0-venue + two overlay parquet files (manifest chain assembled 2026-08-05):
   #   part-sub-venue.parquet  120,000 rows  source=synth-sub-venue  (#1486 — designator x per-region identifier)
   #   part-gb.parquet         800,000 rows  source=synth-gb         (v0.14.0-gb's recipe output, HM Land Registry PPD OGL v3.0)
   corpus_dir: /data/corpus/versioned/v0.17.0-batch/corpus-v0.17.0-batch
@@ -70,7 +70,7 @@ data:
     usgov-hrsa-fqhc: 2.0
     usgov-imls-pls: 2.0
     usgov-nad: 1.0
-    state-ia-contractors: 2.0
+    state-ia-builders: 2.0
     state-tx-notaries: 1.5
     state-ny-notaries: 2.0
     deepseek-kryptonite: 3.0
@@ -93,9 +93,9 @@ data:
     synth-fragment: 6.0
     synth-fr-fragment: 12.0
     synth-no-fragment: 12.0
-    # ---- DECISIONS RESOLVED 2026-08-05 (both sources ride the v0.17.0-batch overlay above) ----
+    # ---- decisions resolved 2026-08-05 (both sources ride the v0.17.0-batch overlay above) ----
     # synth-gb at 6.0: operator ruled "do it all to make the most of the cost"; the measured risk
-    # (32.8% B-dependent_locality mass skewing the tag, seen in the v4.1.x arc UNDER the 0.3 class
+    # (32.8% B-dependent_locality mass skewing the tag, seen in the v4.1.x arc under the 0.3 class
     # weight this run corrects to 1.0) is exactly what the 2k probe reads before the 60k spend —
     # per-tag dep-loc emission + the US/FR stability boards are the kill switch. Weight 6.0 matches
     # the other single-country synth sources rather than the 12.0 saturation tier.
@@ -112,7 +112,7 @@ data:
   augment_glue_prob: 0.25
   augment_ordinal_prob: 0.3
   augment_punct_drop_prob: 0.3
-  # THE ONE NAMED DELTA. 2,286,339 keys / 2,214,803 letter-containing, vs the pilot's 67,708 / 0.
+  # the one named delta. 2,286,339 keys / 2,214,803 letter-containing, vs the pilot's 67,708 / 0.
   # Rebuild with: mailwoman gazetteer build anchor-lookup --include DE,FR,US,GB,NL,ES,IT --output <path>
   anchor_lookup_path: /data/anchor/pilot-anchor-lookup-v2-2026-08-05.json
   gazetteer_lexicon_path: /data/gazetteer/anchor-lexicon-v1.json
@@ -120,7 +120,7 @@ data:
   gazetteer_choreography: true
   affix_relabel_lexicon_path: /data/gazetteer/affix-relabel-lexicon-v1.json
   # Already `shaped` in v4.0.1 — restated because it is required here. The shaped painter is what
-  # makes the widened lookup reachable: it detects postcode SHAPES over the raw text (so a GB unit
+  # makes the widened lookup reachable: it detects postcode shapes over the raw text (so a GB unit
   # arrives as one span with its space) where the gold path only ever painted labeled postcode spans.
   anchor_paint_mode: shaped
   anchor_value_mode: posterior_latlon

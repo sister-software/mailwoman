@@ -4,14 +4,14 @@
  * @author Teffen Ellis, et al.
  *
  *   The shared ancestor-lineage walk over the WOF `ancestors` table — one place's containment chain
- *   joined with `spr` for canonical names + centroids, ordered NEAREST-FIRST (deepest placetype
+ *   joined with `spr` for canonical names + centroids, ordered nearest-first (deepest placetype
  *   first, country last).
  *
  *   Factored out of `WOFSQLitePlaceLookup.ancestors()` (#404) so the reverse geocoder (`reverse.ts`,
  *   #484) reuses the same walk instead of growing a second one. The placetype-specificity ordering
- *   lives here as `PLACETYPE_DEPTH` — a single TS map instead of the previous SQL CASE, and
+ *   lives here as `PLACETYPE_DEPTH` — a single TS map instead of the previous SQL case, and
  *   extended below `localadmin` (locality/borough/neighbourhood/microhood now rank correctly
- *   instead of sorting last. forward resolution rarely saw those as ANCESTOR placetypes, reverse
+ *   instead of sorting last. forward resolution rarely saw those as ancestor placetypes, reverse
  *   geocoding always does).
  */
 

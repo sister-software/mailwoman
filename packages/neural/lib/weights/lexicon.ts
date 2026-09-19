@@ -5,7 +5,7 @@
  *
  *   The evidence-bundle lexicon families and the resolver that answers which generation of one a weights package
  *   ships, checked against the generation the model card says training painted. Split out of `weights.ts`, which had
- *   reached the 1,000-line ceiling: the lexicon contract is its own concern — a family table, a version-mismatch
+ *   reached the 1,000-line ceiling: the lexicon interface is its own concern — a family table, a version-mismatch
  *   error, and a resolution ladder — and `resolveWeights` calls it as one step among a dozen.
  */
 
@@ -17,16 +17,16 @@ import { Globerator } from "spliterator/node/fs"
 import { readRequiredChannels } from "#weights/channels"
 
 /**
- * The evidence-bundle lexicon families, and the LEGACY filename each resolved by before the card named its own (#1510).
+ * The evidence-bundle lexicon families, and the legacy filename each resolved by before the card named its own (#1510).
  *
- * WHY THIS EXISTS. `resolveWeights` used to probe two literal filenames — `street-type-lexicon-v3.json` and
- * `locality-surface-lexicon-v6.json` — while both the shipped v4.0.1 recipe and the v4.2.0 candidate TRAIN against
+ * Why this exists. `resolveWeights` used to probe two literal filenames — `street-type-lexicon-v3.json` and
+ * `locality-surface-lexicon-v6.json` — while both the shipped v4.0.1 recipe and the v4.2.0 candidate train against
  * locality-surface **v7** (`/data/gazetteer/locality-surface-lexicon-v7.json`). Serving therefore fed the channel a
  * different lexicon generation than training painted, and nothing said so: the v6 file exists, the channel loads, the
- * parse works. The Run B check had to stage v7's CONTENT under the v6 FILENAME to score the candidate faithfully — a
- * workaround that only exists because the filename rather than the card, was the contract.
+ * parse works. The Run B check had to stage v7's content under the v6 filename to score the candidate faithfully — a
+ * workaround that only exists because the filename rather than the card, was the interface.
  *
- * The contract is now the card: `requires.<channel>.lexicon` NAMES the artifact the model trained against, and
+ * The interface is now the card: `requires.<channel>.lexicon` names the artifact the model trained against, and
  * {@linkcode resolveEvidenceLexicon} resolves that. The legacy filenames stay as the back-compat answer for a card that
  * declares no version — every bundle published before 2026-08-06 — and taking that path warns once.
  */
@@ -38,7 +38,7 @@ export const EVIDENCE_LEXICON_FAMILIES = {
 export type EvidenceLexiconChannel = keyof typeof EVIDENCE_LEXICON_FAMILIES
 
 /**
- * A train/serve lexicon MISMATCH (#1510): the card names one generation of an evidence lexicon and the weights package
+ * A train/serve lexicon mismatch (#1510): the card names one generation of an evidence lexicon and the weights package
  * ships a different one. Thrown at load time, from {@linkcode resolveWeights}, naming both versions — the whole point is
  * that this can never again be a silent downgrade.
  */
@@ -70,14 +70,14 @@ async function shippedLexiconGenerations(dir: PathBuilder, prefix: string): Prom
 }
 
 /**
- * Resolve one evidence-bundle lexicon for a weights package, from the CARD's declaration rather than a hard-coded
+ * Resolve one evidence-bundle lexicon for a weights package, from the card's declaration rather than a hard-coded
  * filename (#1510). The ladder, and why each rung is shaped the way it is:
  *
- * 1. The card NAMES a generation and the package ships that exact file → resolve it. The train/serve congruent case.
- * 2. The card NAMES a generation, the package ships none of that family → `undefined`. Absence is absence: a pre-bundle
+ * 1. The card names a generation and the package ships that exact file → resolve it. The train/serve congruent case.
+ * 2. The card names a generation, the package ships none of that family → `undefined`. Absence is absence: a pre-bundle
  *    package simply doesn't carry the channel, and `createScorer` already fails closed if the card also declares it
  *    required. (`neural-weights-base-latn` is the live example — it symlinks en-us's card and ships no lexicons.)
- * 3. The card NAMES a generation, the package ships a different one → throw. This is the #1510 defect exactly, and it is
+ * 3. The card names a generation, the package ships a different one → throw. This is the #1510 defect exactly, and it is
  *    the only rung where guessing would be a silent downgrade rather than a plain absence.
  * 4. The card names nothing → the legacy filename, with a one-time warning. Every bundle published before 2026-08-06.
  *

@@ -6,7 +6,7 @@
 
 ## Problem
 
-The docs serve three audiences — developers, the managers who pay, and investors — but are organized as one undifferentiated tree of ~400 published pages. The overlap between `concepts/` and `understanding/` was merged in navigation but never in content. `plan/` mixes active contracts, contributor runbooks, and dead history. The trial path a stranger takes was verified broken (no data-download command; the photon drop-in crashed cold). The prose reads machine-generated in places, and there is no enforced writing standard.
+The docs serve three audiences — developers, the managers who pay, and investors — but are organized as one undifferentiated tree of ~400 published pages. The overlap between `concepts/` and `understanding/` was merged in navigation but never in content. `plan/` mixes active interfaces, contributor runbooks, and dead history. The trial path a stranger takes was verified broken (no data-download command; the photon drop-in crashed cold). The prose reads machine-generated in places, and there is no enforced writing standard.
 
 ## Decisions (operator-approved)
 
@@ -65,10 +65,10 @@ Working hypothesis the derivation tests (not a foregone conclusion):
 
 - **Diátaxis** classifies every page: `tutorial`, `guide` (how-to), `reference`, `explanation`, plus `landing` (Product/Solutions/About) and `evidence` (benchmarks). One page, one role, declared in frontmatter and enforced in CI.
 - **Register per role.** Tutorials and how-to guides use the conversational-colleague voice ("Let's say you have a CSV of customer addresses…") — second person, starts-and-destinations, every paragraph moves the reader toward their goal. Reference pages use the controlled register (STE100-derived): one instruction per sentence, active voice, no rhetorical language, one term per concept. Explanations sit between: plain narrative prose, analog-first (rule-world concept before the statistical term), no hype. Landing pages: short declarative claims, every number earned.
-- **Terminology.** One canonical term per concept, seeded from UPU S42 / ISO 19100 where they match the codebase's contract vocabulary (delivery point, postcode, address component, coordinate reference system…). The glossary (327 terms) is the term registry; new docs link terms rather than redefine them.
+- **Terminology.** One canonical term per concept, seeded from UPU S42 / ISO 19100 where they match the codebase's interface vocabulary (delivery point, postcode, address component, coordinate reference system…). The glossary (327 terms) is the term registry; new docs link terms rather than redefine them.
 - **Mechanical enforcement: Vale.** `.vale.ini` + a Mailwoman style package in-repo. Rules: filler and marketing intensifiers, the direct-word cluster, anthropomorphism (the parser "thinks"), weasel quantities outside deliberately qualitative prose, contrastive-negation stock phrases ("not X, it's Y"), heading case, and canonical-term substitutions. Vale runs in the docs CI job on changed files; the whole new corpus lints clean at launch.
 - **De-slop pass.** Every drafted page is audited for machine-writing tells (inflated symbolism, rule-of-three padding, vague attribution, filler phrases) before review. Numbers appear only with a source; claims a reviewer could not check do not ship.
-- **Frontmatter contract:** `role` (required, enum above) · `audience` (required on landing/solution pages) · `verified-with` (required on tutorial/guide — the version the examples ran against) · `source-of-truth` (required on reference — the code path or generator that owns the contract). The structure check script is rewritten to enforce this on every published page (no more thin 28-of-458 coverage).
+- **Frontmatter interface:** `role` (required, enum above) · `audience` (required on landing/solution pages) · `verified-with` (required on tutorial/guide — the version the examples ran against) · `source-of-truth` (required on reference — the code path or generator that owns the interface). The structure check script is rewritten to enforce this on every published page (no more thin 28-of-458 coverage).
 
 ### Register rules for competitive and strategy content (house rules, binding)
 
@@ -83,16 +83,16 @@ Working hypothesis the derivation tests (not a foregone conclusion):
 
 - **Docusaurus:** keep the single docs plugin instance; the content tree under `docs/articles/` is replaced wholesale by the new tree. Top nav becomes the six doors + Demo CTA + GitHub. `DocsSubHeader` sections/sidebars are regenerated for the new doors (`sections.ts` and `sidebars.ts` move together in every PR). Front page (`src/pages/index.tsx`) rewritten to fork by audience. Footer rebuilt.
 - **Publicness by construction.** The path-shaped build-exclusion globs are retired. `docs/articles/` contains only publishable pages. Internal material moves out of the published tree entirely:
-  - Active internal contracts and runbooks (`plan/SCOPE`, `plan/reference/*` incl. SCHEMA, layer-contract, poi-layer-runbook, `CONTRIBUTING_MODEL_WORK`, operations docs) → `docs/engineering/` (in-repo, unpublished). AGENTS.md and memory pointers updated. These serve repo contributors rather than site readers; the site's Contributing page points at GitHub.
+  - Active internal interfaces and runbooks (`plan/SCOPE`, `plan/reference/*` incl. SCHEMA, layer-interface, poi-layer-runbook, `CONTRIBUTING_MODEL_WORK`, operations docs) → `docs/engineering/` (in-repo, unpublished). AGENTS.md and memory pointers updated. These serve repo contributors rather than site readers; the site's Contributing page points at GitHub.
   - Raw evals, retrospectives, reviews, phase plans, dated specs → `docs/records/` (in-repo, unpublished) or deleted where git history suffices. The eval ledger (`evals/scores-by-version.json`) stays at repo root, untouched.
-- **Structure check** (`docs/scripts/check-docs-structure.ts`): rewritten for the new frontmatter contract; orphan detection and duplicate-title checks retained; the role-required allowlist becomes "every page," not eight named paths.
+- **Structure check** (`docs/scripts/check-docs-structure.ts`): rewritten for the new frontmatter interface; orphan detection and duplicate-title checks retained; the role-required allowlist becomes "every page," not eight named paths.
 - **Search:** Algolia index re-crawls after deploy; accept the stale-window. No redirects (decision 4); `documentation-map`'s URL-stability promise disappears with the page.
 - **Demo pipeline untouched:** the demo-assets plugin, webpack aliases, R2 asset loading, and the demo page itself are out of scope except for nav/link updates.
 - **Field notes:** blog instance untouched.
 
 ## CLI workstream (in scope, docs-driven)
 
-The tutorials define the contract; the commands make the tutorials true:
+The tutorials define the interface; the commands make the tutorials true:
 
 1. **Data acquisition:** a documented, verified download path for the datasets each tutorial needs (working name `mailwoman data pull <bundle>`; exact shape decided in the plan after surveying the existing gazetteer/coverage CLI surface). Includes the resolver database the drop-in servers need.
 2. **Drop-in serve paths:** `npx @mailwoman/photon serve` (and siblings) must start cold from a documented command sequence — cold-start testing found this broken.
@@ -103,7 +103,7 @@ The tutorials define the contract; the commands make the tutorials true:
 
 - A stranger's 10-minute trial passes cold on a clean machine: install → first parse → first geocode, exactly as the Get-started pages state.
 - The US-dataset and planet-build tutorials have been executed as written; their pages carry measured numbers.
-- `yarn workspace @mailwoman/docs build` green (broken links/anchors throw); structure check green under the new contract; Vale clean over the whole new corpus.
+- `yarn workspace @mailwoman/docs build` green (broken links/anchors throw); structure check green under the new interface; Vale clean over the whole new corpus.
 - No internal material is published: `docs/articles/` contains only the new tree; engineering/records trees live outside the content root.
 - Each audience reaches its door from the front page in one click; every Solutions page ends at try-it + pricing.
 - The three drop-in serve commands start cold as documented.

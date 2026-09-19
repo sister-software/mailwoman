@@ -5,7 +5,7 @@
  *
  *   The structural verify step for admin-gazetteer builds — run before sealing/promoting, refuse the
  *   swap on any failure. Row/count checks alone are provably insufficient: the 2026-07-07 #1015 rebuild
- *   passed a rows+countries check while ~95 countries lost their country/region NODES (#1023/#1026 —
+ *   passed a rows+countries check while ~95 countries lost their country/region nodes (#1023/#1026 —
  *   Tbilisi orphaned, "City, Country" scoping broken). Each check here catches a failure class we
  *   actually shipped once:
  *
@@ -226,7 +226,7 @@ export async function verifyReversePanel(adminDBPath: string): Promise<VerifyRes
 }
 
 /**
- * Generate a baseline from an existing DB — the DELIBERATE-update path (review the diff of `verify-baseline.ts` like
+ * Generate a baseline from an existing DB — the deliberate-update path (review the diff of `verify-baseline.ts` like
  * code). Requires `country` for every country that has one. adds `region` where regions exist.
  */
 export function generateBaseline<DB>(db: DatabaseClient<DB>): VerifyBaseline {

@@ -3,20 +3,20 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   `mailwoman gazetteer conventions` — build the **convention asset** (#290, Direction E) FROM
- *   SOURCE: compile the authored convention profiles in `data/conventions/conventions.json` into a
+ *   `mailwoman gazetteer conventions` — build the **convention asset** (#290, Direction E) from
+ *   source: compile the authored convention profiles in `data/conventions/conventions.json` into a
  *   read-only, provenance-stamped sqlite asset (`address_convention` keyed by WOF polygon id + a
  *   `meta` row), the same distributable-asset shape as `postcode-locality-intl.db`.
  *
  *   The authored JSON is the human-editable source of truth (diffable, code-reviewed); the `.db` is
- *   the queryable, immutable compiled form the resolver reads ON DEMAND (one indexed lookup per id rather than the whole table paged into memory). Per the provenance-first design value: every row
+ *   the queryable, immutable compiled form the resolver reads on demand (one indexed lookup per id rather than the whole table paged into memory). Per the provenance-first design value: every row
  *   carries `source` provenance, and a convention that names a strategy this build doesn't register
  *   is rejected here, loudly, rather than silently no-opping at runtime.
  *
  *   Authored entry shape (each element of the JSON array): { "wof_id": 85633111, "source": "…why this
  *   row exists…", "convention": { …Convention… } }
  *
- *   The build writes the asset DIRECTLY to `--output` (the original `scripts/build-conventions.ts`
+ *   The build writes the asset directly to `--output` (the original `scripts/build-conventions.ts`
  *   behavior); it then VACUUMs + integrity-checks before returning. Progress is quiet — only the
  *   final summary lands on stdout.
  */
@@ -24,8 +24,8 @@
 import { readLocalJSONFile } from "@mailwoman/core/fs/readers"
 import { stringifyJSON } from "@mailwoman/core/json"
 import { CommandError } from "@mailwoman/core/scripting/command"
-// resolver-wof-sqlite is an OPTIONAL peer dep of mailwoman. its runtime value `BUILTIN_STRATEGY_NAMES`
-// is imported DYNAMICALLY inside the command (the gazetteer-pipeline convention) so merely loading the
+// resolver-wof-sqlite is an optional peer dep of mailwoman. its runtime value `BUILTIN_STRATEGY_NAMES`
+// is imported dynamically inside the command (the gazetteer-pipeline convention) so merely loading the
 // commands (e.g. `mailwoman --help`) doesn't fault when the peer is absent. `Convention` is type-only.
 import type { Convention } from "@mailwoman/resolver-wof-sqlite"
 import {
@@ -39,7 +39,7 @@ import { resolvePath } from "path-ts"
 import { type CommandSpec, CommandTaskResult, type CommandComponent, useCommandTask } from "#cli-kit"
 
 /**
- * Native command-line contract consumed by the filesystem command router.
+ * Native command-line interface consumed by the filesystem command router.
  */
 export const spec = {
 	name: "conventions",
@@ -59,7 +59,7 @@ interface AuthoredConvention {
 const WEIGHT_KEYS = new Set(["pc", "name", "pop"])
 
 /**
- * Reject malformed or code-incoherent conventions at BUILD time (loud), so the runtime never has to.
+ * Reject malformed or code-incoherent conventions at build time (loud), so the runtime never has to.
  */
 function validate(rows: AuthoredConvention[], known: Set<string>): void {
 	const errors: string[] = []

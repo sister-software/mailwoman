@@ -4,7 +4,7 @@ Plumbing for [Mailwoman](https://mailwoman.ai)'s HTTP surfaces — a node `serve
 OpenAPI emit helpers shared by the drop-in packages ([`@mailwoman/libpostal`](../libpostal),
 [`@mailwoman/photon`](../photon), [`@mailwoman/nominatim`](../nominatim)).
 
-**Plumbing only.** Domain schemas, routes, and wire contracts live with the package that owns them — this
+**Plumbing only.** Domain schemas, routes, and wire interfaces live with the package that owns them — this
 package never grows a `ParseRequestSchema` or a `/parse` handler of its own.
 
 ```ts

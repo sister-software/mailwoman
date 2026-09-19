@@ -3,7 +3,7 @@
 2026-07-20. Operator + Claude. **Reworked 2026-07-30** (operator: "way old") — the design held;
 §0 records what ten days changed around it. Phase sizing and §8's counsel checks unchanged. Extends
 `docs/superpowers/specs/2026-07-18-spatial-layers-and-poi-design.md` (the Phase-1 spatial-layer
-spec); its §7 decisions bind here — the layer contract, the shipped/build-local/private tiers,
+spec); its §7 decisions bind here — the layer interface, the shipped/build-local/private tiers,
 the meaning-of-zero rule, "ship the builder rather than ODbL data," the agent-as-decoder framing, and
 the thin MCP toolset. Companion integration notes:
 `scratchpad/poi-record-match-integration.md` (record/match boundaries for the provider registry and
@@ -11,7 +11,7 @@ CRM layers). Nexus salvage source surveyed read-only this session:
 `/home/lab/Projects/isp-nexus/universe` (AGPL, operator is sole author, relicense-by-copy
 approved per the Phase-1 salvage rule).
 
-Phase 1 is substantially landed already: `core/layers/` (the contract), `@mailwoman/spatial/h3`
+Phase 1 is substantially landed already: `core/layers/` (the interface), `@mailwoman/spatial/h3`
 (the 48-bit packing), `resolver-wof-sqlite/poi-schema.ts` + `mailwoman/gazetteer-pipeline/poi/`
 (poi.db), `@mailwoman/poi-taxonomy`, and `mcp/` (the thin tool surface) all exist in-tree. This
 spec builds the BDC vertical on that substrate. It is a design rather than a plan — each phase gets its
@@ -102,7 +102,7 @@ Row grain (verified against Nexus `sync/fcc/bdc/block-aggregator.ts:47`,
 **Spine keys.** `wof_id` (block-centroid PIP against the gazetteer at build time), `h3` (res-9
 integer short cell of the block centroid). `address_id` is not a spine key here — BDC claims are
 block-grained rather than address-grained; the `location_id` (BSL) that would make them address-grained
-is licensed and unresolvable (§2.2). This is a deliberate contract choice: bdc.db rows key at
+is licensed and unresolvable (§2.2). This is a deliberate interface choice: bdc.db rows key at
 block resolution, and any per-address answer is an inference across the block, flagged as such.
 
 **Tier.** Shipped candidate — the source is public domain. Open cost, flagged (§7): a full
@@ -173,7 +173,7 @@ exists in-tree** — `tiger/sdk/schema.ts` defines `TIGERBlockTable` (`populatio
 `housing_unit_count`, `block_group_code`, `block_code`, land area) and `PLBlockTable` (2020 P.L.
 94-171). The Nexus "TIGER block model with population/housing/area" salvage row is therefore
 **mostly redundant** — do not re-port it; reuse `@mailwoman/tiger`. The only in fact new piece
-is exposing the block table as a demographics layer conforming to the layer contract (a thin
+is exposing the block table as a demographics layer conforming to the layer interface (a thin
 manifest/coverage wrapper + a res-9 h3 column), so `market_size` reads it through the same
 `@mailwoman/core/layers` boundary as everything else. Census is public domain — shipped tier, sealed.
 
@@ -200,7 +200,7 @@ extract, ingest) exactly like `ban/` and `osm/`, so one new workspace is justifi
 **`@mailwoman/bdc`** (new workspace, mirrors `ban`/`osm`): `bdc/sdk` (the public-API client,
 file listing, vintage resolution, CSV parsing, ingest to the staging DB), the bdc.db Kysely
 schema module (`createBDCTable` co-located with the typed interface, intersecting
-`LayerContractDatabase`), the layer reader, and the thin plausibility scorer. Everything else
+`layerschemadatabase`), the layer reader, and the thin plausibility scorer. Everything else
 reuses existing packages.
 
 The three primitives, and where each lives:
@@ -315,7 +315,7 @@ where one exists.
   short cell as a hex string; mailwoman packs it to an **integer** for the clustered B-tree — use
   the mailwoman form, never the hex string.
 - **TIGER block model with population/housing/area** — `@mailwoman/tiger` already has
-  `TIGERBlockTable` + `PLBlockTable` (§2.4). Reuse it; the only new work is the layer-contract
+  `TIGERBlockTable` + `PLBlockTable` (§2.4). Reuse it; the only new work is the layer-interface
   wrapper. (Block-intersection _queries_ may be new; add them to `@mailwoman/tiger` or compose
   from `@mailwoman/spatial` — do not fork a second block model.)
 
@@ -369,12 +369,12 @@ this spec is reviewed.
 
 Scope: the `@mailwoman/bdc` workspace skeleton; salvage the BDC client + vintage/file listing +
 CSV parser (`enum`→const, env re-home); the bdc.db Kysely schema intersecting
-`LayerContractDatabase`; the fabric-without-fabric ingest (Redis→sqlite staging) for one pilot
+`layerschemadatabase`; the fabric-without-fabric ingest (Redis→sqlite staging) for one pilot
 state; the layer reader + `filing_landscape`; the `mailwoman_bdc_filing_landscape` MCP tool.
 
 Checks (pre-registered):
 
-- Layer-contract conformance — `readLayerManifest`/`readLayerCoverage` pass; h3 packed as res-9
+- Layer-interface conformance — `readLayerManifest`/`readLayerCoverage` pass; h3 packed as res-9
   integer short cell (byte-compatible with poi.db / address-id join).
 - Coverage/meaning-of-zero test — an unsurveyed block returns `undefined` from
   `readLayerCoverage`, and `filing_landscape` reports it as unknown, never zero.
@@ -411,7 +411,7 @@ and `reconcile.ts` buckets ("our building in a competitor-claimed-served block")
 
 Checks:
 
-- Provider registry conforms to the layer contract (versioned-refresh, FRN-keyed).
+- Provider registry conforms to the layer interface (versioned-refresh, FRN-keyed).
 - No duplication of `OrganizationName` — the matcher rather than a new contacts subsystem, does the
   join (reviewer check against §5.1).
 - A reconcile fixture produces the enrolled / present-not-in-base buckets over a synthetic

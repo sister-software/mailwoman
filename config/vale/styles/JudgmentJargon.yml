@@ -14,7 +14,7 @@
 ## interpolated) is core domain vocabulary, and the docs sweep caught the
 ## rule flagging it; losing rhetorical "the real point" is the cheaper error.
 extends: existence
-message: "'%s' is a verdict, not evidence — state what the artifact shows and let the reader judge."
+message: "'%s' is a verdict rather than evidence — state what the artifact shows and let the reader judge."
 level: error
 ignorecase: true
 tokens:

@@ -1,25 +1,25 @@
-# v3.10.1-span-ship-8k — #727 STAGE 2 STEP 4 (plan #1134): the 8k continuation of the v3.10.0 2k
-# probe. RESUME (not init_from) from output-v3100-span-ship-probe-s42/checkpoints/step-002000 →
-# 8000 total steps. Resume-not-init_from is deliberate: the SPAN HEAD is the capability being grown,
+# v3.10.1-span-ship-8k — #727 stage 2 step 4 (plan #1134): the 8k continuation of the v3.10.0 2k
+# probe. resume (not init_from) from output-v3100-span-ship-probe-s42/checkpoints/step-002000 →
+# 8000 total steps. Resume-not-init_from is deliberate: the span head is the capability being grown,
 # and the 2k checkpoint already carries a converged head (loss 1.49, seg@1 0.603 > token@1 0.558) +
 # its Adam moments mid-refinement + the constant-LR schedule past warmup. A fresh init_from would
 # discard the head's learned state and re-trigger warmup. Constant LR → resume is clean (no cosine).
 #
 # The 2k probe cleared all three pre-registered reads (2026-07-17):
 #   LEG-1 span mechanism: loss 18.6→1.49 converged. seg@1 0.603 > token@1 0.558 (+4.5pp, parity 267,
-#     CHANNEL-STARVED relative check) — the span scorer beats token decode on the v0.11.0-no-fragment
+#     channel-starved relative check) — the span scorer beats token decode on the v0.11.0-no-fragment
 #     corpus (the novel confirmation. v301 proved it on v257).
-#   GUARD: golden us micro 86.9=86.9 / exact 66.4 vs 66.2. fr micro 90.0 vs 90.1 / exact flat — the
-#     span head is a purely ADDITIONAL output, the BIO token path is byte-stable-ish.
-#   LEG-2 P3 all-caps: FAILED (raw-case exact 48.0 vs v381 48.3, vs the +5pp bar). augment_upper_case
-#     is INERT at 2k. It rides the 8k as an unchanged passenger (resume = no distribution shift) and
+#   guard: golden us micro 86.9=86.9 / exact 66.4 vs 66.2. fr micro 90.0 vs 90.1 / exact flat — the
+#     span head is a purely additional output, the BIO token path is byte-stable-ish.
+#   LEG-2 P3 all-caps: failed (raw-case exact 48.0 vs v381 48.3, vs the +5pp bar). augment_upper_case
+#     is inert at 2k. It rides the 8k as an unchanged passenger (resume = no distribution shift) and
 #     gets a fair 8k re-grade — but its promote bar (+5pp) is unchanged and unmet. the #690 shim stays
 #     unless the 8k re-grade clears it. Not a bar relaxation: the promote check still stands.
 #
 # Pre-registered 8k reads (package-shaped int8 vs shipped v381 baselines. same corpus+tokenizer → F1 valid):
-#   PROMOTE CHECK (standing): golden 2pp check (no tag >2pp down vs v381), the gauntlet passes, metamorphic,
+#   promote check (standing): golden 2pp check (no tag >2pp down vs v381), the gauntlet passes, metamorphic,
 #     FR fragment board + digit board no worse than -2pp. The span head must not cost the token path.
-#   ARC READS (the point): seg@1 and oracle@5 on the JS harness via the PR #1154 decode surface +
+#   ARC reads (the point): seg@1 and oracle@5 on the JS harness via the PR #1154 decode surface +
 #     the semi-crf-transitions sidecar. the phase-4c name-evidence rerank consumes this model.
 #   LEG-2 re-grade: all-caps raw-case vs v381 48.3 (promote bar +5pp — informational, shim-delete check).
 #   This 8k checkpoint ships nowhere without the full battery green. it is the phase-4c decode substrate.
@@ -62,7 +62,7 @@ data:
     usgov-hrsa-fqhc: 2.0
     usgov-imls-pls: 2.0
     usgov-nad: 1.0
-    state-ia-contractors: 2.0
+    state-ia-builders: 2.0
     state-tx-notaries: 1.5
     state-ny-notaries: 2.0
     deepseek-kryptonite: 3.0
@@ -82,9 +82,9 @@ data:
     synth-no-street-led: 0.0
     synth-cz-pcfirst-preposition: 12.0
     synth-nl-postcode: 6.0
-    # PROBE 1: the fragment/autocomplete source (assay weight — moderate precedent).
+    # probe 1: the fragment/autocomplete source (assay weight — moderate precedent).
     synth-fragment: 6.0
-    # #727 T2 NEW — the one variable. 12.0 = the targeted-fix precedent (fr-bare-street,
+    # #727 T2 new — the one variable. 12.0 = the targeted-fix precedent (fr-bare-street,
     # si-bare-village, no-street-led are all 12.0). Streets with no house number + the
     # bare-locality counter.
     synth-fr-fragment: 12.0
@@ -101,7 +101,7 @@ data:
   # copy per row so the model segments street/locality without leaning on the comma. Closes the gauntlet
   # comma-drop INV (White House + FR Rue du Chevaleret). One new variable vs v373.
   augment_punct_drop_prob: 0.3
-  # P3 (#829): ALL-CAPS copies, mirroring lowercase_row (skip-row on multi-char case-folds, tokens too).
+  # P3 (#829): all-caps copies, mirroring lowercase_row (skip-row on multi-char case-folds, tokens too).
   augment_upper_case_prob: 0.15
   anchor_lookup_path: /data/anchor/pilot-anchor-lookup.json
   gazetteer_lexicon_path: /data/gazetteer/anchor-lexicon-v1.json
@@ -137,12 +137,12 @@ model: # Verbatim from v2.4.1.
   use_postcode_anchor: true
   use_gazetteer_anchor: true
   gazetteer_feature_dim: 5
-  # #1104 country channel ON — dedicated 2-dim [country_surface, country_ambiguous] soft feed with its
+  # #1104 country channel on — dedicated 2-dim [country_surface, country_ambiguous] soft feed with its
   # own projection + confidence (must equal the lexicon's feature_dim). Default-False elsewhere, so a
   # resume from a pre-country checkpoint stays byte-identical until this flips.
   use_country_anchor: true
   country_feature_dim: 2
-  # #1104 homograph-guard SOFTENER — the one variable vs v263. Scales the country_ambiguous dim by 0.5
+  # #1104 homograph-guard softener — the one variable vs v263. Scales the country_ambiguous dim by 0.5
   # before the country_projection (bakes into the exported ONNX. no lexicon/inference change). v263's
   # hard guard (scale 1.0) over-suppressed homograph countries Georgia/Jordan (country-homograph F1
   # 89.8->82.6); softening should recover homograph recall without giving back the country F1 the

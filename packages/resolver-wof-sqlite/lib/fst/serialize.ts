@@ -5,30 +5,30 @@
  *
  *   Binary serialization for the FST gazetteer. Format:
  *
- *   HEADER (32 bytes) magic [u8. 4] "FST\0" version u16 1 flags u16 0 (reserved) stateCount u32
+ *   header (32 bytes) magic [u8. 4] "FST\0" version u16 1 flags u16 0 (reserved) stateCount u32
  *   edgeCount u32 total edges across all states placeCount u32 total place entries across all
  *   states stringCount u32 unique strings in string table stringBytes u32 total bytes of string
  *   data _reserved u32
  *
- *   STRING TABLE offsets [u32. stringCount + 1] byte offset into data (last = sentinel) data [u8.
+ *   string table offsets [u32. stringCount + 1] byte offset into data (last = sentinel) data [u8.
  *   stringBytes] concatenated UTF-8
  *
- *   STATE TABLE [stateCount × 12 bytes] edgeStart u32 index into edge table placeStart u32 index into
+ *   state table [stateCount × 12 bytes] edgeStart u32 index into edge table placeStart u32 index into
  *   place table edgeCount u16 placeCount u16
  *
- *   EDGE TABLE [edgeCount × 8 bytes] stringIdx u32 index into string table targetState u32
+ *   edge table [edgeCount × 8 bytes] stringIdx u32 index into string table targetState u32
  *
- *   PLACE TABLE [placeCount × 60 bytes at V5, 56 below] wofID u32 placetypeIdx u8 index into
+ *   place table [placeCount × 60 bytes at V5, 56 below] wofID u32 placetypeIdx u8 index into
  *   PLACETYPE_ORDER chainLen u8 0..8 crossCountryBranches u8 (header flags bit0 enables the read)
  *   placeFlags u8 (V5. bit0 = encyclopedic present) nameIdx u32 index into string table referential f32
  *   population-anchored likelihood [0,1] — was the conflated `importance` (V2–V4), was population u32
  *   (V1) lat f32 lon f32 chain [u32. 8] parent chain (unused slots = 0) encyclopedic f32 (V5 only.
  *   read only when placeFlags bit0 is set)
  *
- *   THE V5 BUMP IS THE TWO-SCORE SPLIT (ROAD_TO_V9 §2 R1). Through V4 one float carried whichever score
+ *   the V5 bump is the two-score split (ROAD_TO_V9 §2 R1). Through V4 one float carried whichever score
  *   the source database held, and nothing in the bytes said which — so a reader could not tell a
  *   population proxy from a Wikipedia score. V5 names the ranking score `referential` and gives the
- *   encyclopedic signal its own slot plus a PER-PLACE presence bit, because most places have no
+ *   encyclopedic signal its own slot plus a PER-place presence bit, because most places have no
  *   Wikipedia article and a 0 there would be a fact nobody recorded. `fst-freshness.ts` reports every
  *   V4-and-below artifact as format-stale for exactly this reason: its single float is unattributable.
  */
@@ -129,7 +129,7 @@ export function serializeFST(matcher: FSTMatcher, provenance?: FSTProvenance): B
 
 	// Read the versioned binary header.
 	// flags bit0 (survey #4, 2026-07-27): place rows carry surface-ambiguity data in the former _pad
-	// byte (pp+6 = crossCountryBranches u8, pp+7 reserved). Presence-signaled here so VERSION stays
+	// byte (pp+6 = crossCountryBranches u8, pp+7 reserved). Presence-signaled here so version stays
 	// put: pre-ambiguity artifacts read flags=0 → readers expose `undefined`, never a fake 0.
 	const hasAmbiguity = nodes.some((n) => n.places.some((p) => p.crossCountryBranches !== undefined))
 	MAGIC.copy(buf, pos)
@@ -205,7 +205,7 @@ export function serializeFST(matcher: FSTMatcher, provenance?: FSTProvenance): B
 			buf.writeUInt8(chainLen, pp + 5)
 			// Former _pad: byte 0 = crossCountryBranches (header flags bit0 enables the read), byte 1 = v5 placeFlags.
 			buf.writeUInt8(hasAmbiguity ? Math.min(place.crossCountryBranches ?? 0, 255) : 0, pp + 6)
-			// An absent encyclopedic score writes flag 0 AND a 0.0 float. The float is unread in that
+			// An absent encyclopedic score writes flag 0 and a 0.0 float. The float is unread in that
 			// state, so absence can never surface as a score — the meaning-of-zero rule, in bytes.
 			const hasEncyclopedic = place.encyclopedic !== undefined
 			buf.writeUInt8(hasEncyclopedic ? PLACE_FLAG_HAS_ENCYCLOPEDIC : 0, pp + 7)

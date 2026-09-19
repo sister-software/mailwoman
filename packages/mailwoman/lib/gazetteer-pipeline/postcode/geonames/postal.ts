@@ -27,7 +27,7 @@ export interface GeonamesPostalRow {
  *
  * Callers own the reduction: the JP builder keeps the last row per postcode, the KR builder the first, and both
  * semantics are theirs rather than this reader's. (`zcta-centroids.ts`'s `parseGeonamesCentroids` is the third reader
- * of this format and deliberately stays local: it is synchronous over an in-memory string by test contract, and its
+ * of this format and deliberately stays local: it is synchronous over an in-memory string by test interface, and its
  * `Number` + `(0, 0)`-skip validity rules differ from the `pyFloat` port here.)
  */
 export async function* geonamesPostalRows(source: string): AsyncGenerator<GeonamesPostalRow> {

@@ -3,7 +3,7 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Unit tests for `WebONNXRunner`'s feed construction against a MOCKED onnxruntime-web session — no
+ *   Unit tests for `WebONNXRunner`'s feed construction against a mocked onnxruntime-web session — no
  *   model files required, so these run in CI where the weights aren't linked.
  *
  *   What this suite guards (the live-demo regression of 2026-06-10): models since v4.2.0 are
@@ -14,7 +14,7 @@
  *   - Caller-provided anchor/gazetteer features are fed through.
  *   - When the graph declares the inputs but the caller provides nothing, zero-fill them (the
  *       confidence=0 identity) instead of letting ORT throw `input 'gazetteer_features' is missing
- *       in 'feeds'`. Zero-fill is a STRUCTURAL fallback only — the loader warns loudly about the
+ *       in 'feeds'`. Zero-fill is a structural fallback only — the loader warns loudly about the
  *       quality trap — but the session must not crash.
  *   - The optional `locale_logits` output (v4.3.0+ locale head) surfaces as `localeLogits`.
  *   - The optional `span_scores` output (#727 stage-2, v3.x+) surfaces as `spanScores`, with the same
@@ -345,8 +345,8 @@ describe("defaultCountryLexiconURL", () => {
 
 describe("cross-runner parity (#727 span read)", () => {
 	test("the web runner's span unflatten matches the node ONNXRunner's, byte for byte", async () => {
-		// The (token, length, type) unflatten is DUPLICATED in neural/onnx-runner.ts and here — two
-		// hosts, one contract. A silent divergence would make the browser decode a transposed tensor
+		// The (token, length, type) unflatten is duplicated in neural/onnx-runner.ts and here — two
+		// hosts, one interface. A silent divergence would make the browser decode a transposed tensor
 		// and mis-tag every span (the PLACETYPE_ORDER failure mode, one layer down). This pins them:
 		// the same flat buffer must produce the same nested array on both sides.
 		const SEQ_LEN = 2

@@ -72,7 +72,7 @@ class AffixRelabelLexicon:
     suffixes: dict[str, str]  # lowercase variant -> canonical suffix
     version: str
     # v2 (2026-08-10, #1569): Pub-28 canonicals that are also common street-name head nouns
-    # (PARK/HILL/CREEK...). Sourced from packages/codex/lib/us/street-suffix.json via the
+    # (park/hill/creek...). Sourced from packages/codex/lib/us/street-suffix.json via the
     # `mailwoman gazetteer affix-relabel` builder — never hand-typed here. Empty (a v1
     # artifact) leaves the positional licensing in split_street_span off: old artifacts keep
     # the old blanket-rejection behavior, by construction.
@@ -120,18 +120,18 @@ def split_street_span(words: list[str], lex: AffixRelabelLexicon) -> tuple[int, 
     if len(words) > 2 and words[0].lower() in lex.directionals:
         prefix = 1
         rest = words[1:]
-    # Trailing USPS suffix — REQUIRED, and must leave >=1 word for the name.
+    # Trailing USPS suffix — required, and must leave >=1 word for the name.
     if len(rest) < 2 or rest[-1].lower() not in lex.suffixes:
         return None
     name = rest[:-1]
     if _is_affix_shaped(name, lex):
         # Positional licensing (2026-08-10, #1569 five-whys root cause). The blanket rejection
-        # made suffix-shape a property of the WORD, so every ordinary-source 'Menlo Park Road'
+        # made suffix-shape a property of the word, so every ordinary-source 'Menlo Park Road'
         # kept a monolithic street label and ~78% of terminal-only carriers taught the model to
         # absorb the true suffix in real contexts. Mirror of the TS recipe's allowNameProneTail
         # (street-affix.ts. the golden truth already encodes these splits): a name of >= 2 words
-        # whose FINAL word is merely a name-prone head noun (PARK/HILL/CREEK...) is licensed by
-        # the TRUE suffix that follows it. Single-word names ('W Park Ave' -> name ['Park']) and
+        # whose final word is merely a name-prone head noun (park/hill/creek...) is licensed by
+        # the true suffix that follows it. Single-word names ('W Park Ave' -> name ['Park']) and
         # non-name-prone suffix-shaped tails ('Old Avenue Road') stay refused. `lex.name_prone`
         # rides the v2 lexicon artifact (built from packages/codex/lib/us/street-suffix.json); a v1
         # artifact has it empty, so licensing is inert and old runs reproduce byte-for-byte.
@@ -147,7 +147,7 @@ def relabel_row(row: dict[str, Any], lex: AffixRelabelLexicon) -> bool:
     char-offset span arrays when the row carries them — #519).
 
     Returns True if any span was split. Rows whose street spans don't meet the builder's
-    split contract are left untouched (the affix recipe makes no claim about them either).
+    split interface are left untouched (the affix recipe makes no claim about them either).
     """
     labels = row["labels"]
     tokens = row["tokens"]

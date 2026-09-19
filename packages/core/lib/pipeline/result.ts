@@ -1,7 +1,7 @@
 /**
  * @copyright Sister Software
  * @license AGPL-3.0
- * @file Runtime pipeline result contract.
+ * @file Runtime pipeline result interface.
  */
 
 import type { AddressTree } from "#decoder/types"

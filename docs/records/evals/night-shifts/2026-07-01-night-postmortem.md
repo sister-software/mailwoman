@@ -98,7 +98,7 @@ you can make — each with my recommendation:
    `resolveTree` coherence (#822/#263/#832); population + region-bbox mask the headline cases, the
    explicit-country tail is the gap. **Rec: option B — converge the browser path on the shared `resolveTree`**
    (kills the dual-maintenance permanently) over the quick option-A patch.
-4. **#493 — serializer contracts.** The lossless primitive shipped (#859); the serializer surfaces
+4. **#493 — serializer interfaces.** The lossless primitive shipped (#859); the serializer surfaces
    (JSON opt-in / XML / tuple shapes) + the demo rendering are the focused session the issue calls for —
    it explicitly wants "operator eyes for the visual," so I stopped at the decision-free primitive.
 5. **#379 — `tar` 7.x.** The lone remaining dependabot alert (medium) needs the 7.x major (no 6.x backport);
@@ -242,8 +242,8 @@ What's in fact left is **operator-conditional or focused-session** rather than c
   `Hôtel` → `H` + an all-O `ô` + `tel de Ville`, confirmed real — offsets are JS-char-aligned), then
   **shipped the pure primitive** (PR #859): `unknownSpans`/`losslessSegments`/`isLossless` in
   `@mailwoman/core/decoder` — the all-O gaps become typed `unknown` spans, round-trip holds 800/800 real
-  parses, byte-stable, no serializer touched. The remaining work (serializer contracts, demo) changes
-  consumer contracts → the focused session the issue calls for.
+  parses, byte-stable, no serializer touched. The remaining work (serializer interfaces, demo) changes
+  consumer interfaces → the focused session the issue calls for.
 - **#825 / change E** — _corrected late in the shift (see "DeepSeek nudge" below)_: the result
   **already shipped** as v4.13.0 (PT 52→82, PL 53→62); #825 is the incremental push, campaign-conditional (more data
   / a representation change — weight is falsified). Budget preserved for that campaign call rather than a probe.
@@ -277,11 +277,11 @@ paid off twice:
   "operator-owned"; on a closer look the serializer functions are the established `includeAlternatives` opt-in
   pattern (default-off, byte-stable), only the demo rendering in fact wants "operator eyes." So `decodeAsJson`/
   `decodeAsTuples` (overloaded — existing callers untouched) / `decodeAsXml` gained an opt-in `includeUnknown`;
-  7 tests, decoder suite 105/105. Not self-merged — the native-vs-opt-in + JSON-shape contract calls are flagged
+  7 tests, decoder suite 105/105. Not self-merged — the native-vs-opt-in + JSON-shape interface calls are flagged
   for review; the demo rendering is left for the focused pass.
 
 The takeaway for the next shift: an over-conservative "it's conditional" can be its own unverified verdict. The boundary
-(don't ship contract/architecture/budget _decisions_) was right; "don't ship the safe plumbing underneath them"
+(don't ship interface/architecture/budget _decisions_) was right; "don't ship the safe plumbing underneath them"
 was too cautious.
 
 ## Numbers (Part 2 — final)
@@ -304,7 +304,7 @@ _Drafted during the shift; finalized at hand-off. Active window ~05:00–13:39 U
 
 The decision brief at the top of Part 2 is the authoritative list; the forks for the morning:
 
-- **#864** — review the `unknown` serializer contract (native-vs-opt-in, JSON mix-vs-nest), then merge. The
+- **#864** — review the `unknown` serializer interface (native-vs-opt-in, JSON mix-vs-nest), then merge. The
   #493 parse-API wrappers + demo rendering are the follow-on (they depend on #864's types).
 - **Change E / $20** — held. the result is banked (v4.13.0); the further push is a campaign-strategy
   - data call (#477 recipe) rather than an overnight probe. Budget untouched.

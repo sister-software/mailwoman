@@ -31,7 +31,7 @@ import {
 export const description = "Grade a controlled premise-linkage evaluation across the open and authoritative arms."
 
 /**
- * Native command-line contract consumed by the filesystem command router.
+ * Native command-line interface consumed by the filesystem command router.
  */
 export const spec = {
 	name: "premise-linkage",
@@ -182,7 +182,7 @@ async function loadControlledConfig<T>(
 
 /**
  * The shipped synthetic fixture, its matching provider, and a pipeline stub — the self-check's three pieces, which ship
- * together so they cannot disagree.
+ * together. Therefore, they cannot disagree.
  */
 async function loadSyntheticConfig() {
 	const { syntheticFixtureAdapter, syntheticFixtureDeps, syntheticFixtureProvider } =

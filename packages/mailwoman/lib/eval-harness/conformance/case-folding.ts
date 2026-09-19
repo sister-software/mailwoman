@@ -3,25 +3,25 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   The case-folding invariance law: changing only the CASE of a query must not change what the pipeline
+ *   The case-folding invariance law: changing only the case of a query must not change what the pipeline
  *   answered. Pure — no model, no I/O beyond reading the committed suite.
  *
- *   WHY THIS IS A PRODUCT COMMITMENT AND NOT A NICETY. Lowercase is the user register: a phone keyboard
- *   emits it, a pasted spreadsheet cell emits SHOUTING, and an autocapitalized field emits Title Case. All
+ *   why this is A product commitment and not A nicety. Lowercase is the user register: a phone keyboard
+ *   emits it, a pasted spreadsheet cell emits shouting, and an autocapitalized field emits Title Case. All
  *   three name the same building as the mixed-case form a curator typed into the board. A pipeline that
  *   resolves one and not the others has not made a small mistake on an unusual input. it has failed the
  *   input shape most of its traffic arrives in.
  *
- *   TWO GUARDS, AND THEY ANSWER DIFFERENT QUESTIONS. {@linkcode caseFoldKey} decides whether a pair differs
- *   by case AND NOTHING ELSE — it is what keeps punctuation, whitespace, transliteration and
+ *   two guards, and they answer different questions. {@linkcode caseFoldKey} decides whether a pair differs
+ *   by case and nothing else — it is what keeps punctuation, whitespace, transliteration and
  *   Unicode-normalization drift out of this law, since any of those move the key. {@linkcode
- *   caseApplicability} decides whether a case change of that kind is a SEMANTIC equivalent in the row's own
- *   locale, which the key cannot say: `İstanbul` and `ISTANBUL` have matching fold keys and are different
+ *   caseApplicability} decides whether a case change of that kind is a semantic equivalent in the row's own
+ *   locale, which the key cannot say: `İstanbul` and `istanbul` have matching fold keys and are different
  *   words in Turkish. A pair that clears the first guard and fails the second is excluded before it runs, per
  *   this law's own tradeoff — an invalid transformation must never be tolerated as a failure, because a
  *   failure invites someone to fix the pipeline for an input that was never a case variant.
  *
- *   THE VARIANT IS DERIVED, NEVER AUTHORED. Every committed row's `variant` is exactly the named
+ *   the variant is derived, never authored. Every committed row's `variant` is exactly the named
  *   transformation applied to its `base`, and {@linkcode auditCaseFoldingSuite} re-derives it. A hand-typed
  *   variant is how a "case-folding" row quietly acquires a dropped accent, and the whole law then measures
  *   something else under its own name.
@@ -46,7 +46,7 @@ export const CASE_FOLDING_LAW = "case-folding-invariance"
 /**
  * The three case transformations this law states, and the only three a committed row may use.
  *
- * - `upper` — the SHOUTING register: a pasted spreadsheet cell, a scanned form, a legacy mainframe export.
+ * - `upper` — the shouting register: a pasted spreadsheet cell, a scanned form, a legacy mainframe export.
  * - `lower` — the mobile register, and the one the house treats as first-class rather than degraded.
  * - `mixed` — title case, the autocapitalize register: every token's first cased character capitalized, the rest folded
  *   down. Named `mixed` rather than `title` because what the law tests is a case pattern that is neither extreme, and
@@ -59,7 +59,7 @@ export type CaseTransformationName = (typeof CASE_TRANSFORMATIONS)[number]
 /**
  * Title-case one token: the first cased character up, every later one down.
  *
- * Reads the first CASED character rather than index 0, so `%ARABICA` and `10th` capitalize the letter rather than
+ * Reads the first cased character rather than index 0, so `%arabica` and `10th` capitalize the letter rather than
  * leaving the token untouched because it happens to start with punctuation or a digit.
  */
 function titleCaseToken(token: string): string {
@@ -95,7 +95,7 @@ export const CASE_TRANSFORMATION_BY_NAME: Record<CaseTransformationName, (text: 
  * The case-insensitive identity of a string — equal keys mean the two differ by case and by nothing else.
  *
  * Upper-then-lower rather than a bare `toLowerCase`, because a bare fold leaves `ß` distinct from `SS` and would then
- * report `Friedrichstraße` / `FRIEDRICHSTRASSE` as differing by more than case. Routing through uppercase first
+ * report `Friedrichstraße` / `friedrichstrasse` as differing by more than case. Routing through uppercase first
  * performs the expansion Unicode's full case folding performs (`ß → ss`), and JavaScript's own final-sigma rule keeps
  * `ΟΔΟΣ` / `οδος` matching. There is no `String.prototype.caseFold`; this is the composition that stands in for it.
  */
@@ -125,7 +125,7 @@ export function classifyCaseTransformation(base: string, variant: string): CaseT
  *
  * - `identity-transformation` — the transformation returns the text unchanged, either because the script has no case
  *   (Japanese, Chinese, Thai, Hebrew, Arabic) or because the text is already written in the target case (`N7 0BT`
- *   uppercased). Such a row is the IDENTITY law wearing a case-folding label: it would hold whatever the pipeline does
+ *   uppercased). Such a row is the identity law wearing a case-folding label: it would hold whatever the pipeline does
  *   with casing, and its holding would be counted as evidence that casing is handled.
  * - `locale-sensitive-casing` — the row's locale maps the cases of a letter differently from the root locale, so a
  *   root-locale transformation changes which letter is written. Turkish and Azeri separate dotted `i`/`İ` from dotless
@@ -221,8 +221,8 @@ export const CASE_FOLDING_SUITE_PATH: string = resolvePackagePath(
  * Returns one message per problem, each naming the fixture. Empty means the suite states this law and only this law —
  * which is the claim the DoD's fourth item makes, and the only form of it that is executable.
  *
- * The `caseCountry` requirement is not bookkeeping. A row graded with no country routes through the BASE en-US weights
- * package, which carries no pair index for the row's country, so its dependent locality silently never fires and a
+ * The `caseCountry` requirement is not bookkeeping. A row graded with no country routes through the base en-US weights
+ * package. It carries no pair index for the row's country. Therefore, its dependent locality silently never fires and a
  * case-folding violation is reported for an instrument that was never pointed at the row's locale.
  */
 export function auditCaseFoldingSuite(fixtures: readonly ConformanceFixture[]): string[] {

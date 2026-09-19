@@ -55,7 +55,7 @@ UNREADABLE_HERE: dict[str, str] = {
 }
 
 #: The shapes this side paints, compiled. Priority is the INDEX, so the order of the record is part
-#: of the contract: a lower index wins an overlap, and dropping a row must not reorder the rest.
+#: of the interface: a lower index wins an overlap, and dropping a row must not reorder the rest.
 POSTCODE_PATTERNS: list[tuple[str, str, re.Pattern[str]]] = [
     (label, kind, re.compile(pattern)) for label, kind, pattern in ALL_POSTCODE_SHAPES if label not in UNREADABLE_HERE
 ]

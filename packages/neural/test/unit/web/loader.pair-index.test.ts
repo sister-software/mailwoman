@@ -4,13 +4,13 @@
  * @author Teffen Ellis, et al.
  *
  *   Loader wiring for the PIX1 placetype-pair index (#1278 phase 2 — locale-hint wiring): fetch
- *   tolerance, LOAD-ALL construction (every fetched index becomes a live resolver, no load-time check),
- *   and the OPTIONAL config-default posture pin the `country` load-option now sets.
+ *   tolerance, load-all construction (every fetched index becomes a live resolver, no load-time check),
+ *   and the optional config-default posture pin the `country` load-option now sets.
  *
  *   Strategy mirrors `web-loader.tolerance.test.ts`: mock onnxruntime-web (no model file) +
  *   partial-mock `./tokenizer.ts` / `./classifier.ts` to stub the tokenizer + capture the classifier
  *   config, while keeping the real `serializePairIndex` / `PairIndexResolver`, so the fetch-construct
- *   path under test runs for real. The per-parse SELECTION among the loaded indexes lives in
+ *   path under test runs for real. The per-parse selection among the loaded indexes lives in
  *   `web-loader.locale-hint.test.ts` (pure); the decode-level behavior (prior applied on selection,
  *   byte-stability without) lives in `web-loader.pair-prior-decode.test.ts`, which runs the real
  *   classifier end-to-end.
@@ -218,7 +218,7 @@ describe("loadNeuralClassifierFromURLs — placetype-pair index (#1278)", () => 
 		// No `country` load-option → no config-default posture pin. The per-parse selection is the only path
 		// (byte-stable when nothing selected — asserted end-to-end in loader.pair-prior-decode.test.ts).
 		expect(capturedConfig?.placetypePair).toBeUndefined()
-		// But the index is LIVE and retained (phase 2: load all, don't check) — the same instance the per-parse
+		// But the index is live and retained (phase 2: load all, don't check) — the same instance the per-parse
 		// selection can return.
 		const [gb] = result.pairIndexes
 		expect(result.pairIndexes).toHaveLength(1)
@@ -270,7 +270,7 @@ describe("loadNeuralClassifierFromURLs — placetype-pair index (#1278)", () => 
 
 		// No config default (the pinned country isn't among the loaded ones)…
 		expect(capturedConfig?.placetypePair).toBeUndefined()
-		// …but both indexes are LIVE for the per-parse path.
+		// …but both indexes are live for the per-parse path.
 		expect(result.pairIndexes.map((i) => i.country)).toEqual(["gb", "nz"])
 		expect(result.pairIndexes.every((i) => i.resolver instanceof PairIndexResolver)).toBe(true)
 		// The unmet pin is loud and names both sides.

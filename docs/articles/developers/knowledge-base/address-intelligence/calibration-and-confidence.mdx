@@ -53,7 +53,7 @@ to review.
 Set those aside and there is a third problem, which is the one calibration addresses.
 
 Think about a weather forecaster. A good one who says "70% chance of rain" is right on about seven of
-every ten days they say it, and that is the entire contract — the number means what it says. A
+every ten days they say it, and that is the entire interface — the number means what it says. A
 forecaster who is right nineteen times out of twenty on their "70%" days is not being careful; they
 are being useless in a different direction, because you cannot act on a number that understates
 itself either.
@@ -77,8 +77,8 @@ means.
 The card is built by running the shipped model over data where the answer is already known, sorting
 the predictions by their stated confidence into twenty buckets, and recording what fraction of each
 bucket turned out right. That gives a translation from stated confidence to observed accuracy. The
-fit is **isotonic**, which is the one constraint that matters: the translation can never run
-backwards, so a raw 0.9 always maps to at least as much corrected confidence as a raw 0.8. Ordering
+fit is **isotonic**. The translation can never run backwards, so a raw 0.9 always maps to at least
+as much corrected confidence as a raw 0.8. Ordering
 is preserved; only the scale changes.
 
 Applied to the same held-out data, expected calibration error goes from 0.0698 to 0.0017. The

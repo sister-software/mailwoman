@@ -80,7 +80,7 @@ def test_locale_id_map():
     assert locale_id("ZZ") == IGNORE_INDEX  # unmapped country
     assert locale_id(None) == IGNORE_INDEX
     assert NUM_LOCALES == len(LOCALE_TO_ID)
-    # Append-only contract: US/FR/DE are the pilot's first three ids.
+    # Append-only interface: US/FR/DE are the pilot's first three ids.
     assert LOCALE_TO_ID["US"] == 0 and LOCALE_TO_ID["FR"] == 1 and LOCALE_TO_ID["DE"] == 2
 
 
@@ -146,7 +146,7 @@ def test_all_ignored_locale_batch_does_not_nan():
 
 # endregion
 
-# region back-compat: conditioning OFF
+# region back-compat: conditioning off
 
 
 def test_conditioning_off_emits_no_locale_logits_and_ignores_locale_ids():

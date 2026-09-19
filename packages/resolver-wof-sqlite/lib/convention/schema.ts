@@ -4,7 +4,7 @@
  * @author Teffen Ellis, et al.
  *
  *   Typed schema for the convention asset — the `address_convention` table `SqliteConventionSource` probes, plus the
- *   `meta` provenance row every sealed artifact here carries. The interface is the read/write contract and
+ *   `meta` provenance row every sealed artifact here carries. The interface is the read/write interface and
  *   {@link createAddressConventionTable} creates the table, so a column added to one is a compile error against the
  *   other.
  */

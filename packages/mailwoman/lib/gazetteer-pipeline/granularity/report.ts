@@ -8,7 +8,7 @@
  *
  *   The report declares its own limits inline rather than deferring them to a design doc. These
  *   numbers will outlive the conversation that produced them, and a reader six months out must be
- *   told IN THE FILE that counts are not quality and that the locality rung is self-comparison for
+ *   told IN the file that counts are not quality and that the locality rung is self-comparison for
  *   the Overture-backfilled countries.
  *
  *   Pure: rows in, markdown out, `buildDate` injected by the caller so the output is deterministic
@@ -24,16 +24,16 @@ import { LADDER, type CountryGranularity, bottomsOutAt } from "#gazetteer-pipeli
 /**
  * Which build path supplied a country's rows — the single most important column in this report.
  *
- * A country whose rows are Overture- or GeoNames-sourced had NO WOF GeoJSON repo ingested, so its empty sub-locality
+ * A country whose rows are Overture- or GeoNames-sourced had no WOF GeoJSON repo ingested, so its empty sub-locality
  * rung says nothing whatsoever about WOF's depth there. Only a dozen of the 260 admin repos WOF publishes are in the
  * recipe. the rest of the world arrives via Overture divisions (5 subtypes, none hood-level) or the GeoNames alias
  * fold. Without this column a reader would take "233 countries bottom out at locality" as a finding about WOF rather
  * than about the recipe.
  *
- * Derived from the ARTIFACT (synthetic id ranges on the locality rung), not from the recipe constants. A recipe-derived
+ * Derived from the artifact (synthetic id ranges on the locality rung), not from the recipe constants. A recipe-derived
  * column silently goes wrong the moment a country is added to `DEFAULT_WOF_PRIORITY_COUNTRIES` and the gazetteer has
  * not been rebuilt yet — it would claim `wof-repo` over rows that are still 100% Overture. Instead the recipe is used
- * only as a CROSS-CHECK: a mismatch renders as `rebuild pending`, which is the honest description of that window.
+ * only as a cross-check: a mismatch renders as `rebuild pending`, which is the honest description of that window.
  */
 function sourceClass(country: CountryGranularity): string {
 	const locality = country.rungs.locality
@@ -145,7 +145,7 @@ still Overture or GeoNames, and its rungs say nothing about WOF yet.
   set those rows came from Overture, not WOF; the \`ovt\` share in each cell is how much.
 - **An empty rung is coverage, not fact.** Two independent filters produce zeroes here: the country
   recipe above, and \`ADMIN_PLACETYPES\` in \`admin/ingest-wof.ts\`, which allowlists 9 of WOF's 34
-  placetypes — so even for a cloned country the build never asked for the other 25. Per the
+  placetypes . Therefore, even for a cloned country the build never asked for the other 25. Per the
   **meaning-of-zero** rule a measured-and-empty rung renders as \`0\` and a never-measured rung as
   \`—\`; they are not the same claim.
 

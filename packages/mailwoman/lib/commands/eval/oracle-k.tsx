@@ -19,7 +19,7 @@ const MAX_ORACLE_HYPOTHESES = 50
 export const description = "Oracle-recall@k — k-best segment-decode headroom over the parity corpus (#727 stage-2)"
 
 /**
- * Native command-line contract consumed by the filesystem command router.
+ * Native command-line interface consumed by the filesystem command router.
  */
 export const spec = {
 	name: "oracle-k",

@@ -3,7 +3,7 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Which remote a WOF repo is pulled FROM — our fork when one exists, upstream otherwise.
+ *   Which remote a WOF repo is pulled from — our fork when one exists, upstream otherwise.
  *
  *   We carry corrections upstream cannot merge on our schedule. The first is the January 2019 GB batch that deprecated
  *   `Rochester`, `Gillingham`, `Swansea`, `Telford` and 50 others with no successor (`gazetteer triage` reports the
@@ -12,7 +12,7 @@
  *   nobody else can see — the fork is public, the diff is a normal WOF record change, and the upstream PR is a push
  *   away from the same branch.
  *
- *   The preference is DIVERGENCE-BASED, and must be: the fork org holds a fork of every `whosonfirst-data-*` repo,
+ *   The preference is divergence-based, and must be: the fork org holds a fork of every `whosonfirst-data-*` repo,
  *   almost all of which carry nothing of ours. Existence therefore says only that a fork was made. Divergence says a
  *   correction lives there, which is the thing worth preferring a remote for. Nothing needs a second registration
  *   step, so the two lists cannot drift apart.
@@ -76,13 +76,13 @@ export type ForkProbe = (org: string, repo: string) => Promise<ForkState>
 /**
  * Resolve the origin for one WOF repo.
  *
- * DIVERGENCE rather than EXISTENCE. A GitHub fork does not track its parent, so a fork carrying none of our commits is
+ * Divergence rather than existence. A GitHub fork does not track its parent, so a fork carrying none of our commits is
  * a point-in-time snapshot that drifts further from upstream every day it sits there. Preferring one would read older
- * data for no benefit, silently, on every fresh clone — which is why a CLEAN fork resolves upstream and says why.
+ * data for no benefit, silently, on every fresh clone — which is why a clean fork resolves upstream and says why.
  * "Prefer our fork" always meant "prefer the remote our corrections are on"; `diverged` is that, stated so a machine
  * can check it.
  *
- * A probe that THROWS (no network, no `gh`, no auth) resolves upstream with the failure in `reason`: an unreachable
+ * A probe that throws (no network, no `gh`, no auth) resolves upstream with the failure in `reason`: an unreachable
  * fork registry is not evidence about the fork either way, and pretending otherwise would silently pull upstream data
  * over a correction we rely on. The caller sees which happened.
  */
@@ -123,7 +123,7 @@ export async function resolveWOFRepoOrigin(repo: string, probe: ForkProbe): Prom
  * that makes a fork worth preferring, since the fork org holds a fork of every WOF repo whether or not we have
  * corrected it.
  *
- * A THROW is not "no fork": {@linkcode resolveWOFRepoOrigin} keeps that distinction, so a failed lookup is recorded as
+ * A throw is not "no fork": {@linkcode resolveWOFRepoOrigin} keeps that distinction, so a failed lookup is recorded as
  * upstream-with-a-caveat rather than upstream-as-established-fact.
  */
 export const githubForkProbe: ForkProbe = async (org, repo) => {

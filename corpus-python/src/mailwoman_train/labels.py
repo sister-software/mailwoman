@@ -95,7 +95,7 @@ STAGE3_BIO_LABELS: Final[tuple[str, ...]] = (
 
 # endregion
 
-# region Stage 4: secondary-address family (#1100 / #456) — DEFINED rather than YET ACTIVE
+# region Stage 4: secondary-address family (#1100 / #456) — defined rather than YET active
 
 #
 # The secondary-address vertical axis: designator/id pairs for units, levels (floors), and buildings,
@@ -104,20 +104,20 @@ STAGE3_BIO_LABELS: Final[tuple[str, ...]] = (
 #
 #   "STE 200"     -> unit_designator="STE"  + (existing) unit="200"   (unit is the bare id, #456)
 #   "FL 3" / "3F" -> level_designator="FL"  + level_id="3"
-#   "BLDG B"      -> building_designator="BLDG" + building_id="B"
+#   "bldg B"      -> building_designator="bldg" + building_id="B"
 #   "Eingang 2"   -> entrance="Eingang 2" ; "Stiege 4" -> staircase="Stiege 4"
 #
-# The existing STAGE3 ``unit`` tag is deliberately KEPT as the bare unit-id role rather than renamed to
+# The existing STAGE3 ``unit`` tag is deliberately kept as the bare unit-id role rather than renamed to
 # ``unit_id`` — a rename would rewrite every ``unit``-labeled corpus row. A ``unit`` → ``unit_id``
 # rename, plus reconciling the JP ``building_number``/``building_name`` declarations against
 # ``building_designator``/``building_id``, is a version-conditional batch for the activation bump rather than
 # piecemeal here (same discipline as the #875 casing batch).
 #
-# ACTIVATION (coupled, deliberately deferred — rides the v7-adjacent label-stage bump): bumping
+# activation (coupled, deliberately deferred — rides the v7-adjacent label-stage bump): bumping
 # ACTIVE_* to STAGE4 widens the model head 33 → 47 labels, so it requires a retrain (from-scratch or
 # an output-head expansion) and a same-commit extension of the JS ``COMPONENT_TAGS`` union in
 # ``core/types/component.ts`` (the decoder maps model indices → labels through it — they must move
-# together). Until then ACTIVE stays STAGE3 and these tags collapse to ``O`` at load, so defining them
+# together). Until then active stays STAGE3 and these tags collapse to ``O`` at load, so defining them
 # now is inert for live models and lets the secondary-address recipe emit them.
 STAGE4_FINE_TAGS: Final[tuple[str, ...]] = (
     "unit_designator",
@@ -141,13 +141,13 @@ STAGE4_BIO_LABELS: Final[tuple[str, ...]] = (
 # region JP fine tags (v8 CJK Phase 2 — schema activation)
 
 #
-# The seven JP-specific tags SCHEMA.mdx declares (mirrored in core/types/component.ts, where they
+# The seven JP-specific tags schema.mdx declares (mirrored in core/types/component.ts, where they
 # have sat as forward-compat declarations since Phase 0): the admin ladder (prefecture 都道府県,
 # municipality 市区町村, district 大字/丁目-level name) and the kanji-designator number parts
 # (block 丁目, sub_block 番地, building_number 号) + building_name (romaji buildings). Per the
-# encoder-design D4 rule, COMPACT numbers (2-3-16) stay whole-span ``house_number`` — the fine
+# encoder-design D4 rule, compact numbers (2-3-16) stay whole-span ``house_number`` — the fine
 # number tags are for the long designator form (2丁目3番16号) only. Not a universal stage: the JP
-# CHAR model trains with ``stage3-jp``. the Latin model stays on STAGE3. STAGE4 (the
+# char model trains with ``stage3-jp``. the Latin model stays on STAGE3. STAGE4 (the
 # secondary-address family above — numerically also 47 BIO, a coincidence) remains its own future
 # activation.
 JP_FINE_TAGS: Final[tuple[str, ...]] = (
@@ -173,12 +173,12 @@ STAGE3_JP_BIO_LABELS: Final[tuple[str, ...]] = (
 
 #
 # One tag, ``locality_unit``, for the whole ordinal chain China's rural and state-farm addresses
-# carry below the named settlement (``三分场八队``: No. 3 sub-farm, No. 8 production team. the XPCC
+# carry below the named settlement (``三分场八队``: No. 3 sub-farm, No. 8 production team. the xpcc
 # ``一四三团十二连``; the villager group ``民权三组``). Which rung each generic names is a deterministic
 # reading of the suffix (``分场``/``大队``/``队``/``连``/``团``/``组``), done after decode by
 # ``@mailwoman/core``'s CN unit reader, so the label set does not grow with every ladder found
 # (five overlap in the coarse-placer census alone). The named head unit (``孟定农场``) is
-# ``dependent_locality``. Mirrors ``core/types/component.ts`` and SCHEMA.mdx. A CJK CHAR-model set
+# ``dependent_locality``. Mirrors ``core/types/component.ts`` and schema.mdx. A CJK char-model set
 # like ``stage3-jp``: the Latin model never trains on it.
 CN_FINE_TAGS: Final[tuple[str, ...]] = ("locality_unit",)
 
@@ -212,7 +212,7 @@ STAGE3_CJK_BIO_LABELS: Final[tuple[str, ...]] = (
 # region Active set (points at the most-recent stage)
 
 # Bump to STAGE3 when training with v0.6.0 corpus. Until then, STAGE2 is active so
-# existing v0.5.x models keep working. STAGE4 is DEFINED above but not active — its
+# existing v0.5.x models keep working. STAGE4 is defined above but not active — its
 # activation is coupled to a retrain + the JS union bump (see the Stage 4 block).
 
 ACTIVE_TAGS: Final[tuple[str, ...]] = STAGE3_TAGS
@@ -228,10 +228,10 @@ ID_TO_LABEL: Final[dict[int, str]] = {i: label for label, i in LABEL_TO_ID.items
 
 
 #
-# The label vocabulary became per-MODEL when the JP sibling model activated (the JP head is 47
+# The label vocabulary became per-model when the JP sibling model activated (the JP head is 47
 # labels while the Latin head stays 33). ``resolve_label_set`` is the single lookup. the module
 # globals above remain the STAGE3 default so every existing consumer is byte-identical. A consumer
-# that supports only the default must RAISE on a non-default set, never silently collapse (the
+# that supports only the default must raise on a non-default set, never silently collapse (the
 # #1349 lesson: a label-space mismatch that zero-fills is invisible until fingerprinted).
 class LabelSet:
     """One model's label vocabulary: tags, BIO labels, and the derived id maps."""
@@ -278,14 +278,14 @@ IGNORE_INDEX: Final[int] = -100
 # region Locale conditioning (PR3 / self-conditioning)
 
 # Country (ISO 3166-1 alpha-2) → locale class id for the auxiliary self-conditioning head.
-# The head predicts which country an address belongs to from the POOLED sequence. that
+# The head predicts which country an address belongs to from the pooled sequence. that
 # posterior conditions the per-token labeling (model.py FiLM) and is the LocalePosterior the
 # resolver consumes. The probe behind PR3 showed the postcode alone pins the country only
 # 28–44% of the time, so the model must infer it from the whole string — this map is the
 # aux head's target vocabulary.
 #
 # Stable order: never reorder, only append, so a checkpoint's locale-head ids stay
-# reproducible (same discipline as the BIO STAGE-N constants above). A row whose ``country``
+# reproducible (same discipline as the BIO stage-N constants above). A row whose ``country``
 # is absent from this map maps to IGNORE_INDEX and contributes nothing to the aux loss —
 # graceful for locales the head wasn't trained on. The head still carries a slot for every
 # entry here, so the pilot (US/FR/DE) can grow to the others without a geometry change.

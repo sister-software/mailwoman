@@ -121,7 +121,7 @@ def _train_gpu(
     print(f"Resume: {resume}")
     print("Starting training...\n")
 
-    # Import and run training. load_config is the STRICT path (#1248): an unknown YAML
+    # Import and run training. load_config is the strict path (#1248): an unknown YAML
     # key — e.g. a setting the volume-side config schema predates — raises here at launch,
     # naming the dotted key + file, instead of silently running a fine-tune with every setting inert.
     from mailwoman_train.config import load_config

@@ -13,7 +13,7 @@
  *   moved. A caller declaring `variable: ["backend"]` in that situation is measuring two things and attributing the
  *   result to one.
  *
- *   Comparing STATED configs cannot see this. comparing EFFECTIVE configs can, which is why
+ *   Comparing stated configs cannot see this. comparing effective configs can, which is why
  *   {@link EngineRegistry.acquire} resolves defaults before anything here reads them.
  *
  *   **It warns, it does not refuse** (decided 2026-08-16, spec §6.3). An earlier draft made an undeclared difference a
@@ -28,7 +28,7 @@ import { runFileSync } from "@mailwoman/core/process"
 import { effectiveKeyFor } from "#engine/registry"
 
 /**
- * Whether the comparison's SETUP was clean — did exactly the declared keys differ between the two resolved configs.
+ * Whether the comparison's setup was clean — did exactly the declared keys differ between the two resolved configs.
  *
  * Read this as a hygiene check on the experiment, never as a causal finding. It compares two config objects. it has no
  * access to why any individual row moved, and a delta is a property of an aggregate while causation happens per row
@@ -51,7 +51,7 @@ export const VariableIsolation = {
 	NoVariable: "no_variable",
 	/**
 	 * The arms are different geocoders. No configuration record can express what differs, because the dominant variable
-	 * is the INDEX each one holds — and no configuration record can isolate a change here, however carefully declared.
+	 * is the index each one holds — and no configuration record can isolate a change here, however carefully declared.
 	 */
 	CrossEngine: "cross_engine",
 } as const
@@ -187,7 +187,7 @@ export interface WorktreeTreeDelta {
  *
  * {@link crossEngineReading}'s "different geocoders over different indexes" is written for Pelias-vs-mailwoman, where
  * nothing in either arm's provenance can bound the difference. A worktree pair is the opposite case: both arms name a
- * commit, so the tool can MEASURE what separates them and say it, instead of disclaiming an attribution the caller set
+ * commit, so the tool can measure what separates them and say it, instead of disclaiming an attribution the caller set
  * the comparison up to make. The isolation verdict stays {@link VariableIsolation.CrossEngine} — the config-key checker
  * still has nothing to check across two processes — but the warning carries the bounded surface: every difference lives
  * inside the named commits, and a reader can `git diff` the printed range.

@@ -8,14 +8,14 @@
  *   carry (the #1480 NI BT abstention). The pre-registered bars:
  *
  *   - **B3-2** — ≥60% of held-out units within 10 km, zero worse than the abstention arm. The
- *     within-10-km population is a DATA property of a real PFX1 artifact (a GB one is being built
- *     build-side); what the resolver-level legs below pin is the CONTRACT the artifact rides on —
+ *     within-10-km population is a data property of a real PFX1 artifact (a GB one is being built
+ *     build-side); what the resolver-level legs below pin is the interface the artifact rides on —
  *     a hit resolves to the index node's coordinate, the node's `radiusP95Km` rides along (never
  *     read a coordinate without its radius), and an abstention arm (no index) resolves nothing, so
  *     a hit is never worse than abstention by construction.
  *   - **B3-3** — NI ≥95% country scope GB + NIR ancestry + correct district named, 0% coordinate.
  *     The ancestry-only tier resolves with no lat/lon — absence, never 0,0 (meaning-of-zero) — and
- *     the metadata contract includes `postcode_prefix` + `postcode_prefix_ancestors`.
+ *     the metadata interface includes `postcode_prefix` + `postcode_prefix_ancestors`.
  *   - **B3-5** — structural: the index is `PostcodePrefixIndexLike` (`probe` + optional `country`),
  *     injected, never imported from `@mailwoman/neural`. The fake indexes below are plain objects
  *     satisfying the structure — the resolver consumes any implementation.
@@ -147,7 +147,7 @@ describe("postcodePrefixResolvedPlace — the synthetic place (B3-2/B3-3)", () =
 		// The B3-2 tier: the node resolves to the index node's coordinate…
 		expect(postcode.lat).toBe(54.577232)
 		expect(postcode.lon).toBe(-5.94725)
-		// …and the metadata contract rides along: prefix, ancestry, radius — never read a coordinate
+		// …and the metadata interface rides along: prefix, ancestry, radius — never read a coordinate
 		// without its radius (M-3's 200× receipt).
 		expect(postcode.metadata?.["postcode_prefix"]).toBe("BT9")
 
@@ -202,7 +202,7 @@ describe("B3-3 — the ancestry-only tier is coordinate-free (0% get a coordinat
 		expect(postcode.lat).toBeUndefined()
 		expect(postcode.lon).toBeUndefined()
 		expect(postcode.metadata?.["coordinate_source"]).toBeUndefined()
-		// The district is still NAMED — country → constituent country → district, coarsest-first.
+		// The district is still named — country → constituent country → district, coarsest-first.
 		expect(postcode.metadata?.["postcode_prefix"]).toBe("BT9")
 		const ancestors = postcode.metadata?.["postcode_prefix_ancestors"] as Array<{ name: string }>
 		expect(ancestors.map((a) => a.name)).toEqual(["United Kingdom", "Northern Ireland", "Belfast"])

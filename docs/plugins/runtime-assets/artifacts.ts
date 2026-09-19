@@ -11,7 +11,7 @@
  *   Everything here resolves through `@mailwoman/core/module/resolve-from`, keyed on this file's `import.meta.url`,
  *   and nothing here touches `import.meta.resolve`: this file runs under Docusaurus's config loader, whose CommonJS
  *   transform rewrites `import.meta.url` and cannot parse `import.meta.resolve`, in this file or in anything it
- *   imports. Only a docs BUILD can verify a change to that, never a unit test.
+ *   imports. Only a docs build can verify a change to that, never a unit test.
  */
 
 import { pathExists, readLocalTextFile } from "@mailwoman/core/fs/readers"
@@ -41,10 +41,10 @@ export function relativeImportSpecifiers(source: string): string[] {
  *
  * MapLibre derives its default worker URL from `import.meta.url` and answers an empty string when that is not an
  * `http(s):` URL. The docs client bundle is classic-script output, so webpack inlines `import.meta.url` as the `file:`
- * path of `maplibre-gl.mjs` on the build host. the empty URL then spawns the PAGE ITSELF as the worker, which dies at
- * its first byte of HTML. No error reaches the console, `map.loaded()` stays false, and no tile is ever requested. The
- * site sets `setWorkerUrl` to the staged copy (`docs/src/shared/maplibre/worker/index.ts`), which is same-origin and
- * therefore loads as a module worker.
+ * path of `maplibre-gl.mjs` on the build host. the empty URL then spawns the page itself as the worker, which dies at
+ * its first byte of html. No error reaches the console, `map.loaded()` stays false, and no tile is ever requested. The
+ * site sets `setWorkerUrl` to the staged copy (`docs/src/shared/maplibre/worker/index.ts`), which is same-origin and .
+ * Therefore, loads as a module worker.
  *
  * Staging from the installed package, at build time, is what keeps the worker at the same version as the bundled main
  * thread. a committed copy would drift on the next dependency bump.

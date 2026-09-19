@@ -112,11 +112,11 @@ export interface AddressNode {
 	 */
 	alternatives?: ReadonlyArray<unknown>
 	/**
-	 * ADDITIONAL roles this single span plays, beyond `tag` (#413). A place can hold multiple admin tiers under one name
+	 * Additional roles this single span plays, beyond `tag` (#413). A place can hold multiple admin tiers under one name
 	 * — a city-state (Berlin is region and locality) or a capital-seat province (Milano province ~ Milano comune). Rather
 	 * than synthesize a second node with a borrowed span, the resolver records the extra role(s) here, so one node = one
 	 * span = many roles (the model Google's `address_components[].types` uses). `tag`/`placeID`/`lat`/`lon` remain the
-	 * PRIMARY role. each interpretation is a distinct secondary role with its own resolved place. Serializers surface
+	 * primary role. each interpretation is a distinct secondary role with its own resolved place. Serializers surface
 	 * every role (a city-state emits both `region` and `locality`). Distinct from `alternatives` — those are same-role
 	 * runner-up places (Springfield IL vs MA); interpretations are different tags, same span. Empty / absent for the
 	 * common single-role node. Both completion (#415) and a future concordance decode write into this one slot.
@@ -125,7 +125,7 @@ export interface AddressNode {
 	/**
 	 * The ISO 15924 script this span is written in — the one that writes most of its script-containing codepoints.
 	 *
-	 * The span is where the question is answerable. A whole input folds to one answer and loses which PART carried which
+	 * The span is where the question is answerable. A whole input folds to one answer and loses which part carried which
 	 * writing system: `金龍酒家, 12 Gerrard Street, London WC2H 7JS` is majority Latin, so a reader of the input's script
 	 * cannot tell that the venue is Han. `Zyyy` is the abstention — a span holding only a house number borrows no
 	 * neighbour's script.
@@ -168,7 +168,7 @@ export interface AddressTree {
 	raw: string
 	roots: AddressNode[]
 	/**
-	 * The addressing SYSTEM this tree was decoded under, which selects the containment hierarchy
+	 * The addressing system this tree was decoded under, which selects the containment hierarchy
 	 * (`containmentFor(system)` in `./containment.ts`). Absent means the default Western hierarchy (`house_number →
 	 * street → locality → …`).
 	 *
@@ -180,9 +180,9 @@ export interface AddressTree {
 	 */
 	system?: AddressSystem
 	/**
-	 * The parse-time locale-head verdict when it was CONFIDENT (softmax >= the action threshold): the model's own read of
+	 * The parse-time locale-head verdict when it was confident (softmax >= the action threshold): the model's own read of
 	 * which country's addressing this text is shaped like. Absent = under threshold or the head never ran — unknown,
-	 * never "domestic". Evidence about the TEXT rather than a resolved country: the head is a 9-way classifier, so a
+	 * never "domestic". Evidence about the text rather than a resolved country: the head is a 9-way classifier, so a
 	 * Chinese address may read GB — right about "not the locale's country", wrong about which. The scope check this
 	 * exists for (#1684) therefore only ever drops an inferred scope on a mismatch. it never re-points one.
 	 */

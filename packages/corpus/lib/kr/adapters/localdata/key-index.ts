@@ -10,7 +10,7 @@
  *   local authority grants is a separate `identity` assertion on the same row, and is not what a string aligns against.
  *   So nothing in a permit string is taken on its own word. The region must be a 시도 the register lists, the 시군구 one
  *   that region lists, the road one that 시군구 lists, the 동 one that 시군구 lists, the 리 one that 동 lists. A string
- *   that satisfies the whole key becomes a training row. one that does not is a BOARD row — an address the model will
+ *   that satisfies the whole key becomes a training row. one that does not is a board row — an address the model will
  *   be read on and never trained on.
  *
  *   Built by one pass over the register rows, which is why it lives beside them rather than inside the aligner.
@@ -80,7 +80,7 @@ function add(map: Map<string, Set<string>>, key: string, value: string): void {
 }
 
 /**
- * Add one LABEL row's names to the key sets.
+ * Add one label row's names to the key sets.
  *
  * The 읍/면 joins the road set's unit as a road-form token too, since the road address writes it between the 시군구 and the
  * road.
@@ -107,7 +107,7 @@ export function indexLabelRow(index: KeyIndex, row: JusoLabelRow): void {
 }
 
 /**
- * Admit the pre-merger region names as aliases of the register's current one, SHARING its key sets.
+ * Admit the pre-merger region names as aliases of the register's current one, sharing its key sets.
  *
  * The sets are shared by reference rather than copied: an alias is the same place under an older name, and a later
  * `indexLabelRow` under either name must reach the same set.

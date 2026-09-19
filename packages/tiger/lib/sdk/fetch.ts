@@ -3,10 +3,10 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Pull TIGER geometry/attributes into a `node:sqlite` database via the Kysely
+ *   Pull tiger geometry/attributes into a `node:sqlite` database via the Kysely
  *   {@link DatabaseClient}.
  *
- *   Replaces the ad-hoc wget and the retired corpus TIGER build script. Pared down from isp-nexus's
+ *   Replaces the ad-hoc wget and the retired corpus tiger build script. Pared down from isp-nexus's
  *   `generate-tiger-tiles.ts` (its per-level column mapping is the spec) into the playpen
  *   `repo-tools` idiom: an async generator of progress events, idempotent, no SpatiaLite.
  *
@@ -17,7 +17,7 @@
  *   - `addrfeat` (per county) — named street segments + ZIPs → `tiger_streets` (attribute-only).
  *
  *   `tiger_streets` + `tiger_places` match the schema the corpus `tiger` adapter reads, so this is a
- *   drop-in replacement for the retired corpus TIGER build script.
+ *   drop-in replacement for the retired corpus tiger build script.
  *
  *   Flow per source unit: download (skips a valid cached zip) → unzip → stream `ogr2ogr -f
  *   GeoJSONSeq` (mapping shapefile columns to the schema, WGS84 for geometry levels) → batched
@@ -41,7 +41,7 @@ const CENSUS_HOST = "https://www2.census.gov"
 const DEFAULT_DATA_ROOT = mailwomanDataRoot()
 
 /**
- * Supported TIGER levels. `tabblock20` is per state + carries geometry; `place`/`addrfeat` are attribute-only.
+ * Supported tiger levels. `tabblock20` is per state + carries geometry; `place`/`addrfeat` are attribute-only.
  */
 export type TIGERFetchLevel = "tabblock20" | "place" | "addrfeat"
 
@@ -63,7 +63,7 @@ export interface FetchTIGEROptions {
 	 */
 	stateFIPS: string
 	/**
-	 * TIGER level. Default `tabblock20`.
+	 * Tiger level. Default `tabblock20`.
 	 */
 	level?: TIGERFetchLevel
 	/**
@@ -122,7 +122,7 @@ function selectSQL(level: TIGERFetchLevel, layer: string, county?: string): stri
 		case "place":
 			return `SELECT GEOID AS geoid, NAME AS name, STATEFP AS statefp, LSAD AS lsad, NAMELSAD AS namelsad, CLASSFP AS classfp FROM "${layer}"`
 		case "addrfeat":
-			// ADDRFEAT has no STATEFP column — injected per-row from the state we're fetching.
+			// addrfeat has no statefp column — injected per-row from the state we're fetching.
 			return `SELECT LINEARID AS linearid, FULLNAME AS fullname, ZIPL AS zipl, ZIPR AS zipr FROM "${layer}" WHERE FULLNAME IS NOT NULL AND FULLNAME != ''`
 	}
 }
@@ -168,10 +168,10 @@ function buildRow(level: TIGERFetchLevel, p: Record<string, unknown>, geometry: 
 }
 
 /**
- * Scrape the ADDRFEAT directory listing for a state's county FIPS codes.
+ * Scrape the addrfeat directory listing for a state's county FIPS codes.
  */
 async function discoverCounties(state: string, vintage: number): Promise<string[]> {
-	// The LISTING only — a small HTML index. The per-county archives below stay on raw `fetch`, streaming to disk.
+	// The listing only — a small html index. The per-county archives below stay on raw `fetch`, streaming to disk.
 	const html = await new APIClient({ displayName: "tiger-listing", retry: true })
 		.fetch<string>({ url: `${CENSUS_HOST}/geo/tiger/TIGER${vintage}/ADDRFEAT/`, responseType: "text" })
 		.then(pluckResponseData)
@@ -187,7 +187,7 @@ async function discoverCounties(state: string, vintage: number): Promise<string[
 }
 
 /**
- * Fetch one state's TIGER data at `level` into a SQLite DB. Yields progress. returns the final tally.
+ * Fetch one state's tiger data at `level` into a SQLite DB. Yields progress. returns the final tally.
  */
 export async function* fetchTIGER(options: FetchTIGEROptions): AsyncGenerator<FetchTIGEREvent, FetchTIGERResult> {
 	const level = options.level ?? "tabblock20"
@@ -199,8 +199,8 @@ export async function* fetchTIGER(options: FetchTIGEROptions): AsyncGenerator<Fe
 
 	const cacheDir = join(dataRoot, "tiger", String(vintage), state)
 	// Default to a stable, vintage-agnostic `tiger.db` — the filename the corpus `tiger` adapter reads
-	// (run-corpus-build → `${ROOT}/tiger/tiger.db`). The vintage is a content detail rather than a path one.
-	// the per-table idempotent delete keeps a re-fetch (newer vintage) clean. The download CACHE stays
+	// (run-corpus-build → `${root}/tiger/tiger.db`). The vintage is a content detail rather than a path one.
+	// the per-table idempotent delete keeps a re-fetch (newer vintage) clean. The download cache stays
 	// vintage-partitioned below so zips don't collide across vintages.
 	const outPath = options.outPath ?? join(dataRoot, "tiger", "tiger.db")
 	await makeDirectories(cacheDir)

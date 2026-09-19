@@ -3,7 +3,7 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   `mailwoman tiger fetch --state <FIPS>` — download a state's TIGER tabulation blocks (2020) into a
+ *   `mailwoman tiger fetch --state <FIPS>` — download a state's tiger tabulation blocks (2020) into a
  *   SQLite database via the Kysely `DatabaseClient`. Geometry is stored as GeoJSON text (no
  *   SpatiaLite).
  *
@@ -19,7 +19,7 @@ import { useState } from "react"
 import { type CommandSpec, CommandTaskResult, type CommandComponent, useCommandTask } from "#cli-kit"
 
 /**
- * Native command-line contract consumed by the filesystem command router.
+ * Native command-line interface consumed by the filesystem command router.
  */
 export const spec = {
 	name: "fetch",
@@ -48,7 +48,7 @@ const TIGERFetch: CommandComponent<typeof spec> = ({ options }) => {
 	const [status, setStatus] = useState("Starting…")
 
 	const state = useCommandTask(async () => {
-		// `@mailwoman/tiger` is an OPTIONAL dependency (the census-TIGER fetch tooling is for
+		// `@mailwoman/tiger` is an optional dependency (the census-tiger fetch tooling is for
 		// operators building the street tier rather than end-user geocoding) — imported lazily here so a
 		// clean geocoding-only install of the CLI never loads it at startup, and a missing optional
 		// dep degrades to a friendly message instead of crashing the whole CLI.

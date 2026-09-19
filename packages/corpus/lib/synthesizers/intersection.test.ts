@@ -3,7 +3,7 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Tests for the v0.7 intersection synthesizer. Validates the {raw, components} contract and the BIO
+ *   Tests for the v0.7 intersection synthesizer. Validates the {raw, components} interface and the BIO
  *   output by running rows through the real `alignRow` aligner — confirming the model will see
  *   B-/I-intersection_a, O on the connector, and B-/I-intersection_b (the signal it currently
  *   lacks).
@@ -25,7 +25,7 @@ function asCanonical(r: SynthesizedIntersectionRow): CanonicalRow {
 }
 
 describe("synthesizeIntersectionRow", () => {
-	it("emits both street surface forms verbatim in raw (alignment contract)", () => {
+	it("emits both street surface forms verbatim in raw (alignment interface)", () => {
 		const row = synthesizeIntersectionRow(DEFAULT_US_BASES[0]!, { random: mulberry32(1) })!
 		expect(row).not.toBeNull()
 		expect(row.raw).toContain(row.components.intersection_a!)
@@ -51,7 +51,7 @@ describe("synthesizeIntersectionRow", () => {
 		// NB: align.ts's default whitespace tokenizer strips standalone punctuation, so the connector
 		// ("&", "/", …) leaves no token. What matters — and what we assert — is that the two street
 		// spans label correctly and in order. The connector's label is a tokenizer detail (the
-		// production SentencePiece tokenizer keeps "&" as an O token); not the generator's contract.
+		// production SentencePiece tokenizer keeps "&" as an O token); not the generator's interface.
 		const row = synthesizeIntersectionRow(DEFAULT_US_BASES[0]!, { random: mulberry32(7) })!
 		const result = alignRow(asCanonical(row))
 		expect(result.kind).toBe("labeled")

@@ -3,7 +3,7 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Synthetic Overture ids must be a function of the PLACE rather than of the build.
+ *   Synthetic Overture ids must be a function of the place rather than of the build.
  *
  *   The failure this pins is silent and cross-artifact. Ids were `idBase + rowIndex` over a threaded DuckDB scan, so
  *   the same division took a different id in each build: `8000001092006` is _Dolok Merawan, Indonesia_ in one shipped
@@ -19,7 +19,7 @@ import { assignSyntheticIDs, foldedPlacetype, prepareInserts } from "mailwoman/g
 import { describe, expect, test } from "vitest"
 
 /**
- * GERS-shaped ids. Real ones are opaque 32-char hex strings. the shape matters only in that the hash sees the whole
+ * Gers-shaped ids. Real ones are opaque 32-char hex strings. the shape matters only in that the hash sees the whole
  * string.
  */
 const GERS = [
@@ -88,8 +88,8 @@ describe("assignSyntheticIDs", () => {
 })
 
 describe("the bulk-write statements bind against the real unified schema", () => {
-	// The column tuples are checked against the `WOFDatabase` INTERFACE at compile time. The tables are
-	// created by `createUnifiedSchema`'s DDL, which is a SEPARATE artifact — a column renamed in one and
+	// The column tuples are checked against the `WOFDatabase` interface at compile time. The tables are
+	// created by `createUnifiedSchema`'s DDL, which is a separate artifact — a column renamed in one and
 	// not the other type-checks perfectly and then fails partway through a multi-hour build. Binding a
 	// row against the real schema is the only thing that catches that.
 	async function openUnified(): Promise<DatabaseClient<WOFDatabase>> {
@@ -120,8 +120,8 @@ describe("the bulk-write statements bind against the real unified schema", () =>
 		expect(db.prepare("SELECT name FROM names WHERE id = ?").get(id)).toEqual({ name: "Testville" })
 
 		// #1884: the Wikidata concordance rides the same `wd:id` source the WOF ingest writes and the
-		// `gazetteer importance` join reads (`WHERE c.other_source = 'wd:id'`) — the predicate is the
-		// contract, so it is asserted literally.
+		// `gazetteer importance` join reads (`where c.other_source = 'wd:id'`) — the predicate is the
+		// interface, so it is asserted literally.
 		expect(db.prepare("SELECT other_id FROM concordances WHERE id = ? AND other_source = 'wd:id'").get(id)).toEqual({
 			other_id: "Q140147",
 		})
@@ -151,8 +151,8 @@ describe("foldedPlacetype", () => {
 
 	test("leaves every other country's county alone, including the two that look like Singapore", () => {
 		// KW 137 county places against 13 localities and QA 79 against 46 both clear the count test and fail the name
-		// test: Kuwait's county names are underscore-joined ASCII while its Arabic names sit on `locality`, and Qatar's
-		// are Doha's zone NUMBERS. Admitting either would attest surfaces nobody writes.
+		// test: Kuwait's county names are underscore-joined ascii while its Arabic names sit on `locality`, and Qatar's
+		// are Doha's zone numbers. Admitting either would attest surfaces nobody writes.
 		expect(foldedPlacetype("county", "KW")).toBe("county")
 		expect(foldedPlacetype("county", "QA")).toBe("county")
 		expect(foldedPlacetype("county", "US")).toBe("county")

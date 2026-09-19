@@ -41,7 +41,7 @@ export interface ReleasePreflightOptions {
 	 */
 	version?: string
 	/**
-	 * The CALLER'S staging directory: written into and never removed. Absent, a scratch directory is made and owned here.
+	 * The caller'S staging directory: written into and never removed. Absent, a scratch directory is made and owned here.
 	 */
 	staging?: string
 	/**
@@ -63,7 +63,7 @@ export interface ReleasePreflightReport {
 }
 
 /**
- * Stage, materialize, pack and audit every release workspace. Answers the report. the verdict is `FAIL` when any
+ * Stage, materialize, pack and audit every release workspace. Answers the report. the verdict is `fail` when any
  * release workspace does not pack to a tarball honoring its manifest, or when the release list's named-absence identity
  * does not hold.
  */
@@ -77,7 +77,7 @@ export async function releasePreflight(options: ReleasePreflightOptions): Promis
 	const startedAt = performance.now()
 	await using resources = new AsyncDisposableStack()
 
-	// Two ownership rules, and they are separate. A `--staging` root is the CALLER'S directory: this operation writes
+	// Two ownership rules, and they are separate. A `--staging` root is the caller'S directory: this operation writes
 	// into it and never removes it. The one it makes itself is its own, and `--keep` withholds removal so the staged
 	// tree survives for inspection — registering it is what decides that, rather than a branch at the far end.
 	let stagingRoot = options.staging

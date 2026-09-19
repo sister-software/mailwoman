@@ -3,9 +3,9 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Admin-coherence verdicts (#1717 stage 1) — after a geocode resolves, compare the PARSED admin
+ *   Admin-coherence verdicts (#1717 stage 1) — after a geocode resolves, compare the parsed admin
  *   qualifiers (`region`, `country`) against what the winning candidate's resolved ancestry actually
- *   says, and report a per-component verdict. FLAG-ONLY: nothing reads these verdicts to rank,
+ *   says, and report a per-component verdict. flag-only: nothing reads these verdicts to rank,
  *   re-pick, or check — they exist so a board run can count how often the resolver's answer ignores a
  *   qualifier the parse got right (`Weimar, Thüringen` → Weimar TX), and how often the winner
  *   carries no ancestry to check at all (the `unverifiable` count).
@@ -25,7 +25,7 @@
  *     class to check against. Report it faithfully. folding it into either decided verdict would
  *     hide exactly the gap #1717 wants measured.
  *
- *   STATED BOUNDS (v1 is fold-equality only — do not read more into a verdict than this):
+ *   stated bounds (v1 is fold-equality only — do not read more into a verdict than this):
  *
  *   - Cross-language variant forms are not bridged: `Thüringen` folds to `thuringen`, the stored
  *     exonym `Thuringia` to `thuringia`, so a variant-form match the gazetteer could vouch for
@@ -37,7 +37,7 @@
  *     `Illinois` and `Deutschland` against a DE winner, but an uncurated endonym (`Alemania`)
  *     against a DE winner reads `contradicted` — the module never silently over-claims a match it
  *     cannot derive.
- *   - The region verdict additionally carries the MISLABEL BRIDGE: a region slot holding a COUNTRY
+ *   - The region verdict additionally carries the mislabel bridge: a region slot holding a country
  *     name ("Batumi, Georgia" parses region="Georgia") confirms against the winner's country-class
  *     evidence, because containment holds and `contradicted` would misdescribe the geography. It
  *     runs after the region band, is monotone (`contradicted`/`unverifiable` → `confirmed` is the
@@ -61,7 +61,7 @@ import { normalizeLocalityForKey } from "@mailwoman/resolver-wof-sqlite/street"
 
 /**
  * One admin-coherence verdict. See the module docstring for the exact meaning of each — in particular, `unverifiable`
- * is an absence-of-evidence claim about the WINNER, never about the parse.
+ * is an absence-of-evidence claim about the winner, never about the parse.
  */
 type AdminCoherenceVerdict = "confirmed" | "contradicted" | "unstated" | "unverifiable"
 
@@ -150,7 +150,7 @@ function intersects(a: ReadonlySet<string>, b: ReadonlySet<string>): boolean {
 }
 
 /**
- * The winner's COUNTRY-class evidence keys: the resolver-stamped alpha-2 expanded through the codex tables into every
+ * The winner's country-class evidence keys: the resolver-stamped alpha-2 expanded through the codex tables into every
  * spelling the check can vouch for, plus any country-placetype ancestors. One assembly, two consumers — the country
  * verdict compares against it, and the region verdict's mislabel bridge (below) does too, so the two verdicts can never
  * disagree about what counts as country-class evidence.
@@ -203,7 +203,7 @@ function regionVerdict(parsedRegion: string | undefined, winner: AdminCoherenceW
 		if (intersects(parsedKeys, regionKeys(ancestor.name, iso))) return "confirmed"
 	}
 
-	// The mislabel bridge: the region SLOT sometimes holds a COUNTRY name — "Moscow, Russia" parses
+	// The mislabel bridge: the region slot sometimes holds a country name — "Moscow, Russia" parses
 	// region="Russia", "Batumi, Georgia" parses region="Georgia" (the shape the flag's own first
 	// triage counted at ~4 of 16 contradictions). Containment still holds when the winner's
 	// country-class evidence matches the qualifier, so `contradicted` would be the wrong claim about
@@ -259,7 +259,7 @@ export interface AdminCoherenceSourceNode {
  * tree's nodes, and return a spreadable result fragment. `winner` is the admin-ladder pick; `fallbackWinner` is the
  * primary resolved node the street-backed tiers report instead (the resolution context the coordinate was scoped by).
  * No winner at all → an empty fragment: the `admin_coherence` field stays absent, which is a different claim from
- * `unverifiable` (nothing resolved, so there was no candidate to check).
+ * `unverifiable` (nothing resolved. Therefore, there was no candidate to check).
  */
 export function adminCoherenceField(
 	nodes: readonly AdminCoherenceSourceNode[],

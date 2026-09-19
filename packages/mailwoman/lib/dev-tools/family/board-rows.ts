@@ -4,7 +4,7 @@
  * @author Teffen Ellis, et al.
  *
  *   The curated rows of the four target families that had no board (#1931 task 6), each authored from the set its
- *   issue attests. The SELECTION is by hand and every row says which family it pins. the POINTS are never typed: a row
+ *   issue attests. The selection is by hand and every row says which family it pins. the points are never typed: a row
  *   that names a place carries the gazetteer lookup (`name`, `country`, `parent`) and `family-board.run.ts` reads the
  *   coordinate off the admin gazetteer, refusing a name it cannot find or finds twice.
  *

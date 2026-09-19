@@ -6,7 +6,7 @@
  *   Australian states and territories (ISO 3166-2:AU). Australia Post's addressing guidelines put the
  *   state abbreviation on the last line between the locality and the 4-digit postcode ("Line 3
  *   should contain the locality or suburb, state and postcode and be written in capital letters" —
- *   addressing guidelines, accessed 2026-06-11), e.g. `SYDNEY NSW 2000`, `BUNBURY WA 6230`, `EUROA
+ *   addressing guidelines, accessed 2026-06-11), e.g. `sydney NSW 2000`, `bunbury WA 6230`, `euroa
  *   VIC 3664`. The abbreviation set is the ISO 3166-2:AU subdivision codes, which are the same
  *   codes Australia Post's own examples use (NSW, VIC, WA, QLD, ACT appear across the addressing
  *   guidelines and the barcode booklet).

@@ -12,8 +12,8 @@ import {
  *   #475 postal-city alias integration. Two layers:
  *
  *   1. The reader ({@link WOFPostalCityAliasLookup}) — a postcode-scoped probe that returns only the
- *        DIVERGENT rows (postal name ≠ geographic name), the rows that carry alias signal.
- *   2. The coordinate-first scorer wiring — a user-typed POSTAL city ("Antioch", postcode 37013) becomes
+ *        divergent rows (postal name ≠ geographic name), the rows that carry alias signal.
+ *   2. The coordinate-first scorer wiring — a user-typed postal city ("Antioch", postcode 37013) becomes
  *        a name-match alias for the geographic locality the postcode sits in ("Nashville"), so the
  *        right place tiers over a same-named distractor in another state. Default-off: without the
  *        reader the resolver is byte-identical (the byte-stability test pins this).

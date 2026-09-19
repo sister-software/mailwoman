@@ -26,7 +26,7 @@ export function normLoose(s: string | undefined): string {
 }
 
 /**
- * Normalized exact, or either-direction TOKEN-subset (fragmentation + decomposition tolerant). Token subset rather than
+ * Normalized exact, or either-direction token-subset (fragmentation + decomposition tolerant). Token subset rather than
  * raw substring, so "Saint" ⊆ "Saint Paul" and "Ave" ⊆ "Elm Ave" match while "Park" does not spuriously match
  * "Parkway".
  */

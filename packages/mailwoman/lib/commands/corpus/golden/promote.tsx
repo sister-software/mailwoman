@@ -5,7 +5,7 @@
  *
  *   `mailwoman corpus golden promote` — promote LLM-synthesized golden-set candidates into a
  *   versioned golden dir with human-typed-likelihood filters + dedup. Companion to `corpus golden
- *   expand`. Forward-copies the prior version's entries + non-JSONL files and writes a MANIFEST
+ *   expand`. Forward-copies the prior version's entries + non-jsonl files and writes a manifest
  *   with per-file sha256.
  */
 
@@ -14,7 +14,7 @@ import { Text } from "ink"
 import { type CommandSpec, CommandTaskResult, type CommandComponent, useCommandTask } from "#cli-kit"
 
 /**
- * Native command-line contract consumed by the filesystem command router.
+ * Native command-line interface consumed by the filesystem command router.
  */
 export const spec = {
 	name: "promote",

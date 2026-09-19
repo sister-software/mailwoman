@@ -4,7 +4,7 @@
  * @author Teffen Ellis, et al.
  *
  *   The plus-code (Open Location Code) result override — the last step of a geocode, after every
- *   resolve tier. See {@link applyPlusCodeOverride} for the contract. the decoder itself lives in
+ *   resolve tier. See {@link applyPlusCodeOverride} for the interface. the decoder itself lives in
  *   `@mailwoman/spatial` (pure arithmetic, officially-vectored).
  */
 
@@ -41,12 +41,12 @@ export function applyPlusCodeOverride(result: GeocodeOutcomeLike, input: string,
 	if (!token) return
 	const upper = token.toUpperCase()
 
-	// The short-code reference must be LOCALITY-grade: recovery needs a point within half a
+	// The short-code reference must be locality-grade: recovery needs a point within half a
 	// prefix-resolution (0.5 degrees for the common 4-digit short form) of the true cell, and the
 	// blended result coordinate can be poisoned by a ZIP-lookalike postcode ('Managua 11001'
 	// answered a Floral Park NY point) or a coarse admin centroid (Ulaanbaatar's reference arrived
 	// ~2 degrees off) — both measured recovering into the wrong degree cell with perfect fractions.
-	// The resolved locality NODE is the reference the code was shortened against.
+	// The resolved locality node is the reference the code was shortened against.
 	const referenceNode = firstNodeWhere(
 		resolved.roots,
 		(n) => (n.tag === "locality" || n.tag === "dependent_locality") && n.lat != null && n.lon != null

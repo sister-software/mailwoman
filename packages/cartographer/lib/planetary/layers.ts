@@ -17,7 +17,7 @@ import { LayerID } from "#styles/layers"
 
 export interface PlanetaryPalette {
 	/**
-	 * The body's own surface tone, under the relief. Named `space` for the layer it feeds, which paints the SPHERE under
+	 * The body's own surface tone, under the relief. Named `space` for the layer it feeds, which paints the sphere under
 	 * globe projection rather than the area around it — the field around the globe is the page behind a transparent
 	 * canvas, and the app's stylesheet paints it.
 	 */
@@ -71,7 +71,7 @@ export type PlanetaryStyleBody = keyof typeof PALETTES
 const PLANETARY_NAMESPACE = "planetary"
 
 /**
- * The body's surface tone, under the relief. Under globe projection a background layer paints the SPHERE rather than
+ * The body's surface tone, under the relief. Under globe projection a background layer paints the sphere rather than
  * the viewport, so this is the ground the hillshade shades and not the field around the globe. the app's stylesheet
  * paints that behind a transparent canvas.
  */

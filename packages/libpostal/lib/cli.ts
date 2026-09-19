@@ -5,7 +5,7 @@
  * @author Teffen Ellis, et al.
  *
  *   `mailwoman-libpostal` — boot a libpostal-compatible parse/expand endpoint via the `serve`
- *   command. Usage + examples live in the package README.
+ *   command. Usage + examples live in the package readme.
  *
  *   Wires the real engine: `/parse` over Mailwoman's neural BIO tagger (`@mailwoman/neural`),
  *   `/expand` over `@mailwoman/normalize`. `/expand` is honest-minimal: it returns the original
@@ -28,7 +28,7 @@ async function serve(engineStamp: ResolvedEngineStamp): Promise<void> {
 		options: {
 			port: { type: "string", default: "8081" },
 			host: { type: "string", default: "0.0.0.0" },
-			// Permissive CORS is on by default (browser clients need it). `--no-cors` turns it off for deployments
+			// Permissive cors is on by default (browser clients need it). `--no-cors` turns it off for deployments
 			// where a reverse proxy already sets the headers.
 			cors: { type: "boolean", default: true },
 		},

@@ -133,7 +133,7 @@ of the same pass, which title-cases the long words and leaves the short ones sho
 are already the form the corpus uses for state codes and directionals.
 
 The restriction is in the phrase _pure ASCII_. Case conversion outside ASCII is language-dependent and
-can change a string's length, which would break the character offsets the whole result is built on, so
+can change a string's length, which would break the character offsets the whole result is built on. Therefore,
 an input containing any non-ASCII character is left exactly as typed. The consequence is visible:
 
 ```

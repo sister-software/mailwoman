@@ -22,7 +22,7 @@
 ## from-scratch case is the minority one and the least safe to leave implied.
 ##
 ## WHY THE TOKENS ARE SHAPED THIS WAY. Vale runs Go RE2, which has no lookbehind and
-## no lookahead, so "bare mention" cannot be expressed as "overlay not preceded by a
+## no lookahead. Therefore, "bare mention" cannot be expressed as "overlay not preceded by a
 ## qualifier". These match the determiner-plus-verb frames instead, which is where an
 ## unqualified mention actually lands. A qualified mention has a word in between and
 ## does not match: "the corpus overlay is", "the en-GB weights overlay was". Compound

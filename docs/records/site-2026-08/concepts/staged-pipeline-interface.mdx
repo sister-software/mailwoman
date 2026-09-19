@@ -1,6 +1,6 @@
 ---
 sidebar_position: 14
-title: The pipeline contract
+title: The pipeline interface
 tags:
   - concepts
   - architecture
@@ -8,14 +8,14 @@ tags:
   - reference
 ---
 
-# The pipeline contract
+# The pipeline interface
 
 You don't have to take Mailwoman's pipeline as-is. The runtime coordinator (`createRuntimePipeline`) accepts each pipeline stage as an injectable function or interface; an integrator can swap any of them for a custom implementation without forking the core.
 
 This article is the practical "how do I plug in" companion to:
 
 - [The staged pipeline](../understanding/our-approach/the-staged-pipeline.mdx) — the narrative for _why_ the stages exist
-- [STAGES.md (reference)](https://github.com/sister-software/mailwoman/blob/main/docs/engineering/reference/STAGES.mdx) — the full per-stage contract with type definitions, error semantics, and edge cases
+- [STAGES.md (reference)](https://github.com/sister-software/mailwoman/blob/main/docs/engineering/reference/STAGES.mdx) — the full per-stage interface with type definitions, error semantics, and edge cases
 
 Read those first if you're new. Use this page when you already know the shape and want to ship a custom stage.
 
@@ -44,7 +44,7 @@ Every stage is **optional**. When you omit one, the coordinator either substitut
 ### Decode-time constraint layers (v4.3.0+)
 
 The neural classifier carries two constraint layers configured at construction rather than as pipeline
-stages — they run inside `classifier.parse` and are part of the SHIP CONFIG contract (the model
+stages — they run inside `classifier.parse` and are part of the SHIP CONFIG interface (the model
 card's notes name the required settings per release):
 
 - **Conventions mask** (`addressSystemConventions: "auto" | SystemCode`, v4.3.0+): the model's
@@ -58,7 +58,7 @@ card's notes name the required settings per release):
 
 Running a v4.4.0+ model without these settings reproduces measured check failures (po_box 60.4 vs
 89.1 with the bridge; the FR digit-split class without conventions) — they are not optional
-enhancements for those weights, they are the decode contract.
+enhancements for those weights, they are the decode interface.
 
 ## Replacing a stage
 
@@ -88,7 +88,7 @@ Not every stage failure is treated the same. The coordinator distinguishes **gra
 
 | Stage                  | If it throws                                                                                                                                       |
 | ---------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `normalize`            | Propagates. Input preprocessing is a contract; a crash is a bug.                                                                                   |
+| `normalize`            | Propagates. Input preprocessing is a interface; a crash is a bug.                                                                                  |
 | `computeQueryShape`    | Propagates. Same rationale.                                                                                                                        |
 | `detectLocale`         | Propagates. A locale detector that crashes signals a real fault rather than noise.                                                                 |
 | `classifyKind`         | Propagates. Kind classification runs on the QueryShape wecomputed — there's nothing external that can poison it.                                   |
@@ -113,7 +113,7 @@ try {
 }
 ```
 
-If you abort while a stage is mid-execution, that stage runs to completion before the abort takes effect. The longest cancellation latency is one stage's runtime — typically the neural classifier (~10-70ms p99 for the en-US weights). Fine-grained mid-stage cancellation is a future enhancement that requires plumbing `signal` into each stage's contract.
+If you abort while a stage is mid-execution, that stage runs to completion before the abort takes effect. The longest cancellation latency is one stage's runtime — typically the neural classifier (~10-70ms p99 for the en-US weights). Fine-grained mid-stage cancellation is a future enhancement that requires plumbing `signal` into each stage's interface.
 
 Aborting before any stage runs throws immediately. Aborting between stages skips the rest of the pipeline.
 
@@ -170,6 +170,6 @@ Expand the **Classification origin** section to see which pipeline stage contrib
 
 ## See also
 
-- [STAGES.md](https://github.com/sister-software/mailwoman/blob/main/docs/engineering/reference/STAGES.mdx) — the full per-stage type contract
+- [STAGES.md](https://github.com/sister-software/mailwoman/blob/main/docs/engineering/reference/STAGES.mdx) — the full per-stage type interface
 - [The staged pipeline](../understanding/our-approach/the-staged-pipeline.mdx) — why these stages exist
 - [QUERY_SHAPE.md](https://github.com/sister-software/mailwoman/blob/main/docs/engineering/reference/QUERY_SHAPE.mdx) — the structural-prior sub-system feeding stages 2 and 2.5

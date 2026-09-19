@@ -115,4 +115,4 @@ Fellegi-Sunter baseline rather than the bundled model's calibrated 2.8324, and `
 
 ## License
 
-[AGPL-3.0-only](https://www.gnu.org/licenses/agpl-3.0.html)
+[AGPL-3.0-only](https://www.gnu.org/licenses/AGPL-3.0.html)

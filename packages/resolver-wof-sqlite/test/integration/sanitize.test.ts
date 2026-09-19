@@ -5,7 +5,7 @@
  *
  *   Tests for the FTS5 sanitizer. The function isn't exported (it lives inside `lookup.ts`), so we
  *   drive it through real `findPlace` calls against a tiny fixture DB and assert on the
- *   `place_search MATCH` behavior. This also catches the case where the sanitizer produces SQL
+ *   `place_search match` behavior. This also catches the case where the sanitizer produces SQL
  *   that's syntactically valid but logically wrong.
  */
 
@@ -78,7 +78,7 @@ describe("sanitizeFTSQuery — trailing-* prefix support", () => {
 	})
 
 	test('phrase + prefix in one query (mixed): `Pari* TX` is `Pari* AND "TX"`', async () => {
-		// The fixture has Paris (FR) but no TX. the `AND` of `Pari*` (matches Paris) with `"TX"` (matches
+		// The fixture has Paris (FR) but no TX. the `and` of `Pari*` (matches Paris) with `"TX"` (matches
 		// nothing in the fixture) returns empty.
 		const r = await lookup.findPlace({ text: "Pari* TX", placetype: "locality" })
 		expect(r).toEqual([])
@@ -138,8 +138,8 @@ describe("sanitizeFTSQuery — intra-token punctuation SPLITS for non-postcode q
 	test("postcode-typed queries KEEP the #920 fused name-law shape", async () => {
 		// A spaced/hyphenated postcode query must still fuse per token — the postal names are stored
 		// collapsed. `62-701` fused per-token is `62701`, matching the stored row. split it would be
-		// `"62" "701"`, which unicode61 also tokenizes to match — but the fuse is the contract the
-		// geonames-postal name law was built against, so pin it explicitly.
+		// `"62" "701"`, which unicode61 also tokenizes to match — but the fuse is the interface the
+		// geonames-postal name law was built against. Therefore, pin it explicitly.
 		const r = await lookup.findPlace({ text: "62-701", placetype: "postalcode" })
 
 		expect(r).toHaveLength(1)

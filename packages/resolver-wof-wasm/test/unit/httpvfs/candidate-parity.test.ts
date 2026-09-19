@@ -3,7 +3,7 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Node↔browser candidate-reader parity over the real artifact (the #861 server↔demo contract, run
+ *   Node↔browser candidate-reader parity over the real artifact (the #861 server↔demo interface, run
  *   for the 2026-08-11 staging repoint): the same probes through the Node `WOFCandidateTableLookup`
  *   (`@mailwoman/resolver-wof-sqlite`) and the browser twin (`httpvfs/resolver.ts` over a
  *   node:sqlite-backed stub worker), asserting the same top answer — id, coordinate, exact-tier flag,

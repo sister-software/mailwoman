@@ -7,7 +7,7 @@
  *   (`docs/articles/reviews/2026-06-11-punctuation-survey.md`), the structural half of the
  *   sub-premise direction note (`docs/articles/plan/2026-06-11-subpremise-proposer-direction.md`).
  *
- *   A pure function over the raw input emitting TYPED span proposals from three cue families:
+ *   A pure function over the raw input emitting typed span proposals from three cue families:
  *
  *   1. **Paired delimiters (M2)** — balanced `()`, `[]`, `""`, `«»`, `„“` groups propose
  *        `ANNOTATION_SPAN` / `QUOTED_SPAN`. Unbalanced delimiters of a class produce no proposal
@@ -24,7 +24,7 @@
  *        when those tables are loaded). The proposer never decides between readings — downstream
  *        consumers weigh them.
  *
- *   The proposals are INFORMATION rather than decisions (the #464 lesson): consumers treat them as phrase
+ *   The proposals are information rather than decisions (the #464 lesson): consumers treat them as phrase
  *   priors the classifier conditions on and as structural boundaries the decode-side span bridge
  *   must not merge across. The classifier can always disagree.
  *
@@ -61,7 +61,7 @@ const CONFIDENT_ANNOTATION_MIN = 0.6
 export type ProposedSpanKind =
 	/** A balanced `()`/`[]` group whose content reads as an aside about the address. */
 	| "ANNOTATION_SPAN"
-	/** A balanced quote group — the content is likely a NAME (venue/unit); typing is the classifier's job. */
+	/** A balanced quote group — the content is likely a name (venue/unit); typing is the classifier's job. */
 	| "QUOTED_SPAN"
 	/** Delivery-service designator + identifier ("PO Box 19", "GPO Box 2890", "Private Bag 7"). */
 	| "PO_BOX_PHRASE"
@@ -69,11 +69,11 @@ export type ProposedSpanKind =
 	| "UNIT_PHRASE"
 	/** Level-class designator + identifier ("Floor 3", "FL 12"). */
 	| "LEVEL_PHRASE"
-	/** Dual-path FUSED reading: the punctuated numeric is one value ("123 1/2", "69-10", "14/2"). */
+	/** Dual-path fused reading: the punctuated numeric is one value ("123 1/2", "69-10", "14/2"). */
 	| "FUSED_NUMBER"
-	/** Dual-path SPLIT reading, left side: the sub-premise ("Flat 2" of "Flat 2/14", "3" of "3/45"). */
+	/** Dual-path split reading, left side: the sub-premise ("Flat 2" of "Flat 2/14", "3" of "3/45"). */
 	| "SPLIT_UNIT"
-	/** Dual-path SPLIT reading, right side: the house number ("14" of "Flat 2/14"). */
+	/** Dual-path split reading, right side: the house number ("14" of "Flat 2/14"). */
 	| "SPLIT_HOUSE_NUMBER"
 
 /**
@@ -122,12 +122,12 @@ export interface SpanProposerLexicon {
 	 */
 	weakDesignators: ReadonlySet<string>
 	/**
-	 * The subset of {@link unitDesignators} naming venue-INTERIOR structure ("concourse", "terminal", "wing", "gate", …)
+	 * The subset of {@link unitDesignators} naming venue-interior structure ("concourse", "terminal", "wing", "gate", …)
 	 * rather than a postal secondary unit. Sourced from WOF placetypes + OSM `aeroway`, never from a mail standard — see
 	 * `@mailwoman/neural`'s `venue-structure.ts`.
 	 *
 	 * Membership is carried through to the proposal's `source` so the consuming prior can weight the two provenances
-	 * differently. It has to: measured 2026-08-02, the model's margin against `I-unit` on a sub-venue IDENTIFIER runs
+	 * differently. It has to: measured 2026-08-02, the model's margin against `I-unit` on a sub-venue identifier runs
 	 * 4.6–5.0 nats (`B` after `Concourse` scores `B-venue` 4.24 while `I-unit` sits 17th of 33), which the shipped
 	 * unit-designator scale cannot reach — while raising that shared scale far enough drags quote marks and commas into
 	 * unit spans elsewhere in the corpus. The two classes need different magnitudes because the model has different
@@ -135,13 +135,13 @@ export interface SpanProposerLexicon {
 	 */
 	venueStructureDesignators: ReadonlySet<string>
 	/**
-	 * Positional words that may PRECEDE a designator ("West Wing", "Upper Concourse") — the mirror of the
+	 * Positional words that may precede a designator ("West Wing", "Upper Concourse") — the mirror of the
 	 * designator+identifier shape, where the qualifier leads instead of following.
 	 */
 	venueStructureModifiers: ReadonlySet<string>
 	/**
 	 * The subset of {@link venueStructureDesignators} that may take a preceding modifier. Narrower than the full set
-	 * because some designators form ordinary STREET names in exactly this shape — "East Gate" is a street, "West Wing" is
+	 * because some designators form ordinary street names in exactly this shape — "East Gate" is a street, "West Wing" is
 	 * not — so a rule spanning all of them converts correct street parses into sub-venue ones.
 	 */
 	modifierEligibleStructureDesignators: ReadonlySet<string>
@@ -408,7 +408,7 @@ function proposeDesignatorPhrases(
 		// cue family 3 owns punctuated ids
 		if (!isShortIdentifier(next.stripped)) continue
 		const weak = lexicon.weakDesignators.has(lead)
-		// Provenance rides the source string: a venue-INTERIOR designator and a postal one produce the same
+		// Provenance rides the source string: a venue-interior designator and a postal one produce the same
 		// span shape but face different model margins, and the consuming prior weights them apart on this.
 		const venueStructure = !isLevel && lexicon.venueStructureDesignators.has(lead)
 
@@ -421,7 +421,7 @@ function proposeDesignatorPhrases(
 		})
 	}
 
-	// MODIFIER + DESIGNATOR ("West Wing", "Upper Concourse") — the mirror of the shape above, where the
+	// modifier + designator ("West Wing", "Upper Concourse") — the mirror of the shape above, where the
 	// qualifier leads rather than follows. Emitted at a lower confidence: an identifier after a designator is
 	// nearly unambiguous, while a positional word before one is a shape ordinary street names also take, so
 	// this proposal should lose to a confident encoder more readily than that one does.
@@ -436,7 +436,7 @@ function proposeDesignatorPhrases(
 
 		const beforeModifier = tokens[i - 2]
 
-		// A house number before the modifier makes this a STREET line — "12 East Gate" is an address on East
+		// A house number before the modifier makes this a street line — "12 East Gate" is an address on East
 		// Gate rather than a sub-venue of anything. The number is the discriminator the surface itself provides.
 		if (beforeModifier && /^\d{1,6}[A-Za-z]?$/.test(beforeModifier.stripped)) continue
 
@@ -489,7 +489,7 @@ const FRACTION = /^\d\/\d$/
 const AMBIGUOUS_PROPOSAL_CONFIDENCE = 0.55
 
 /**
- * Words that lead NUMBERED ROADS ("Hwy 50/89", "Route 1/9", "I-95") — a bounded structural category (road-type
+ * Words that lead numbered roads ("Hwy 50/89", "Route 1/9", "I-95") — a bounded structural category (road-type
  * leaders), mirroring the phrase grouper's street-type sets. The leading-designator-shape fallback must not read them
  * as sub-premise designators: a slash after a road leader is a route concurrency rather than an AU unit/house split.
  */

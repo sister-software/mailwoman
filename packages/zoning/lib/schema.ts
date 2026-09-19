@@ -5,35 +5,35 @@
  *
  *   Typed schema for `zoning-ireland.db` — the two-tier polygon layer: the authority's unsimplified rings as
  *   the truth table, an H3 cell table above them as the summary, the plan and jurisdiction a zone belongs to,
- *   the published vocabularies, and the layer-contract tables from `@mailwoman/core/layers`.
+ *   the published vocabularies, and the layer-interface tables from `@mailwoman/core/layers`.
  *
- *   THE LOCAL CODE IS `NOT NULL` AND THE CROSSWALK IS NULLABLE, WHICH IS THE VOCABULARY DECISION AS A
- *   CONSTRAINT. A source with no crosswalk produces a complete row. a source with no local code does not. The
+ *   the local code is `not NULL` and the crosswalk is nullable, which is the vocabulary decision AS A
+ *   constraint. A source with no crosswalk produces a complete row. a source with no local code does not. The
  *   Department's own item description is what this transcribes: its national scheme "complements (rather than
  *   replaces) the existing statutory zoning used for each individual plan".
  *
- *   `provenance_grade` is a column with a `CHECK`, not a convention. `NOT NULL` alone accepts `''`, and a
+ *   `provenance_grade` is a column with a `check`, not a convention. `not NULL` alone accepts `''`, and a
  *   blank matches neither half of every read that splits on grade — so the constraint refuses a blank as well
  *   as an unknown value. This is `packages/filer`'s discipline applied unchanged, and the reason it is
  *   compulsory here is licensing as much as epistemics: an observed land-use layer is ODbL, and merging one
  *   of its rows into this table would relicense the table.
  *
- *   `signed_area_m2` IS THE INGEST'S OWN RECEIPT AND ITS SIGN IS required. The service encodes hole roles
- *   by ring orientation with clockwise as the exterior, so a correctly-read feature stores a POSITIVE signed
+ *   `signed_area_m2` is the ingest'S own receipt and its sign is required. The service encodes hole roles
+ *   by ring orientation with clockwise as the exterior, so a correctly-read feature stores a positive signed
  *   sum. the national total of those sums is what the build compares against the Department's own
  *   `Shape__Area` statistic. Read with the holes it is 5,444.5 km²; read without them, 5,666.6 km².
  *
- *   `WITHOUT ROWID` ON THE CELL TABLE AND NEVER ON THE GEOMETRY TABLE. Small fixed-width rows probed by their
+ *   `without rowid` on the cell table and never on the geometry table. Small fixed-width rows probed by their
  *   exact primary key belong in the B-tree. a row carrying a geometry blob does not — clustering it into the
  *   B-tree makes every index page a geometry page.
  *
- *   THE WHOLE-CELL SET IS COMPACTED PER FEATURE, SO IT IS MIXED-RESOLUTION. A row therefore carries its own
+ *   the whole-cell SET is compacted PER feature, SO IT is mixed-resolution. A row therefore carries its own
  *   `resolution`, and a probe walks `cellToParent` from the index resolution up to the coarsest resolution
  *   present. `layer_coverage` is not compacted and stays single-resolution, because `recoverShortCellResolution`
  *   recovers one resolution from the stored cells and throws on a table that mixes them.
  */
 
-import type { LayerContractDatabase } from "@mailwoman/core/layers"
+import type { layerschemadatabase } from "@mailwoman/core/layers"
 import { addBoundingBoxColumns, addCellIndexColumns, addRingsColumn } from "@mailwoman/sqlite/schema-columns"
 import { sql, type Kysely } from "kysely"
 
@@ -55,11 +55,11 @@ export type ZoningCellContainment = (typeof ZoningCellContainment)[keyof typeof 
 
 /**
  * One authority zoning polygon, verbatim. A plain rowid table: it holds a geometry blob, which is the one shape
- * `WITHOUT ROWID` hurts.
+ * `without rowid` hurts.
  */
 export interface ZoningAreaTable {
 	/**
-	 * The authority's own feature id, as published. Unique across the product — measured, `OBJECTID` runs 1 to 85,330
+	 * The authority's own feature id, as published. Unique across the product — measured, `objectid` runs 1 to 85,330
 	 * with no repeat — so it needs no scoping prefix, and a prefix would put this package's key into a column that claims
 	 * to be the publisher's.
 	 */
@@ -75,7 +75,7 @@ export interface ZoningAreaTable {
 	 */
 	plan_id: string
 	/**
-	 * `ZONE_ORIG` — THE AUTHORITY'S OWN ZONE CODE, VERBATIM, in its own spelling including case and trailing space.
+	 * `ZONE_ORIG` — the authority'S own zone code, verbatim, in its own spelling including case and trailing space.
 	 * Compared case-insensitively where it must be compared. never stored normalized.
 	 */
 	local_code: string
@@ -88,7 +88,7 @@ export interface ZoningAreaTable {
 	 */
 	local_code_url: string | null
 	/**
-	 * `ZONE_GZT` — the Department's national generic type, BESIDE the local code and never instead of it. NULL where a
+	 * `ZONE_GZT` — the Department's national generic type, beside the local code and never instead of it. NULL where a
 	 * publisher ships no crosswalk.
 	 */
 	crosswalk_code: string | null
@@ -105,7 +105,7 @@ export interface ZoningAreaTable {
 	 */
 	crosswalk_rollup: string | null
 	/**
-	 * One of {@link ProvenanceGrade}. `NOT NULL` with a `CHECK` that refuses a blank.
+	 * One of {@link ProvenanceGrade}. `not NULL` with a `check` that refuses a blank.
 	 */
 	provenance_grade: string
 	min_lat: number
@@ -118,11 +118,11 @@ export interface ZoningAreaTable {
 	 */
 	ring_count: number
 	/**
-	 * The signed ring sum, in square metres, POSITIVE under this service's clockwise-exterior convention.
+	 * The signed ring sum, in square metres, positive under this service's clockwise-exterior convention.
 	 */
 	signed_area_m2: number
 	/**
-	 * The authority's ring coordinates, UNSIMPLIFIED, with hole roles RESOLVED — see `ring-roles.ts` for the resolution
+	 * The authority's ring coordinates, unsimplified, with hole roles resolved — see `ring-roles.ts` for the resolution
 	 * and `rings.ts` for the layout and the point test.
 	 */
 	rings: Uint8Array
@@ -150,9 +150,9 @@ export interface ZoningPlanTable {
 	/**
 	 * `CURRENT_PLAN`, carried as published.
 	 *
-	 * IT DOES NOT MEAN "IN FORCE TODAY". Every row of the Current layer carries `1`, which the domain defines as `Current
-	 * plan` against `Expired and not replaced` and `Expired and replaced` — so it means "not superseded". Whether the
-	 * plan's own window has closed is `valid_to`, and it is a separate fact.
+	 * IT does not mean "IN force today". Every row of the Current layer carries `1`, which the domain defines as `Current
+	 * plan` against `Expired and not replaced` and `Expired and replaced` . Therefore, it means "not superseded". Whether
+	 * the plan's own window has closed is `valid_to`, and it is a separate fact.
 	 */
 	current_plan: number
 }
@@ -164,19 +164,19 @@ export interface ZoningJurisdictionTable {
 	jurisdiction_id: string
 	name: string
 	/**
-	 * The publisher's own code, verbatim. `Fl` for Fingal against `CL`, `CO`, `DU` for the rest — DO NOT REPAIR.
+	 * The publisher's own code, verbatim. `Fl` for Fingal against `CL`, `CO`, `DU` for the rest — do not repair.
 	 */
 	source_code: string
 	country: string
 }
 
 /**
- * A publisher's declared vocabulary, as shipped, per scheme — plus the values the DATA uses that the publisher never
+ * A publisher's declared vocabulary, as shipped, per scheme — plus the values the data uses that the publisher never
  * declared.
  */
 export interface ZoningVocabularyTable {
 	/**
-	 * `IE-GZT`, `IE-SZO`, `IE-PLAN-LEVEL`, or `IE-LOCAL:<authority code>`.
+	 * `IE-GZT`, `IE-SZO`, `IE-plan-level`, or `IE-local:<authority code>`.
 	 */
 	scheme: string
 	code: string
@@ -191,14 +191,15 @@ export interface ZoningVocabularyTable {
 	definition: string | null
 	/**
 	 * NULL for the Irish generic types. Every one of the 85,330 rows links its definition to `viewer.myplan.ie`, which
-	 * has no A or AAAA record, and three candidate replacements on the live host answer HTTP 404 — so the definitions
-	 * behind the 54 code-to-label pairs were not retrievable and this column is not filled in with a plausible one.
+	 * has no A or aaaa record, and three candidate replacements on the live host answer http 404 . Therefore, the
+	 * definitions behind the 54 code-to-label pairs were not retrievable and this column is not filled in with a
+	 * plausible one.
 	 */
 	definition_url: string | null
 	/**
-	 * `1` where the publisher DECLARES this code in its own domain, `0` where the code appears only in the data.
+	 * `1` where the publisher declares this code in its own domain, `0` where the code appears only in the data.
 	 *
-	 * FOLDING THE TWO WOULD EITHER HIDE A SOURCE-SCHEMA CHANGE OR INVENT A DECLARATION. Ireland declares 54 generic types
+	 * Folding the two would either hide A source-schema change or invent A declaration. Ireland declares 54 generic types
 	 * and its data uses 55: `N/A` appears on 4 rows and in no domain.
 	 */
 	declared: number
@@ -212,7 +213,7 @@ export interface ZoningVocabularyTable {
 /**
  * A publisher's own mapping between two schemes, where it publishes one as a table.
  *
- * EMPTY FOR IRELAND, AND THE EMPTINESS IS A MEASUREMENT. The Department's generic type is assigned PER POLYGON rather
+ * Empty FOR ireland, and the emptiness is A measurement. The Department's generic type is assigned PER polygon rather
  * than per code: 52 of the 795 (authority, local code) pairs take more than one generic type inside a single authority
  * — Cork County Council's `Special Policy Area` takes 14 and its `Green Infrastructure` 12 — so the mapping is not a
  * function of the pair and no edge table can carry it without inventing one. The mapping lives on `zoning_area`, per
@@ -255,9 +256,9 @@ export interface ZoningCellTable {
 }
 
 /**
- * The authority's own statement of what it MAPPED — one row per statement, never derived from the zoning polygons.
+ * The authority's own statement of what it mapped — one row per statement, never derived from the zoning polygons.
  *
- * EMPTY IN THIS EDITION, AND ITS EMPTINESS IS THE CLAIM. The Department states "Awaiting data for some Local
+ * Empty IN this edition, and its emptiness is the claim. The Department states "Awaiting data for some Local
  * Authorities
  *
  * - Please see map viewer for coverage details" and publishes that detail only inside a map application, so there is no
@@ -285,7 +286,7 @@ export interface ZoningMappedExtentTable {
 /**
  * Pass to `new DatabaseClient<ZoningDatabase>(...)`.
  */
-export interface ZoningDatabase extends LayerContractDatabase {
+export interface ZoningDatabase extends layerschemadatabase {
 	zoning_area: ZoningAreaTable
 	zoning_plan: ZoningPlanTable
 	zoning_jurisdiction: ZoningJurisdictionTable
@@ -296,13 +297,13 @@ export interface ZoningDatabase extends LayerContractDatabase {
 }
 
 /**
- * The subset of a Kysely handle the DDL touches. Same reasoning as `LayerContractHandle`: Kysely is invariant in its
+ * The subset of a Kysely handle the DDL touches. Same reasoning as `layerschemahandle`: Kysely is invariant in its
  * schema parameter, so naming only the members these functions call lets a caller pass its own wider handle.
  */
 export type ZoningSchemaHandle = Pick<Kysely<ZoningDatabase>, "schema">
 
 /**
- * Create `zoning_area`. A PLAIN rowid table on purpose — the `rings` blob is exactly the payload `WITHOUT ROWID`
+ * Create `zoning_area`. A plain rowid table on purpose — the `rings` blob is exactly the payload `without rowid`
  * penalizes.
  */
 export async function createZoningAreaTable(db: ZoningSchemaHandle): Promise<void> {
@@ -325,8 +326,8 @@ export async function createZoningAreaTable(db: ZoningSchemaHandle): Promise<voi
 		.addColumn("signed_area_m2", "real", (c) => c.notNull())
 
 	await addRingsColumn(bounded)
-		// ONE GRADE PER CLAIM, AND A BLANK IS NOT ONE. `NOT NULL` alone accepts `''`, which matches neither half of every
-		// read that splits on grade — so the value set and the blank are refused separately, and the second half is the one
+		// one grade PER claim, and A blank is not one. `not NULL` alone accepts `''`, which matches neither half of every
+		// read that splits on grade . Therefore, the value set and the blank are refused separately, and the second half is the one
 		// a schema without it loses.
 		.addCheckConstraint(
 			"zoning_area_provenance_grade_declared",
@@ -401,14 +402,14 @@ export async function createZoningCrosswalkEdgeTable(db: ZoningSchemaHandle): Pr
 
 /**
  * Create `zoning_cell` — the summary tier. Small fixed-width rows probed by their exact primary key, which is the
- * `WITHOUT ROWID` shape.
+ * `without rowid` shape.
  */
 export async function createZoningCellTable(db: ZoningSchemaHandle): Promise<void> {
 	const table = db.schema.createTable("zoning_cell")
 
 	await addCellIndexColumns(table, "area_id")
 		.addPrimaryKeyConstraint("zoning_cell_pk", ["h3_cell", "area_id"])
-		// `WITHOUT ROWID` has no first-class builder. the raw modifier is the idiomatic fallback.
+		// `without rowid` has no first-class builder. the raw modifier is the idiomatic fallback.
 		.modifyEnd(sql`without rowid`)
 		.execute()
 }

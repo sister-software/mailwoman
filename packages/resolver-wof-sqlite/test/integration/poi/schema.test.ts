@@ -37,7 +37,7 @@ describe("poi schema", () => {
 		)
 	})
 
-	it("stages + contract tables coexist and accept typed rows", async () => {
+	it("stages + interface tables coexist and accept typed rows", async () => {
 		const { kdb } = openMemory()
 		await createPOIStagingTables(kdb)
 		await createLayerManifestTable(kdb)

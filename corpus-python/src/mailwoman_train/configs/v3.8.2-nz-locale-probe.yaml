@@ -1,27 +1,27 @@
-# === v3.8.2-nz-locale-probe — first Deepparse-parity LOCALE add: New Zealand. 2k PROBE. ===
+# === v3.8.2-nz-locale-probe — first Deepparse-parity locale add: New Zealand. 2k probe. ===
 # init_from the shipped v381 (v7.0.0/6.5.0 weights), fresh optimizer, LR 1e-5 constant, warmup 500, 2000
-# steps. The one new variable: the synth-nz LINZ locale source (v0.12.0-nz overlay) + NZ:1.0 in
+# steps. The one new variable: the synth-nz linz locale source (v0.12.0-nz overlay) + NZ:1.0 in
 # country_weights (the allowlist key that admits it) + synth-nz:6.0 (4.2% of the source multinomial).
 #
 # Why (task #58, Deepparse parity #1): NZ was untrained (country_weights allowlist dropped it). The
-# postmortem's "8,967 rows, just declare it" premise was FALSIFIED — the in-corpus 2,990 NZ rows are all
-# synth PO-box (no streets). Real data: openaddresses/extracted/nz/countrywide.csv = 2.12M LINZ-derived
-# street rows. NZ column quirk (surface-audited): OA CITY=suburb, DISTRICT=city, POSTCODE 0% — the recipe
-# maps DISTRICT->locality, CITY->dependent_locality (districtAsLocality). Eval holds out ~12% of NZ
+# postmortem's "8,967 rows, just declare it" premise was falsified — the in-corpus 2,990 NZ rows are all
+# synth PO-box (no streets). Real data: openaddresses/extracted/nz/countrywide.csv = 2.12M linz-derived
+# street rows. NZ column quirk (surface-audited): OA city=suburb, district=city, postcode 0% — the recipe
+# maps district->locality, city->dependent_locality (districtAsLocality). Eval holds out ~12% of NZ
 # localities (source-disjoint coord board).
 #
-# PRE-REGISTERED READ (written before the numbers. Fable design 2026-07-18):
-#   TARGET (the point): NZ coordinate-acceptability EMERGES on the held-out NZ coord board (from ~0, the
+# PRE-registered read (written before the numbers. Fable design 2026-07-18):
+#   target (the point): NZ coordinate-acceptability emerges on the held-out NZ coord board (from ~0, the
 #     shipped model can't parse NZ suburb/city order). Bar set once the board is built (report the rate).
-#   GUARD (must not regress the 23): golden 2pp check — no shipped tag >2pp below v381. The battery MUST
+#   guard (must not regress the 23): golden 2pp check — no shipped tag >2pp below v381. The battery must
 #     include the US #1101 comma-free board + the FR fragment board (the two hard-won results a new-locale
 #     gradient most plausibly erodes) + the Norway digit board (bare-street-hn 0.733, bare-pc 1.000).
-#   GUARD: the gauntlet passes. metamorphic INV[comma-drop] holds.
-#   FORGETTING: source_weights is the knob (exact multinomial); synth-nz 4.2% is inside the ≤5-8% safe band.
-#   SILENT-DROP CHECK: confirm the loader's `Source index` log line shows synth-nz with nonzero pulls in the first steps
+#   guard: the gauntlet passes. metamorphic INV[comma-drop] holds.
+#   forgetting: source_weights is the knob (exact multinomial); synth-nz 4.2% is inside the ≤5-8% safe band.
+#   silent-drop check: confirm the loader's `Source index` log line shows synth-nz with nonzero pulls in the first steps
 #     (a country/source-key mismatch drops every NZ row and the run "passes" having trained on nothing new).
 #
-# ESCALATION: clean 2k -> 8k -> full promote battery -> ship as v7.1.0 (first post-v7 model). Promote = operator.
+# escalation: clean 2k -> 8k -> full promote battery -> ship as v7.1.0 (first post-v7 model). Promote = operator.
 #
 # Launch: cd corpus-python && modal run -d -m launch.train_remote --config v3.8.2-nz-locale-probe.yaml --resume none
 
@@ -64,7 +64,7 @@ data:
     usgov-hrsa-fqhc: 2.0
     usgov-imls-pls: 2.0
     usgov-nad: 1.0
-    state-ia-contractors: 2.0
+    state-ia-builders: 2.0
     state-tx-notaries: 1.5
     state-ny-notaries: 2.0
     deepseek-kryptonite: 3.0
@@ -84,9 +84,9 @@ data:
     synth-no-street-led: 0.0
     synth-cz-pcfirst-preposition: 12.0
     synth-nl-postcode: 6.0
-    # PROBE 1: the fragment/autocomplete source (assay weight — moderate precedent).
+    # probe 1: the fragment/autocomplete source (assay weight — moderate precedent).
     synth-fragment: 6.0
-    # #727 T2 NEW — the one variable. 12.0 = the targeted-fix precedent (fr-bare-street,
+    # #727 T2 new — the one variable. 12.0 = the targeted-fix precedent (fr-bare-street,
     # si-bare-village, no-street-led are all 12.0). Streets with no house number + the
     # bare-locality counter.
     synth-fr-fragment: 12.0
@@ -132,12 +132,12 @@ model: # Verbatim from v2.4.1.
   use_postcode_anchor: true
   use_gazetteer_anchor: true
   gazetteer_feature_dim: 5
-  # #1104 country channel ON — dedicated 2-dim [country_surface, country_ambiguous] soft feed with its
+  # #1104 country channel on — dedicated 2-dim [country_surface, country_ambiguous] soft feed with its
   # own projection + confidence (must equal the lexicon's feature_dim). Default-False elsewhere, so a
   # resume from a pre-country checkpoint stays byte-identical until this flips.
   use_country_anchor: true
   country_feature_dim: 2
-  # #1104 homograph-guard SOFTENER — the one variable vs v263. Scales the country_ambiguous dim by 0.5
+  # #1104 homograph-guard softener — the one variable vs v263. Scales the country_ambiguous dim by 0.5
   # before the country_projection (bakes into the exported ONNX. no lexicon/inference change). v263's
   # hard guard (scale 1.0) over-suppressed homograph countries Georgia/Jordan (country-homograph F1
   # 89.8->82.6); softening should recover homograph recall without giving back the country F1 the

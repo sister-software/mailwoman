@@ -31,9 +31,9 @@ function bridgeable(gap: string): boolean {
  */
 export interface BridgePunctuationOpts {
 	/**
-	 * Structural spans (from the Stage 2.7 span proposer — ANNOTATION/QUOTED groups, delimiters inclusive) whose
+	 * Structural spans (from the Stage 2.7 span proposer — annotation/quoted groups, delimiters inclusive) whose
 	 * boundaries no merge may straddle: M2's crossing constraint, the bridge's mirror image (the bridge merges across
-	 * WEAK punctuation. this blocks merging across STRUCTURAL punctuation). A merge is blocked when either span boundary
+	 * weak punctuation. this blocks merging across structural punctuation). A merge is blocked when either span boundary
 	 * falls inside the gap being bridged — e.g. an apostrophe-quoted name whose closing quote sits in an
 	 * otherwise-bridgeable gap. Boundaries already inside a labeled token are the model's call rather than the bridge's.
 	 * only gaps are policed.

@@ -3,7 +3,7 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   The NSUL reader's probe contract, pinned over a fixture DB built by the SAME DDL + compact-postcode
+ *   The nsul reader's probe interface, pinned over a fixture DB built by the same DDL + compact-postcode
  *   derivation the real builder uses (`nsul/schema.ts`) — so a fixture row and a production row can
  *   never disagree on the key a postcode probes by.
  */
@@ -18,7 +18,7 @@ import {
 	readLayerManifest,
 	writeLayerCoverage,
 	writeLayerManifest,
-	type LayerContractDatabase,
+	type layerschemadatabase,
 } from "@mailwoman/core/layers"
 import { CoverageBasis } from "@mailwoman/evidence"
 import {
@@ -38,7 +38,7 @@ const fixtures = new AsyncDisposableStack()
 afterAll(() => fixtures.disposeAsync())
 
 /**
- * Two Wokingham UPRNs sharing `RG40 4HR` and one Bognor Regis UPRN on `PO21 1HR` — enough to exercise the one-to-many
+ * Two Wokingham UPRNs sharing `RG40 4HR` and one Bognor Regis uprn on `PO21 1HR` — enough to exercise the one-to-many
  * probe, its ordering, and the compact/spaced key equivalence.
  */
 const ROWS = [
@@ -136,9 +136,9 @@ describe("uprnsForPostcode", () => {
 	})
 })
 
-describe("layer contract", () => {
+describe("layer interface", () => {
 	it("round-trips the manifest, spine declaration included", async () => {
-		using kdb = new DatabaseClient<LayerContractDatabase>(databasePath, { readOnly: true })
+		using kdb = new DatabaseClient<layerschemadatabase>(databasePath, { readOnly: true })
 
 		const manifest = await readLayerManifest(kdb)
 
@@ -148,7 +148,7 @@ describe("layer contract", () => {
 	})
 
 	it("keeps unsurveyed cells UNKNOWN — the meaning-of-zero rule", async () => {
-		using kdb = new DatabaseClient<LayerContractDatabase>(databasePath, { readOnly: true })
+		using kdb = new DatabaseClient<layerschemadatabase>(databasePath, { readOnly: true })
 
 		expect((await readLayerCoverage(kdb, 1))?.basis).toBe(CoverageBasis.Designated)
 		expect(await readLayerCoverage(kdb, 2)).toBeUndefined()

@@ -6,11 +6,11 @@
  * code left unattested by the corpus is not merely missing: the model reads it as the country it does know.
  *
  * Two arms per province, because `NL` and `PE` fail under different conditions and one arm cannot show it. `NL`
- * contradicts the country with or without a postal code; `PE` needs the postal code, and then takes the LOCALITY slot
+ * contradicts the country with or without a postal code; `PE` needs the postal code, and then takes the locality slot
  * rather than the country's, destroying the city. A probe that rendered only one shape would report one of them as
  * passing.
  *
- * The postal codes are real, read from `postalcode-ca-overture.db`, and each is the one NEAREST its seat — the distance
+ * The postal codes are real, read from `postalcode-ca-overture.db`, and each is the one nearest its seat — the distance
  * rides in the output so a reader can see the city and the code name the same town. Selecting the province's busiest
  * code instead paired `Winnipeg` with `R0C 2Z0`, which is Stonewall, 30 km away.
  *
@@ -104,10 +104,10 @@ interface ProbeRow {
 using db = new DatabaseClient<WOFDatabase>(values["postcode-db"]!)
 
 /**
- * The postal code NEAREST the seat, spaced the way an address writes it, with the distance it sits at.
+ * The postal code nearest the seat, spaced the way an address writes it, with the distance it sits at.
  *
  * Nearest rather than busiest, and the distance is reported rather than assumed. Ranking a province's codes by
- * address-point count selects a RURAL code every time: a rural code spans a whole district and holds thousands of
+ * address-point count selects a rural code every time: a rural code spans a whole district and holds thousands of
  * points, while a downtown code covers one block and holds single digits. Manitoba's twelve busiest are all `R0x`, and
  * the busiest of them, `R0C 2Z0` at 2,381 points, is Stonewall — 30 km from Winnipeg, which is the seat it was being
  * paired with. `Winnipeg, MB R0C 2Z0` is then an address whose city and postal code name different towns, and a model
@@ -124,7 +124,7 @@ async function postcodeNearest(code: string, seat: { lat: number; lon: number })
 			name: string
 			latitude: number
 			longitude: number
-			// GLOB the full A1A1A1 shape rather than counting characters. The artifact stores some names with their space
+			// glob the full A1A1A1 shape rather than counting characters. The artifact stores some names with their space
 			// already in, so a length test admits `Y1A R6` — five significant characters — and spacing it again writes
 			// `Y1A  R6`, an address no Canadian writes and no model should be asked to read.
 		}>`SELECT name, latitude, longitude FROM spr WHERE name LIKE ${`${prefix}%`} AND name GLOB ${"[A-Z][0-9][A-Z][0-9][A-Z][0-9]"}`.execute(
@@ -152,7 +152,7 @@ interface PostcodePick {
 }
 
 // A probe written to price a corpus change has to be able to point at the model that change produced. without this it
-// can only ever grade the installed one, which is the arm the change is measured AGAINST.
+// can only ever grade the installed one, which is the arm the change is measured against.
 const deps = await buildGauntletDeps(values["weights-cache"] ? { weightsCacheRoot: values["weights-cache"] } : {})
 const report: ProbeRow[] = []
 
@@ -194,7 +194,7 @@ for (const { code, name } of Object.values(CA_PROVINCES)) {
 const correct = report.filter((row) => row.correct)
 
 /**
- * The province codes that are also an ISO 3166-1 alpha-2 country code, DERIVED rather than listed.
+ * The province codes that are also an ISO 3166-1 alpha-2 country code, derived rather than listed.
  *
  * A list here would be a second copy of a table the platform already holds, and the copy is what goes stale: the five
  * below are `NL`, `NU`, `PE`, `SK` and `YT`, where the issue that opened this named two.

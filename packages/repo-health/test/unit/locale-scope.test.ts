@@ -8,7 +8,7 @@
  *   live instance was the other list — `D_RULE_COUNTRIES` read `["FR", "GB", "DE"]` while tier 1 read US and FR, and
  *   nothing reported it for four months because a list that does not name a country answers nothing for it.
  *
- *   The parser case matters for the SHAPE. Every membership assertion here is vacuously true against a table that
+ *   The parser case matters for the shape. Every membership assertion here is vacuously true against a table that
  *   parsed as empty, so the check refuses a declaration it read fewer tier rows out of than the register declares.
  */
 
@@ -26,7 +26,7 @@ afterAll(() => fixtures.disposeAsync())
 const DECLARATION = "docs/engineering/SCOPE.mdx"
 
 /**
- * The five tier rows as `SCOPE.mdx` writes them, minus the evidence column's prose. Every fixture starts from these and
+ * The five tier rows as `scope.mdx` writes them, minus the evidence column's prose. Every fixture starts from these and
  * edits the one row its case is about.
  */
 const TIER_ROWS: Record<string, string[]> = {

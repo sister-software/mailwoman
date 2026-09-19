@@ -7,7 +7,7 @@
  *   in-memory `address_point` fixture (the schema `mailwoman situs address-points` builds,
  *   with the `street_key` route-fold column), then asserts both-sided bracketing, self-number
  *   exclusion (the non-circularity guarantee), unit-sibling centroids, single-sided extrapolation +
- *   its cap, route-key folding, and the no-bracket fall-through to the TIGER segment fallback.
+ *   its cap, route-key folding, and the no-bracket fall-through to the tiger segment fallback.
  */
 
 import {
@@ -102,7 +102,7 @@ describe("AddressPointInterpolator", () => {
 	})
 
 	it("never answers from a point at the queried number itself (non-circular by construction)", () => {
-		// A row for 150 EXISTS (off the street line at lat 0.5). The answer must come from the
+		// A row for 150 exists (off the street line at lat 0.5). The answer must come from the
 		// 100/200 bracket instead — in production the exact tier owns on-file numbers.
 		const hit = interpolator.find({ street: "Elm St", number: "150", postcode: "05601" })
 		expect(hit!.bracket).toBe("both")
@@ -182,7 +182,7 @@ describe("AddressPointInterpolator", () => {
 		const tiger = new StreetInterpolator({ database: segDB })
 		const ladder = new AddressPointInterpolator({ database: db, fallback: tiger })
 
-		// 'lone lane' has one point — Method 2 cannot bracket. TIGER answers, flagged as such.
+		// 'lone lane' has one point — Method 2 cannot bracket. tiger answers, flagged as such.
 		const hit = ladder.find({ street: "Lone Ln", number: "51", postcode: "05601" })
 		expect(hit).not.toBeNull()
 		expect(hit!.method).toBe("tiger_range")

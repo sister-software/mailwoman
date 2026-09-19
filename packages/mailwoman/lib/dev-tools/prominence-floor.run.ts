@@ -294,7 +294,7 @@ async function scorePhase(): Promise<void> {
 				return { band: band.id, falseDrop, accuracyCost }
 			})
 
-			// The rule is per band and decisive, so the arm is judged on its WORST band on each axis: the
+			// The rule is per band and decisive, so the arm is judged on its worst band on each axis: the
 			// smallest refusal it bought anywhere, and the largest accuracy it cost anywhere.
 			const worstDrop = Math.min(...perBand.map((entry) => entry.falseDrop))
 			const worstCost = Math.max(...perBand.map((entry) => entry.accuracyCost))

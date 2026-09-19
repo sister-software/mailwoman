@@ -3,12 +3,12 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   `<BackendControl>` — the neural-backend indicator + "Force WASM" checkbox from the demo's control
+ *   `<BackendControl>` — the neural-backend indicator + "Force wasm" checkbox from the demo's control
  *   panel (`_app.tsx:1255-1280`), as a dumb presentational unit. It shows which backend the runtime
- *   resolved to (WebGPU / WASM, with the int8 size the host formats into the label) and lets the visitor
+ *   resolved to (WebGPU / wasm, with the int8 size the host formats into the label) and lets the visitor
  *   opt out of WebGPU. Props in, one boolean event out — the host re-loads the bundle on the toggle.
  *
- *   NODE-SAFE: pure React, no maplibre.
+ *   node-safe: pure React, no maplibre.
  */
 
 import type { ReactNode } from "react"
@@ -19,17 +19,17 @@ export interface BackendControlProps {
 	 */
 	activeBackend?: string
 	/**
-	 * Whether the CPU/WASM backend is currently forced.
+	 * Whether the CPU/wasm backend is currently forced.
 	 */
 	forceWASM: boolean
 	/**
-	 * Fired when the visitor toggles the "Force WASM" checkbox.
+	 * Fired when the visitor toggles the "Force wasm" checkbox.
 	 */
 	onForceWASMChange: (forceWASM: boolean) => void
 }
 
 /**
- * The backend indicator + WASM opt-out.
+ * The backend indicator + wasm opt-out.
  */
 export function BackendControl({ activeBackend, forceWASM, onForceWASMChange }: BackendControlProps): ReactNode {
 	return (

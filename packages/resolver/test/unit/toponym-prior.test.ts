@@ -8,7 +8,7 @@
  *   `rankByCountryPrior` (a locale country demoted from hard filter to additive bonus).
  *
  *   The measurement these pin (2026-08-10, shipped `candidate.db`): the panel's bare GB rows resolve to
- *   a more-POPULOUS foreign namesake — Whitby CA 128,377 over Whitby GB 13,130 — while the importance
+ *   a more-populous foreign namesake — Whitby CA 128,377 over Whitby GB 13,130 — while the importance
  *   artifact ranks them the other way (GB 0.5496 over CA 0.5089). Population cannot separate them.
  *   importance can. The country prior covers the other half: bare `Zürich` under an en-US locale is
  *   hard-scoped to US and lands on Zurich, Kansas (pop 81) 8,043 km off.
@@ -150,7 +150,7 @@ describe("rankByImportance", () => {
 describe("rankByImportance same-country tie band (Springfield decision, 2026-08-11)", () => {
 	// The decided calibration row, live values off the treatment candidate.db: three US Springfields
 	// whose importance order inverts their population order on margins inside the band. The ratified
-	// §2 policy pins the bare query to the REFERENTIAL answer (MO), so the chained trio must fall back
+	// §2 policy pins the bare query to the referential answer (MO), so the chained trio must fall back
 	// to size order — MO (171,589), MA (153,672), IL (112,544).
 	const SPRINGFIELD: ResolvedPlace[] = [
 		place({ id: 85_940_429, name: "Springfield", country: "US", prominence: 5.0513, importance: 0.612605 }),
@@ -211,7 +211,7 @@ describe("rankByImportance same-country tie band (Springfield decision, 2026-08-
 	})
 
 	it("#2272: a bearer with NO recorded population never heads its country over one the gazetteer counted", () => {
-		// The live Brussels shape. `blendImportance` returns the encyclopedic score UNCAPPED when
+		// The live Brussels shape. `blendImportance` returns the encyclopedic score uncapped when
 		// `referential <= 0` (`place-importance-schema.ts:153`), so an article-only row outscored a
 		// municipality of 160,553 — absence of evidence read as the strongest evidence there is.
 		const anderlecht: ResolvedPlace[] = [

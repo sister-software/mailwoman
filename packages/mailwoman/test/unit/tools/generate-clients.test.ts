@@ -33,7 +33,7 @@ test("pythonPyproject interpolates the given version and names the mailwoman-cli
 	expect(toml).toContain('version = "5.10.1"')
 
 	// The four generated subpackages must all be carved out of the ruff pass — a missed entry here
-	// means ruff lints/reformats GENERATED code as if it were hand-maintained.
+	// means ruff lints/reformats generated code as if it were hand-maintained.
 	for (const surface of CLIENT_SURFACES) {
 		expect(toml).toContain(`mailwoman_client/${surface}`)
 	}

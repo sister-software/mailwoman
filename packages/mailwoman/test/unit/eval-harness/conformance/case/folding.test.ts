@@ -7,7 +7,7 @@
  *
  *   The required pair is `caseFoldKey` and `caseApplicability`, and the reason both exist is here in
  *   executable form: the key refuses a pair that changed anything besides case, and the applicability rules
- *   refuse a pair the key ACCEPTS but whose locale casts case differently. `İstanbul` clears the first and
+ *   refuse a pair the key accepts but whose locale casts case differently. `İstanbul` clears the first and
  *   fails the second, which is the whole argument for having two.
  *
  *   Every exclusion is exercised against a real committed board row rather than a synthetic string — the

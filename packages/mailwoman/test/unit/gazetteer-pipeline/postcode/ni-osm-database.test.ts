@@ -125,7 +125,7 @@ test("buildPostcodeNIOSM: #920 laws, the malformed drop, and the ODbL/meaning-of
 	const alt = db.prepare("SELECT COUNT(*) AS n FROM names WHERE name = 'BT3 9QQ'").get() as { n: number }
 	expect(alt.n).toBe(1)
 
-	// The spaced form must never be the primary name — the CZ build that stored it measured WORSE than no
+	// The spaced form must never be the primary name — the CZ build that stored it measured worse than no
 	// coverage at all (#920), because its bigrams partial-matched the wrong codes.
 	const spaced = db.prepare("SELECT COUNT(*) AS n FROM spr WHERE name LIKE '% %'").get() as { n: number }
 	expect(spaced.n).toBe(0)

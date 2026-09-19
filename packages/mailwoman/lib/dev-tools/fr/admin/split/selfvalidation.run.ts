@@ -5,7 +5,7 @@
  *
  *   Fr-admin-split-selfvalidation.ts — the PRE-GPU eval for the international admin-split retrain
  *   (night 2026-06-19). Before spending an A100, falsify the premise: does splitting the
- *   département out of the locality actually move the resolved coordinate, anchor-ON, through the
+ *   département out of the locality actually move the resolved coordinate, anchor-on, through the
  *   production resolver? Or does FTS land the same commune either way (DeepSeek's silent-wash risk
  *   — the v1.7.0 trap: a label change that the resolver ignores)?
  *
@@ -14,13 +14,13 @@
  *   `defaultCountry: FR`):
  *
  *   - `dropped` {locality:[commune]} — the model's "région → null" failure
- *   - `merged` {locality:[commune + " " + dept]} — the "CANBERRA ACT" fuse failure
+ *   - `merged` {locality:[commune + " " + dept]} — the "canberra ACT" fuse failure
  *   - `split` {locality:[commune], region:[dept]} — the corrected parse and measure the great-circle
  *       error to the commune's true centroid.
  *
  *   The premise is real iff `split`'s mean error is materially below `dropped`/`merged` — concentrated on
- *   COLLISION communes (a name in >1 département), where the région is the only disambiguator.
- *   UNIQUE communes are the control (the resolver should find them with or without the région).
+ *   collision communes (a name in >1 département), where the région is the only disambiguator.
+ *   unique communes are the control (the resolver should find them with or without the région).
  *
  *   Eval: ≥5% mean centroid-error reduction (`split` vs `dropped`) on the collision stratum, else stop —
  *   the premise is false and no retrain can fix it.
@@ -87,7 +87,7 @@ interface Commune {
 }
 
 // Communes with their département (placetype 'region' in WOF-FR) + how many distinct départements
-// share the same commune NAME (the collision degree — the disambiguation pressure).
+// share the same commune name (the collision degree — the disambiguation pressure).
 const rows = allRows<Commune>(
 	db.prepare(
 		`WITH fr_comm AS (

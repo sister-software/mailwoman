@@ -2,9 +2,9 @@ import { dataRootPath } from "@mailwoman/core/data-root"
 /**
  * @copyright Sister Software · @license AGPL-3.0 · @author Teffen Ellis, et al.
  *
- *   #370 RESCORE-CEILING probe — sizes how much of the unresolved tail a parse<->resolve rescoring
+ *   #370 rescore-ceiling probe — sizes how much of the unresolved tail a parse<->resolve rescoring
  *   loop could recover, vs a true gazetteer coverage gap. For each coord-golden row: parse (the shipped
- *   v4.13.0 model) -> resolveTree -> resolved? For each UNRESOLVED row, ask whether the GOLD locality is
+ *   v4.13.0 model) -> resolveTree -> resolved? For each unresolved row, ask whether the gold locality is
  *   in the gazetteer (findPlace) and what the model emitted, and bucket the failure:
  *     - swap     : gold is in the gazetteer and the model emitted a different (wrong) locality token
  *                  -> a constrained rescore that swaps in the gold token recovers it. The clearest #370 win.
@@ -13,7 +13,7 @@ import { dataRootPath } from "@mailwoman/core/data-root"
  *     - emitUnres: model emitted the gold locality but resolveTree still didn't resolve -> a resolver
  *                  ranking/country-filter issue rather than a rescore opportunity.
  *     - covGap   : gold not in the gazetteer -> rescoring can't help. it's a coverage gap.
- *   recoverable = swap + needsK = #370's CEILING. Same resolver for baseline + gold-check (consistent).
+ *   recoverable = swap + needsK = #370's ceiling. Same resolver for baseline + gold-check (consistent).
  *
  *   Run: node packages/mailwoman/lib/dev-tools/rescore-ceiling-probe.run.ts [--model out/v191/model.onnx] [--n 150]
  */
@@ -70,7 +70,7 @@ async function main() {
 	console.log(`loc | n   res  unres | swap needsK emitUnres covGap | swapKm p50/p90 (top1·best5)`)
 
 	const T = { n: 0, res: 0, unres: 0, swap: 0, needsK: 0, emitUn: 0, cov: 0 }
-	// FALSIFIER accumulators: great-circle error (km) from the postcode-disambiguated gold-locality
+	// falsifier accumulators: great-circle error (km) from the postcode-disambiguated gold-locality
 	// resolution to truth, over the swap cases. top1 = resolver's ranked choice. best5 = the ceiling
 	// if same-name disambiguation picks the right candidate from the top 5.
 	const swapTop1: number[] = []
@@ -113,7 +113,7 @@ async function main() {
 			} else if (emitted && emitted.toLowerCase() !== gold.toLowerCase()) {
 				s.swap++
 
-				// FALSIFIER: resolve the gold locality with the row's postcode (what the rescore keeps as
+				// falsifier: resolve the gold locality with the row's postcode (what the rescore keeps as
 				// an anchor) and measure great-circle to truth. p50 < 10km → the swap recovers a real
 				// coordinate. scatter → the gold name resolves to a same-name collision (a label-F1 mirage,
 				// the #685 trap). (0,0) placeholders are dropped — WOF ships them on some rows.
@@ -167,7 +167,7 @@ async function main() {
 			`              coverage-gap (rescore can't help)      = ${T.cov} (${((100 * T.cov) / Math.max(T.unres, 1)).toFixed(0)}%)`
 	)
 
-	// FALSIFIER VERDICT (DeepSeek-specified): does the gold-locality swap recover a real coordinate?
+	// falsifier verdict (DeepSeek-specified): does the gold-locality swap recover a real coordinate?
 	const t1p50 = percentile(swapTop1, 50) ?? Number.NaN,
 		t1p90 = percentile(swapTop1, 90) ?? Number.NaN,
 		b5p50 = percentile(swapBest5, 50) ?? Number.NaN,

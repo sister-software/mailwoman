@@ -1,6 +1,6 @@
 # v0.8.0 candidate — label_smoothing calibration fork.
 #
-# SINGLE VARIABLE vs v0_7_2-intersection-bare.yaml (the current default): label_smoothing
+# single variable vs v0_7_2-intersection-bare.yaml (the current default): label_smoothing
 # 0.0 → 0.05. Everything else (corpus, weights, the intersection-bare source, CRF-off) is held.
 #
 # Why 0.05 rather than 0.1: v0.7.0 calibration at ls=0.1 reduce overconfidence 86→67% but left the
@@ -8,10 +8,10 @@
 # project-v07-calibration-result). 0.05 is the gentler middle ground (the staged fork): the
 # hypothesis is it recovers most of the calibration improvement without the house_number damage.
 #
-# HONEST expectation (articulated before launch, per night-shift iteration discipline):
+# honest expectation (articulated before launch, per night-shift iteration discipline):
 # calibration improves (overconfidence down), harness ~flat-to-slightly-up, house_number
 # neutral-vs-0.1, resolver/differentiators stable (calibration barely moves ranking). This is
-# UNLIKELY to clear the operator's "significant harness gain" bar — it's a clean data point
+# unlikely to clear the operator's "significant harness gain" bar — it's a clean data point
 # that closes the staged ls=0.05 fork, run within budget. Promote only if harness improves
 # meaningfully and no tag regresses >2pp. else ship experimental / don't promote.
 #
@@ -33,7 +33,7 @@ data:
     usgov-hrsa-fqhc: 2.0
     usgov-imls-pls: 2.0
     usgov-nad: 1.0
-    state-ia-contractors: 2.0
+    state-ia-builders: 2.0
     state-tx-notaries: 1.5
     state-ny-notaries: 2.0
     deepseek-kryptonite: 3.0

@@ -60,7 +60,7 @@ export async function createCapitalTable<DB extends { capital: CapitalTable }>(d
 /**
  * Read the whole reference out of an artifact, or `null` when the artifact predates the table — the caller then falls
  * back to its next source rather than treating an old artifact as "no capitals" (the meaning-of-zero rule: a missing
- * table is UNMEASURED, an empty one is a finding).
+ * table is unmeasured, an empty one is a finding).
  */
 export function readCapitalPoints<DB>(db: DatabaseClient<DB>): CapitalPoint[] | null {
 	if (!hasTable(db, CAPITAL_TABLE)) return null

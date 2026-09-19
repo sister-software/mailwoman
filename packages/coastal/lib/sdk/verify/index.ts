@@ -5,26 +5,26 @@
  *
  *   The two-path agreement check, and its negative half.
  *
- *   POSITIVE HALF. A sample of points is answered from the sealed artifact and then re-asked of the EA's OGC
+ *   positive half. A sample of points is answered from the sealed artifact and then re-asked of the EA's OGC
  *   API Features service — the same authority, a different distribution channel, and geometry this package
  *   has never touched. The point test is run again on the service's own rings, so what is compared is a
  *   verdict against a verdict rather than a file against itself. That is what makes it a check on OUR
- *   CONVERSION rather than on the authority.
+ *   conversion rather than on the authority.
  *
- *   NEGATIVE HALF, AND IT MATTERS MORE HERE THAN IT DID FOR THE FLOOD LAYER. Inland English points and Welsh
- *   and Scottish coastal points must come back `unknown` with no designation. Wales publishes NCERM on the
- *   PREVIOUS generation's vocabulary (three periods from a 2005 base, percentile bands) and Scotland's Dynamic
+ *   negative half, and IT matters more here than IT did FOR the flood layer. Inland English points and Welsh
+ *   and Scottish coastal points must come back `unknown` with no designation. Wales publishes ncerm on the
+ *   previous generation's vocabulary (three periods from a 2005 base, percentile bands) and Scotland's Dynamic
  *   Coast carries an explicit prohibition on property-level assessment — neither is interchangeable with
  *   England's — and an inland English point is the case this layer's whole coverage posture exists for. A
  *   positive-only check would pass on an artifact that reported the entire country as designated.
  *
- *   THE CHANNELS DIFFER IN COORDINATE PRECISION AND THAT IS WHY A BOUNDARY POINT IS NOT A FAILURE. The
+ *   the channels differ IN coordinate precision and that is why A boundary point is not A failure. The
  *   geodatabase publishes nine decimals through this package's ingest. the OGC service publishes six. Six
  *   decimals is about 10 cm, so a point within roughly a metre of a zone boundary can land on opposite sides
  *   of two renderings of the same edge. Those are reported as `boundary_tolerance` with their distance to the
  *   nearest edge, and the count is part of the receipt.
  *
- *   THE DISTANCE IS TO THE EDGE rather than TO THE NEAREST VERTEX. A point a centimetre from a long edge can be
+ *   the distance is TO the edge rather than TO the nearest vertex. A point a centimetre from a long edge can be
  *   metres from every vertex of it — the flood verify's one near-miss read 1.58 m to vertices and 0.009 m to
  *   edges, an overstatement of 175-fold — so measuring vertices makes the boundary tolerance far stricter than
  *   it reads, which is how a rendering difference gets reported as a conversion defect.
@@ -61,7 +61,7 @@ export interface AgreementRow {
 	serviceInside: boolean
 	outcome: "agree" | "disagree" | "boundary_tolerance"
 	/**
-	 * Metres from the point to the nearest EDGE of any polygon the service returned nearby.
+	 * Metres from the point to the nearest edge of any polygon the service returned nearby.
 	 *
 	 * Carried on every row rather than only the tolerated ones, because it is what separates a real defect from the two
 	 * channels rendering the same edge differently — and a receipt that omits it forces a re-run. `undefined` means the
@@ -98,9 +98,9 @@ export interface VerifyCoastalResult {
  * Points this product's mapping does not reach, named. Each is a place rather than a bare pair of numbers: a coordinate
  * a reader cannot name is a coordinate nobody can check.
  *
- * TWO POPULATIONS, AND BOTH ARE required. The inland English points are the case this layer's coverage posture exists
+ * Two populations, and both are required. The inland English points are the case this layer's coverage posture exists
  * for — a builder that generalized the flood rule would answer them confidently. The Welsh and Scottish coastal points
- * are the case the FLOOD layer's negative half exists for, and they are on the coast here rather than inland, so they
+ * are the case the flood layer's negative half exists for, and they are on the coast here rather than inland, so they
  * also confirm the artifact is clipped to the English product rather than to "the island".
  */
 export const OUTSIDE_MAPPING_POINTS: ReadonlyArray<{ label: string; latitude: number; longitude: number }> = [
@@ -191,7 +191,7 @@ export async function verifyCoastalDatabase(options: VerifyCoastalOptions): Prom
 }
 
 /**
- * Whether the SERVICE's own geometry contains the point, decided here with the same even-odd rule the artifact's reader
+ * Whether the service's own geometry contains the point, decided here with the same even-odd rule the artifact's reader
  * uses — so what is compared is a verdict against a verdict.
  */
 async function readServiceContainment(

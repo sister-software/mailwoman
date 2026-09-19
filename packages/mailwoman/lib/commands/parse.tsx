@@ -61,7 +61,7 @@ const boundedInteger =
 		Number.isInteger(value) && value >= 1 && value <= maximum
 
 /**
- * Native command-line contract consumed by the filesystem command router.
+ * Native command-line interface consumed by the filesystem command router.
  */
 export const spec = {
 	name: "parse",
@@ -162,7 +162,7 @@ function parsePolicySpecs(policySpecs: readonly string[]): PolicyOverride[] {
 }
 
 const ParseCommand: ParsedCommandComponent<ParseOptions> = ({ options, args }) => {
-	// The weights guard wraps the DEFAULT pipeline path only — explicit --model/--tokenizer paths and
+	// The weights guard wraps the default pipeline path only — explicit --model/--tokenizer paths and
 	// the legacy/benchmark/degraded paths keep their existing loading semantics untouched (plan 3.
 	// non-interactive absent-weights behavior stays byte-identical to pre-guard until plan 4).
 	const guardEligible =
@@ -316,7 +316,7 @@ async function resolveWithCandidates(
 		opts.defaultCountry = dc
 	}
 
-	// #895: the library default is ON. only the explicit --no-admin-coherence pin needs threading.
+	// #895: the library default is on. only the explicit --no-admin-coherence pin needs threading.
 	if (options.adminCoherence === false) {
 		opts.adminCoherence = false
 	}
@@ -393,8 +393,8 @@ function emitDegradedBanner(options: ParseOptions): void {
 /**
  * #40 — announce every stage the coordinator degraded past. `runPipeline` catches a classifier / grouper / resolver
  * throw and keeps going (`PipelineResult.faults`), which used to mean a crashed model produced a tidy-looking parse
- * with nothing on stdout or stderr to say so. Same `⚠` register as the encoder-load warnings above. stderr only, so
- * stdout stays the machine-readable parse.
+ * with nothing on stdout or stderr to say. The same `⚠` register applies to the encoder-load warnings above. stderr
+ * only, so stdout stays the machine-readable parse.
  */
 function emitFaultWarnings(result: { faults: ReadonlyArray<{ stage: string; name: string; message: string }> }): void {
 	for (const fault of result.faults) {
@@ -469,13 +469,13 @@ async function runPipeline(input: string, options: ParseOptions): Promise<string
 		resolveOpts.candidatesPerLookup = (options.candidates ?? 5) + 1
 	}
 
-	// #42 postcode-country coherence — only meaningful alongside --resolve's default country. Default-ON,
+	// #42 postcode-country coherence — only meaningful alongside --resolve's default country. Default-on,
 	// so only the explicit --no-postcode-country-coherence opt-out needs threading.
 	if (options.resolve && options.postcodeCountryCoherence === false) {
 		resolveOpts.postcodeCountryCoherence = false
 	}
 
-	// #31 opt-in mechanisms — default-OFF, so only the explicit opt-in needs threading.
+	// #31 opt-in mechanisms — default-off, so only the explicit opt-in needs threading.
 	if (options.resolve && options.postcodeShapeCoherence === true) {
 		resolveOpts.postcodeShapeCoherence = true
 	}
@@ -526,7 +526,7 @@ async function runPipeline(input: string, options: ParseOptions): Promise<string
 		pipelineOpts.resolveOpts = resolveOpts
 	}
 
-	// #727 phase-4c: the rerank is DEFAULT-ON — `createRuntimePipeline` lazy-loads the bundled FR index when the model
+	// #727 phase-4c: the rerank is default-on — `createRuntimePipeline` lazy-loads the bundled FR index when the model
 	// ships a span head (a no-op otherwise). `--no-street-evidence-rerank` passes `false` to disable it.
 	const streetEvidence = options.streetEvidenceRerank ? undefined : (false as const)
 
@@ -693,7 +693,7 @@ async function runBenchmark(input: string, options: ParseOptions, iterations: nu
 /**
  * `undefined` so the caller degrades to the structural pipeline (postcode_only / locality_only fast-paths still
  * resolve; `npx mailwoman parse …` always produces output). The #1108 absent-vs-corrupt distinction lives in
- * {@link loadClassifierTolerant}; the warning goes to STDERR, never STDOUT, so piped stdout parsing is unaffected.
+ * {@link loadClassifierTolerant}; the warning goes to stderr, never stdout, so piped stdout parsing is unaffected.
  */
 async function tryLoadNeural(
 	options: ParseOptions

@@ -8,7 +8,7 @@
  *   Public Domain (federal statistical survey).
  *
  *   The FY 2023 release is the most current as of 2026-05. IMLS ships a single ZIP containing CSV,
- *   SAS, and SPSS variants. We extract the outlet-level CSV (pls_fy*_outlet*.csv or similar) and
+ *   SAS, and spss variants. We extract the outlet-level CSV (pls_fy*_outlet*.csv or similar) and
  *   discard the rest. The administrative-entity (system-level) CSV is intentionally skipped — it has
  *   no per-branch address detail.
  *
@@ -17,7 +17,7 @@
  *   member listing + selective extraction).
  *
  *   Invoke via `mailwoman corpus fetch imls-pls --out-root <path>`. Idempotent: if dest CSV exists
- *   and sha matches MANIFEST, skips download.
+ *   and sha matches manifest, skips download.
  */
 
 /* oxlint-disable sister-software/prefer-region-over-marks -- these markers label steps inside one
@@ -130,7 +130,7 @@ export async function fetchIMLSPLS(
 	await removePathIfPresent(zipDest)
 	report?.("  Removed ZIP (CSV kept)")
 
-	// MARK: Write MANIFEST
+	// MARK: Write manifest
 
 	const manifest: SourceManifest = {
 		source_url: ZIP_URL,

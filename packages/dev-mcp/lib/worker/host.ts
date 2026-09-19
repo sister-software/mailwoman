@@ -5,7 +5,7 @@
  *
  *   The shim's half of the worker protocol: fork, handshake, call correlation, restart, crash policy.
  *
- *   IMPORT DISCIPLINE — the reason this file exists apart from `worker.ts`: everything here must be loadable by the
+ *   import discipline — the reason this file exists apart from `worker.ts`: everything here must be loadable by the
  *   never-stale shim, so it imports Node builtins only. Importing anything from the mailwoman graph (even a type-only
  *   module that transitively reaches runtime code) would re-create the staleness the split removes. The worker's
  *   message shapes are re-declared structurally rather than imported for exactly that reason. the protocol test forks
@@ -13,14 +13,14 @@
  *
  *   Restart semantics, stated where a caller will read them:
  *
- *   - In-flight tool calls are REJECTED with a restart error — they were running against the old module graph and
+ *   - In-flight tool calls are rejected with a restart error — they were running against the old module graph and
  *     their results would be unattributable.
- *   - Background jobs die with the child (the worker's SIGTERM handler cancels them); the restart result includes the
+ *   - Background jobs die with the child (the worker's sigterm handler cancels them); the restart result includes the
  *     aborted-call count so nothing disappears silently.
- *   - Engines are rebuilt lazily by the next call, per the registry's own contract.
+ *   - Engines are rebuilt lazily by the next call, per the registry's own interface.
  *
  *   Crash policy: an unexpected exit rejects all pending calls and respawns once, immediately. Three unexpected exits
- *   inside a minute mark the host DEGRADED — further calls fail fast with the child's last stderr tail — because a
+ *   inside a minute mark the host degraded — further calls fail fast with the child's last stderr tail — because a
  *   crash-looping child burning engine boots is worse than a loud outage. `restart()` always clears the degraded
  *   state: it is the operator-intent signal.
  */
@@ -65,7 +65,7 @@ export interface WorkerHostOptions {
 	 */
 	handshakeTimeoutMs?: number
 	/**
-	 * Where the child's stdout/stderr are drained to. Defaults to the host process's stderr — NEVER stdout, which on the
+	 * Where the child's stdout/stderr are drained to. Defaults to the host process's stderr — never stdout, which on the
 	 * shim is the MCP channel.
 	 */
 	log?: NodeJS.WritableStream
@@ -80,7 +80,7 @@ const CRASH_LIMIT = 3
 const CRASH_WINDOW_MS = 60_000
 
 /**
- * How long a SIGTERM'd child gets to run its cleanup handler before SIGKILL. Generous because the worker's teardown
+ * How long a sigterm'd child gets to run its cleanup handler before sigkill. Generous because the worker's teardown
  * closes SQLite handles and cancels spawned jobs.
  */
 const TERM_GRACE_MS = 5000

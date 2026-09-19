@@ -1,7 +1,7 @@
 # === v1.2.0-probe-glue (#513 solo probe) ========================================================
-# SINGLE-VARIABLE vs the shipped v1.1.0: data.augment_glue_prob 0.0 -> 0.25 (the #513 glue
+# single-variable vs the shipped v1.1.0: data.augment_glue_prob 0.0 -> 0.25 (the #513 glue
 # augmentation, PR #514 — fuse region+postcode in raw, labels stay split via char projection).
-# Resume the v1.1.0 step-040000 (copied to a fresh dir), +4k. PRE-REGISTERED READ: the perturb
+# Resume the v1.1.0 step-040000 (copied to a fresh dir), +4k. PRE-registered read: the perturb
 # arena's glue rows (the ~25-30 "NY14201" class) recover at +4k and affix floors hold (32-row
 # 78/67, v2 85/85) and US postcode >= 97. Fail -> the change doesn't ride v4.4.0.
 # Launch: cd corpus-python && modal run -d -m launch.train_remote --config v1.2.0-probe-glue.yaml --resume auto
@@ -22,7 +22,7 @@ data:
     usgov-hrsa-fqhc: 2.0
     usgov-imls-pls: 2.0
     usgov-nad: 1.0
-    state-ia-contractors: 2.0
+    state-ia-builders: 2.0
     state-tx-notaries: 1.5
     state-ny-notaries: 2.0
     deepseek-kryptonite: 3.0
@@ -45,7 +45,7 @@ data:
   # The v0.9.12 US-postcode fix (#468): zero the gazetteer clue on tokens adjacent to a postcode-anchor
   # hit, at train time (paired with classifier.suppressGazetteerNearPostcode at inference). First trained here.
   gazetteer_choreography: true
-  # THE #511 change: end the base-vs-recipe affix label contradiction (probe-validated v1.0.6).
+  # the #511 change: end the base-vs-recipe affix label contradiction (probe-validated v1.0.6).
   affix_relabel_lexicon_path: /data/gazetteer/affix-relabel-lexicon-v1.json
 
 model:

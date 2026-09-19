@@ -5,14 +5,14 @@
  *
  *   Inference-side country-lexicon features (#1104) — the third atlas soft-feed channel, sibling of
  *   the postcode anchor (`anchor-inference.ts`, #239/#240) and the gazetteer anchor
- *   (`gazetteer-inference.ts`, #464). Country is a CLOSED, ENUMERABLE class (~250 surfaces) the
- *   learned GRAMMAR mislabels in the WOF-admin / resolver hierarchy case ("United States of America,
- *   Wyoming, <locality>" reads as a leading STREET). This channel injects the atlas prior the tagger
+ *   (`gazetteer-inference.ts`, #464). Country is a closed, enumerable class (~250 surfaces) the
+ *   learned grammar mislabels in the WOF-admin / resolver hierarchy case ("United States of America,
+ *   Wyoming, <locality>" reads as a leading street). This channel injects the atlas prior the tagger
  *   lacks: a per-piece multi-hot clue that the piece is part of a recognized country surface phrase.
- *   The clue INFORMS, the model decides (model-first) — the direct analogue of Pelias's
+ *   The clue informs, the model decides (model-first) — the direct analogue of Pelias's
  *   position-independent `WhosOnFirstClassifier` dictionary lookup, rendered as an additive feature.
  *
- *   The matcher DELIBERATELY REUSES the gazetteer's phrase-scan (`gazetteerCharPaint`) — one tested
+ *   The matcher deliberately reuses the gazetteer's phrase-scan (`gazetteerCharPaint`) — one tested
  *   longest-first n-gram algorithm (case-insensitive `entries` + uppercase-exact `code_entries`,
  *   char→piece projection by the first non-whitespace char), two vocabularies. Only the vocabulary
  *   (`country-surface-lexicon-v1.json`, built by
@@ -24,13 +24,13 @@
  *   The emitted per-piece feature is `[country_surface, country_ambiguous]`:
  *
  *   - `country_surface` (bit 1) — the piece is inside a recognized country surface phrase.
- *   - `country_ambiguous` (bit 2) — the SURFACE is a homograph (also a US region, e.g. "Georgia",
- *     "CA") or a curated common-word name ("America", "England"). A SOFT false-positive guard: the
+ *   - `country_ambiguous` (bit 2) — the surface is a homograph (also a US region, e.g. "Georgia",
+ *     "CA") or a curated common-word name ("America", "England"). A soft false-positive guard: the
  *     model learns to trust `surface & !ambiguous` (unambiguous long/code forms) strongly and
  *     `surface & ambiguous` weakly, using context — the model-first analogue of Pelias's hard
  *     blacklist, without dropping the surface (recall on "Republic of Georgia" is preserved).
  *
- *   WHY A DEDICATED CHANNEL rather than the gazetteer's existing `country` slot: the gazetteer slot
+ *   why A dedicated channel rather than the gazetteer's existing `country` slot: the gazetteer slot
  *   already carries these surfaces and the shipped model already consumes them, yet the WOF-admin
  *   case still fails (#1104). The country bit is one of a 5-hot vector sharing one projection with
  *   region/po_box/cedex/homograph, and it is zeroed adjacent to a postcode by
@@ -90,7 +90,7 @@ export function parseCountryLexicon(raw: {
  * country phrase's sub-tokens. Returns `(pieces × COUNTRY_FEATURE_DIM)` features (`[country_surface,
  * country_ambiguous]`) + `(pieces,)` confidence (1.0 wherever a country surface fires).
  *
- * REUSES `gazetteerCharPaint` — the country lexicon is the same phrase-scan structure, so the matcher is shared and the
+ * Reuses `gazetteerCharPaint` — the country lexicon is the same phrase-scan structure, so the matcher is shared and the
  * two channels cannot drift on how a phrase is matched.
  */
 export function buildCountryFeatures(

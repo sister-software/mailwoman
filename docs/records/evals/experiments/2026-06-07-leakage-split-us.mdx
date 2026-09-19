@@ -25,7 +25,7 @@ Per-tag F1 split by corpus-held-out geography (VT/WY/ND) vs in-training geograph
 
 ## Read
 
-DeepSeek (2026-06-07) flagged geographic train/test leakage as the top risk to our headline F1: the model trains on the corpus (tiger/BAN/WOF), which covers the same streets and localities OA tests, so component recall could be partly memorization. The corpus holds out specific US geography (VT/WY/ND) from training, so OA rows there test places the model never saw.
+DeepSeek (2026-06-07) flagged geographic train/test leakage as the top risk to our headline F1: the model trains on the corpus (tiger/BAN/WOF), which covers the same streets and localities OA tests. Therefore, component recall could be partly memorization. The corpus holds out specific US geography (VT/WY/ND) from training, so OA rows there test places the model never saw.
 
 The result refutes that hypothesis on the tags OA can grade. Held-out Vermont scores 1.000 macro-F1 against 0.994 in-training, so held-out is if anything marginally easier. The per-state spread tells the same story from another angle: Montana (in-training) is the worst at 0.979 while Vermont (held-out) ties California and Illinois at the top. The ordering tracks intrinsic state difficulty rather than training exposure. The shipped en-US model's locality/region/postcode recognition generalizes to unseen geography, and the near-perfect numbers also confirm that these three tags on clean, canonical US addresses are essentially a solved problem.
 

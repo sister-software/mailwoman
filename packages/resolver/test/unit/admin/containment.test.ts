@@ -3,10 +3,10 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   #1717 stage 2 — the admin-containment re-rank at the WALK's deciding site.
+ *   #1717 stage 2 — the admin-containment re-rank at the walk's deciding site.
  *
  *   The partition itself is pure and tested directly (tier-safety, stability, the no-stamp
- *   identity). The walk tests then pin the reach contract the #1729 lesson demands: the qualifier is
+ *   identity). The walk tests then pin the reach interface the #1729 lesson demands: the qualifier is
  *   threaded onto exactly the lookups the setting covers, the partition runs after `rankByImportance`
  *   (fame must not win back the top slot from a qualifier-vouched candidate), and the
  *   `admin_containment` trace stamp reports the tri-state truthfully — `unavailable` on a backend
@@ -51,7 +51,7 @@ interface StampSpec {
 
 /**
  * A backend whose locality candidates carry containment stamps only when the query asked (`regionQualifier` present) —
- * the capable-backend contract. Region lookups miss (the fixture region resolves nothing, like Thüringen under a US
+ * the capable-backend interface. Region lookups miss (the fixture region resolves nothing, like Thüringen under a US
  * scope).
  */
 async function makeBackend(
@@ -132,7 +132,7 @@ describe("adminContainmentVerdict — the tri-state trace stamp", () => {
 	})
 })
 
-describe("the walk's deciding site (#1729 reach contract)", () => {
+describe("the walk's deciding site (#1729 reach interface)", () => {
 	const resolveWith = async (
 		specs: StampSpec[],
 		opts: ResolveOpts,

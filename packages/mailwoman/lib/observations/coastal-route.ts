@@ -5,34 +5,34 @@
  *
  *   The coastal-erosion route, observation-only: after the resolver has produced a coordinate, the
  *   Environment Agency's own erosion designation for that coordinate is recorded beside the answer — under a
- *   NAMED SCENARIO, with the cumulative distance as published, the shoreline-management policy where the
+ *   named scenario, with the cumulative distance as published, the shoreline-management policy where the
  *   scenario carries one, and the coverage record stating what the product does and does not license.
  *
- *   THE ROUTE READS. IT NEVER ANSWERS. It takes a finished coordinate and returns a record. Nothing here is
+ *   the route reads. IT never answers. It takes a finished coordinate and returns a record. Nothing here is
  *   consulted while an answer is being chosen, no candidate is read, no result is added, removed or
  *   re-ordered, and no abstain is reached or avoided because of it. A geocode with the route configured is
  *   the same geocode plus one advisory, which is a statement about construction rather than about a
  *   measurement.
  *
- *   PRESENCE IS THE SWITCH, AND IT IS A LAYER PATH. There is no boolean: a boolean would make the caller's
+ *   presence is the switch, and IT is A layer path. There is no boolean: a boolean would make the caller's
  *   factory construct the reader itself and put a sealed layer open on the default construction path. A
  *   session resolves the layer path, opens it if the file is there, and hands the route in. a session that
  *   finds no file hands in nothing and is byte-identical to one built before this route existed.
  *
- *   EVERY OBSERVATION NAMES ITS SCENARIO, AND THE ROUTE'S DEFAULT IS NEVER HIDDEN. NCERM publishes twelve
+ *   every observation names its scenario, and the route'S default is never hidden. ncerm publishes twelve
  *   erosion-zone layers because the answer depends on which management scenario, which horizon and which
  *   sea-level-rise allowance the reader means. The route answers under one of them and says which. a reading
  *   that named no scenario would let a 2105 projection be taken for a present-day designation.
  *
- *   ONLY A DESIGNATION REACHES A CALLER, AND THE SILENCE IS THE INVERSION OF THE FLOOD ROUTE. That route
- *   raises a marker for a designated ABSENCE, because inside England a location with no flood polygon is
- *   Flood Zone 1 by the Planning Practice Guidance's own definition. NCERM publishes no coverage statement at
+ *   only A designation reaches A caller, and the silence is the inversion OF the flood route. That route
+ *   raises a marker for a designated absence, because inside England a location with no flood polygon is
+ *   Flood Zone 1 by the Planning Practice Guidance's own definition. ncerm publishes no coverage statement at
  *   all, so a location with no erosion polygon is either inland or on the coast outside the mapped risk area
  *   and the product cannot tell those apart. There is therefore no absence observation to raise — an
  *   advisory there would be a determination nobody made — and the named refusal is what a receipt carries
  *   instead.
  *
- *   THE OBSERVATION IS ABOUT THE MAP, NEVER ABOUT THE PROPERTY. The Environment Agency states that its data
+ *   the observation is about the MAP, never about the property. The Environment Agency states that its data
  *   "cannot provide details for individual properties". So the wording reports what the authority's mapping
  *   assigns at the location under a named scenario — a fact about the map — and the product's own exclusions
  *   ride on every observation, because a caller cannot see from an erosion distance that the answer is silent
@@ -104,7 +104,7 @@ export interface CoastalErosionObservation {
 }
 
 /**
- * Why a coordinate produced no observation. Every one of these is a SILENCE the route owes an account of — an unnamed
+ * Why a coordinate produced no observation. Every one of these is a silence the route owes an account of — an unnamed
  * silence and a silence for the right reason read identically on a receipt.
  */
 export const COASTAL_REFUSALS = [
@@ -114,7 +114,7 @@ export const COASTAL_REFUSALS = [
 	"no_coordinate",
 	/**
 	 * The authority's mapping assigns no erosion zone here under the scenario asked about. Not an absence claim: the
-	 * location may be inland, or on the coast outside the mapped risk area, and NCERM publishes nothing that tells those
+	 * location may be inland, or on the coast outside the mapped risk area, and ncerm publishes nothing that tells those
 	 * apart.
 	 */
 	"no_designation_here",

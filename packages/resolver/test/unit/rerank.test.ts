@@ -56,7 +56,7 @@ describe("rerankByResolution", () => {
 		expect(out.best.payload).toBe("a")
 		expect(out.changed).toBe(false)
 		// Rank-1 was plausible, so rank-2 need not have been resolved at all... but the budget resolves
-		// in order. what matters is the ANSWER is unchanged.
+		// in order. what matters is the answer is unchanged.
 		expect(out.ranked[0]!.payload).toBe("a")
 	})
 

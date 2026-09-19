@@ -13,7 +13,7 @@ import { isPresent } from "@mailwoman/core/objects"
 import { availableParallelism } from "@mailwoman/core/utils/system"
 // Default import rather than `* as process` — the ESM namespace object for `node:process` only reflects
 // the process object's own properties (`pid`, `exit`, `env`, …); EventEmitter methods (`on`, `once`,
-// `emit`) live on its prototype chain and are silently absent from `import *`. SIGINT/SIGTERM below
+// `emit`) live on its prototype chain and are silently absent from `import *`. sigint/sigterm below
 // need `.once`, so this must be the real singleton.
 import { Box, Text } from "ink"
 import { useEffect, useState } from "react"
@@ -28,7 +28,7 @@ interface ServerConfig {
 }
 
 /**
- * Native command-line contract consumed by the filesystem command router.
+ * Native command-line interface consumed by the filesystem command router.
  */
 export const spec = {
 	name: "serve",
@@ -40,10 +40,10 @@ export const spec = {
 	},
 } as const satisfies CommandSpec
 
-// NOTE(retrofit): long-running — exempt from useCommandTask (no one-shot task or exit-code dance to
+// note(retrofit): long-running — exempt from useCommandTask (no one-shot task or exit-code dance to
 // move: the process deliberately never exits, WorkerStatus is event-subscription UI with cleanup, and
 // ChildThread's effect boots the @mailwoman/api Hono app over a node listener. there is no
-// `setImmediate(process.exit)` here — SIGINT/SIGTERM now dispose the server after it drains).
+// `setImmediate(process.exit)` here — sigint/sigterm now dispose the server after it drains).
 
 const ClusterManager: ParsedCommandComponent<ServerConfig> = ({ options: { cpus = availableParallelism() } }) => {
 	const [workers, setWorkers] = useState<Worker[]>()
@@ -80,7 +80,7 @@ const ClusterManager: ParsedCommandComponent<ServerConfig> = ({ options: { cpus 
 			}
 		})
 
-		// Graceful shutdown: a TERM/INT delivered to the PRIMARY pid (docker stop, systemctl stop)
+		// Graceful shutdown: a term/INT delivered to the primary pid (docker stop, systemctl stop)
 		// never reaches worker JS handlers — Node's cluster teardown bypasses them. Forward the
 		// signal explicitly so each worker's serveNode drain actually runs, then exit once they're
 		// gone (bounded — a hung worker must not wedge the shutdown).
@@ -213,9 +213,9 @@ const ChildThread: ParsedCommandComponent<ServerConfig> = ({ options: { port, ho
 			if (!preflight.ok) {
 				// Every cluster worker runs createServeEngine() independently, so with --cpus N every one of
 				// them hits this same failure and would print the identical banner N times. Node assigns
-				// cluster worker `id`s synchronously (1, 2, 3, ...) at fork() time in the PRIMARY, before any
+				// cluster worker `id`s synchronously (1, 2, 3, ...) at fork() time in the primary, before any
 				// worker's async preflight resolves — so `cluster.worker.id === 1` deterministically picks the
-				// FIRST-forked worker, regardless of which worker's preflight check happens to finish first.
+				// first-forked worker, regardless of which worker's preflight check happens to finish first.
 				// Only that one worker prints. the rest exit silently. Chosen over a primary-side pre-fork
 				// check (the primary doesn't otherwise call createServeEngine() at all, and duplicating its
 				// import/db-existence check there just to avoid forking would be the more invasive change) and

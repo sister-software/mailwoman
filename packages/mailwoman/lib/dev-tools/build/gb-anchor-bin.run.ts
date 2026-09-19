@@ -4,29 +4,29 @@
  * @author Teffen Ellis, et al.
  *
  *   Build the GB postcode-anchor binary (`postcode-gb.bin`, PCB1) that the anchor-v2 retrain's serving
- *   half needs — UNIT keys plus OUTWARD district keys, in the SPACE-STRIPPED UPPERCASE form the train
+ *   half needs — unit keys plus outward district keys, in the space-stripped uppercase form the train
  *   painter writes (`SW1A 2AA` → `SW1A2AA`).
  *
- *   WHY THIS EXISTS RATHER THAN `mailwoman gazetteer postcode-binary --locale GB:<database>`. That
+ *   why this exists rather than `mailwoman gazetteer postcode-binary --locale GB:<database>`. That
  *   command's GB branch (`aggregateGbOutward`) derives the outward code by splitting `name` on a
- *   SPACE, because it was written against `postalcode-gb.db` (the retired GeoNames-lineage database),
+ *   space, because it was written against `postalcode-gb.db` (the retired GeoNames-lineage database),
  *   whose `name` column carries the spaced display form. The licence-clean Code-Point Open database
  *   (`postalcode-gb-codepoint.db`, OGL v3.0) stores `name` already space-stripped (`AB101AB`), so
- *   `gbOutward` returns null on every one of its 1,746,976 rows and the command writes a VALID,
- *   EMPTY, 0-code binary and reports success. Measured 2026-08-05:
+ *   `gbOutward` returns null on every one of its 1,746,976 rows and the command writes a valid,
+ *   empty, 0-code binary and reports success. Measured 2026-08-05:
  *
  *     mailwoman gazetteer postcode-binary --locale GB:postalcode-gb-codepoint.db
  *       → GB: 0 codes (0 placed) → postcode-gb.bin (0.00 MB)
  *
  *   It also aggregates GB to outward codes only, which was right for a model whose GB slot never
  *   trained but is wrong for one trained against `pilot-anchor-lookup-v2` — that lookup carries
- *   1,746,976 UNIT keys plus 2,863 outward keys, and the unit centroid is what painted the training
+ *   1,746,976 unit keys plus 2,863 outward keys, and the unit centroid is what painted the training
  *   spans.
  *
  *   So the key set here is a verbatim mirror of the training lookup's GB half
  *   (`mailwoman/gazetteer-pipeline/anchor-lookup.ts::loadGBCodePoint` + `addGBOutwardKeys`): every
  *   Code-Point unit that matches the unit-key shape, plus one outward key per district placed at the
- *   MEAN of its units' centroids. Decoded through `PostcodeBinaryResolver.toAnchorLookup()` this
+ *   mean of its units' centroids. Decoded through `PostcodeBinaryResolver.toAnchorLookup()` this
  *   reproduces the training lookup's GB entries exactly — posterior `{GB: 1}` (GB keys cannot collide:
  *   unit keys are ≥5 chars and letter-initial, outward keys ≤4 and letter-initial, NL keys are
  *   digit-initial, every numeric system's keys are digits only), unit centroids verbatim, outward

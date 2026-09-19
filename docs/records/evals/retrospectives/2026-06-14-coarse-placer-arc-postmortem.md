@@ -89,7 +89,7 @@ the default-on flip were authorized rather than self-granted._
   KR. The distribution's real value (European cross-border namesakes) is likewise under-exercised by a US-heavy
   test set. Both want a locale-native eval set we don't have yet.
 - **A cross-PR doc dependency bit the merge order.** The M1 code comments reference the soft-signal spec, which
-  lived on its own branch (#605) — so #605 had to merge before #606 or the path wouldn't resolve. Worked, but a
+  lived on its own branch (#605) . Therefore, #605 had to merge before #606 or the path wouldn't resolve. Worked, but a
   self-contained PR would've avoided the ordering constraint.
 - **Recurring small friction:** the `prettier-plugin-jsdoc` reflows one-line `/** … */` comments onto two lines
   and then `eslint`'s `jsdoc/multiline-blocks` flags them — hit it three times, fixed each by switching to a

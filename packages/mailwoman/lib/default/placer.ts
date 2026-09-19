@@ -9,7 +9,7 @@
  *   **on by default**: `geocodeAddress` and `createRuntimePipeline` load this bundled placer unless
  *   the caller passes their own `placeCountry` or opts out with `placeCountry: false`.
  *
- *   Loaded LAZILY + cached once per process: the int8 model is ~0.79 MB and `predict` is
+ *   Loaded lazily + cached once per process: the int8 model is ~0.79 MB and `predict` is
  *   microseconds, but the bundled-artifact read is async, so callers `await` it the first time and
  *   reuse the cached promise after. Returns `null` (no prior, graceful) when the bundled model
  *   can't be resolved — a stripped-down install, a missing `data/` dir — so a default-on consumer

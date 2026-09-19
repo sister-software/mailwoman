@@ -7,7 +7,7 @@
  *   assertions (`parity-inputs.jsonl`, legacy-Classification-keyed) into ComponentTag-keyed eval
  *   fixtures for `mailwoman eval parity`. Top-solution gold only (`expected[0]` — the positional
  *   alternatives were rules-ranking artifacts); cases whose gold carries an unmapped legacy tag
- *   (given_name, surname, personal_title, …) or no expectation at all become TOMBSTONES — kept in
+ *   (given_name, surname, personal_title, …) or no expectation at all become tombstones — kept in
  *   the fixture file with a `dropped` reason so provenance survives, skipped by the runner.
  *   Run from the repo root: `node packages/mailwoman/lib/dev-tools/convert-parity-fixtures.run.ts`
  */

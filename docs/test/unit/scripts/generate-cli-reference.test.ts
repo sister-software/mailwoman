@@ -10,8 +10,8 @@
  *      re-defaulted on `doctor` or `data pull` fails here with the diff in the message. `doctor`
  *      pins the smallest shape (one boolean flag, no arguments); `data pull` pins the rest of the
  *      grammar in one command — a variadic required argument, a `--no-`-free boolean pair, an
- *      optional string, and a description carrying a `$VARIABLE`.
- *   2. The COMMITTED page equals a fresh render. This is the one that catches a flag changed
+ *      optional string, and a description carrying a `$variable`.
+ *   2. The committed page equals a fresh render. This is the one that catches a flag changed
  *      anywhere in the documented surface without a regenerate, which no per-command snapshot can
  *      see.
  *   3. The render is a pure function of the surface — same input, same bytes, and no host path or

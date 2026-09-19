@@ -19,7 +19,7 @@ export const parseCompareTool = ({ registry }: DevToolDeps): DevTool => ({
 		"WHAT IS THIS STRING MADE OF — mailwoman's reading against libpostal's, on the same input. `mwdev_compare` " +
 		"grades geocoders on a coordinate and libpostal produces none, so an arm there would score a miss on every " +
 		"row; this is the only genuinely like-for-like PARSE comparison available, because libpostal IS Pelias's " +
-		"parser and `@mailwoman/libpostal` implements its exact `/parse` contract. Both sides are expressed in " +
+		"parser and `@mailwoman/libpostal` implements its exact `/parse` interface. Both sides are expressed in " +
 		"libpostal's label vocabulary using that drop-in's own converter — but the mapping is MANY-TO-ONE " +
 		"(neighbourhood + dependent_locality → suburb, macroregion + subregion → state_district, venue + house → " +
 		"house), so agreement on a LABEL is not agreement on a TAG; the mailwoman side keeps its original tag and " +

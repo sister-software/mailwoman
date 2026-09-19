@@ -59,14 +59,14 @@ LOOKUP_H = {"12345": ({"US": 1.0}, 42.81, -73.93)}
 
 
 def test_gold_path_paints_nothing_on_leading_house_number():
-    # GOLD: 12345 is labeled house_number rather than postcode → the anchor never fires at TRAIN.
+    # gold: 12345 is labeled house_number rather than postcode → the anchor never fires at train.
     feats, confs = realign_anchor_to_pieces(RAW_H, TOKENS_H, LABELS_H, PIECES_H, LOOKUP_H)
     assert confs == [0.0, 0.0, 0.0]
     assert all(f == [0.0] * ANCHOR_FEATURE_DIM for f in feats)
 
 
 def test_shaped_path_paints_anchor_on_leading_house_number():
-    # SHAPED: 12345 is postcode-SHAPED and in the lookup → the anchor FIRES on the house number,
+    # shaped: 12345 is postcode-shaped and in the lookup → the anchor fires on the house number,
     # exactly as it does at inference. This is the #723 training signal the gold path withheld.
     feats, confs = realign_anchor_to_pieces_shaped(RAW_H, PIECES_H, LOOKUP_H)
     assert confs == [1.0, 0.0, 0.0]
@@ -81,7 +81,7 @@ def test_shaped_path_misses_non_lookup_shape():
     assert all(f == [0.0] * ANCHOR_FEATURE_DIM for f in feats)
 
 
-# ---- the GB key contract + the outward fallback (2026-08-05)
+# ---- the GB key interface + the outward fallback (2026-08-05)
 
 RAW_GB = "Buckingham Palace, London SW1A 2AA"
 # Pieces that split the unit across the space, the geometry a wrong paint extent shows up in.
@@ -95,7 +95,7 @@ PIECES_GB = [
 
 
 def test_shaped_paints_a_gb_unit_from_the_space_stripped_key():
-    # THE KEY CONTRACT. The lookup is keyed `SW1A2AA` — space-stripped — and the shaped span is the
+    # the KEY interface. The lookup is keyed `SW1A2AA` — space-stripped — and the shaped span is the
     # full unit including the space. `neural/anchor-inference.ts`'s `spanMode: "shaped"` mirrors this.
     # its default alnum-run scan cannot (it would probe `SW1A` and `2AA` separately).
     lookup = {"SW1A2AA": ({"GB": 1.0}, 51.50354, -0.1277)}
@@ -135,7 +135,7 @@ def test_the_outward_fallback_is_inert_for_a_five_digit_lookup():
 
 def test_shaped_matches_gold_when_postcode_is_in_position():
     # Sanity: on a real postcode in postcode position, shaped and gold paint the same pieces (the only
-    # difference between modes is WHERE detection comes from, never what lands).
+    # difference between modes is where detection comes from, never what lands).
     raw = "Strasse 12 10115 Berlin"
     pieces = [_piece("Strasse", 0, 7), _piece("12", 8, 10), _piece("10115", 11, 16), _piece("Berlin", 17, 23)]
     lookup = {"10115": ({"DE": 1.0}, 52.53, 13.40)}

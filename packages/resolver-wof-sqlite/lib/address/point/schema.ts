@@ -3,18 +3,18 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Typed schema for the SITUS / rooftop ADDRESS-POINT extracts (`address-points-<cc>-<slug>.db`, built
+ *   Typed schema for the situs / rooftop address-point extracts (`address-points-<cc>-<slug>.db`, built
  *   by `mailwoman situs address-points` and by `@mailwoman/ban`'s `./scripts/build/address-point-database`
  *   — the #476/#567 national rooftop tier behind the demo's "type any US address, get the building").
  *   Two writers share one schema, which is why it lives here. Single source of truth for the columns shared
- *   by the BUILDER and the READER ({@link AddressPointSqliteLookup}), so a column rename in one is a
+ *   by the builder and the reader ({@link AddressPointSqliteLookup}), so a column rename in one is a
  *   compile error in the other.
  *
- *   The builder's hot INSERT (tens of millions of rows per state) stays a POSITIONAL prepared
+ *   The builder's hot insert (tens of millions of rows per state) stays a positional prepared
  *   statement for throughput — but its column list is derived from {@link ADDRESS_POINT_COLUMNS}
  *   here, and its table comes from {@link createAddressPointTable}, so the positional order can't
  *   silently drift from what the reader expects. (Same convention as the candidate build: typed
- *   schema guards the contract. positional inserts keep the speed.)
+ *   schema guards the interface. positional inserts keep the speed.)
  */
 
 import type { Kysely } from "kysely"
@@ -37,7 +37,7 @@ export interface AddressPointTable {
 	 */
 	street_key: RouteKey
 	/**
-	 * House number, normalized lower-case (kept TEXT — "123-A", "12 1/2" must survive).
+	 * House number, normalized lower-case (kept text — "123-A", "12 1/2" must survive).
 	 */
 	number: string
 	unit: string | null
@@ -82,14 +82,14 @@ export interface AddressPointDatabase {
 /**
  * The subset of a Kysely handle the `address_point` DDL touches — the parameter type its builders take.
  *
- * Kysely is invariant in its schema parameter (the incompatibility is in `transaction()`), so a extract that EXTENDS
+ * Kysely is invariant in its schema parameter (the incompatibility is in `transaction()`), so a extract that extends
  * `AddressPointTable` — OSM adds `h3_cell` — cannot pass its own handle to a `Kysely<AddressPointDatabase>` parameter.
  * Naming only `schema` lets it, and the DDL below needs nothing else.
  */
 export type AddressPointSchemaHandle = Pick<Kysely<AddressPointDatabase>, "schema">
 
 /**
- * The `address_point` columns in INSERT order. The builder's positional prepared statement derives its placeholder list
+ * The `address_point` columns in insert order. The builder's positional prepared statement derives its placeholder list
  * from this, so the positional order can't drift from the DDL / the reader.
  */
 export const ADDRESS_POINT_COLUMNS = [
@@ -148,8 +148,8 @@ export async function createAddressPointIndexes(db: AddressPointSchemaHandle): P
 		.execute()
 
 	await db.schema.createIndex("idx_ap_streetkey").on("address_point").columns(["postcode", "street_key"]).execute()
-	// Street-first index for the BBOX scope (#247): OSM points often carry no postcode/locality, so the
-	// reader scopes a `(street_norm, number)` probe by the resolved locality's bbox (lat/lon BETWEEN). The
+	// Street-first index for the bbox scope (#247): OSM points often carry no postcode/locality, so the
+	// reader scopes a `(street_norm, number)` probe by the resolved locality's bbox (lat/lon between). The
 	// postcode/locality indexes lead with their scope column and can't serve this. US situs never probes by
 	// bbox so it simply carries one extra (cheap) index on a future rebuild.
 	await db.schema.createIndex("idx_ap_street").on("address_point").columns(["street_norm", "number"]).execute()

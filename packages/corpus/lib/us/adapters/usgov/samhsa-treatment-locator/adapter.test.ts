@@ -71,7 +71,7 @@ describe("usgov-samhsa-treatment-locator adapter against fixture sample.csv", ()
 	})
 
 	it("preserves narrative sub-tenant designators verbatim in street", async () => {
-		// "Suite C, behind main building" is the SAMHSA-specific adversarial training signal.
+		// "Suite C, behind main building" is the samhsa-specific adversarial training signal.
 		await runAdapter({
 			adapter: createUsgovSamhsaTreatmentLocatorAdapter(),
 			adapterOptions: { inputPath: fixtureCSV },

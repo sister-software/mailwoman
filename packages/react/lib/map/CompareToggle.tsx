@@ -8,7 +8,7 @@
  *   version picker (the primary version filtered out); the actual second parse is a host concern the
  *   composed demo surfaces through `panels.compare`. Props in, two events out.
  *
- *   NODE-SAFE: pure React, no maplibre.
+ *   node-safe: pure React, no maplibre.
  */
 
 import type { ReactNode } from "react"

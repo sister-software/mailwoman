@@ -89,9 +89,9 @@ beforeAll(async () => {
 		dir.resolve("FI.txt")
 	)
 
-	// "Santa Isabel" reproduces the Malabo shape: one language-tagged UNFLAGGED row + a separate
+	// "Santa Isabel" reproduces the Malabo shape: one language-tagged unflagged row + a separate
 	// language-less row carrying the historic evidence (isHistoric + a `to` date). Historic-ness is a
-	// fact about the NAME — the unflagged row must not classify official.
+	// fact about the name — the unflagged row must not classify official.
 	const santaIsabelHistoric = ["1", "633679", "", "Santa Isabel", "", "", "", "1", "", "1973"].join("\t")
 
 	await writeLocalTextFile(

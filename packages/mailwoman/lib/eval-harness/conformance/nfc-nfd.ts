@@ -3,34 +3,34 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   The canonical-form invariance law: a query that arrives DECOMPOSED must answer the same as the composed
+ *   The canonical-form invariance law: a query that arrives decomposed must answer the same as the composed
  *   query it is canonically equivalent to. Pure — no model, no I/O beyond reading the committed suite.
  *
- *   WHY IT IS A PRODUCT COMMITMENT. `é` has two spellings the Unicode standard declares equal: one code point
+ *   why IT is A product commitment. `é` has two spellings the Unicode standard declares equal: one code point
  *   (`U+00E9`) and two (`e` + `U+0301`). Which one reaches the pipeline is decided by the tool that produced
  *   the text, never by the person who typed it. A macOS filesystem API hands back decomposed text, a Korean
  *   or Vietnamese input method can emit either, a form post carries whatever the browser was given, and most
  *   databases and the web platform emit composed. `Köln` and `Köln` are the same city and different bytes,
  *   and a pipeline that resolves one and not the other has failed an input its own users cannot see.
  *
- *   CANONICAL rather than COMPATIBILITY. {@linkcode canonicalFormKey} is `NFD`, which is UAX #15's own definition of
+ *   canonical rather than compatibility. {@linkcode canonicalFormKey} is `NFD`, which is UAX #15's own definition of
  *   canonical equivalence: two strings are canonically equivalent exactly when their decompositions match. So
  *   the key refuses, by construction, every relation this law is not — `ﬁ` against `fi` and `Ⅻ` against `XII`
- *   are COMPATIBILITY pairs and move the key, an accent removed moves the key, and a case change moves it too.
+ *   are compatibility pairs and move the key, an accent removed moves the key, and a case change moves it too.
  *   Those are other laws or no law at all, and none of them can enter this one wearing its name.
  *
- *   THE CORPUS STATES ONE DIRECTION. Every committed board row is already written in NFC — 83 of 651 rows
+ *   the corpus states one direction. Every committed board row is already written in NFC — 83 of 651 rows
  *   carry a canonically variant code point at all, and all 83 of those are composed — so the decompose arm is
  *   stateable everywhere and the compose arm nowhere. That is reported rather than inferred: the register's
  *   coverage line prints transformed rows over eligible rows on every run, because a suite that states one
  *   arm and declares two would otherwise imply a breadth it never exercised.
  *
- *   THE VARIANT IS DERIVED, NEVER AUTHORED. Every committed row's `variant` is exactly the named
+ *   the variant is derived, never authored. Every committed row's `variant` is exactly the named
  *   transformation applied to its `base`, and {@linkcode auditCanonicalFormSuite} re-derives it. A hand-typed
  *   variant is how a canonical-form row quietly acquires a dropped accent, and the law then measures
  *   something else under its own name.
  *
- *   STAGE 1 OWNS THIS, WHICH IS THE REASON TO MEASURE IT AND NOT THE REASON TO SKIP IT. `@mailwoman/normalize`
+ *   stage 1 owns this, which is the reason TO measure IT and not the reason TO skip IT. `@mailwoman/normalize`
  *   composes to NFC before anything downstream sees the text, so both forms should converge before the
  *   tokenizer runs. "Should converge" is a claim about code. a divergence here is that claim failing, and the
  *   first place to look is whichever stage received the two forms still distinct.
@@ -55,14 +55,14 @@ export const CANONICAL_FORM_LAW = "canonical-form-invariance"
 /**
  * The two canonical normalization forms this law states, and the only two a committed row may name.
  *
- * - `nfd` — canonical DECOMPOSITION: every composed character split into its base plus its combining marks, and every
+ * - `nfd` — canonical decomposition: every composed character split into its base plus its combining marks, and every
  *   Hangul syllable split into jamo. The register a macOS filesystem API, some input methods and some text pipelines
  *   produce.
- * - `nfc` — canonical COMPOSITION: the inverse, and the form the web platform, most databases and this pipeline's own
+ * - `nfc` — canonical composition: the inverse, and the form the web platform, most databases and this pipeline's own
  *   Stage 1 emit.
  *
- * Compatibility normalization (`NFKC` / `NFKD`) is deliberately absent. It rewrites characters that are not canonically
- * equal — `ﬁ` to `fi`, `Ⅻ` to `XII`, a full-width digit to an ASCII one — so a pair related by it is not a pair this
+ * Compatibility normalization (`nfkc` / `nfkd`) is deliberately absent. It rewrites characters that are not canonically
+ * equal — `ﬁ` to `fi`, `Ⅻ` to `XII`, a full-width digit to an ascii one — so a pair related by it is not a pair this
  * law can state, and {@linkcode canonicalFormKey} refuses it.
  */
 export const CANONICAL_FORMS = ["nfd", "nfc"] as const
@@ -92,7 +92,7 @@ export function canonicalFormKey(text: string): string {
 /**
  * Does this text hold anything a canonical transformation can act on?
  *
- * True exactly when the two forms differ, which is the eligibility rule the whole law rests on: a query of ASCII, or of
+ * True exactly when the two forms differ, which is the eligibility rule the whole law rests on: a query of ascii, or of
  * a script with no composed characters, is byte-identical under both forms and can state nothing.
  */
 export function canonicallyVariant(text: string): boolean {
@@ -141,7 +141,7 @@ export function classifyCanonicalTransformation(base: string, variant: string): 
  * The declared reasons a canonical transformation is not stateable over a given row.
  *
  * - `no-canonical-variance` — the query's two canonical forms are the same bytes, so neither arm moves anything. Plain
- *   ASCII, and every script whose characters carry no canonical decomposition, land here. Such a row is the IDENTITY
+ *   ascii, and every script whose characters carry no canonical decomposition, land here. Such a row is the identity
  *   law wearing a canonical-form label, and its holding would be counted as evidence that the forms are handled.
  * - `already-in-target-form` — the query is canonically variant, and it is already written in the form this arm composes
  *   or decomposes toward, so this arm alone is the identity while its sibling states the law. Reported apart from the
@@ -215,7 +215,7 @@ export const NFC_NFD_SUITE_PATH: string = resolvePackagePath(
 /**
  * How much of the population this law actually transformed.
  *
- * Every field is a count of COMMITTED ROWS rather than of law arms, because the question the tradeoff asks is how much
+ * Every field is a count of committed rows rather than of law arms, because the question the tradeoff asks is how much
  * of the corpus the suite reached, and a row carrying two arms would otherwise read as twice the coverage.
  */
 export interface CanonicalFormCoverage {
@@ -230,7 +230,7 @@ export interface CanonicalFormCoverage {
 	/**
 	 * Of the eligible rows, how many this suite states a byte-distinct arm over.
 	 *
-	 * Counted by the COMMITTED ROW a fixture names, which is what makes the ratio a ratio: the denominator counts rows,
+	 * Counted by the committed row a fixture names, which is what makes the ratio a ratio: the denominator counts rows,
 	 * two rows can carry the same query text, and one row can carry several arms. Keying on the text would report the
 	 * first pair as one and keying on the fixture would report the second as several.
 	 */
@@ -295,7 +295,7 @@ export function describeCanonicalFormCoverage(
  *
  * Returns one message per problem, each naming the fixture. Empty means the suite states this law and only this law.
  *
- * The `caseCountry` requirement is not bookkeeping: a row graded with no country routes through the BASE en-US weights
+ * The `caseCountry` requirement is not bookkeeping: a row graded with no country routes through the base en-US weights
  * package rather than its own overlay, so a canonical-form violation would be reported for an instrument that was never
  * pointed at the row's locale.
  *

@@ -6,10 +6,10 @@
  *   over `workspaceDirectories`, `listTrackedFiles` over `trackedFiles`. The longer name is how a duplicate arrives,
  *   because an author who knew the shorter name would have imported it.
  *
- *   The sibling {@linkcode findPrivateNameShadows} compares names for EQUALITY, which finds a copy only when both
+ *   The sibling {@linkcode findPrivateNameShadows} compares names for equality, which finds a copy only when both
  *   authors chose the same word. This compares camelCase component runs instead, which is what an affix leaves behind.
  *
- *   SCOPED ACROSS PACKAGES on purpose. Two names inside one package are usually a deliberate family
+ *   scoped across packages on purpose. Two names inside one package are usually a deliberate family
  *   (`buildPostcodeLocalityJP` beside `buildPostcodeLocality`); across packages, the shorter name has a public home the
  *   longer one could have imported.
  *

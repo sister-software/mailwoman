@@ -39,9 +39,9 @@ export function overlayLocale(country: string | undefined): string {
  * Whether a row routed to `country` graded without its weights overlay, given the overlay locales that failed to load.
  *
  * A country with no declared overlay answers `false`: it grades through the base package by design, which is its
- * production path, so calling that degraded would withhold a suggestion the run is entitled to make.
+ * production path. Therefore, calling that degraded would withhold a suggestion the run is entitled to make.
  *
- * `baseOnlyLocales` is keyed by LOCALE because the harness memoizes its fallback per locale — a second country routing
+ * `baseOnlyLocales` is keyed by locale because the harness memoizes its fallback per locale — a second country routing
  * to the same overlay takes the cached base classifier and never re-enters the failure path, so a set keyed by country
  * would miss it.
  */

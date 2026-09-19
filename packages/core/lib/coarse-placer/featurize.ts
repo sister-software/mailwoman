@@ -9,7 +9,7 @@
  *   indices in [0, FEATURE_DIM).
  *
  *   Why these features: script is the dominant coarse-geography signal (CJK→East Asia,
- *   Cyrillic→Eastern Europe, Arabic→MENA), and char n-grams separate within a script (Hangul→KR vs
+ *   Cyrillic→Eastern Europe, Arabic→mena), and char n-grams separate within a script (Hangul→KR vs
  *   kana→JP vs Han-only→CN, or Dutch "straat" vs French "rue" within Latin). A linear model over
  *   both is a few hundred KB and runs in microseconds — the "always-resident, places the planet
  *   coarsely" tier.
@@ -18,7 +18,7 @@
 import { hashFNV1a } from "#coarse-placer/fnv-hash"
 
 /**
- * The trained classes: the well-represented corpus countries, the #743 Overture-sourced EU expansion, and `OTHER` — the
+ * The trained classes: the well-represented corpus countries, the #743 Overture-sourced EU expansion, and `other` — the
  * explicit off-map class (milestone 2) trained on non-Latin/non-CJK scripts via outlier exposure, so the model learns
  * the edge of its competence and routes "probably off my loaded map" instead of a confident mis-placement. Index order
  * is the label id.
@@ -26,9 +26,9 @@ import { hashFNV1a } from "#coarse-placer/fnv-hash"
  * The first 11 are the original v0.5.0-corpus countries. The next 16 (#743) are EU locales the placer previously
  * couldn't emit — ambiguous names there (FI "Helsinki", PL "Rybnik") landed off-continent in the population-first
  * candidate gazetteer because no country prior pinned them. They're trained from the Overture per-country addresses
- * theme (`build-dataset.mjs`), and they're pulled out of the Latin off-map `OTHER` outlier set
- * (`build-outlier-latin.mjs`) that used to teach PL/PT/CZ → OTHER. Widening the class set is the soft-prior change. it
- * never hard-filters, so a neighbour confusion (DK↔NO, EE↔LT↔LV) still keeps resolution in-region, off the global-pop
+ * theme (`build-dataset.mjs`), and they're pulled out of the Latin off-map `other` outlier set
+ * (`build-outlier-latin.mjs`) that used to teach PL/PT/CZ → other. Widening the class set is the soft-prior change. it
+ * never hard-filters, so a neighbour confusion (DK↔no, EE↔LT↔LV) still keeps resolution in-region, off the global-pop
  * attractors. Adding a class requires a retrain + a fresh artifact — the bundled meta.json carries its own `classes`,
  * so this constant only drives training (`train.mjs`), not inference.
  */
@@ -133,7 +133,7 @@ function bucket(s: string, salt: number): number {
 /**
  * Featurize an address into a deduped list of active feature indices: char 3/4/5-grams over the lowercased,
  * boundary-marked string + one presence token per Unicode script seen (+ the dominant script). Non-Latin characters are
- * PRESERVED (lowercasing only touches cased scripts).
+ * preserved (lowercasing only touches cased scripts).
  */
 export function featurize(text: string): number[] {
 	const norm = text.toLowerCase().replaceAll(/\s+/g, " ").trim()

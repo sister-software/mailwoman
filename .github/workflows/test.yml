@@ -4,15 +4,15 @@
 # as the 2.0.0 release where `workspace:*` deps shipped to npm. A green
 # test.yml is required before any PR can merge once branch protection is on.
 #
-# STRUCTURE — six legs (static, unit-fast, unit-slow, lexicon-full, react, smoke), then the `test`
+# structure — six legs (static, unit-fast, unit-slow, lexicon-full, react, smoke), then the `test`
 # aggregator checks on all six. unit-fast and unit-slow run the root Vitest sweep concurrently — fast
 # leg is the pure unit/lexicon surface. slow leg is the DB-conditional integration suites (CLI harness,
 # WOF resolver, model-load tests).
 #
-# SIZES, measured 2026-08-29 on the lab workstation: fast 593 files / ~46-156s, slow 126 files /
+# sizes, measured 2026-08-29 on the lab workstation: fast 593 files / ~46-156s, slow 126 files /
 # ~517s. The earlier figures here (317 files / 10s and 86 files / 95s, from 2026-08-02) were off by
 # 1.9x and 5.4x, which is enough to send someone triaging CI cost at the wrong leg. Wall times move
-# with contention and with the machine. the FILE COUNTS are the durable half, so re-read them from
+# with contention and with the machine. the file counts are the durable half, so re-read them from
 # `vitest list --filesOnly` rather than trusting a number in a comment.
 #
 # lexicon-full is the sixth leg and the newest (2026-08-02). It exists because one test file was
@@ -22,11 +22,11 @@
 # here, with a nightly (lexicon-nightly.yml) for data drift and a release-time run in publish.yml.
 # See the per-job comment for why all three layers are needed.
 #
-# The aggregator job is named `test` ON PURPOSE: the "Production Integrity" ruleset's
+# The aggregator job is named `test` on purpose: the "Production Integrity" ruleset's
 # required status check matches the context `test`, and publish.yml's prepare phase
 # auto-merges the release PR on that same check. Rename it and both break.
 #
-# WHERE EACH LEG RUNS — jobs ask for a CAPABILITY rather than a machine (2026-08-02). Three legs are
+# where each LEG runs — jobs ask for a capability rather than a machine (2026-08-02). Three legs are
 # portable and run on GitHub-hosted runners unconditionally: static (lint + typecheck), unit-fast
 # (no model, no DB by construction) and react (browser mode — hosted even allows the `--with-deps`
 # playwright path the lab runners can't sudo). Two are not portable and carry the label
@@ -35,10 +35,10 @@
 # materialized from that same root.
 #
 # The label supplies the variable as well as the data. Each runner exports MAILWOMAN_DATA_ROOT from
-# the runner application's own `.env`, which the listener loads into every job it runs, so no job
+# the runner application's own `.env`. It the listener loads into every job it runs. Therefore, no job
 # here declares it. Do not reintroduce a job-level `env: MAILWOMAN_DATA_ROOT: ${{ secrets.… }}`: an
-# `env:` block always wins over the inherited value, and a `secrets` expression expands to the EMPTY
-# STRING on any event whose secrets come from a store that lacks the name. An empty root is not an
+# `env:` block always wins over the inherited value, and a `secrets` expression expands to the empty
+# string on any event whose secrets come from a store that lacks the name. An empty root is not an
 # absent root — it resolves relative to the checkout, so the failure arrives as a missing model file
 # inside `_work/` rather than as a missing secret.
 #
@@ -47,10 +47,10 @@
 # It also keeps the lab box carrying two legs rather than five, which is what the fleet's four slots
 # and a shared workstation can actually absorb.
 #
-# `data-fleet` (below) decides only whether the two labelled legs RUN or SKIP. it does not move any
+# `data-fleet` (below) decides only whether the two labelled legs RUN or skip. it does not move any
 # job between runners. Releases are unaffected either way: publish.yml stays pinned to the fleet.
 #
-# PATH-BLOCKING: the smoke leg validates the PACKAGING pipeline (see per-job comment), so a
+# path-blocking: the smoke leg validates the packaging pipeline (see per-job comment), so a
 # docs-only or data-only PR skips smoke entirely — the job reports green in seconds. The unit
 # split into fast/slow means the fast leg reports in ~15s on a fleet slot that's released
 # after the prefix (~75s); the slow leg (DB-conditional suites) runs in parallel on another slot.
@@ -79,7 +79,7 @@ env:
   # Opt into Node 24 for JavaScript-based actions (checkout, setup-node, etc.)
   # ahead of the forced switch in June 2026 / removal in Sep 2026.
   FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: "true"
-  # onnxruntime-node's postinstall downloads OPTIONAL GPU-provider binaries from Microsoft's Akamai
+  # onnxruntime-node's postinstall downloads optional GPU-provider binaries from Microsoft's Akamai
   # CDN — the CPU libs the runners actually use are bundled in the npm tarball. That CDN edge is
   # intermittently unreachable from the lab runners (2026-07-28: three CI rounds died on it —
   # ETIMEDOUT IPv4 + ENETUNREACH IPv6). Skip the download entirely: deterministic installs, no GPU
@@ -88,10 +88,10 @@ env:
 
 concurrency:
   group: test-${{ github.workflow }}-${{ github.ref }}
-  # Cancel superseded runs on PRs AND pushes to main: only the latest head's `test` check is
-  # required (the ruleset + release auto-merge match on the branch HEAD sha), so an older
+  # Cancel superseded runs on PRs and pushes to main: only the latest head's `test` check is
+  # required (the ruleset + release auto-merge match on the branch head sha), so an older
   # in-flight run is pure fleet burn — each leg occupies one of the 4 lab runner slots, and a
-  # stale push's 4 legs queue AHEAD of the current push's. workflow_dispatch is EXEMPT: that's
+  # stale push's 4 legs queue ahead of the current push's. workflow_dispatch is exempt: that's
   # publish.yml mode=prepare dispatching against the release branch — cancelling it when a
   # rerun lands would hang the release PR's auto-merge on a check that never reports.
   cancel-in-progress: ${{ github.event_name != 'workflow_dispatch' }}
@@ -99,19 +99,19 @@ concurrency:
 jobs:
   # Is a data-capable runner online? That is the only question this job answers.
   #
-  # GitHub Actions has no native fallback: a job whose labels match a REGISTERED but OFFLINE runner
-  # QUEUES for up to 24h rather than failing. With every leg on `self-hosted`, taking the fleet down
+  # GitHub Actions has no native fallback: a job whose labels match a registered but offline runner
+  # queues for up to 24h rather than failing. With every leg on `self-hosted`, taking the fleet down
   # therefore blocks all merges silently — branch protection wants a green `test`, and `test` has
   # nowhere to run.
   #
   # The structural half of the fix is the `mailwoman-data` capability label (see the file header):
   # three legs left the fleet entirely and no longer care whether it is up. What remains is the two
-  # legs that genuinely need the data root, and the only honest options for them are RUN or SKIP.
+  # legs that genuinely need the data root, and the only honest options for them are RUN or skip.
   # They cannot fall back: unit-slow reads ~10 GB of databases (a 4.9 GB WOF admin DB, a 2.4 GB
   # address-point DB, a 2.2 GB postcode DB, …) — past a hosted runner's 14 GB disk once a checkout
   # and node_modules are on it, and past the 10 GB repo-wide cache limit, with a transfer per run
   # that would cost more than the tests. Those suites are written with `describe.skipIf(!HAS_WOF)`,
-  # so on a hosted runner they would SKIP and the leg would go GREEN having tested a fraction of
+  # so on a hosted runner they would skip and the leg would go green having tested a fraction of
   # what its name claims. A check that silently means less while reporting the same is worse than one
   # that is honestly unavailable — hence a declared skip, annotated, over a vacuous pass.
   #
@@ -125,7 +125,7 @@ jobs:
   #   2. The runners API, if `secrets.RUNNER_PROBE_TOKEN` is set (a PAT with `administration: read`
   #      — GITHUB_TOKEN cannot list self-hosted runners, there is no such permission scope).
   #   3. `up`. Every failure mode lands here: no token, a fork PR with no secrets, a 500 from the
-  #      API. Fail CLOSED — an unreachable probe must never silently downgrade the check, and a job
+  #      API. Fail closed — an unreachable probe must never silently downgrade the check, and a job
   #      that queues is a visible problem where a skipped one is not.
   data-fleet:
     runs-on: ubuntu-latest
@@ -157,9 +157,9 @@ jobs:
           fi
 
           # The `.runners | type == "array"` test is required rather than defensive noise. Every API
-          # failure — bad credentials, 403, 404 — returns a JSON OBJECT with a `message` and no
-          # `runners` key, so a tolerant expression like `.runners // []` counts it as ZERO ONLINE
-          # RUNNERS and reports the fleet down. A count of zero cannot tell "nothing is online" from
+          # failure — bad credentials, 403, 404 — returns a JSON object with a `message` and no
+          # `runners` key, so a tolerant expression like `.runners // []` counts it as zero online
+          # runners and reports the fleet down. A count of zero cannot tell "nothing is online" from
           # "nobody answered the question"; only the shape of the response can. Anything that is not
           # an array yields a non-numeric sentinel, which the guard below turns into fail-closed.
           online=$(curl -sS --max-time 30 \
@@ -210,13 +210,13 @@ jobs:
       # accept as current — the stale-artifact shape this repo has been bitten by before (the
       # 2026-08-02 weights-cache incident). Miss and rebuild beats hit and lie.
       #
-      # The key is the CONTENT of everything `tsc -b` reads. An earlier draft appended github.sha,
+      # The key is the content of everything `tsc -b` reads. An earlier draft appended github.sha,
       # which made every new commit a guaranteed miss — only a re-run of the identical sha could hit,
       # which is nearly worthless for PR wall-clock. Content-keyed, a docs-only, data-only or
       # workflow-only PR reuses main's tree across all six legs, and a source change busts it because
       # tsc genuinely does have to rebuild then.
       #
-      # ⚠ THIS STEP MUST STAY BEFORE `Install dependencies`. hashFiles globs the workspace as it finds
+      # ⚠ this step must stay before `Install dependencies`. hashFiles globs the workspace as it finds
       # it and does not skip node_modules, so running it after install would walk ~74,000 vendored
       # files to compute a key about our own sources.
       - name: Restore compiled tree
@@ -231,7 +231,7 @@ jobs:
         uses: actions/setup-node@v7
         with:
           node-version-file: .nvmrc
-          # Cache the yarn store. This was DISABLED while the leg ran on the lab (2026-07-29): the
+          # Cache the yarn store. This was disabled while the leg ran on the lab (2026-07-29): the
           # restore against GitHub's cache service hung through the lab's degraded network path —
           # multiple 20m job-budget deaths in Setup Node — and was redundant anyway, since
           # .yarnrc.yml's enableGlobalCache serves installs offline there. Neither reason survives
@@ -283,7 +283,7 @@ jobs:
 
       # Full repo-wide lint (oxlint incl. sister-software/no-process-globals, oxfmt --check, python
       # toolchain checks: ruff, verify_toolchain, mypy --strict, bandit). This is the complete check:
-      # the pre-commit hook only lints STAGED files, so repo-wide drift and --no-verify commits are
+      # the pre-commit hook only lints staged files, so repo-wide drift and --no-verify commits are
       # caught here. The first `uv run` syncs corpus-python's venv incl. the [train] extras (mypy
       # must resolve torch), so this step is slower than it looks on a cold runner.
       - name: Lint
@@ -299,7 +299,7 @@ jobs:
         run: yarn python:test
 
       # The docs app ships real runtime code (the /demo page). Its typecheck sat outside CI and
-      # went 7-errors red on main unnoticed — one of those errors was the LIVE demo's undefined
+      # went 7-errors red on main unnoticed — one of those errors was the live demo's undefined
       # baseUrl paths (#917, broken in production since v5.0.0). This step is that bug's class fix.
       - name: Typecheck docs
         run: yarn workspace @mailwoman/docs typecheck
@@ -334,13 +334,13 @@ jobs:
       # accept as current — the stale-artifact shape this repo has been bitten by before (the
       # 2026-08-02 weights-cache incident). Miss and rebuild beats hit and lie.
       #
-      # The key is the CONTENT of everything `tsc -b` reads. An earlier draft appended github.sha,
+      # The key is the content of everything `tsc -b` reads. An earlier draft appended github.sha,
       # which made every new commit a guaranteed miss — only a re-run of the identical sha could hit,
       # which is nearly worthless for PR wall-clock. Content-keyed, a docs-only, data-only or
       # workflow-only PR reuses main's tree across all six legs, and a source change busts it because
       # tsc genuinely does have to rebuild then.
       #
-      # ⚠ THIS STEP MUST STAY BEFORE `Install dependencies`. hashFiles globs the workspace as it finds
+      # ⚠ this step must stay before `Install dependencies`. hashFiles globs the workspace as it finds
       # it and does not skip node_modules, so running it after install would walk ~74,000 vendored
       # files to compute a key about our own sources.
       - name: Restore compiled tree
@@ -355,7 +355,7 @@ jobs:
         uses: actions/setup-node@v7
         with:
           node-version-file: .nvmrc
-          # Cache the yarn store. This was DISABLED while the leg ran on the lab (2026-07-29): the
+          # Cache the yarn store. This was disabled while the leg ran on the lab (2026-07-29): the
           # restore against GitHub's cache service hung through the lab's degraded network path —
           # multiple 20m job-budget deaths in Setup Node — and was redundant anyway, since
           # .yarnrc.yml's enableGlobalCache serves installs offline there. Neither reason survives
@@ -374,10 +374,10 @@ jobs:
 
       # `@mailwoman/dev-mcp`'s symbol index shells out to ripgrep, which is not on the hosted image —
       # `symbol-index`, `symbol-tool` and `symbol-precheck` failed with
-      # `ripgrep (rg) is not on PATH, so the declaration search did not run.` on every PR.
+      # `ripgrep (rg) is not on path. Therefore, the declaration search did not run.` on every PR.
       #
       # Installed rather than skipped. That guard exists because an unrunnable searcher returning ""
-      # reads as "this symbol has no home", which is the answer the tool is for — so a runner without
+      # reads as "this symbol has no home". It is the answer the tool is for. Therefore, a runner without
       # ripgrep must not quietly pass the suite that exercises the guard. The lab fleet already has
       # it, which is why this only ever failed on the hosted leg.
       - name: Install ripgrep (dev-mcp symbol index)
@@ -392,7 +392,7 @@ jobs:
 
   # The DB-conditional half of the Vitest sweep — everything excluded from unit-fast. Runs in
   # parallel with unit-fast on a separate runner slot. the aggregator checks on both.
-  # NOT PORTABLE — requires `mailwoman-data`, and job-skipped when no such runner is online (see the
+  # not portable — requires `mailwoman-data`, and job-skipped when no such runner is online (see the
   # data-fleet header). Its suites read ~10 GB of WOF/address-point databases and are written with
   # `describe.skipIf(!HAS_WOF)`, so on a hosted runner they would skipIf their way to a green tick.
   # A job that reports `skipped` is legible in the UI. one that reports `success` having tested
@@ -423,13 +423,13 @@ jobs:
       # accept as current — the stale-artifact shape this repo has been bitten by before (the
       # 2026-08-02 weights-cache incident). Miss and rebuild beats hit and lie.
       #
-      # The key is the CONTENT of everything `tsc -b` reads. An earlier draft appended github.sha,
+      # The key is the content of everything `tsc -b` reads. An earlier draft appended github.sha,
       # which made every new commit a guaranteed miss — only a re-run of the identical sha could hit,
       # which is nearly worthless for PR wall-clock. Content-keyed, a docs-only, data-only or
       # workflow-only PR reuses main's tree across all six legs, and a source change busts it because
       # tsc genuinely does have to rebuild then.
       #
-      # ⚠ THIS STEP MUST STAY BEFORE `Install dependencies`. hashFiles globs the workspace as it finds
+      # ⚠ this step must stay before `Install dependencies`. hashFiles globs the workspace as it finds
       # it and does not skip node_modules, so running it after install would walk ~74,000 vendored
       # files to compute a key about our own sources.
       - name: Restore compiled tree
@@ -444,7 +444,7 @@ jobs:
         uses: actions/setup-node@v7
         with:
           node-version-file: .nvmrc
-          # actions-cache restore DISABLED (2026-07-29) — see static leg comment for rationale.
+          # actions-cache restore disabled (2026-07-29) — see static leg comment for rationale.
 
       - name: Enable Corepack (yarn 4)
         run: corepack enable
@@ -455,7 +455,7 @@ jobs:
       - name: Compile
         run: yarn compile
 
-      # Weights come from the DERIVED STORE at $MAILWOMAN_DATA_ROOT/derived/weights/<key>, not from
+      # Weights come from the derived store at $MAILWOMAN_DATA_ROOT/derived/weights/<key>, not from
       # actions/cache. The cache entry carried 76.3 MB of real files and restored at ~1.6 MB/s over
       # the lab's path to GitHub's cache service — 48-54s, to a host that already holds the source
       # model on local disk. `copy-weights.ts` now serves the derived binaries from that store and
@@ -482,24 +482,24 @@ jobs:
             yarn ci:test:slow --exclude '**/test/integration/conformance-*.test.ts'
           fi
 
-  # Do the five LIVE-PIPELINE conformance suites need to run? HOSTED, for the same reason
+  # Do the five live-pipeline conformance suites need to run? hosted, for the same reason
   # `lexicon-check` is: deciding on a hosted runner costs nothing and keeps the four-runner
   # `mailwoman-data` fleet for work that needs the databases.
   #
-  # WHAT THIS DECIDES. `conformance-{nfc-nfd,whitespace,punctuation,case-folding,refinement-monotonicity}.test.ts`
+  # what this decides. `conformance-{nfc-nfd,whitespace,punctuation,case-folding,refinement-monotonicity}.test.ts`
   # drive the real pipeline over the blocking rows: measured 2026-08-29 at 93.4s of unit-slow's 517s,
   # or 18% of the leg. Unlike `lexicon-full` this is not its own job — a fourth data-hungry leg would
   # queue against the same scarce slots the `lexicon-check` header complains about — so the decision
   # is threaded into unit-slow as a vitest exclude instead.
   #
-  # WHAT STILL RUNS EVERY PR when this holds them back: the `*-suite.test.ts` files in unit-fast,
+  # what still runs every PR when this holds them back: the `*-suite.test.ts` files in unit-fast,
   # which assert the same laws against the committed fixture rows without loading a model. Each
   # integration file's own header states the difference, and it is real: the fast leg proves the
   # Stage 1 claim about normalization, this leg shows the measured result about the whole pipeline, because
   # the tokenizer, the lexicons, the pair indices and the resolver all read text downstream of
   # Stage 1 and any of them could hold one form and not the other.
   #
-  # THE FILTER IS THE PARSE PATH, deliberately broad. A narrow filter here would be the failure it
+  # the filter is the parse path, deliberately broad. A narrow filter here would be the failure it
   # exists to prevent: a suite that stops running while reporting the same green tick.
   conformance-scope:
     runs-on: ubuntu-latest
@@ -552,11 +552,11 @@ jobs:
             echo "| saved | ~93s of unit-slow (18% of the leg, measured 2026-08-29) |"
           } >> "$GITHUB_STEP_SUMMARY"
 
-  # Does the full-scale lexicon build need to run? HOSTED, and deliberately separate from the job it
+  # Does the full-scale lexicon build need to run? hosted, and deliberately separate from the job it
   # checks.
   #
   # The path filter used to live inside `lexicon-full` itself, which meant a PR touching nothing
-  # lexicon-related still had to WAIT FOR A SCARCE `mailwoman-data` SLOT just to print a notice and
+  # lexicon-related still had to wait FOR A scarce `mailwoman-data` slot just to print a notice and
   # exit. The lab fleet is four runners and often fewer (two were online on 2026-08-02) against
   # three data-hungry legs, so a ten-second job can sit queued for minutes — and the `test`
   # aggregator waits on it. Deciding here costs a hosted runner nothing and keeps the lab slots for
@@ -607,25 +607,25 @@ jobs:
             echo "| covered instead by | \`lexicon-nightly.yml\`, and \`publish.yml\` at release |"
           } >> "$GITHUB_STEP_SUMMARY"
 
-  # The FULL-SCALE locality-surface build (`evidence-lexicons.full.test.ts`).
+  # The full-scale locality-surface build (`evidence-lexicons.full.test.ts`).
   #
-  # WHY IT IS ITS OWN JOB: it was unit-slow's wall-clock. Measured 2026-08-02, two tests building the
+  # why IT is its own JOB: it was unit-slow's wall-clock. Measured 2026-08-02, two tests building the
   # lexicon over the whole 4.9 GB admin DB were 236.9s of a 253s leg — 93% of the leg's test time —
   # and the cost grows with the gazetteer, so the problem was getting worse on its own. Splitting it
   # out took unit-slow to ~94s locally.
   #
-  # WHAT STILL RUNS EVERY PR: the four laws, against a seeded fixture DB
+  # what still runs every PR: the four laws, against a seeded fixture DB
   # (`evidence-lexicons.fixture.test.ts`, 505ms, in unit-fast). That file drives the real builder
   # through `opts.dbPath` and is invariant to gazetteer size. What is not covered when this job is
-  # path-conditional off is the COVERAGE-SCALE claim — `entries > 10_000` and the nonzero skip counters —
+  # path-conditional off is the coverage-scale claim — `entries > 10_000` and the nonzero skip counters —
   # which is a claim about the gazetteer rather than about the laws.
   #
-  # PATH-CONDITIONAL, and the three layers are deliberate. This job catches a PR that changes the BUILDER.
-  # It cannot catch DATA DRIFT: the gazetteer is rebuilt outside any pull request, so no path filter
+  # path-conditional, and the three layers are deliberate. This job catches a PR that changes the builder.
+  # It cannot catch data drift: the gazetteer is rebuilt outside any pull request, so no path filter
   # will ever see it. `lexicon-nightly.yml` is that layer, and `publish.yml` runs the build again at
   # release so a tag is never reduce on an inherited "no lexicon path changed" tick.
   #
-  # NOT PORTABLE — reads the same ~10 GB of databases as unit-slow.
+  # not portable — reads the same ~10 GB of databases as unit-slow.
   lexicon-full:
     needs: [data-fleet, lexicon-check]
     if: needs.data-fleet.outputs.up == 'true' && needs.lexicon-check.outputs.needed == 'true'
@@ -652,13 +652,13 @@ jobs:
       # accept as current — the stale-artifact shape this repo has been bitten by before (the
       # 2026-08-02 weights-cache incident). Miss and rebuild beats hit and lie.
       #
-      # The key is the CONTENT of everything `tsc -b` reads. An earlier draft appended github.sha,
+      # The key is the content of everything `tsc -b` reads. An earlier draft appended github.sha,
       # which made every new commit a guaranteed miss — only a re-run of the identical sha could hit,
       # which is nearly worthless for PR wall-clock. Content-keyed, a docs-only, data-only or
       # workflow-only PR reuses main's tree across all six legs, and a source change busts it because
       # tsc genuinely does have to rebuild then.
       #
-      # ⚠ THIS STEP MUST STAY BEFORE `Install dependencies`. hashFiles globs the workspace as it finds
+      # ⚠ this step must stay before `Install dependencies`. hashFiles globs the workspace as it finds
       # it and does not skip node_modules, so running it after install would walk ~74,000 vendored
       # files to compute a key about our own sources.
       - name: Restore compiled tree
@@ -713,13 +713,13 @@ jobs:
       # accept as current — the stale-artifact shape this repo has been bitten by before (the
       # 2026-08-02 weights-cache incident). Miss and rebuild beats hit and lie.
       #
-      # The key is the CONTENT of everything `tsc -b` reads. An earlier draft appended github.sha,
+      # The key is the content of everything `tsc -b` reads. An earlier draft appended github.sha,
       # which made every new commit a guaranteed miss — only a re-run of the identical sha could hit,
       # which is nearly worthless for PR wall-clock. Content-keyed, a docs-only, data-only or
       # workflow-only PR reuses main's tree across all six legs, and a source change busts it because
       # tsc genuinely does have to rebuild then.
       #
-      # ⚠ THIS STEP MUST STAY BEFORE `Install dependencies`. hashFiles globs the workspace as it finds
+      # ⚠ this step must stay before `Install dependencies`. hashFiles globs the workspace as it finds
       # it and does not skip node_modules, so running it after install would walk ~74,000 vendored
       # files to compute a key about our own sources.
       - name: Restore compiled tree
@@ -734,7 +734,7 @@ jobs:
         uses: actions/setup-node@v7
         with:
           node-version-file: .nvmrc
-          # Cache the yarn store. This was DISABLED while the leg ran on the lab (2026-07-29): the
+          # Cache the yarn store. This was disabled while the leg ran on the lab (2026-07-29): the
           # restore against GitHub's cache service hung through the lab's degraded network path —
           # multiple 20m job-budget deaths in Setup Node — and was redundant anyway, since
           # .yarnrc.yml's enableGlobalCache serves installs offline there. Neither reason survives
@@ -753,7 +753,7 @@ jobs:
 
       # --with-deps is available again now that this leg is hosted. It sudo-installs the chromium
       # system libs, which is why it was off while the leg ran on the lab (no passwordless sudo
-      # there, so the libs were provisioned once by hand). A hosted runner is a fresh image every
+      # there. Therefore, the libs were provisioned once by hand). A hosted runner is a fresh image every
       # time and has sudo, so it must install them itself.
       - name: Install Playwright chromium (react browser tests)
         run: yarn workspace @mailwoman/react exec playwright install --with-deps chromium
@@ -783,12 +783,12 @@ jobs:
   # undeclared runtime dep, an unshipped file, or a command module with an eager top-level side
   # effect — all invisible in-repo, all fatal to a fresh `npm install`.
   #
-  # PATH-CONDITIONAL on pull_request: the smoke test validates the PACKAGING pipeline, so changes to
+  # path-conditional on pull_request: the smoke test validates the packaging pipeline, so changes to
   # docs, root *.md, data/, .github/, or any workspace not packed by smoke-clean-install.ts
   # (osm, tile-worker, resolver-wof-wasm) can't affect it. On a docs-only or
   # data-only PR the heavy steps are skipped → green in seconds. On push to main, workflow_dispatch
-  # (release flow), and any PR that TOUCHES a smoke-relevant path, every step runs.
-  # NOT PORTABLE — job-skipped when the fleet is down, for the same reason as unit-slow but a
+  # (release flow), and any PR that touches a smoke-relevant path, every step runs.
+  # not portable — job-skipped when the fleet is down, for the same reason as unit-slow but a
   # sharper one: smoke packs the weights workspaces, `copy-weights.ts` materializes them from the
   # data root, and `yarn pack` quietly packs whatever subset of the `files` globs exists. Without
   # the host it would pack payload-free tarballs and install them — the exact failure that
@@ -810,7 +810,7 @@ jobs:
         with:
           filters: |
             smoke:
-              # --- Published workspace source (WORKSPACES dict in smoke-clean-install.ts) ---
+              # --- Published workspace source (workspaces dict in smoke-clean-install.ts) ---
               - 'packages/core/**'
               - 'packages/spatial/**'
               - 'packages/resolver/**'
@@ -885,13 +885,13 @@ jobs:
       # accept as current — the stale-artifact shape this repo has been bitten by before (the
       # 2026-08-02 weights-cache incident). Miss and rebuild beats hit and lie.
       #
-      # The key is the CONTENT of everything `tsc -b` reads. An earlier draft appended github.sha,
+      # The key is the content of everything `tsc -b` reads. An earlier draft appended github.sha,
       # which made every new commit a guaranteed miss — only a re-run of the identical sha could hit,
       # which is nearly worthless for PR wall-clock. Content-keyed, a docs-only, data-only or
       # workflow-only PR reuses main's tree across all six legs, and a source change busts it because
       # tsc genuinely does have to rebuild then.
       #
-      # ⚠ THIS STEP MUST STAY BEFORE `Install dependencies`. hashFiles globs the workspace as it finds
+      # ⚠ this step must stay before `Install dependencies`. hashFiles globs the workspace as it finds
       # it and does not skip node_modules, so running it after install would walk ~74,000 vendored
       # files to compute a key about our own sources.
       - name: Restore compiled tree
@@ -906,13 +906,13 @@ jobs:
       # Change detection replaces a trigger-level `paths:` filter (the docs-build precedent).
       # On pull_request, the heavy steps run only when a path in the filter list changed —
       # otherwise the job reports green in seconds (checkout + this step). The list mirrors the
-      # WORKSPACES dict in smoke-clean-install.ts — keep the two in sync.
+      # workspaces dict in smoke-clean-install.ts — keep the two in sync.
       - name: Setup Node
         if: github.event_name != 'pull_request' || steps.changes.outputs.smoke == 'true'
         uses: actions/setup-node@v7
         with:
           node-version-file: .nvmrc
-          # actions-cache restore DISABLED (2026-07-29): the restore against GitHub's cache service
+          # actions-cache restore disabled (2026-07-29): the restore against GitHub's cache service
           # hangs through the lab's degraded path (multiple 20m job-budget deaths in Setup Node) and
           # is redundant — .yarnrc.yml's enableGlobalCache serves installs offline on the runners.
 
@@ -929,12 +929,12 @@ jobs:
         run: yarn compile
 
       # Same cache as the unit leg (same key → shared entry). Smoke packs the weights workspaces
-      # into the throwaway install (see WORKSPACES in smoke-clean-install.ts): photon/nominatim/
+      # into the throwaway install (see workspaces in smoke-clean-install.ts): photon/nominatim/
       # fastify declare @mailwoman/neural-weights-en-us as a real dep, so on a version-bumped
-      # release branch npm would otherwise chase the not-yet-published registry version (ETARGET —
+      # release branch npm would otherwise chase the not-yet-published registry version (etarget —
       # the chicken-and-egg that blocked the v7.6.0 release PR). `yarn pack` quietly packs whatever
       # subset of the `files` globs exists, so the binaries must be present before packing.
-      # Weights come from the DERIVED STORE at $MAILWOMAN_DATA_ROOT/derived/weights/<key>, not from
+      # Weights come from the derived store at $MAILWOMAN_DATA_ROOT/derived/weights/<key>, not from
       # actions/cache. The cache entry carried 76.3 MB of real files and restored at ~1.6 MB/s over
       # the lab's path to GitHub's cache service — 48-54s, to a host that already holds the source
       # model on local disk. `copy-weights.ts` now serves the derived binaries from that store and
@@ -968,13 +968,13 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 5
     steps:
-      # A `skipped` leg normally means something went wrong upstream, so it stays fatal — EXCEPT when
+      # A `skipped` leg normally means something went wrong upstream, so it stays fatal — except when
       # the data fleet is down, where unit-slow and smoke skip by design because the host they need
       # is gone. That exemption is the price of being able to merge at all with the fleet off, and it
       # is narrow: failure and cancellation are still fatal, and the run says what it did not
       # cover.
       - name: Fail if any leg failed
-        # `lexicon-full` is EXCLUDED from the skipped-is-fatal check on purpose: skipping it is its
+        # `lexicon-full` is excluded from the skipped-is-fatal check on purpose: skipping it is its
         # designed behaviour when lexicon-check says no lexicon path changed, and the check itself
         # still has to pass. Every other leg is enumerated rather than wildcarded so that a leg
         # skipping for an unexpected reason stays fatal.

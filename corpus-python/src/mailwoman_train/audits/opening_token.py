@@ -3,7 +3,7 @@
 WHY THIS EXISTS. A claim that one reading of an opening outweighs another is a claim about counts, and a
 count is only comparable when its definition and its sampling level travel with it. A figure of 443.7
 rows per pass was carried through three documents with neither, which is what this module replaces: it
-counts both readings under definitions stated here, at both levels, so the comparison rests on stated
+counts both readings under definitions stated here, at both levels. Therefore, the comparison rests on stated
 terms rather than a remembered convention.
 
 WHAT IT FOUND, and why the narrow definitions matter. Reading "that opening" more or less narrowly does

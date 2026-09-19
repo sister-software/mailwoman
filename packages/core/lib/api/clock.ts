@@ -22,7 +22,7 @@
  */
 export interface ClockLike {
 	/**
-	 * The current time, in milliseconds. Same contract as `Date.now()`.
+	 * The current time, in milliseconds. Same interface as `Date.now()`.
 	 */
 	now(): number
 	/**

@@ -3,7 +3,7 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Contract tests for the Stage 2.7 span proposer (M2 + M3). Essential properties: unbalanced
+ *   Interface tests for the Stage 2.7 span proposer (M2 + M3). Essential properties: unbalanced
  *   delimiters never propose. annotation confidence follows content shape (trailing-country groups
  *   stay below consumer floors). dual-path numeric readings emit both alternatives under one group.
  *   designator proposals are codex-conditioned and suppressed inside confident annotations.
@@ -24,7 +24,7 @@ const LEXICON: SpanProposerLexicon = {
 	unitDesignators: new Set(["apt", "apartment", "suite", "ste", "unit", "rm", "room", "bldg", "building"]),
 	levelDesignators: new Set(["fl", "floor", "bsmt", "basement"]),
 	weakDesignators: new Set(["bldg", "building"]),
-	// Empty here on purpose: this fixture models the POSTAL vocabulary, and the venue-structure split is exercised in
+	// Empty here on purpose: this fixture models the postal vocabulary, and the venue-structure split is exercised in
 	// its own describe below. A fixture that quietly carried both would make every assertion above ambiguous about
 	// which provenance produced the proposal.
 	venueStructureDesignators: new Set<string>(),

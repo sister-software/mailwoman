@@ -4,7 +4,7 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   `mailwoman-un-locode` — build the lookup DB, or look up a UN/LOCODE by name or coordinate.
+ *   `mailwoman-un-locode` — build the lookup DB, or look up a UN/locode by name or coordinate.
  *
  *   ```sh
  *   mailwoman-un-locode build --csv code-list.csv --out un-locode.db

@@ -54,7 +54,7 @@ describe("buildStreetMorphologyFST", () => {
 		const rue = matcher.query("rue")
 		expect(rue.accepting.some((e) => e.name === "rue" && e.placetype === "street_affix")).toBe(true)
 
-		// `straße` normalizes via NFKC + lowercase. Verify the canonical is reachable.
+		// `straße` normalizes via nfkc + lowercase. Verify the canonical is reachable.
 		const strasse = matcher.query("straße")
 		expect(strasse.accepting.some((e) => e.placetype === "street_affix")).toBe(true)
 	})

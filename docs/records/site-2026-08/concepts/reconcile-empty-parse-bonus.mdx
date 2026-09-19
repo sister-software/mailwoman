@@ -24,7 +24,7 @@ score = phrase_confidence × classifier_confidence × resolver_score × concorda
 
 All four factors are in `[0, 1]`. We multiply them.
 
-First implementation, all 14 contract tests passed. Then every kryptonite fixture failed with `expected … to be defined`: the winning beam was **empty**. The reconciler returned no parse at all, notan incorrect one.
+First implementation, all 14 interface tests passed. Then every kryptonite fixture failed with `expected … to be defined`: the winning beam was **empty**. The reconciler returned no parse at all, notan incorrect one.
 
 This took about 15 minutes to diagnose because the algorithm reads natural ("multiply the confidences"), and the bug is implicit in the multiplicative framing.
 

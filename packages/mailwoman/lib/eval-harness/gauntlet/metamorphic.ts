@@ -3,7 +3,7 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Metamorphic Gauntlet (CheckList INV/DIR/BAND) — the un-gameable layer. It asserts RELATIONS between
+ *   Metamorphic Gauntlet (CheckList INV/DIR/band) — the un-gameable layer. It asserts relations between
  *   outputs rather than stored expected values, so a curated corpus can't breed false trust here.
  *
  *   - INV (invariance, ≤1m): a label-preserving perturbation (casing, whitespace, trailing punctuation,
@@ -13,14 +13,14 @@
  *   - DIR (directional, ≤5km): dropping the postcode must not break resolution — the result must still
  *       land near the with-postcode coordinate. This is exactly the #251 failure class, frozen as a
  *       standing property.
- *   - BAND (tolerance, ≤5km): a CORRUPTING perturbation (single-char transpose / substitution, ordinal
+ *   - band (tolerance, ≤5km): a corrupting perturbation (single-char transpose / substitution, ordinal
  *       or house-number spelling) may legitimately shift the parse — byte-identical output is the wrong
- *       contract — but it must still land within a tolerance band of the clean coordinate. Perturbations
- *       the pipeline neither normalizes nor trained on (number-spelling) are EXPECTED to miss the band.
+ *       interface — but it must still land within a tolerance band of the clean coordinate. Perturbations
+ *       the pipeline neither normalizes nor trained on (number-spelling) are expected to miss the band.
  *       those are recorded in KNOWN_BAND_XFAIL so the gap is documented, non-blocking, and can't be
  *       silently hidden.
  *
- *   CHECK: any INV violation, a DIR that fails to resolve near the anchor, or a new (untracked) BAND miss
+ *   check: any INV violation, a DIR that fails to resolve near the anchor, or a new (untracked) band miss
  *   fails the run. Run:
  *     mailwoman eval gauntlet --layer metamorphic [--candidate <candidate.onnx>]
  */
@@ -52,7 +52,7 @@ const BAND_NEAR_KM = 5
 interface Base {
 	input: string
 	/**
-	 * Drives the DIR (drop-postcode) test. all bases drive INV + BAND.
+	 * Drives the DIR (drop-postcode) test. all bases drive INV + band.
 	 */
 	postcode: boolean
 	/**
@@ -62,7 +62,7 @@ interface Base {
 }
 
 /**
- * Base inputs. The postcode'd ones drive the DIR (drop-postcode) test. all drive INV + BAND.
+ * Base inputs. The postcode'd ones drive the DIR (drop-postcode) test. all drive INV + band.
  */
 const BASES: Base[] = [
 	{ input: "181 Rue du Chevaleret, Paris", postcode: false, locale: "fr-FR" },
@@ -235,7 +235,7 @@ function swapOrdinal(s: string): string | null {
 }
 
 /**
- * Spell out the LEADING house-number token (`100`→`One Hundred`). Bounded map — never a general algorithm.
+ * Spell out the leading house-number token (`100`→`One Hundred`). Bounded map — never a general algorithm.
  */
 const HOUSE_SPELL = new Map<string, string>([["100", "One Hundred"]])
 
@@ -257,7 +257,7 @@ interface Perturbation {
 }
 
 /**
- * Label-preserving perturbations — the output must be INVARIANT (≤1m, same tier).
+ * Label-preserving perturbations — the output must be invariant (≤1m, same tier).
  */
 const INV: Perturbation[] = [
 	{ name: "lower", f: (s) => s.toLowerCase() },
@@ -274,7 +274,7 @@ const INV: Perturbation[] = [
 ]
 
 /**
- * Corrupting perturbations — output may shift, but must stay within the BAND (≤5km).
+ * Corrupting perturbations — output may shift, but must stay within the band (≤5km).
  */
 const BAND: Perturbation[] = [
 	{ name: "transpose", f: (s) => transposeMiddle(s) },
@@ -284,19 +284,19 @@ const BAND: Perturbation[] = [
 ]
 
 /**
- * Known, DETERMINISTIC INV failures (the pipeline is argmax + SQL — failures don't flap). Each is tracked by an issue
+ * Known, deterministic INV failures (the pipeline is argmax + SQL — failures don't flap). Each is tracked by an issue
  * and reported as xfail: visible, but NON-blocking, so the check fails only on new regressions. The loop also flags any
- * xfail that has started PASSING ("newly passing → drop it"), so this list can't rot into false comfort — the
+ * xfail that has started passing ("newly passing → drop it"), so this list can't rot into false comfort — the
  * Pelias-pass-list trap, inverted.
  */
 /**
  * Casing/spacing are fully green (the #829 lowercase restore + trailing-punct trim cleared every prior xfail with no
  * retrain). `abbrev` holds for the EN suffix swaps (Avenue→Ave, Street→St) because the model trains on both forms — but
- * the FR street-type swap below is a RESOLVER gap rather than a model one, and it is a finding rather than a reflex
+ * the FR street-type swap below is a resolver gap rather than a model one, and it is a finding rather than a reflex
  * xfail (see note). A new deterministic INV break belongs here with a tracked note, never silently conditional. The
  * #1002 FR `Boulevard→Bd` xfail was removed 2026-07-06 with its fix: the root cause was not the FR gazetteer
- * (street_norm expands `bd` fine) but the MODEL absorbing the undertrained "Bd" into house_number ("2 Bd") pre-lookup —
- * fixed by enabling Stage-1 `expandAbbreviations` in the geocode path with the locale-UNKNOWN safe set (Bd/Bvd/Av/Imp.
+ * (street_norm expands `bd` fine) but the model absorbing the undertrained "Bd" into house_number ("2 Bd") pre-lookup —
+ * fixed by enabling Stage-1 `expandAbbreviations` in the geocode path with the locale-unknown safe set (Bd/Bvd/Av/Imp.
  * EN suffixes deliberately untouched). Keep the anti-rot loop honest: a new deterministic INV break belongs here with a
  * tracked note, never silently conditional. The #1101 FR comma-drop xfail ("181 Rue du Chevaleret, Paris" losing its
  * rooftop) was removed 2026-08-12 when the anti-rot loop flagged it newly passing — the comma-free base now holds its
@@ -305,17 +305,17 @@ const BAND: Perturbation[] = [
 const KNOWN_INV_XFAIL = new Map<string, string>()
 
 /**
- * Known, DETERMINISTIC BAND misses — the tolerance-band analog of KNOWN_INV_XFAIL, same anti-rot bookkeeping. These are
+ * Known, deterministic band misses — the tolerance-band analog of KNOWN_INV_XFAIL, same anti-rot bookkeeping. These are
  * perturbation classes the pipeline neither normalizes nor was trained on, so a corrupted surface legitimately lands
  * outside the band. Tracked (visible, non-blocking) rather than hidden or conditional. See the input-robustness
  * coverage matrix (docs/articles/concepts/input-robustness.mdx) for the gaps these pin.
  */
 /**
- * All measured anchor-OFF/gazetteer-OFF (the harness default. the weights package ships no anchor artifacts). The
+ * All measured anchor-off/gazetteer-off (the harness default. the weights package ships no anchor artifacts). The
  * gazetteer soft-feed is exactly the channel that recovers a typo'd locality/street in ship-config, so some of these
- * may hold with the retrieval channels ON — tracked here as the anchor-off floor rather than a claim about production.
+ * may hold with the retrieval channels on — tracked here as the anchor-off floor rather than a claim about production.
  */
-// Empty on the shipped stack. An entry belongs here only while a BAND perturbation misses deterministically. the
+// Empty on the shipped stack. An entry belongs here only while a band perturbation misses deterministically. the
 // self-check names an entry that has started passing, and it leaves then (the Damrak locality pair left once the
 // word-level fuzzy measure corrected the corrupted locality. the `100 Centre Street, New York, NY` trio — the spelled
 // house number and the two street-token corruptions — left once the rooftop survived them).
@@ -345,7 +345,7 @@ function bump(m: Map<string, Tally>, name: string, key: keyof Tally): void {
 }
 
 /**
- * Run the metamorphic layer. Returns `pass` (no NEW INV/DIR/BAND violation beyond the tracked xfails).
+ * Run the metamorphic layer. Returns `pass` (no new INV/DIR/band violation beyond the tracked xfails).
  */
 export async function runMetamorphicLayer(options: GauntletLayerOptions = {}): Promise<{ pass: boolean }> {
 	const deps = await buildGauntletDeps(layerDepsOptions(options))
@@ -424,7 +424,7 @@ export async function runMetamorphicLayer(options: GauntletLayerOptions = {}): P
 			}
 		}
 
-		// BAND: a corrupting perturbation may shift the parse, but must land within the tolerance band.
+		// band: a corrupting perturbation may shift the parse, but must land within the tolerance band.
 		for (const p of BAND) {
 			const perturbed = p.f(base.input, base)
 

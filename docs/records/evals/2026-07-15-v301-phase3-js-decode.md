@@ -61,7 +61,7 @@ Phase 4, and which is now the required phase rather than a nice-to-have.
 
 ## What shipped
 
-- `ONNXRunner.InferResult.spanScores` + `maxSpan` — optional, mirroring the `localeLogits` contract; a
+- `ONNXRunner.InferResult.spanScores` + `maxSpan` — optional, mirroring the `localeLogits` interface; a
   pre-v3 bundle has no `span_scores` output and the BIO path is untouched.
 - `NeuralParseTrace.spanScores` — threaded through `traceParse`.
 - `neural/semi-markov-decode.ts` — `decodeSegmentationsKBest` + `parseSemiCRFTransitions`. **11 tests**:
@@ -75,7 +75,7 @@ Phase 4, and which is now the required phase rather than a nice-to-have.
 
 ## The browser side — done, and measured on the runtime that ships
 
-`WebONNXRunner` reads `span_scores` with the same optional contract (pre-v3 bundles → `undefined` →
+`WebONNXRunner` reads `span_scores` with the same optional interface (pre-v3 bundles → `undefined` →
 BIO path byte-unaffected). The decoder itself is pure TS with no ORT dependency, so **one decoder
 serves both hosts**.
 

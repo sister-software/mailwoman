@@ -4,18 +4,18 @@ import { stringifyJSON } from "@mailwoman/core/json"
  * @copyright Sister Software
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
- * @file How an OSM tag is read out of a GDAL OSM-driver layer in OGRSQL, shared by the POI and sub-venue extractors.
+ * @file How an OSM tag is read out of a gdal OSM-driver layer in ogrsql, shared by the POI and sub-venue extractors.
  */
 
 /**
- * Tag keys GDAL's `osmconf.ini` promotes to real OGR fields, per layer. A promoted key is selected as a bare column and
- * is REMOVED from that layer's `other_tags` hstore, so reading it through `hstore_get_value` answers NULL for every
+ * Tag keys gdal's `osmconf.ini` promotes to real OGR fields, per layer. A promoted key is selected as a bare column and
+ * is removed from that layer's `other_tags` hstore, so reading it through `hstore_get_value` answers NULL for every
  * feature of the layer.
  */
 export type PromotedKeysByLayer = Readonly<Record<string, ReadonlySet<string>>>
 
 /**
- * OGRSQL column aliases can't contain `:` — launder it the same way GDAL's own `attribute_name_laundering` would
+ * Ogrsql column aliases can't contain `:` — launder it the same way gdal's own `attribute_name_laundering` would
  * (`tower:type` -> `tower_type`).
  */
 export function tagAlias(key: string): string {
@@ -44,15 +44,15 @@ export function tagSelectExpr(promotedKeysByLayer: PromotedKeysByLayer, layer: s
 
 /**
  * OSM tag key/value shape: letters, digits, underscore, colon, dot, hyphen. The SQL builders interpolate rule
- * keys/values directly into OGRSQL strings, and rule tables are public, caller-suppliable parameters — so every token
- * is checked against this allowlist before any of it reaches a template string. A hostile value such as `a' OR 1=1 --`
- * would otherwise close the `'...'` literal early and inject arbitrary OGRSQL. Rejecting outright is a stronger,
- * simpler guarantee than trying to enumerate escape rules for GDAL's OGRSQL dialect.
+ * keys/values directly into ogrsql strings, and rule tables are public, caller-suppliable parameters — so every token
+ * is checked against this allowlist before any of it reaches a template string. A hostile value such as `a' or 1=1 --`
+ * would otherwise close the `'...'` literal early and inject arbitrary ogrsql. Rejecting outright is a stronger,
+ * simpler guarantee than trying to enumerate escape rules for gdal's ogrsql dialect.
  */
 const SAFE_TAG_TOKEN = /^[A-Za-z0-9_:.-]+$/
 
 /**
- * A tag-rule table entry as this module reads it: a conjunction (`AND`) of `[key, value]` pairs. `OR` across tags is
+ * A tag-rule table entry as this module reads it: a conjunction (`and`) of `[key, value]` pairs. `or` across tags is
  * expressed as multiple rules in the table.
  */
 export interface TagRuleLike {

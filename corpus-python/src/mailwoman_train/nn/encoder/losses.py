@@ -162,7 +162,7 @@ class CoarseEncoderLosses(CoarseEncoderState):
             locale_term = self.locale_loss_weight * locale_ce
             loss = locale_term if loss is None else loss + locale_term.to(loss.dtype)
 
-        # Span-boundary auxiliary loss (#727). Per-token BCE on span START (B-*) and END (entity token
+        # Span-boundary auxiliary loss (#727). Per-token BCE on span start (B-*) and END (entity token
         # whose successor doesn't continue it), supervised from the BIO labels. Computed in fp32 — the
         # CRF NaN scar (v0.6.0) says any structural/transition-style leg gets fp32 headroom, and BCE
         # over masked positions is cheap. Masked to real, non-ignore tokens. a batch with no valid
@@ -184,7 +184,7 @@ class CoarseEncoderLosses(CoarseEncoderState):
                 next_is_i[:, :-1] = is_i[:, 1:]
                 start_tgt = is_b.float()
                 end_tgt = (in_entity & ~next_is_i).float()
-                # Run the head in the ambient (autocast) dtype, then upcast the LOGITS to fp32 for a
+                # Run the head in the ambient (autocast) dtype, then upcast the logits to fp32 for a
                 # stable BCE — the same pattern the locale aux-CE uses (`locale_logits.float()`). Upcasting
                 # `h` before the matmul instead would clash with the bf16 head weights (mat1/mat2 dtype).
                 sb_logits = self.span_boundary_head(hidden)  # (B, S, 2), ambient dtype
@@ -197,7 +197,7 @@ class CoarseEncoderLosses(CoarseEncoderState):
                 loss = sb_term if loss is None else loss + sb_term.to(loss.dtype)
 
         # #727 stage-2 phase 1: the semi-Markov span loss. fp32 throughout (the DP owns its upcast).
-        # Rows whose gold segmentation exceeds `max_span` are SKIPPED rather than truncated — a truncated
+        # Rows whose gold segmentation exceeds `max_span` are skipped rather than truncated — a truncated
         # gold teaches a wrong boundary, which is the exact defect this arc exists to fix.
         span_scores_out: torch.Tensor | None = None
 

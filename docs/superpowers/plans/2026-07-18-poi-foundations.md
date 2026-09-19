@@ -1,10 +1,10 @@
 # POI Foundations (Plan 1 of 3) Implementation Plan
 
-> **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
+> **For agentic workers:** required sub-skill: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
-**Goal:** The spatial-layer contract (manifest + coverage tables every layer DB embeds) in `@mailwoman/core`, and the new `@mailwoman/poi-taxonomy` data package (category records + synonym lexicon + lookup API).
+**Goal:** The spatial-layer interface (manifest + coverage tables every layer DB embeds) in `@mailwoman/core`, and the new `@mailwoman/poi-taxonomy` data package (category records + synonym lexicon + lookup API).
 
-**Architecture:** Per `docs/superpowers/specs/2026-07-18-spatial-layers-and-poi-design.md` §2.1 and §3.3. The layer contract is a Kysely schema module (house pattern: `resolver-wof-sqlite/candidate-schema.ts`) plus typed read/write helpers. `poi-taxonomy` copies the `variant-aliases` package shape: JSON data file + synchronous loader + indexed lookup. Plan 2 (pipeline) consumes the lookup API; Plan 3 (data) replaces the seed taxonomy with the full Overture snapshot and builds poi.db against the contract.
+**Architecture:** Per `docs/superpowers/specs/2026-07-18-spatial-layers-and-poi-design.md` §2.1 and §3.3. The layer interface is a Kysely schema module (house pattern: `resolver-wof-sqlite/candidate-schema.ts`) plus typed read/write helpers. `poi-taxonomy` copies the `variant-aliases` package shape: JSON data file + synchronous loader + indexed lookup. Plan 2 (pipeline) consumes the lookup API; Plan 3 (data) replaces the seed taxonomy with the full Overture snapshot and builds poi.db against the interface.
 
 **Tech Stack:** TypeScript (erasable-only, `.ts` imports), Kysely over `node:sqlite` via `DatabaseClient` (`core/kysley/client.ts`), vitest, oxfmt/oxlint.
 
@@ -22,7 +22,7 @@
 - `erasableSyntaxOnly`: no `enum` (use `const X = {…} as const` + `type X = (typeof X)[keyof typeof X]`), no constructor parameter properties, no runtime namespaces.
 - Relative imports carry explicit `.ts` extensions.
 - Indentation: tabs (match the repo).
-- Acronym casing in identifiers: whole camelCase components — `wofID`, `buildSHA`, `toPOICategoryID`. DB columns stay `snake_case` (string contracts).
+- Acronym casing in identifiers: whole camelCase components — `wofID`, `buildSHA`, `toPOICategoryID`. DB columns stay `snake_case` (string interfaces).
 - Kysely is the only DB connector; table DDL through the schema-builder; `WITHOUT ROWID` via `.modifyEnd(sql`without rowid`)`.
 - New core subpath ⇒ update **both** exports maps in `core/package.json` (dev `exports` with `node` condition first AND `publishConfig.exports` without it).
 - All work in `/home/lab/Projects/mailwoman-exotic-poi` (branch `feat/exotic-poi`). The worktree is already installed + compiled.
@@ -35,7 +35,7 @@
 
 ---
 
-### Task 1: Layer-contract schema module
+### Task 1: Layer-interface schema module
 
 **Files:**
 
@@ -45,7 +45,7 @@
 **Interfaces:**
 
 - Consumes: `kysely` (`Kysely`, `sql`), nothing else.
-- Produces: `LayerTier`, `LayerFreshnessPolicy` (const objects + types), `LayerManifestTable`, `LayerCoverageTable`, `LayerContractDatabase`, `createLayerManifestTable(db: Kysely<LayerContractDatabase>): Promise<void>`, `createLayerCoverageTable(db: Kysely<LayerContractDatabase>): Promise<void>`. Tasks 2–3 and Plan 3's poi.db builder rely on these exact names.
+- Produces: `LayerTier`, `LayerFreshnessPolicy` (const objects + types), `LayerManifestTable`, `LayerCoverageTable`, `layerschemadatabase`, `createLayerManifestTable(db: Kysely<layerschemadatabase>): Promise<void>`, `createLayerCoverageTable(db: Kysely<layerschemadatabase>): Promise<void>`. Tasks 2–3 and Plan 3's poi.db builder rely on these exact names.
 
 - [ ] **Step 1: Write the failing test**
 
@@ -65,13 +65,13 @@ import { describe, expect, it } from "vitest"
 
 import { DatabaseClient } from "../kysley/client.ts"
 
-import { createLayerCoverageTable, createLayerManifestTable, LayerTier, type LayerContractDatabase } from "./schema.ts"
+import { createLayerCoverageTable, createLayerManifestTable, LayerTier, type layerschemadatabase } from "./schema.ts"
 
-function openMemoryDB(): DatabaseClient<LayerContractDatabase> {
-	return new DatabaseClient<LayerContractDatabase>({ database: new DatabaseSync(":memory:") })
+function openMemoryDB(): DatabaseClient<layerschemadatabase> {
+	return new DatabaseClient<layerschemadatabase>({ database: new DatabaseSync(":memory:") })
 }
 
-describe("layer contract DDL", () => {
+describe("layer interface DDL", () => {
 	it("creates layer_manifest and accepts a typed row", async () => {
 		using db = openMemoryDB()
 		await createLayerManifestTable(db)
@@ -132,9 +132,9 @@ Expected: FAIL — `Cannot find module './schema.ts'` (or equivalent resolve err
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Typed schema for the spatial-layer contract — the two tables EVERY layer database embeds,
+ *   Typed schema for the spatial-layer interface — the two tables EVERY layer database embeds,
  *   regardless of tier: `layer_manifest` (single-row identity/provenance/licensing record) and
- *   `layer_coverage` (per-H3-cell survey completeness). The contract is what lets shipped,
+ *   `layer_coverage` (per-H3-cell survey completeness). The interface is what lets shipped,
  *   build-local, and private layers share one query surface. Spec:
  *   docs/superpowers/specs/2026-07-18-spatial-layers-and-poi-design.md §2.1.
  *
@@ -149,7 +149,7 @@ export const LayerTier = {
 	Shipped: "shipped",
 	/** Share-alike sources (ODbL): we ship the builder CLI, the user builds locally. */
 	BuildLocal: "build-local",
-	/** The user's own data, conforming to the contract, never distributed. */
+	/** The user's own data, conforming to the interface, never distributed. */
 	Private: "private",
 } as const
 export type LayerTier = (typeof LayerTier)[keyof typeof LayerTier]
@@ -195,14 +195,14 @@ export interface LayerCoverageTable {
 	observed_rows: number
 }
 
-/** Pass to `new DatabaseClient<LayerContractDatabase>(...)` (or intersect into a layer's own schema). */
-export interface LayerContractDatabase {
+/** Pass to `new DatabaseClient<layerschemadatabase>(...)` (or intersect into a layer's own schema). */
+export interface layerschemadatabase {
 	layer_manifest: LayerManifestTable
 	layer_coverage: LayerCoverageTable
 }
 
 /** Create `layer_manifest`. Single row enforced by `name` PK + the writer's insert-once discipline. */
-export async function createLayerManifestTable(db: Kysely<LayerContractDatabase>): Promise<void> {
+export async function createLayerManifestTable(db: Kysely<layerschemadatabase>): Promise<void> {
 	await db.schema
 		.createTable("layer_manifest")
 		.addColumn("name", "text", (c) => c.primaryKey())
@@ -222,7 +222,7 @@ export async function createLayerManifestTable(db: Kysely<LayerContractDatabase>
 }
 
 /** Create `layer_coverage` — small fixed-width rows probed by PK, the WITHOUT ROWID sweet spot. */
-export async function createLayerCoverageTable(db: Kysely<LayerContractDatabase>): Promise<void> {
+export async function createLayerCoverageTable(db: Kysely<layerschemadatabase>): Promise<void> {
 	await db.schema
 		.createTable("layer_coverage")
 		.addColumn("h3_cell", "integer", (c) => c.primaryKey())
@@ -245,7 +245,7 @@ Expected: PASS (2 tests).
 cd /home/lab/Projects/mailwoman-exotic-poi
 yarn oxfmt core/layers/schema.ts core/layers/schema.test.ts
 git add core/layers/schema.ts core/layers/schema.test.ts
-git commit -m "feat(core): spatial-layer contract schema (layer_manifest + layer_coverage)"
+git commit -m "feat(core): spatial-layer interface schema (layer_manifest + layer_coverage)"
 git log -1 --oneline
 ```
 
@@ -262,7 +262,7 @@ Expected: the new commit hash with the message above.
 
 **Interfaces:**
 
-- Consumes: Task 1's `LayerContractDatabase`, `LayerTier`, `LayerFreshnessPolicy`, DDL functions.
+- Consumes: Task 1's `layerschemadatabase`, `LayerTier`, `LayerFreshnessPolicy`, DDL functions.
 - Produces: `SpineKeys`, `LayerManifest`, `CoverageCell`, `writeLayerManifest(db, manifest)`, `readLayerManifest(db): Promise<LayerManifest>`, `writeLayerCoverage(db, cells: CoverageCell[])`, `readLayerCoverage(db, h3Cell): Promise<CoverageCell | undefined>`. Plan 3's builder and every layer reader use these.
 
 - [ ] **Step 1: Write the failing test**
@@ -289,7 +289,7 @@ import {
 	writeLayerManifest,
 	type LayerManifest,
 } from "./manifest.ts"
-import { createLayerCoverageTable, createLayerManifestTable, type LayerContractDatabase } from "./schema.ts"
+import { createLayerCoverageTable, createLayerManifestTable, type layerschemadatabase } from "./schema.ts"
 
 const MANIFEST: LayerManifest = {
 	name: "poi",
@@ -307,8 +307,8 @@ const MANIFEST: LayerManifest = {
 	createdAt: "2026-07-18T00:00:00Z",
 }
 
-async function openContractDB(): Promise<DatabaseClient<LayerContractDatabase>> {
-	const db = new DatabaseClient<LayerContractDatabase>({ database: new DatabaseSync(":memory:") })
+async function openschemadb(): Promise<DatabaseClient<layerschemadatabase>> {
+	const db = new DatabaseClient<layerschemadatabase>({ database: new DatabaseSync(":memory:") })
 	await createLayerManifestTable(db)
 	await createLayerCoverageTable(db)
 	return db
@@ -316,31 +316,31 @@ async function openContractDB(): Promise<DatabaseClient<LayerContractDatabase>> 
 
 describe("layer manifest IO", () => {
 	it("round-trips a manifest", async () => {
-		using db = await openContractDB()
+		using db = await openschemadb()
 		await writeLayerManifest(db, MANIFEST)
 		const back = await readLayerManifest(db)
 		expect(back).toEqual(MANIFEST)
 	})
 
 	it("rejects an unknown tier at write time", async () => {
-		using db = await openContractDB()
+		using db = await openschemadb()
 		await expect(writeLayerManifest(db, { ...MANIFEST, tier: "bootleg" as never })).rejects.toThrow(/tier/)
 	})
 
 	it("rejects a manifest with no spine keys", async () => {
-		using db = await openContractDB()
+		using db = await openschemadb()
 		await expect(writeLayerManifest(db, { ...MANIFEST, spineKeys: {} })).rejects.toThrow(/spine/)
 	})
 
 	it("throws when reading a database with no manifest", async () => {
-		using db = await openContractDB()
+		using db = await openschemadb()
 		await expect(readLayerManifest(db)).rejects.toThrow(/manifest/)
 	})
 })
 
 describe("layer coverage IO", () => {
 	it("round-trips cells and returns undefined for unsurveyed cells", async () => {
-		using db = await openContractDB()
+		using db = await openschemadb()
 		await writeLayerCoverage(db, [
 			{ h3Cell: 1001, completeness: 0.9, observedRows: 240 },
 			{ h3Cell: 1002, completeness: 0.1, observedRows: 3 },
@@ -367,14 +367,14 @@ Expected: FAIL — cannot resolve `./manifest.ts`.
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Read/write helpers over the layer-contract tables. The parsed {@link LayerManifest} is the
+ *   Read/write helpers over the layer-interface tables. The parsed {@link LayerManifest} is the
  *   camelCase face of `layer_manifest`; validation happens at BOTH ends so a hand-built or
  *   corrupted layer fails loudly at open time rather than misbehaving downstream.
  */
 
 import type { Kysely } from "kysely"
 
-import { LayerFreshnessPolicy, LayerTier, type LayerContractDatabase } from "./schema.ts"
+import { LayerFreshnessPolicy, LayerTier, type layerschemadatabase } from "./schema.ts"
 
 /** Which spine columns a layer carries. At least one key is required. */
 export interface SpineKeys {
@@ -424,7 +424,7 @@ function assertManifestInvariants(manifest: Pick<LayerManifest, "tier" | "freshn
 }
 
 /** Insert the single manifest row. Call exactly once, from the layer's build script. */
-export async function writeLayerManifest(db: Kysely<LayerContractDatabase>, manifest: LayerManifest): Promise<void> {
+export async function writeLayerManifest(db: Kysely<layerschemadatabase>, manifest: LayerManifest): Promise<void> {
 	assertManifestInvariants(manifest)
 
 	await db
@@ -448,7 +448,7 @@ export async function writeLayerManifest(db: Kysely<LayerContractDatabase>, mani
 }
 
 /** Read + validate the manifest. Throws if the table is empty, multi-row, or invalid. */
-export async function readLayerManifest(db: Kysely<LayerContractDatabase>): Promise<LayerManifest> {
+export async function readLayerManifest(db: Kysely<layerschemadatabase>): Promise<LayerManifest> {
 	const rows = await db.selectFrom("layer_manifest").selectAll().execute()
 
 	if (rows.length !== 1) {
@@ -477,7 +477,7 @@ export async function readLayerManifest(db: Kysely<LayerContractDatabase>): Prom
 }
 
 /** Bulk-insert coverage cells (build-time; cold path, so Kysely inserts are fine). */
-export async function writeLayerCoverage(db: Kysely<LayerContractDatabase>, cells: CoverageCell[]): Promise<void> {
+export async function writeLayerCoverage(db: Kysely<layerschemadatabase>, cells: CoverageCell[]): Promise<void> {
 	if (cells.length === 0) return
 
 	await db
@@ -491,7 +491,7 @@ export async function writeLayerCoverage(db: Kysely<LayerContractDatabase>, cell
  * callers must not conflate this with `{completeness: 0}`.
  */
 export async function readLayerCoverage(
-	db: Kysely<LayerContractDatabase>,
+	db: Kysely<layerschemadatabase>,
 	h3Cell: number
 ): Promise<CoverageCell | undefined> {
 	const row = await db.selectFrom("layer_coverage").selectAll().where("h3_cell", "=", h3Cell).executeTakeFirst()
@@ -543,7 +543,7 @@ Expected: new commit hash.
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   The spatial-layer contract: manifest/coverage schema + IO. Every layer database — shipped,
+ *   The spatial-layer interface: manifest/coverage schema + IO. Every layer database — shipped,
  *   build-local, or private — embeds these tables. Spec:
  *   docs/superpowers/specs/2026-07-18-spatial-layers-and-poi-design.md §2.1.
  */

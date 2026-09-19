@@ -29,7 +29,7 @@ from ..labels import ID_TO_LABEL
 from ..nn.encoder import MailwomanCoarseEncoder
 from ..nn.span_scorer import SEGMENT_TYPES
 
-# The street FAMILY, matching mailwoman/eval-harness/parity-corpus.ts PARITY_FLOORS.
+# The street family, matching mailwoman/eval-harness/parity-corpus.ts PARITY_FLOORS.
 STREET_TYPES = {"street", "street_prefix", "street_prefix_particle", "street_suffix"}
 
 

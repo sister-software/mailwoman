@@ -6,11 +6,11 @@
  *   The two phases between the streamed touches and the artifact a consumer reads: the stored containment
  *   index, and the reduction above it.
  *
- *   BOTH READ THE TOUCH TABLE, AND ONLY ONE OF THEM COMPACTS. `resolveCells` writes the tiers a probe walks
- *   and collapses uniform interiors parent-ward; `reduceCells` reads the UNCOMPACTED touches, because a
+ *   both read the touch table, and only one OF them compacts. `resolveCells` writes the tiers a probe walks
+ *   and collapses uniform interiors parent-ward; `reduceCells` reads the uncompacted touches, because a
  *   compacted parent no longer names the cells the reduction has to answer.
  *
- *   THE REDUCTION IS THE SLOW PHASE AND ITS MEMORY IS BOUNDED BY CONSTRUCTION. A lattice of 49 point tests
+ *   the reduction is the slow phase and its memory is bounded BY construction. A lattice of 49 point tests
  *   per sampled cell, over a delineation cache that is cleared whole rather than evicted one entry at a
  *   time — see {@link GEOMETRY_CACHE_ENTRIES}. Memory stays flat in row count, which is the property the poi
  *   build lost when a reader materialized instead of streaming.
@@ -71,7 +71,7 @@ export function resolveCells(
 
 	database.exec("COMMIT")
 
-	// The partial rows are every touch that is not whole for its own delineation. `INSERT OR REPLACE` above already put
+	// The partial rows are every touch that is not whole for its own delineation. `insert or replace` above already put
 	// the whole rows in, and the primary key is `(h3_cell, area_id)`, so this insert must skip them explicitly rather
 	// than rely on the key: a partial row replacing a whole one would demote an answered cell to a ray cast.
 	database.exec(
@@ -171,7 +171,7 @@ export function reduceCells(
 
 	// A delineation is named by every cell it reaches — 5.35 of them per cell at resolution 9 on the pilot region — so a
 	// naive read fetches each ring blob once per touch. At Iowa's scale that is millions of blob reads of ground already
-	// in memory. The cache is bounded and CLEARED WHOLE when it fills rather than evicted one at a time: h3 cell integers
+	// in memory. The cache is bounded and cleared whole when it fills rather than evicted one at a time: h3 cell integers
 	// carry their ancestry in their high bits, so a scan in `h3_cell` order visits neighbours together and a cleared cache
 	// refills with the delineations the next run of cells actually names.
 	const geometry = new Map<string, StoredDelineation>()

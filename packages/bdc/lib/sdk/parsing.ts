@@ -10,13 +10,13 @@
  *   parameter instead (the FCC partitions availability files per provider, so the caller already knows it),
  *   and FRN/brand/state/H3 join concerns are a 2c registry-join boundary.
  *
- *   Two projection decisions are required and pre-registered. `location_id` (column 3) stays a STRING —
+ *   Two projection decisions are required and pre-registered. `location_id` (column 3) stays a string —
  *   the FCC's values are zero-padded 10-digit strings and `parseInt` would lose the leading zeros (decision
- *   1). `geoid` (column 10) is a string joining `TIGERBlockTable.GEOID` (decision 3).
+ *   1). `geoid` (column 10) is a string joining `TIGERBlockTable.geoid` (decision 3).
  *
  *   ## Why the source is a resource rather than a Buffer
  *
- *   This read is STREAMING because the files do not fit the alternative. One state × one technology —
+ *   This read is streaming because the files do not fit the alternative. One state × one technology —
  *   `bdc_48_FibertothePremises_fixed_broadband_D25` — is 920 MB and 10,369,043 rows, and a national run
  *   spans every state × every technology. The previous byte scanner took a `Buffer`, so its caller opened
  *   with `readFile(csvPath)` and held the whole file resident per file.
@@ -27,7 +27,7 @@
  *   carry two ("FiberFirst, LLC", "Valor Telecommunications of Texas, LP"). A delimiter scan blind to quotes
  *   shifts every column right of `brand_name` on 4% of rows — measured exactly, a quote-blind
  *   `String.split(",")` mismatches 81,095 of 2,000,000 real rows. Quote-aware parsing also keeps an
- *   embedded NEWLINE inside its row — no row in that file needs it (the 12/13/14-field line counts sum
+ *   embedded newline inside its row — no row in that file needs it (the 12/13/14-field line counts sum
  *   exactly to `wc -l`, so no record is split across lines), but the guarantee is what makes the reader safe
  *   on a file nobody has measured yet.
  *
@@ -44,7 +44,7 @@
  *   ```
  *
  *   The 6.2.0 row is why this looked like a regression when it landed: CSVSpliterator decoded once per
- *   COLUMN, and `TextDecoder`'s per-call overhead dominates at column sizes. Fixed upstream in
+ *   column, and `TextDecoder`'s per-call overhead dominates at column sizes. Fixed upstream in
  *   sister-software/spliterator#6 by decoding the row once — so the streaming path now runs within 10% of a
  *   whole-buffer byte scan while holding 9.8x less memory. **Requires a spliterator release carrying that
  *   fix**; on 6.2.0 this reader is correct and roughly 3x slower.
@@ -94,7 +94,7 @@ export interface BDCAvailabilityRow {
 	low_latency: 0 | 1
 	business_residential_code: string
 	/**
-	 * Joins `TIGERBlockTable.GEOID` (note: uppercase column on that side) — 2a decision 3.
+	 * Joins `TIGERBlockTable.geoid` (note: uppercase column on that side) — 2a decision 3.
 	 */
 	geoid: string
 }
@@ -120,7 +120,7 @@ function projectRow(columns: readonly string[], providerID: ProviderID): BDCAvai
 
 /**
  * Shared reader options. `header: true` consumes the first row as the header even in `array` mode. Quote-aware parsing
- * keeps the 421,882 quoted-brand rows aligned. `crlf` already defaults to `true` for CSV (RFC 4180), so a CRLF file
+ * keeps the 421,882 quoted-brand rows aligned. `crlf` already defaults to `true` for CSV (RFC 4180), so a crlf file
  * does not leak `\r` into the last column.
  */
 const READER_OPTIONS = { mode: "array" } as const

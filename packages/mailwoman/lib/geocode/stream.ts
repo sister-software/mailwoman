@@ -87,7 +87,7 @@ export interface GeocodeStreamOptions {
 /**
  * The compiled worker, resolved whether this runs from `out/` (prod) or `.ts` source (tests).
  *
- * ONE SPELLING SERVES BOTH, because `lib/` and `out/` are siblings: this module is `lib/geocode-stream.ts` in source
+ * One spelling serves both, because `lib/` and `out/` are siblings: this module is `lib/geocode-stream.ts` in source
  * and `out/geocode-stream.js` compiled, so `../` is the package root either way. The `import.meta.url` branch this
  * replaced existed only because source used to sit one level shallower than its own output.
  */

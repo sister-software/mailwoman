@@ -38,7 +38,7 @@ class DataConfig:
     # When set: rows from unlisted sources are dropped. Weight / max_weight acceptance
     # multiplies with country_weights — a row must pass both filters to survive.
     source_weights: dict[str, float] | None = None
-    # Per-source target EXPOSURE in reps per row (#1677), for the sources whose weight nobody can pick:
+    # Per-source target exposure in reps per row (#1677), for the sources whose weight nobody can pick:
     # the weight is derived at launch from the source's row count and the run's total samples, beside the
     # fixed ``source_weights`` (see ``source_reps.py``). A source takes a weight or a reps target, never both.
     source_reps: dict[str, float] | None = None
@@ -61,12 +61,12 @@ class DataConfig:
     augment_glue_prob: float = 0.0
     # v3.24: ordinal-street swap ("5th" ↔ "Fifth") on street-family tokens — the 8.2.0 metamorphic catch.
     augment_ordinal_prob: float = 0.0
-    # Case augmentation (#829): probability that a row yields an extra LOWERCASED copy (raw + tokens
+    # Case augmentation (#829): probability that a row yields an extra lowercased copy (raw + tokens
     # lowercased. labels + char-offset spans unchanged — lowercasing is length-preserving). Teaches the
     # model that a lowercase query is the same address (the #829 lowercase-sensitivity class). Model-first
     # vs a deterministic case-normalizer. 0 = disabled (rng-stream bit-identical).
     augment_case_prob: float = 0.0
-    # Punct-drop augmentation (#1101): probability a row yields an extra DELIMITER-FREE copy —
+    # Punct-drop augmentation (#1101): probability a row yields an extra delimiter-free copy —
     # separator commas + wrapping quotes stripped (gap-only. interior apostrophes kept), raw + tokens +
     # char-offset spans all re-targeted. Teaches robustness to whitespace-only input (64% of parity
     # gold). Model-first vs a deterministic delimiter-normalizer. 0 = disabled (rng-stream bit-identical).
@@ -74,7 +74,7 @@ class DataConfig:
     augment_upper_case_prob: float = 0.0
     # Augmentation-pool exclusion (2026-08-10 recipe review): sources whose rows bypass the
     # augmentation stage entirely (original emitted exactly once). Augmented copies of an
-    # OVERSAMPLED synthetic source are near-duplicates that compound its reps per row while
+    # oversampled synthetic source are near-duplicates that compound its reps per row while
     # adding none of the diversity that moves OOD boards. list that source here. The affix
     # relabel still applies — label policy and augmentation policy are independent.
     augment_exclude_sources: list[str] = field(default_factory=list)
@@ -99,18 +99,18 @@ class DataConfig:
     street_type_lexicon_path: str | None = None
     # Locality-surface channel (v3.16.0 evidence-bundle probe). Path to the locality-surface lexicon
     # JSON (built by scripts/diagnostic/build-locality-surface-lexicon.ts — WOF US+FR locality names,
-    # curated, homograph bit). Same schema as the gazetteer lexicon. painted from the RAW SURFACE.
+    # curated, homograph bit). Same schema as the gazetteer lexicon. painted from the RAW surface.
     locality_surface_lexicon_path: str | None = None
     # Gazetteer channel choreography (#464, v0.9.13 postcode fix). When True (with anchor + gazetteer
     # channels on), zero the gazetteer clue on tokens adjacent to a postcode-anchor hit, so the model
     # never learns the biased region->postcode CRF transition that cost v0.9.12 ~3pp US postcode.
     # Inference must mirror it (classifier suppressGazetteerNearPostcode). For the consolidation run.
     gazetteer_choreography: bool = False
-    # --- CharCNN input path (#825 / v8 CJK). The D1 contract: char_ids (B, S, W), S = label units,
+    # --- CharCNN input path (#825 / v8 CJK). The D1 interface: char_ids (B, S, W), S = label units,
     # W = composition window. "off" (default) = the SentencePiece path, byte-identical to every prior
     # recipe. "word" = one unit per whitespace token (the #825 Latin char-word probe). "char" = one
     # unit per character (the v8 JP probe. char_ctx=3 → W=7). Both non-off modes skip SentencePiece
-    # entirely, REQUIRE span-schema parquet files (#519), and are channel-free — the anchor/gazetteer/
+    # entirely, require span-schema parquet files (#519), and are channel-free — the anchor/gazetteer/
     # country/street/locality channels project per SP-piece and re-align per-unit post-probe, so the
     # loader raises if any channel path is configured alongside. Pairs with model.use_char_embed.
     char_mode: str = "off"
@@ -136,26 +136,26 @@ class DataConfig:
     # base-vs-affix-recipe label contradiction the #492 ladder measured at >=1,000:1. None -> off.
     affix_relabel_lexicon_path: str | None = None
     # --- #220/#723 anchor-absorption knobs. Defaults preserve v1.9.2 behavior exactly. ---
-    # WHERE the postcode anchor is painted at TRAINING:
-    #   "gold"   (default) — on GOLD B/I-postcode spans only (the v1.9.2 behavior, the #723 root cause:
+    # where the postcode anchor is painted at training:
+    #   "gold"   (default) — on gold B/I-postcode spans only (the v1.9.2 behavior, the #723 root cause:
     #                        the model never saw the anchor fire on a house# at train, but inference
-    #                        paints on SHAPE, so it faceplants on "12345 Main St").
-    #   "shaped"           — on postcode-SHAPED spans (the per-country POSTCODE_PATTERNS, mirroring
+    #                        paints on shape, so it faceplants on "12345 Main St").
+    #   "shaped"           — on postcode-shaped spans (the per-country POSTCODE_PATTERNS, mirroring
     #                        inference's neural/postcode-anchor.ts), so the model sees + learns to
     #                        override the anchor on house-numbers-that-look-like-postcodes. This is the fix.
     anchor_paint_mode: str = "gold"
     # What the anchor encodes:
     #   "posterior_latlon"        (default) — the v1.9.2 country-posterior + normalized centroid vector.
-    #   "region_agnostic_mindist"           — DEMOTE to a weak scalar log(1 + min_km from the token's
-    #                                         postcode centroid to the NEAREST gazetteer region centroid),
+    #   "region_agnostic_mindist"           — demote to a weak scalar log(1 + min_km from the token's
+    #                                         postcode centroid to the nearest gazetteer region centroid),
     #                                         placed in feat[0], rest zeroed. non-real-postcode -> the
     #                                         large constant. Train/inference-congruent (no detected
     #                                         region -> no circularity). Keeps ANCHOR_FEATURE_DIM so the
     #                                         resumed projection layer carries over (re-learns the weaker
-    #                                         input). The model learns congruence INTERNALLY (model-first).
+    #                                         input). The model learns congruence internally (model-first).
     anchor_value_mode: str = "posterior_latlon"
     # Region-centroid table {region_key: [lat, lon]} for region_agnostic_mindist. None -> mode unavailable.
-    # NOTE: anchor dropout is not a new field — it's the existing train.py curriculum
+    # note: anchor dropout is not a new field — it's the existing train.py curriculum
     # (perturb_anchor_confidence, ANCHOR_ZERO_OUT_MAX). To probe a harder mask, bump that constant. do
     # not add a parallel knob (the review's no-reinvent conclusion).
     region_centroids_path: str | None = None
@@ -177,7 +177,7 @@ class DataConfig:
         Norwegian rows anyone looked at were parse failures in the eval corpus.
 
         ``NO`` is the sole ISO-3166-1 alpha-2 code that collides with a YAML 1.1 boolean, which is
-        why this hid for so long — one country, no pattern, nothing else to notice. The fix in the
+        why this hid for. Therefore, long — one country, no pattern, nothing else to notice. The fix in the
         configs is to quote the key. this guard is what stops it coming back, because the next
         person to add a country will write it unquoted and be right to expect that to work.
 
@@ -224,7 +224,7 @@ class ModelConfig:
     # v0.4.0: CRF NLL normalization. ``"per_sequence"`` = v0.3.0 mean-over-batch
     # (preserves backward compat with old configs). ``"per_token"`` = sum NLL across
     # batch / total real tokens — self-balances against per-token CE, eliminates
-    # ``crf_loss_weight`` hand-tuning, matches AllenNLP/FLAIR defaults.
+    # ``crf_loss_weight`` hand-tuning, matches AllenNLP/flair defaults.
     crf_normalization: str = "per_sequence"
     # v0.6.2 diagnostic flag: force the CRF forward to compute in fp32 while the rest of
     # the model continues in bf16. Tests the 2026-05-28 postmortem's hypothesis that the
@@ -282,11 +282,11 @@ class ModelConfig:
     use_gazetteer_anchor: bool = False
 
     # Dedicated affix head (#492 probe/run): a 2-layer MLP over [final hidden ; gazetteer 5-dim]
-    # emitting {O, B/I-street_prefix, B/I-street_suffix}. Its 4 affix logits REPLACE the main
+    # emitting {O, B/I-street_prefix, B/I-street_suffix}. Its 4 affix logits replace the main
     # classifier's affix columns in the returned logits (merge-in-forward — ONNX export and
     # score-affix need no changes). Loss = main CE + affix CE (1:1).
     use_affix_head: bool = False
-    # Separate dependent_locality head (P-B probe): resurrect the dead dep-loc tag in its OWN MLP head
+    # Separate dependent_locality head (P-B probe): resurrect the dead dep-loc tag in its own MLP head
     # (fresh weights own the B/I-dependent_locality columns, merge-in-forward like the affix head) instead
     # of reinit-ing the shared classifier rows. Tests whether head-subspace separation avoids the
     # comma-drop invariance break that every flat-head reinit recipe paid (v3.10–v3.13). init_from-safe
@@ -297,7 +297,7 @@ class ModelConfig:
     # inference mask's training half. hypothesis = FR region recovers (16.2 was the v4.3.0 tail).
     use_conventions_loss_mask: bool = False
     # Span-boundary aux head (#727 GLiNER-lite probe): a training-only 2-logit head predicting per-token
-    # span START (B-*) and END (entity token whose successor doesn't continue it), supervised from the BIO
+    # span start (B-*) and END (entity token whose successor doesn't continue it), supervised from the BIO
     # labels. Adds boundary-placement pressure against the region→street absorption residual. Inference-
     # invariant (never exported). span_boundary_loss_weight scales the aux BCE leg. 0 disables it.
     use_span_boundary_head: bool = False
@@ -305,7 +305,7 @@ class ModelConfig:
     # #727 stage-2 phase 1 — the semi-Markov span scorer (span_scorer.py). Unlike the stage-1 aux head
     # above, this is a real scoring path: it scores every span up to `max_span` tokens per segment type
     # and a segment-level transition table carries the address grammar, so a whole segmentation is
-    # scored jointly instead of emerging from per-token votes. Default-OFF ⇒ off the logits path;
+    # scored jointly instead of emerging from per-token votes. Default-off ⇒ off the logits path;
     # `span_loss_weight` scales the semi-CRF NLL leg (0 disables it). Phase 2 exports it.
     use_span_scorer: bool = False
     span_loss_weight: float = 0.0
@@ -324,7 +324,7 @@ class ModelConfig:
     # #1104 homograph-guard softener. Scales the country_ambiguous dim (index 1) of country_features
     # before country_projection — 1.0 = the v263 behavior (hard ambiguous guard); <1.0 softens the
     # suppression of homograph countries (Georgia/Jordan) that over-fired on the country-homograph
-    # probe (89.8→82.6). The scale is a registered buffer, so it BAKES INTO the exported ONNX — no
+    # probe (89.8→82.6). The scale is a registered buffer, so it bakes into the exported ONNX — no
     # lexicon or inference change. inference feeds the raw [surface, ambiguous] and the graph scales it.
     country_ambiguous_scale: float = 1.0
     # Street-type channel (P-A / Option A probe). When on (with data.street_type_lexicon_path set), the
@@ -339,7 +339,7 @@ class ModelConfig:
     use_locality_surface_anchor: bool = False
     # Must match the locality-surface lexicon JSON's feature_dim ([locality, locality_homograph]).
     locality_surface_feature_dim: int = 2
-    # CharCNN front-end (#825 / v8 CJK). When True the per-unit embedding is COMPOSED from char_ids
+    # CharCNN front-end (#825 / v8 CJK). When True the per-unit embedding is composed from char_ids
     # (B, S, W) by CharCNNEmbedding instead of the SentencePiece piece-ID lookup. Pairs with
     # data.char_mode != "off" (the trainer enforces the pairing); char_vocab_size is derived from the
     # loaded char vocab at build time, never from the yaml.
@@ -357,7 +357,7 @@ class TrainConfig:
     grad_accum_steps: int = 1
     learning_rate: float = 5e-4
     weight_decay: float = 0.01
-    # #727 stage-2: give the FRESH span head its own (higher) LR while the pretrained encoder keeps
+    # #727 stage-2: give the fresh span head its own (higher) LR while the pretrained encoder keeps
     # `learning_rate`. A randomly-initialized head cannot train at a fine-tuning LR — the v3.0.0 probe
     # proved that the expensive way. None ⇒ one param group ⇒ byte-identical to every prior recipe.
     span_head_learning_rate: float | None = None
@@ -382,7 +382,7 @@ class TrainConfig:
     # Stage 2 emits sharp gradients during warmup and diverged at the LR peak without it.
     grad_clip_norm: float = 1.0
     # --- Fisher capture + EWC (v8.3.0 Phase 1, the B11 consolidation artifact — see fisher.py). ---
-    # Capture side (base runs): accumulate the diagonal empirical Fisher over the FINAL
+    # Capture side (base runs): accumulate the diagonal empirical Fisher over the final
     # fisher_capture_last_n_steps optimizer steps (the memo's "last N batches" at the
     # effective-batch grain) and write fisher-diag-v1.npz + sidecar beside the final checkpoint.
     # Read-only on p.grad — byte-identical trajectory with the flag on or off (pinned by test).
@@ -403,7 +403,7 @@ class TrainConfig:
     lr_schedule: str = "cosine"
     # ``"linear_cooldown"``'s branch point (2026-08-10 recipe review, setting 11): resume a
     # mid-schedule checkpoint at this step with ``learning_rate`` set to that checkpoint's
-    # CURRENT (tail) LR. multiplier holds 1.0 through the start, then decays linearly to zero
+    # current (tail) LR. multiplier holds 1.0 through the start, then decays linearly to zero
     # at ``max_steps`` — the WSD-style read of a mid-cosine checkpoint's finished-schedule
     # endpoint. Required by (and only read by) lr_schedule='linear_cooldown'.
     cooldown_start_step: int | None = None
@@ -427,7 +427,7 @@ class TrainConfig:
     # them via the tied token-embedding head, producing an encoder checkpoint a later supervised run
     # fine-tunes from (`init_from`). See pretrain.py. Off the supervised path entirely.
     objective: str = "supervised"
-    # Fraction of attended (non-pad) tokens masked for the MLM objective. 0.15 is BERT-classic. the
+    # Fraction of attended (non-pad) tokens masked for the MLM objective. 0.15 is bert-classic. the
     # small-encoder literature favors ~0.4 — tune per experiment. Ignored unless objective == "mlm".
     mlm_mask_prob: float = 0.15
     # Initialize model weights from this checkpoint dir at the start of a supervised run, without
@@ -435,7 +435,7 @@ class TrainConfig:
     # MLM-pretrained encoder. Empty = fresh init. Ignored when resuming (resume takes precedence).
     init_from: str = ""
 
-    # Freeze every parameter EXCEPT the affix head (#492 frozen-encoder probe): the optimizer
+    # Freeze every parameter except the affix head (#492 frozen-encoder probe): the optimizer
     # sees only head params. Distinguishes encoder-representation sufficiency from output-head
     # competition — see issue #492's pre-registered ladder.
     freeze_encoder: bool = False

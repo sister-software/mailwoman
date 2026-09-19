@@ -5,7 +5,7 @@
  *
  *   The Gauntlet's per-case grader: one stored case + one assembled result → the list of mismatches.
  *
- *   PURE, and its own module for exactly that reason. It lived inside `runRegressionLayer`'s closure until
+ *   pure, and its own module for exactly that reason. It lived inside `runRegressionLayer`'s closure until
  *   2026-08-06, where the only way to exercise it was to build the ~9 GB database set and run 306 addresses
  *   end-to-end — so the assertions this file makes had never been unit-tested, and #1507's finding (two stored
  *   expectation columns that no branch here ever read) survived every review of the layer that calls it.
@@ -26,7 +26,7 @@ export const DEFAULT_TOL_M = 5000
 /**
  * Map an expect_components key to the assembled-result field it asserts.
  *
- * Exported for the ablation layer, which scores a DELETION against the same slot this check grades — a second copy of
+ * Exported for the ablation layer, which scores a deletion against the same slot this check grades — a second copy of
  * the mapping would let the two disagree about which field `venue` lives in, and the ablation runner would then report
  * "the slot stayed empty" for a slot it was reading off the wrong field.
  */
@@ -55,7 +55,7 @@ export function componentOf(r: GauntletResult, key: string): string | null {
 				return r.components[key as (typeof COMPONENT_TAGS)[number]] ?? null
 			}
 
-			// LOUD: a silent null here made venue/dependent_locality expectations grade against
+			// loud: a silent null here made venue/dependent_locality expectations grade against
 			// nothing for their whole life (caught 2026-08-01). An unknown key is an authoring bug.
 			throw new Error(`expect_components key "${key}" has no GauntletResult mapping — extend componentOf`)
 	}
@@ -84,7 +84,7 @@ const SCRIPT_FAMILIES: ReadonlyArray<readonly [string, RegExp]> = [
 
 /**
  * The script family of one character, or `null` when the character carries no script of its own — digits, punctuation,
- * whitespace, combining marks. Those are NEUTRAL: they belong to whichever rendering surrounds them, which is what lets
+ * whitespace, combining marks. Those are neutral: they belong to whichever rendering surrounds them, which is what lets
  * `BGD - 16 khoroo` stay one Latin rendering instead of four.
  */
 function scriptFamilyOf(char: string): string | null {
@@ -102,12 +102,12 @@ function scriptFamilyOf(char: string): string | null {
  *
  * The dual-script rows (`mn-ws-gandantegchinlen-dual-script` and its siblings) carry the same address twice — a
  * Cyrillic/Mongolian rendering and a Latin/English one, slash-joined — so a parse that correctly tags both produces one
- * span holding both. Each maximal run of one script family, with the neutral characters BETWEEN two letters of that
- * family absorbed into it, is one rendering. the neutrals that sit at a family BOUNDARY are the joiner and belong to
+ * span holding both. Each maximal run of one script family, with the neutral characters between two letters of that
+ * family absorbed into it, is one rendering. the neutrals that sit at a family boundary are the joiner and belong to
  * neither (`" / "`, `", "`, `" — "` all fall out the same way).
  *
  * A mono-script value yields exactly one rendering — the value itself, minus any leading/trailing non-letters — so it
- * can never satisfy a contract that lists two. That is the whole precision story: the splitter only ever speaks on a
+ * can never satisfy a interface that lists two. That is the whole precision story: the splitter only ever speaks on a
  * value written in two or more scripts, and since 2026-08-11 it speaks only for the rows that OPT IN via
  * `expect_component_renderings` (see {@linkcode checkCase}) — ordinary component assertions never reach it.
  *
@@ -152,7 +152,7 @@ export function scriptRenderings(value: string): string[] {
 }
 
 /**
- * Does `got` satisfy the asserted `expected`? Exact case-folded equality, nothing else — the whole of the contract for
+ * Does `got` satisfy the asserted `expected`? Exact case-folded equality, nothing else — the whole of the interface for
  * every ordinary `expect_components` key.
  *
  * A global set-based fallback over {@linkcode scriptRenderings} lived here briefly (2026-08-10 → 2026-08-11) so a
@@ -161,7 +161,7 @@ export function scriptRenderings(value: string): string[] {
  * elements that ran together, so a `locality` of `四季酒家 Manchester` satisfied `Manchester`. Review converted the
  * relaxation into the per-row `expect_component_renderings` OPT-IN: a case that genuinely carries a span in two scripts
  * lists the renderings it requires, a key so listed supersedes the same key here, and every other assertion stays this
- * strict equality. See {@linkcode checkCase}'s component check for the contract.
+ * strict equality. See {@linkcode checkCase}'s component check for the interface.
  */
 export function componentMatches(got: string, expected: string): boolean {
 	return got.toLowerCase() === expected.toLowerCase()
@@ -169,8 +169,8 @@ export function componentMatches(got: string, expected: string): boolean {
 
 /**
  * Grade one `expect_component_renderings` entry: which of the required renderings are absent from
- * {@linkcode scriptRenderings}`(got)`, case-folded? Empty = the contract is satisfied. Nothing else about `got` is
- * asserted — neutral separators between renderings, and any EXTRA rendering, ride along free.
+ * {@linkcode scriptRenderings}`(got)`, case-folded? Empty = the interface is satisfied. Nothing else about `got` is
+ * asserted — neutral separators between renderings, and any extra rendering, ride along free.
  */
 function missingRenderings(got: string, required: readonly string[]): string[] {
 	const present = new Set(scriptRenderings(got).map((rendering) => rendering.toLowerCase()))
@@ -180,10 +180,10 @@ function missingRenderings(got: string, required: readonly string[]): string[] {
 
 /**
  * The resolved place a `expect_place_id` / `expect_place_name` row grades against: the most specific admin node the
- * RESOLVER decorated (`hierarchy` is sorted locality → dependent_locality → subregion → region → country).
+ * resolver decorated (`hierarchy` is sorted locality → dependent_locality → subregion → region → country).
  *
- * READ THIS BEFORE CHANGING IT. The obvious-looking target, {@linkcode GauntletResult.locality}, is the wrong one: it
- * echoes the parsed QUERY SPAN (`geocode-core.ts`'s `allNodes.find(...).value`), so `Gaborone` in yields `Gaborone` out
+ * Read this before changing IT. The obvious-looking target, {@linkcode GauntletResult.locality}, is the wrong one: it
+ * echoes the parsed query span (`geocode-core.ts`'s `allNodes.find(...).value`), so `Gaborone` in yields `Gaborone` out
  * no matter which place the resolver actually returned. `hierarchy[].name` is the gazetteer's canonical
  * `resolver_name`, which is the only field in the result that can disagree with the input — and disagreeing with the
  * input is the entire point of this assertion.
@@ -197,26 +197,26 @@ function resolvedPlace(r: GauntletResult): GauntletResult["hierarchy"][number] |
  *
  * Four independent checks, all opt-in per row — a null column asserts nothing:
  *
- * 1. COORDINATE, great-circle against `expect_tolerance_m` (default {@linkcode DEFAULT_TOL_M}).
- * 2. TIER, strict — an `address_point` that drifts to `admin` is a regression even inside tolerance.
- * 3. PLACE IDENTITY (#1507, wired 2026-08-06) — `expect_place_name` / `expect_place_id` against the resolved
+ * 1. Coordinate, great-circle against `expect_tolerance_m` (default {@linkcode DEFAULT_TOL_M}).
+ * 2. Tier, strict — an `address_point` that drifts to `admin` is a regression even inside tolerance.
+ * 3. Place identity (#1507, wired 2026-08-06) — `expect_place_name` / `expect_place_id` against the resolved
  *    {@linkcode resolvedPlace}. This is the one the other three cannot express: the country sweep's family-A rows
  *    (Gaborone → the Austrian hamlet `Aichegg`, Kinshasa → `Alionys II`, Djibouti → `Ober-Himmeri`) came back with the
- *    RIGHT parsed locality and only a coordinate 8,045 km away to say so, and a row whose expected place sits inside a
+ *    right parsed locality and only a coordinate 8,045 km away to say so, and a row whose expected place sits inside a
  *    25 km bar of its impostor would have had nothing at all. The corpus stored both columns from the first migration
  *    and no branch read them, so "wrong place, plausible coordinate" was unassertable for the corpus's whole life.
- * 4. COMPONENTS, exact case-insensitive per key, against the parsed/assembled spans ({@linkcode componentMatches}). Last
+ * 4. Components, exact case-insensitive per key, against the parsed/assembled spans ({@linkcode componentMatches}). Last
  *    because a corrupt `expect_components` JSON short-circuits the rest of its check, and the place check must still
  *    have run. Rows whose input carries a span in two or more scripts opt in per key via `expect_component_renderings`
  *    — `{ tag: [rendering, …] }` — and for a listed key the assertion becomes: {@linkcode scriptRenderings} of the got
- *    value must CONTAIN EVERY listed rendering, case-folded (both scripts required when the case defines both). Nothing
- *    else about that value is asserted. PRECEDENCE: a key present in `expect_component_renderings` supersedes the same
+ *    value must contain every listed rendering, case-folded (both scripts required when the case defines both). Nothing
+ *    else about that value is asserted. precedence: a key present in `expect_component_renderings` supersedes the same
  *    key in `expect_components`; an empty rendering list throws (an authoring bug the seed schema refuses upstream).
  */
 export function checkCase(c: GauntletCaseTable, r: GauntletResult): string[] {
 	const issues: string[] = []
 
-	// The ABSTAIN contract (#1585): the row's expected outcome is no coordinate, so the grade inverts —
+	// The abstain interface (#1585): the row's expected outcome is no coordinate, so the grade inverts —
 	// any resolved coordinate fails it. Mutually exclusive with a pinned coordinate. a row carrying both
 	// is an authoring bug that must be loud rather than a precedence question.
 	if (c.expect_abstain) {
@@ -258,22 +258,22 @@ export function checkCase(c: GauntletCaseTable, r: GauntletResult): string[] {
 				issues.push(`place name "${place.name}" ≠ "${c.expect_place_name}"`)
 			}
 
-			// EXACT, unlike the name: a place id is an opaque key (`wof:1108826319`), not prose.
+			// exact, unlike the name: a place id is an opaque key (`wof:1108826319`), not prose.
 			if (c.expect_place_id != null && place.placeID !== c.expect_place_id) {
 				issues.push(`place id "${place.placeID ?? null}" ≠ "${c.expect_place_id}"`)
 			}
 		}
 	}
 
-	// Parsed ahead of the expect_components loop because its keys take PRECEDENCE there. `undefined` tolerated
+	// Parsed ahead of the expect_components loop because its keys take precedence there. `undefined` tolerated
 	// alongside null: a pre-2026-08-11 regression.db has no such column at all (not that the runner would grade
 	// one — the corpus stamp refuses first).
-	const renderingContract =
+	const renderinginterface =
 		c.expect_component_renderings != null
 			? tryParsingJSON<Record<string, string[]>>(c.expect_component_renderings)
 			: null
 
-	if (c.expect_component_renderings != null && !renderingContract) {
+	if (c.expect_component_renderings != null && !renderinginterface) {
 		issues.push(`expect_component_renderings is not valid JSON (corrupt regression.db row?)`)
 	}
 
@@ -286,8 +286,8 @@ export function checkCase(c: GauntletCaseTable, r: GauntletResult): string[] {
 			issues.push(`expect_components is not valid JSON (corrupt regression.db row?)`)
 		} else {
 			for (const [k, v] of Object.entries(exp)) {
-				// Superseded: the rendering contract owns this key outright.
-				if (renderingContract && k in renderingContract) continue
+				// Superseded: the rendering interface owns this key outright.
+				if (renderinginterface && k in renderinginterface) continue
 
 				const got = componentOf(r, k)
 
@@ -298,9 +298,9 @@ export function checkCase(c: GauntletCaseTable, r: GauntletResult): string[] {
 		}
 	}
 
-	if (renderingContract) {
-		for (const [k, required] of Object.entries(renderingContract)) {
-			// LOUD, like the unknown-key throw above: an empty or non-string-array list would assert nothing while
+	if (renderinginterface) {
+		for (const [k, required] of Object.entries(renderinginterface)) {
+			// loud, like the unknown-key throw above: an empty or non-string-array list would assert nothing while
 			// looking asserted. The seed schema refuses these on load, so reaching one here means a row bypassed it.
 			if (!Array.isArray(required) || !required.length || required.some((v) => typeof v !== "string")) {
 				throw new Error(

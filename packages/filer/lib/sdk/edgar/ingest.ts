@@ -2,7 +2,7 @@
  * @copyright Sister Software.
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
- * @file The EDGAR chain, assembled — carrier names in, {@linkcode EdgarSubsidiaryRow}s out.
+ * @file The edgar chain, assembled — carrier names in, {@linkcode EdgarSubsidiaryRow}s out.
  *
  *   Every link existed and was tested in isolation before this file. nothing joined them, so nothing had
  *   ever produced a row `buildFilerDatabase` could consume. This is that join, and it is deliberately thin
@@ -12,7 +12,7 @@
  *   name → resolveCIKCandidates      (edgar-filings.ts — every candidate, never a winner)
  *        → corroborateCIK            (cik-corroboration.ts — the second signal, on SIC)
  *        → parseTenKFilings          (edgar-filings.ts)
- *        → fetchExhibit21Documents   (edgar-filings.ts — the SGML document manifest)
+ *        → fetchExhibit21Documents   (edgar-filings.ts — the sgml document manifest)
  *        → parseExhibit21            (exhibit21.ts — measured on 21 real filings)
  *        → EdgarSubsidiaryRow[]
  *   ```
@@ -28,7 +28,7 @@
  *   report without re-running anything.
  *
  *   **Ambiguity stops the registrant, it does not get resolved here.** When the top score is a genuine tie
- *   between DIFFERENT CIKs and more than one survives corroboration, this abstains and counts it. Picking
+ *   between different CIKs and more than one survives corroboration, this abstains and counts it. Picking
  *   one would be the exact false-identity-link failure `resolveCIKCandidates` refuses to commit, relocated
  *   one file downstream. A pinned CIK that is among the tied survivors does break the tie — an operator
  *   decision about one registrant's identity is a stronger signal than a name score.
@@ -128,7 +128,7 @@ export interface EdgarIngestOptions extends CIKCorroborationOptions {
 }
 
 /**
- * EDGAR's submissions payload for one registrant. Only the two fields this module reads are declared — `sic` for the
+ * Edgar's submissions payload for one registrant. Only the two fields this module reads are declared — `sic` for the
  * corroboration check, and the rest is handed to `parseTenKFilings` untouched.
  */
 interface SubmissionsPayload {
@@ -205,7 +205,7 @@ async function collectForFiling(
 	client: SECIngestClient,
 	filing: TenKFiling
 ): Promise<{ rows: EdgarSubsidiaryRow[]; unparseable: number }> {
-	// EDGAR occasionally 404s a filing document that objectively exists — a transient fetch failure rather than a
+	// edgar occasionally 404s a filing document that objectively exists — a transient fetch failure rather than a
 	// missing filing. Catching here rather than letting a single 404 kill the whole run.
 	let documents: { url: string }[]
 
@@ -246,12 +246,12 @@ async function collectForFiling(
 /**
  * Resolve each `queries` name to a corroborated registrant and collect its most recent 10-K's Exhibit 21 disclosures.
  *
- * `tickers` is EDGAR's registrant index. `company_tickers.json` covers only registrants WITH A TICKER — 7,998 distinct
+ * `tickers` is edgar's registrant index. `company_tickers.json` covers only registrants with A ticker — 7,998 distinct
  * CIKs, and none of Cellco Partnership, Windstream, Zayo, Brightspeed, Consolidated, Hargray or Altice. This sector is
  * majority private-equity-owned, so a caller should build this list from `cik-lookup-data.txt` instead. the parameter
  * takes whatever index the caller assembled rather than fetching one itself.
  *
- * Only the MOST RECENT 10-K is read. A registrant's older filings restate the same family with an earlier vintage, and
+ * Only the most recent 10-K is read. A registrant's older filings restate the same family with an earlier vintage, and
  * ingesting all of them would multiply rows without adding facts — a deliberate scope choice rather than an oversight.
  */
 export async function collectEdgarSubsidiaryRows(

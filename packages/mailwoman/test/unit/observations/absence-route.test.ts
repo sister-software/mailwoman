@@ -8,7 +8,7 @@
  *
  *   No pipeline. The route reads a finished `POIIntentOutcome` and a sealed coverage layer, and both are
  *   supplied here — synthetic outcomes against a scratch layer built through `@mailwoman/core/layers`'s own
- *   writers. That is what lets the ASYMMETRY be stated at its sharpest: the same query, the same empty
+ *   writers. That is what lets the asymmetry be stated at its sharpest: the same query, the same empty
  *   answer, two cells that differ in nothing but `basis`, and opposite readings. The pilot layer cannot
  *   state it, because every one of its 290 cells is `surveyed`.
  *
@@ -89,7 +89,7 @@ afterAll(() => scratchRoot[Symbol.asyncDispose]())
 const built: string[] = []
 
 /**
- * A sealed-shaped layer carrying exactly the contract tables the route reads, written through the blessed writers so
+ * A sealed-shaped layer carrying exactly the interface tables the route reads, written through the blessed writers so
  * the scratch artifact and a real one differ in scale and nothing else.
  */
 async function scratchLayer(options: ScratchLayerOptions = {}): Promise<string> {
@@ -274,7 +274,7 @@ describe("the conjunction's other half — the artifact", () => {
 
 		if (outcome.type !== "intent" || outcome.intent.subject.kind !== "category") throw new Error("unreachable")
 
-		// The same cell and the same answer, with the second class added to the SEARCH — the one difference.
+		// The same cell and the same answer, with the second class added to the search — the one difference.
 		expect(await route.observe(outcome)).toMatchObject({ fired: true })
 
 		outcome.intent.subject.categoryIDs = ["drugstore", "pharmacy"]

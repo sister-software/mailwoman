@@ -8,7 +8,7 @@
  *   the first thing to reach for when an arm comparison moves and you need to know whether the FST
  *   could have caused it.
  *
- *   WHAT IT PRINTS, and why that is the right quantity. `neural/fst-prior.ts`'s `applyBias` does not use
+ *   what IT prints, and why that is the right quantity. `neural/fst-prior.ts`'s `applyBias` does not use
  *   the accepting entries individually: it collapses them to `max(importance)` PER BIO TAG, and only
  *   four placetypes reach a tag at all (`PLACETYPE_TO_BIO` — country / region / locality / postalcode).
  *   A `localadmin`, `county`, `borough` or `neighbourhood` entry is walked, deduped, and then dropped
@@ -16,8 +16,8 @@
  *   Saint-Denis pair is about — is invisible to the decoder. only the max is not. Printing anything else
  *   would overstate what an importance swap can do here.
  *
- *   `MISS` means the FST does not accept the surface at all: the gazetteer has nothing to say, which is
- *   ABSENCE and not a zero bias. A printed `0` means the FST DOES know the surface and scores it zero.
+ *   `miss` means the FST does not accept the surface at all: the gazetteer has nothing to say, which is
+ *   absence and not a zero bias. A printed `0` means the FST does know the surface and scores it zero.
  *   The two are different facts and the output keeps them apart.
  *
  *   Usage: node packages/mailwoman/lib/dev-tools/probe/fst-bias.run.ts [--locale en-us] [--raw] <surface>...

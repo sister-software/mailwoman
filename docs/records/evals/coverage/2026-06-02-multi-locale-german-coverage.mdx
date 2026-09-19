@@ -16,7 +16,7 @@ error of about 5,940 km.
 
 That looks like the resolver being hopelessly US-centric, and for about ten minutes I believed it.
 Then I found the eval harness hardcoded `defaultCountry: "US"`, which the lookup applies as a _hard
-filter_, so every German address was restricted to US places before ranking ever ran. German Berlin was never even a candidate. Fix the
+filter_. Therefore, every German address was restricted to US places before ranking ever ran. German Berlin was never even a candidate. Fix the
 one string and the same resolver, against the same global gazetteer, puts German Berlin first on
 population alone: coordinate error collapses from 5,940 km to **10 km**. The ranking was fine the
 whole time. (The full autopsy is in the resolver-vs-eval-artifact notes; the short version is: when

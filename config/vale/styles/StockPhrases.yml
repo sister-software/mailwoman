@@ -23,7 +23,7 @@
 ## carrying the adverb trips both rules; that is duplication, not a false
 ## positive.
 extends: existence
-message: "Cut the stock phrase '%s' — say the specific claim instead."
+message: "Remove the stock phrase '%s' — say the specific claim instead."
 level: error
 ignorecase: true
 tokens:

@@ -2,7 +2,7 @@
  * @copyright Sister Software
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
- * @file The acquisition + build surface for the EA flood-zone layer. The READER is the package root.
+ * @file The acquisition + build surface for the EA flood-zone layer. The reader is the package root.
  */
 
 export * from "#sdk/build-flood"

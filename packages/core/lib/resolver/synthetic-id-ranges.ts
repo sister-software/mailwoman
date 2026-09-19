@@ -37,7 +37,7 @@ export const GEONAMES_POSTAL_ID_BASE = 9_500_000_000_000
 export const NL_PC6_ID_BASE = 9_600_000_000_000
 
 /**
- * The LINZ-derived New Zealand locality database (`gazetteer build nz-localities`).
+ * The linz-derived New Zealand locality database (`gazetteer build nz-localities`).
  */
 export const NZ_LOCALITY_ID_BASE = 9_650_000_000_000
 

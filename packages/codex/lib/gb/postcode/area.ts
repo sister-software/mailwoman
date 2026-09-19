@@ -3,7 +3,7 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Postcode AREA → constituent country, the Royal Mail mapping — and the concrete proof of the
+ *   Postcode area → constituent country, the Royal Mail mapping — and the concrete proof of the
  *   lesson in `postcode.ts` that UK postcodes do not track administrative geography.
  *
  *   A postcode area is the leading one or two letters of a postcode (`SW`, `M`, `EH`, `BT`), named
@@ -13,11 +13,11 @@
  *   four UK countries an area predominantly falls in — and even that has border exceptions:
  *
  *   - **TD** (Galashiels) and **SY** (Shrewsbury) straddle the Scotland/England and Wales/England
- *       borders respectively. each is assigned to its MAJORITY country here (TD → Scotland, SY →
+ *       borders respectively. each is assigned to its majority country here (TD → Scotland, SY →
  *       Wales). A handful of individual postcodes on the wrong side of the line are a gazetteer
  *       concern rather than a thing this coarse table tries to model.
  *
- *   So this is the ROYAL MAIL area→country mapping, and the fact that it needs a hand-built
+ *   So this is the royal mail area→country mapping, and the fact that it needs a hand-built
  *   non-England set with documented border fudges — rather than a tidy prefix rule — is exactly why
  *   a UK postcode is not a county.
  */
@@ -67,7 +67,7 @@ const WALES_AREAS = [
 
 /**
  * The explicit non-England postcode areas, area → constituent country. England is intentionally absent: it is the
- * DEFAULT (the great majority of UK areas are English), so listing it would be both enormous and a maintenance trap.
+ * default (the great majority of UK areas are English), so listing it would be both enormous and a maintenance trap.
  * Keeping only the non-England set makes the default transparent — anything not named here is England.
  */
 export const GB_POSTCODE_AREA_COUNTRY: Record<string, UkCountryCode> = {
@@ -77,24 +77,24 @@ export const GB_POSTCODE_AREA_COUNTRY: Record<string, UkCountryCode> = {
 }
 
 /**
- * The two postcode areas whose assignment in {@link GB_POSTCODE_AREA_COUNTRY} is a MAJORITY call rather than a fact —
+ * The two postcode areas whose assignment in {@link GB_POSTCODE_AREA_COUNTRY} is a majority call rather than a fact —
  * TD (Galashiels) straddles the Scotland/England border and SY (Shrewsbury) straddles the Wales/England border, and
  * both carry real postcodes on the other side of the line. The header above documents them in prose. this is the same
- * knowledge in a form a build can read, so an artifact that ASSERTS ancestry per postcode district can withhold the
+ * knowledge in a form a build can read, so an artifact that asserts ancestry per postcode district can withhold the
  * constituent country here instead of asserting a coin-flip. Consumers that only want the coarse majority answer keep
  * using {@link countryOfPostcodeArea} and ignore this.
  */
 export const GB_BORDER_STRADDLING_AREAS: ReadonlySet<string> = new Set(["TD", "SY"])
 
 /**
- * True when `area` looks like a valid postcode-area string: one or two ASCII letters.
+ * True when `area` looks like a valid postcode-area string: one or two ascii letters.
  */
 function isAreaShape(area: unknown): area is string {
 	return typeof area === "string" && /^[A-Z]{1,2}$/i.test(area)
 }
 
 /**
- * The constituent country a postcode AREA belongs to. Returns the explicit country for a known non-England area (e.g.
+ * The constituent country a postcode area belongs to. Returns the explicit country for a known non-England area (e.g.
  * `BT` → `NIR`, `G` → `SCT`, `CF` → `WLS`), and `ENG` as the default for any other validly-shaped area — England is by
  * far the largest, so the default is transparent and the non-England exceptions live in
  * {@link GB_POSTCODE_AREA_COUNTRY}. Returns null for clearly-invalid input (not one-or-two letters), so a malformed

@@ -21,7 +21,7 @@ side rather than the artifact side.
 ## How to read an entry
 
 **Tier** is the distribution posture, defined by the
-[spatial-layer contract](https://github.com/sister-software/mailwoman/blob/main/docs/engineering/reference/layer-contract.mdx#tiers) and used here for every
+[spatial-layer interface](https://github.com/sister-software/mailwoman/blob/main/docs/engineering/reference/layer-interface.mdx#tiers) and used here for every
 artifact, notthe ones that formally embed the layer manifest:
 
 - **shipped** — permissive sources only. We build it and publish it.
@@ -140,7 +140,7 @@ Treat the card as history rather than as a description of anything you can downl
 
 ## POI layer — `poi.db`
 
-Layer #1 on the [spatial-layer contract](https://github.com/sister-software/mailwoman/blob/main/docs/engineering/reference/layer-contract.mdx), and the worked
+Layer #1 on the [spatial-layer interface](https://github.com/sister-software/mailwoman/blob/main/docs/engineering/reference/layer-interface.mdx), and the worked
 example every later layer copies. It answers category and brand queries — "coffee near Springfield
 IL" — rather than address queries.
 
@@ -410,7 +410,7 @@ has one, a `pair-index-<cc>.bin` placetype-pair index (GB: 19,209 pairs, ~458 KB
 **Model.** Version 7.0.0, the from-scratch base. ONNX int8 dynamic quantized from fp32, opset 17,
 max sequence 128, six layers at hidden size 384, vocabulary 73,143, roughly 29M parameters.
 **37.6 MB int8** (146.6 MB fp32). Note that the en-US package README prints older size and
-vocabulary figures; the `model-card.json` is the functional contract.
+vocabulary figures; the `model-card.json` is the functional interface.
 
 **Training data.** Compiled from permissive sources only, by construction: the corpus build filters
 share-alike rows through `SHARE_ALIKE_PATTERN` (`--exclude-share-alike`), and the model card's
@@ -468,7 +468,7 @@ work happens at public block granularity plus the address spine we already own.
   in the build runbooks rather than here.
 - **Demo assets.** The map-highlight polygons and the address-coverage tile overlay exist to make
   the demo work; see the [coverage overlay runbook](https://github.com/sister-software/mailwoman/blob/main/docs/engineering/reference/coverage-overlay.mdx).
-- **Your data.** A `private`-tier layer conforming to the same contract — a CRM export, survey
+- **Your data.** A `private`-tier layer conforming to the same interface — a CRM export, survey
   notes, parcel relationships — joins the same query surface and never leaves your machine. That
   is a supported posture rather than a product we sell.
 
@@ -479,7 +479,7 @@ work happens at public block granularity plus the address spine we already own.
 - [Pricing](./pricing.mdx) — the engine's tiers, and the
   [OEM band](./pricing.mdx#embedding-mailwoman-in-a-product-you-sell) for shipping Mailwoman inside
   a product you license to others.
-- [Spatial-layer contract](https://github.com/sister-software/mailwoman/blob/main/docs/engineering/reference/layer-contract.mdx) — the schema every layer database
+- [Spatial-layer interface](https://github.com/sister-software/mailwoman/blob/main/docs/engineering/reference/layer-interface.mdx) — the schema every layer database
   embeds, and where the tier vocabulary on this page comes from.
 - [POI layer runbook](https://github.com/sister-software/mailwoman/blob/main/docs/engineering/reference/poi-layer-runbook.mdx) — the worked build/verify/publish
   example.

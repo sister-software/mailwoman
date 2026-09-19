@@ -4,8 +4,8 @@
  * @author Teffen Ellis, et al.
  *
  *   Tests for {@link SQLiteStreetNameLookup} (#727 phase-4c FR backend) against a fixture DB built
- *   with the contract fold (`foldStreetSurface`). Covers unscoped + scoped lookups, the fold
- *   contract (hyphen/apostrophe), positive-evidence fallback, and graceful degrade on a tableless db.
+ *   with the interface fold (`foldStreetSurface`). Covers unscoped + scoped lookups, the fold
+ *   interface (hyphen/apostrophe), positive-evidence fallback, and graceful degrade on a tableless db.
  */
 
 import { temporaryDirectory, type TemporaryDirectory } from "@mailwoman/core/fs/temporary"
@@ -24,8 +24,8 @@ beforeAll(async () => {
 	dbPath = dir.resolve("street-centroids-fr.db")
 	using seed = new DatabaseClient<StreetCentroidDatabase>(dbPath)
 
-	// The real extract shape: the geocoding `street_norm` PLUS the #727 phase-4c `name_key` (contract fold). The reader must
-	// prefer `name_key`; each row carries a DELIBERATELY WRONG street_norm, so a passing lookup proves it read name_key.
+	// The real extract shape: the geocoding `street_norm` plus the #727 phase-4c `name_key` (interface fold). The reader must
+	// prefer `name_key`; each row carries a deliberately wrong street_norm, so a passing lookup proves it read name_key.
 	seed.exec(
 		"CREATE TABLE street_centroid (street_norm TEXT NOT NULL, postcode TEXT, locality_base TEXT NOT NULL, name_key TEXT NOT NULL)"
 	)
@@ -64,7 +64,7 @@ describe("SQLiteStreetNameLookup", () => {
 		expect(lk.hasStreetName("Rue Nonexistent")).toBe(false)
 	})
 
-	test("fold contract: a hyphenated/apostrophe'd query matches the folded index entry", () => {
+	test("fold interface: a hyphenated/apostrophe'd query matches the folded index entry", () => {
 		using lk = new SQLiteStreetNameLookup(dbPath)
 		expect(lk.hasStreetName("Rue Pillet-Will")).toBe(true) // hyphen → space, matches "rue pillet will"
 		expect(lk.hasStreetName("Chemin d'En Galinier")).toBe(true)

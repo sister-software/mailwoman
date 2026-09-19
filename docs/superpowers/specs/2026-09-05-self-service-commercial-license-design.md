@@ -44,7 +44,7 @@ returns 5xx on any failure and writes D1 under unique constraints gets at-least-
 that alone. A queue arrives when a measurement calls for one.
 
 **The key format stays in `@mailwoman/core`, and the worker imports it by subpath.** Ed25519 moves from `node:crypto`
-onto WebCrypto, which Node, `workerd`, and browsers all implement, so one implementation signs and verifies everywhere.
+onto WebCrypto, which Node, `workerd`, and browsers all implement. Therefore, one implementation signs and verifies everywhere.
 The worker imports `@mailwoman/core/license/key` and `@mailwoman/core/license/register`, never the `license` barrel and
 never a module that reaches `node:fs`; a bundle test holds that line. Where a core module's implementation must differ
 per platform, its `package.json` export carries `workerd` and `browser` conditions beside `node`, the way the browser

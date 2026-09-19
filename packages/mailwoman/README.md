@@ -231,7 +231,7 @@ package is the umbrella that wires them together as a single `npm install`.
 
 ## License
 
-Dual-licensed: **[AGPL-3.0-only](https://www.gnu.org/licenses/agpl-3.0.html)** for
+Dual-licensed: **[AGPL-3.0-only](https://www.gnu.org/licenses/AGPL-3.0.html)** for
 open-source use, or a **commercial license** for closed-source use without the AGPL's
 source-sharing obligation (contact `teffen@sister.software`). Portions derived from
 [Pelias Parser](https://github.com/pelias/parser) remain under MIT, and `@mailwoman/core`

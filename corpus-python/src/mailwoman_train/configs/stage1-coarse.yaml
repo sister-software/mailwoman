@@ -7,8 +7,8 @@
 # label set here without an explicit phase plan.
 
 data:
-  # corpus-v0.2.0 (synth-ON, 263.7M rows, 10 adapters, locality-holdout splits).
-  # Built 2026-05-18 nightshift. Full BAN (102 départements), full TIGER (all US),
+  # corpus-v0.2.0 (synth-on, 263.7M rows, 10 adapters, locality-holdout splits).
+  # Built 2026-05-18 nightshift. Full BAN (102 départements), full tiger (all US),
   # NPPES, IMLS, HRSA, and state sources included.
   corpus_dir: /data/corpus/versioned/v0.2.0/corpus-v0.2.0
   tokenizer_dir: /data/models/tokenizer/v0.1.0
@@ -28,7 +28,7 @@ data:
     usgov-nppes: 2.0
     usgov-hrsa-fqhc: 2.0
     usgov-imls-pls: 2.0
-    state-ia-contractors: 2.0
+    state-ia-builders: 2.0
     state-tx-notaries: 1.5
     state-ny-notaries: 2.0
   train_rows_per_epoch: null

@@ -87,7 +87,7 @@ const PLACES: ResolvedPlace[] = [
 		prominence: 3.7451,
 		exactMatch: true,
 	},
-	// Manchester: the in-country answer the soft prior must KEEP (NH 5.06 + 2 > GB 5.74).
+	// Manchester: the in-country answer the soft prior must keep (NH 5.06 + 2 > GB 5.74).
 	{
 		id: 6,
 		name: "Manchester",
@@ -134,7 +134,7 @@ const PLACES: ResolvedPlace[] = [
 		prominence: 3.3606,
 		exactMatch: true,
 	},
-	// A postcode → point for the not-bare guard. sits on Berlin, Wisconsin (id 5) so the check ADMITS it.
+	// A postcode → point for the not-bare guard. sits on Berlin, Wisconsin (id 5) so the check admits it.
 	{ id: 900, name: "54923", placetype: "postalcode", country: "US", lat: 43.97, lon: -88.95, score: 1 },
 ]
 
@@ -381,7 +381,7 @@ describe("importance key in the admin walk (#17)", () => {
 })
 
 /**
- * The bare-COUNTRY class: "Japan" / "China" / "Germany" as the whole query. Two independent defects, measured through
+ * The bare-country class: "Japan" / "China" / "Germany" as the whole query. Two independent defects, measured through
  * the compiled CLI on 2026-08-13 against the shipped candidate.db (which carries every country at `placetype: country`
  * with real centroids and `is_primary = 1`):
  *
@@ -389,9 +389,9 @@ describe("importance key in the admin walk (#17)", () => {
  *   Germany, United States tagged `country`), and the locality placetype filter made the country row unreachable at any
  *   rank: bare `Japan` answered Japan, Pennsylvania. Fix: the lone bare locality-tagged span also races the `country`
  *   placetype, prominence arbitrates.
- * - Even a CORRECT `country` tag failed under the locale-inferred default scope: the hard filter can only admit the scope
+ * - Even a correct `country` tag failed under the locale-inferred default scope: the hard filter can only admit the scope
  *   country itself, so bare `Germany` under en-US filtered out the DE row and fell to Camp Dennison, Ohio (an FTS alias
- *   — its historical name is "Germany"). Fix: an INFERRED scope is withheld from `country`-placetype lookups. an
+ *   — its historical name is "Germany"). Fix: an inferred scope is withheld from `country`-placetype lookups. an
  *   explicit scope stays supreme.
  */
 describe("bare-country class", () => {
@@ -497,7 +497,7 @@ describe("bare-country class", () => {
 		expect(out.roots[0]?.metadata?.["bare_country_repick"]).toBe(true)
 	})
 
-	// #1678 thread 2 — the parse half. The race finds the right PLACE. before this the node kept the wrong
+	// #1678 thread 2 — the parse half. The race finds the right place. before this the node kept the wrong
 	// TAG, so a bare country answered with a correct coordinate under `{"locality": …}`. That label misleads
 	// the moment the same toponym sits inside a longer address rather than alone.
 	it("retags a country repick to `country`", async () => {

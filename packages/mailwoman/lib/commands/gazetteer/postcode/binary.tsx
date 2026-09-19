@@ -6,31 +6,31 @@
  *   `mailwoman gazetteer postcode-binary` — build per-country browser postcode binaries (#240) from
  *   the SQLite databases. Emits one `postcode-<cc>.bin` per locale into the `--out` dir (default
  *   `docs/static/mailwoman/`, alongside `fst-en-US.bin`), each loadable by `@mailwoman/neural`'s
- *   `PostcodeBinaryResolver` in the WASM/browser parser. Per-country so the browser fetches only
+ *   `PostcodeBinaryResolver` in the wasm/browser parser. Per-country so the browser fetches only
  *   the locale it needs (the tiered-loading story in the design doc).
  *
  *   The database `name` is already the normalized postcode key (DE/FR `68161`/`75008`, NL space-less
- *   `1012LM`, US `94105`), which is exactly what the anchor queries, so it serializes verbatim.
+ *   `1012LM`, US `94105`). It is exactly what the anchor queries. Therefore, it serializes verbatim.
  *
  *   **GB is special**, and it is where this command shipped two defects (#1509 — the derivation and
  *   the refusal both live in `gazetteer-pipeline/postcode/binary.ts`, with the reproduction). The
- *   outward district is now derived by SHAPE (the inward code is the trailing three characters of the
+ *   outward district is now derived by shape (the inward code is the trailing three characters of the
  *   space-stripped form), so the same rule reads the spaced GeoNames-lineage database and the
  *   space-stripped Code-Point Open one. `--gb-granularity` picks the key set:
  *
- *   - `unit` (DEFAULT) — every unit PLUS its outward district: 1,749,839 keys / 20.0 MB from
- *       `postalcode-gb-codepoint.db`. This is the TRAIN-FAITHFUL set. A model trained against
- *       `pilot-anchor-lookup-v2` was painted from UNIT centroids, so serving it anything coarser feeds
+ *   - `unit` (default) — every unit plus its outward district: 1,749,839 keys / 20.0 MB from
+ *       `postalcode-gb-codepoint.db`. This is the train-faithful set. A model trained against
+ *       `pilot-anchor-lookup-v2` was painted from unit centroids, so serving it anything coarser feeds
  *       the anchor channel a different distribution than training saw.
  *   - `outward` — districts only: 2,863 keys / 0.03 MB. The only GB set that fits a browser bundle, and
  *       the command's original behaviour.
  *
  *   Every locale's key count is checked against a documented floor before anything is written. a build
- *   below it exits NONZERO with a named reason rather than shipping a valid, empty binary.
+ *   below it exits nonzero with a named reason rather than shipping a valid, empty binary.
  *
  *   Defaults to `POSTCODE_BINARY_SOURCES` (`gazetteer-pipeline/postcode/binary.ts`): US, NL/FR/DE/ES/IT
  *   from `postalcode-intl.db`, and GB from `postalcode-gb-codepoint.db` (the licence-clean OGL v3.0
- *   source). Each `.bin` is written DIRECTLY to `--out` (the original
+ *   source). Each `.bin` is written directly to `--out` (the original
  *   `scripts/build-postcode-binary.ts` behavior). Per-locale progress streams to stderr. the roll-up
  *   lands on stdout.
  */
@@ -60,7 +60,7 @@ interface LocaleSource {
 const BROWSER_BUDGET_BYTES = 4 * 1024 * 1024
 
 /**
- * Native command-line contract consumed by the filesystem command router.
+ * Native command-line interface consumed by the filesystem command router.
  */
 export const spec = {
 	name: "postcode-binary",
@@ -128,7 +128,7 @@ const GazetteerPostcodeBinary: CommandComponent<typeof spec> = ({ options }) => 
 				gbGranularity: granularity,
 			})
 
-			// REFUSE BEFORE WRITING (#1509). A magnitude never carries its own absence: a zero-key binary
+			// refuse before writing (#1509). A magnitude never carries its own absence: a zero-key binary
 			// is structurally valid, so the only place the failure can surface is here.
 			const violation = keyFloorViolation(country, entries.length, granularity)
 
@@ -153,9 +153,9 @@ const GazetteerPostcodeBinary: CommandComponent<typeof spec> = ({ options }) => 
 					`) → ${outPath} (${ByteFormatter.formatIEC(bytes.length)})`
 			)
 
-			// The GB default is `unit` because that is what the anchor-v2 model was TRAINED against, and a
+			// The GB default is `unit` because that is what the anchor-v2 model was trained against, and a
 			// serving bundle shipping anything coarser feeds the channel a different distribution than
-			// training painted. But this command's default `--out` is the BROWSER asset dir, where 20 MB is
+			// training painted. But this command's default `--out` is the browser asset dir, where 20 MB is
 			// not a postcode binary, it is the whole page budget. The size is printed either way. this names
 			// the setting rather than deciding for the operator. Which countries carry a browser granularity is
 			// the source table's to say.

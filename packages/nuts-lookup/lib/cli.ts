@@ -4,7 +4,7 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   `mailwoman-nuts` — build the NUTS polygon DB, or look up a coordinate's NUTS codes.
+ *   `mailwoman-nuts` — build the nuts polygon DB, or look up a coordinate's nuts codes.
  *
  *   ```sh
  *   mailwoman-nuts build --geojson NUTS_RG_03M_2021_4326.geojson --out nuts.db

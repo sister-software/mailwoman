@@ -91,7 +91,7 @@ export type RunFileOptions = ExecFileOptions & { cwd?: PathBuilderLike }
  * Run a command to completion and answer what it wrote.
  *
  * Rejects with a {@linkcode ProcessError} on a non-zero exit — the shape every caller of `promisify(execFile)` already
- * handled — and with the plain spawn error when the command could not start (ENOENT, EACCES).
+ * handled — and with the plain spawn error when the command could not start (enoent, eacces).
  */
 export async function runFile(
 	file: PathBuilderLike,
@@ -134,7 +134,7 @@ export function runFileSync(
 }
 
 /**
- * Run a SHELL command line synchronously and answer stdout. Reach for {@linkcode runFileSync} unless the command needs
+ * Run a shell command line synchronously and answer stdout. Reach for {@linkcode runFileSync} unless the command needs
  * the shell — an argument list does not get re-parsed, quoted or expanded.
  */
 export function runShellSync(command: string, options: ExecSyncOptions & { cwd?: PathBuilderLike } = {}): string {

@@ -51,7 +51,7 @@ Paris` (identical terminal token + membership; emission-gap distributions overla
   Full-geocode tier evidence collects none of the oracle@5 0.723 headroom** — because it is STARVED:
   evidence rate 3.4% (9/267 fixtures produced street-tier evidence on any hypothesis; tier census
   1308 admin / 25 address_point / 2 street). The failing class is context-free fragments, which
-  cannot reach rooftop layers, so all hypotheses tie at admin. not a treadmill case — first
+  cannot reach rooftop layers. Therefore, all hypotheses tie at admin. not a treadmill case — first
   measurement; the redesign is measurement-driven: the arbiter needs STREET-NAME existence evidence
   (P1's StreetLocalityEvidence — two independent negatives converged on the same design today).
 - ~05:25 (same receipt) — name-evidence falsifier v0 (FR BAN street-centroids 2.2M + NO tuples, n=7 recoverable):
@@ -125,11 +125,11 @@ Paris` (identical terminal token + membership; emission-gap distributions overla
   now end-to-end: span head -> k-best -> oracle@5 0.786 -> name-evidence rerank, every link measured,
   none promoted.
 - 10:15 — **PHASE-4C StreetLocalityEvidence BUILT (PR #1156, default-off, ready-for-review).**
-  resolver/street-evidence.ts (interface + foldStreetSurface contract + G1 isPureTypeVocabulary +
+  resolver/street-evidence.ts (interface + foldStreetSurface interface + G1 isPureTypeVocabulary +
   pickByStreetEvidence v2 policy, pure, 14 tests) + resolver-wof-sqlite/street-name-lookup.ts (FR
   BAN backend implementing it, 9 fixture-DB tests). 23/23 pass, tsc + oxlint clean. not wired — the
   arbiter primitive; wiring into the k-best rerank needs #1154 on main. PRODUCTION FOLLOW-UP:
-  street-centroids-fr.db must be rebuilt with foldStreetSurface (contract fold) + a street_norm
+  street-centroids-fr.db must be rebuilt with foldStreetSurface (interface fold) + a street_norm
   index (BAN sdk).
 - STASH FLAG (operator): two STALE WIP stashes predate tonight — stash@{0} = a banned-prose sweep
   (50 'direct'→calibrated etc., 25 mdx files) that now CONFLICTS with current main (docs diverged
@@ -211,7 +211,7 @@ Paris` (identical terminal token + membership; emission-gap distributions overla
 - **Phase-4c wiring (the next arc, needs #1154 on main):** compose `pickByStreetEvidence` with the
   k-best decode loop behind a flag; run the full promote battery with the rerank active on the
   v3.10.1 8k substrate; target the board result 0.851 (96 fixes / 3 breaks). Then the US TIGER
-  street-name backend (spec build-order #2) + the `street-centroids-fr.db` rebuild (contract fold +
+  street-name backend (spec build-order #2) + the `street-centroids-fr.db` rebuild (interface fold +
   `street_norm` index).
 - **v3.10.1 8k** is the phase-4c substrate (`scratchpad/v3101-cache` + volume `step-008000`); it
   ships nowhere on its own (dormant span head, byte-stable token path).

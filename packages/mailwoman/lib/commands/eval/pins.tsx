@@ -3,7 +3,7 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   `mailwoman eval pins` — the board-pin contract's CLI (#1895). Bare: print the measured pins
+ *   `mailwoman eval pins` — the board-pin interface's CLI (#1895). Bare: print the measured pins
  *   under the constant names `load.test.ts` pins them as. `--check`: compare measured against the
  *   committed constants and exit nonzero with the exact replacement values. `--update`: rewrite
  *   only the three constants (the test's dated history comments survive byte-identically), then
@@ -25,7 +25,7 @@ import { type CommandSpec, CommandTaskResult, type CommandComponent, useCommandT
 export const description = "Measure, check, or update the regression board's pins (row count, corpus hash, board id)."
 
 /**
- * Native command-line contract consumed by the filesystem command router.
+ * Native command-line interface consumed by the filesystem command router.
  */
 export const spec = {
 	name: "pins",

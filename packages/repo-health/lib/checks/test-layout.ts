@@ -2,7 +2,7 @@
  * @copyright Sister Software
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
- * @file Enforce tests as external consumers of workspace package contracts.
+ * @file Enforce tests as external consumers of workspace package interfaces.
  */
 
 import { pathExists, readLocalTextFile } from "@mailwoman/core/fs/readers"
@@ -26,14 +26,14 @@ const COLOCATED_TEST_WORKSPACES = new Set(["packages/corpus"])
 const playwrightSuites = new Set([...vitestSuites, "browser", "build", "e2e"])
 
 /**
- * The `test-contract` check: one error per test file outside its workspace's declared test layout and per relative
+ * The `test-interface` check: one error per test file outside its workspace's declared test layout and per relative
  * import a test makes. Corpus tests live next to their modules under `lib/`; other workspaces use
  * `test/{unit,integration,full}/`.
  */
-export const testContractCheck: RepoCheck = {
-	id: "test-contract",
+export const testLayoutCheck: RepoCheck = {
+	id: "test-interface",
 	description:
-		"Workspace tests use their declared layout and import the package by its contract; a relative import names a test helper only.",
+		"Workspace tests use their declared layout and import the package by its interface; a relative import names a test helper only.",
 	async run(context) {
 		const root = context.repoRoot
 		const diagnostics: Diagnostic[] = []
@@ -68,8 +68,8 @@ export const testContractCheck: RepoCheck = {
 				const sourceText = await readLocalTextFile(filePath)
 				const sourceFile = ts.createSourceFile(filePath, sourceText, ts.ScriptTarget.Latest, true)
 
-				// Type-only specifiers count here: tests are consumers of the package CONTRACT, types included. A relative
-				// specifier that stays inside `test/` names a test helper, which has no contract to bypass. one that leaves
+				// Type-only specifiers count here: tests are consumers of the package interface, types included. A relative
+				// specifier that stays inside `test/` names a test helper, which has no interface to bypass. one that leaves
 				// `test/` reaches the package's source by location, and the `#` map is refused in tests by
 				// `mailwoman/no-private-import-in-test`, so the module needs an `exports` entry instead.
 				const testRoot = resolvePath(workspaceRoot, "test")
@@ -83,7 +83,7 @@ export const testContractCheck: RepoCheck = {
 
 					diagnostics.push({
 						severity: DiagnosticSeverity.Error,
-						message: `relative module import ${stringifyJSON(specifier)} leaves test/ and bypasses the package contract`,
+						message: `relative module import ${stringifyJSON(specifier)} leaves test/ and bypasses the package interface`,
 						file,
 					})
 				}

@@ -53,7 +53,7 @@ import {
 import { $public } from "#env"
 
 /**
- * The `license` command contract: one positional action and the options each action reads.
+ * The `license` command interface: one positional action and the options each action reads.
  */
 export const spec = {
 	name: "license",

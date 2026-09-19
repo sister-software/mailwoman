@@ -36,7 +36,7 @@ line rather than the fourth step.
 
 ## Exemplar paragraph
 
-> `@mailwoman/nominatim` speaks the Nominatim HTTP contract over the Mailwoman engine, so an existing client
+> `@mailwoman/nominatim` speaks the Nominatim HTTP interface over the Mailwoman engine, so an existing client
 > keeps working after you change its host. Forward geocoding (`/search`) and reverse geocoding (`/reverse`)
 > are implemented, along with `/status` and an emitted `/openapi.json`; `/lookup` is planned and returns
 > nothing useful yet, so a client that resolves known place identifiers is not ready to move. There is no

@@ -55,7 +55,7 @@ class FrameRasterizer extends AsciifyTerminal {
 }
 
 /**
- * Converts a 2×4-subpixel RGBA grid into braille cells. Grid must be `columns * 2` x `rows * 4`.
+ * Converts a 2×4-subpixel rgba grid into braille cells. Grid must be `columns * 2` x `rows * 4`.
  *
  * @throws If the grid's dimensions don't match `columns * 2` x `rows * 4` — a caller sizing bug rather than something
  *   to silently clip.

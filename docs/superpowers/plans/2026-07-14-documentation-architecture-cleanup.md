@@ -11,7 +11,7 @@ Make the public documentation easy to enter, trustworthy to cite, and inexpensiv
 1. What does Mailwoman do, and when should I use it?
 2. How do I parse, geocode, or integrate it?
 3. How does the system work at a useful technical level?
-4. What is the authoritative contract or operational procedure?
+4. What is the authoritative interface or operational procedure?
 
 This is an information-architecture and content-lifecycle change rather than a project to rewrite every document or erase the project's technical history.
 
@@ -37,14 +37,14 @@ Use the following books as process and pedagogical guides. They inform the struc
 
 ## Content model
 
-Every maintained public page must declare its role in frontmatter and obey its contract.
+Every maintained public page must declare its role in frontmatter and obey its interface.
 
 | Role        | Reader need                           | Time horizon            | Canonicality              | Required fields                          |
 | ----------- | ------------------------------------- | ----------------------- | ------------------------- | ---------------------------------------- |
 | `guide`     | accomplish a task                     | evergreen               | one preferred path        | audience, prerequisites, verified-with   |
 | `tutorial`  | learn by doing                        | evergreen but versioned | one learning journey      | audience, prerequisites, verified-with   |
 | `concept`   | understand a stable idea              | evergreen               | one explanatory home      | audience, source-of-truth, review-by     |
-| `reference` | look up a precise contract            | release-bound           | authoritative             | source-of-truth, generated-from or owner |
+| `reference` | look up a precise interface           | release-bound           | authoritative             | source-of-truth, generated-from or owner |
 | `decision`  | understand an active choice           | active until superseded | links to accepted outcome | status, owner, superseded-by when closed |
 | `evidence`  | inspect a result or historical record | immutable/datestamped   | cited by maintained pages | date, status, promoted-conclusions       |
 
@@ -58,7 +58,7 @@ The top-level switcher should lead with reader intent. Its final labels are a de
 Start here       fork page · status · installation · first parse · API overview
 Use Mailwoman    parse · geocode · browser · batch · privacy recipes
 Understand       system overview · parsing model · resolution · data · quality
-Reference        schemas · API contracts · architecture · runtime flags · data sources
+Reference        schemas · API interfaces · architecture · runtime flags · data sources
 Contribute       development · model work · operations · releases
 Archive          dated plans · evidence · research/retrospectives (where deliberately public)
 Legal            licensing · provenance · privacy · SBOM
@@ -91,7 +91,7 @@ Consolidate the maintained explanatory material into a small map. Existing pages
 | Data, locales, and coverage     | supported locale tiers, sources, coverage limits             | language support, data catalog, coverage material                            |
 | Quality and evaluation          | metrics, checks, calibration, known limits                   | eval discipline, input robustness, confidence pages; links to evidence       |
 | Training and model lifecycle    | corpus, training, export, release boundaries                 | corpus construction, training pipeline; links to contributor runbook         |
-| Geocode-first record matching   | matching model and its contract                              | existing matcher concepts                                                    |
+| Geocode-first record matching   | matching model and its interface                             | existing matcher concepts                                                    |
 | Compatibility and migration     | choosing/switching from other services                       | existing switching pages, `understanding/alternatives`                       |
 
 The map is an ownership proposal rather than an instruction to merge unrelated material blindly. A page survives separately when it serves a distinct reader question or a stable reference need.
@@ -112,14 +112,14 @@ Required outline:
 
 Each mechanism enters through its rule-parser analog before its statistical name, per the audience rules above: gazetteer lookup → FST prior, hand-written pattern → learned per-token emission, tie-breaking heuristics → Viterbi best path. A Pelias-literate reader should reach the end with their existing intuitions extended rather than replaced.
 
-Keep BiLSTMs as a brief historical comparison, if at all. Do not claim a shared multilingual model, learned CRF transitions, a model geometry, supported locales, or a data source without verifying it against the current implementation and the source-of-truth reference. Avoid generic title-case labels such as `HouseNumber` when the public contract uses a different spelling.
+Keep BiLSTMs as a brief historical comparison, if at all. Do not claim a shared multilingual model, learned CRF transitions, a model geometry, supported locales, or a data source without verifying it against the current implementation and the source-of-truth reference. Avoid generic title-case labels such as `HouseNumber` when the public interface uses a different spelling.
 
 ## Work plan
 
 ### Phase 0 — baseline and guardrails
 
 - [ ] Record a content inventory outside the evals/retrospectives scope: path, current sidebar, title, last substantive change, role, intended audience, owner, status, inbound links, and recommended action (`keep`, `rewrite`, `merge`, `archive`, `remove nav`).
-- [ ] Identify the canonical source for each reference claim: code-derived contract, schema, generated artifact, or named owning document.
+- [ ] Identify the canonical source for each reference claim: code-derived interface, schema, generated artifact, or named owning document.
 - [ ] Give `understanding/` (each of its five subtrees) and the `research/` blog explicit dispositions in the inventory.
 - [ ] Flag known stale claims for the inventory: `concepts/crf-decoder.mdx` (the CRF has been CE-only since v0.5.0 — no learned transitions ship) and any page implying a shared multilingual model (fr-fr ships the en-us weights).
 - [ ] Capture baseline measures: number of primary-nav entries, broken links, orphan pages, duplicate/near-duplicate titles, and the click paths for the four goal questions.
@@ -149,12 +149,12 @@ The navigation implementation already exists: the section switcher (`src/compone
 
 ### Phase 3 — reference and contributor boundaries
 
-- [ ] Separate generated/API contracts from explanatory prose. Generated data is generated during the docs build or linked to its generation source; it is not manually copied.
+- [ ] Separate generated/API interfaces from explanatory prose. Generated data is generated during the docs build or linked to its generation source; it is not manually copied.
 - [ ] Make `SCHEMA`, interfaces, architecture, runtime flags, data sources, operations, and release/runbook material discoverable from Reference or Contribute according to audience.
 - [ ] Mark active design records with status and successor links; do not present historical plans as current roadmap.
 - [ ] Add an explicit “current scope and roadmap” entry point that points to the maintained scope declaration rather than the plan directory.
 
-**Exit criteria:** a reader can distinguish an API/schema contract, an active decision, and a historical plan from page chrome and first screen.
+**Exit criteria:** a reader can distinguish an API/schema interface, an active decision, and a historical plan from page chrome and first screen.
 
 ### Phase 4 — prevent relapse
 

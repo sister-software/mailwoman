@@ -13,7 +13,7 @@
  *
  *   ```
  *   corpus-v<version>/
- *     MANIFEST.json
+ *     manifest.json
  *     train/
  *       part-0000.parquet
  *       part-0001.parquet
@@ -129,13 +129,13 @@ export async function writeParquetFile(rows: readonly ParquetRow[], path: PathBu
 		.build()
 
 	// parquet-wasm serializes key-value metadata through a hash map, whose order is not stable between writes.
-	// File identity and provenance live in MANIFEST.json, so omitting file metadata preserves deterministic bytes.
+	// File identity and provenance live in manifest.json, so omitting file metadata preserves deterministic bytes.
 	await writeLocalBuffer(writeParquet(wasmTable, properties), path)
 }
 
 /**
- * Per-file metadata captured in `MANIFEST.json`, one entry per `.parquet` file of a split. The `slices` key it sits
- * under is the wire contract the Python loader reads (`manifest_files` in `corpus_files.py`, with its pre-rename
+ * Per-file metadata captured in `manifest.json`, one entry per `.parquet` file of a split. The `slices` key it sits
+ * under is the wire interface the Python loader reads (`manifest_files` in `corpus_files.py`, with its pre-rename
  * fallback); every corpus on disk carries it, so the key name is not the writer's to change.
  */
 export interface ParquetFileDescriptor {

@@ -5,7 +5,7 @@
  *
  *   `mailwoman placer build-dataset` — assemble the coarse placer (#244) training dataset: the
  *   stratified per-country corpus/Overture sample (plain run), or `--outliers
- *   <exposure|latin|oa>` to append OTHER-class outlier-exposure rows (WOF non-Latin scripts,
+ *   <exposure|latin|oa>` to append other-class outlier-exposure rows (WOF non-Latin scripts,
  *   Overture Latin off-map, or OpenAddresses leave-one-family-out). Run the plain build first. the
  *   outlier builders append to its splits.
  */
@@ -22,7 +22,7 @@ import {
 export const description = "Assemble the coarse placer (#244) dataset (--outliers appends OTHER exposure)"
 
 /**
- * Native command-line contract consumed by the filesystem command router.
+ * Native command-line interface consumed by the filesystem command router.
  */
 export const spec = {
 	name: "build-dataset",

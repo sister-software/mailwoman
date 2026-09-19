@@ -5,7 +5,7 @@
  *
  *   `<MapCompass>` — the needle that appears when the map leaves north and fades out when it returns.
  *
- *   It is a compass ROSE, the way the reference map apps draw it: a ringed dial carrying a two-tone needle whose red
+ *   It is a compass rose, the way the reference map apps draw it: a ringed dial carrying a two-tone needle whose red
  *   half points north and whose pale half points south. A single-color arrow cannot say which end is north, so a
  *   reader has to already know the convention to read it. two tones say it outright. There is no `N` on the dial —
  *   at this size the letter and the needle's north tip want the same few pixels, and the tip is the clearer of them.
@@ -20,7 +20,7 @@
  *   Under `prefers-reduced-motion` it appears and disappears with no transition, and the dial still rotates —
  *   rotation is the information rather than decoration.
  *
- *   NODE-SAFE: pure React, no maplibre. The host reads the bearing off its own map and passes it in.
+ *   node-safe: pure React, no maplibre. The host reads the bearing off its own map and passes it in.
  */
 
 import type { ReactNode } from "react"

@@ -84,7 +84,7 @@ export function whitespaceTokenizer(): Tokenizer {
 const HAN = /\p{Script=Han}/u
 
 /**
- * Whitespace tokenizer for Latin runs, ONE TOKEN PER CHARACTER for Han runs.
+ * Whitespace tokenizer for Latin runs, one token PER character for Han runs.
  *
  * The CJK sibling model is character-level (CharCNN), so a per-character token is the unit it labels. the Latin tail of
  * a mixed row (`赵光三分场二十九队, Heilongjiang, China`) keeps the word tokens the Latin aligner has always used. Spans still

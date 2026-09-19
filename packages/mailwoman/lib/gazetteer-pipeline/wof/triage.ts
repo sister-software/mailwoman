@@ -3,7 +3,7 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   WOF currency triage — a REPORT over the admin gazetteer's non-current records, so a coverage hole
+ *   WOF currency triage — a report over the admin gazetteer's non-current records, so a coverage hole
  *   that upstream created is reviewable instead of invisible.
  *
  *   The motivating case (2026-08-19): `Rochester, Kent` — a ~28k cathedral city — resolved 474 km away
@@ -13,8 +13,8 @@
  *   `Rochester` and `Gillingham` were deprecated, and the replacement `Medway` localadmin is itself
  *   not current. Every record looks individually plausible. only the cluster is wrong.
  *
- *   THIS MODULE DECIDES NOTHING. It measures and reports, because the non-current population is a
- *   MIXTURE that no rule separates — measured over the shipped artifact:
+ *   this module decides nothing. It measures and reports, because the non-current population is a
+ *   mixture that no rule separates — measured over the shipped artifact:
  *
  *   - genuine ghost towns (`Treece`, Kansas — evacuated),
  *   - abolished administrative districts (`Shepway District` → Folkestone & Hythe, 2018),
@@ -46,7 +46,7 @@ import { resolvePath, type PathBuilderLike } from "path-ts"
 const TRIAGE_PLACETYPES = ["locality", "localadmin", "borough"] as const
 
 /**
- * Placetypes searched for a LIVE cover — wider than the subject bands on purpose. WOF's January 2019 GB batch demoted
+ * Placetypes searched for a live cover — wider than the subject bands on purpose. WOF's January 2019 GB batch demoted
  * cities out of the locality band while leaving a same-named county/region standing: `Swansea` (pop 300,352) is
  * reachable only as a principal area 6.1 km from the city, and bare `Newport` now races six live namesake localities
  * with the 161k Welsh city absent from the band. A cover in another band is a different fact from no cover at all, and
@@ -77,12 +77,12 @@ export const CurrencyClass = {
 export type CurrencyClass = (typeof CurrencyClass)[keyof typeof CurrencyClass]
 
 /**
- * Whether a LIVE record already serves this place, and by what evidence.
+ * Whether a live record already serves this place, and by what evidence.
  *
  * - `covered_exact` — a live record of the same folded name within {@link COVERAGE_RADIUS_KM}.
- * - `covered_containment` — a live neighbour whose name this one CONTAINS: `Town of Gilbert` over live `Gilbert`,
+ * - `covered_containment` — a live neighbour whose name this one contains: `Town of Gilbert` over live `Gilbert`,
  *   `Arrondissement de Lyon` over live `Lyon`. This verdict is what keeps the legal-form class out of the hole count —
- *   a same-NAME-STRING test alone called 21,010 US rows holes, and the samples were `Commonwealth of Pennsylvania` and
+ *   a same-name-string test alone called 21,010 US rows holes, and the samples were `Commonwealth of Pennsylvania` and
  *   `Town of Cary`. Directional: `Telford` inside live `Telford and Wrekin` is not a cover, because no query for
  *   Telford resolves through it.
  * - `covered_cross_band` — a live record of the same name nearby, but at a different placetype: the place answers at
@@ -104,8 +104,8 @@ export type CoverageVerdict = (typeof CoverageVerdict)[keyof typeof CoverageVerd
  */
 export interface TriageAttestation {
 	/**
-	 * `unmeasured` when no dump exists for the country: the pass could not look, which is not the same as looking and
-	 * finding nothing (the meaning-of-zero rule).
+	 * `unmeasured` when no dump exists for the country: the pass could not look. That differs from looking and finding
+	 * nothing (the meaning-of-zero rule).
 	 */
 	state: "attested" | "unattested" | "unmeasured"
 	population?: number
@@ -195,10 +195,10 @@ interface LiveRecord {
 
 /**
  * The shared fold for this pass: diacritic-stripped, lower-cased, whitespace-collapsed. Deliberately not
- * `normalizeLocalityForKey` — that is the RESOLVER's key discipline, and importing it here would tie a reporting pass
- * to a runtime contract it must be free to outlive. And deliberately not `@mailwoman/normalize`'s `stripCombiningMarks`
- * either (NFD, no case/space fold): this fold decomposes under NFKD, so compatibility forms fold too, and the triage
- * artifact was built under it.
+ * `normalizeLocalityForKey` — that is the resolver's key discipline, and importing it here would tie a reporting pass
+ * to a runtime interface it must be free to outlive. And deliberately not `@mailwoman/normalize`'s
+ * `stripCombiningMarks` either (NFD, no case/space fold): this fold decomposes under nfkd, so compatibility forms fold
+ * too, and the triage artifact was built under it.
  */
 function fold(value: string): string {
 	return value
@@ -242,7 +242,7 @@ function judgeCoverage(
 			continue
 		}
 
-		// DIRECTIONAL, and the direction is the whole point: the dead name must CONTAIN a live one, because
+		// directional, and the direction is the whole point: the dead name must contain a live one, because
 		// then the place is reachable by the shorter name people type (`Town of Gilbert` over live `Gilbert`).
 		// The reverse is not a cover — `Telford` sits inside live `Telford and Wrekin`, and nothing answers a
 		// query for Telford. An empty live key would `includes()`-match everything, so it never participates.

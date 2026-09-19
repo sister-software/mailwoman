@@ -1,6 +1,6 @@
 # Docs Reorganization Implementation Plan
 
-> **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
+> **For agentic workers:** required sub-skill: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
 **Goal:** Replace the ~400-page docs site with a fresh ~85-page three-audience site (Ory-style top level), plus the CLI commands that make every documented path true.
 
@@ -24,7 +24,7 @@
 ## Phase overview
 
 ```
-Phase 0  toolchain: Vale + frontmatter contract + structure check      (tasks 1–2)
+Phase 0  toolchain: Vale + frontmatter interface + structure check      (tasks 1–2)
 Phase 1  tree surgery: internal material out, skeleton cutover        (tasks 3–5)
 Phase 2  CLI: data pull, drop-in cold start, Claude skill             (tasks 6–8)
 Phase 3  content, door by door, tutorials executed                    (tasks 9–22)
@@ -72,7 +72,7 @@ BlockIgnores = (?s)(```.*?```), (?s)(<details>.*?</details>)
 - [ ] **Step 5: CI wiring.** In `docs-build.yml` PR path-filtered job, add step "Prose lint" running `yarn workspace @mailwoman/docs lint:prose` after install, before build. (Corpus is old prose until Phase 3 — scope the step to `git diff --name-only origin/main... -- 'docs/articles/**/*.md*'` changed files until Task 23 flips it to full-corpus.)
 - [ ] **Step 6: Commit** `feat(docs): Vale prose toolchain with Mailwoman style rules`.
 
-### Task 2: Frontmatter contract + structure check rewrite
+### Task 2: Frontmatter interface + structure check rewrite
 
 **Files:**
 
@@ -86,7 +86,7 @@ BlockIgnores = (?s)(```.*?```), (?s)(<details>.*?</details>)
 - [ ] **Step 1: Write failing tests** for `validatePage`: missing role → error; bad role value → error; tutorial without `verified-with` → error; reference without `source-of-truth` → error; landing without `audience` → error; valid page → `[]`.
 - [ ] **Step 2: Rewrite the check.** Replace the `ROLE_REQUIRED_PAGES` hardcoded-path array with every-page enforcement; keep sidebar-orphan and duplicate-title checks as-is; empty the allowlist (old entries reference pages that will be gone).
 - [ ] **Step 3: Run tests** (`yarn workspace @mailwoman/docs vitest run scripts/`) → green. The full check will fail against the old tree — acceptable: wire the strict mode behind `--strict` flag; CI keeps legacy mode until Task 5 flips `docs-build.yml` to `--strict`.
-- [ ] **Step 4: Commit** `feat(docs): every-page frontmatter contract in the structure check`.
+- [ ] **Step 4: Commit** `feat(docs): every-page frontmatter interface in the structure check`.
 
 ### Task 25: Writing-system derivation (execution order: after Task 2, before Task 5)
 
@@ -101,13 +101,13 @@ BlockIgnores = (?s)(```.*?```), (?s)(<details>.*?</details>)
 - Produces: the voice authority every Phase 3 task drafts against, and the updated Vale rules that mechanically enforce it. Phase 3 dispatches carry `docs/engineering/writing-system.md` + the relevant template as required reading.
 
 - [ ] **Step 1: Field survey.** For each contemporary — Google Maps Platform (developers.google.com/maps), Mapbox (docs.mapbox.com), Geocode.earth (geocode.earth + their docs), Jawg (jawg.io docs), Felt (felt.com/docs, felt.com blog) — capture against a fixed rubric: document types offered; register per type (second person? contractions? humor?); sentence length norms; how errors/limits are admitted; terminology discipline (one term per concept?); code-example conventions; what makes their docs pleasant or painful. Record concrete quoted examples (short, cited by URL) in the comparison record.
-- [ ] **Step 2: Selection matrix.** For each standards-draft entry (STE100, Diátaxis, ISO 19100, UPU S42, RFC 7322, Microsoft, Google style, OS, USBGN): adopt / adapt / reject, each with a one-sentence justification grounded in the field survey or the codebase's existing contract vocabulary. The matrix lives in `writing-system.md`.
+- [ ] **Step 2: Selection matrix.** For each standards-draft entry (STE100, Diátaxis, ISO 19100, UPU S42, RFC 7322, Microsoft, Google style, OS, USBGN): adopt / adapt / reject, each with a one-sentence justification grounded in the field survey or the codebase's existing interface vocabulary. The matrix lives in `writing-system.md`.
 - [ ] **Step 3: Write the system.** Voice rules per Diátaxis role (register, person, tense, example discipline), terminology policy (canonical-term table seeded from the codebase + adopted standards), number/measurement policy, the banned-pattern list (superset of Task 1's rules), and the machine-writing-tells audit checklist writers run before commit.
 - [ ] **Step 4: Sync Vale.** Update rule files to match the derived system exactly (add/remove terms; severities). Fixture check (`check-vale-rules.sh`) updated + green.
 - [ ] **Step 5: Templates.** One per role: frontmatter skeleton, section order, opening-move guidance, and a short exemplar paragraph written in the derived voice.
 - [ ] **Step 6: Commit** `docs(engineering): derived writing system + templates; Vale rules synced`.
 
-### Task 3: Move active internal contracts to `docs/engineering/`
+### Task 3: Move active internal interfaces to `docs/engineering/`
 
 **Files:**
 
@@ -120,7 +120,7 @@ BlockIgnores = (?s)(```.*?```), (?s)(<details>.*?</details>)
 
 - [ ] **Step 1:** `git mv` the files. `grep -rn "articles/plan" --include="*.{ts,tsx,md,mdx,yml,json}" .` (repo root, excluding `docs/records`, `docs/build`, `node_modules`) and fix every hit: AGENTS.md, workflow path filters, sidebars (removal happens in Task 5 — for now delete the moved ids from `sidebars.ts` `reference`/`contribute`/`archive` lists so the build stays green), any code imports of `eval-ledger.schema.json` (it lives in `plan/reference/` — keep its new path wired).
 - [ ] **Step 2:** `yarn workspace @mailwoman/docs build` → green. `mailwoman eval check --help` smoke (ledger schema path) → green.
-- [ ] **Step 3: Commit** `refactor(docs): move active internal contracts out of the published tree`.
+- [ ] **Step 3: Commit** `refactor(docs): move active internal interfaces out of the published tree`.
 
 ### Task 4: Park raw records; retire path-shaped exclusions
 
@@ -150,7 +150,7 @@ BlockIgnores = (?s)(```.*?```), (?s)(<details>.*?</details>)
 - Produces: the six-door frame every Phase 3 task hangs pages on. Sidebar ids: `product`, `solutions`, `resources`, `developers`, `about`, `pricing` — Phase 3 tasks add doc ids to these lists.
 
 - [ ] **Step 1:** Park the old tree under `docs/records/site-2026-08/`.
-- [ ] **Step 2:** Write the nine seed pages (real content rather than stubs — these are the Get-started trio, Status, Support, About trio, Pricing; briefs in Tasks 9/22; write them to final quality now, they are the minimum viable site). Colleague voice; frontmatter per contract; every claim checked against `mailwoman/` source or `package.json` versions.
+- [ ] **Step 2:** Write the nine seed pages (real content rather than stubs — these are the Get-started trio, Status, Support, About trio, Pricing; briefs in Tasks 9/22; write them to final quality now, they are the minimum viable site). Colleague voice; frontmatter per interface; every claim checked against `mailwoman/` source or `package.json` versions.
 - [ ] **Step 3:** Rebuild nav: sidebars + sections + navbar + footer + front page. Front page fork: "Build with it" → Get started · "Make the case for it" → Solutions · "See the proof" → Benchmarks. Demo button prominent.
 - [ ] **Step 4:** `yarn workspace @mailwoman/docs build` green; structure check `--strict` green; `yarn workspace @mailwoman/docs lint:prose` green on the new pages. Screenshot via run-docs skill; eyeball nav and front page.
 - [ ] **Step 5: Commit** `feat(docs)!: six-door site skeleton; old tree parked under records`.
@@ -184,7 +184,7 @@ BlockIgnores = (?s)(```.*?```), (?s)(<details>.*?</details>)
 **Interfaces:**
 
 - Consumes: Task 6's `data pull`.
-- Produces: each of the three serves starts cold from exactly the command sequence the docs will print, or exits with a doctor-grade message naming the `data pull` fix. The verified sequences (recorded in the test) are the contract Tasks 10–11 document.
+- Produces: each of the three serves starts cold from exactly the command sequence the docs will print, or exits with a doctor-grade message naming the `data pull` fix. The verified sequences (recorded in the test) are the interface Tasks 10–11 document.
 
 - [ ] **Step 1:** In a temp `MAILWOMAN_DATA_ROOT`, run each compiled serve cold; record every failure verbatim (prior cold-start testing found a crash + a phantom `--data` flag in the photon README).
 - [ ] **Step 2:** Failing test encoding the desired operation: with no data → exit non-zero, stderr contains `mailwoman data pull`; after `data pull candidate` (+ whatever the engine floor needs) → HTTP 200 on the health route within 30 s.
@@ -261,9 +261,9 @@ Per-page briefs (each: colleague voice, starts-and-destinations opener, every co
 **Files:** Create `developers/reference/{library-api,cli,http-apis,component-tags,packages,runtime-flags,locales-and-tiers,footprints}.mdx`; Create `docs/scripts/generate-cli-reference.ts`.
 
 - _cli_ is generated: walk `mailwoman/commands/**` Pastel modules (they export `options` zod schemas + descriptions), emit MDX tables; wire into `prebuild` beside the OpenAPI emit. `source-of-truth: generated — docs/scripts/generate-cli-reference.ts`.
-- _http-apis_ wraps the four existing OpenAPI emits. _component-tags_ renders from the schema source (`docs/engineering/reference/SCHEMA.mdx` stays the contract; the public page derives and links). _packages_ is the curated 40-workspace table (from AGENTS.md, consumer-relevant subset). _runtime-flags_ from the SCOPE flag register. _locales-and-tiers_ states tier-1 locales + eval checks. _footprints_ carries the measured artifact sizes (30.5 MB model etc. — re-measure at head, don't copy).
+- _http-apis_ wraps the four existing OpenAPI emits. _component-tags_ renders from the schema source (`docs/engineering/reference/SCHEMA.mdx` stays the interface; the public page derives and links). _packages_ is the curated 40-workspace table (from AGENTS.md, consumer-relevant subset). _runtime-flags_ from the SCOPE flag register. _locales-and-tiers_ states tier-1 locales + eval checks. _footprints_ carries the measured artifact sizes (30.5 MB model etc. — re-measure at head, don't copy).
 - Controlled register throughout; STE100 rules; no narrative.
-- [ ] Generator with a vitest snapshot test → pages → build → **Commit** `docs(reference): the eight contracts, CLI generated`.
+- [ ] Generator with a vitest snapshot test → pages → build → **Commit** `docs(reference): the eight interfaces, CLI generated`.
 
 ### Task 16: Knowledge base — Postal systems shelf
 

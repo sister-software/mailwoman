@@ -163,7 +163,7 @@ export const BroadbandDataCollectionLayers: BDCLayerSpecificationInput[] = [
 		"source-layer": `bdc_${TIGERLevel.Block}`,
 		source: BDCTileSetID,
 		type: "line",
-		// filter: [">=", ["get", "ALAND"], 0],
+		// filter: [">=", ["get", "aland"], 0],
 		minzoom: 9,
 		paint: {
 			"line-color": "#000",

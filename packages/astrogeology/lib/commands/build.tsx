@@ -4,7 +4,7 @@
  * @author Teffen Ellis, et al.
  *
  *   `astrogeology build --body <moon|mars> [--max-zoom 6] [--out <dir>]` — the whole chain for one body over its
- *   locked sources: rows → features → NDJSON → tippecanoe → metadata. DEM → hillshade → metadata. the search artifact.
+ *   locked sources: rows → features → ndjson → tippecanoe → metadata. DEM → hillshade → metadata. the search artifact.
  *   the manifest. Refuses when the lock lacks a source: the build reads pins, never the network.
  */
 
@@ -35,7 +35,7 @@ import { downloadPinned, readLock } from "#sdk/fetch"
 import { type PlanetarySource, sourceFor } from "#sdk/sources"
 
 /**
- * The command's contract, in the shape mailwoman's filesystem router reads.
+ * The command's interface, in the shape mailwoman's filesystem router reads.
  */
 export const spec = {
 	name: "build",

@@ -6,7 +6,7 @@ completeness check. An interruption mid-save (the exact crash-and-resume loop th
 promises to survive) therefore leaves a partial directory that the next ``--resume auto``
 loads.
 
-Contract pinned here (the repair): a checkpoint directory named ``step-*`` is either
+Interface pinned here (the repair): a checkpoint directory named ``step-*`` is either
 complete or absent. Writes go to a temp name the ``step-*`` glob cannot see, then rename
 into place after everything (``training_state.json`` last) is written. the completeness
 marker for discovery is the presence of ``training_state.json`` — which every durable

@@ -10,10 +10,10 @@ look.
 produced them are mid-flight, and a finding here is a description of one build rather than a verdict on a design.
 Specifically:
 
-| Artifact                       | Identity                                       | Note                                                                                                  |
-| ------------------------------ | ---------------------------------------------- | ----------------------------------------------------------------------------------------------------- |
-| `wof/admin-global-priority.db` | built 2026-08-04                               | carries **no `layer_manifest`** — it predates the contract, so it cannot say which recipe produced it |
-| `wof/candidate.db`             | symlink → `candidate-global-2026-08-15-icu.db` | also unmanifested; the `-icu` suffix suggests an in-progress fold change                              |
+| Artifact                       | Identity                                       | Note                                                                                                   |
+| ------------------------------ | ---------------------------------------------- | ------------------------------------------------------------------------------------------------------ |
+| `wof/admin-global-priority.db` | built 2026-08-04                               | carries **no `layer_manifest`** — it predates the interface, so it cannot say which recipe produced it |
+| `wof/candidate.db`             | symlink → `candidate-global-2026-08-15-icu.db` | also unmanifested; the `-icu` suffix suggests an in-progress fold change                               |
 
 Neither artifact can state its own provenance, which is the exact gap phase 3 closes going forward. So
 where this document says "the gazetteer does X", read it as "this build does X" — a rebuild may already
@@ -73,7 +73,7 @@ competing places. With `neg_rank` equal to the bit, their order fell out of the 
 ### Root cause, and a correction to my own first answer
 
 I initially reported this as a WOF data property. **It is not.** Both ids are ≥ 8e12, which is
-`OVERTURE_ID_BASE` — Turkey has no WOF repo cloned, so it is served by the Overture `divisions` backfill.
+`OVERTURE_ID_BASE` — Turkey has no WOF repo cloned. Therefore, it is served by the Overture `divisions` backfill.
 `fold-overture.ts` copies `d.population` per row with no parent→child propagation, so the duplication
 arrived from Overture's own data.
 

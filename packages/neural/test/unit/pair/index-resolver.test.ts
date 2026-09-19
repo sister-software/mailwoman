@@ -30,7 +30,7 @@ const HEADER: PairIndexHeaderInput = {
 }
 
 /**
- * What the serializer emits for {@link HEADER}: the input fields plus the two format-owned fields the serializer stamps
+ * What the serializer emits for {@link header}: the input fields plus the two format-owned fields the serializer stamps
  * itself — `schemaVersion: 3` and the embedded tag table (see the tagTable describe block below).
  */
 const HEADER_AS_WRITTEN: PairIndexHeader = { ...HEADER, schemaVersion: 3, tagTable: [...COMPONENT_TAGS] }
@@ -38,7 +38,7 @@ const HEADER_AS_WRITTEN: PairIndexHeader = { ...HEADER, schemaVersion: 3, tagTab
 /**
  * Hand-build a PIX1 binary independent of `serializePairIndex`, so tests can express states the serializer refuses to
  * produce (legacy headers without `tagTable`, foreign tag tables, out-of-range indices, records missing the schema-3
- * parent byte) — and so the layout-conformance block below checks the serializer against the DOCUMENTED format
+ * parent byte) — and so the layout-conformance block below checks the serializer against the documented format
  * (docs/engineering/reference/pix1.ksy) rather than against itself.
  *
  * `records` are `[child, parent, tagIdx, parentTagIdx]`. Passing `parentTagIdx: undefined` writes the schema-2 record
@@ -103,7 +103,7 @@ const ENTRIES: PairIndexEntry[] = [
 ]
 
 /**
- * The edge a probe hit returns for each of {@link ENTRIES} — the whole typed edge rather than half of it (schema 3).
+ * The edge a probe hit returns for each of {@link entries} — the whole typed edge rather than half of it (schema 3).
  */
 const DEP_LOC_UNDER_LOCALITY = { tag: "dependent_locality", parentTag: "locality" }
 const LOCALITY_UNDER_REGION = { tag: "locality", parentTag: "region" }
@@ -234,7 +234,7 @@ describe("transitionBeta header field (TRANSITION-BETA build)", () => {
 	})
 
 	it("old-binary compat: a header WITHOUT the field reads back transitionBeta === undefined", () => {
-		// HEADER carries no transitionBeta, so the emitted header JSON has no such key at all (not
+		// header carries no transitionBeta, so the emitted header JSON has no such key at all (not
 		// null/0) — the same absence an artifact built before the field existed carries. (Since the
 		// tagTable build the serializer is no longer byte-identical to pre-field artifacts. the true
 		// legacy-binary path is exercised with hand-built bytes in the tagTable describe block.)
@@ -245,7 +245,7 @@ describe("transitionBeta header field (TRANSITION-BETA build)", () => {
 		expect(peekPairIndexHeader(bytes).transitionBeta).toBeUndefined()
 		expect("transitionBeta" in r.header).toBe(false)
 		// transitionBeta stays absence-tolerant within a schema — optional fields ride on the JSON header without
-		// version bumps. only the RECORD-shaping fields (the tag table, the parent byte) are version-conditional.
+		// version bumps. only the record-shaping fields (the tag table, the parent byte) are version-conditional.
 		expect(r.header.schemaVersion).toBe(3)
 	})
 })
@@ -262,7 +262,7 @@ describe("parentDelta header field (whole-edge default-on, #46)", () => {
 	})
 
 	it("absence-tolerant: a header WITHOUT the field reads back parentDelta === undefined", () => {
-		// Absent means "no parent bias", not "0" — the same absence contract transitionBeta carries, and the
+		// Absent means "no parent bias", not "0" — the same absence interface transitionBeta carries, and the
 		// one de/in/es/it artifacts ship under (unmeasured locales, per-locale check).
 		const bytes = serializePairIndex(HEADER, ENTRIES)
 		const r = new PairIndexResolver(bytes)
@@ -384,7 +384,7 @@ describe("parentTag record field (schemaVersion 3 — the typed parent)", () => 
 
 	it("carries a parent tag the containment map would NOT have derived", () => {
 		// `WESTERN_PARENT_OF.dependent_locality` is `["locality"]`. The US borough source legitimately
-		// emits a dependent_locality UNDER a borough (also dependent_locality) — a derived parent tag
+		// emits a dependent_locality under a borough (also dependent_locality) — a derived parent tag
 		// could never say that. a recorded one can.
 		const r = resolver([
 			{ child: "park slope", parent: "brooklyn", tag: "dependent_locality", parentTag: "dependent_locality" },
@@ -442,7 +442,7 @@ describe("PIX1 layout conformance (docs/engineering/reference/pix1.ksy)", () => 
 		const view = new DataView(bytes.buffer, bytes.byteOffset, bytes.byteLength)
 		const decoder = new TextDecoder()
 
-		// magic: the ASCII bytes "PIX1"
+		// magic: the ascii bytes "PIX1"
 		expect(decoder.decode(bytes.subarray(0, 4))).toBe("PIX1")
 
 		// header_len: u4le, then header_json: UTF-8 JSON of exactly that many bytes

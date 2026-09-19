@@ -1,15 +1,15 @@
 # v0.7.2 — intersection retrain v2 (bare-format recipe output).
 #
-# v0.7.1 PROVED the coverage hypothesis: the model went from never emitting
+# v0.7.1 proved the coverage hypothesis: the model went from never emitting
 # intersection_a/b (~0.0001 prob) to confidently + correctly parsing them (0.99)
-# — BUT only on the format it trained on. The v0.7.1 synth recipe always appended
+# — but only on the format it trained on. The v0.7.1 synth recipe always appended
 # a ", City, ST" tail, so the model learned "intersection followed by a locality"
 # and fumbled the harness's bare "X & Y" cases (mislabeling the second street as a
 # locality). It had also never seen the "@" connector. Harness intersections moved
 # 0/65 → 4/65 (functionally much better than that number. metric under-reported).
 #
-# SINGLE VARIABLE vs v0_7_1-intersection.yaml: the `synth-intersection` recipe output
-# (part-intersection.parquet on the volume) is regenerated to ~58% BARE (no tail) +
+# single variable vs v0_7_1-intersection.yaml: the `synth-intersection` recipe output
+# (part-intersection.parquet on the volume) is regenerated to ~58% bare (no tail) +
 # the "@" connector + more connector variety. Weight held at 0.2 (the model already
 # learned intersections at 0.2 — format was the gap rather than weight. and 0.2 keeps the
 # synthesis-as-supplement discipline of weight < 0.25). New output_dir so v0.7.1's
@@ -38,7 +38,7 @@ data:
     usgov-hrsa-fqhc: 2.0
     usgov-imls-pls: 2.0
     usgov-nad: 1.0
-    state-ia-contractors: 2.0
+    state-ia-builders: 2.0
     state-tx-notaries: 1.5
     state-ny-notaries: 2.0
     deepseek-kryptonite: 3.0

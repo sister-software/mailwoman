@@ -26,7 +26,7 @@ const ADMIN_DB = $public.MAILWOMAN_WOF_ADMIN_DB
 const POLYGONS_DB = $public.MAILWOMAN_WOF_POLYGONS_DB
 
 /**
- * Strip ANSI escape sequences + ink spinner frames so the JSON parser can consume CLI stdout.
+ * Strip ansi escape sequences + ink spinner frames so the JSON parser can consume CLI stdout.
  */
 function stripAnsiSpinner(stdout: string): string {
 	const ansi = /\[[0-9;]*[a-zA-Z]/gu

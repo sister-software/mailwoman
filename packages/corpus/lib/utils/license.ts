@@ -6,12 +6,12 @@
  *   Corpus licensing — the single source of truth for the training-data license policy (#26).
  *
  *   Posture (operator, 2026-06-19): **exclusion is a deliberate act rather than a silent default.** The
- *   build INCLUDES every row an adapter yields (stamping its `license`); a build that needs a clean
+ *   build includes every row an adapter yields (stamping its `license`); a build that needs a clean
  *   license set — e.g. the proprietary `@mailwoman/neural-weights-*` weights, which must not
- *   inherit a share-alike obligation — PURPOSELY excludes kinds via `buildCorpus({ excludeLicenses
+ *   inherit a share-alike obligation — purposely excludes kinds via `buildCorpus({ excludeLicenses
  *   })` (CLI `--exclude-licenses` / `--exclude-share-alike`). Nothing is dropped on a license
  *   string unless the operator named it. This avoids the trap of silently dropping allowed data
- *   mis-stamped with a conservative license (e.g. BAN, which is dual-licensed Licence Ouverte OR
+ *   mis-stamped with a conservative license (e.g. BAN, which is dual-licensed Licence Ouverte or
  *   ODbL — we elect Licence Ouverte. a default-deny on the old `ODbL` stamp would have wrongly
  *   dropped 48M allowed rows).
  *
@@ -30,7 +30,7 @@ export const SHARE_ALIKE_PATTERN = /^ODbL|^Open Database License|^CC-BY-SA|^CC-S
 
 /**
  * Compile a `--exclude-licenses` spec (comma-separated, e.g. `"ODbL,CC-BY-SA"`) into anchored, case-insensitive prefix
- * patterns. Each entry matches a license string that STARTS with it, so `CC-BY-SA` catches `CC-BY-SA-3.0`,
+ * patterns. Each entry matches a license string that starts with it, so `CC-BY-SA` catches `CC-BY-SA-3.0`,
  * `CC-BY-SA-4.0`, etc. Regex metacharacters are escaped — the spec is a literal license prefix rather than a
  * user-supplied regex.
  */

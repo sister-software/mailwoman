@@ -18,7 +18,7 @@
  *   - {@link JP_ADMIN_SUFFIXES} — the kanji that close an administrative-area name (都/道/府/県 at the
  *       prefecture level, then 市/区/郡/町/村 for city / ward / district / town / village). These are
  *       the Japanese equivalent of a US street suffix in the parsing sense: the token-final marker
- *       that tells you what KIND of unit the preceding name is.
+ *       that tells you what kind of unit the preceding name is.
  *   - {@link JP_BLOCK_MARKERS} — the markers that close the numbered tail (丁目 / 番地 / 番 / 号), the part
  *       that actually does the "house number" job in the absence of streets.
  *

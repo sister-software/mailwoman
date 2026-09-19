@@ -3,7 +3,7 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   The classifier contract the geocode cascade consumes, and the two helpers every geocode entry runs first: which
+ *   The classifier interface the geocode cascade consumes, and the two helpers every geocode entry runs first: which
  *   classifier will read this input (a script-routed one answers the character-path family for a kanji or Hangul
  *   line), and the normalizer call whose postal-mark decision must follow that classifier's encoder. They live
  *   together so the three geocode entries cannot disagree about either.

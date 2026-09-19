@@ -4,7 +4,7 @@
  * @author Teffen Ellis, et al.
  *
  *   Tests for the #727 phase-4c street-name-evidence rerank policy (`street-evidence.ts`). Covers the
- *   fold contract, the G1 type-vocabulary guard, and the v2 pick policy's four cases (keep / fix /
+ *   fold interface, the G1 type-vocabulary guard, and the v2 pick policy's four cases (keep / fix /
  *   G1-skip / G2-cap / fail-open) that the FR fragment board measured at 96 fixes / 3 breaks.
  */
 
@@ -37,7 +37,7 @@ describe("foldStreetSurface", () => {
 		expect(foldStreetSurface("  Chemin   de la  Grenouillère ")).toBe("chemin de la grenouillere")
 	})
 
-	test("normalizes hyphens and apostrophes to spaces (the fold contract — the v1 break class)", () => {
+	test("normalizes hyphens and apostrophes to spaces (the fold interface — the v1 break class)", () => {
 		expect(foldStreetSurface("Rue Pillet-Will")).toBe("rue pillet will")
 		expect(foldStreetSurface("Chemin d'En Galinier")).toBe("chemin d en galinier")
 		// A hyphenated index entry and an un-hyphenated one fold to the same key.

@@ -158,7 +158,7 @@ describe("resolveTree + adminCoherence (#263)", () => {
 	})
 
 	it("ignores fuzzy (non-exact) region candidates — a Portland under Missouri must NOT match the token 'ME'", async () => {
-		// Place a Portland under Missouri (the fuzzy runner-up). Since MISSOURI.exactMatch is false, the
+		// Place a Portland under Missouri (the fuzzy runner-up). Since missouri.exactMatch is false, the
 		// pass must not consider it, so no re-pick to Missouri.
 		const PORTLAND_MO: ResolvedPlace = { ...PORTLAND_ME, id: 31, parent_id: 30, lat: 37, lon: -93 }
 		const resolver = createWOFResolver(await makeBackend([MESSINA, MISSOURI, PORTLAND_MO]))
@@ -169,7 +169,7 @@ describe("resolveTree + adminCoherence (#263)", () => {
 	})
 
 	it("falls through to a same-named COUNTRY when no region holds the locality (#267 — Tbilisi, Georgia)", async () => {
-		// "Georgia" the US state vs Georgia the country. Tbilisi descends from the COUNTRY, Atlanta from the state.
+		// "Georgia" the US state vs Georgia the country. Tbilisi descends from the country, Atlanta from the state.
 		const usGeorgia = {
 			id: 40,
 			name: "Georgia",
@@ -245,7 +245,7 @@ describe("resolveTree + adminCoherence (#263)", () => {
 		// The 2026-07-07 admin rebuild (#1015) flattened Georgia to localities-only: no `country`-placetype
 		// node, and Tbilisi orphaned (parent_id -1). So both the country-node lookup and the `parentID`
 		// descendant test miss it — the exact shape that regressed "Tbilisi, Georgia" → US Georgia (10,200 km).
-		// matchCountry("Georgia") → GE lets the fall-through scope by the `country` COLUMN, which is still set.
+		// matchCountry("Georgia") → GE lets the fall-through scope by the `country` column, which is still set.
 		const usGeorgia = {
 			id: 40,
 			name: "Georgia",

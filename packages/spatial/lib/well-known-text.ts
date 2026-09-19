@@ -11,7 +11,7 @@ import wkx from "wkx"
 import type { GeometryCollection, GeometryLiteral } from "#index"
 
 /**
- * Given an extended Well-Known Binary (EWKB) buffer, parse it into a GeoJSON geometry object.
+ * Given an extended Well-Known Binary (ewkb) buffer, parse it into a GeoJSON geometry object.
  *
  * @category Geo
  */
@@ -34,40 +34,40 @@ export function wellKnownGeometryToGeoJSON<T = GeometryLiteral>(input: Buffer | 
 }
 
 /**
- * Given a GeoJSON geometry object, convert it to an well-known binary (EWKB) buffer.
+ * Given a GeoJSON geometry object, convert it to an well-known binary (ewkb) buffer.
  *
  * @category Geo
  *
- * @returns A hex-encoded EWKB string or WKB buffer.
+ * @returns A hex-encoded ewkb string or WKB buffer.
  */
 export function geometryToWKB(geometry: GeometryLiteral | GeometryCollection) {
 	return wkx.Geometry.parseGeoJSON(geometry).toWkb()
 }
 
 /**
- * Given a GeoJSON geometry object, convert it to an extended well-known binary (EWKB) buffer.
+ * Given a GeoJSON geometry object, convert it to an extended well-known binary (ewkb) buffer.
  *
  * @category Geo
  *
- * @returns A buffer representing the EWKB.
+ * @returns A buffer representing the ewkb.
  */
 export function geometryToEWKB(geometry: GeometryLiteral | GeometryCollection) {
 	return wkx.Geometry.parseGeoJSON(geometry).toEwkb()
 }
 
 /**
- * Given a GeoJSON geometry object, convert it to an extended well-known binary (EWKB) buffer.
+ * Given a GeoJSON geometry object, convert it to an extended well-known binary (ewkb) buffer.
  *
  * @category Geo
  *
- * @returns A hex-encoded string representing the EWKB.
+ * @returns A hex-encoded string representing the ewkb.
  */
 export function geometryToEWKH(geometry: GeometryLiteral | GeometryCollection) {
 	return geometryToEWKB(geometry).toString("hex")
 }
 
 /**
- * Given a GeoJSON geometry object, convert it to an extended well-known text (EWKT) string.
+ * Given a GeoJSON geometry object, convert it to an extended well-known text (ewkt) string.
  *
  * @category Geo
  */

@@ -35,9 +35,9 @@ describe("toMapHTML", () => {
 		expect(html).toContain("maplibre-gl@5.24.0/dist/maplibre-gl.js")
 		expect(html).toContain('integrity="sha384-')
 		expect(html).not.toMatch(/leaflet/i)
-		// The house Protomaps basemap-v4 vector source (CORS-aware tile-worker), not a raster tile URL.
+		// The house Protomaps basemap-v4 vector source (cors-aware tile-worker), not a raster tile URL.
 		expect(html).toContain("https://tiles.mailwoman.ai/basemap-v4.json")
-		// Glyphs + sprite from the CORS-enabled upstream Protomaps assets (house mirror isn't CORS-routed).
+		// Glyphs + sprite from the cors-enabled upstream Protomaps assets (house mirror isn't cors-routed).
 		expect(html).toContain("protomaps.github.io/basemaps-assets/fonts")
 		expect(html).toContain("protomaps.github.io/basemaps-assets/sprites/v4/light")
 		expect(html).not.toMatch(/tile\.openstreetmap\.org|raster/)

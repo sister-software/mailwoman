@@ -1,6 +1,6 @@
 # Hono API surface, Phase 4b: the cutover — Implementation Plan
 
-> **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
+> **For agentic workers:** required sub-skill: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
 **Goal:** Reduce `mailwoman serve` over to `@mailwoman/api` with a fully wired engine, delete `mailwoman/server/` and the last express dependency, repoint the RemoteResolver protocol to `/v1/resolve`, re-stamp the three drop-in documents with full info (redocly-clean), and true up the docs (AGENTS.md workspace table, spec amendments).
 

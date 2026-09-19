@@ -143,7 +143,7 @@ class CoarseEncoderChannels(CoarseEncoderState):
                 anchor_confidence = torch.zeros(bsz, seq, dtype=h.dtype, device=h.device)
             if self.inject_first_token:
                 # Dual-injection (#327, v0.9.4): also inject the pooled anchor at position 0 — an
-                # order-INDEPENDENT global cue the locality can attend back to regardless of where the
+                # order-independent global cue the locality can attend back to regardless of where the
                 # postcode sits. Pool each sequence by its max-confidence token (the postcode span) via
                 # gather (ONNX-clean), scale by that confidence so an all-zero (no-anchor) sequence stays
                 # the exact c=0 identity, and add it only at position 0 (functional cat, no in-place).

@@ -137,7 +137,7 @@ export function alignRow(row: CanonicalRow, opts: AlignOptions = {}): AlignmentR
 		// yielding a span past the end. An out-of-bounds offset can never be a valid char span —
 		// quarantine the row rather than crash assertSpanInvariants and take down a multi-hour build.
 		// (If this class proves large in the quarantine report, locateSpan's boundary logic needs a
-		// combining-mark fix to KEEP these non-Latin rows.)
+		// combining-mark fix to keep these non-Latin rows.)
 		if (span.start < 0 || span.end > raw.length || span.start >= span.end) {
 			return {
 				kind: "quarantined",
@@ -230,7 +230,7 @@ function locateSpan(args: {
 
 	if (!needle.length) return undefined
 
-	// Pass 1: verbatim substring. Word-boundary-aligned matches are PREFERRED over intra-word ones
+	// Pass 1: verbatim substring. Word-boundary-aligned matches are preferred over intra-word ones
 	// — leftmost-substring alone let a short value claim the inside of an earlier word (region "AK"
 	// matched inside "Umak"/"Lake", scrambling every later span. caught by the v0.5.0 pilot build).
 	// Intra-word matches stay allowed as the fallback because they are essential for affix

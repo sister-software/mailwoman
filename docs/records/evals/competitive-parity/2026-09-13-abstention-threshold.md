@@ -203,7 +203,7 @@ it was fixed ([#2265](https://github.com/sister-software/mailwoman/issues/2265))
 **What the defect was.** `applySpanRescore` begins `if (hasResolvedPlace(roots)) return`
 (`packages/resolver/lib/resolve/passes.ts`) — it declines only when the tree already holds a resolved
 place. A `minWinningScore` refusal leaves a tree with no resolved place, which is precisely the
-recovery pass's trigger condition, so the recovery re-issued the byte-identical locality lookup the
+recovery pass's trigger condition. Therefore, the recovery re-issued the byte-identical locality lookup the
 floor haddeclined. Measured before the fix, raising the floor across the whole populated range
 of the scale moved the false-selection rate from 75 of 100 rows to 74 — one row — and moved selection
 accuracy not at all. The handover was visible in the mechanism strings: at floor 4 the withheld-gold

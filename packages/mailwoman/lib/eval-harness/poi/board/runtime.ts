@@ -52,7 +52,7 @@ export interface POIBoardOptions {
 	/**
 	 * Build `mailwoman/observations`' semantic route and inject it as {@linkcode poiSemanticLookup}.
 	 *
-	 * DEFAULT OFF, and the floors are registered against the off arm: the board grades the construction that ships, and a
+	 * Default off, and the floors are registered against the off arm: the board grades the construction that ships, and a
 	 * floor measured under an opt-in rung would describe a pipeline no caller runs. On, it measures the activity-phrase
 	 * family — the rows whose subject reaches no committed lexicon entry, and which therefore take no POI branch at all
 	 * with the rung absent. Ignored when {@linkcode poiSemanticLookup} is supplied directly.

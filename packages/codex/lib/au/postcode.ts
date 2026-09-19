@@ -4,7 +4,7 @@
  * @author Teffen Ellis, et al.
  *
  *   Australian postcodes: four digits, written at the end of the last address line after the locality
- *   and state (`SYDNEY NSW 2000`). Sourcing (accessed 2026-06-11):
+ *   and state (`sydney NSW 2000`). Sourcing (accessed 2026-06-11):
  *
  *   - Australia Post's Correct Addressing brochure (SAP 8833878, Nov 2022) — every example carries a
  *       4-digit postcode and the brochure references envelopes "with preprinted four postcode
@@ -13,7 +13,7 @@
  *       falls in the range 3000-3999 the State abbreviation will be VIC. 4000-4999 will be QLD,
  *       etc. … Exceptions to this include ACT Postcodes and Postcodes located on State borders."
  *       Because the booklet only enumerates VIC and QLD and flags exceptions, this module
- *       deliberately does not ship a full first-digit → state table — the shape is the contract,
+ *       deliberately does not ship a full first-digit → state table — the shape is the interface,
  *       the geographic prior is the gazetteer's job.
  *
  *   Note the shape collides with New Zealand's (also 4 digits) — `candidateSystemsForPostcode`

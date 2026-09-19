@@ -5,13 +5,13 @@
  *
  *   Parity pin for the #1728 phase-2 migration: `fst-autocomplete.ts` now delegates the #587
  *   algorithm to `@mailwoman/ancestrie`, and this suite proves the delegated implementation is
- *   OBSERVATIONALLY IDENTICAL to the algorithm it replaced — same suggestions, same order, same
+ *   observationally identical to the algorithm it replaced — same suggestions, same order, same
  *   fields, on the same artifacts.
  *
- *   THE FROZEN COPY IS THE POINT. `legacyAutocomplete` below is the pre-migration implementation,
+ *   the frozen copy is the point. `legacyAutocomplete` below is the pre-migration implementation,
  *   verbatim. It exists only here, as the reference the adapter is measured against — the shipped
  *   code path is the ancestrie-backed one. If a deliberate behavior change ever lands in ancestrie's
- *   `autocomplete`, this suite fails and the change must be RE-RATIFIED by updating the frozen copy
+ *   `autocomplete`, this suite fails and the change must be RE-ratified by updating the frozen copy
  *   in the same commit, which is what makes drift between the two homes visible (the #861 rule: the
  *   function is shared. this is the regression check proving it stays shared).
  *
@@ -48,7 +48,7 @@ import {
 } from "@mailwoman/resolver-wof-sqlite/fst"
 import { describe, expect, it } from "vitest"
 
-// MARK: The FROZEN pre-migration implementation, verbatim
+// MARK: The frozen pre-migration implementation, verbatim
 
 interface BfsItem {
 	stateID: number
@@ -304,7 +304,7 @@ describe("fst-autocomplete ↔ ancestrie parity — synthetic", () => {
 })
 
 /**
- * Round the synthetic trie through the real serializer so parity is measured on entries as the BYTES deliver them (f32
+ * Round the synthetic trie through the real serializer so parity is measured on entries as the bytes deliver them (f32
  * referential, flag-restricted encyclopedic and ambiguity reads) — not on the hand-built object graph.
  */
 function deserializeThroughBytes(nodes: ConstructorParameters<typeof FSTMatcher>[0]): FSTMatcher {

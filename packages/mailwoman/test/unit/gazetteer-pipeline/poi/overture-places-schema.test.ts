@@ -5,7 +5,7 @@
  *
  *   Unit tests for the pure Overture places-theme column-choice logic `ingestPlaces` uses
  *   (`chooseCategoryColumn` / `hasBrandColumn` / `chooseCountryExpression`) — exercised directly over
- *   synthetic `DESCRIBE` result rows, no DuckDB/network involved. `ingestPlaces` itself (the DuckDB S3
+ *   synthetic `describe` result rows, no DuckDB/network involved. `ingestPlaces` itself (the DuckDB S3
  *   read) isn't covered here. see the task report for why that side stays untested (no network in CI).
  *
  *   `chooseCountryExpression` fixtures cover three release shapes: an (imagined) older release with a
@@ -43,7 +43,7 @@ const NEWER_RELEASE_COLUMNS: DescribeColumn[] = [
 ]
 
 /**
- * The real 2026-05-20.0 places-theme shape: no top-level `country`, but an `addresses` LIST<STRUCT<...>>.
+ * The real 2026-05-20.0 places-theme shape: no top-level `country`, but an `addresses` list<struct<...>>.
  */
 const PLACES_2026_05_20_COLUMNS: DescribeColumn[] = [
 	{ column_name: "id" },

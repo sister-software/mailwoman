@@ -3,7 +3,7 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   `mailwoman gazetteer build anchor-lookup` — the postcode→anchor JSON lookup (#239/#240. LIVE
+ *   `mailwoman gazetteer build anchor-lookup` — the postcode→anchor JSON lookup (#239/#240. live
  *   consumer: `@mailwoman/neural`'s scorer + the eval harnesses). JSON artifact, write-once semantics
  *   (regenerate, don't edit).
  *
@@ -20,7 +20,7 @@ import { extractDelimited } from "@mailwoman/core/scripting/arguments"
 import { type CommandSpec, CommandTaskResult, type CommandComponent, useCommandTask } from "#cli-kit"
 
 /**
- * Native command-line contract consumed by the filesystem command router.
+ * Native command-line interface consumed by the filesystem command router.
  */
 export const spec = {
 	name: "anchor-lookup",

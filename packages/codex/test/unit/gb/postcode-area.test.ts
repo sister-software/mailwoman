@@ -64,7 +64,7 @@ describe("countryOfPostcode", () => {
 	it("area→country is a real mapping, but a postcode is not a county", () => {
 		// London (`SW`) and Manchester (`M`) are different cities in different English counties, yet
 		// both resolve to ENG — the area→country map is genuine. But that is as far as it goes: the
-		// postcode carries the COUNTRY, never the county, while a Scottish area like Glasgow's `G`
+		// postcode carries the country, never the county, while a Scottish area like Glasgow's `G`
 		// flips the country outright. Royal Mail routing rather than administrative geography.
 		expect(countryOfPostcode("SW1A 1AA")).toBe("ENG") // London
 		expect(countryOfPostcode("M1 1AE")).toBe("ENG") // Manchester

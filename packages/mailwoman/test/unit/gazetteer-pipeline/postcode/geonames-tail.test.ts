@@ -6,7 +6,7 @@
  *   Fixture-scale guard for the GeoNames-postal tail reproducer. The real check is per-country row-count
  *   parity against the frozen 946 MB artifact (see the module docstring); this holds the three things
  *   that eval cannot express cheaply — the #920 name law survives a rebuild, a country with no dump is
- *   REPORTED rather than silently zeroed, and the provenance `meta` table actually reaches the sealed
+ *   reported rather than silently zeroed, and the provenance `meta` table actually reaches the sealed
  *   artifact carrying source md5s.
  */
 
@@ -66,7 +66,7 @@ test("buildPostcodeGeonamesTail: #920 laws survive a rebuild, and a missing dump
 
 	expect(result.inserted).toBe(3)
 	expect(result.byCountry).toEqual({ CZ: 2, PL: 1 })
-	// The meaning-of-zero rule: a country with no dump is a NAMED absence rather than a zero row.
+	// The meaning-of-zero rule: a country with no dump is a named absence rather than a zero row.
 	expect(result.missing).toEqual(["ZZ"])
 	expect(result.sources.map((s) => s.country)).toEqual(["CZ", "PL"])
 	expect(result.sources.every((s) => /^[0-9a-f]{32}$/.test(s.md5))).toBe(true)

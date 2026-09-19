@@ -8,20 +8,20 @@
  *
  *   `repos-audit` reports what is on disk and `wof-repo-origin` answers where a repo should come from. Nothing joined
  *   them, so the join happened by hand — and a hand-run clone is how the fork gets bypassed: the pull succeeds, the
- *   build succeeds, and the artifact silently loses every record the fork corrects. THE DIRECTORY IS THE RECIPE
+ *   build succeeds, and the artifact silently loses every record the fork corrects. the directory is the recipe
  *   (`repos-audit`'s docstring explains why), so what lands here decides what the next build believes.
  *
- *   Split into a PURE PLANNER and an executor. Every refusal below is a decision about someone's working tree, and a
+ *   Split into a pure planner and an executor. Every refusal below is a decision about someone's working tree, and a
  *   decision worth making is worth testing without a network or a 2 GB clone.
  *
  *   Three things it will not do, each for a reason that has already cost something:
  *
  *   - **Never re-point a remote silently.** Changing `origin` changes what the next build ingests. A checkout aimed at
- *       upstream while a fork exists is REPORTED, and re-pointing is a separate opt-in.
+ *       upstream while a fork exists is reported, and re-pointing is a separate opt-in.
  *   - **Never touch a dirty tree or a clone carrying local commits.** Corrections are authored in these directories
  *       before they are pushed. a helpful `git reset` here destroys work that exists nowhere else.
  *   - **Never force a shallow clone forward.** Every WOF checkout in the lab is `--depth 1`, which is not merely small:
- *       `git show <commit> --name-status` on one reports every file as `A`, so a diff against it reads as "this commit
+ *       `git show <commit> --name-status` on one reports every file as `A`. Therefore, a diff against it reads as "this commit
  *       added 72,679 files". The plan carries the shallowness so a reader knows the history they are about to consult
  *       is not there.
  */
@@ -82,14 +82,14 @@ export interface CloneState {
 	originURL?: string
 	dirty?: boolean
 	/**
-	 * Commits on HEAD that the tracked upstream lacks. `undefined` when no upstream is tracked.
+	 * Commits on head that the tracked upstream lacks. `undefined` when no upstream is tracked.
 	 */
 	ahead?: number
 	behind?: number
 	shallow?: boolean
 	head?: string
 	/**
-	 * Committer date of HEAD, ISO-8601 — the vintage a build step cannot otherwise see.
+	 * Committer date of head, ISO-8601 — the vintage a build step cannot otherwise see.
 	 */
 	headDate?: string
 }
@@ -198,10 +198,10 @@ export async function inspectClone(directory: string): Promise<CloneState> {
 		}
 	}
 
-	// Compared against ORIGIN's branch rather than `@{u}`. `git remote rename origin upstream` rewrites `branch.<name>.remote`,
-	// so after a re-point the tracked upstream is the remote we moved AWAY from — and a clone sitting exactly level with
+	// Compared against origin's branch rather than `@{u}`. `git remote rename origin upstream` rewrites `branch.<name>.remote`,
+	// so after a re-point the tracked upstream is the remote we moved away from — and a clone sitting exactly level with
 	// its fork reports as carrying unpushed commits, which the planner then refuses to touch. Measured on the GB
-	// checkout the moment the re-point landed: `HEAD...@{u}` answered `35 0` while `HEAD` and `origin/master` were the
+	// checkout the moment the re-point landed: `head...@{u}` answered `35 0` while `head` and `origin/master` were the
 	// same sha.
 	const branch = read(["rev-parse", "--abbrev-ref", "HEAD"])
 
@@ -230,9 +230,9 @@ export async function inspectClone(directory: string): Promise<CloneState> {
 /**
  * Plan the sync for a set of repos without touching anything.
  *
- * `fetchFirst` updates remote-tracking refs so `behind` is measured against the remote's ACTUAL tip rather than
+ * `fetchFirst` updates remote-tracking refs so `behind` is measured against the remote's actual tip rather than
  * whatever this machine last heard. Skipping it reports a stale clone as up-to-date, which is the failure the whole
- * command exists to prevent — so it defaults ON, and turning it off is for offline inspection.
+ * command exists to prevent . Therefore, it defaults on, and turning it off is for offline inspection.
  */
 export async function planReposSync(options: {
 	root: string

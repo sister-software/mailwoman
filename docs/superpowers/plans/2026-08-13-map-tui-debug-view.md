@@ -1,6 +1,6 @@
 # `@mailwoman/map-tui` + `mw geocode --debug` Implementation Plan
 
-> **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
+> **For agentic workers:** required sub-skill: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
 **Goal:** Ship the frame-first `@mailwoman/map-tui` library workspace and the three-panel interactive/static `mw geocode --debug` view it powers.
 
@@ -17,7 +17,7 @@
 - Acronyms are whole camelCase components: `frameToANSILines`, `decodeMVT`, `placeID`, `RGBAGrid` — never `frameToAnsiLines`/`decodeMvt`.
 - No raw `process.env` — env goes through `core/env/schema.ts` + `$public`. (`process.stdout.isTTY` is fine; the rule binds env/argv.)
 - No `!== undefined` predicates — use presence/nullish checks (`x != null`, `typeof x === "number"`).
-- The #1577 contract is inviolable: the non-debug geocode success path never renders through Ink; `geocode.test.ts` must pass **unmodified**.
+- The #1577 interface is inviolable: the non-debug geocode success path never renders through Ink; `geocode.test.ts` must pass **unmodified**.
 - Databases/tiles are read-only artifacts; tiles are never shipped in any package.
 - Run tests from the repo root: `yarn vitest run <path>`. Run `yarn compile` before exercising the compiled CLI (`node mailwoman/out/cli.js`).
 - Engines: `node >= 24.18.0` (all workspaces). New workspace version matches siblings: `9.1.0`.
@@ -97,7 +97,7 @@ Note the `files` array excludes `test/` and `scripts/` — the fixture and its g
 
 - [ ] **Step 5: Install + verify.** Run `yarn install`, then `yarn lint`. Expected: install resolves the four new deps; lint passes.
 
-- [ ] **Step 6: README.** Three short paragraphs: what the package is (frame-first terminal map renderer), the `MapFrame` contract (frames are values; consumers own presentation), where tiles come from (caller-supplied PMTiles path; never bundled).
+- [ ] **Step 6: README.** Three short paragraphs: what the package is (frame-first terminal map renderer), the `MapFrame` interface (frames are values; consumers own presentation), where tiles come from (caller-supplied PMTiles path; never bundled).
 
 - [ ] **Step 7: Commit.** `map-tui: bootstrap the workspace`
 

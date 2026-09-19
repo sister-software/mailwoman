@@ -8,7 +8,7 @@ OpenCage-informed annotations layer (epic #811). Local/no-GPU shift; $20 Modal b
 Seven new npm packages, all live, tested, and publish-safe (in `.release-it.json`, covered by
 `ci:smoke`):
 
-- `@mailwoman/annotations` — the contract: native typed `AnnotationSet` + `toOpenCage()` / `toNative()`.
+- `@mailwoman/annotations` — the interface: native typed `AnnotationSet` + `toOpenCage()` / `toNative()`.
 - `@mailwoman/nominatim` — `/search` + `/reverse` over the live engine, full annotations block.
 - `@mailwoman/photon` — `/api` + `/reverse`, GeoJSON FeatureCollections.
 - `@mailwoman/libpostal` — `/parse` (faithful libpostal labels) + `/expand` (deterministic, documented).
@@ -35,7 +35,7 @@ was dropping house_number + road. Recover them from a parse and backfill country
 White House query now returns the full address at the rooftop coordinate.
 
 **Tooling:** `scripts/eval/nominatim-dropin-parity.mjs` — spins the packaged server, scores the geopy
-contract + resolve-rate over a fixed set, `/reverse`, and the countrycodes override. Checks the
+interface + resolve-rate over a fixed set, `/reverse`, and the countrycodes override. Checks the
 supported set (US + the #743 safelist), tracks the placer frontier non-conditional.
 
 **Docs:** comparison matrix `how-mailwoman-compares.mdx` (#819) + five `switching-from-*.mdx` guides

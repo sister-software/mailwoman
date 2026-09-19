@@ -3,15 +3,15 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Build the COUNTRY-SURFACE LEXICON for the country-lexicon soft-feed channel (#1104). This is the
+ *   Build the country-surface lexicon for the country-lexicon soft-feed channel (#1104). This is the
  *   third atlas channel, a sibling of the postcode anchor (#239/#240) and the gazetteer anchor
- *   (#464): a per-token multi-hot clue the neural GRAMMAR conditions on but never obeys. Country is a
- *   CLOSED, ENUMERABLE class (~250 surfaces) — atlas rather than grammar — so a dictionary phrase-lookup
+ *   (#464): a per-token multi-hot clue the neural grammar conditions on but never obeys. Country is a
+ *   closed, enumerable class (~250 surfaces) — atlas rather than grammar — so a dictionary phrase-lookup
  *   recovers the WOF-admin / resolver hierarchy case ("United States of America, Wyoming, <locality>")
- *   the learned tagger reads as a leading STREET. Pelias handled the same class the same way
+ *   the learned tagger reads as a leading street. Pelias handled the same class the same way
  *   (`WhosOnFirstClassifier extends PhraseClassifier`); this is the model-first analogue.
  *
- *   WHY A DEDICATED LEXICON (not just the gazetteer's `country` slot): the gazetteer already carries
+ *   why A dedicated lexicon (not just the gazetteer's `country` slot): the gazetteer already carries
  *   these surfaces in slot 0, and the shipped model already consumes them — yet the WOF-admin case
  *   still fails (model-card #1104: golden country recall 82.0% vs 88.6%). The country bit is one of a
  *   5-hot vector sharing one learned projection with region/po_box/cedex/homograph, and it is zeroed
@@ -20,13 +20,13 @@
  *   weight) and is immune to that suppression. See
  *   docs/superpowers/plans/2026-07-14-country-lexicon-channel.md.
  *
- *   The matcher REUSES the gazetteer's phrase-scan (longest-first n-gram over whitespace words,
+ *   The matcher reuses the gazetteer's phrase-scan (longest-first n-gram over whitespace words,
  *   case-insensitive `entries` + uppercase-exact `code_entries`, char→piece projection) — one tested
  *   algorithm, two vocabularies. Only the vocabulary + the emitted feature differ. The emitted
  *   feature is 2-dim per piece: `[country_surface, country_ambiguous]`.
  *
  *   - `country_surface` (bit 1): the piece is part of a recognized country surface phrase.
- *   - `country_ambiguous` (bit 2): the SURFACE is a homograph (also a US region) or a common-word
+ *   - `country_ambiguous` (bit 2): the surface is a homograph (also a US region) or a common-word
  *     name ("Georgia", "America", "England", "IN") — a soft version of Pelias's hard blacklist. The
  *     model learns to trust `surface & !ambiguous` (unambiguous long/code forms) strongly and
  *     `surface & ambiguous` weakly, using context — model-first, never a hard drop, so recall on
@@ -34,7 +34,7 @@
  *
  *   Source of truth: `@mailwoman/codex` (COUNTRY_SURFACE_FORMS + ISO2_TO_NAME) — the same data the
  *   corpus-python bridge `country-surfaces.json` is generated from (codex-export-country-surfaces.ts), so
- *   the channel and the corpus extract synthesizer cannot diverge on what a country surface IS.
+ *   the channel and the corpus extract synthesizer cannot diverge on what a country surface is.
  *
  *   Output: data/gazetteer/country-surface-lexicon-v1.json (small, committed, provenance-tracked).
  *   Regenerate: `node packages/mailwoman/lib/dev-tools/codex/country/surface-lexicon.ts`
@@ -68,7 +68,7 @@ const OUTPUT = repoRootPath("data", "gazetteer", "country-surface-lexicon-v1.jso
 
 /**
  * The one shared word-normalization rule (identical to build-gazetteer-anchor-lexicon.mjs and mirrored in
- * gazetteer_char_paint on both sides): per whitespace-word, strip LEADING/TRAILING characters that are not Unicode
+ * gazetteer_char_paint on both sides): per whitespace-word, strip leading/trailing characters that are not Unicode
  * letters or digits (keep internal ones: "u.s.a", "timor-leste"), rejoin single-spaced. Entry keys and scanned tokens
  * both pass through it, so "U.S.A." ≡ "u.s.a".
  */
@@ -89,7 +89,7 @@ const usStateAbbrevs = new Set<string>(US_STATE_ABBREVIATIONS as readonly string
 
 /**
  * Curated common-word country surfaces — single tokens that appear far more often as ordinary street/venue/locality
- * words than as a trailing country. A SOFT flag (the model still decides), the model-first analogue of Pelias's
+ * words than as a trailing country. A soft flag (the model still decides), the model-first analogue of Pelias's
  * blacklist (north/south/east/west/street/city/king). Tunable.
  */
 const COMMON_WORD_AMBIGUOUS = new Set(["america", "england", "britain", "turkey", "chad", "jordan", "jersey", "guinea"])

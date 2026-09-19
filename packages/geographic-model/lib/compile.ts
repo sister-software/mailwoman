@@ -5,7 +5,7 @@
  *
  *   Deterministic compilation of a validated {@link GeographicModelDocument} into the runtime artifact.
  *
- *   The compiler validates by DELEGATION: `parseGeographicModelDocument` is the only thing that
+ *   The compiler validates by delegation: `parseGeographicModelDocument` is the only thing that
  *   decides whether a document is well formed, and it throws with every violation before a single byte
  *   is computed. There is no second validator here, and no partial artifact on failure — a compile
  *   either produces the whole artifact or produces nothing.
@@ -114,7 +114,7 @@ const DERIVATION_INPUT_ORDER: readonly DerivationInputKind[] = [
 
 /**
  * The separator for the compound keys this module groups by. `U+0000` cannot appear in a readable identifier without
- * being visible in it, so two different key tuples cannot collapse onto one string. The derived IDENTIFIERS written
+ * being visible in it, so two different key tuples cannot collapse onto one string. The derived identifiers written
  * into the artifact use readable separators instead, and are checked for collisions once they are all built.
  */
 const KEY_SEPARATOR = "\u0000"

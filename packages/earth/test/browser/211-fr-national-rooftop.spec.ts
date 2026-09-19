@@ -14,7 +14,7 @@ const TOL = 0.006
 const CASES: Array<{ address: string; lat: number; lon: number }> = [
 	// BAN row: 181 | rue du chevaleret | 75013 | paris → 48.833518, 2.36858 (release 2026-05-18)
 	{ address: "181 Rue du Chevaleret, Paris", lat: 48.833518, lon: 2.36858 },
-	// The WITH-postcode form must keep hitting the same row via the postcode probe.
+	// The with-postcode form must keep hitting the same row via the postcode probe.
 	{ address: "181 Rue du Chevaleret, 75013 Paris", lat: 48.833518, lon: 2.36858 },
 ]
 

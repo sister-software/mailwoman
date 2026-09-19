@@ -264,13 +264,13 @@ describe("resolveTree", () => {
 		// The FI Pori wins despite the US one's higher score — the hard country filter excludes it.
 		expect(result.roots[0]).toMatchObject({ placeID: "wof:1", lat: 61.48 })
 		// Three lookups since the bare-toponym races: the FI-scoped locality query plus the FI-scoped
-		// `country` and `region` side races (which find nothing here). What the #194 contract forbids
-		// is an UNSCOPED retry — every call must still carry the FI filter.
+		// `country` and `region` side races (which find nothing here). What the #194 interface forbids
+		// is an unscoped retry — every call must still carry the FI filter.
 		expect(backend.calls).toHaveLength(3)
 		expect(backend.calls.every((c) => c.country === "FI")).toBe(true)
 	})
 
-	test("#194 hardCountry miss → node left UNRESOLVED, with NO global retry (the in-region-or-unresolved contract)", async () => {
+	test("#194 hardCountry miss → node left UNRESOLVED, with NO global retry (the in-region-or-unresolved interface)", async () => {
 		// The locality exists only in FR. a hardCountry of FI must not fall back to it globally.
 		const places: ResolvedPlace[] = [
 			{ id: 3, name: "Lyon", placetype: "locality", country: "FR", lat: 45.76, lon: 4.84, score: 9 },
@@ -280,7 +280,7 @@ describe("resolveTree", () => {
 		const resolver = createWOFResolver(backend)
 
 		const input = tree("Lyon", [node("locality", "Lyon", 0, 4, [], "neural", "v1")])
-		// spanRescore:false isolates the #194 contract — rescore is default-on and would add a second
+		// spanRescore:false isolates the #194 interface — rescore is default-on and would add a second
 		// (recovery) lookup on the unresolved tree, which this test is not about.
 		const result = await resolver.resolveTree(input, { hardCountry: "FI", spanRescore: false })
 
@@ -677,7 +677,7 @@ describe("resolveTree — alternatives (candidate-list API)", () => {
 
 	// Dual-role hierarchy completion (#405/#415). In `…, Berlin, Berlin <PC>` the parser drops the
 	// locality (city == region), leaving a region but no locality. Completion records the dropped
-	// locality as a `locality` INTERPRETATION on the resolved region node (one node, one span, two
+	// locality as a `locality` interpretation on the resolved region node (one node, one span, two
 	// roles — no synthesized sibling), from the backend's precomputed coincident-roles relation (#403).
 	const DUAL_ROLE_PLACES: ResolvedPlace[] = [
 		{ id: 900, name: "Germany", placetype: "country", country: "DE", lat: 51.1, lon: 10.4, score: 10 },
@@ -725,7 +725,7 @@ describe("resolveTree — alternatives (candidate-list API)", () => {
 			defaultCountry: "DE",
 		})
 
-		// No synthesized locality NODE — the role rides on the region node.
+		// No synthesized locality node — the role rides on the region node.
 		expect(result.roots.find((r) => r.tag === "locality")).toBeUndefined()
 
 		expect(localityRole(result.roots)).toMatchObject({
@@ -1047,7 +1047,7 @@ describe("resolveTree — interpolation tier (#483)", () => {
 			},
 		}
 
-		// "344 East Sheldon Rd": parser nests street_prefix/street_suffix UNDER street. street.value is
+		// "344 East Sheldon Rd": parser nests street_prefix/street_suffix under street. street.value is
 		// the bare base name. The query must be the full reassembled street, ordered by offset.
 		const nested = tree("344 East Sheldon Rd 05450", [
 			node("street", "Sheldon", 8, 15, [
@@ -1189,7 +1189,7 @@ function fakeStreetCentroids(
 	entries: Array<{ street: string; commune: string; lat: number; lon: number }>,
 	onCall?: () => void
 ): StreetCentroidLookup {
-	// Mirror the FR normalizer's apostrophe/hyphen handling: strip apostrophes GLUED ("l'intendance" →
+	// Mirror the FR normalizer's apostrophe/hyphen handling: strip apostrophes glued ("l'intendance" →
 	// "lintendance"), hyphens → space ("Sainte-Catherine" → "sainte catherine").
 	const key = (s: string, c: string) =>
 		`${s
@@ -1292,9 +1292,9 @@ describe("resolveTree — street-centroid tier (#1042)", () => {
 
 		const resolver = createWOFResolver(new FakeResolverBackend(FIXTURE_PLACES))
 
-		// The live 5.10.1 shape: span-rescore exact-matched the street's FIRST TOKEN "Rue" to the
+		// The live 5.10.1 shape: span-rescore exact-matched the street's first token "Rue" to the
 		// commune Rue (Somme) and injected it as the locality. the street-centroid tier then matched
-		// the register's (street, commune) pair — "Rue Sainte-Catherine" in BORDEAUX. The register's
+		// the register's (street, commune) pair — "Rue Sainte-Catherine" in bordeaux. The register's
 		// commune evidence is strictly stronger than the speculative injection, so the bogus locality
 		// must not survive as the result's city.
 		const input = tree("Rue Sainte-Catherine, Bordeaux", [
@@ -1352,12 +1352,12 @@ describe("resolveTree — street-centroid tier (#1042)", () => {
 		expect(localities).toHaveLength(1) // same commune (case-insensitive) — kept
 	})
 
-	// #1764. The register comparison is documented diacritic-INSENSITIVE and was not: NFD produced the combining
-	// mark and `[^a-z0-9 ]` then replaced it with a SPACE, so `Sète` folded to "se te" and matched nothing. The
-	// negative branch of that comparison is a `roots.splice`, so the miss DELETED a correct locality node.
+	// #1764. The register comparison is documented diacritic-insensitive and was not: NFD produced the combining
+	// mark and `[^a-z0-9 ]` then replaced it with a space, so `Sète` folded to "se te" and matched nothing. The
+	// negative branch of that comparison is a `roots.splice`, so the miss deleted a correct locality node.
 	//
 	// The asymmetry is what makes the fold decide. `communes[]` is built from `adminValues` first, which already
-	// holds the node's own value — so whenever the typed value hits the register the fold cannot matter. It matters
+	// holds the node's own value . Therefore, whenever the typed value hits the register the fold cannot matter. It matters
 	// only when the typed value misses and the gazetteer's accented display name is the one leg left to match on.
 	test("#1764: the register-commune fold is diacritic-insensitive ('Sète' ≡ 'Sete')", async () => {
 		const lookup = fakeStreetCentroids([

@@ -4,14 +4,14 @@
  * @author Teffen Ellis, et al.
  * @file Tests for {@linkcode createGoogleGeocoderClient}.
  *
- *   Every test drives the stub Axios ADAPTER from `@mailwoman/core/api/test-transport` and, where
- *   timing matters, an injected `ClockLike` from `@mailwoman/core/api/test-clocks`. NO TEST HERE
- *   PERFORMS A LIVE NETWORK CALL OR A REAL SLEEP, and on this client the first half is not merely
+ *   Every test drives the stub Axios adapter from `@mailwoman/core/api/test-transport` and, where
+ *   timing matters, an injected `ClockLike` from `@mailwoman/core/api/test-clocks`. no test here
+ *   performs A live network call or A real sleep, and on this client the first half is not merely
  *   hygiene: every uncached Google request is billed, so a suite that reached the network would charge
  *   the operator's card on every CI run.
  *
- *   The interesting assertions are the ones about Google's IN-BAND error channel — statuses that
- *   arrive under HTTP 200 and are therefore invisible to every check `core/api` provides — and about
+ *   The interesting assertions are the ones about Google's IN-band error channel — statuses that
+ *   arrive under http 200 and are therefore invisible to every check `core/api` provides — and about
  *   the API key, which must not reach a log, a cache key or a filename.
  */
 
@@ -25,7 +25,7 @@ import { join } from "path-ts"
 import { Globerator } from "spliterator/node/fs"
 import { afterAll, afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 
-// `$private` is a LIVE getter over `{ ...dotEnv, ...process.env }`, and `dotEnv` is read from the repo's
+// `$private` is a live getter over `{ ...dotEnv, ...process.env }`, and `dotEnv` is read from the repo's
 // real `.env` once at module load — which on this machine does carry a `GOOGLE_MAPS_API_KEY`. A
 // `vi.stubEnv(..., undefined)` cannot hide it: the merge falls back to `dotEnv` regardless of what the
 // test puts on `process.env`. Mocking the module is the only way to make the missing-key test test
@@ -219,7 +219,7 @@ describe("in-band status mapping", () => {
 		const error = await captureError(client.geocodeAddress("anywhere"))
 
 		expect(error.status).toBe(429)
-		// A STATED CEILING: the caller requeues, the client does not spin.
+		// A stated ceiling: the caller requeues, the client does not spin.
 		expect(isTransientResourceError(error)).toBe(true)
 		expect(transport.calls).toHaveLength(2)
 	})
@@ -401,7 +401,7 @@ describe("pacing", () => {
 
 		await Promise.all([client.geocodeAddress("a"), client.geocodeAddress("b"), client.geocodeAddress("c")])
 
-		// 60000 / 60 = 1000ms. `requestsPerMinute` ALONE would have let all three go out at once — it is
+		// 60000 / 60 = 1000ms. `requestsPerMinute` alone would have let all three go out at once — it is
 		// a budget rather than a rate. See `bdc/sdk/client.ts` for the measurement.
 		expect(transport.dispatchTimes).toEqual([0, 1000, 2000])
 	})

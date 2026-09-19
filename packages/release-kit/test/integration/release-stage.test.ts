@@ -62,7 +62,7 @@ describe("checkReleaseListIdentity", () => {
 
 		const identity = await checkReleaseListIdentity(root)
 
-		// The en-au class: a workspace outside the release list with no stated reason is FROZEN, and the
+		// The en-au class: a workspace outside the release list with no stated reason is frozen, and the
 		// failure must carry its name rather than "expected 3, found 2".
 		expect(identity.unexpectedAbsences).toEqual(["packages/frozen-one"])
 		expect(identity.publishCount).toBe(2)
@@ -214,7 +214,7 @@ describe("the Hugging Face materialization plan", () => {
 describe("the pair-index parity selector", () => {
 	it("still matches a test file — the empty-selection class", async () => {
 		// The v9.2.0 release's second dispatch died because publish.yml named the parity test's pre-regroup path and
-		// Vitest matched zero files. The workflow now calls a package script whose filter is the test's NAME, and
+		// Vitest matched zero files. The workflow now calls a package script whose filter is the test's name, and
 		// this asserts the filter is not empty-handed — the same answer a dispatch would return several minutes in.
 		const repoRoot = String(repoRootPath())
 

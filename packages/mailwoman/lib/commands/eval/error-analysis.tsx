@@ -5,7 +5,7 @@
  *
  *   `mailwoman eval error-analysis` — categorized failure report over the golden eval set (the
  *   pre-publish 2pp promote eval. night-shift skill). Builds the classifier via `createScorer` in
- *   STRICT ship-config mode so a `--model` candidate is graded in-distribution (#566/#685 trap);
+ *   strict ship-config mode so a `--model` candidate is graded in-distribution (#566/#685 trap);
  *   `--no-strict` warns-and-continues for legacy pre-anchor models.
  */
 
@@ -14,7 +14,7 @@ import { type CommandSpec, harnessCommand } from "#cli-kit"
 export const description = "Categorized golden-set failure report (the pre-publish 2pp promote check)"
 
 /**
- * Native command-line contract consumed by the filesystem command router.
+ * Native command-line interface consumed by the filesystem command router.
  */
 export const spec = {
 	name: "error-analysis",

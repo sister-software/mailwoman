@@ -4,15 +4,15 @@
  * @author Teffen Ellis, et al.
  * @file The autocomplete ladder (#2154): every board row truncated at every prefix boundary, each rung graded against the
  *   row's own truth, on two arms — the parse → resolve path today's Photon `/api` runs on a partial query, and the FST
- *   autocomplete tier. Four readings per row per arm: the FIRST-HIT rung (how many characters before the truth enters
- *   the top-k), STABILITY (once in, does it stay in on every later rung), LATENCY per rung-length band, and ABSTENTION
+ *   autocomplete tier. Four readings per row per arm: the first-HIT rung (how many characters before the truth enters
+ *   the top-k), stability (once in, does it stay in on every later rung), latency per rung-length band, and abstention
  *   on the one- and two-character rungs where the right answer is no answer.
  *
- *   THE LOCALE HINT IS PART OF THE INPUT. A finished address carries its own country evidence; `Ru` carries none, and a
+ *   the locale hint is part OF the input. A finished address carries its own country evidence; `Ru` carries none, and a
  *   first-hit rung measured without the hint grades the gazetteer's population prior rather than autocomplete. Every
  *   rung therefore runs under the row's country, and a row with none is refused rather than graded.
  *
- *   NO NEW TRUTH. The ladder is derived from rows that already carry a coordinate and a tolerance. the full-string rung
+ *   no new truth. The ladder is derived from rows that already carry a coordinate and a tolerance. the full-string rung
  *   is the ordinary board grade for that row, and a difference there is a harness defect rather than a finding.
  */
 
@@ -228,7 +228,7 @@ export interface ArmSummary {
 	 */
 	rowsWithoutArtifact: number
 	/**
-	 * Rows whose truth entered the answers at SOME rung.
+	 * Rows whose truth entered the answers at some rung.
 	 */
 	rowsHit: number
 	/**
@@ -459,7 +459,7 @@ export async function runAutocompleteLadder(
 }
 
 /**
- * The per-arm summary over the HEADLINE rows. Pure.
+ * The per-arm summary over the headline rows. Pure.
  */
 export function summarizeArm(arm: LadderArm, rows: readonly LadderRow[]): ArmSummary {
 	const allHeadline = rows.filter((row) => row.headline)

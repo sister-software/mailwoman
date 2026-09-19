@@ -30,7 +30,7 @@ export interface ReliabilityBin {
 	mean_confidence: number | null
 	accuracy: number | null
 	/**
-	 * `accuracy - mean_confidence`, SIGNED. Negative is overconfidence — the direction that lets a caller trust a wrong
+	 * `accuracy - mean_confidence`, signed. Negative is overconfidence — the direction that lets a caller trust a wrong
 	 * answer — and an unsigned gap cannot tell it from the harmless direction.
 	 */
 	gap: number | null
@@ -150,7 +150,7 @@ export interface ErrorClass {
 /**
  * The confusions an eval at `threshold` lets through, most frequent first.
  *
- * Restricted to the ADMITTED errors on purpose. A hard filter's cost is asymmetric — an admitted error scopes the whole
+ * Restricted to the admitted errors on purpose. A hard filter's cost is asymmetric — an admitted error scopes the whole
  * downstream resolve to the wrong answer, while a rejection only forgoes the narrowing — so the per-class rate above
  * the eval is the number that decides whether the eval is safe, and the overall confusion matrix is not.
  *
@@ -184,7 +184,7 @@ export function errorClasses(sample: readonly Observation[], threshold: number, 
 /**
  * Split a sample by one stratum key and curve each group.
  *
- * A group is keyed by the stratum's VALUE, and observations missing the key are grouped under `(unset)` rather than
+ * A group is keyed by the stratum's value, and observations missing the key are grouped under `(unset)` rather than
  * dropped — a stratum that half the sample does not carry is a fact about the corpus, and dropping those rows moves the
  * denominator of every other group without saying so.
  */

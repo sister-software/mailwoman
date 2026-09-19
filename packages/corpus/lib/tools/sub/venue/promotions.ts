@@ -4,15 +4,15 @@
  * @author Teffen Ellis, et al.
  *
  *   The sub-venue curation ledger (#35 wave 2) — every decision taken about whether a designator
- *   surface may be used for parsing IN A GIVEN LOCALE, with the census that backs it.
+ *   surface may be used for parsing IN A given locale, with the census that backs it.
  *
- *   This file is HAND-AUTHORED. `sub-venue-lexicon.ts` is a pure function of its sources. nothing in it
+ *   This file is hand-authored. `sub-venue-lexicon.ts` is a pure function of its sources. nothing in it
  *   can decide that Spanish `terminal` is safe and British `hall` is not, because that judgement is
  *   about the confounds a token has in a language, and a confound is a fact about the world rather than
- *   about the data. What the builder does is APPLY these decisions — {@link SUBVENUE_PROMOTIONS} is the
+ *   about the data. What the builder does is apply these decisions — {@link SUBVENUE_PROMOTIONS} is the
  *   only thing that ever sets `curated: true` on a machine-derived surface.
  *
- *   ── Why every decision is per-LOCALE ─────────────────────────────────────────────────────────────
+ *   ── Why every decision is per-locale ─────────────────────────────────────────────────────────────
  *   Wave 1 measured `hall` at 3,274 hits in the Great Britain extract and stopped there, which reads as
  *   a verdict on the word. It is not. Re-censused per region 2026-08-05, the same token is a British
  *   disaster and a German designator, and no single global flag can express that. The rule this file
@@ -30,7 +30,7 @@
  *     hall.
  *
  *   The instrument is `context` on {@link SubVenueSurface} plus the name-shape split. both are
- *   reproducible from the committed extracts, and `PROVENANCE.md` records the commands.
+ *   reproducible from the committed extracts, and `provenance.md` records the commands.
  *
  *   ── A rejection is a deliverable ─────────────────────────────────────────────────────────────────
  *   Rejections stay in this table forever. They are what stops the next contributor re-proposing
@@ -50,7 +50,7 @@ export interface SubVenuePromotion {
 	 */
 	phrase: string
 	/**
-	 * BCP-47-ish `<lang>-<REGION>`. The region half is matched against a surface's `region` and the language half against
+	 * BCP-47-ish `<lang>-<region>`. The region half is matched against a surface's `region` and the language half against
 	 * its `lang`, so `de-DE` reaches both a German Wikidata label (region-free) and a German extract's untagged name.
 	 */
 	locale: string
@@ -59,7 +59,7 @@ export interface SubVenuePromotion {
 	 * Set when the board's verdict is valid only under a syntactic shape — the machine-readable half of a shape-separable
 	 * confound. `identifier-required` means the phrase is promoted solely in `<phrase> <identifier>` position (Halle 8);
 	 * bare occurrences stay unpromoted. A consumer that reads promotions must honour this field: the de-DE `halle` board
-	 * (2026-08-05 five-whys review) is the founding case — its 168-hit confound includes the CITY Halle (Saale), and the
+	 * (2026-08-05 five-whys review) is the founding case — its 168-hit confound includes the city Halle (Saale), and the
 	 * 32/32-real enumeration that justified promotion was an enumeration of the identifier-containing shape rather than
 	 * of the phrase. Absent = the promotion holds in any shape.
 	 */
@@ -73,7 +73,7 @@ export interface SubVenuePromotion {
 	 */
 	confound: number
 	/**
-	 * What the confound half IS. Required prose — a bare number is not a board.
+	 * What the confound half is. Required prose — a bare number is not a board.
 	 */
 	confoundNote: string
 	/**
@@ -87,7 +87,7 @@ export interface SubVenuePromotion {
  * designator for reading.
  *
  * ── A rejection of a shipped designator is advisory ──────────────────────────────────────────────
- * `neural/venue-structure.ts` ships `wing`, `terminal`, `concourse` and six more as a FLAT English vocabulary with no
+ * `neural/venue-structure.ts` ships `wing`, `terminal`, `concourse` and six more as a flat English vocabulary with no
  * locale gate. Nothing in this table can un-ship them: the `wing` / en-US rejection below tells a recipe author which
  * locale to exclude from a generated line, and does not stop the span proposer from firing on "Red Wing". Giving the
  * shipped vocabulary a per-locale gate is the largest thing the recipe will want that does not exist yet.
@@ -270,7 +270,7 @@ export const SUBVENUE_PROMOTIONS: readonly SubVenuePromotion[] = [
 	},
 
 	// ── terminal ────────────────────────────────────────────────────────────────────────────────────
-	// The English surface already ships. These promote the LOCALIZED forms, which is what a non-English
+	// The English surface already ships. These promote the localized forms, which is what a non-English
 	// recipe line needs and what wave 1 had none of.
 	{
 		designatorID: "terminal",

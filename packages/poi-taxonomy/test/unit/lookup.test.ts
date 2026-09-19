@@ -180,7 +180,7 @@ describe("full Overture snapshot + curated overlay", () => {
 		expect(getPOICategory("grocery_store")).toBeUndefined()
 		expect(getPOICategory("hiking_trail")).toBeUndefined()
 
-		// The board-canary phrases resolve to the CURATED id, with no absorbed leaf leaking in as a second match.
+		// The board-canary phrases resolve to the curated id, with no absorbed leaf leaking in as a second match.
 		expect(lookupPOICategory("coffee shop").map((m) => m.category.id)).toEqual(["cafe"])
 		expect(lookupPOICategory("hiking trail").map((m) => m.category.id)).toEqual(["trail"])
 		expect(lookupPOICategory("grocery").map((m) => m.category.id)).toEqual(["supermarket"])
@@ -199,7 +199,7 @@ describe("full Overture snapshot + curated overlay", () => {
 		expect(lookupPOICategory("greengrocer").map((m) => m.category.id)).toEqual(["supermarket"])
 
 		// `credit union` is special: Overture keeps a standalone `credit_union` category (its own id-phrase), and the
-		// curated `bank` record absorbs the SEPARATE `bank_credit_union` leaf. The added synonym maps the phrase onto
+		// curated `bank` record absorbs the separate `bank_credit_union` leaf. The added synonym maps the phrase onto
 		// bank too, so it yields both — the curated redirect first (#1933 precedence), then the standalone category.
 		expect(lookupPOICategory("credit union").map((m) => m.category.id)).toEqual(["bank", "credit_union"])
 	})
@@ -234,7 +234,7 @@ describe("full Overture snapshot + curated overlay", () => {
 
 		// The committed taxonomy.json is the generator's output run through oxfmt (repo law: committed JSON is
 		// oxfmt-clean — short arrays inline — which `JSON.stringify` can't reproduce byte-for-byte). So the committed
-		// file is compared by PARSED content rather than raw bytes: same data, formatting aside.
+		// file is compared by parsed content rather than raw bytes: same data, formatting aside.
 		const committed = await readLocalJSONFile(resolvePackagePath("@mailwoman/poi-taxonomy", "data", "taxonomy.json"))
 
 		expect(committed).toEqual(await generateTaxonomyTable())

@@ -3,11 +3,11 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   The worktree arm's CONTRACT, exercised against a throwaway git repo rather than this one.
+ *   The worktree arm's interface, exercised against a throwaway git repo rather than this one.
  *
  *   Deliberately not a geocode: building an engine costs minutes and needs the data root, so a test that ran one
  *   would be a slow integration test wearing a unit test's clothes. What is asserted here is the implementation that
- *   was actually hard — that a ref arm runs the REF's source and a `WORKTREE` arm runs the UNCOMMITTED one,
+ *   was actually hard — that a ref arm runs the REF's source and a `worktree` arm runs the uncommitted one,
  *   that a dirty tree says so in the commit it reports, and that neither leaves litter behind.
  */
 
@@ -58,7 +58,7 @@ async function fakeRepo(marker: string): Promise<string> {
 		join(root, "packages", "mailwoman", "geocode", "index.ts")
 	)
 
-	// The workspace link yarn would have installed. Both arms need it and for different reasons: the WORKTREE arm
+	// The workspace link yarn would have installed. Both arms need it and for different reasons: the worktree arm
 	// resolves through it directly, and the ref arm's farm mirrors this directory to build its own — so an empty
 	// node_modules here would test neither path.
 	await makeDirectories(join(root, "node_modules"))
@@ -116,7 +116,7 @@ describe("runWorktreeArm — the WORKTREE arm runs the UNCOMMITTED source", () =
 		})
 
 		expect(result.answers[0]!.tier).toBe("uncommitted")
-		// A dirty tree is not its HEAD. Reporting the bare sha would let a result claim a commit it did not run.
+		// A dirty tree is not its head. Reporting the bare sha would let a result claim a commit it did not run.
 		expect(result.commit).toContain("+dirty")
 	})
 

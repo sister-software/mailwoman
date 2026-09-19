@@ -79,7 +79,7 @@ def write_final_artifacts(
         optim=state.optimizer,
         scheduler=state.scheduler,
     )
-    # Fisher artifact lands BESIDE the final checkpoint (the weights-bundle contract: versioned
+    # Fisher artifact lands beside the final checkpoint (the weights-bundle interface: versioned
     # filename + provenance sidecar, the lexicon discipline). Zero-count capture (a run shorter
     # than its window says it was armed for) raises in finalize — loud, never a silent absence.
     if regularizers.fisher_acc is not None:

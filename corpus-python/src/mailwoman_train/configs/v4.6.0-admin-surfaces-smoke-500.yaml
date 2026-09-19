@@ -1,11 +1,11 @@
-# 500-STEP FEED SMOKE for v4.6.0 — validates the v0.23.0 overlay reads + loss descends. Not a capability probe.
+# 500-step feed smoke for v4.6.0 — validates the v0.23.0 overlay reads + loss descends. Not a capability probe.
 # v4.6.0-admin-surfaces — the first-refusal-era from-scratch base (2026-08-15).
 #
 # The v4.4.0 suffix-boundary-v2 recipe verbatim (from scratch, 60k cosine, s42) over the
 # v0.23.0-admin-surfaces overlay. Four corpus deltas, each carrying a standing board failure:
 #   1. cz-pcfirst v21 + fr-bare-street v22 — the v4.5.x counter-form sources, weights held at their
 #      probe-verified values (fr 6.0 / cz 12.0). The fine-tune arc proved these classes need a
-#      BASE run (three cycles, Fisher brake blind to rare classes — scratchpad/v45x-final-verdict.md).
+#      base run (three cycles, Fisher brake blind to rare classes — scratchpad/v45x-final-verdict.md).
 #   2. bare-country v23 (277 rows, weight 1.0 — per-source draw share, so a small weight still
 #      repeats each row ~20x/epoch. the Japan-parses-as-locality class, #1651's parse half).
 #   3. trailing-region es v23 (Portopetro: '«locality», «region», Spain' tails from WOF pairs).
@@ -13,18 +13,18 @@
 #      weight on the venue-ish subset).
 # Checks: the 500-step feed smoke precedes the launch. the full battery + the 349-row regression
 # board grade the result. the two standing board rows (es-op3-southeast-portopetro,
-# gb-op2-st-margarets-hope) are the acceptance tests. PROMOTE IS THE OPERATOR'S.
+# gb-op2-st-margarets-hope) are the acceptance tests. promote is the operator'S.
 #
-# === v4.4.0-suffix-boundary-v2-base-60k — #1569 corrected-contract base (five-whys countermeasures) ===
+# === v4.4.0-suffix-boundary-v2-base-60k — #1569 corrected-interface base (five-whys countermeasures) ===
 #
-# HYPOTHESIS: the v4.3.3 B1 plateau (72-85/128 across 5k-46k incl. the completed-schedule
-# cooldown branch) was caused by a CONTRADICTORY feed — ~78% of ordinary-source terminal-only
+# hypothesis: the v4.3.3 B1 plateau (72-85/128 across 5k-46k incl. the completed-schedule
+# cooldown branch) was caused by a contradictory feed — ~78% of ordinary-source terminal-only
 # carriers taught "absorb the suffix" (the relabel guard refused name-prone splits) while the
 # synthetic source taught "split", and the model learned the context discrimination instead
 # (rich rows 5/43 vs bare 53/65). This run trains the same geometry from scratch with the
 # contradiction removed and the exposure/diversity changes corrected.
 #
-# EFFECTIVE DELTAS vs v4.3.3 (each carries its own receipt in scratchpad/SUFFIX_BOUNDARY_TRAINING.md):
+# effective deltas vs v4.3.3 (each carries its own receipt in scratchpad/SUFFIX_BOUNDARY_TRAINING.md):
 #   1. affix lexicon v2 — positional licensing: ordinary terminal-only carriers 21.0% -> 94.0%
 #      correct (250k feed audit, contrast classes unchanged). The absorb signal is gone.
 #   2. corpus v0.19.0 — suffix-boundary recipe v2: real 16,432-name venue shell at 30% (was 6 template
@@ -35,16 +35,16 @@
 #   4. augment_exclude_sources: the source bypasses augmentation (copies of an oversampled
 #      template source compound repetition without adding diversity. augmented rows measured at
 #      25.5% of the emitted budget).
-# TRAINING SEMANTICS otherwise verbatim v4.3.3: from scratch, no init_from, no EWC, LR 5e-4,
+# training semantics otherwise verbatim v4.3.3: from scratch, no init_from, no EWC, LR 5e-4,
 # warmup 1,000, 60k cosine, batch 128, bf16, Fisher capture over the final 2k steps, seed 42.
 # The loader is the repaired substrate (stationary sampler, clean val, atomic checkpoints).
 #
-# CHECKS (fp32, unchanged):
+# checks (fp32, unchanged):
 #   B1 terminal-only >=116/128
 #   B2 terminal-contrast >=34/48
 #   B4 locality-token retention >=3/7 (exact locality is an upside watch)
 #   B3 `mailwoman eval promote --spec v9.0.0-base`, zero known tier-1 regression, only after B1/B2/B4
-# Grade 5k/10k/20k/40k/60k fp32. GRADE DISCIPLINE: mid-cosine reads understate the finished
+# Grade 5k/10k/20k/40k/60k fp32. grade discipline: mid-cosine reads understate the finished
 # model (the 40k cooldown branch measured the tail worth +3 B1) — interim grades are curve
 # telemetry, the 60k grade is the verdict. If 60k misses B1, stop this change. the next moves
 # are the street-type channel position-encoding and decode-time span scoring rather than a re-weighting.

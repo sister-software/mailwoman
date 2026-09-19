@@ -6,7 +6,7 @@
  *   The authoring loader: that a directory's layout is convenience and nothing else, and that a
  *   failure names the file an author can open.
  *
- *   The enumeration property is tested against a permuted FILE LIST rather than against a real
+ *   The enumeration property is tested against a permuted file list rather than against a real
  *   directory, on purpose. `readdir` order is a property of the filesystem — hash order on ext4, and
  *   not something a test can arrange — so a test that wrote files in an awkward order would be
  *   asserting about the machine it ran on. Handing the merge its files in reverse states the property

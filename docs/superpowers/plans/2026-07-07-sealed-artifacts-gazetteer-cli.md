@@ -1,6 +1,6 @@
 # Sealed Artifacts + Gazetteer CLI (PR A + PR B) Implementation Plan
 
-> **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
+> **For agentic workers:** required sub-skill: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
 **Goal:** Mechanically enforce the read-only-artifact policy (`sealDatabase`/`openBuiltDatabase`) and fold the scattered WOF admin-gazetteer build (1 script + 4 post-build steps) into one turnkey, verified, self-documenting `mailwoman gazetteer build admin` command.
 

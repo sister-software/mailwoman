@@ -8,7 +8,7 @@
  *   common-noun terms and aliases ("city" → locality, "state" → region) also match inside proper
  *   nouns: "New York City" tooltips "City", "United States of America" tooltips "States".
  *
- *   GUARD 1 — proper nouns. Un-links a GlossaryTerm node when all of the following hold:
+ *   guard 1 — proper nouns. Un-links a GlossaryTerm node when all of the following hold:
  *
  *   1. The glossary term is a common noun (starts lowercase) — acronym/name terms (FST, BAN, WOF)
  *      are exempt so "admin FST" keeps its tooltip.
@@ -17,7 +17,7 @@
  *      noun ("New York City", "United States of America", "State Street"). A capitalized match at a
  *      plain sentence start has no capitalized neighbor and keeps its tooltip.
  *
- *   GUARD 2 — homonyms. Un-links a node whose MATCHED SURFACE (not its term) is listed in the
+ *   guard 2 — homonyms. Un-links a node whose matched surface (not its term) is listed in the
  *   `noAutoLink` option. This is a surface-level suppression, so the term itself keeps its tooltip
  *   wherever it is written in full: suppressing "state" leaves "region" linking, and leaves the FST
  *   alias "finite-state transducer" linking too, even though it contains "state". See the option's
@@ -59,7 +59,7 @@ const STARTS_WITH_CAPITALIZED_WORD = /^\s*[A-Z]/
 /**
  * Every surface an entry can be matched as, given the upstream matcher's "s"/"es" plural allowance.
  *
- * Generated FORWARD from the entry rather than un-inflected from the surface, which is the same direction the matcher
+ * Generated forward from the entry rather than un-inflected from the surface, which is the same direction the matcher
  * runs. An inverse ("strip a trailing es, else strip a trailing s") is not the inverse: it takes "states" to "stat",
  * and the first build with one shipped a guard that suppressed `state` on every page while leaving `states` linking on 26.
  */

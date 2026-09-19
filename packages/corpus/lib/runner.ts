@@ -3,7 +3,7 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Adapter runner — drives a `CorpusAdapter` to completion and writes intermediate JSONL + a
+ *   Adapter runner — drives a `CorpusAdapter` to completion and writes intermediate jsonl + a
  *   per-adapter manifest.
  *
  *   Output layout under `outputDir`:
@@ -11,7 +11,7 @@
  *   ```
  *   <outputDir>/<adapter.id>/
  *   canonical.jsonl       # one row per line, in emission order
- *   MANIFEST.json         # adapter id, version, row count, sha256, license, started_at, ended_at
+ *   manifest.json         # adapter id, version, row count, sha256, license, started_at, ended_at
  * ```
  *
  *   The runner is responsible for everything an adapter is **not** responsible for:
@@ -20,13 +20,13 @@
  *   - Stamping the adapter's `addressRole` on every row that omits one, so a single-role source declares its role once
  *       and a multi-role source overrides per row.
  *   - Applying `canonicalDedupKey` and skipping duplicates.
- *   - Streaming sha256 over JSONL bytes so the manifest checksum doesn't require a re-read.
+ *   - Streaming sha256 over jsonl bytes so the manifest checksum doesn't require a re-read.
  *   - Honoring backpressure on the output write stream.
  *   - Counting + emitting periodic progress to an optional callback.
  *   - Honoring `signal` (delegates to adapter's iteration boundary).
  *
  *   The runner does not perform alignment, tokenization, synthesis, or the Parquet write. Those
- *   steps run later, consuming the JSONL files this writes.
+ *   steps run later, consuming the jsonl files this writes.
  */
 
 import { openWriteStream, type WriteStream } from "@mailwoman/core/fs/streams"
@@ -52,12 +52,12 @@ export interface RunnerProgress {
 	yielded: number
 
 	/**
-	 * Rows actually written to JSONL (after dedup).
+	 * Rows actually written to jsonl (after dedup).
 	 */
 	written: number
 
 	/**
-	 * Bytes written to JSONL so far.
+	 * Bytes written to jsonl so far.
 	 */
 	bytes: number
 
@@ -105,7 +105,7 @@ export interface RunAdapterOptions {
 }
 
 /**
- * Return value of `runAdapter`: the same shape as `MANIFEST.json` on disk.
+ * Return value of `runAdapter`: the same shape as `manifest.json` on disk.
  */
 export interface AdapterRunManifest {
 	adapter_id: string
@@ -126,7 +126,7 @@ export interface AdapterRunManifest {
 /**
  * Drive a single adapter to completion.
  *
- * Returns the manifest describing the run. Writes `canonical.jsonl` + `MANIFEST.json` under `outputDir/<adapter.id>/`.
+ * Returns the manifest describing the run. Writes `canonical.jsonl` + `manifest.json` under `outputDir/<adapter.id>/`.
  * Throws if the output directory cannot be created, if a row arrives with a missing required field, or if the abort
  * signal fires.
  */
@@ -272,7 +272,7 @@ export async function runAllAdapters(
 }
 
 /**
- * Validate an emitted row. Cheap. runs once per row. Catches adapter bugs early so the JSONL doesn't end up
+ * Validate an emitted row. Cheap. runs once per row. Catches adapter bugs early so the jsonl doesn't end up
  * half-malformed.
  */
 function assertEmittedRow(adapter: CorpusAdapter, row: CanonicalRow): void {

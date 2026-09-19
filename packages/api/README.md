@@ -4,9 +4,9 @@ The **native [Mailwoman](https://mailwoman.ai) HTTP API** — an engine-agnostic
 (parse, geocode, batch, resolve, format) plus health, metrics, and an emitted OpenAPI document. Unlike its
 drop-in siblings ([`@mailwoman/nominatim`](../nominatim), [`@mailwoman/photon`](../photon),
 [`@mailwoman/libpostal`](../libpostal)), nothing here mimics a third-party API — this is Mailwoman's own
-wire contract, so request bodies are strict and validator-enforced.
+wire interface, so request bodies are strict and validator-enforced.
 
-## Engine contract
+## Engine interface
 
 The package takes a `MailwomanAPIEngine` — every method optional. An absent method answers `501` (`/v1/parse`)
 or `503` (`/v1/geocode`, `/v1/batch`, `/v1/resolve`, `/v1/reload` — deps missing in production). `format` is

@@ -10,7 +10,7 @@
  *   map apps use, and the reason is the map: chrome that floats over it leaves the map the page, where a slab makes
  *   the map the leftover third.
  *
- *   NODE-SAFE: pure React + the shared units, no maplibre.
+ *   node-safe: pure React + the shared units, no maplibre.
  */
 
 import type React from "react"
@@ -88,7 +88,7 @@ export interface GeocoderControlsProps {
 	 */
 	onSelectVersion: (version: string) => void
 	/**
-	 * Toggle the forced WASM backend.
+	 * Toggle the forced wasm backend.
 	 */
 	onForceWASMChange: (forceWASM: boolean) => void
 	/**
@@ -108,7 +108,7 @@ type SheetName = "about" | "layers" | "developer" | null
 /**
  * The width at or below which the panel is a bottom drawer rather than a left column.
  *
- * STATED ONCE, and it has to agree with the `@media (max-width: 600px)` block in `styles.css` that actually moves the
+ * Stated once, and it has to agree with the `@media (max-width: 600px)` block in `styles.css` that actually moves the
  * panel: the gestures below arm on this query, so a disagreement arms a drag on a layout with nowhere to drag to.
  */
 const DRAWER_LAYOUT = "(max-width: 600px)"
@@ -124,7 +124,7 @@ const DRAG_TRAVEL_PX = 3
 /**
  * Downward travel, in pixels, that promotes a pull at the top of the scroll into a drag on the drawer.
  *
- * Larger than {@link DRAG_TRAVEL_PX} because this gesture starts on the CONTENT, where the same few pixels could still
+ * Larger than {@link DRAG_TRAVEL_PX} because this gesture starts on the content, where the same few pixels could still
  * turn out to be a scroll: the drawer must not start moving under a reader who meant to flick the result up.
  */
 const OVERSCROLL_PROMOTE_PX = 8
@@ -284,7 +284,7 @@ export function GeocoderControls({
 	}, [sheetDetents, toggleDetent])
 
 	/*
-	 * OVERSCROLL IS A DRAG rather than a bounce. Pull down on a sheet that is already scrolled to its top and the sheet
+	 * overscroll is A drag rather than a bounce. Pull down on a sheet that is already scrolled to its top and the sheet
 	 * itself should come down — that is what the reference sheets do, and it is what makes a drawer dismissable
 	 * without first hunting for the pill. A rubber band in that position says the gesture was heard and refused.
 	 *
@@ -330,7 +330,7 @@ export function GeocoderControls({
 			if (event.clientY - armed.startY < OVERSCROLL_PROMOTE_PX) return
 
 			overscrollRef.current = null
-			// Measured from where the pull STARTED, so the sheet does not jump by the threshold at the moment it takes over.
+			// Measured from where the pull started, so the sheet does not jump by the threshold at the moment it takes over.
 			sheetDragRef.current = { startY: armed.startY, startHeight: sheet.getBoundingClientRect().height, moved: true }
 			sheet.setPointerCapture(event.pointerId)
 			onGripPointerMove(event)
@@ -363,7 +363,7 @@ export function GeocoderControls({
 	)
 
 	// A permalink answers on arrival. `runtime.ready` holds it back — the parse pipeline drops a submit made before the
-	// model is loaded, which is exactly the window a cold permalink lands in — and the ref makes it once-only, so a
+	// model is loaded. It is exactly the window a cold permalink lands in — and the ref makes it once-only. Therefore, a
 	// later re-render (or the visitor clearing the field) cannot re-run the URL's query over their own work.
 	const autoRanInitialQuery = useRef(false)
 
@@ -393,12 +393,12 @@ export function GeocoderControls({
 	}, [])
 
 	/*
-	 * TOUCHING THE MAP PUTS THE DRAWER DOWN. A phone shows the map through whatever the drawer leaves, so the first
+	 * touching the MAP puts the drawer down. A phone shows the map through whatever the drawer leaves, so the first
 	 * thing a visitor does after reading a result is pan to see where it is — and a drawer that stays at its detent
 	 * through that gesture is answering a question nobody asked twice.
 	 *
 	 * It shrinks rather than closes: the result is still there, one pull away. Only a gesture counts — a programmatic
-	 * camera move carries no `originalEvent`, and the fly-to that ANSWERS a query is exactly such a move, so reacting
+	 * camera move carries no `originalEvent`, and the fly-to that answers a query is exactly such a move, so reacting
 	 * to those would put a result away at the moment it arrived.
 	 */
 	useEffect(() => {
@@ -464,7 +464,7 @@ export function GeocoderControls({
 	const showSheet = Boolean(busy || result || errorMessage) && !resultDismissed
 
 	/*
-	 * The drawer STANDS OVER the map, as opposed to resting at the bottom of it. Shrunk to its smallest detent it is
+	 * The drawer stands over the map, as opposed to resting at the bottom of it. Shrunk to its smallest detent it is
 	 * a search field with a map behind it, and the map's own controls belong back on screen at that point — which is
 	 * the state a pan leaves it in.
 	 */
@@ -508,7 +508,7 @@ export function GeocoderControls({
 				{...(sheetHeight === null ? {} : { style: { maxHeight: `${Math.round(sheetHeight)}px` } })}
 			>
 				{/*
-				 * THE HEADER STAYS. The grab bar and the search field are one sticky block, so scrolling a long result
+				 * the header stays. The grab bar and the search field are one sticky block, so scrolling a long result
 				 * never takes the field with it — the thing a visitor reaches for next is the thing that scrolled away.
 				 * It is opaque because the panel's own material is glass, and text read through a pinned header.
 				 */}

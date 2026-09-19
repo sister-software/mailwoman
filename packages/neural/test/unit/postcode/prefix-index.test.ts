@@ -6,7 +6,7 @@
  *   PFX1 round-trip + doctrine tests. The doctrine cases are the point, and each pins one property
  *   the arc document earned with a measurement: a coordinate may never travel without its
  *   `radiusP95Km` (M-3's 200× spread between a US band and a GB outward code), the ancestry-only
- *   tier must survive the round trip as ABSENCE rather than `0,0` (M-2b's coordinate-less BT
+ *   tier must survive the round trip as absence rather than `0,0` (M-2b's coordinate-less BT
  *   districts), and a duplicate prefix must throw rather than silently keep one of two counts.
  */
 
@@ -134,7 +134,7 @@ describe("PFX1 layout conformance (docs/engineering/reference/pfx1.ksy)", () => 
 		const view = new DataView(bytes.buffer, bytes.byteOffset, bytes.byteLength)
 		const decoder = new TextDecoder()
 
-		// magic: the ASCII bytes "PFX1"
+		// magic: the ascii bytes "PFX1"
 		expect(decoder.decode(bytes.subarray(0, 4))).toBe("PFX1")
 
 		// header_len: u4le, then header_json: UTF-8 JSON of exactly that many bytes
@@ -151,7 +151,7 @@ describe("PFX1 layout conformance (docs/engineering/reference/pfx1.ksy)", () => 
 		o += 4
 
 		// Three distinct surfaces (UK, England, Northern Ireland) across four nodes that make seven
-		// references — the dictionary is the anti-repetition device, so it must be SHORTER than the
+		// references — the dictionary is the anti-repetition device, so it must be shorter than the
 		// reference count, which the assertion at the end of the walk states directly.
 		expect(ancestorCount).toBe(3)
 

@@ -4,7 +4,7 @@
 
 **Branch:** ad-hoc on `main`; ship via incremental commits.
 
-**Depends on:** [`STAGES.md`](https://github.com/sister-software/mailwoman/blob/main/docs/engineering/reference/STAGES.mdx) (the interface contract) and [`QUERY_SHAPE.md`](https://github.com/sister-software/mailwoman/blob/main/docs/engineering/reference/QUERY_SHAPE.mdx) (the QueryShape sub-system design).
+**Depends on:** [`STAGES.md`](https://github.com/sister-software/mailwoman/blob/main/docs/engineering/reference/STAGES.mdx) (the interface interface) and [`QUERY_SHAPE.md`](https://github.com/sister-software/mailwoman/blob/main/docs/engineering/reference/QUERY_SHAPE.mdx) (the QueryShape sub-system design).
 
 **Why these two together:** QueryShape consumes `NormalizedInput.normalized` and produces structural priors that downstream stages thread through. Building them in the same ship means the boundary between them gets its first real test before it ossifies.
 

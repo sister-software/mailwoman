@@ -18,7 +18,7 @@ import type { WOFDatabase } from "@mailwoman/resolver-wof-sqlite/schema"
  *        precedence over a country → region → locality ancestor chain (most-specific wins, weights
  *        merge key-by-key). This is the mechanism the EU locales never exercise (they ride
  *        WORLD_DEFAULT).
- *   2. Live dispatch — a `WOFSQLitePlaceLookup` with an INJECTED convention, keyed by the country's WOF
+ *   2. Live dispatch — a `WOFSQLitePlaceLookup` with an injected convention, keyed by the country's WOF
  *        id, proving the merged convention actually reroutes `findPlace`'s strategy dispatch.
  */
 import { DatabaseClient } from "@mailwoman/sqlite/client"
@@ -63,7 +63,7 @@ describe("convention engine — merge + resolve", () => {
 			300: { scoringWeights: { name: 0.4 } }, // locality (Sapporo)
 		} satisfies Record<number, Convention>)
 
-		// chain ordered MOST-GENERAL → MOST-SPECIFIC
+		// chain ordered most-general → most-specific
 		const out = resolveConvention(source, [100, 200, 300])
 		expect(out.candidateStrategies).toEqual(["grid_interpolation", "postcode_area_resolution"]) // region won
 		expect(out.scoringWeights).toEqual({ pc: 0.7, name: 0.4, pop: 0.1 }) // country pc + locality name + base pop

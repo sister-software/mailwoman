@@ -1,16 +1,16 @@
-# v0.7.0b calibration — GENTLER label smoothing (iteration 2 of the 2-cap).
+# v0.7.0b calibration — gentler label smoothing (iteration 2 of the 2-cap).
 #
 # Staged rather than launched. The ls=0.1 run (v0_7_0-calibration-label-smoothing.yaml)
 # reduced overconfidence-on-wrong 86.3%→66.6% but did not improve the primary
 # harness pass rate (14.6%→13.8%) and regressed house_number recall −6.0pp and
-# street −2.9pp on the held-out TEST (>2pp check). See the night-3 postmortem §0c.
+# street −2.9pp on the held-out test (>2pp check). See the night-3 postmortem §0c.
 #
 # Hypothesis for this iteration: ls=0.1 over-smoothed, flattening the target
 # enough to cost recall on the confident-correct tags (house_number, street).
 # ls=0.05 is a gentler regularizer — test whether it keeps a meaningful
 # overconfidence reduction without the per-tag recall cost.
 #
-# SINGLE-VARIABLE CHANGE vs v0_6_0-stage3.yaml: label_smoothing 0.0 → 0.05.
+# single-variable change vs v0_6_0-stage3.yaml: label_smoothing 0.0 → 0.05.
 # (Identical to the ls=0.1 config except this value + output_dir.)
 #
 # Per the 2-iteration cap: this is the last recipe tweak before a methodology
@@ -37,7 +37,7 @@ data:
     usgov-hrsa-fqhc: 2.0
     usgov-imls-pls: 2.0
     usgov-nad: 1.0
-    state-ia-contractors: 2.0
+    state-ia-builders: 2.0
     state-tx-notaries: 1.5
     state-ny-notaries: 2.0
     deepseek-kryptonite: 3.0
@@ -63,7 +63,7 @@ model:
   hidden_dropout_prob: 0.1
   attention_probs_dropout_prob: 0.1
   use_crf: true
-  # === THE SINGLE VARIABLE: 0.0 → 0.05 (gentler than v0.7.0's 0.1) ===
+  # === the single variable: 0.0 → 0.05 (gentler than v0.7.0's 0.1) ===
   label_smoothing: 0.05
   crf_normalization: per_sequence
   crf_loss_weight: 0.0

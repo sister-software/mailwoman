@@ -3,17 +3,17 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   `nl-postcode` — the Dutch full-form postcode recipe (#924). The model reads the DIGITS-FIRST NL
+ *   `nl-postcode` — the Dutch full-form postcode recipe (#924). The model reads the digits-first NL
  *   postcode "1012 LG" as a house number + a 2-letter street ("1012 LG Amsterdam" → house_number
  *   1012 / street "LG" / locality Amsterdam), and that spurious street context then pulls the
  *   locality into the US situs tier (Amsterdam → Amsterdam, NY). Letters-first postcodes (UK
  *   "SW1A 1AA") parse natively. the `\d{4} [A-Z]{2}` shape does not, and the soft query-shape prior
  *   (0.9 log-odds) can't overcome the strong house-number reading of a leading 4-digit token.
  *
- *   This is the model-first fix as DATA (the #723/#901 discipline — teach the boundary, don't
+ *   This is the model-first fix as data (the #723/#901 discipline — teach the boundary, don't
  *   override the decoder): real NL (street, number, postcode, city) tuples in the orders Dutch
- *   addresses actually use, with the full postcode tagged as one postcode span. Both the SPACED
- *   ("1012 LG", the failing form — a 2-token span) and UNSPACED ("1012LG", 1 token) forms are
+ *   addresses actually use, with the full postcode tagged as one postcode span. Both the spaced
+ *   ("1012 LG", the failing form — a 2-token span) and unspaced ("1012LG", 1 token) forms are
  *   emitted so the model learns the digits-first postcode regardless of spacing. the three orders
  *   keep polarity balanced (the v1.9.9 lesson).
  */

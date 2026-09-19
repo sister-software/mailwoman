@@ -3,12 +3,12 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Country → street-normalization-locale routing for the BAN rooftop build. The NORMALIZER itself
+ *   Country → street-normalization-locale routing for the BAN rooftop build. The normalizer itself
  *   lives in `@mailwoman/resolver-wof-sqlite/street-normalize` (the one-function discipline — the
  *   reader on the resolver side and the builder here must call the identical function). This module
  *   only maps an ISO-3166 country code to the locale that selects the right per-locale rules, and
- *   re-exports the normalizer so the BAN SDK is a self-contained surface. Kept SEPARATE from the
- *   heavy `region-database-provider.ts` (which pulls the SQLite lookup) so the pure locale contract is testable
+ *   re-exports the normalizer so the BAN SDK is a self-contained surface. Kept separate from the
+ *   heavy `region-database-provider.ts` (which pulls the SQLite lookup) so the pure locale interface is testable
  *   without opening a database — mirrors `@mailwoman/osm`'s `street-locale.ts`.
  */
 

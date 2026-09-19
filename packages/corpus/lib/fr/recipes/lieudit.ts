@@ -13,12 +13,12 @@
  *
  *   Mapping: lieu-dit → `dependent_locality`, commune → `locality`. Rendered to match the formatter's
  *   FR `place`-slot convention (`fix(formatter): render dependent_locality for neither-slot templates`,
- *   b1edc1b7, verified via a `formatAddress` smoke call): house+street on line 1, the lieu-dit ALONE on
+ *   b1edc1b7, verified via a `formatAddress` smoke call): house+street on line 1, the lieu-dit alone on
  *   line 2, postcode+commune on line 3 — French postal convention (La Poste's line 5).
  *
  *   ~1.69M clean rows survive the filter nationally (26M total BAN rows, 1.81M raw `nom_ld` fills, ~6.6%
  *   junk/dup). The pool is read in full (small string tuples only — no coordinates needed) and
- *   Fisher-Yates shuffled with the seeded PRNG before slicing to `--count`, rather than sampled with
+ *   Fisher-Yates shuffled with the seeded prng before slicing to `--count`, rather than sampled with
  *   replacement — at a `--count` a sizeable fraction of the pool, with-replacement draws would produce a
  *   large duplicate rate (birthday-paradox math: ~190k expected collisions at count=800k over a 1.69M
  *   pool).
@@ -207,7 +207,7 @@ export const frLieuditRecipe: CorpusRecipe = {
 				components.postcode = t.postcode
 			}
 
-			// The envelope form: house+street line, the lieu-dit ALONE on its own line, postcode+commune line. That is
+			// The envelope form: house+street line, the lieu-dit alone on its own line, postcode+commune line. That is
 			// La Poste's line 5, and it is what `FR`'s layout prints — this recipe used to restate it.
 			let raw = formatAddress(components, "FR")
 

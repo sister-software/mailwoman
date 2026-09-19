@@ -16,18 +16,18 @@
  *   - **`poiLookup` is an already-open {@link POILookup}, not a `POILookupOpts` this function
  *     constructs itself.** `POILookup`'s constructor eagerly loads the poi-taxonomy category dictionary
  *     and prepares three statements (see `poi-lookup.ts`) — reconstructing that per call would mean
- *     re-opening the SQLite handle and re-running the dictionary `SELECT` on every single
+ *     re-opening the SQLite handle and re-running the dictionary `select` on every single
  *     `nearestInfrastructure` invocation. A scorer calling this once per filing candidate wants to open
  *     `poi.db` once and reuse the same `POILookup` — this wrapper takes that shape: the caller owns
  *     `POILookup`'s open/dispose lifecycle (`using poiLookup = new POILookup(...)`), we just call
  *     `.search()` on it.
  *   - **`nearestInfrastructure` is `async`, not sync.** `readLayerCoverage`
- *     (`@mailwoman/core/layers`) is `Promise`-returning — every layer-contract read in this codebase is
+ *     (`@mailwoman/core/layers`) is `Promise`-returning — every layer-interface read in this codebase is
  *     (`readLayerManifest`, `filingLandscape` itself) — so pairing each POI hit with its coverage cell
  *     means awaiting one `readLayerCoverage` call per hit. A sync signature can't await that.
  *
  *   {@link res9ShortCellToRes6Parent} (exported by `filing-landscape.ts`; see that file's docstring for
- *   why the res-6 parent is reconstructed from the STORED res-9 cell rather than recomputed from the
+ *   why the res-6 parent is reconstructed from the stored res-9 cell rather than recomputed from the
  *   centroid) turns each hit's res-9 cell into the res-6 cell every layer in this repo aggregates
  *   coverage at (poi.db's own convention; `bdc.db`'s `BDC_COVERAGE_H3_RESOLUTION` matches it
  *   deliberately — see `schema.ts`). `POI_H3_RESOLUTION` (`poi-lookup.ts`) is also 9, so the two layers'
@@ -35,7 +35,7 @@
  */
 
 import { stringifyJSON } from "@mailwoman/core/json"
-import { readLayerCoverage, type CoverageCell, type LayerContractHandle } from "@mailwoman/core/layers"
+import { readLayerCoverage, type CoverageCell, type layerschemahandle } from "@mailwoman/core/layers"
 import { POI_H3_RESOLUTION, type POILookup } from "@mailwoman/resolver-wof-sqlite/poi"
 import { shortCellToInt, type H3Cell, type PointLiteral } from "@mailwoman/spatial"
 import type { DatabaseClient } from "@mailwoman/sqlite/client"
@@ -53,7 +53,7 @@ export const NEAREST_INFRASTRUCTURE_DEFAULT_MAX_RINGS = 32
 
 /**
  * One k-nearest telecom-infrastructure hit, paired with the res-6 coverage cell it falls in. `coverage: undefined`
- * means `contractDB`'s layer has never surveyed that area (the meaning-of-zero rule. see `@mailwoman/core/layers`) —
+ * means `schemadb`'s layer has never surveyed that area (the meaning-of-zero rule. see `@mailwoman/core/layers`) —
  * never conflate it with a covered-but-empty cell.
  */
 export interface InfrastructureHit {
@@ -61,7 +61,7 @@ export interface InfrastructureHit {
 	name: string | null
 	distanceM: number
 	/**
-	 * Res-9 short H3 cell of the hit ITSELF — not the (coarser) coverage cell. see `coverage.h3Cell` for that.
+	 * Res-9 short H3 cell of the hit itself — not the (coarser) coverage cell. see `coverage.h3Cell` for that.
 	 */
 	h3Cell: number
 	coverage: CoverageCell | undefined
@@ -76,7 +76,7 @@ export interface NearestInfrastructureOptions {
 	categoryIDs: string[]
 	limit?: number
 	/**
-	 * Ring budget. Default {@link NEAREST_INFRASTRUCTURE_DEFAULT_MAX_RINGS} (32) — NOT `POILookup`'s own internal default
+	 * Ring budget. Default {@link NEAREST_INFRASTRUCTURE_DEFAULT_MAX_RINGS} (32) — not `POILookup`'s own internal default
 	 * (16); see this module's docstring.
 	 */
 	maxRings?: number
@@ -84,13 +84,13 @@ export interface NearestInfrastructureOptions {
 
 /**
  * K-nearest telecom-infrastructure POIs from `options.center`, each paired with the coverage cell it falls in per
- * `contractDB`'s own `layer_coverage` table. Never throws on a sparse result — no infrastructure within `maxRings`, or
+ * `schemadb`'s own `layer_coverage` table. Never throws on a sparse result — no infrastructure within `maxRings`, or
  * every `categoryIDs` entry unresolvable against `poiLookup`'s dictionary — returns `[]`, the same discipline
  * `POILookup.search` itself follows.
  */
 export async function nearestInfrastructure(
 	poiLookup: POILookup,
-	contractDB: LayerContractHandle & Pick<DatabaseClient, "destroy">,
+	schemadb: layerschemahandle & Pick<DatabaseClient, "destroy">,
 	options: NearestInfrastructureOptions
 ): Promise<InfrastructureHit[]> {
 	const [longitude, latitude] = options.center.coordinates
@@ -113,7 +113,7 @@ export async function nearestInfrastructure(
 		}
 
 		const h3Cell = shortCellToInt(latLngToCell(hit.latitude, hit.longitude, POI_H3_RESOLUTION) as H3Cell)
-		const coverage = await readLayerCoverage(contractDB, res9ShortCellToRes6Parent(h3Cell))
+		const coverage = await readLayerCoverage(schemadb, res9ShortCellToRes6Parent(h3Cell))
 
 		infrastructureHits.push({
 			categoryID: hit.categoryID,

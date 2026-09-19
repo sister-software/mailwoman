@@ -7,12 +7,12 @@
  *
  *   A byte-fallback piece's placeholder text (`"<0x7B>"`, 6 chars) is not 6 input characters — it represents exactly
  *   one byte of a real character's UTF-8 encoding. An offset walker that advances the cursor by the placeholder's
- *   length desyncs every SUBSEQUENT piece's `[start, end)` offsets for the rest of the input rather than just the
+ *   length desyncs every subsequent piece's `[start, end)` offsets for the rest of the input rather than just the
  *   byte-fallback piece itself, which is why the assertions here reach well past the fallback run. On the small
  *   fixture tokenizer (`tokenizer-v0.1.0.model`, deliberately tiny-vocab) byte-fallback fires on curly quotes “”‘’,
- *   guillemets «», and even ASCII braces `{}`/`[]` — not just non-Latin scripts, so this suite reproduces without the
+ *   guillemets «», and even ascii braces `{}`/`[]` — not just non-Latin scripts, so this suite reproduces without the
  *   conditional production tokenizer. See `tokenizer.ts`'s doc comment for the handling (buffer a byte-fallback RUN, decode
- *   as one UTF-8 sequence via `TextDecoder`, advance the cursor by the DECODED string's length).
+ *   as one UTF-8 sequence via `TextDecoder`, advance the cursor by the decoded string's length).
  */
 
 import { workspacePath } from "@mailwoman/core/paths"
@@ -64,7 +64,7 @@ describe("MailwomanTokenizer — byte-fallback offset reconstruction (paired-pun
 		const tokenizer = await MailwomanTokenizer.loadFromFile(TOKENIZER_MODEL_PATH)
 		const { pieces } = tokenizer.encode(raw)
 		const byteFallbackPiece = pieces.find((p) => p.piece === "<0x7B>")!
-		// The single byte 0x7B IS the complete UTF-8 encoding of "{" (1 byte, 1 char) — the run's one piece
+		// The single byte 0x7B is the complete UTF-8 encoding of "{" (1 byte, 1 char) — the run's one piece
 		// recovers exactly "{", not a 6-char placeholder-length span.
 		expect(raw.slice(byteFallbackPiece.start, byteFallbackPiece.end)).toBe("{")
 
@@ -105,7 +105,7 @@ describe("MailwomanTokenizer — byte-fallback offset reconstruction (paired-pun
 		expect(raw.slice(openRun[2]!.start, openRun[2]!.end)).toBe("“")
 		expect(raw.slice(closeRun[2]!.start, closeRun[2]!.end)).toBe("”")
 
-		// The piece BETWEEN the two runs ("A") and everything after the second run must land on the correct
+		// The piece between the two runs ("A") and everything after the second run must land on the correct
 		// offsets. A placeholder-length walk over-advances by 5 chars per 3-piece run (18 placeholder chars for
 		// 1 real char), landing deep past the end of this 15-char string and garbling every downstream span.
 		const aPiece = pieces.find((p) => p.piece === "A")!

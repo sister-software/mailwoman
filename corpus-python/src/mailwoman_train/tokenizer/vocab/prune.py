@@ -52,7 +52,7 @@ def main() -> None:
     vocab_size = sp.get_piece_size()
 
     counts = np.load(args.train_counts)["counts"]
-    # These four checks guard artifact SURGERY: each one catches a mismatch that would otherwise
+    # These four checks guard artifact surgery: each one catches a mismatch that would otherwise
     # write a tokenizer or a graph whose pieces and embedding rows disagree. `assert` disappears
     # under `python -O`, which is exactly when a silently wrong artifact would ship.
     if counts.shape != (vocab_size,):
@@ -63,8 +63,8 @@ def main() -> None:
     keep[counts > 0] = True
     keep[list(eval_fired)] = True
 
-    # Specials: ids 0-3 (pad/unk/bos/eos) plus any piece the proto marks non-NORMAL (control /
-    # unused / byte). Byte-fallback pieces are type BYTE — kept via the same check.
+    # Specials: ids 0-3 (pad/unk/bos/eos) plus any piece the proto marks non-normal (control /
+    # unused / byte). Byte-fallback pieces are type byte — kept via the same check.
     proto = sp_pb2.ModelProto()
     proto.ParseFromString(Path(args.tokenizer).read_bytes())
     if len(proto.pieces) != vocab_size:

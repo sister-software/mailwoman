@@ -7,8 +7,8 @@
  *   gazetteer does not carry. #1480's abstention is the defect: a BT unit with no permissive source
  *   behind it (the NI half of Code-Point Open) misses the gazetteer, and the tree contributes
  *   nothing for it — no country scope, no district, no coordinate. This module derives the code's
- *   PREFIX and probes the PFX1 index (`postcode-prefix-<cc>.bin`), so the resolve "abstains on the
- *   UNIT and still contributes its DISTRICT": the node resolves from the prefix's centroid and/or
+ *   prefix and probes the PFX1 index (`postcode-prefix-<cc>.bin`), so the resolve "abstains on the
+ *   unit and still contributes its district": the node resolves from the prefix's centroid and/or
  *   ancestry, whichever the artifact carries.
  *
  *   The index is a structural type (`PostcodePrefixIndexLike`, declared in `core/resolver/types.ts`),
@@ -19,24 +19,24 @@
  *
  *   ## The derivation law (per artifact country)
  *
- *   - **GB** — the OUTWARD code: the compact (whitespace-stripped) form minus its trailing 3 unit
+ *   - **GB** — the outward code: the compact (whitespace-stripped) form minus its trailing 3 unit
  *     characters ("SW1A 2AA" → "SW1A", "BT9 5GS" → "BT9"). Never a greedy regex — the unit is
  *     exactly 3 chars in the compact form, and `outwardOf` in `mailwoman/gazetteer-pipeline/
  *     postcode-prefix.ts` is the build-side twin of this law.
  *   - **US** — the 3-digit section ("94043" → "940"). M-3 measured 3 digits as the first length
  *     where the ZIP prefix stops being free (145 km p95 median); a 5-digit artifact would be the
- *     full code the gazetteer already carries. No US artifact ships yet (B3-4 needs a ZCTA
+ *     full code the gazetteer already carries. No US artifact ships yet (B3-4 needs a zcta
  *     acquisition) — the branch exists so the law is tested before the data.
  *   - **Anything else** — abstain (null).
  *
  *   ## The probe's country restriction
  *
- *   The index is country-specific EVIDENCE: it is only probed when its `country` matches the
+ *   The index is country-specific evidence: it is only probed when its `country` matches the
  *   query's country scope (or the scope is absent). A GB index must not speak under a US scope —
  *   the pipeline passes the locale's index, and the walk's country filter is the caller's declared
  *   universe.
  *
- *   ## Metadata contract (what the node carries afterward)
+ *   ## Metadata interface (what the node carries afterward)
  *
  *   - `postcode_prefix` — the prefix string that resolved it.
  *   - `postcode_prefix_ancestors` — the ancestry the prefix asserts (coarsest-first. GB outward
@@ -44,12 +44,12 @@
  *   - `postcode_prefix_radius_p95_km` — the artifact's measured p95 radius, when the node carries a
  *     coordinate (M-3's receipt: a 1-digit US band and a GB outward code differ by 200×; never read
  *     a coordinate without its radius).
- *   - `coordinate_source: "postcode_prefix"` — ONLY when the node actually carries a coordinate.
+ *   - `coordinate_source: "postcode_prefix"` — only when the node actually carries a coordinate.
  *     The ancestry-only tier (NI's 80 BT districts) stays coordinate-free — the meaning-of-zero
  *     rule, and the half that decides B3-3: inventing a BT centroid would reproduce the `BT3 9QQ` →
  *     Sheffield defect #1480 just fixed.
  *
- *   **D-rule: opt-in behind `ResolveOpts.postcodePrefixPrior`, default-OFF** (the PCN1 posture:
+ *   **D-rule: opt-in behind `ResolveOpts.postcodePrefixPrior`, default-off** (the PCN1 posture:
  *   data + loader + offline probe, no decode wiring. the header ships without `delta` until a
  *   calibration measures one). Bars: B3-2 (≥60% of held-out units within 10 km, zero worse than the
  *   abstention arm), B3-3 (NI ≥95% country scope GB + NIR ancestry + correct district named, 0%
@@ -68,13 +68,13 @@ import type { PostcodePrefixIndexLike, PostcodePrefixNode, ResolvedPlace } from 
 export type CoordinateOptionalPlace = Omit<ResolvedPlace, "lat" | "lon"> & { lat?: number; lon?: number }
 
 /**
- * The MINIMUM compact code length for a GB outward derivation — a shorter code has no 3-character unit to strip ("B3"
+ * The minimum compact code length for a GB outward derivation — a shorter code has no 3-character unit to strip ("B3"
  * is a GB area rather than a unit-containing code).
  */
 const MIN_GB_OUTWARD_CODE_LENGTH = 5
 
 /**
- * The MINIMUM code length for a US section derivation.
+ * The minimum code length for a US section derivation.
  */
 const MIN_US_SECTION_CODE_LENGTH = 3
 

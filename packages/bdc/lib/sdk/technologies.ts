@@ -22,7 +22,7 @@ export const BroadbandTechnologyCode = {
 	 */
 	ADSL2ADSL2Plus: 11,
 	/**
-	 * @title VDSL
+	 * @title vdsl
 	 */
 	VDSL: 12,
 	/**
@@ -34,19 +34,19 @@ export const BroadbandTechnologyCode = {
 	 */
 	OtherCopperWireline: 30,
 	/**
-	 * @title Cable Modem (other than DOCSIS 1)
+	 * @title Cable Modem (other than docsis 1)
 	 */
 	CableModemOtherThanDOCSIS1: 40,
 	/**
-	 * @title Cable Modem (DOCSIS 1)
+	 * @title Cable Modem (docsis 1)
 	 */
 	CableModemDOCSIS1: 41,
 	/**
-	 * @title Cable Modem (DOCSIS 3)
+	 * @title Cable Modem (docsis 3)
 	 */
 	CableModemDOCSIS3: 42,
 	/**
-	 * @title Cable Modem (DOCSIS 3.1)
+	 * @title Cable Modem (docsis 3.1)
 	 */
 	CableModemDOCSIS31: 43,
 	/**
@@ -98,13 +98,13 @@ export type BroadbandTechnologyCode = (typeof BroadbandTechnologyCode)[keyof typ
  */
 export const BroadbandTechnologyCategory = {
 	/**
-	 * Cable, including DOCSIS 1, 3, and 3.1.
+	 * Cable, including docsis 1, 3, and 3.1.
 	 *
 	 * @title Cable
 	 */
 	Cable: "CABLE",
 	/**
-	 * DSL, including ADSL, ADSL2/ADSL2+, VDSL, and symmetric xDSL.
+	 * DSL, including adsl, ADSL2/ADSL2+, vdsl, and symmetric xDSL.
 	 *
 	 * @title DSL
 	 */

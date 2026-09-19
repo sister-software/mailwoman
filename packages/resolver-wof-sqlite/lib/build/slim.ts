@@ -70,7 +70,7 @@ export interface BuildSlimOptions {
 	 * external `content=`), so once it's built `names` is only the build-time source — the resolver queries
 	 * `place_search` + `spr` + `place_population` + `coincident_roles` and never reads `names` at runtime. Dropping it is
 	 * the single biggest size win (~2/3 of the file for a multi-locale build. see #359). A future consumer that needs raw
-	 * alt-names at runtime should ship a SEPARATE extract rather than re-bloat the hot DB.
+	 * alt-names at runtime should ship a separate extract rather than re-bloat the hot DB.
 	 */
 	dropNames?: boolean
 	/**
@@ -132,8 +132,8 @@ interface PlacePopulationTable {
 
 /**
  * Kysely schema for the build phase. Mirrors the resolver-facing tables, plus the ATTACHed `src.*` tables so the
- * row-copying queries can name the source schema in `selectFrom` without falling back to raw SQL. ATTACH itself is
- * still raw — Kysely doesn't model it — but everything downstream (the SELECT-INSERT step that does the actual
+ * row-copying queries can name the source schema in `selectFrom` without falling back to raw SQL. attach itself is
+ * still raw — Kysely doesn't model it — but everything downstream (the select-insert step that does the actual
  * filtering work) goes through the builder.
  */
 interface BuildSchema {
@@ -168,7 +168,7 @@ export async function buildSlimWOFDatabase(opts: BuildSlimOptions): Promise<Buil
 
 	// Open the output DB and create the empty schema. We discover the schema from the first input
 	// (raw sqlite_master read — Kysely doesn't model that) so the output mirrors source column
-	// ordering / types. `CREATE TABLE AS SELECT` flattens types to dynamic, which would break
+	// ordering / types. `create table AS select` flattens types to dynamic, which would break
 	// callers that rely on column-affinity behavior.
 	const out = new DatabaseClient<BuildSchema>(opts.output)
 	let result: BuildSlimResult
@@ -184,8 +184,8 @@ export async function buildSlimWOFDatabase(opts: BuildSlimOptions): Promise<Buil
 				.get(table) as { sql?: string } | undefined
 
 			if (createSQL?.sql) {
-				// Raw DDL by design (introspect-and-replay): we exec the SOURCE DB's own CREATE TABLE
-				// string read from sqlite_master, so a static Kysely builder can't express it. See AGENTS.md.
+				// Raw DDL by design (introspect-and-replay): we exec the source DB's own create table
+				// string read from sqlite_master, so a static Kysely builder can't express it. See agents.md.
 				out.exec(createSQL.sql)
 			} else if (table === PLACE_POPULATION_TABLE) {
 				// Older source builds may predate the aux table — create it empty so the per-source
@@ -196,8 +196,8 @@ export async function buildSlimWOFDatabase(opts: BuildSlimOptions): Promise<Buil
 			}
 		}
 
-		// PRIMARY KEY on spr.id + place_population.id come from the schemas we copied. an explicit
-		// index on names.id helps the per-id INSERT SELECT later.
+		// primary KEY on spr.id + place_population.id come from the schemas we copied. an explicit
+		// index on names.id helps the per-id insert select later.
 		out.exec(`CREATE INDEX IF NOT EXISTS names_id_idx ON names(id);`)
 
 		// Pull rows from each input.
@@ -242,8 +242,8 @@ export async function buildSlimWOFDatabase(opts: BuildSlimOptions): Promise<Buil
 			out.exec(`DROP TABLE IF EXISTS names;`)
 		}
 
-		// VACUUM the output so the on-disk file reflects just the trimmed row count. Without it the
-		// file size stays inflated from the in-flight INSERT churn.
+		// vacuum the output so the on-disk file reflects just the trimmed row count. Without it the
+		// file size stays inflated from the in-flight insert churn.
 		progress("vacuum", "VACUUM (final size reduction)")
 		out.exec("VACUUM;")
 
@@ -280,10 +280,10 @@ async function copyFromSource(
 	topLocalities: number,
 	progress: NonNullable<BuildSlimOptions["onProgress"]>
 ): Promise<void> {
-	// ATTACH avoids any "load source into memory" step — SQLite walks both files in place. We need
+	// attach avoids any "load source into memory" step — SQLite walks both files in place. We need
 	// a fresh temp copy because some WOF distributions ship as read-only filesystem mounts and
-	// ATTACH will still want a writable journal on the side. copying to /tmp dodges that without
-	// mutating the canonical files in /mnt/playpen/mailwoman-data/wof/. ATTACH / DETACH stay raw
+	// attach will still want a writable journal on the side. copying to /tmp dodges that without
+	// mutating the canonical files in /mnt/playpen/mailwoman-data/wof/. attach / detach stay raw
 	// — Kysely doesn't model them.
 	await using tmpScratch = await temporaryDirectory("mailwoman-slim-src-")
 	const scratchPath = tmpScratch.resolve("src.db")
@@ -299,7 +299,7 @@ async function copyFromSource(
 			out.prepare(`SELECT 1 FROM src.sqlite_master WHERE type = 'table' AND name = '${PLACE_POPULATION_TABLE}'`).get()
 		)
 
-		// The SELECT-INSERT queries below go through Kysely. The cross-schema `FROM` clause is the only
+		// The select-insert queries below go through Kysely. The cross-schema `from` clause is the only
 		// "interesting" bit: by declaring `src.spr` / `src.names` / `src.place_population` in
 		// `BuildSchema`, Kysely lets us write `selectFrom("src.spr")` with the same column-type
 		// checking as the regular schema. SQLite parses the dotted identifier as a schema-name

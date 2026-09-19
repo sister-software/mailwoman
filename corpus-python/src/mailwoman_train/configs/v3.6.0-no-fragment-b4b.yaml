@@ -1,37 +1,37 @@
-# === v3.6.0-no-fragment-b4b — Track B, knob 1: RAISE THE BARE-STREET RATIO. 2k PROBE rather than a ship. ===
+# === v3.6.0-no-fragment-b4b — Track B, knob 1: raise the bare-street ratio. 2k probe rather than a ship. ===
 #
-# PRE-REGISTERED READ (written before the numbers exist. graded on the Norway digit board, board 3,
-# scratchpad/run-digit-board.run.ts, package-shaped int8, vs the registered SHIPPED-v310 baselines).
+# PRE-registered read (written before the numbers exist. graded on the Norway digit board, board 3,
+# scratchpad/run-digit-board.run.ts, package-shaped int8, vs the registered shipped-v310 baselines).
 #
-# THE ONE VARIABLE vs v3.3.0: the synth-no-fragment recipe's --bare-street-prob 0.30 -> 0.70. Config,
-# weight (12.0), tokenizer, init base — ALL identical to v3.3.0. Only the recipe output's COMPOSITION changed:
+# the one variable vs v3.3.0: the synth-no-fragment recipe's --bare-street-prob 0.30 -> 0.70. Config,
+# weight (12.0), tokenizer, init base — all identical to v3.3.0. Only the recipe output's composition changed:
 # bare-street rows 21% -> 49% of the recipe output (measured, scratchpad/build-no-fragment-b4b.run.ts).
 #
-# WHY. v3.3.0 (bare-street-prob 0.30) moved the target only +1.7pp (overlapping CIs, bar not cleared).
+# why. v3.3.0 (bare-street-prob 0.30) moved the target only +1.7pp (overlapping CIs, bar not cleared).
 # Its own verdict named the cause: "only 30% of signal rows are pure bare streets. the source spends
 # most of its weight on {street}{number}, a form the model mostly already handles." The fix (B0's
-# mechanism): the street is mistagged as a LOCALITY and the digit follows it. teach bare-street !=
-# bare-locality, which requires the street without a number so the model can't lean on the digit. This
+# mechanism): the street is mistagged as a locality and the digit follows it. teach bare-street !=
+# bare-locality. It requires the street without a number. Therefore, the model can't lean on the digit. This
 # is exactly the fr-fragment fix (which moved its analogue +50pp). knob 1 concentrates the signal there.
-# B4c (the vocab splice) is CLOSED as a diffuse-cost trade (scratchpad/deepparse-cmp/NUMSPLICE-8k-verdict.md);
+# B4c (the vocab splice) is closed as a diffuse-cost trade (scratchpad/deepparse-cmp/numsplice-8k-verdict.md);
 # this corpus change cannot perturb the numeric manifold the way the tokenizer surgery did.
 #
-# THE MEASURED PROBLEM (board 3, n=400/class, 95% Wilson, shipped v310, zero Norwegian rows pre-#1145):
-#     bare-street-hn   "Hallingrudveien 32"   0.693 [0.646, 0.736]   <- TARGET (no postcode competing)
+# the measured problem (board 3, n=400/class, 95% Wilson, shipped v310, zero Norwegian rows pre-#1145):
+#     bare-street-hn   "Hallingrudveien 32"   0.693 [0.646, 0.736]   <- target (no postcode competing)
 #
-# MOVE  : bare-street-hn CLEARS the bar v3.3.0 missed — clear motion, i.e. its lower CI clears v310's
-#         UPPER CI (0.736), so ~>=0.78. +1.7pp with overlapping CIs (v3.3.0) does not count. Falsifier:
+# move  : bare-street-hn clears the bar v3.3.0 missed — clear motion, i.e. its lower CI clears v310's
+#         upper CI (0.736), so ~>=0.78. +1.7pp with overlapping CIs (v3.3.0) does not count. Falsifier:
 #         if 0.70 still does not clear, the corpus change is refuted for this defect and digit-ownership
 #         closes (numsplice already closed) — a real, decision-ending result.
-# GUARD : bare-pc (negative class) stays at 1.000 — the model must not stop emitting postcode.
-# GUARD : street-led-hn / city-first-hn / pc-first-hn do not regress from 0.94-0.968.
-# GUARD : the FR fragment board (board 2) does not re-drift — v3.3.0 lost -1.7pp overall (weight
-#         dilution); this run must hold FR OVERALL >= ~0.725 (v310 0.733). If FR drifts again, knob 2
+# guard : bare-pc (negative class) stays at 1.000 — the model must not stop emitting postcode.
+# guard : street-led-hn / city-first-hn / pc-first-hn do not regress from 0.94-0.968.
+# guard : the FR fragment board (board 2) does not re-drift — v3.3.0 lost -1.7pp overall (weight
+#         dilution); this run must hold FR overall >= ~0.725 (v310 0.733). If FR drifts again, knob 2
 #         (no-fragment weight relative to fr-fragment) is the next one-at-a-time probe rather than this one.
-# GUARD : GOLDEN (post-numsplice lesson — an on-board win can hide an off-board cost). If board 3 passes,
+# guard : golden (post-numsplice lesson — an on-board win can hide an off-board cost). If board 3 passes,
 #         run the golden check delta vs v310. fr.house_number / us.unit_real must not regress >2pp.
 #
-# NOT A SHIP. A pass justifies a full 8k pre-registered against the same board. Promotion is operator's.
+# not A ship. A pass justifies a full 8k pre-registered against the same board. Promotion is operator's.
 #
 # init_from v310 step-008000, fresh optimizer, LR 1.0e-5 constant, 2000 steps, warmup 200.
 #
@@ -74,7 +74,7 @@ data:
     usgov-hrsa-fqhc: 2.0
     usgov-imls-pls: 2.0
     usgov-nad: 1.0
-    state-ia-contractors: 2.0
+    state-ia-builders: 2.0
     state-tx-notaries: 1.5
     state-ny-notaries: 2.0
     deepseek-kryptonite: 3.0
@@ -94,9 +94,9 @@ data:
     synth-no-street-led: 0.0
     synth-cz-pcfirst-preposition: 12.0
     synth-nl-postcode: 6.0
-    # PROBE 1: the fragment/autocomplete source (assay weight — moderate precedent).
+    # probe 1: the fragment/autocomplete source (assay weight — moderate precedent).
     synth-fragment: 6.0
-    # #727 T2 NEW — the one variable. 12.0 = the targeted-fix precedent (fr-bare-street,
+    # #727 T2 new — the one variable. 12.0 = the targeted-fix precedent (fr-bare-street,
     # si-bare-village, no-street-led are all 12.0). Streets with no house number + the
     # bare-locality counter.
     synth-fr-fragment: 12.0
@@ -138,12 +138,12 @@ model: # Verbatim from v2.4.1.
   use_postcode_anchor: true
   use_gazetteer_anchor: true
   gazetteer_feature_dim: 5
-  # #1104 country channel ON — dedicated 2-dim [country_surface, country_ambiguous] soft feed with its
+  # #1104 country channel on — dedicated 2-dim [country_surface, country_ambiguous] soft feed with its
   # own projection + confidence (must equal the lexicon's feature_dim). Default-False elsewhere, so a
   # resume from a pre-country checkpoint stays byte-identical until this flips.
   use_country_anchor: true
   country_feature_dim: 2
-  # #1104 homograph-guard SOFTENER — the one variable vs v263. Scales the country_ambiguous dim by 0.5
+  # #1104 homograph-guard softener — the one variable vs v263. Scales the country_ambiguous dim by 0.5
   # before the country_projection (bakes into the exported ONNX. no lexicon/inference change). v263's
   # hard guard (scale 1.0) over-suppressed homograph countries Georgia/Jordan (country-homograph F1
   # 89.8->82.6); softening should recover homograph recall without giving back the country F1 the

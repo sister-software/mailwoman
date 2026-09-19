@@ -1,6 +1,6 @@
 # EDGAR Live Wiring Implementation Plan
 
-> **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
+> **For agentic workers:** required sub-skill: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
 **Goal:** Make `@mailwoman/filer`'s EDGAR chain work against real SEC filings — the parser currently recovers 45 subsidiaries from 13 real Exhibit 21 documents that state 142, and 18 of those 45 are fabricated.
 
@@ -12,7 +12,7 @@
 
 - **Decision 6 binds everywhere: abstain, never guess.** A row/line that cannot be confidently reduced to a subsidiary name is COUNTED in `unparseable` and dropped. Every new rule below is an abstention rule or an alignment rule; none of them invents a value.
 - **The substring all values satisfy the required relationship.** Every emitted `name`/`jurisdiction` must appear in the document as a contiguous string once tags are stripped, entities decoded and whitespace collapsed. It is necessary but not sufficient — `exhibit21-real.test.ts`'s fabrication assertions exist because the 2026-08-03 run emitted `"EX-21.1"`, `"3"`, `"q42025exh211listofsubsidia.htm"` and `"•"` as subsidiary names, all of which satisfy the substring invariant.
-- **`filer/test-fixtures/edgar/expected.json` is the contract, and it was not derived from `parseExhibit21`.** It came from an independent DOM-based reference implementation, hand-checked against the source documents. Do not edit it to match implementation output. If you believe an expectation is wrong, say so in your report and stop — changing it silently converts the regression suite into a record of whatever the code does.
+- **`filer/test-fixtures/edgar/expected.json` is the interface, and it was not derived from `parseExhibit21`.** It came from an independent DOM-based reference implementation, hand-checked against the source documents. Do not edit it to match implementation output. If you believe an expectation is wrong, say so in your report and stop — changing it silently converts the regression suite into a record of whatever the code does.
 - No `enum` (`erasableSyntaxOnly`). Acronyms are whole components in identifiers (`CIK`, `SEC`, `HTML`, `SGML`, `URL`).
 - Tabs for indentation, double quotes, no semicolons — match the surrounding file exactly.
 - `yarn typecheck:tests` must pass alongside `yarn vitest run filer/` — `satisfies` pins in test files are invisible to both vitest and `tsc -b`.

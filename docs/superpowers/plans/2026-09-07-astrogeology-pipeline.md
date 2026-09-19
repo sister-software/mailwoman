@@ -1,6 +1,6 @@
 # Astrogeology Pipeline Implementation Plan
 
-> **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
+> **For agentic workers:** required sub-skill: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
 **Goal:** A private workspace, `packages/astrogeology`, that turns the USGS nomenclature gazetteer and the LOLA and MOLA global DEMs into `moon.pmtiles`, `moon-hillshade.pmtiles`, `mars.pmtiles`, `mars-hillshade.pmtiles`, a search artifact per body and a build manifest with checksums, and publishes them through `mailwoman tiles publish`. CI builds the same chain over tiny fixtures with no network.
 
@@ -604,7 +604,7 @@ git commit -m "feat(astrogeology): bodies, the nomenclature feature schema, and 
 grep -n "fetch(\|pipeline(\|movePath\|tmp" packages/core/lib/utils/geodatabase-archive.ts packages/tiger/lib/sdk/download.ts packages/osm/lib/sdk/fetch.ts | head -20
 ```
 
-Three fetchers stream a response to a `.tmp` sibling and rename. If `packages/core/lib/utils/geodatabase-archive.ts` already exposes that half as a function taking `(url, dest)`, import it; if all three inline it, extract `downloadToFile(url, dest, { onProgress? })` into `packages/core/lib/fs/download.ts` (exported as `@mailwoman/core/fs/download`, the one module allowed to hold the stream-to-disk shape, using `openWriteStream` from `#fs/streams` and `movePath` from `#fs/writers`), make the three fetchers call it, and add a `HELPER_HOMES` row for the `Readable.fromWeb(res.body)` shape. The tiger fetcher keeps its zip-integrity check around the call; that is its own contract.
+Three fetchers stream a response to a `.tmp` sibling and rename. If `packages/core/lib/utils/geodatabase-archive.ts` already exposes that half as a function taking `(url, dest)`, import it; if all three inline it, extract `downloadToFile(url, dest, { onProgress? })` into `packages/core/lib/fs/download.ts` (exported as `@mailwoman/core/fs/download`, the one module allowed to hold the stream-to-disk shape, using `openWriteStream` from `#fs/streams` and `movePath` from `#fs/writers`), make the three fetchers call it, and add a `HELPER_HOMES` row for the `Readable.fromWeb(res.body)` shape. The tiger fetcher keeps its zip-integrity check around the call; that is its own interface.
 
 - [ ] **Step 2: The source table and the lock**
 
@@ -979,7 +979,7 @@ git commit -m "feat(astrogeology): hillshade build — gdaldem in the body's met
 
 - Produces: `buildSearchIndex(features, outPath): Promise<void>` writing an ancestrie artifact whose entries are feature names and aliases with the feature id as payload; `emitManifest({ body, sources, outputs, transformations }, outPath)`.
 
-- [ ] **Step 1: Read the ancestrie builder's contract, then write the index**
+- [ ] **Step 1: Read the ancestrie builder's interface, then write the index**
 
 ```bash
 sed -n 1,80p packages/ancestrie/README.md

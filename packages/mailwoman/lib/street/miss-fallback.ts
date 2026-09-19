@@ -4,7 +4,7 @@
  * @author Teffen Ellis, et al.
  *
  *   The bare-toponym street-miss fallback, split from `geocode-core.ts` (the max-lines cap. the
- *   geocode file holds the cascade, this one holds the retry). Contract in {@link applyStreetMissFallback}.
+ *   geocode file holds the cascade, this one holds the retry). Interface in {@link applyStreetMissFallback}.
  */
 
 import type { GeocodeOutcomeLike } from "@mailwoman/api"

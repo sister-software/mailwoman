@@ -3,7 +3,7 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   The Open UPRN builder's contract: the line parser's input-tail behavior (truncated fields,
+ *   The Open uprn builder's interface: the line parser's input-tail behavior (truncated fields,
  *   `Number("")`-shaped traps), the versions.txt parse, and a full fixture build through
  *   `buildUPRNLayer` — DDL, checks, coverage, manifest, seal — verified by reading the sealed
  *   artifact back through the production reader.
@@ -12,7 +12,7 @@
 import { statPath } from "@mailwoman/core/fs/readers"
 import { temporaryDirectory } from "@mailwoman/core/fs/temporary"
 import { writeLocalFile, writeLocalTextFile } from "@mailwoman/core/fs/writers"
-import { readLayerCoverage, readLayerManifest, type LayerContractDatabase } from "@mailwoman/core/layers"
+import { readLayerCoverage, readLayerManifest, type layerschemadatabase } from "@mailwoman/core/layers"
 import { CoverageBasis } from "@mailwoman/evidence"
 import { UPRNLookup, UPRN_COVERAGE_H3_RESOLUTION, uprnFullCell } from "@mailwoman/resolver-wof-sqlite/uprn"
 import { shortCellToInt, type H3Cell } from "@mailwoman/spatial"
@@ -100,12 +100,12 @@ const FIXTURE_POINTS = [
 ]
 
 /**
- * U+FEFF, by char code so no invisible character hides in this source file.
+ * U+feff, by char code so no invisible character hides in this source file.
  */
 const BOM = String.fromCharCode(0xfe_ff)
 
 /**
- * A fixture CSV in the wild file's exact shape: BOM-prefixed header, CRLF terminators.
+ * A fixture CSV in the wild file's exact shape: BOM-prefixed header, crlf terminators.
  */
 function fixtureCSV(headerLine: string = OPEN_UPRN_HEADER): string {
 	const rows = FIXTURE_POINTS.map((p) => `${p.uprn},0.0,0.0,${p.lat},${p.lon}`)
@@ -162,7 +162,7 @@ describe("buildUPRNLayer (fixture)", () => {
 		expect(lookup.coordinateOf(906_700_601_612)).toEqual({ latitude: 55.8823426, longitude: -4.2786558 })
 		expect(lookup.nearestUPRN(51.4526, -2.602, 100)?.uprn).toBe(1)
 
-		using kdb = new DatabaseClient<LayerContractDatabase>(out, { readOnly: true })
+		using kdb = new DatabaseClient<layerschemadatabase>(out, { readOnly: true })
 
 		const manifest = await readLayerManifest(kdb)
 
@@ -171,7 +171,7 @@ describe("buildUPRNLayer (fixture)", () => {
 		expect(manifest.attribution).toContain("© Crown copyright and database right 2026")
 		expect(manifest.spineKeys.h3).toEqual({ column: "h3_cell", resolution: 9 })
 
-		// Coverage: the res-6 parent of a fixture point is designated-complete. an unsurveyed cell is UNKNOWN.
+		// Coverage: the res-6 parent of a fixture point is designated-complete. an unsurveyed cell is unknown.
 		const parent = shortCellToInt(
 			cellToParent(uprnFullCell(FIXTURE_POINTS[0]!.lat, FIXTURE_POINTS[0]!.lon), UPRN_COVERAGE_H3_RESOLUTION) as H3Cell
 		)

@@ -122,7 +122,7 @@ async function hookMain(): Promise<void> {
 }
 
 /**
- * Worker mode: lock, then sync the LATEST payload until it stops changing under us.
+ * Worker mode: lock, then sync the latest payload until it stops changing under us.
  */
 type SyncIssue = (issue: number, todos: TodoItem[], dryRun: boolean) => void
 

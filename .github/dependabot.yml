@@ -1,6 +1,6 @@
 # Dependabot version-update config (grouped weekly, all three ecosystems).
 #
-# Security updates are a separate GitHub feature (repo settings) and are NOT
+# Security updates are a separate GitHub feature (repo settings) and are not
 # affected by the `ignore` blocks below — ignores only mute *version* PRs;
 # security alerts and their PRs still fire for ignored packages.
 version: 2

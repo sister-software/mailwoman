@@ -13,7 +13,7 @@
  *   the direction that fails valid refinements. Both are asserted here rather than left to the live suite,
  *   where a run that happens to produce neither would report the same green as a run that handles both.
  *
- *   And `unexplained` IS ASSERTED IN BOTH DIRECTIONS, because the live suite does not produce it: the shipped
+ *   And `unexplained` is asserted IN both directions, because the live suite does not produce it: the shipped
  *   pipeline holds this law on every committed row, so the failing branch has no live witness and would
  *   otherwise ship unexercised.
  */
@@ -224,7 +224,7 @@ describe("reading a refinement pair", () => {
 		expect(reading.counts.beyond_window).toBe(2)
 	})
 
-	// The refined table being short does not explain a candidate ARRIVING: its window bounds what the refined
+	// The refined table being short does not explain a candidate arriving: its window bounds what the refined
 	// lookup could show, never what the base's roomy table failed to hold.
 	it("does not let the refined table's own window explain an addition the base had room for", () => {
 		const reading = accountRefinement(

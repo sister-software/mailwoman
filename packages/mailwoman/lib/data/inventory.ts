@@ -7,7 +7,7 @@
  */
 
 import { pathExists, readLink, isSymbolicLink, statPath, type Dirent } from "@mailwoman/core/fs/readers"
-import type { LayerContractDatabase } from "@mailwoman/core/layers/schema"
+import type { layerschemadatabase } from "@mailwoman/core/layers/schema"
 import { getRow } from "@mailwoman/core/utils"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
 import { tableExists } from "@mailwoman/sqlite/introspection"
@@ -111,10 +111,10 @@ export interface InventoryReport {
  * one read-write would fail on exactly the artifacts it most needs to describe.
  */
 export function probeManifest(path: string): { manifest?: LayerManifest; error?: string } {
-	let db: DatabaseClient<LayerContractDatabase> | undefined
+	let db: DatabaseClient<layerschemadatabase> | undefined
 
 	try {
-		db = new DatabaseClient<LayerContractDatabase>(path, { readOnly: true })
+		db = new DatabaseClient<layerschemadatabase>(path, { readOnly: true })
 
 		if (!tableExists(db, "layer_manifest")) return {}
 

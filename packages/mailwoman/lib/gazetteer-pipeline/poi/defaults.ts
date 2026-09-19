@@ -15,11 +15,11 @@
  * addresses-theme ingest) as of this writing — a monthly Overture release covers every theme at once, so the two pins
  * move together in practice. Kept as an independent constant here rather than imported from that `.tsx` command:
  * `gazetteer-pipeline/*.ts` must stay importable under plain `node` type-stripping (no JSX transform), and
- * `commands/**\/*.tsx` files are Ink presentation that require compiling (AGENTS.md) — pulling a value from a `.tsx`
+ * `commands/**\/*.tsx` files are Ink presentation that require compiling (agents.md) — pulling a value from a `.tsx`
  * file into this pipeline layer would invert that dependency direction. If the pins drift, `--release` overrides either
  * independently.
  *
- * Overture PRUNES old releases from the bucket — the 2026-08-19 listing held exactly one. A stale pin therefore fails
+ * Overture prunes old releases from the bucket — the 2026-08-19 listing held exactly one. A stale pin therefore fails
  * every default build outright (the S3 listing finds nothing), and a sealed artifact built from a pruned release can
  * never be rebuilt. Bump this pin when a build reports the release missing. treat the bump as a new-vintage decision
  * (row deltas ride along), never a routine chore.

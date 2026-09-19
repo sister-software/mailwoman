@@ -25,7 +25,7 @@ def test_row_from_groups_designator_id_space_joined_fields_comma_joined():
         ", ",
     )
     assert row["raw"] == "789 Elm Boulevard, STE 200, Miami, FL 33101"
-    # Designator + id are ADJACENT (one logical unit), not comma-split.
+    # Designator + id are adjacent (one logical unit), not comma-split.
     assert "STE 200" in row["raw"]
     assert _span_texts(row) == [
         ("house_number", "789"),

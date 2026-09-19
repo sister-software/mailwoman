@@ -3,16 +3,16 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Typed schema for the candidate gazetteer's ANCESTORS sidecar (`candidate_ancestor` +
+ *   Typed schema for the candidate gazetteer's ancestors sidecar (`candidate_ancestor` +
  *   `candidate_interval`) — the containment lineage the candidate table itself cannot answer, built
  *   into the same `candidate.db` by `build-candidate.ts` and read by
  *   {@link WOFCandidateTableLookup.ancestors}.
  *
- *   ENCODING: closure-lite rows, denormalized — one row per (place, ancestor) edge carrying the
+ *   encoding: closure-lite rows, denormalized — one row per (place, ancestor) edge carrying the
  *   parent's placetype, display name and folded key — rather than a fixed-slot id chain on the
  *   candidate row. Decided by the two consumers:
  *
- *   1. The admin-coherence check needs the WINNER's chain as (placetype, name) pairs in one probe.
+ *   1. The admin-coherence check needs the winner's chain as (placetype, name) pairs in one probe.
  *      A fixed-slot `[id.8]` chain answers with ids, and every id then needs a name lookup the
  *      artifact has no per-id table for — up to 8 indirections where the closure row has zero.
  *   2. The account layer needs every candidate under a `name_key` enumerable with its chain from
@@ -21,26 +21,26 @@
  *      — each a handful of adjacent pages.
  *
  *   Denormalizing the parent onto the edge is the same discipline as the candidate table itself:
- *   this artifact is read over HTTP byte ranges, where a join to a dimension table scatters page
- *   fetches, and a `WITHOUT ROWID` B-tree clustered on `(spr_id, depth)` keeps a whole chain in
+ *   this artifact is read over http byte ranges, where a join to a dimension table scatters page
+ *   fetches, and a `without rowid` B-tree clustered on `(spr_id, depth)` keeps a whole chain in
  *   1-2 pages. The repeated parent strings are the price of the zero-join read, paid at build time.
  *
- *   `depth` is 1 for the NEAREST ancestor (deepest containment tier), increasing outward to the
+ *   `depth` is 1 for the nearest ancestor (deepest containment tier), increasing outward to the
  *   country — the same nearest-first order `ancestry.ts` serves for the FTS backend, so the two
  *   backends' `ancestors()` agree by construction. The order within a place is deterministic:
  *   containment depth descending (`placetypeDepth`), then ancestor id ascending, capped at
- *   {@link MAX_ANCESTOR_DEPTH}. `parent_name_key` is the SHARED {@link normalizeLocalityForKey}
+ *   {@link MAX_ANCESTOR_DEPTH}. `parent_name_key` is the shared {@link normalizeLocalityForKey}
  *   fold — the same fold `candidate.name_key` is built with, so a chain entry and a candidate key
  *   compare under one normalizer.
  *
- *   `candidate_interval` carries pre/post-order labels over the CANONICAL-PARENT FOREST, assigned
- *   at build time: `a` contains `d` ⟺ `a.pre <= d.pre AND d.post <= a.post` — O(1) in either
+ *   `candidate_interval` carries pre/post-order labels over the canonical-parent forest, assigned
+ *   at build time: `a` contains `d` ⟺ `a.pre <= d.pre and d.post <= a.post` — O(1) in either
  *   direction with no chain scan and no knowledge of either side's tier — and the descendants of
- *   `a` are the contiguous range `pre BETWEEN a.pre AND a.post`. Interval labels are classically
+ *   `a` are the contiguous range `pre between a.pre and a.post`. Interval labels are classically
  *   avoided for their relabel-on-update cost. this database is a sealed read-only artifact rebuilt
  *   whole, which is exactly the regime where that cost is void.
  *
- *   THE DAG CAVEAT, and the recorded choice: WOF places can carry more than one parent (multiple
+ *   the DAG caveat, and the recorded choice: WOF places can carry more than one parent (multiple
  *   hierarchies, ambiguous boundaries). `candidate_ancestor` keeps every parent — the closure rows
  *   are the complete containment record. A single interval pair can only encode a tree, so the
  *   interval forest links each place to one canonical parent: its depth-1 edge — the finest
@@ -49,9 +49,9 @@
  *   closure rows. the interval answer for it is `false`, which is why interval verdicts are
  *   "contained along the canonical hierarchy", never "not contained at all".
  *
- *   ABSENCE SEMANTICS (meaning-of-zero): a place with no `candidate_interval` row has no recorded
+ *   absence semantics (meaning-of-zero): a place with no `candidate_interval` row has no recorded
  *   ancestry in the source (extract-fed postcodes and localities, isolated places, cycle-skipped
- *   rows). Absence is UNVERIFIABLE, never a containment verdict.
+ *   rows). Absence is unverifiable, never a containment verdict.
  */
 
 import { sql, type Kysely } from "kysely"
@@ -106,7 +106,7 @@ export interface CandidateAncestorTable {
 	 */
 	parent_name: string
 	/**
-	 * The SHARED {@link normalizeLocalityForKey} fold of `parent_name` — comparable against `candidate.name_key` and
+	 * The shared {@link normalizeLocalityForKey} fold of `parent_name` — comparable against `candidate.name_key` and
 	 * against a query-side fold under one normalizer, by construction.
 	 */
 	parent_name_key: NameKey
@@ -133,7 +133,7 @@ export interface CandidateAncestorsDatabase {
 
 /**
  * The `candidate_ancestor` columns in clustered-key order — the first two are the primary key, and the builder's
- * positional `INSERT` binds by this order. Keep in sync with {@link CandidateAncestorTable}.
+ * positional `insert` binds by this order. Keep in sync with {@link CandidateAncestorTable}.
  */
 export const CANDIDATE_ANCESTOR_COLUMNS = [
 	"spr_id",
@@ -158,13 +158,13 @@ export async function createCandidateAncestorTable(db: Kysely<CandidateDatabase>
 		.addColumn("parent_name", "text", (c) => c.notNull())
 		.addColumn("parent_name_key", "text", (c) => c.notNull())
 		.addPrimaryKeyConstraint("candidate_ancestor_pk", ["spr_id", "depth"])
-		// `WITHOUT ROWID` has no first-class builder. the raw modifier is the idiomatic fallback.
+		// `without rowid` has no first-class builder. the raw modifier is the idiomatic fallback.
 		.modifyEnd(sql`without rowid`)
 		.execute()
 }
 
 /**
- * Create the interval-label table. Small rows probed by primary key — the `WITHOUT ROWID` win case.
+ * Create the interval-label table. Small rows probed by primary key — the `without rowid` win case.
  */
 export async function createCandidateIntervalTable(db: Kysely<CandidateDatabase>): Promise<void> {
 	await db.schema
@@ -186,7 +186,7 @@ export interface IntervalLabel {
 
 /**
  * Does `outer` contain `inner` along the canonical hierarchy? Reflexive: a place contains itself (containment
- * degenerates to identity, the same reading the admin-coherence check gives a self-match). The shared FUNCTION for
+ * degenerates to identity, the same reading the admin-coherence check gives a self-match). The shared function for
  * every consumer of the labels — a re-derived comparison risks disagreeing at exactly the strict/inclusive boundary
  * this line settles.
  */

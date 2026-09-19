@@ -4,7 +4,7 @@
  * @author Teffen Ellis, et al.
  *
  *   The `mwdev_bench` tool definition — the description an agent reads, the input schema, and the handler wiring.
- *   The measurement itself lives in the package root. this file is the CONTRACT, and the description is the
+ *   The measurement itself lives in the package root. this file is the interface, and the description is the
  *   required half of it.
  */
 
@@ -41,7 +41,7 @@ export const benchTool = ({ registry }: DevToolDeps): DevTool => ({
 		let cold: { engine_build_ms: number; first_query_ms: number; total_ms: number } | null = null
 
 		if (args["include_cold"]) {
-			// Evicting is what makes this a COLD measurement rather than a second warm one.
+			// Evicting is what makes this a cold measurement rather than a second warm one.
 			registry.evictAll()
 
 			const startedAt = Date.now()

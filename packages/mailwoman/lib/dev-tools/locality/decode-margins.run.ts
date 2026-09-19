@@ -3,7 +3,7 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Does the MODEL refuse the locality, or does a decode-time prior take it away? (#2311)
+ *   Does the model refuse the locality, or does a decode-time prior take it away? (#2311)
  *
  *   `traceParse` carries both readings of the same token: `logits` is the model's raw emission, and `emissions` is what
  *   viterbi decoded over, after every prior in `priors` has written into it. A row whose raw emission already refuses
@@ -83,7 +83,7 @@ const { values } = parseArguments({
 		/**
 		 * Write each row's own region as its canonical name rather than its code — `Illinois` for `IL`.
 		 *
-		 * Separates the FRAME from the name: `Orland Park, IL 60467` answers no locality at all while `Orland Park,
+		 * Separates the frame from the name: `Orland Park, IL 60467` answers no locality at all while `Orland Park,
 		 * Illinois` answers the place, so a penalty read under the coded frame may belong to the frame rather than to the
 		 * locality's own shape. A row whose region the codex cannot spell is skipped and counted, never rendered under its
 		 * code as though the arm had applied.
@@ -98,7 +98,7 @@ const { values } = parseArguments({
 		 *
 		 * The choreography zeroes the gazetteer clue within one piece of a postcode-anchor hit. It was added to stop the
 		 * clue on a region token from making the `B-region → B-postcode` transition uncompetitive, which cost about 3
-		 * points of postcode. A DECLARED ABLATION for measurement: the model was trained with the choreography, so serving
+		 * points of postcode. A declared ablation for measurement: the model was trained with the choreography, so serving
 		 * it without is a mismatch and never a shipping configuration.
 		 */
 		"no-gazetteer-suppression": { type: "boolean" },
@@ -206,7 +206,7 @@ interface GroupMargins {
 	rows: number
 	decodedAsLocality: number
 	/**
-	 * Rows whose RESOLVED locality is the expected one, counted only under `--with-geocode`.
+	 * Rows whose resolved locality is the expected one, counted only under `--with-geocode`.
 	 *
 	 * A different question from {@linkcode decodedAsLocality}, and the two are easy to read as one: the decode reading
 	 * asks what label the locality's own tokens took, and this asks what the pipeline finally answered. A row can lose

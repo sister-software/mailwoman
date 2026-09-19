@@ -2,38 +2,38 @@
 //
 // be-panel — thirty Belgian address lines through the local pipeline, in three configurations.
 //
-// WHY BELGIUM
+// why belgium
 //
-// Belgium is not a measured locale. No Belgian rooftop register ships, and no `nl-BE` or `fr-BE`
+// Belgium is not a measured locale. No Belgian rooftop register ships, and no `nl-be` or `fr-be`
 // weights package exists, so a Belgian user today installs the base weights and resolves against the
 // global admin gazetteer. This panel measures what that actually gets them, which is a different
 // question from the one a tier-1 locale answers. It also carries the case Belgium is uniquely good
 // for: five Brussels streets appear twice, once in Dutch and once in French, so a bilingual pair
 // tests whether two surface forms of the same street reach the same place.
 //
-// THREE ARMS
+// three arms
 //
 //   base            base weights, nothing configured — what `npm install` plus a gazetteer gives you.
 //   fr-overlay      the French weights overlay, nothing else changed — does the nearest measured
 //                   locale help a country that is half French-speaking?
-//   country-pinned  base weights with `defaultCountry: "BE"` — what a reader who knows their file is
+//   country-pinned  base weights with `defaultCountry: "be"` — what a reader who knows their file is
 //                   Belgian would actually set.
 //
 // Each arm answers a question a reader arrives with. None of them is a Belgian model, because there
 // is no Belgian model.
 //
-// WHAT IS GRADED, AND AGAINST WHAT
+// what is graded, and against what
 //
 // There is no Belgian ground-truth coordinate set here, so nothing on this page claims a distance to
 // a true rooftop. Four things are measurable without one:
 //
 //   1. Resolution — did a coordinate come back at all, and at which tier.
-//   2. Country routing — is the coordinate inside Belgium's bounding box, and does the result name BE.
+//   2. Country routing — is the coordinate inside Belgium's bounding box, and does the result name be.
 //      This is the real risk: Belgian place names collide with Dutch, French and Slovenian ones, so a
 //      cross-border miss is the failure mode worth catching. The first two arms leave the country
 //      unpinned so this is earned rather than assumed; the third pins it, which is the point of it.
 //   3. Locality — does the resolved commune match the one the address belongs to, reported as three
-//      separate counts (parsed span, gazetteer name match, name match AND inside Belgium). The last
+//      separate counts (parsed span, gazetteer name match, name match and inside Belgium). The last
 //      is the metric; see `localityChecks` for why the first two are not. The accepted forms are
 //      committed in `be-panel.json`, one list per row, covering the Dutch, French and English
 //      spellings a gazetteer may carry.
@@ -41,7 +41,7 @@
 //      This one needs no ground truth at all: the two rows name the same street, so any distance
 //      between them is the pipeline disagreeing with itself.
 //
-// USAGE
+// usage
 //
 //   npm install mailwoman @mailwoman/neural @mailwoman/neural-weights-en-us \
 //               @mailwoman/neural-weights-fr-fr @mailwoman/resolver \
@@ -94,7 +94,7 @@ const { values: flags } = parseArgs({
 	},
 })
 
-// This file is served at /benchmarks/be-panel.mjs and runs in a READER's project, where
+// This file is served at /benchmarks/be-panel.mjs and runs in a reader's project, where
 // `@mailwoman/core/env` — the blessed env helper inside this repo — is not a dependency.
 // oxlint-disable-next-line sister-software/no-process-globals -- shipped doc asset; runs outside this repo
 const dataRoot = flags["data-root"] ?? process.env.MAILWOMAN_DATA_ROOT
@@ -110,7 +110,7 @@ const candidatePath = join(dataRoot, "wof", "candidate.db")
 
 /**
  * Fold a place name to the form the committed `acceptedLocality` lists are written in: lowercase, no diacritics, no
- * punctuation, single spaces. `Liège` and `LIEGE` both fold to `liege`.
+ * punctuation, single spaces. `Liège` and `liege` both fold to `liege`.
  */
 function fold(name) {
 	return name
@@ -130,9 +130,9 @@ function fold(name) {
  * `nameMatched` reads only the nodes the resolver decorated (`result.hierarchy`). It says the gazetteer returned a
  * place carrying an accepted name — and a place name is not unique on Earth.
  *
- * `resolved` is `nameMatched` AND the coordinate landing inside Belgium. That conjunct is the metric, and it is the one
- * this panel needs: `Oude Markt 1, 3000 Leuven` resolves to a hierarchy reading `["Leuven"]` in the NETHERLANDS, and
- * `Place Saint-Lambert 1, 4000 Liège` to `["Le Liège", "Liège"]` in FRANCE. Both are name matches in the wrong country,
+ * `resolved` is `nameMatched` and the coordinate landing inside Belgium. That conjunct is the metric, and it is the one
+ * this panel needs: `Oude Markt 1, 3000 Leuven` resolves to a hierarchy reading `["Leuven"]` in the netherlands, and
+ * `Place Saint-Lambert 1, 4000 Liège` to `["Le Liège", "Liège"]` in france. Both are name matches in the wrong country,
  * and a panel built to catch cross-border misrouting scored both as locality hits until the conjunct was added.
  */
 function localityChecks(result, accepted, inBelgium) {
@@ -169,7 +169,7 @@ async function weightsStamp(locale) {
 	// missing card is a failure to report rather than a field to omit.
 	if (!resolved.modelCardPath) throw new Error("be-panel: the resolved weights bundle carries no model card.")
 
-	// oxlint-disable-next-line no-restricted-properties -- shipped doc asset (no monorepo install); a throw on a corrupt model-card is the contract
+	// oxlint-disable-next-line no-restricted-properties -- shipped doc asset (no monorepo install); a throw on a corrupt model-card is the interface
 	const card = JSON.parse(await readFile(resolved.modelCardPath, "utf8"))
 
 	return {
@@ -233,7 +233,7 @@ async function runArm(arm, panel) {
 				lon: result.lon,
 				// `tier` is the raw `resolution_tier` field, kept verbatim. `answeredAt` is the tier the
 				// row is counted under, and it is `none` when no coordinate came back: `resolution_tier`
-				// reports where the cascade ENDED, not whether it produced anything, so it still reads
+				// reports where the cascade ended, not whether it produced anything, so it still reads
 				// "admin" on a row that answered nothing.
 				tier: result.resolution_tier,
 				answeredAt: hasCoordinate ? (result.resolution_tier ?? "none") : "none",
@@ -322,7 +322,7 @@ async function runArm(arm, panel) {
 	}
 }
 
-// oxlint-disable-next-line no-restricted-properties -- shipped doc asset (no monorepo install); a throw on a corrupt committed panel is the contract
+// oxlint-disable-next-line no-restricted-properties -- shipped doc asset (no monorepo install); a throw on a corrupt committed panel is the interface
 const panel = JSON.parse(await readFile(flags.panel, "utf8"))
 const startedAt = Date.now()
 const results = {}
@@ -349,7 +349,7 @@ const report = {
 	records: Object.fromEntries(Object.entries(results).map(([name, arm]) => [name, arm.records])),
 }
 
-// The previous write helper created the parent directory first — keep that contract.
+// The previous write helper created the parent directory first — keep that interface.
 await mkdir(dirname(flags.out), { recursive: true })
 await writeFile(flags.out, `${JSON.stringify(report, null, "\t")}\n`)
 

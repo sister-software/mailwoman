@@ -16,7 +16,7 @@ type CandidateHTTPVFSWorker = Awaited<ReturnType<typeof loadHTTPVFSDatabase>>
 let candidateWorkerPromise: Promise<CandidateHTTPVFSWorker> | undefined
 
 /**
- * Lazily open (once, shared across calls) the ADMIN CANDIDATE gazetteer worker used only for anchor→center resolution.
+ * Lazily open (once, shared across calls) the admin candidate gazetteer worker used only for anchor→center resolution.
  * Independent of the POI-layer worker — a separate byte-ranged DB, the same one `/demo`'s cascade resolves localities
  * against ({@link WOFCandidateTableLookup}).
  */

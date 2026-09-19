@@ -5,7 +5,7 @@
  *
  *   Where the Vale prose linter is, for every caller that spawns it. `@vvago/vale` publishes a `bin` entry that has
  *   been a native binary in one release and a Node launcher (`bin/vale.cjs`) around a `native/` binary in the next, so
- *   the manifest's own `bin` field is the contract and is read at call time. a launcher runs under this Node. Resolving
+ *   the manifest's own `bin` field is the interface and is read at call time. a launcher runs under this Node. Resolving
  *   from the caller's own location keeps the lookup inside the package that declares the dependency.
  */
 

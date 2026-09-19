@@ -7,7 +7,7 @@
 # verbatim: init_from v4.4.0 step-060000, EWC lambda=1.0e4 + the base fisher, LR 1e-5.
 # Check (pre-registered, the v4.5.0 lesson): the probe is graded on the board rather than val — export
 # step-2000, int8, `eval gauntlet --candidate`. A pass is zero new counted failures vs the base board
-# and the bare-street probes holding (Calle de Alcalá / Madison Square West / COMER stay street-read)
+# and the bare-street probes holding (Calle de Alcalá / Madison Square West / comer stay street-read)
 # and 'Praha 100 00, Czechia' moving. On a fail, read, never sweep.
 data:
   corpus_dir: /data/corpus/versioned/v0.21.0-psc-frsurfaces-v2/corpus-v0.21.0-psc-frsurfaces-v2
@@ -65,7 +65,7 @@ data:
     synth-anchor-absorption: 6.0
     synth-fr-bare-street: 0.0 # SUPERSEDED (vintages must never co-feed)
     synth-fr-bare-street-v20: 0.0 # SUPERSEDED by -v21
-    synth-fr-bare-street-v21: 6.0 # THE KNOB: 12.0 -> 6.0 (the v4.5.0 erosion's attacking weight)
+    synth-fr-bare-street-v21: 6.0 # the KNOB: 12.0 -> 6.0 (the v4.5.0 erosion's attacking weight)
     synth-si-bare-village: 12.0
     synth-no-street-led: 0.0
     synth-cz-pcfirst-preposition: 0.0 # SUPERSEDED (vintages must never co-feed)

@@ -5,7 +5,7 @@
  *
  *   Pure channel packing + output decode shared by the two ONNX runners (`onnx-runner.ts`,
  *   `web-onnx-runner.ts`). Both hosts feed the same fixed-length tensors and read the same
- *   `logits`/`locale_logits`/`span_scores` outputs. this module owns that contract once so the two
+ *   `logits`/`locale_logits`/`span_scores` outputs. this module owns that interface once so the two
  *   cannot drift — the #727 span read was previously duplicated across hosts and held together only
  *   by a parity test. No `onnxruntime-*` import: the runners construct their own `ort.Tensor`s from
  *   the packed `{data, dims}` pairs, which is the only host-specific step.
@@ -34,11 +34,11 @@ export interface InferEvidenceChannels {
 
 /**
  * The `infer()` signature — one exported type for the three call surfaces that previously restated it
- * (`ONNXRunner.infer`, `WebONNXRunner.infer`, and the classifier's `NeuralRunner` contract).
+ * (`ONNXRunner.infer`, `WebONNXRunner.infer`, and the classifier's `NeuralRunner` interface).
  *
  * @param tokenIDs The id sequence produced by the tokenizer (no special tokens added).
  * @param anchor Optional postcode-anchor channel (#239/#240) — fed only when the graph declares the anchor inputs.
- * @param gazetteer Optional gazetteer-anchor channel (#464) — same feed contract as the postcode anchor.
+ * @param gazetteer Optional gazetteer-anchor channel (#464) — same feed interface as the postcode anchor.
  * @param country Optional country-lexicon channel (#1104).
  * @param evidence Optional evidence-bundle channels (Option-A).
  */
@@ -99,7 +99,7 @@ export interface PackedFeed<Data extends Float32Array | BigInt64Array = Float32A
 
 /**
  * The `{data, dims}` view of an output tensor `decodeInferOutput` reads — structurally satisfied by an `ort.Tensor`
- * whose float32 dtype the export contract guarantees.
+ * whose float32 dtype the export interface guarantees.
  */
 export interface OutputTensor {
 	readonly data: Float32Array
@@ -280,7 +280,7 @@ export function decodeInferOutput(
 	// Locale head (#511 Tier A): present on v1.1.0+ exports, absent (and optional) before.
 	const localeLogits = output.localeLogits ? Array.from(output.localeLogits.data) : undefined
 
-	// Span head (#727 stage-2): present on v3.x+ exports. Same optional contract as the locale head
+	// Span head (#727 stage-2): present on v3.x+ exports. Same optional interface as the locale head
 	// — a pre-v3 bundle simply has no `span_scores` output and the BIO path is unaffected.
 	const spanTensor = output.spanScores
 	let spanScores: number[][][] | undefined
@@ -324,7 +324,7 @@ export function decodeInferOutput(
 /**
  * Back-compat inference of the required soft-feature channels from an ONNX model's declared input names (#718). A model
  * that exports `anchor_features` / `gazetteer_features` declared those channels mandatory at train time — feeding zeros
- * is the channel-off identity, but a model TRAINED with the channel is OOD when scored without it. Cards without a
+ * is the channel-off identity, but a model trained with the channel is OOD when scored without it. Cards without a
  * `requires` block (every pre-#718 bundle) route through here so the fail-closed guard still guards them.
  * Conventions/bridge are not graph-observable (no dedicated input), so they're left undeclared here — only the card
  * declares them.

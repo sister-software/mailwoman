@@ -128,7 +128,7 @@ re-weighting a change that could not work; a weight change is not a fix when the
 
 - **The check was reporting a crash as a floor failure.** `fr.bare_street_intact` read
   `postcode-us.bin` from the tracked workspace, which is bare by design since the linkers moved to the
-  data-root overlay — so it threw ENOENT and the check printed `✗ FAIL (floor 75%)`. The floor
+  data-root overlay . Therefore, it threw ENOENT and the check printed `✗ FAIL (floor 75%)`. The floor
   reads 97.5. No candidate could clear the check on a dev checkout. Fixed in #1843; found
   because the failing arm was the shipped model, which a candidate cannot be blamed for.
 - **`mwdev_coverage` answered about the wrong corpus.** A cached census of `0.26.0` was reported
@@ -239,7 +239,7 @@ measurements live in `scratchpad/HANDOFF-2026-08-24.md` and the run store.
 - Every absolute net/regressed count. Grades apply to the **372 of 649 rows carrying coordinate
   truth** rather than to 649; and foreign-row grades from the unrouted path are not production behavior.
 - The D-rule row identities. Under production routing the blocking set is **FR 2 of 45 graded rows
-  (`COMER parís.méxico` in its two board contracts, `fr-fork-entity-comer` and
+  (`COMER parís.méxico` in its two board interfaces, `fr-fork-entity-comer` and
   `venue-toponym-comer-bare`) + GB 2 of 51 (`Biggin Hill, United Kingdom` and
   `Brixton Hill, United Kingdom`); DE 0 of 6.** The GB venue-cluster blocking story
   (`St Andrew Undershaft Church…`, `30 St Mary Axe…`) was an artifact of grading GB rows without
@@ -247,7 +247,7 @@ measurements live in `scratchpad/HANDOFF-2026-08-24.md` and the run store.
 - The v5.0.1-null / v5.0.2-fix row-level readings, including "the fix healed exactly its 3 target
   rows" — same unrouted path. The parse-level diffs (the deleted `locality="London"`, the Passeig
   retags) remain real observations of the SINGLE-CONFIG en-US parse and stay useful as mechanism
-  illustrations of the grammar contract; they are not statements about the production route.
+  illustrations of the grammar interface; they are not statements about the production route.
 
 **The corrected campaign table** (board SHA-256 `e3063ff5faebdf2f…`, fingerprint `ddc60394d5c41471`,
 commit `ff4bb076c`):

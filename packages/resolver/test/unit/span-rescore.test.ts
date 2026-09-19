@@ -20,8 +20,8 @@ const norm = backendNameKey
 
 /**
  * A tiny gazetteer: exact-normalized-name matches only (so the walk can't fuzzy-resolve fragments), with an optional
- * ALIAS surface per place — a row admitted by an alias stands in for the gazetteer's names table / alt_names bag, which
- * is what stamps the backend's `exactMatch` on name-OR-alias equality.
+ * alias surface per place — a row admitted by an alias stands in for the gazetteer's names table / alt_names bag, which
+ * is what stamps the backend's `exactMatch` on name-or-alias equality.
  */
 type FixturePlace = ResolvedPlace & { aliases?: string[] }
 
@@ -120,10 +120,10 @@ const PLACES: FixturePlace[] = [
 		score: 9,
 		exactMatch: true,
 	},
-	// #1546: the non-Latin-primary namesake, modeled on the LIVE shipped board. Moscow RU (pop 12.7M,
+	// #1546: the non-Latin-primary namesake, modeled on the live shipped board. Moscow RU (pop 12.7M,
 	// primary "Москва") is admitted to a "Moscow" query only through its alias surface — the backend
 	// stamps exactMatch via the "Moscow" names row — and it ranks first (population-first). The old
-	// span-rescore filter re-checked the PRIMARY name folded to [a-z0-9 ], and norm("Москва") is ""
+	// span-rescore filter re-checked the primary name folded to [a-z0-9 ], and norm("Москва") is ""
 	// — so the RU entry was dropped and Moscow, Idaho won by default among the Latin-named bearers.
 	{
 		id: 30,
@@ -161,7 +161,7 @@ const PLACES: FixturePlace[] = [
 	},
 	// The check anchor for the #1546 group — resolves next to the Idaho bearer (id 31).
 	{ id: 902, name: "83843", placetype: "postalcode", country: "US", lat: 46.73, lon: -116.99, score: 1 },
-	// #1546: the alias surface is the recall for LATIN scripts too — a query equal to a place's ALIAS
+	// #1546: the alias surface is the recall for latin scripts too — a query equal to a place's alias
 	// ("New York City") but not its primary name ("New York") was dropped by the same primary-name
 	// re-check, even when the backend had already flagged it exact.
 	{
@@ -406,8 +406,8 @@ describe("findRescoreCandidate", () => {
 	})
 
 	it("#1546: admits a non-Latin-primary namesake via its alias surface — population-first then picks it", async () => {
-		// The live Moscow board: the backend returns Moscow RU FIRST (exactMatch via the "Moscow" alias
-		// row), but the old filter re-checked only the PRIMARY name folded to [a-z0-9 ] — norm("Москва")
+		// The live Moscow board: the backend returns Moscow RU first (exactMatch via the "Moscow" alias
+		// row), but the old filter re-checked only the primary name folded to [a-z0-9 ] — norm("Москва")
 		// is "" and could never equal "moscow", so Moscow, Idaho won by default among the Latin-named
 		// bearers. Population-first ranking was starved rather than violated. recall fixes it with no ranking
 		// change.
@@ -555,12 +555,12 @@ describe("resolveTree + spanRescore", () => {
 			node({ tag: "locality", value: "dz", start: 14, end: 16 }),
 		])
 
-		// No `spanRescore` in opts — the default (ON) must still recover the locality.
+		// No `spanRescore` in opts — the default (on) must still recover the locality.
 		const out = await resolver.resolveTree(input, { defaultCountry: "PL" })
 		expect(out.roots.find((n) => n.placeID === "wof:1")?.value).toBe("Grudziądz")
 	})
 
-	it("is byte-stable when spanRescore is false (explicit opt-out — the #685/byte-stable contract)", async () => {
+	it("is byte-stable when spanRescore is false (explicit opt-out — the #685/byte-stable interface)", async () => {
 		const resolver = createWOFResolver(await makeBackend())
 		const roots = [node({ tag: "locality", value: "Grudzi", start: 7, end: 13 })]
 
@@ -594,7 +594,7 @@ describe("resolveTree + spanRescore", () => {
 		expect((injected?.alternatives as ResolvedPlace[] | undefined)?.map((a) => a.id)).toEqual([11, 12, 13])
 	})
 
-	it("#1537: `alternatives` stays ABSENT (not empty) for a lone namesake — the walk path's contract", async () => {
+	it("#1537: `alternatives` stays ABSENT (not empty) for a lone namesake — the walk path's interface", async () => {
 		const resolver = createWOFResolver(await makeBackend())
 
 		const out = await resolver.resolveTree(

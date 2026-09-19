@@ -3,7 +3,7 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   The address-point reader's probe contract, pinned over a fixture extract — the scope ladder and
+ *   The address-point reader's probe interface, pinned over a fixture extract — the scope ladder and
  *   the range-surface fallback ("385-387 Esplanade" keys the register's `385`; an exact range key,
  *   where a source carries one verbatim, is never second-guessed).
  */
@@ -80,7 +80,7 @@ beforeAll(async () => {
 
 	insert.run("forest road", "forest road", "19", null, "7250", "trevallyn", "Forest Road", -41.4316, 147.1185, "t", "r")
 	// BAN-style space-separated letter suffix — the spacing-variant fallback's fixture. The key comes
-	// from the SHARED normalizer so this fixture can never drift from the probe side's derivation.
+	// from the shared normalizer so this fixture can never drift from the probe side's derivation.
 	const egliseKey = normalizeStreetForKey("Rue de l'Église")
 
 	insert.run(egliseKey, egliseKey, "3 a", null, "67530", "boersch", "Rue de l'Église", 48.4771, 7.4433, "t", "r")
@@ -111,7 +111,7 @@ beforeAll(async () => {
 	insert.run(teichKey, teichKey, "3", null, "04509", "krensitz", "Teichstraße", 51.52, 12.45, "osm", "r")
 	// An OSM-shaped row with no scope of its own — the case the bbox rung exists for.
 	insert.run("mill lane", "mill lane", "7", null, null, null, "Mill Lane", 51.5, -0.1, "osm", "r")
-	// A NAD-shaped US row whose city field is ABBREVIATED — the Texas extract writes `addi` for Addison on 5,174 rows. The
+	// A NAD-shaped US row whose city field is abbreviated — the Texas extract writes `addi` for Addison on 5,174 rows. The
 	// board's `us-addison-zip-75001` (status pass) is this row. a locality check that reads the truncation as a
 	// different place loses it to interpolation.
 	const airportKey = normalizeStreetForKey("Airport Pkwy")
@@ -168,7 +168,7 @@ describe("AddressPointSqliteLookup", () => {
 	})
 
 	it("never range-splits or suffix-folds the unit-containing and box shapes", () => {
-		// AU slash convention: '5/7' is unit 5 of house 7 — NOT a range. The ladder must not derive '5'.
+		// AU slash convention: '5/7' is unit 5 of house 7 — not a range. The ladder must not derive '5'.
 		expect(lookup.find({ street: "Osborne Drive", number: "5/32", postcode: "4505" })).toBeNull()
 		// Fractional house numbers survive untouched — '32 1/2' is neither a spaced suffix nor a range.
 		expect(lookup.find({ street: "Osborne Drive", number: "32 1/2", postcode: "4505" })).toBeNull()

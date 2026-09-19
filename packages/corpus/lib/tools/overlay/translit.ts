@@ -3,28 +3,28 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Build per-script parquet files from the DeepSeek-generated transliteration JSONL and emit the
- *   corpus-v0.4.0 MANIFEST that combines them with the existing kryptonite + v0.3.0 files.
+ *   Build per-script parquet files from the DeepSeek-generated transliteration jsonl and emit the
+ *   corpus-v0.4.0 manifest that combines them with the existing kryptonite + v0.3.0 files.
  *
  *   Sibling to `kryptonite.ts`. The two modules share the same composition pattern: take a
- *   base MANIFEST, append new parquet files, write a combined MANIFEST. Differences specific to
+ *   base manifest, append new parquet files, write a combined manifest. Differences specific to
  *   transliteration:
  *
- *   - One JSONL contains rows from N target scripts (source = `deepseek-translit-<slug>`). We bucket by
+ *   - One jsonl contains rows from N target scripts (source = `deepseek-translit-<slug>`). We bucket by
  *       `source` and write one parquet file per script so `audit.ts` can attribute each file to its
  *       synthetic source without relying on filename-prefix inference.
  *   - Each file is written to `train/part-translit-<slug>.parquet` (distinct from kryptonite's
  *       `part-0000.parquet`, which v0.4.0's first builder already produced).
  *   - Inherits the path-canonicalization fix flagged in Thread B's postmortem: v0.3.0 file paths are
- *       rewritten from `$MAILWOMAN_DATA_ROOT/...` to `/data/...` in the combined MANIFEST so
+ *       rewritten from `$MAILWOMAN_DATA_ROOT/...` to `/data/...` in the combined manifest so
  *       all paths share one container-friendly form.
  *
  *   See docs/engineering/reference/CORPUS_V0_4_0_GENERATION.md for prompts, model, and the
- *   reproducibility contract.
+ *   reproducibility interface.
  *
  *   Invoke via `mailwoman corpus slice translit \
  *   --jsonl /data/corpus/versioned/v0.4.0/transliteration/canonical-transliteration.jsonl \
- *   --base-manifest /data/corpus/versioned/v0.4.0/corpus-v0.4.0/MANIFEST.json \
+ *   --base-manifest /data/corpus/versioned/v0.4.0/corpus-v0.4.0/manifest.json \
  *   --out-dir /data/corpus/versioned/v0.4.0`
  */
 
@@ -56,7 +56,7 @@ export interface TranslitOverlayOptions {
 	/**
 	 * Prefix the base manifest's file paths currently carry, to be rewritten to
 	 * {@link TranslitOverlayOptions.canonicalPathPrefix}. Defaults to `mailwomanDataRoot()` with a trailing slash — the
-	 * root that WROTE those paths. Pass it explicitly when translating a manifest generated under a different
+	 * root that wrote those paths. Pass it explicitly when translating a manifest generated under a different
 	 * `$MAILWOMAN_DATA_ROOT` than the one you are running with.
 	 */
 	legacyPathPrefix?: string
@@ -184,7 +184,7 @@ export async function buildTranslitOverlay(
 		report?.(`quarantine log → ${qPath} (${quarantine.length} rows)`)
 	}
 
-	// Compose final MANIFEST: rewrite the base's file paths from the data root → /data/... and append
+	// Compose final manifest: rewrite the base's file paths from the data root → /data/... and append
 	// the new translit files. The kryptonite file already lives in the base manifest (it was written
 	// there by Thread B).
 	const base = await readLocalJSONFile<ParquetManifest>(options.baseManifest)

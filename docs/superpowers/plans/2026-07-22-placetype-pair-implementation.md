@@ -1,17 +1,17 @@
 # Placetype-pair prior — implementation plan
 
-> **For agentic workers:** REQUIRED SUB-SKILL: superpowers:subagent-driven-development. Design authority: `2026-07-22-placetype-census-bias.md` (rev 2) + Kimi feedback. Every contract below was recon-verified against HEAD (`.superpowers/sdd/` recon report) — line refs are verified rather than Kimi's estimates.
+> **For agentic workers:** required sub-skill: superpowers:subagent-driven-development. Design authority: `2026-07-22-placetype-census-bias.md` (rev 2) + Kimi feedback. Every interface below was recon-verified against HEAD (`.superpowers/sdd/` recon report) — line refs are verified rather than Kimi's estimates.
 
 **Goal:** Ship the placetype-pair emission prior end to end: PIX1 pair-index artifact (GB) → sixth emission prior in `classifier.ts#decode` → falsifier boards → calibrated δ + full battery → `@mailwoman/neural-weights-en-gb` ship train.
 
-**Tech:** TS only (no Python); Pastel CLI for the builder; vitest; the existing prior-stack contracts.
+**Tech:** TS only (no Python); Pastel CLI for the builder; vitest; the existing prior-stack interfaces.
 
 ## Global Constraints
 
 - Branch: `feat/placetype-pair-prior` from origin/main (the plan branch merges first or rebases in).
 - Identifier family: `placetype-pair` / `pairIndex` / `PIX1` — never bare "census".
 - Naming/casing, `.ts` imports, erasableSyntaxOnly, oxlint/oxfmt, compiled CLI, zero raw env/argv, `dataRootPath()` — all house rules apply.
-- **Verified contracts (do not re-derive):** prior block = `classifier.ts:573–655`, `matrixHasBias` at 554, all priors receive `(source, pieces, this.labels, opts)` and fold via `addEmissionMatrix` (exported from `query-shape-prior.ts:205`); `TRACE_PRIOR_KINDS` at `trace.ts:28` (ordered; empty-input mirror at `classifier.ts:438`); `parseWithLogits` returns RAW pre-prior logits by contract (`classifier.ts:397–398`) — all public parse entries share `#decode`'s Viterbi path; word grouping = `groupPiecesIntoWords` (`fst-prior.ts:193`, exported) with `WordGroup {fstToken, pieceIndices}`; sibling resolution mirror = `resolveAnchorLookupSibling` (`weights.ts:283–297`) with `locale.split("-")[1]` country subtag; binary precedent = PCB1 (`postcode-binary-resolver.ts`, writer+reader one file); Pastel auto-discovers `commands/gazetteer/*.tsx` (zod `options` export + `useCommandTask`).
+- **Verified interfaces (do not re-derive):** prior block = `classifier.ts:573–655`, `matrixHasBias` at 554, all priors receive `(source, pieces, this.labels, opts)` and fold via `addEmissionMatrix` (exported from `query-shape-prior.ts:205`); `TRACE_PRIOR_KINDS` at `trace.ts:28` (ordered; empty-input mirror at `classifier.ts:438`); `parseWithLogits` returns RAW pre-prior logits by interface (`classifier.ts:397–398`) — all public parse entries share `#decode`'s Viterbi path; word grouping = `groupPiecesIntoWords` (`fst-prior.ts:193`, exported) with `WordGroup {fstToken, pieceIndices}`; sibling resolution mirror = `resolveAnchorLookupSibling` (`weights.ts:283–297`) with `locale.split("-")[1]` country subtag; binary precedent = PCB1 (`postcode-binary-resolver.ts`, writer+reader one file); Pastel auto-discovers `commands/gazetteer/*.tsx` (zod `options` export + `useCommandTask`).
 - Flag policy: a new flag = a `ParseOpts` field with the heavy JSDoc convention + a row in `docs/articles/plan/reference/runtime-flags.mdx` in the same PR (SCOPE invariant 5). No `registerFlag()` API exists.
 - Frozen-scale headers: measured values carry eval date + delta inline (the `span-proposal-prior.ts:33–54` style).
 - Data inputs (frozen snapshots): `$MAILWOMAN_DATA_ROOT/ppd/2026-07-22/gb-tuples.csv` (CITY=dep-loc, DISTRICT=post town), FSA/CQC in the acquisition dirs, EPC for out-of-register coverage.
@@ -94,7 +94,7 @@ Note: the runtime country context = the locale the weights resolved for (en-gb �
 
 - δ_gb calibrated on held-out register rows (sweep at the calibrated candidate ±; the rung-3 δ=6.0 is the prior expectation rather than the answer); frozen-scale header written with date + numbers; builder re-run with the final δ.
 - Checkpoint matrix: feed-2k vs feed-8k (peer options) × prior ON — full battery each: golden us/fr ±0.7pp, bare-locality ≥0.90, digit adjudication, 4 dep-loc boards (full pipeline), presets byte-identical for non-GB, val ±1.0pp, 2pp error-analysis, gauntlet. **cRT probe (v3.12.0, running) folds in here** — if its 8k held emission, it joins the matrix as a third checkpoint candidate.
-- `runtime-flags.mdx` row + the surface-audit paragraph (which public surfaces ride Viterbi; `parseWithLogits` raw contract).
+- `runtime-flags.mdx` row + the surface-audit paragraph (which public surfaces ride Viterbi; `parseWithLogits` raw interface).
 
 ### Task 8: Packaging + ship + docs
 

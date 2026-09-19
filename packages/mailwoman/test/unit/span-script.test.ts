@@ -5,7 +5,7 @@
  * @file What `AddressNode.script` says on the four inputs #2282 was opened with.
  *
  *   The four are not arbitrary: each one is a row class the folded `CharacterClass` answers wrongly, and the assertion
- *   that matters in every case is about a SPAN rather than the input. `金龍酒家, 12 Gerrard Street, London WC2H 7JS` is majority
+ *   that matters in every case is about a span rather than the input. `金龍酒家, 12 Gerrard Street, London WC2H 7JS` is majority
  *   Latin, so anything reading the input's script cannot find the Han venue — which is the span a router wants.
  *
  *   The trees here are hand-built rather than parsed. A parse needs the ~9 GB database set and an ONNX bundle, and what

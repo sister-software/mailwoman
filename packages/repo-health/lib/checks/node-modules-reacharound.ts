@@ -14,7 +14,7 @@
  *
  *   The check targets literal `node_modules` path segments rather than general path construction.
  *
- *   Scoped to `join`/`resolve` ARGUMENTS via the TypeScript AST rather than a grep, because `node_modules` appears
+ *   Scoped to `join`/`resolve` arguments via the TypeScript AST rather than a grep, because `node_modules` appears
  *   legitimately (and constantly) in vitest exclude globs, `.gitignore`-shaped arrays, and prose. Files are prefiltered
  *   on the substring first, so the AST cost is paid on ~30 files rather than ~2,700.
  */
@@ -33,7 +33,7 @@ const MINIMUM_REASON_LENGTH = 20
 
 /**
  * The path-building functions this guard watches: `node:path`'s two composers and path-ts's, in bare or `path.`-
- * qualified form (the callee NAME is what's matched, so `path.posix.join(…)` lands on `join`).
+ * qualified form (the callee name is what's matched, so `path.posix.join(…)` lands on `join`).
  *
  * The check is on the name alone, so a rename-import (`join as pathJoin`) slips past. That is the accepted hole: it has
  * no instances today, and closing it would mean resolving imports — the surface this file deliberately does without.
@@ -45,40 +45,40 @@ const PATH_BUILDERS = new Set(["join", "resolve", "resolvePath", "resolvePathBui
  * repo-relative path. add an entry only with a comment that survives review.
  */
 const ALLOWED: Record<string, string> = {
-	// The ORACLE for that layout. A fixture built with the implementation's own helper cannot fail when the
+	// The oracle for that layout. A fixture built with the implementation's own helper cannot fail when the
 	// implementation is wrong, so this file spells the path out independently and ties the helper back to it.
 	"packages/neural/test/integration/weights/cache.test.ts":
 		"pins the cache layout independently of the helper that builds it",
-	// Probes a FOREIGN scratch project it just created with `npm install`. The whole point is to read the install
+	// Probes a foreign scratch project it just created with `npm install`. The whole point is to read the install
 	// layout from outside; `import.meta.resolve` would answer from the monorepo's graph — the exact thing the clean-
 	// install smoke exists to not consult.
 	"packages/release-kit/lib/release/smoke/clean-install.ts":
 		"inspects a scratch project's install layout from outside, by design",
 	"packages/release-kit/lib/release/smoke/get-started.ts":
 		"inspects a scratch project's install layout from outside, by design — the get-started pages' cold trial",
-	// BUILDS a node_modules tree rather than reading one — the symlink farm a worktree arm needs, because a git
+	// builds a node_modules tree rather than reading one — the symlink farm a worktree arm needs, because a git
 	// worktree has none and symlinking the main checkout's directory across resolves every workspace back into the
 	// main checkout (yarn links `@mailwoman/core -> ../../packages/core`, resolved against the symlink's real path).
 	// There is nothing to resolve: the directory does not exist until this code creates it.
 	"packages/dev-mcp/lib/worktree/arm.ts": "constructs the worktree's node_modules farm; nothing exists to resolve yet",
-	// The ORACLE for that farm, on the same principle as the weights-cache pair above: a fixture built with the
+	// The oracle for that farm, on the same principle as the weights-cache pair above: a fixture built with the
 	// implementation's own helper cannot fail when the implementation is wrong.
 	"packages/dev-mcp/test/unit/worktree-arm.test.ts": "pins the farm layout independently of the code that builds it",
-	// BUILDS a scratch workspace's node_modules link so a bare `@fixture/recipes` specifier resolves the way yarn makes
+	// builds a scratch workspace's node_modules link so a bare `@fixture/recipes` specifier resolves the way yarn makes
 	// it resolve. The move planner under test rewrites package-subpath specifiers, and a fixture with no install layout
 	// cannot exercise that family at all.
 	"packages/repo-health/test/unit/move/plan.test.ts":
 		"builds the scratch workspace's install link; nothing exists to resolve yet",
-	// Writes a FIXTURE cache in the npm-prefix layout `weightsCachePackageDir` reads. Spelling it out here is what
+	// Writes a fixture cache in the npm-prefix layout `weightsCachePackageDir` reads. Spelling it out here is what
 	// makes the cache rung's test independent of the helper it is exercising.
 	"packages/neural/test/integration/weights/overlay.test.ts":
 		"builds a fixture cache in the npm-prefix layout, independently",
-	// LINKS the checkout's node_modules into the staging tree rather than reading a package's layout — `yarn pack`
+	// links the checkout's node_modules into the staging tree rather than reading a package's layout — `yarn pack`
 	// needs the project context there, and the link target is the checkout root's own directory rather than another
 	// package's install dir. Same principle as worktree-arm: nothing package-owned is being addressed by hand.
 	"packages/release-kit/lib/release/stage.ts":
 		"symlinks the checkout's node_modules into the staging tree; not a package lookup",
-	// THE ONE HOME. `weightsCachePackageDir` is the inverse of a resolution rather than a substitute for one: the directory
+	// the one home. `weightsCachePackageDir` is the inverse of a resolution rather than a substitute for one: the directory
 	// does not exist yet when the layout is needed (`npm install --prefix <cacheRoot>` is about to create it, or
 	// `stage-weights-cache.ts` is about to write a candidate bundle into it), so there is nothing to resolve. Every
 	// other site in the tree now calls this.
@@ -87,7 +87,7 @@ const ALLOWED: Record<string, string> = {
 
 /**
  * Every tracked source that mentions `node_modules` at all — the AST cost is paid on ~30 files rather than ~2,700.
- * "Ours" is the set git TRACKS: see `tracked-sources.ts` for why enumeration reads the index rather than the disk
+ * "Ours" is the set git tracks: see `tracked-sources.ts` for why enumeration reads the index rather than the disk
  * (scratchpad probes, agent worktrees, and local build output must not fail a guard CI cannot reproduce).
  */
 async function listCandidateSources(context: RepoContext): Promise<string[]> {
@@ -150,7 +150,7 @@ export function findReachArounds(source: string, fileName: string): Array<{ line
 				for (const argument of node.arguments) {
 					const text = argumentText(argument)
 
-					// A `node_modules` PATH SEGMENT rather than the bare word — this must not fire on an exclude glob
+					// A `node_modules` path segment rather than the bare word — this must not fire on an exclude glob
 					// like `**/node_modules/**` that happens to sit inside a `join`.
 					if (text && /(^|[/\\])node_modules([/\\]|$)/.test(text) && !text.startsWith("**")) {
 						const { line } = sourceFile.getLineAndCharacterOfPosition(node.getStart(sourceFile))

@@ -22,7 +22,7 @@ export function stripCombiningMarks(input: string): string {
 }
 
 /**
- * {@link foldCaseWhitespace} over the NFKC composition, with locale-aware lower-casing: fullwidth and compatibility
+ * {@link foldCaseWhitespace} over the nfkc composition, with locale-aware lower-casing: fullwidth and compatibility
  * forms fold together before comparison.
  */
 export function foldNFKCWhitespace(input: string): string {

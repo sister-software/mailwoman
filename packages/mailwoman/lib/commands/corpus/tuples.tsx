@@ -9,7 +9,7 @@
  *   The extraction lived as a one-off whose output survived and whose code did not; `@mailwoman/corpus/tools`'s
  *   `postcode-triples` restored the code, and this command is its entry point, so a country's tuples can be rebuilt
  *   when the extraction changes. The `parent-join` source follows each `postalcode-intl.db` code's parent into the admin
- *   gazetteer and emits one tuple per REGION SURFACE in the languages the region's addresses are written in (#1673);
+ *   gazetteer and emits one tuple per region surface in the languages the region's addresses are written in (#1673);
  *   the `geonames` source reads a fetched GeoNames postal export. Both stamp the country's attested postcode placement
  *   and refuse a country whose placement nothing attests.
  *
@@ -39,7 +39,7 @@ function localityShape(triple: { locality: string }): string {
 }
 
 /**
- * Native command-line contract consumed by the filesystem command router.
+ * Native command-line interface consumed by the filesystem command router.
  */
 export const spec = {
 	name: "tuples",

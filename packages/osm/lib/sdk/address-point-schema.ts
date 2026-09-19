@@ -4,10 +4,10 @@
  * @author Teffen Ellis, et al.
  *
  * OSM's additive extension of the shared rooftop schema. Existing address-point readers project
- * only the legacy columns, so the H3 spine and layer-contract tables do not change their query path.
+ * only the legacy columns, so the H3 spine and layer-interface tables do not change their query path.
  */
 
-import { createLayerCoverageTable, createLayerManifestTable, type LayerContractDatabase } from "@mailwoman/core/layers"
+import { createLayerCoverageTable, createLayerManifestTable, type layerschemadatabase } from "@mailwoman/core/layers"
 import {
 	ADDRESS_POINT_COLUMNS,
 	type AddressPointTable,
@@ -27,7 +27,7 @@ export interface OSMAddressPointTable extends AddressPointTable {
 	h3_cell: number
 }
 
-export interface OSMAddressPointDatabase extends LayerContractDatabase {
+export interface OSMAddressPointDatabase extends layerschemadatabase {
 	address_point: OSMAddressPointTable
 }
 
@@ -37,7 +37,7 @@ export interface OSMAddressPointDatabase extends LayerContractDatabase {
 export const OSM_ADDRESS_POINT_COLUMNS = [...ADDRESS_POINT_COLUMNS, "h3_cell"] as const
 
 /**
- * Create the legacy-compatible domain table plus OSM's contract/spine extension.
+ * Create the legacy-compatible domain table plus OSM's interface/spine extension.
  */
 export async function createOSMAddressPointTables(db: Kysely<OSMAddressPointDatabase>): Promise<void> {
 	await createAddressPointTable(db)

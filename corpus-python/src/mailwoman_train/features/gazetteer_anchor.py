@@ -28,7 +28,7 @@ from dataclasses import dataclass
 from ..types import PieceSpan
 
 # Leading/trailing strip: chars that are not Unicode letters/digits. Mirrors the builder's
-# /^[^\p{L}\p{N}]+|[^\p{L}\p{N}]+$/gu — Python's \w with re.UNICODE covers [\p{L}\p{N}_]; underscore
+# /^[^\p{L}\p{N}]+|[^\p{L}\p{N}]+$/gu — Python's \w with re.unicode covers [\p{L}\p{N}_]; underscore
 # never borders our surfaces, so strip on "not alphanumeric" via str.isalnum per char.
 _WS_RE = re.compile(r"\S+")
 
@@ -124,7 +124,7 @@ def gazetteer_char_paint(raw: str, lexicon: GazetteerLexicon) -> tuple[list[int]
                 matched_n, matched_bits = n, bits
                 break
         if matched_n:
-            # Digit guard (``rules.digit_guard``): a guarded match CONSUMES its span (no sub-ngram
+            # Digit guard (``rules.digit_guard``): a guarded match consumes its span (no sub-ngram
             # re-matching — the TS painter mirrors this exactly) but paints nothing. Digit test is
             # str.isdecimal ↔ TS \p{Nd} — the strict Unicode-Nd parity pair (isdigit would also
             # accept superscripts that \p{Nd} rejects).

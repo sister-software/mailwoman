@@ -39,7 +39,7 @@ still Overture or GeoNames, and its rungs say nothing about WOF yet.
   set those rows came from Overture rather than WOF; the `ovt` share in each cell is how much.
 - **An empty rung is coverage rather than fact.** Two independent filters produce zeroes here: the country
   recipe above, and `ADMIN_PLACETYPES` in `admin/ingest-wof.ts`, which allowlists 9 of WOF's 34
-  placetypes — so even for a cloned country the build never asked for the other 25. Per the
+  placetypes . Therefore, even for a cloned country the build never asked for the other 25. Per the
   **meaning-of-zero** rule a measured-and-empty rung renders as `0` and a never-measured rung as
   `—`; they are not the same claim.
 

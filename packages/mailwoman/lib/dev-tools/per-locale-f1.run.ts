@@ -34,7 +34,7 @@ async function main(): Promise<void> {
 		allowPositionals: true,
 	})
 
-	// The old parseArgs() only ASSIGNED a field when the flag was present (`!= null`), leaving the
+	// The old parseArgs() only assigned a field when the flag was present (`!= null`), leaving the
 	// module's own default in place otherwise — and the boolean flags were set to `true` on presence
 	// regardless of value. Spreading conditionally here reproduces both behaviors exactly: an absent
 	// flag must not arrive as `undefined` where that would override a default.

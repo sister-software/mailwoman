@@ -3,7 +3,7 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   The contract half of `mwdev_symbol`: a search that answers with denominators and states what it did not read.
+ *   The interface half of `mwdev_symbol`: a search that answers with denominators and states what it did not read.
  */
 
 import type { EngineRegistryLike } from "@mailwoman/dev-mcp/engine/registry"

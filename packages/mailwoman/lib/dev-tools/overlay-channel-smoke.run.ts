@@ -3,16 +3,16 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Do a weights package's DECLARED channels actually FEED on real input? (ROAD_TO_V9 §1 A2/A4.)
+ *   Do a weights package's declared channels actually feed on real input? (ROAD_TO_V9 §1 A2/A4.)
  *
  *   The failure this exists to exclude is not "the channel is missing" — the loader already warns
- *   about that. It is the quieter one: a channel that RESOLVES, loads a real lexicon, and then paints
+ *   about that. It is the quieter one: a channel that resolves, loads a real lexicon, and then paints
  *   nothing on every row. Two live examples in one week — the en-gb overlay declaring an evidence
  *   bundle it shipped no lexicons for (#1511), and the shaped anchor keyer finding no span in the
  *   lowercase register (#1512). Both loaded clean.
  *
  *   So: load the package exactly as production does (`loadFromWeights`), rebuild the soft-feature
- *   channels for one input, and report per channel how many PIECES carry a non-zero clue. Zero-with-a-
+ *   channels for one input, and report per channel how many pieces carry a non-zero clue. Zero-with-a-
  *   lexicon-loaded is the answer that matters, and it is called out in place.
  *
  *   `--cache-root` grades a candidate laid out as a package-shaped weights dir
@@ -26,7 +26,7 @@ import { stringifyJSON } from "@mailwoman/core/json"
 import { parseArguments } from "@mailwoman/core/scripting/arguments"
 import { NeuralAddressClassifier } from "@mailwoman/neural"
 // `@mailwoman/neural` exports no `./case-normalize` subpath, and what the anchor channel sees is the
-// CASE-NORMALIZED text (#690/#829, default-ON in `parse`) — re-implementing that here is the one thing
+// case-normalized text (#690/#829, default-on in `parse`) — re-implementing that here is the one thing
 // that must not drift, so this repo-local diagnostic imports the module directly (same posture as
 // `packages/mailwoman/lib/dev-tools/probe/gb-anchor-fire.run.ts`).
 import { normalizeInputCase } from "@mailwoman/neural/case-normalize"

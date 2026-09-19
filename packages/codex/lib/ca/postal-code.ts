@@ -4,24 +4,24 @@
  * @author Teffen Ellis, et al.
  *
  *   Canadian postcodes: the branded type, the shape, normalization, and the FSA-letter →
- *   province/territory prior — the only ALPHANUMERIC postcode of the systems the codex models.
+ *   province/territory prior — the only alphanumeric postcode of the systems the codex models.
  *
  *   The informative contrast across `us/zipcode.ts`, `de/postleitzahl.ts`, `fr/code-postal.ts`, and
  *   here:
  *
- *   - A US ZIP is numeric. its first digit maps to a loose BAND of states.
- *   - A German PLZ is numeric. its first digit maps to a Leitzone that CROSSES Bundesland borders.
+ *   - A US ZIP is numeric. its first digit maps to a loose band of states.
+ *   - A German PLZ is numeric. its first digit maps to a Leitzone that crosses Bundesland borders.
  *   - A French code postal is numeric. its first two digits are the département.
  *   - A Canadian postcode is `A1A 1A1` — Letter Digit Letter, then Digit Letter Digit — and its
- *       first LETTER pins the province or territory directly (`M` → Ontario, `H` → Quebec, `V` →
+ *       first letter pins the province or territory directly (`M` → Ontario, `H` → Quebec, `V` →
  *       British Columbia). So like the French prefix it is a clean admin prior, but it does the job
- *       with a single ALPHA character rather than digits.
+ *       with a single alpha character rather than digits.
  *
- *   The clean rule has two wrinkles worth knowing. `X` is SHARED by the Northwest Territories and
+ *   The clean rule has two wrinkles worth knowing. `X` is shared by the Northwest Territories and
  *   Nunavut (no single letter splits them), so `provinceOfPostalCode` returns an array there. And
- *   the large provinces span SEVERAL letters: Ontario alone owns `K L M N P`, Quebec owns `G H J`.
+ *   the large provinces span several letters: Ontario alone owns `K L M N P`, Quebec owns `G H J`.
  *   The first three characters form the FSA (Forward Sortation Area); the last three are the LDU
- *   (Local Delivery Unit). A FSA whose second character (the first digit) is `0` is a RURAL area —
+ *   (Local Delivery Unit). A FSA whose second character (the first digit) is `0` is a rural area —
  *   the bridge to the wider, lower-density delivery zones.
  */
 
@@ -42,7 +42,7 @@ const POSTAL_CODE_LENGTH = 6
  * @category Postal
  * @type string
  * @title Postcode
- * @pattern ^[ABCEGHJ-NPRSTVXY]\d[ABCEGHJ-NPRSTV-Z] ?\d[ABCEGHJ-NPRSTV-Z]\d$
+ * @pattern ^[abceghj-nprstvxy]\d[abceghj-nprstv-Z] ?\d[abceghj-nprstv-Z]\d$
  */
 export type PostalCode = Tagged<string, "CaPostalCode">
 
@@ -115,7 +115,7 @@ export function provinceOfPostalCode(postalCode: unknown): CanadianProvinceCode 
 }
 
 /**
- * True when a postcode is RURAL: its second character (the FSA's first digit) is `0`. Canada Post uses a `0` in that
+ * True when a postcode is rural: its second character (the FSA's first digit) is `0`. Canada Post uses a `0` in that
  * position to mark the lower-density delivery zones (rural routes, small communities) — the contrast with the urban
  * `1`–`9` FSAs. Returns false for a non-code.
  */

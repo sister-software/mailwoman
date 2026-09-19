@@ -3,16 +3,16 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   `tiger`: US Census TIGER/Line consumer adapter.
+ *   `tiger`: US Census tiger/Line consumer adapter.
  *
- *   TIGER/Line is the canonical US street + locality dataset published by the Census Bureau as a
+ *   tiger/Line is the canonical US street + locality dataset published by the Census Bureau as a
  *   **public-domain** product (no ODbL share-alike concerns for US-only corpora). Coverage extends
  *   to every named street segment + every incorporated place + CDP across the 50 states + DC + the
  *   five primary territories — substantially better US street-name coverage than OSM, especially in
  *   rural areas.
  *
  *   Following the `wof-admin` / `wof-postalcode` pattern, this adapter consumes a SQLite database the
- *   operator pre-builds from the raw TIGER shapefiles (see the README for the schema and a
+ *   operator pre-builds from the raw tiger shapefiles (see the readme for the schema and a
  *   suggested `ogr2ogr` pipeline). The mailwoman side does not parse Shapefile binary directly —
  *   keeping the adapter narrow lets the operator pick their own ingestion tool (ogr2ogr / shp2pgsql
  *   / a custom Python script / etc.) without forcing a heavy native dep into `@mailwoman/corpus`.
@@ -26,12 +26,12 @@
  *       locality-with-region, locality-with-region-country (mirrors `wof-admin`'s fan-out for
  *       consistency).
  *   - `packages/corpus/lib/us/fips-state.ts` — the FIPS → `{abbreviation, name}` lookup table
- *       (originally `tiger/state.ts`, AGPL-3.0 → AGPL-3.0). The full isp-nexus TIGER module ships a
+ *       (originally `tiger/state.ts`, AGPL-3.0 → AGPL-3.0). The full isp-nexus tiger module ships a
  *       TypeORM-backed service layer. mailwoman only needs the lookup data so we don't carry the
  *       service layer over.
  *
- *   License: stamped `"Public Domain"` per Census Bureau guidance on TIGER/Line. No per-row override
- *   needed — every row in TIGER is the same license.
+ *   License: stamped `"Public Domain"` per Census Bureau guidance on tiger/Line. No per-row override
+ *   needed — every row in tiger is the same license.
  */
 
 import { formatAddressRow } from "@mailwoman/codex/address-format"
@@ -165,7 +165,7 @@ function* placeVariants(row: TigerPlaceRow): Iterable<{
 }
 
 /**
- * Build a TIGER adapter. Pure factory so multiple instances can be created in tests.
+ * Build a tiger adapter. Pure factory so multiple instances can be created in tests.
  */
 export function createTigerAdapter(): CorpusAdapter {
 	return {

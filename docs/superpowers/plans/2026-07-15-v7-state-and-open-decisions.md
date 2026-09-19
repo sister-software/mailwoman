@@ -32,7 +32,7 @@ Ship v7.0.0 = **delete** the legacy rules parser. "Delete" qualifies as all of:
 2. The rules classifier code is removed + sealed — `@mailwoman/classifiers`' rule parser and its
    `context`/`Graph`/`permutate` implementation deleted, git tag `legacy-rules-final`, npm package
    deprecated/archived.
-3. Shared contracts rehomed to survive the deletion — `Classification.ts` → `core/types`; the
+3. Shared interfaces rehomed to survive the deletion — `Classification.ts` → `core/types`; the
    `tokenization/context → core/solver` edge split (`Span`/normalizer/`split` stay).
 4. The rules parser's hand-written gold (the parity corpus) rescued to neural eval fixtures.
 5. not deleted: the libpostal dictionary data + the generic tokenization utilities.

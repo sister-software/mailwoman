@@ -3,7 +3,7 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Contract + per-rule unit tests for the rule-based grouper. The kryptonite-catalogue fixture test
+ *   Interface + per-rule unit tests for the rule-based grouper. The kryptonite-catalogue fixture test
  *   (operator's adversarial examples) lives in `kryptonite.test.ts`.
  */
 
@@ -38,7 +38,7 @@ function findKind(proposals: PhraseProposal[], kind: string, body?: string): Phr
 	return proposals.find((p) => p.kindHypothesis === kind && (body === undefined || p.span.body === body))
 }
 
-describe("phrase-grouper — contract", () => {
+describe("phrase-grouper — interface", () => {
 	it("groupPhrasesSync returns an array", () => {
 		const out: PhraseProposal[] = groupPhrasesSync(input("anything"), shape())
 		expect(Array.isArray(out)).toBe(true)
@@ -180,7 +180,7 @@ describe("scoreHyphenatedCompound", () => {
 
 describe("scoreStreetPhrase", () => {
 	it("emits STREET_PHRASE for name + suffix, EXCLUDING the leading house number (#565)", () => {
-		// The house number is not part of the street phrase — the NUMERIC rule proposes it separately, so
+		// The house number is not part of the street phrase — the numeric rule proposes it separately, so
 		// the reconciler can type the number and the street as distinct nodes instead of fusing them.
 		const out = scoreStreetPhrase(tokenizeSegment("350 5th Ave", 0), "350 5th Ave")
 		expect(out).toHaveLength(1)
@@ -199,7 +199,7 @@ describe("scoreStreetPhrase", () => {
 		expect(scoreStreetPhrase(tokenizeSegment("Street", 0), "Street")).toEqual([])
 	})
 
-	// #425 — Romance street pattern: the street TYPE leads ("Via Trento", "Calle Mayor").
+	// #425 — Romance street pattern: the street type leads ("Via Trento", "Calle Mayor").
 	it("emits STREET_PHRASE for a prefix-led Italian street (Via Trento)", () => {
 		const out = scoreStreetPhrase(tokenizeSegment("Via Trento", 0), "Via Trento")
 		expect(out.find((p) => p.span.body === "Via Trento")).toBeDefined()
@@ -301,7 +301,7 @@ describe("scoreLocalityPhrase", () => {
 		expect(bodies).toContain("Palmas")
 	})
 
-	// #425 — all-caps intl place HEAD that matches the region-abbreviation shape ("SAN", "DI") must
+	// #425 — all-caps intl place head that matches the region-abbreviation shape ("SAN", "DI") must
 	// still form the multi-word locality rather than get skipped as a US-state abbreviation.
 	it("forms a locality from a region-abbrev-shaped head (SAN NAZARIO)", () => {
 		const bodies = scoreLocalityPhrase(tokenizeSegment("SAN NAZARIO", 0), "SAN NAZARIO", true).map((p) => p.span.body)
@@ -321,7 +321,7 @@ describe("scoreLocalityPhrase", () => {
 		const bodies = scoreLocalityPhrase(tokenizeSegment("Via Trento", 0), "Via Trento", false).map((p) => p.span.body)
 		expect(bodies).not.toContain("Via")
 		expect(bodies).not.toContain("Via Trento")
-		// The street NAME alone may still surface as a locality candidate — the reconciler arbitrates.
+		// The street name alone may still surface as a locality candidate — the reconciler arbitrates.
 		expect(bodies).toContain("Trento")
 	})
 })

@@ -11,14 +11,14 @@
  *   NPI_Files.html index, then downloads the ZIP and extracts only the main registry CSV
  *   (npidata_pfile_*.csv). The smaller endpoint/othername/pl files stay zipped — we don't need them.
  *
- *   Uses Node's built-in fetch (gzip/brotli) to parse the HTML index and download the ZIP, and
+ *   Uses Node's built-in fetch (gzip/brotli) to parse the html index and download the ZIP, and
  *   streaming sha256 instead of sha256sum. The ZIP is unpacked with the `unzip` binary via
- *   `node:child_process` (no clean Node equivalent for member listing + selective extraction). NOTE:
+ *   `node:child_process` (no clean Node equivalent for member listing + selective extraction). note:
  *   the old bash fetcher used `curl --continue-at -` to resume a partial download. native fetch has
  *   no resume, so a partial run re-downloads from the start.
  *
  *   Invoke via `mailwoman corpus fetch nppes --out-root <path>`. Idempotent: if dest CSV exists and
- *   sha256 matches MANIFEST, skips download.
+ *   sha256 matches manifest, skips download.
  */
 
 /* oxlint-disable sister-software/prefer-region-over-marks -- these markers label steps inside one
@@ -45,7 +45,7 @@ export type FetchNPPESOptions = BaseFetchOptions
  * `NPPES_Data_Dissemination_<Month>_<Year>*.zip`; weekly files carry a `MMDDYY_MMDDYY` date range, which we exclude.
  */
 async function discoverLatestZip(): Promise<string | undefined> {
-	// `responseType: "text"` — the index is HTML, scraped by regex below.
+	// `responseType: "text"` — the index is html, scraped by regex below.
 	const html = await new APIClient({
 		displayName: "nppes-index",
 		retry: true,
@@ -146,7 +146,7 @@ export async function fetchNPPES(options: FetchNPPESOptions, report?: (line: str
 	await removePathIfPresent(zipDest)
 	report?.("  Removed ZIP (CSV kept)")
 
-	// MARK: Write MANIFEST for extracted CSV
+	// MARK: Write manifest for extracted CSV
 
 	const manifest: SourceManifest = {
 		source_url: zipURL,

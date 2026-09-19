@@ -10,8 +10,8 @@
  *   file catches it. So the comparison is mechanical — re-derive each skeleton from the dataset and require the
  *   committed layout to print the same fields in the same order with the same line breaks.
  *
- *   It reads the dataset through `@mailwoman/core`, which is legal for a TEST and not for `lib/`: `@mailwoman/core`
- *   imports `@mailwoman/codex`, so a source file here reaching back would close that loop. This file lives under
+ *   It reads the dataset through `@mailwoman/core`, which is legal for a test and not for `lib/`: `@mailwoman/core`
+ *   imports `@mailwoman/codex`. Therefore, a source file here reaching back would close that loop. This file lives under
  *   `test/`, which nothing imports, and codex's own manifest stays free of core. The former home was
  *   `@mailwoman/core`, and `@mailwoman/core` imports `@mailwoman/codex`. A codex test reading the dataset would close
  *   that loop. this package already depends on both.
@@ -49,7 +49,7 @@ const FIELD: Readonly<Record<string, string>> = {
 /**
  * The skeleton a layout prints: field names per line, street line collapsed to one marker.
  *
- * Two slots drop out. Both are AUTHORED rather than transcribed, so comparing them against the source would report
+ * Two slots drop out. Both are authored rather than transcribed, so comparing them against the source would report
  * every country carrying one as a departure and say nothing:
  *
  * - `country`, because `%R` is absent from nearly every `fmt` — libaddressinput's consumers add the destination country
@@ -57,12 +57,12 @@ const FIELD: Readonly<Record<string, string>> = {
  * - `dependent_locality`, for the 47 countries measured as printing one; `%D` appears in 14 of the 197 shipped `fmt`
  *   strings, and a country that really has the line still needs it. It takes a line of its own beside the locality, or
  *   a place inside the locality's line where that line also carries the street, so it is dropped wherever it sits
- *   rather than only as a line. WHERE the generator put it is what `address-layouts.test.ts` checks.
+ *   rather than only as a line. where the generator put it is what `address-layouts.test.ts` checks.
  */
 const AUTHORED_SLOTS = new Set(["country", "dependent_locality"])
 
 function skeletonOfLayout(layout: AddressLayout, source: readonly string[][]): string[][] {
-	// A slot counts as authored only when the SOURCE does not name it. The 14 `fmt` strings that carry `%D` are
+	// A slot counts as authored only when the source does not name it. The 14 `fmt` strings that carry `%D` are
 	// compared like any other line, so a transcription error there still fails.
 	const inSource = new Set(source.flat())
 	const transcribed = (name: string): boolean => !AUTHORED_SLOTS.has(name) || inSource.has(name)

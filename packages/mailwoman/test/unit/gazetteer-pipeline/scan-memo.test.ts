@@ -8,7 +8,7 @@
  *   that pair was 236.9s of a 253s CI leg.
  *
  *   The invalidation key is deliberately (mtimeMs, size) and not path alone: the WOF admin DB is a
- *   sealed readonly artifact that a rebuild REPLACES, and a path-only memo would serve the old scan
+ *   sealed readonly artifact that a rebuild replaces, and a path-only memo would serve the old scan
  *   against the new file for the life of the process.
  */
 

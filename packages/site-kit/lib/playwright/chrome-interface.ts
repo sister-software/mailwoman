@@ -3,14 +3,14 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   The contract every map app's floating chrome answers, as assertions a browser test can run.
+ *   The interface every map app's floating chrome answers, as assertions a browser test can run.
  *
  *   It lives here rather than in either app's `test/e2e/` because both apps make the same promises about the same
  *   components, and the defects it exists to catch were found by hand on one app while the other carried them too: a
  *   side sheet that opened over the control that opened it, a footer strip that covered the bottom sheet's last rows,
  *   a compass mounted nowhere, two panels sharing an edge.
  *
- *   IT ASSERTS GEOMETRY AND REACHABILITY rather than APPEARANCE. Whether the glass is the right colour is a judgement. that
+ *   IT asserts geometry and reachability rather than appearance. Whether the glass is the right colour is a judgement. that
  *   two controls do not occupy the same pixels, and that every panel can be closed by someone holding a phone, are
  *   facts a machine can hold.
  */
@@ -88,7 +88,7 @@ async function visibleBoxes(page: Page): Promise<Map<string, Box>> {
 /**
  * No two floating pieces of chrome occupy the same pixels.
  *
- * A SIDE SHEET IS EXEMPT, because on a phone it is deliberately the whole panel laid over everything else — the overlap
+ * A side sheet is exempt, because on a phone it is deliberately the whole panel laid over everything else — the overlap
  * there is the design. Every other pair has to clear.
  */
 export async function expectNoChromeOverlap(page: Page): Promise<void> {
@@ -167,8 +167,8 @@ export async function expectSheetOpensAndCloses(page: Page, opener: Locator): Pr
 /**
  * Every control in the map's column that opens a sheet opens exactly one, and closes it both ways.
  *
- * The controls are READ OFF THE PAGE rather than named here, so an app that mounts a different set is held to the same
- * contract and a control added later is covered without this file changing. A control that opens no sheet — a compass,
+ * The controls are read off the page rather than named here, so an app that mounts a different set is held to the same
+ * interface and a control added later is covered without this file changing. A control that opens no sheet — a compass,
  * a zoom button — is skipped, which is what keeps the walk honest about what it actually checked.
  *
  * @returns The accessible names of the controls that were exercised.
@@ -233,7 +233,7 @@ export async function expectReachable(page: Page, selector: string): Promise<voi
  *
  * Unscoped, that call walks the whole style: measured at 64.3 ms returning 4,819 features over the 79-layer basemap at
  * zoom 14 in Manhattan, against 5.7 ms and 44 features scoped to the 11 label layers. One per pointer move is the map's
- * entire frame budget, and nothing about the page LOOKS wrong when it happens — which is why it is a contract rather
+ * entire frame budget, and nothing about the page looks wrong when it happens — which is why it is a interface rather
  * than a timing assertion, and why a timing assertion would be the flaky way to write this.
  *
  * @param handle The global the app republishes its map instance under.

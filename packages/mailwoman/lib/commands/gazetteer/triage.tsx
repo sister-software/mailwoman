@@ -5,7 +5,7 @@
  *
  *   `mailwoman gazetteer triage` — the WOF currency-hole ledger (`gazetteer-pipeline/wof-triage.ts`).
  *
- *   REPORT ONLY. Nothing this command emits changes a resolve. the ledger exists so an upstream coverage hole is
+ *   report only. Nothing this command emits changes a resolve. the ledger exists so an upstream coverage hole is
  *   reviewable instead of invisible, and so a decision to supplement one is recorded rather than inferred. The
  *   motivating case is in the module docstring (`Rochester, Kent`, deprecated in a January 2019 batch with no
  *   successor, resolving 474 km away until the currency backfill).
@@ -23,7 +23,7 @@ import { type CommandSpec, CommandTaskResult, type CommandComponent, useCommandT
 import type { TriageRow, TriageSummary } from "#gazetteer-pipeline/wof/triage"
 
 /**
- * Native command-line contract consumed by the filesystem command router.
+ * Native command-line interface consumed by the filesystem command router.
  */
 export const spec = {
 	name: "triage",

@@ -116,8 +116,8 @@ def push_oa_locale_rows(args: argparse.Namespace, push: Push) -> None:
                 license_note,
             )
 
-        # Fragment recipe v6 (#1104): COUNTRY counterweight — the recipe-v5 mass is country-sparse, which eroded
-        # country recall 88.6%→82.0% on the fragment lineage. Emit a full address ENDING in the country
+        # Fragment recipe v6 (#1104): country counterweight — the recipe-v5 mass is country-sparse, which eroded
+        # country recall 88.6%→82.0% on the fragment lineage. Emit a full address ending in the country
         # token per triple, both comma'd and comma-free (golden has both), rotating the codex surface
         # forms, so the fine-tune keeps the country class alive without touching the fragment gains.
         surfaces = COUNTRY_SURFACES.get(country, [])
@@ -155,7 +155,7 @@ def push_corpus_harvest_rows(
     counterweight block below zips them against street surfaces rather than re-reading the corpus.
     """
     corpus_streets = span_rows_from_corpus(args.corpus_parquet_glob, {"US"}, args.per_locale_cap, max_parts=30)
-    # Fragment recipe v3: GLOBAL bare-locality twins (all countries. cap/4 each) — the gauntlet
+    # Fragment recipe v3: global bare-locality twins (all countries. cap/4 each) — the gauntlet
     # global-dublin-bare regression showed famous cities outside the recipe's OA locales lose their
     # locality reading once fragment street-mass grows. Harvested from real corpus locality spans.
     if args.famous_localities_file:
@@ -242,13 +242,13 @@ def push_country_counterweight_rows(
 ) -> None:
     """The #1104 country rows: a tail-position block and a leading-position one.
 
-    Both draw from `country_rng`, which is seeded separately from the recipe's own shuffle, so this
+    Both draw from `country_rng`. It is seeded separately from the recipe's own shuffle. Therefore, this
     block's numbers do not move when a block before it changes size.
     """
     # Fragment recipe v6 (#1104): country counterweight. The golden country classes are US + FR heavy, and neither
     # is an OA_LOCALES locale, so those tails had zero signal — the country-sparse fine-tune eroded
     # recall 88.6%→82.0%. The corpus rarely co-locates street+locality in one row (WOF-admin-heavy), so
-    # synthesize by ZIPPING separate street + locality pools (both do exist in the corpus) with a codex
+    # synthesize by zipping separate street + locality pools (both do exist in the corpus) with a codex
     # country surface tail (COUNTRY_SURFACES, sourced from @mailwoman/codex), comma'd and comma-free.
     _country_note = (
         "Synthetic — fragment-assay; #1104 country counterweight (corpus street × locality + codex surface tail)"
@@ -268,7 +268,7 @@ def push_country_counterweight_rows(
 
     # US localities: the NAD admin pairs (English city names), not corpus_localities — the wof-admin
     # locality harvest carries alternate-language surfaces ("Сельма"/"п'єдмонт"), which would teach a
-    # nonsense "English-street cyrillic-city USA" tail. ASCII-filter as a safety net for any locale.
+    # nonsense "English-street cyrillic-city USA" tail. ascii-filter as a safety net for any locale.
     country_localities: dict[str, list[str]] = {"US": [loc for loc, _ in admin_pairs]}
 
     for c in sorted(country_seed_countries):
@@ -301,19 +301,19 @@ def push_country_counterweight_rows(
             )
             country_rows += 2
 
-    # v2.9.1 (#1104): LEADING-position country rows — "United States of America, Wyoming, Лорейн"
-    # (country first). The v290 tail-only counterweight recovered tail cases but MISSED this WOF-admin
+    # v2.9.1 (#1104): leading-position country rows — "United States of America, Wyoming, Лорейн"
+    # (country first). The v290 tail-only counterweight recovered tail cases but missed this WOF-admin
     # distribution (12/60 golden misses, all leading-position + non-Latin locality). Regions from NAD
-    # admin_pairs. localities from corpus_localities["US"] INCLUDING non-Latin (the point — teach country
+    # admin_pairs. localities from corpus_localities["US"] including non-Latin (the point — teach country
     # when the locality context is non-Latin). Rotate the codex surfaces (the golden favors the long
     # "United States of America" form here).
     us_regions = [reg for _, reg in admin_pairs]
     us_localities_all = corpus_localities.get("US", [])
     us_surfaces = COUNTRY_SURFACES.get("US", [])
-    # v2.9.2 (#1104): weight the LEADING surfaces to the MULTI-WORD forms ("United States of America",
+    # v2.9.2 (#1104): weight the leading surfaces to the multi-word forms ("United States of America",
     # "United States"). The v291 probe pinned the residual exactly there: short leading forms ("USA, AZ,
     # …" → country=USA) already parse. only the long form fails ("United States of America, …" → the
-    # 4-token phrase reads as a STREET). Rotating all 6 surfaces gave the long form only ~1/6 of leading
+    # 4-token phrase reads as a street). Rotating all 6 surfaces gave the long form only ~1/6 of leading
     # rows. Bias to the multi-word forms so the model gets enough signal to stop reading them as street.
     leading_surfaces = [s for s in us_surfaces if len(s.split()) >= 2] or us_surfaces
     leading_rows = 0

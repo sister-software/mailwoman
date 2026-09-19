@@ -79,9 +79,9 @@ def encode_row_units(
     label_to_id: dict[str, int] | None = None,
     collapse: Callable[[str], str] | None = None,
 ) -> dict[str, list[Any]]:
-    """Encode one row under the D1 contract: ``char_ids (S, W)`` where S = label units, W = window.
+    """Encode one row under the D1 interface: ``char_ids (S, W)`` where S = label units, W = window.
 
-    The generalization the v8 CJK plan's contract note specifies: a UNIT is anything carrying one
+    The generalization the v8 CJK plan's interface note specifies: a UNIT is anything carrying one
     BIO label — a whitespace token for Latin char-word mode (``ctx_chars=0``: W covers the unit's
     own chars, like ``encode_row_charword``) or one character for CJK char mode (``ctx_chars=3``:
     W=7 covers the char ± 3 neighbors, giving the CNN local n-gram context — 丁目/番地/号 as units).
@@ -97,7 +97,7 @@ def encode_row_units(
     modes. ``label_to_id``/``collapse`` default to the module-global STAGE3 vocabulary. a
     non-default model (the JP 47-label head) passes its ``LabelSet``'s pair (v8 CJK Phase 2). A span-derived char array is already unit-correct: the span-leading unit's first char is
     ``B-``, a continuation unit's first char is ``I-``, and two ADJACENT same-family spans each keep
-    their own ``B-``. (The contract note sketched a piece-path-style B/I re-flip for word mode. that
+    their own ``B-``. (The interface note sketched a piece-path-style B/I re-flip for word mode. that
     re-flip would MERGE adjacent same-family entities — first-char-as-is is strictly more faithful,
     the deliberate deviation.)
     """

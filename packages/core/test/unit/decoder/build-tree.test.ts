@@ -206,7 +206,7 @@ describe("buildAddressTree — boundary trim", () => {
 
 // Paired-punctuation span-edge trimming (paired-punctuation audit, .superpowers/sdd/task-9-audit-report.md).
 // `trimBoundary` is generic — it strips any leading/trailing non-word character, one at a time, with no notion of
-// "pairing" at all. That's what makes it inherently safe for UNBALANCED paired punctuation too: it never looks for a
+// "pairing" at all. That's what makes it inherently safe for unbalanced paired punctuation too: it never looks for a
 // matching partner, so a lone leading quote with no closer, or a lone trailing paren with no opener, trims exactly
 // the same way a single stray comma does. These cases characterize that the existing mechanism (built for the
 // v0.4.0 comma-slip class) generalizes to quotes/brackets/braces/guillemets without any dedicated code.

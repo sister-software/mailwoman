@@ -10,7 +10,7 @@
  *   agrees with the affix database builder (which calls the codex matchers directly) by construction.
  *
  *   v2 (2026-08-10, #1569 five-whys): adds `name_prone` — the codex name-prone canonicals
- *   (PARK/HILL/CREEK…) that license the positional split of e.g. `Menlo Park | Road` in the
+ *   (park/hill/creek…) that license the positional split of e.g. `Menlo Park | Road` in the
  *   loader's relabel pass. A v1 artifact without the key leaves licensing off (old behavior).
  *
  *   Output: data/gazetteer/affix-relabel-lexicon-v2.json
@@ -23,7 +23,7 @@ import { dirname } from "path-ts"
 import { type CommandSpec, CommandTaskResult, type CommandComponent, useCommandTask } from "#cli-kit"
 
 /**
- * Native command-line contract consumed by the filesystem command router.
+ * Native command-line interface consumed by the filesystem command router.
  */
 export const spec = {
 	name: "affix-relabel",
@@ -42,9 +42,9 @@ const GazetteerAffixRelabel: CommandComponent<typeof spec> = ({ options }) => {
 
 		const output = options.out ?? String(repoRootPathBuilder("data", "gazetteer", "affix-relabel-lexicon-v2.json"))
 
-		// Directionals: every SINGLE-TOKEN surface variant → canonical abbreviation. The codex maps are
-		// Maps keyed by the Pub-28 spaced names ("NORTH WEST"); real US streets use the one-word form
-		// ("Northwest"), which is what a whitespace-token relabel pass can match — so we emit the abbr
+		// Directionals: every single-token surface variant → canonical abbreviation. The codex maps are
+		// Maps keyed by the Pub-28 spaced names ("north west"); real US streets use the one-word form
+		// ("Northwest"). It is what a whitespace-token relabel pass can match. Therefore, we emit the abbr
 		// ("nw") and the de-spaced name ("northwest"), same surfaces matchLeadingDirectional accepts.
 		const directionals: Record<string, string> = {}
 
@@ -68,8 +68,8 @@ const GazetteerAffixRelabel: CommandComponent<typeof spec> = ({ options }) => {
 			source: "@mailwoman/codex us/street-directional + us/street-suffix.json (USPS Pub 28 + name-prone curation)",
 			directionals,
 			suffixes,
-			// Licenses the positional split of a >=2-word name whose FINAL word is merely
-			// name-prone-shaped when a TRUE suffix follows ('Menlo Park | Road') — the #1569
+			// Licenses the positional split of a >=2-word name whose final word is merely
+			// name-prone-shaped when a true suffix follows ('Menlo Park | Road') — the #1569
 			// five-whys countermeasure. Loaders reading a v1 artifact (key absent) keep the old
 			// blanket rejection.
 			name_prone: [...NAME_PRONE_US_SUFFIXES].toSorted(),

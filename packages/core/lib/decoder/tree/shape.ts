@@ -3,7 +3,7 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Tree-SHAPE predicates over an `AddressTree` — the one stack walk behind the pipeline's bare-tree
+ *   Tree-shape predicates over an `AddressTree` — the one stack walk behind the pipeline's bare-tree
  *   guards and the "lone bare toponym" conditions. Two quantifiers cover every consumer:
  *
  *   - {@link isBareTreeOf} — every value-containing node carries the given tag (several allowed). The
@@ -23,7 +23,7 @@ import { walkNodes } from "#decoder/tree/walk"
 import type { AddressNode, AddressTree } from "#decoder/types"
 
 /**
- * True when every node in the tree either carries `tag` or bears no value — i.e. the only EVIDENCE in the parse is
+ * True when every node in the tree either carries `tag` or bears no value — i.e. the only evidence in the parse is
  * `tag`-shaped. A tag-matching node counts even when its value is empty (the guard asks "did the parser emit this
  * shape", not "is the span non-blank"); any other tag with a non-empty value disqualifies. False for a tree with no
  * `tag` node at all.
@@ -82,7 +82,7 @@ export interface FlatTreeNode {
 	 *
 	 * Carried for the same reason `source` is: a projection that keeps only the text and the tag cannot tell a span that
 	 * resolved to a different place from one that did not move at all, and those are a ranking problem and a non-event
-	 * respectively. `alternatives` is reduced to its LENGTH — the retrieval breadth is what a consumer reads, and handing
+	 * respectively. `alternatives` is reduced to its length — the retrieval breadth is what a consumer reads, and handing
 	 * over the candidate objects invites a walk this projection exists to have already done.
 	 */
 	placeID?: string
@@ -92,7 +92,7 @@ export interface FlatTreeNode {
 }
 
 /**
- * Flatten a tree to its nodes in SOURCE order — sorted by `start`, the same order `decodeAsTuples` means by it.
+ * Flatten a tree to its nodes in source order — sorted by `start`, the same order `decodeAsTuples` means by it.
  *
  * A traversal-order walk (depth-first onto a stack, then reversed) is the obvious implementation and is wrong here: it
  * coincides with source order only while every parent's span precedes its children's, and the decoder does not promise

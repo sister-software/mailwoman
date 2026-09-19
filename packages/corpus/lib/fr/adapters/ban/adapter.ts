@@ -18,10 +18,10 @@
  *   left for the wof-postalcode + wof-admin cross-reference at corpus build time (a future pass.
  *   for Phase 1 the row's region is simply absent).
  *
- *   License: the official BAN (adresse.data.gouv.fr) is DUAL-licensed — Licence Ouverte 2.0 (Etalab,
- *   attribution-only) OR ODbL (share-alike). We ELECT Licence Ouverte 2.0 (issue #26 Tier B:
+ *   License: the official BAN (adresse.data.gouv.fr) is dual-licensed — Licence Ouverte 2.0 (Etalab,
+ *   attribution-only) or ODbL (share-alike). We elect Licence Ouverte 2.0 (issue #26 Tier B:
  *   allowed for training with attribution. the ODbL option's share-alike obligation would defeat
- *   the proprietary-weights goal). Stamped onto every row as `Licence Ouverte 2.0` — NOT the older
+ *   the proprietary-weights goal). Stamped onto every row as `Licence Ouverte 2.0` — not the older
  *   conservative `ODbL-1.0` label, which wrongly read as Tier-C-denied in the corpus license audit.
  *   The model card must carry the BAN attribution (Tier B obligation).
  *

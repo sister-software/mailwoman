@@ -5,18 +5,18 @@
  *
  *   Where the house number sits relative to the street name, per country — the one fact libaddressinput does not carry.
  *
- *   Its `fmt` models the street address as a single opaque `%A`, so a skeleton transcribed from it says which LINE the
+ *   Its `fmt` models the street address as a single opaque `%A`, so a skeleton transcribed from it says which line the
  *   street occupies and nothing about how that line is spelled. The split — house number leading or following — is read
  *   from the OpenCage `address-formatting` templates (MIT), which model both slots, and it is read once: this table is
- *   the result, committed as data, so the layout generator needs no third-party package at run time.
+ *   the result, committed as data. Therefore, the layout generator needs no third-party package at run time.
  *
- *   210 of the 251 template countries name both slots. the other 41 say nothing, and their ABSENCE here is the answer
+ *   210 of the 251 template countries name both slots. the other 41 say nothing, and their absence here is the answer
  *   rather than a gap. A country this table does not name takes the number-first order, which
  *   `@mailwoman/codex/address-layouts`'s generator applies as its default.
  *
- *   REFRESHING IT is deliberate work rather than a command: the source is no longer a dependency of this repository. Re-read
+ *   refreshing IT is deliberate work rather than a command: the source is no longer a dependency of this repository. Re-read
  *   `address-formatting`'s `templates.json`, take each country's `address_template`, collapse every `{{#first}}`
- *   alternation to the `{{{road}}}` it may contain (an alternation names the road as a FALLBACK for a place name, and
+ *   alternation to the `{{{road}}}` it may contain (an alternation names the road as a fallback for a place name, and
  *   the position inside one is not the street's real position), then compare the offsets of `{{{house_number}}}` and
  *   `{{{road}}}`.
  */
@@ -27,7 +27,7 @@
 export type StreetOrder = "number-first" | "number-last"
 
 /**
- * Countries that separate the street name and the house number with a COMMA rather than a space — `Calle Mayor, 12`.
+ * Countries that separate the street name and the house number with a comma rather than a space — `Calle Mayor, 12`.
  *
  * Measured the same way, and on the same rendered output: 183 of the 213 template countries space-join, 22 comma-join,
  * and 8 name only one of the two slots so the question does not arise. The separator is not cosmetic — Spain's corpus
@@ -61,9 +61,9 @@ export const COMMA_JOINED_STREET_COUNTRIES: ReadonlySet<string> = new Set([
 /**
  * How the street line is written in a country's own script, for the countries that write two.
  *
- * `STREET_ORDERS` below is read from the OpenCage templates, which render in Latin, so it states the romanized form of
- * every country including these. Hong Kong's entry is `21 Jordan Road`; its Chinese register writes `佐敦道21號`, which is
- * a different order and a different separator, and neither is derivable from the other.
+ * `STREET_ORDERS` below is read from the OpenCage templates. It render in Latin. Therefore, it states the romanized
+ * form of every country including these. Hong Kong's entry is `21 Jordan Road`; its Chinese register writes `佐敦道21號`,
+ * which is a different order and a different separator, and neither is derivable from the other.
  *
  * The values are the codex's street-node names, so the generator emits the node rather than deriving one. `han` is the
  * unseparated name-then-number line the Chinese-writing systems use, and the entries follow the split `LINE_JOINS`

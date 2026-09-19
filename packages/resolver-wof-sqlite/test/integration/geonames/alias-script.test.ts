@@ -10,7 +10,7 @@
  *   Hong Kong is in the fold set and carried six Han lookup keys, every one of them the country row's own:
  *   `屯門` and `深水埗` name two of its eighteen districts and resolved to nothing.
  *
- *   The DISPLAY name stays Latin. Which names are REACHABLE and which name a row renders are separate
+ *   The display name stays Latin. Which names are reachable and which name a row renders are separate
  *   questions, and only the first one is this rule's.
  */
 

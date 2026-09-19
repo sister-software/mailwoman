@@ -5,7 +5,7 @@
  *
  *   The source-conflict check, and the baseline it is measured against.
  *
- *   The property under test is the DISTINCTION the check exists to draw: fourteen countries are two-source
+ *   The property under test is the distinction the check exists to draw: fourteen countries are two-source
  *   today because someone traded duplication for coverage, and a fifteenth appearing is an accident. A check
  *   that refused all multi-source countries would refuse the trade. one that accepted all of them would
  *   never catch the accident. Both failures print a clean result.

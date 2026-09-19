@@ -18,7 +18,7 @@ export interface RegionAbbreviationTokenOpts {
 }
 
 /**
- * True when a token is region-abbreviation SHAPED: 2..`maxLetters` uppercase ASCII letters. Shape only — no state
+ * True when a token is region-abbreviation shaped: 2..`maxLetters` uppercase ascii letters. Shape only — no state
  * table, so "SAN" and "DI" match at `maxLetters: 3`; suppressing those is the caller's context to apply.
  */
 export function isRegionAbbreviationToken(token: string, options: RegionAbbreviationTokenOpts = {}): boolean {
@@ -45,7 +45,7 @@ export function detectRegionAbbreviations(
 
 	// Single pass over both arrays, relying on two properties of the caller's output: `tokens` and
 	// `segments` are each sorted by `span.start`, and segments do not overlap. Pairing them with a nested
-	// scan is quadratic in input LENGTH, since both grow with it, and this runs on every parse.
+	// scan is quadratic in input length, since both grow with it, and this runs on every parse.
 	let t = 0
 
 	for (const seg of segments) {

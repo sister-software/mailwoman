@@ -90,7 +90,7 @@ describe("same-data panel builder (#2261)", () => {
 	})
 
 	it("builds a homograph row whose gold is a bearer other than the one being iterated", () => {
-		// Two eligible names put a row at index 1, where the rule names the SMALLER bearer.
+		// Two eligible names put a row at index 1, where the rule names the smaller bearer.
 		const rows = [
 			...corpus(0),
 			city("9000003", "Rutland", "US", "VT", 90_000),

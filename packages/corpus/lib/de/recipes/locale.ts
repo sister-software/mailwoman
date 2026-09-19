@@ -10,11 +10,11 @@
  *   from the cached zips, then draws `--count` rows from it with the passed `random` (so the emit
  *   stream matches the legacy reservoir-sample loop). Ported from the root build script it replaced.
  *
- *   ORDER ROBUSTNESS (2026-06-06): mixing the two renderings stops a native-only recipe output from teaching
+ *   order robustness (2026-06-06): mixing the two renderings stops a native-only recipe output from teaching
  *   German order so well it reads the US/feed-order eval as a "collapse". See
  *   docs/articles/evals/resolver-geo/2026-06-06-anchor-pilot.md (the order-artifact correction).
  *
- *   TWO REGISTERS THE OA TUPLES DO NOT CARRY (#1946). A comma-free single line — `Neusser Str. 12 Nippes
+ *   two registers the OA tuples do not carry (#1946). A comma-free single line — `Neusser Str. 12 Nippes
  *   50733 Köln`, the dictation / one-field-form register — segments as one unit at stage 2, and with one
  *   segment the placetype-pair prior never fires, so the model reads `Nippes` as a second street and the
  *   one-value-per-tag projection deletes it. `--comma-free-fraction` renders that many native-order rows
@@ -22,7 +22,7 @@
  *   borrow a WOF Ortsteil of the tuple's own locality as `dependent_locality` — 67,532 DE neighbourhoods
  *   carry a locality ancestor in the admin database, `Köln-Nippes` among them. The German spelling is
  *   recovered from the `names` table ({@link ortsteilSurface}): WOF's `spr.name` for DE neighbourhoods is
- *   the ASCII-folded label (`Bocklemuend`), which no German ever types.
+ *   the ascii-folded label (`Bocklemuend`), which no German ever types.
  */
 
 import { dataRootPath } from "@mailwoman/core/data-root"
@@ -39,7 +39,7 @@ import { synthesizeGermanRow, type LocaleBaseTuple } from "#synthesizers/locale"
 import { alignRow } from "#utils"
 
 /**
- * A German OA source (cached zip) + the Bundesland the file covers (OA's REGION column is empty for DE).
+ * A German OA source (cached zip) + the Bundesland the file covers (OA's region column is empty for DE).
  */
 interface GermanSource {
 	zip: PathBuilderLike
@@ -48,7 +48,7 @@ interface GermanSource {
 }
 
 /**
- * `region` is the Bundesland the source covers. OA's REGION column is empty for DE, but the region is implied by the
+ * `region` is the Bundesland the source covers. OA's region column is empty for DE, but the region is implied by the
  * per-state file — the international order needs it for the "City, Region Postcode" tail (v0.9.3 / #327). berlin.csv →
  * Berlin (a city-state, region==locality); sn/statewide → Sachsen.
  */
@@ -58,7 +58,7 @@ const SOURCES: GermanSource[] = [
 ]
 
 /**
- * The two ASCII spellings WOF uses for one German label, so a `names.deu` row can be matched to the `spr.name` it
+ * The two ascii spellings WOF uses for one German label, so a `names.deu` row can be matched to the `spr.name` it
  * spells. WOF folds `Bocklemünd` to `Bocklemuend` in one record and `Schöneberg` to `Schoneberg` in another — the
  * transliteration (`ö` → `oe`, `ß` → `ss`) and the plain diacritic strip (`ö` → `o`) both occur — so a match is against
  * either form, lower-cased.
@@ -95,9 +95,9 @@ function sameGermanLabel(left: string, right: string): boolean {
 /**
  * The surface an Ortsteil is written with in an address, from WOF's rows for it.
  *
- * `spr.name` for a DE neighbourhood is the ASCII-folded label. the `names` rows in `deu` carry the German spelling
+ * `spr.name` for a DE neighbourhood is the ascii-folded label. the `names` rows in `deu` carry the German spelling
  * beside unrelated labels for co-located features (`Bocklemuend` → `Bocklemünd`, `Jüdischer Friedhof Bocklemünd`,
- * `Menara-Garten`). The German name is the one that spells the same label as `spr.name` under either of WOF's ASCII
+ * `Menara-Garten`). The German name is the one that spells the same label as `spr.name` under either of WOF's ascii
  * folds ({@link foldGerman}); with none, `spr.name` stands. WOF also prefixes some Ortsteile with their city
  * (`Köln-Nippes`), a form no envelope carries once the city is its own line, so a leading `<locality>-` is dropped when
  * something is left after it.
@@ -181,7 +181,7 @@ async function readGermanTuples(source: GermanSource): Promise<LocaleBaseTuple[]
 		if (!street || !locality) continue
 		const house_number = row.number ?? ""
 		const postcode = row.postcode ?? ""
-		// OA's REGION column is empty for DE — fall back to the source's Bundesland (set per file).
+		// OA's region column is empty for DE — fall back to the source's Bundesland (set per file).
 		const region = row.region || source.region || ""
 		const key = `${house_number}|${street}|${locality}|${postcode}`.toLowerCase()
 
@@ -219,7 +219,7 @@ export const germanRecipe: CorpusRecipe = {
 		},
 	],
 	async run(opts, write) {
-		// Emit PRNG: the legacy build script seeded mulberry32(opts.seed).
+		// Emit prng: the legacy build script seeded mulberry32(opts.seed).
 		const random = makeMulberry32(opts.seed)
 		const source = opts.sourceName ?? "synth-german"
 		const intlFraction = opts.intlFraction ?? 0.4

@@ -108,7 +108,7 @@ export function jaroWinkler(
  * Jaccard similarity between two token sets in [0, 1]: `|a ∩ b| / |a ∪ b|`.
  *
  * The set-of-tokens complement to the string comparators above. Where {@link nameSimilarity} asks how close two names
- * LOOK, this asks how much two token bags OVERLAP — the right question for organization names and address bags, where
+ * look, this asks how much two token bags overlap — the right question for organization names and address bags, where
  * word order carries no information and a shared rare token is worth more than character-level proximity.
  *
  * Either side empty scores 0 rather than 1: an empty bag agrees with nothing, and treating "no evidence" as "perfect

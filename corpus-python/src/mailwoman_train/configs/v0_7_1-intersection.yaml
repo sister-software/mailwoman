@@ -1,14 +1,14 @@
 # v0.7.1 — intersection coverage retrain (DeepSeek-decided, night-3 2026-05-29).
 #
 # The v0.7 calibration experiment (ls=0.1) failed the check: it reduce overconfidence
-# but left the PRIMARY harness pass rate flat, because the harness is COVERAGE-
-# bound. The single largest gap is INTERSECTIONS: 65/376 harness assertions (17%)
+# but left the primary harness pass rate flat, because the harness is coverage-
+# bound. The single largest gap is intersections: 65/376 harness assertions (17%)
 # at 0% neural, because the model assigns intersection_a/b ~0.0001 probability —
 # it never had training signal (no intersection synthesis generator existed. real-
 # data adapters don't emit intersection-formatted rows). See the night-3
 # postmortem §0c-§0d.
 #
-# SINGLE CHANGE vs v0_6_0-stage3.yaml (the clean base — no label smoothing, the
+# single change vs v0_6_0-stage3.yaml (the clean base — no label smoothing, the
 # calibration verdict was "not the change"): add the new `synth-intersection` source
 # at weight 0.2 (synthesis-as-supplement discipline: small, targeted, < 0.25,
 # one-and-done). Tokenizer v0.6.0-a0 (unchanged → comparisons valid).
@@ -38,7 +38,7 @@ data:
     usgov-hrsa-fqhc: 2.0
     usgov-imls-pls: 2.0
     usgov-nad: 1.0
-    state-ia-contractors: 2.0
+    state-ia-builders: 2.0
     state-tx-notaries: 1.5
     state-ny-notaries: 2.0
     deepseek-kryptonite: 3.0

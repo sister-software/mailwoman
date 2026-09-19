@@ -97,7 +97,7 @@ export class Ancestrie implements AncestrieReaderLike {
 		if (offset === 0 || offset >= this.view.byteLength) return undefined
 		const length = this.view.getUint32(offset, true)
 
-		// oxlint-disable-next-line no-restricted-properties -- zero-dependency leaf: reaching @mailwoman/core for parseJSONStrict would pull its ~11 MB of shipped data behind this browser-safe reader (the nuts-lookup precedent), and a throw on corrupt bytes is this reader's contract.
+		// oxlint-disable-next-line no-restricted-properties -- zero-dependency leaf: reaching @mailwoman/core for parseJSONStrict would pull its ~11 MB of shipped data behind this browser-safe reader (the nuts-lookup precedent), and a throw on corrupt bytes is this reader's interface.
 		return JSON.parse(UTF8_DECODER.decode(this.bytes.subarray(offset + 4, offset + 4 + length))) as JSONValue
 	}
 

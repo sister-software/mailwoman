@@ -8,7 +8,7 @@
 ## of freedom), which is why it warns rather than errors and the agent
 ## judges.
 extends: existence
-message: "Prefer a concrete property over '%s' — say what it does, not how it rates."
+message: "Prefer a concrete property over '%s' — say what it does rather than how it rates."
 level: warning
 ignorecase: true
 tokens:

@@ -2,7 +2,7 @@
  * @copyright Sister Software
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
- * @file `trailing-region` — POSTCODE PLACEMENT, the surface that decides which countries this recipe can teach.
+ * @file `trailing-region` — postcode placement, the surface that decides which countries this recipe can teach.
  *
  *   The same digits change TAG with position. Measured on the shipped model, `Barcelona 6001, Anzoátegui, Venezuela`
  *   tags `6001` as `house_number` and loses the locality into the street, while `6001 Barcelona, Anzoátegui, Venezuela`
@@ -25,7 +25,7 @@ const run = recipeRunner("trailing-region", trailingRegionRecipe, 901)
 const base = { locality: "Portopetro", region: "Illes Balears", country: "Spain", cc: "ES", locale: "es-ES" }
 
 /**
- * The recipe varies its surfaces by row INDEX (`read % 2`, `read % 4`), so a single tuple cannot exercise a given
+ * The recipe varies its surfaces by row index (`read % 2`, `read % 4`), so a single tuple cannot exercise a given
  * placement's plain form reliably. Repeating it lets the assertions look for a surface among the emitted rows rather
  * than pinning one index.
  */
@@ -139,7 +139,7 @@ describe("trailing-region Canadian province codes", () => {
 	})
 
 	it("writes the US state code too, which is the surface #2303 measured missing", async () => {
-		// The code reaches the model in volume through the US sources, but only ever with a STREET in front of the city.
+		// The code reaches the model in volume through the US sources, but only ever with a street in front of the city.
 		// This recipe's `after_region` surface is the bare one: `Washington, DC 20003`.
 		const us = (region: string) => ({
 			locality: "Washington",

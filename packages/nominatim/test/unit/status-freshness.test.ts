@@ -6,7 +6,7 @@
  *   `/status` over the real freshness reader (#997) — the boundary between the artifacts on disk and the wire.
  *
  *   The reader's own states are covered next door, in `mailwoman`'s `freshness.test.ts`. What is under test
- *   here is the one thing only this side can get wrong: `data_updated` must be OMITTED when no artifact
+ *   here is the one thing only this side can get wrong: `data_updated` must be omitted when no artifact
  *   carried a build date, and the artifacts must still be listed when it is. A response that filled the
  *   field with a boot time would look exactly like a dated deployment to every client that reads it, which
  *   is the trust question the endpoint exists to answer.
@@ -60,7 +60,7 @@ async function stamped(path: string, createdAt: string): Promise<string> {
 }
 
 /**
- * A built database with no manifest — every gazetteer built before the layer contract.
+ * A built database with no manifest — every gazetteer built before the layer interface.
  */
 function bare(path: string): string {
 	using db = new DatabaseClient<FreshnessFixtureDatabase>(path)

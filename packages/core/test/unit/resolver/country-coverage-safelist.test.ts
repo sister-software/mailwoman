@@ -22,7 +22,7 @@ describe("hardCountrySafelistFromCoverage", () => {
 		const safelist = hardCountrySafelistFromCoverage([FACT("US", true), FACT("FI", false)])
 
 		expect(safelist.has("US")).toBe(true)
-		// Measured and FAILED is a first-class record, and it must not read as safe.
+		// Measured and failed is a first-class record, and it must not read as safe.
 		expect(safelist.has("FI")).toBe(false)
 	})
 

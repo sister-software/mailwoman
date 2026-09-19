@@ -5,24 +5,24 @@
  *
  *   Read a survey area's published shapefiles as a stream of WGS84 delineations, through ogr2ogr.
  *
- *   OGR IS BUILD TOOLING, NEVER A SERVE DEPENDENCY (SCOPE invariant 6). It converts the authority's geometry
- *   into the structure the runtime probes, and nothing downstream of this module knows GDAL exists.
+ *   OGR is build tooling, never A serve dependency (scope invariant 6). It converts the authority's geometry
+ *   into the structure the runtime probes, and nothing downstream of this module knows gdal exists.
  *
- *   THE SOURCE IS ALREADY IN WGS84, AND CHECKING IT IS STILL THE CHECK. Each `.prj` is an ESRI WKT reading
- *   `GEOGCS["GCS_WGS_1984",…]`, which GDAL resolves to EPSG:4326 — so no reprojection is needed before H3.
+ *   the source is already IN WGS84, and checking IT is still the check. Each `.prj` is an esri WKT reading
+ *   `geogcs["GCS_WGS_1984",…]`, which gdal resolves to epsg:4326 . Therefore, no reprojection is needed before H3.
  *   The authority code is asserted anyway before a single feature is read, and the reprojected stream is
  *   asserted against the layer's own declared extent, which is the check that catches a coordinate-order
  *   mistake the projection check cannot see.
  *
- *   THE DATUM GUARD RUNS EVEN THOUGH THE ANSWER IS THE IDENTITY, AND THAT IS THE POINT. PROJ substitutes a
+ *   the datum guard runs even though the answer is the identity, and that is the point. proj substitutes a
  *   ballpark datum shift silently when the accurate grid is missing — measured on the flood layer at 3.4 m
  *   over an entire country, visible only as eight disagreements out of 59 against the authority's own
- *   service. For an EPSG:4326 source `projinfo` answers `Null geographic offset from WGS 84 to WGS 84, 0 m,
+ *   service. For an epsg:4326 source `projinfo` answers `Null geographic offset from WGS 84 to WGS 84, 0 m,
  *   World.` and the guard passes in one process. Skipping it on the reasoning that this source needs no
  *   shift is how the guard comes to be missing on the day a source arrives that does.
  *
- *   THE ID IS THE SHAPEFILE'S OWN FID, AND IT HAS TO BE, because SSURGO publishes no per-delineation key:
- *   `MUKEY` names the MAP UNIT and one map unit has many delineations — `IA153` holds 17,966 delineations
+ *   the ID is the shapefile'S own FID, and IT has TO be, because ssurgo publishes no per-delineation key:
+ *   `mukey` names the MAP unit and one map unit has many delineations — `IA153` holds 17,966 delineations
  *   across 152 map units. So `area_id` is `<areasymbol>:<fid>`, which is stable across runs and is what makes
  *   a bounded chunk name the same features every time.
  */
@@ -59,7 +59,7 @@ export function mapUnitShapefile(spatialDirectory: string, areaSymbol: string): 
 
 /**
  * The shapefile holding a survey area's own outline. The footprint comes from here and never from the union of the
- * rated polygons — `NOTCOM` and access-denied map units are inside the footprint and carry no rating, so a footprint
+ * rated polygons — `notcom` and access-denied map units are inside the footprint and carry no rating, so a footprint
  * derived from the rated set would report them as unmapped when the authority has declared exactly what they are.
  */
 export function surveyAreaShapefile(spatialDirectory: string, areaSymbol: string): string {
@@ -95,11 +95,11 @@ export interface SoilSourceIdentity {
 export interface SoilIngestOptions {
 	shapefilePath: string
 	/**
-	 * Layer inside it. Defaults to the shapefile's base name, which is what the ESRI driver reports.
+	 * Layer inside it. Defaults to the shapefile's base name, which is what the esri driver reports.
 	 */
 	layer?: string
 	/**
-	 * The EPSG code the source must declare.
+	 * The epsg code the source must declare.
 	 */
 	expectEPSG?: number
 	/**
@@ -116,7 +116,7 @@ export interface SoilIngestOptions {
 /**
  * Read what the shapefile declares about itself, and refuse a projection this ingest was not written for.
  *
- * @throws {Error} When the layer is missing, declares no EPSG authority code, declares one other than `expectEPSG`, or
+ * @throws {Error} When the layer is missing, declares no epsg authority code, declares one other than `expectEPSG`, or
  *   reports no feature count.
  */
 export async function readSoilSourceIdentity(options: SoilIngestOptions): Promise<SoilSourceIdentity> {
@@ -137,7 +137,7 @@ export async function readSoilSourceIdentity(options: SoilIngestOptions): Promis
 }
 
 /**
- * The ingest's `SELECT`, with the FID range applied when one is asked for.
+ * The ingest's `select`, with the FID range applied when one is asked for.
  */
 function delineationSelectSQL(layer: string, options: SoilIngestOptions): string {
 	const select = `SELECT FID AS fid, MUKEY AS mukey, AREASYMBOL AS areasymbol FROM "${layer}"`
@@ -165,7 +165,7 @@ interface RawFeature {
  * Every feature is checked against the declared extent as it passes. A swapped coordinate order survives a projection
  * check — both axes are still numbers in a plausible range — and shows up here immediately.
  *
- * @throws {Error} When ogr2ogr fails, when a feature carries no geometry or no `MUKEY`, or when a vertex falls outside
+ * @throws {Error} When ogr2ogr fails, when a feature carries no geometry or no `mukey`, or when a vertex falls outside
  *   the declared extent.
  */
 export async function* readSoilDelineations(
@@ -178,7 +178,7 @@ export async function* readSoilDelineations(
 		"-f",
 		"GeoJSONSeq",
 		"/vsistdout/",
-		// The OUTPUT projection. `expectEPSG` is the assertion `readSoilSourceIdentity` makes about the SOURCE and is not
+		// The output projection. `expectEPSG` is the assertion `readSoilSourceIdentity` makes about the source and is not
 		// the same thing: the consumer reads WGS84, whatever the shapefile declares.
 		"-t_srs",
 		"EPSG:4326",
@@ -234,7 +234,7 @@ function toDelineation(
  * Where a build's delineations come from, and what the source declares about itself.
  *
  * The builder takes one of these rather than a path, which is what makes the fixture rung possible: hand-built geometry
- * with no network and no GDAL still exercises the whole database half — the domain check, the cell classification, the
+ * with no network and no gdal still exercises the whole database half — the domain check, the cell classification, the
  * reduction, the coverage rows, the manifest and the seal.
  */
 export interface SoilFeatureSource {
@@ -263,7 +263,7 @@ export async function createShapefileFeatureSource(
 
 	return {
 		areaSymbol: options.areaSymbol,
-		// A RANGE's own count is supplied by the caller, because `ogrinfo` reports the layer's total and nothing narrower.
+		// A range's own count is supplied by the caller, because `ogrinfo` reports the layer's total and nothing narrower.
 		// The whole-file total is still checked: the builder sums what its chunks streamed and compares that.
 		declaredFeatureCount: declaredFeatureCount({
 			declared: options.declaredFeatureCount,

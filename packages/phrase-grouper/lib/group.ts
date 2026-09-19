@@ -57,7 +57,7 @@ function tokensPerSegment(
 }
 
 /**
- * Synchronous, pure rule-based implementation. The async wrapper matches the pipeline contract.
+ * Synchronous, pure rule-based implementation. The async wrapper matches the pipeline interface.
  *
  * Emits overlapping proposals freely — the consumer (Stage 5 reconcile) picks the best non-overlapping subset under
  * semantic+hierarchical constraints. Confidence is a [0,1] score per proposal. relative ordering is what matters more

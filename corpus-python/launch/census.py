@@ -191,7 +191,7 @@ def country_census_raw(
         for src, k in (by_source.get(c) or Counter()).most_common(5):
             print(f"        via {src}: {k:,}")
 
-    # COMPLETENESS AUDIT — corpus countries vs the config's admitted set. The Norway bug was one
+    # completeness audit — corpus countries vs the config's admitted set. The Norway bug was one
     # silent drop. this asks what else. Two failure modes:
     #   (a) present-but-dropped: rows in the corpus, absent from country_weights -> silently trained on nothing.
     #   (b) admitted-but-absent: in country_weights, ~zero corpus rows -> the config promises a locale it can't deliver.
@@ -333,7 +333,7 @@ def digit_prior(
             if not BARE.match(tok):
                 continue
             n_bare_tokens += 1
-            # B-/I- stripped: the question is which COMPONENT owns the token rather than its BIO position.
+            # B-/I- stripped: the question is which component owns the token rather than its BIO position.
             tag = lab.split("-", 1)[1] if "-" in lab else lab
             by_tag[tag] += 1
             by_shape[shape(tok)][tag] += 1

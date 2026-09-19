@@ -62,7 +62,7 @@ Real messy takeaway: **mailwoman degrades gracefully (−10pp); Nominatim's free
 | mailwoman | 150 |  18% |  67% | **99%** |    3.2 km |    **0%** |
 | nominatim | 150 |  82% |  83% |     84% |    0.0 km |       16% |
 
-**On US, mailwoman dominates: 99% vs 84%, and 0% no-result vs Nominatim's 16%.** Nominatim returns rooftops when it matches (p50 0.0 km) but misses 16% of US addresses — OSM's US coverage gaps (rural, new developments). mailwoman (TIGER + national situs + the candidate gazetteer) resolves _every_ address to the right locality. The US set is OpenAddresses, which Nominatim (OSM) does not index wholesale, so this is actual coverage superiority rather than data overlap.
+**On US, mailwoman dominates: 99% vs 84%, and 0% no-result vs Nominatim's 16%.** Nominatim returns rooftops when it matches (p50 0.0 km) but misses 16% of US addresses — OSM's US coverage gaps (rural, new developments). mailwoman (TIGER + national situs + the candidate gazetteer) resolves _every_ address to the right locality. The US set is OpenAddresses, which Nominatim (OSM) does not index wholesale. Therefore, this is actual coverage superiority rather than data overlap.
 
 ## direct verdict
 

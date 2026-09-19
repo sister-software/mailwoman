@@ -3,7 +3,7 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Country surface forms across scripts, enumerated from the RUNTIME's own ICU via `Intl.DisplayNames`.
+ *   Country surface forms across scripts, enumerated from the runtime's own ICU via `Intl.DisplayNames`.
  *
  *   The gazetteer holds country names in English and little else, which is why a bare `格鲁吉亚` (Georgia the country,
  *   Chinese), `沙特阿拉伯` or `巴布亚新几内亚` resolves to nothing while `佐治亚州` (Georgia the US state) resolves
@@ -16,8 +16,8 @@
  *   locale-sensitive operation. Measured coverage at time of writing: **280 regions, 5,244 distinct surfaces** across
  *   the locale × style grid below.
  *
- *   This module ENUMERATES. It does not decide what the gazetteer stores — see the candidate build for that, and note
- *   that a surface here is a NAME THE WORLD USES, never an authority's designation.
+ *   This module enumerates. It does not decide what the gazetteer stores — see the candidate build for that, and note
+ *   that a surface here is a name the world uses, never an authority's designation.
  */
 
 /**
@@ -86,7 +86,7 @@ export interface CountryDisplayName {
  * the echo is the miss signal — no separate region list to keep in sync.
  */
 /**
- * The AA–ZZ sweep bounds. ISO 3166-1 alpha-2 is exactly two uppercase ASCII letters, so enumerating the whole square
+ * The AA–ZZ sweep bounds. ISO 3166-1 alpha-2 is exactly two uppercase ascii letters, so enumerating the whole square
  * and keeping what ICU recognises avoids carrying a region list that would need its own upkeep.
  */
 const ASCII_A = 65

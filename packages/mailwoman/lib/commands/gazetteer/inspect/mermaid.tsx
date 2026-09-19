@@ -42,7 +42,7 @@ async function loadD3Interpolators(): Promise<Record<string, InterpolateColorCal
 }
 
 /**
- * Native command-line contract consumed by the filesystem command router.
+ * Native command-line interface consumed by the filesystem command router.
  */
 export const spec = {
 	name: "mermaid",

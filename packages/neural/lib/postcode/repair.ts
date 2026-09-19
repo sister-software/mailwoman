@@ -19,24 +19,24 @@
  *   deterministic decoder-side correction, the "lowest risk" change in the v0.7 plan (vs. #36's soft
  *   FST shallow-fusion or #41's char-level encoder).
  *
- *   PRECISION GUARDS (so we never regress the countries already passing):
+ *   precision guards (so we never regress the countries already passing):
  *
  *   - Alphanumeric shapes (GB/CA/NL/DE-prefixed) are high-confidence "this is a postcode" patterns →
  *       eligible to ADD a span where the model emitted none, but only over non-structural labels
  *       (never over house_number/street/etc.).
  *   - Numeric shapes (\d{5}, ZIP+4, BR, JP, PT, PL) are ambiguous (a bare 5-digit could be a house number)
- *       → SNAP-only: they expand/clip an EXISTING postcode span, never create one from scratch.
- *   - A DESIGNATED shape carries the writing system's own postal marker: `〒506-0025` is a postcode by Japan Post's
+ *       → snap-only: they expand/clip an existing postcode span, never create one from scratch.
+ *   - A designated shape carries the writing system's own postal marker: `〒506-0025` is a postcode by Japan Post's
  *       convention, and no house number is ever written behind 〒. It may overwrite any label, structural ones
  *       included — the one override the discipline below allows, because the mark rather than the digit shape, decides. The
  *       span excludes the mark: the resolver keys `506-0025`, and the character model was trained to leave 〒 outside.
- *   - Smear cleanup is LOCAL: only postcode tokens immediately flanking a snapped span are cleared. We
+ *   - Smear cleanup is local: only postcode tokens immediately flanking a snapped span are cleared. We
  *       never globally clear unmatched postcode tokens — that would regress shapes we don't
  *       pattern-match (AU 4-digit, IN 6-digit, …).
  *
- *   A MISSING shape is not neutral for a HYPHENATED postcode. The local smear cleanup is local to a
+ *   A missing shape is not neutral for a hyphenated postcode. The local smear cleanup is local to a
  *   match, and an unlisted compound shape still matches at its numeric head: `NUM5` claims the five
- *   digits of an unlisted `NNNNN-NNN`, snaps the span down to them, and clips the suffix the model
+ *   digits of an unlisted `nnnnn-NNN`, snaps the span down to them, and clips the suffix the model
  *   correctly labeled. That is how BR CEPs were truncated for the pass's whole life (#35, diagnosed
  *   2026-08-10) while the unhyphenated shapes above degraded gracefully. Before concluding a hyphenated
  *   postcode is a model failure, re-parse it with `postcodeRepair: false`.
@@ -63,7 +63,7 @@ export type { RepairResult } from "#span/repair"
  */
 export interface PostcodeMatch extends SpanMatch {
 	/**
-	 * "alnum" shapes may ADD over container labels. "numeric" shapes may only SNAP an existing span. a "designated" shape
+	 * "alnum" shapes may ADD over container labels. "numeric" shapes may only snap an existing span. a "designated" shape
 	 * (the digits behind a postal marker) may overwrite any label.
 	 */
 	kind: "alnum" | "numeric" | "designated"
@@ -72,7 +72,7 @@ export interface PostcodeMatch extends SpanMatch {
 /**
  * Per-country postcode shape patterns, ordered most-specific → least.
  *
- * The table itself is DATA, in `@mailwoman/codex/postcode-shapes`, because two runtimes read it: this module, and the
+ * The table itself is data, in `@mailwoman/codex/postcode-shapes`, because two runtimes read it: this module, and the
  * Python trainer's `features/postcode_shapes.py`, which paints the train-side anchor on the spans this finds. Held as
  * two typed copies they drifted twice, each time leaving the trainer painting one fewer shape than inference.
  */
@@ -135,7 +135,7 @@ export function repairPostcodeLabels(text: string, input: readonly DecoderToken[
 			if (m.kind === "alnum" && !isAddSafe(tokens, overlap, ADD_OVER_TAGS)) continue
 		}
 
-		// SNAP/ADD: relabel the matched run as a single postcode span.
+		// snap/ADD: relabel the matched run as a single postcode span.
 		overlap.forEach((i, k) => setLabel(i, k === 0 ? POSTCODE_B : POSTCODE_I))
 
 		// Leading smear clip: postcode tokens immediately before the snapped run are noise (e.g. a
@@ -144,11 +144,11 @@ export function repairPostcodeLabels(text: string, input: readonly DecoderToken[
 			setLabel(j, OUTSIDE)
 		}
 
-		// Trailing smear: the model over-extended the postcode to the RIGHT. In postcode-before-city
+		// Trailing smear: the model over-extended the postcode to the right. In postcode-before-city
 		// locales (DE/FR/ES/IT, "08523 Plauen") this swallows the leading characters of the city, which
-		// the historical clip-to-O then DISCARDED ("08523 Pl|auen Vogtl" → postcode "08523" + O +
+		// the historical clip-to-O then discarded ("08523 Pl|auen Vogtl" → postcode "08523" + O +
 		// locality "auen Vogtl", dropping the "Pl"). When the smear connects to a following locality run,
-		// hand those characters BACK to the city — reassign them to locality and demote the city's
+		// hand those characters back to the city — reassign them to locality and demote the city's
 		// leading B so the prefix + city form one span ("Pl"+"auen"+"Vogtl" → "Plauen Vogtl"). A
 		// standalone neighbour with no following locality (a country, "Paris 75008 France") keeps the
 		// historical clip-to-O. This is the decoder-side repair for the cross-tag postcode→city
@@ -181,8 +181,8 @@ export function repairPostcodeLabels(text: string, input: readonly DecoderToken[
 	return { tokens, changed: changeCount() }
 }
 
-// repairLeadingHouseNumber (#723) was removed 2026-06-24. It RELABELLED a leading 5-digit postcode →
-// house_number under conventions=auto (US) — an OVERRIDE that contradicted the model's own label,
+// repairLeadingHouseNumber (#723) was removed 2026-06-24. It relabelled a leading 5-digit postcode →
+// house_number under conventions=auto (US) — an override that contradicted the model's own label,
 // which the project's repair discipline forbids (a repair may add spans on O-tokens or snap
 // boundaries, never re-classify a token from one entity to another). Net on the US golden set it was
 // −302 postcode / +16 house_number. an anchor-ablation probe showed the model is 100% correct on the

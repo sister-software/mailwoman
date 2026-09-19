@@ -4,13 +4,13 @@
  * @author Teffen Ellis, et al.
  *
  *   Pull a state's Census 2020 P.L. 94-171 redistricting counts (table P2 — Hispanic-or-Latino by
- *   race, per block) into the `pl_block` table of a TIGER {@link DatabaseClient} DB, keyed on the
- *   same 15-char block `GEOID` as {@link fetchTIGER}'s `tabblock20`. Join the two for block-level
+ *   race, per block) into the `pl_block` table of a tiger {@link DatabaseClient} DB, keyed on the
+ *   same 15-char block `geoid` as {@link fetchTIGER}'s `tabblock20`. Join the two for block-level
  *   race + geometry (e.g. a dot-density map).
  *
  *   Keyless public data. The per-state ZIP holds a pipe-delimited geographic header
  *   (`<st>geo<yr>.pl`) and three data segments. segment 1 (`<st>00001<yr>.pl`) carries P1 + P2. We
- *   join the header (filtered to SUMLEV 750 = block) to segment 1 by LOGRECNO. Field offsets are
+ *   join the header (filtered to sumlev 750 = block) to segment 1 by logrecno. Field offsets are
  *   fixed by the 2020 P.L. layout (verified against the real files).
  *
  *   https://www2.census.gov/programs-surveys/decennial/2020/data/01-Redistricting_File--PL_94-171/
@@ -34,20 +34,20 @@ const DEFAULT_DATA_ROOT = mailwomanDataRoot()
 
 /**
  * P.L. 94-171 (2020) pipe-delimited field offsets (0-based). Geographic header:
- * …|SUMLEV(2)|…|LOGRECNO(7)|GEOID(8)|GEOCODE(9)|… — GEOCODE is the bare 15-char block FIPS (matches TIGER GEOID20);
- * SUMLEV 750 = tabulation block.
+ * …|sumlev(2)|…|logrecno(7)|geoid(8)|geocode(9)|… — geocode is the bare 15-char block FIPS (matches tiger GEOID20);
+ * sumlev 750 = tabulation block.
  */
 const GEO_SUMLEV = 2
 const GEO_LOGRECNO = 7
 const GEO_GEOCODE = 9
 /**
- * Segment 1: FILEID|STUSAB|CHARITER|CIFSN|LOGRECNO(4)| P1×71 | P2×73. P0020001 is at index 76.
+ * Segment 1: fileid|stusab|chariter|cifsn|logrecno(4)| P1×71 | P2×73. P0020001 is at index 76.
  */
 const SEG_LOGRECNO = 4
 const P2 = (fieldNo: number) => 76 + (fieldNo - 1)
 
 /**
- * Segment 2: FILEID|STUSAB|CHARITER|CIFSN|LOGRECNO(4)| P3×71 | P4×73 | H1×3 — 152 fields, H1 at the tail. Verified
+ * Segment 2: fileid|stusab|chariter|cifsn|logrecno(4)| P3×71 | P4×73 | H1×3 — 152 fields, H1 at the tail. Verified
  * against the real file: `ca000022020.pl`'s state row reads 14,392,140 / 13,475,623 / 916,517, the published CA 2020
  * figures. `occupied + vacant === housing_units` is the invariant that distinguishes a correct offset from a plausible
  * one, and {@link parseH1} refuses a row where it does not hold.
@@ -62,7 +62,7 @@ export const H1_TOTAL = SEG2_FIELD_COUNT - 3
  */
 export const H1_OCCUPIED = SEG2_FIELD_COUNT - 2
 /**
- * H0010003 — vacant housing units, the last field (and so the one that carries a CRLF file's trailing CR).
+ * H0010003 — vacant housing units, the last field (and so the one that carries a crlf file's trailing CR).
  */
 export const H1_VACANT = SEG2_FIELD_COUNT - 1
 
@@ -73,7 +73,7 @@ export interface H1Counts {
 }
 
 /**
- * The three H1 counts from one segment-2 row. The last field carries CRLF's trailing CR when the file has one, so each
+ * The three H1 counts from one segment-2 row. The last field carries crlf's trailing CR when the file has one, so each
  * field is trimmed before it is read as a number. a row whose counts do not add up is refused rather than stored.
  */
 export function parseH1(fields: readonly string[]): H1Counts {
@@ -155,8 +155,8 @@ export interface FetchRedistrictingResult {
 }
 
 // Pipe-delimited, fixed field-offset census rows — the manual `split("|")` at each call site stays (the
-// parse indexes by position rather than by header). spliterator keeps CRLF's trailing CR where readline stripped
-// it, but every field this parser reads (geo GEOCODE/LOGRECNO ≤ 9, segment-1 LOGRECNO + P2 ≤ 86) sits well
+// parse indexes by position rather than by header). spliterator keeps crlf's trailing CR where readline stripped
+// it, but every field this parser reads (geo geocode/logrecno ≤ 9, segment-1 logrecno + P2 ≤ 86) sits well
 // before the final column, so the retained CR only ever lands on an unread trailing field.
 async function eachLine(path: string, fn: (line: string) => void): Promise<void> {
 	for await (const line of TextSpliterator.fromAsync(path)) {
@@ -203,7 +203,7 @@ export async function* fetchRedistricting(
 	const seg2Path = join(cacheDir, `${fileAbbr}00002${vintage}.pl`)
 	yield { phase: "extract", file: `${fileAbbr}geo${vintage}.pl` }
 
-	// Pass 1: header → LOGRECNO → GEOID for the blocks we want.
+	// Pass 1: header → logrecno → geoid for the blocks we want.
 	const prefix = options.county ? state + options.county : state
 	const logToGeoid = new Map<string, string>()
 

@@ -3,27 +3,27 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Generates `docs/articles/developers/reference/cli.mdx` — the published CLI contract — from the
+ *   Generates `docs/articles/developers/reference/cli.mdx` — the published CLI interface — from the
  *   command specifications themselves, so the page cannot drift from the binary. Runs in the docs
  *   `prebuild` beside the four OpenAPI emits (`docs/package.json`), and the committed page is
  *   asserted byte-for-byte by `generate-cli-reference.test.ts`.
  *
- *   HOW THE SURFACE IS DERIVED. `mailwoman/commands/**` is walked as a directory tree, with each executable module
+ *   how the surface is derived. `mailwoman/commands/**` is walked as a directory tree, with each executable module
  *   exporting the same native `CommandSpec` used by runtime parsing and help.
  *
- *   The walk reads the COMPILED tree (`mailwoman/out/commands`), not source: the commands are TSX,
+ *   The walk reads the compiled tree (`mailwoman/out/commands`), not source: the commands are TSX,
  *   which Node cannot type-strip. `docs` already depends on that tree — every OpenAPI emit in
  *   `prebuild` shells `mailwoman/out/cli.js` — so this adds no new prerequisite. Run `yarn compile`
  *   first.
  *
- *   SCOPE. The CLI carries 125 commands across 25 groups. most are the repo's own data-build,
+ *   scope. The CLI carries 125 commands across 25 groups. most are the repo's own data-build,
  *   training and evaluation tooling, which only runs inside a checkout. {@link DOCUMENTED_GROUPS}
  *   names the groups a consumer of the published package runs, and every command in those groups is
  *   emitted — a new sibling appears on the page with no edit here. The remaining groups are listed
  *   by name with a count and a one-line purpose from {@link GROUP_NOTES}; a group absent from that
  *   map is a hard error, so a new group can never vanish from the page silently.
  *
- *   DETERMINISM. Same tree in, same bytes out: no timestamps, no version stamps, no host paths (an
+ *   determinism. Same tree in, same bytes out: no timestamps, no version stamps, no host paths (an
  *   absolute-path default renders as `environment-dependent` — `geocode --data-root` otherwise bakes
  *   this machine's data root into a published page), groups in declared order, commands sorted.
  *   Table cells are padded the way `oxfmt` pads them, so the emitted file is already formatted.
@@ -279,7 +279,7 @@ function collectCommands(node: CommandNode, prefix: readonly string[], into: CLI
 	}
 }
 
-// The PACKAGE ROOT rather than the directory of the package's entry file. `dirname(resolveModulePath("mailwoman"))`
+// The package root rather than the directory of the package's entry file. `dirname(resolveModulePath("mailwoman"))`
 // answered the same thing only while the entry sat at the package root. once source moved under `lib/` it started
 // answering `mailwoman/lib`, and the `out/` joins below silently became `mailwoman/lib/out/…`.
 const packagePath = resolvePackageDirectory("mailwoman")
@@ -460,7 +460,7 @@ export function renderCLIReference(surface: CLISurface): string {
 		"",
 		"## Scope",
 		"",
-		"This page is the flag contract for the `mailwoman` command-line interface. Each table is generated from",
+		"This page is the flag interface for the `mailwoman` command-line interface. Each table is generated from",
 		"the command's own schema, and each description is that flag's help text verbatim, so this page and",
 		"`mailwoman <command> --help` cannot disagree.",
 		"",
@@ -491,7 +491,7 @@ export function renderCLIReference(surface: CLISurface): string {
 	sections.push(
 		"## Exit codes",
 		"",
-		"Every command shares one exit-code contract, owned by `useCommandTask` in `packages/mailwoman/lib/cli/kit`.",
+		"Every command shares one exit-code interface, owned by `useCommandTask` in `packages/mailwoman/lib/cli/kit`.",
 		"",
 		renderTable(
 			["Code", "Meaning", "Next step"],

@@ -3,7 +3,7 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   The JS k-best decode is verified against BRUTE-FORCE enumeration of every valid segmentation, the
+ *   The JS k-best decode is verified against brute-force enumeration of every valid segmentation, the
  *   same discipline the python side got (`tests/mailwoman_train/test_span_scorer.py`). A DP that is
  *   subtly wrong still returns plausible-looking spans — the oracle is the point.
  */

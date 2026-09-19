@@ -1,33 +1,33 @@
 # === v3.5.4-numsplice3-full — B4c ship candidate: 3-digit vocab splice (100-999). 8k. ===
 #
-# THE ONE VARIABLE vs v3.5.0-numsplice-probe: the splice RANGE. v0.11.1-numsplice3 adds word-start
+# the one variable vs v3.5.0-numsplice-probe: the splice range. v0.11.1-numsplice3 adds word-start
 # pieces 100-999 only (+900), not the full 10-9999 (+9,988). So `178` -> `▁178` (one piece, so the
 # house_number rise that single-piece numbers produced survives) while `6000`/`75000`/`90210` stay
 # multi-piece (`▁600,0` / `▁750,0,0`), keeping their postcode-leaning continuations. English letters
 # byte-identical. only 3-digit numeric spans change.
 #
-# WHY. The full-range 8k (v3.5.1) was a trade: board-3 bare-street-hn +13.2pp (0.693->0.825),
+# why. The full-range 8k (v3.5.1) was a trade: board-3 bare-street-hn +13.2pp (0.693->0.825),
 # FR date-name +52pp, the PL 178 row is fixed — but parity postcode fell 0.986->0.889 (-9.7pp, 7 rows).
 # The 7 rows were all 4-5 digit postcodes (AU/NL 4-digit, FR 5-digit) absorbed into adjacent street/
-# locality spans (docs: scratchpad/deepparse-cmp/NUMSPLICE-verdict.md). A single-piece number merges
+# locality spans (docs: scratchpad/deepparse-cmp/numsplice-verdict.md). A single-piece number merges
 # into its neighbour more easily — the property that fixes house_number let 4-5 digit postcodes be
-# swallowed. HYPOTHESIS: the 4-5 digit pieces account for the whole postcode drop. Keeping those
+# swallowed. hypothesis: the 4-5 digit pieces account for the whole postcode drop. Keeping those
 # multi-piece (this config) should keep the house_number rise without the postcode drop.
 #
 # init_from /data/models/numsplice3-expanded (v310 step-008000, token_embeddings FVT mean-init'd to
 # 74,043 — each 100-999 row = mean of its digit constituents. encoder/heads byte-identical).
 #
-# PRE-REGISTERED READ (the fork this run adjudicates):
-#   PRIMARY (must rise) — board 3 bare-street-hn rises toward the full-range 0.825 (it is a 3-digit-heavy
+# PRE-registered read (the fork this run adjudicates):
+#   primary (must rise) — board 3 bare-street-hn rises toward the full-range 0.825 (it is a 3-digit-heavy
 #     class); `aleja Wojska Polskiego 178` -> house_number. If it does not rise, 3-digit is too narrow
 #     and the range needs 4-digit too, which falsifies the claim that the 3-digit pieces produce the
 #     house_number rise.
-#   POSTCODE (must not drop, the whole point) — parity postcode holds at ~0.986 (not the -9.7pp of the full
+#   postcode (must not drop, the whole point) — parity postcode holds at ~0.986 (not the -9.7pp of the full
 #     range). board 3 bare-pc (Norwegian 4-digit) holds. the 6 demo presets hold. If parity postcode
 #     still drops, the 4-5 digit pieces were not the cause and the splice mechanism is unsalvageable as-is.
-#   DO-NO-HARM — FR fragment board + global parity hold.
+#   do-no-harm — FR fragment board + global parity hold.
 #
-# DECISION TABLE:
+# decision table:
 #   bare-street-hn rises and parity postcode holds -> ship candidate: 8k, then promote. The clean
 #     change #727 wanted.
 #   bare-street-hn rises and parity postcode drops -> the trade is intrinsic to single-piece numbers;
@@ -77,7 +77,7 @@ data:
     usgov-hrsa-fqhc: 2.0
     usgov-imls-pls: 2.0
     usgov-nad: 1.0
-    state-ia-contractors: 2.0
+    state-ia-builders: 2.0
     state-tx-notaries: 1.5
     state-ny-notaries: 2.0
     deepseek-kryptonite: 3.0

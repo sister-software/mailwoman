@@ -5,11 +5,11 @@
  *
  *   `<MapControlStack>` — the column of map controls down one edge, and `<MapControlButton>`, the control inside it.
  *
- *   Controls sit in GROUPS: a group is one glass capsule with hairlines between its buttons, and separate groups are
+ *   Controls sit in groups: a group is one glass capsule with hairlines between its buttons, and separate groups are
  *   separate capsules with a gap. That grouping is the whole layout idea — related controls read as one object, and
  *   an unrelated one (a compass that comes and goes) does not join a capsule it would resize.
  *
- *   NODE-SAFE: pure React, no maplibre.
+ *   node-safe: pure React, no maplibre.
  */
 
 import type { ReactNode } from "react"

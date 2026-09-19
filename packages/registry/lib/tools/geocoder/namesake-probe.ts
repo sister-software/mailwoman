@@ -5,8 +5,8 @@
  *
  *   Admin-tier wrong-region probe (#619 tail) — the geocoder-vs-provided-coords eval found an
  *   admin-tier tail to 11143 km (p99 2189 km). Hypothesis: when no street extract covers the address,
- *   the admin cascade resolves the locality by NAME and (when the region/postcode constraint is
- *   weak) picks the population-dominant FOREIGN namesake — Paris→France, Athens→Greece — instead of
+ *   the admin cascade resolves the locality by name and (when the region/postcode constraint is
+ *   weak) picks the population-dominant foreign namesake — Paris→France, Athens→Greece — instead of
  *   the in-state Texas city. This probes a curated set of TX namesake cities, with and without ZIP,
  *   and flags any result outside the Texas bounding box.
  *

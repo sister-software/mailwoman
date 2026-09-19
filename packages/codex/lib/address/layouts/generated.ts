@@ -4,7 +4,7 @@
  * @author Teffen Ellis, et al.
  * @generated
  *
- *   GENERATED — run `node packages/mailwoman/lib/dev-tools/codex/address-layouts.ts` to refresh. Do not edit by hand.
+ *   generated — run `node packages/mailwoman/lib/dev-tools/codex/address-layouts.ts` to refresh. Do not edit by hand.
  *
  *   One layout per country, derived from libaddressinput's `fmt` skeleton (which fields print, in what order) and the
  *   street order read once from the OpenCage templates (which slot leads). The `fmt` each was derived from is quoted
@@ -124,7 +124,7 @@ ${dependent_locality}
 ${postcode} ${locality}
 ${country}`,
 
-	// %O%n%N%n%A%nAX-%Z %C%nÅLAND
+	// %O%n%N%n%A%nAX-%Z %C%nÅland
 	AX: addr`${venue}
 ${attention}
 ${numberFirstStreet}
@@ -1571,7 +1571,7 @@ ${country}`,
 }
 
 /**
- * LATIN-script layouts, for the countries whose Latin print order differs from the one in their own script.
+ * Latin-script layouts, for the countries whose Latin print order differs from the one in their own script.
  *
  * Keyed by ISO 3166-1 alpha-2, and sparse on purpose: a country absent here writes one order in both scripts, so its
  * country-keyed layout serves both. The `lfmt` each was derived from is quoted above it.
@@ -1645,7 +1645,7 @@ ${country}`,
 }
 
 /**
- * LOCAL-script layouts for the same countries — the `fmt` skeleton, emitted even where the country is hand-authored.
+ * Local-script layouts for the same countries — the `fmt` skeleton, emitted even where the country is hand-authored.
  *
  * A hand-authored entry states one order, and for Hong Kong that order is the Latin one, so its own script's order has
  * nowhere else to live. Sparse for the same reason as the Latin table: a country absent here writes one order in both.

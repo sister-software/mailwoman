@@ -3,15 +3,15 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Typed schema + read/write helpers for the candidate gazetteer's COVERAGE MANIFEST — the two
- *   country-keyed tables through which the artifact declares facts about ITSELF, so those facts are
- *   updated at gazetteer REBUILD rather than by a hand-edited code PR after someone remembers:
+ *   Typed schema + read/write helpers for the candidate gazetteer's coverage manifest — the two
+ *   country-keyed tables through which the artifact declares facts about itself, so those facts are
+ *   updated at gazetteer rebuild rather than by a hand-edited code PR after someone remembers:
  *
  *   - `country_coverage`: the hard-country-filter coverage record (#743/#194) — per-country
  *     promotion-eval verdicts + the measured hard-resolve rates that used to live in a code comment on
  *     `HARD_PLACE_COUNTRY_SAFELIST`. Presence = measured; `hard_filter_safe = 0` = measured and
- *     FAILED the check (FI 69.5%, PL 77.8%) — distinguishable from a country never measured at all
- *     (the meaning-of-zero rule, `docs/engineering/reference/layer-contract.mdx`).
+ *     failed the check (FI 69.5%, PL 77.8%) — distinguishable from a country never measured at all
+ *     (the meaning-of-zero rule, `docs/engineering/reference/layer-interface.mdx`).
  *   - `country_bbox`: the coarse guard-B plausibility boxes that used to live in
  *     `resolver/plausibility.ts`'s `COUNTRY_BBOX`. An absent row fails open (never trips the guard),
  *     exactly like an absent key in the constant.
@@ -102,7 +102,7 @@ export const COUNTRY_COVERAGE_TABLE = "country_coverage"
 export const COUNTRY_BBOX_TABLE = "country_bbox"
 
 /**
- * Create `country_coverage` — a handful of small PK-probed rows, the WITHOUT ROWID sweet spot.
+ * Create `country_coverage` — a handful of small PK-probed rows, the without rowid sweet spot.
  */
 export async function createCountryCoverageTable(db: Kysely<GazetteerCoverageDatabase>): Promise<void> {
 	await db.schema
@@ -114,7 +114,7 @@ export async function createCountryCoverageTable(db: Kysely<GazetteerCoverageDat
 		.addColumn("sample_size", "integer")
 		.addColumn("measured_at", "text", (c) => c.notNull())
 		.addColumn("source", "text", (c) => c.notNull())
-		// `WITHOUT ROWID` has no first-class builder. the raw modifier is the idiomatic fallback.
+		// `without rowid` has no first-class builder. the raw modifier is the idiomatic fallback.
 		.modifyEnd(sql`without rowid`)
 		.execute()
 }
@@ -137,7 +137,7 @@ export async function createCountryBBoxTable(db: Kysely<GazetteerCoverageDatabas
 }
 
 /**
- * Write the coverage manifest into a candidate DB UNDER CONSTRUCTION (pre-seal — a shipped DB is never patched, rebuild
+ * Write the coverage manifest into a candidate DB under construction (pre-seal — a shipped DB is never patched, rebuild
  * instead). Creates both tables and inserts the facts. call exactly once, from the gazetteer build.
  */
 export async function writeGazetteerCoverageManifest(
@@ -181,10 +181,10 @@ export async function writeGazetteerCoverageManifest(
 }
 
 /**
- * Read the coverage manifest from an OPEN candidate DB, or `undefined` when the artifact predates it (neither table
+ * Read the coverage manifest from an open candidate DB, or `undefined` when the artifact predates it (neither table
  * present) — the signal for consumers to fall back to the code constants byte-identically. Synchronous raw reads on
  * purpose: this runs inside {@link WOFCandidateTableLookup}'s synchronous constructor (the sync-reader carve-out in
- * `AGENTS.md`), and the tables are a few dozen rows read once per open.
+ * `agents.md`), and the tables are a few dozen rows read once per open.
  */
 export function readGazetteerCoverageManifest<DB>(db: DatabaseClient<DB>): GazetteerArtifactCoverage | undefined {
 	const hasCoverage = hasTable(db, COUNTRY_COVERAGE_TABLE)

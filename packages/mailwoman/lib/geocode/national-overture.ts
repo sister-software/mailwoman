@@ -22,7 +22,7 @@ import { join } from "path-ts"
 import type { RegionDatabases } from "#geocode/regions"
 
 /**
- * Country → the street locale its national Overture extract is BUILT and PROBED with. Membership is a per-register
+ * Country → the street locale its national Overture extract is built and probed with. Membership is a per-register
  * decision: a country joins when its parquet has been read (which fields scope a point, how the number is written) and
  * a locale branch keys those surfaces on both sides.
  */
@@ -42,7 +42,7 @@ export function streetLocaleForOvertureCountry(countryCode: string): StreetLocal
 }
 
 /**
- * The SPDX expression a country's national database records in its layer manifest: Overture's theme license and the
+ * The spdx expression a country's national database records in its layer manifest: Overture's theme license and the
  * source registers' own. The per-agency attribution is computed by the build from the rows it kept and stamped beside
  * it.
  */

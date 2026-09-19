@@ -5,7 +5,7 @@
  *
  *   Golden snapshot of the soft-feature choreography (#718). `buildSoftFeatures` is the single pure
  *   home for the anchor + gazetteer feed that used to live inline in
- *   `NeuralAddressClassifier.#decode` — this pins the BYTE-STABLE extraction: known addresses →
+ *   `NeuralAddressClassifier.#decode` — this pins the byte-stable extraction: known addresses →
  *   known feature tensors. If the choreography drifts (channel wiring, near-postcode suppression
  *   window), these fail.
  *

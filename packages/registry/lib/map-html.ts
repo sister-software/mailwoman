@@ -4,20 +4,20 @@
  * @author Teffen Ellis, et al.
  *
  *   Render resolved entities as a standalone map page — the visual complement to {@link toGeoJSON}'s
- *   QGIS/analyst export. `toMapHTML(featureCollection)` returns one HTML file you open in a
+ *   QGIS/analyst export. `toMapHTML(featureCollection)` returns one html file you open in a
  *   browser. no server, no build.
  *
- *   It renders on the HOUSE stack: MapLibre GL + a Protomaps basemap (`@protomaps/basemaps` generates
+ *   It renders on the house stack: MapLibre GL + a Protomaps basemap (`@protomaps/basemaps` generates
  *   the `layers()` for a named flavor) over the `basemap-v4` vector tiles served from R2 at
  *   `tiles.mailwoman.ai` — the same basemap the demo uses. Each entity is a circle sized by
  *   records-merged and colored by cross-dataset-link status (≥2 sources stand out), or
- *   categorically by `bucket` when the reconciliation output carries one. Pure: GeoJSON in, HTML
+ *   categorically by `bucket` when the reconciliation output carries one. Pure: GeoJSON in, html
  *   string out (the Protomaps layer specs are generated at this point and inlined). The generated
  *   page fetches MapLibre, the basemap tiles, and glyphs/sprite over the network when opened (the
  *   house infra).
  *
- *   SERVE IT OVER LOCALHOST, don't open it as a file. The house tile server (`tiles.mailwoman.ai`)
- *   CORS-restricts to localhost + the docs domains, so a `file://` page shows the (accurate)
+ *   serve IT over localhost, don't open it as a file. The house tile server (`tiles.mailwoman.ai`)
+ *   cors-restricts to localhost + the docs domains, so a `file://` page shows the (accurate)
  *   markers on a blank basemap. `npx serve` / `python3 -m http.server` in the output directory is
  *   enough. the page also surfaces a hint banner when it detects it's running from `file://`.
  *
@@ -40,14 +40,14 @@ const MAPLIBRE_JS_SRI = "sha384-5+cfbwT0iiub6VsQAdn6yz16nr6sDiQoHx6tm4O8OVYXHYOx
 const MAPLIBRE_CSS_SRI = "sha384-uTttxo/aOKbdE5RlD/SPzSDoDmNvGlUYPjONi2MN/b7c9HPSvW07OIuyP7uL6jxK"
 
 /**
- * The house Protomaps basemap: `basemap-v4` PMTiles (tile-worker → R2 at `tiles.mailwoman.ai`, which sends CORS for
+ * The house Protomaps basemap: `basemap-v4` PMTiles (tile-worker → R2 at `tiles.mailwoman.ai`, which sends cors for
  * localhost + the docs domains).
  *
- * Glyphs + sprite come from the UPSTREAM Protomaps assets (GitHub Pages, `ACAO: *`), not the house mirror at
- * `public.mailwoman.ai` — that bucket sends no CORS headers, so the mirror can't be fetched cross-origin
+ * Glyphs + sprite come from the upstream Protomaps assets (GitHub Pages, `acao: *`), not the house mirror at
+ * `public.mailwoman.ai` — that bucket sends no cors headers, so the mirror can't be fetched cross-origin
  * (`cartographer/base/composition.ts` flags the same: "Currently upstream URLs. we mirror these … but no public route
  * fronts that bucket yet"). The upstream assets target the v4 schema, matching the `basemap-v4` tiles. Swap to the
- * house mirror once it has a CORS-enabled route.
+ * house mirror once it has a cors-enabled route.
  */
 const BASEMAP_SOURCE_ID = "basemap-v4"
 const BASEMAP_TILEJSON_URL = "https://tiles.mailwoman.ai/basemap-v4.json"
@@ -106,7 +106,7 @@ function sourceCount(props: MapFeatureData): number {
 }
 
 /**
- * Render `geojson` (a {@link toGeoJSON} / reconciliation FeatureCollection) as a complete, standalone HTML document.
+ * Render `geojson` (a {@link toGeoJSON} / reconciliation FeatureCollection) as a complete, standalone html document.
  * Entities without a coordinate are already absent from those collections. an empty collection renders a friendly empty
  * state rather than a broken map.
  */
@@ -316,7 +316,7 @@ map.on("click", "mw-entities", function (e) {
 map.on("mouseenter", "mw-entities", function () { map.getCanvas().style.cursor = "pointer"; });
 map.on("mouseleave", "mw-entities", function () { map.getCanvas().style.cursor = ""; });
 
-// The house basemap tiles are CORS-restricted to localhost + the docs domain, so a page opened
+// The house basemap tiles are cors-restricted to localhost + the docs domain, so a page opened
 // straight off disk (file://) shows the markers on a blank basemap. Make that explicit rather than
 // silent — the entity positions are correct regardless of whether the basemap paints.
 if (location.protocol === "file:") {

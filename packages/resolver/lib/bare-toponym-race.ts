@@ -3,7 +3,7 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   The bare-toponym ADMIN race — the policy for a query that is one bare name ("Japan", "Georgia").
+ *   The bare-toponym admin race — the policy for a query that is one bare name ("Japan", "Georgia").
  *   The locality placetype filter makes country/region namesakes unreachable at any rank, so the
  *   resolver's lookup runs these side races for the tree's lone locality-tagged span and promotes an
  *   admin namesake under the rules each prober documents. Split from `resolve.ts` so the walk file
@@ -32,7 +32,7 @@ export function loneBareLocalityNode(tree: AddressTree, placetypeMap: PlacetypeM
 }
 
 /**
- * The log-population dominance a bare REGION namesake must hold over the locality winner before the bare-toponym race
+ * The log-population dominance a bare region namesake must hold over the locality winner before the bare-toponym race
  * promotes it. The value is DECISIVE_MARGIN_LOG10 from the ablation-expectation model (0.5 — below it the top-ranked
  * place is the intended one 52.4% of the time, above it 89.1%); restated here because the resolver package cannot
  * import the eval harness. If that measured value moves, move this with it.
@@ -60,7 +60,7 @@ export function pickLargerAdmin(country: ResolvedPlace | null, region: ResolvedP
 
 /**
  * Alias roles the side races refuse to answer through (#1730): a lone bare token that only reaches a place via an
- * ABBREVIATION row ("Tó" folds onto Toledo's "TO") or a translation-gloss row did not name that place — while the
+ * abbreviation row ("Tó" folds onto Toledo's "TO") or a translation-gloss row did not name that place — while the
  * role-NULL exonym tier stays open, which is what lets 格鲁吉亚 win the country race through its display-name alias. An
  * artifact without the role column ignores the exclusion and the races behave as before.
  */
@@ -68,7 +68,7 @@ const BARE_RACE_EXCLUDED_NAME_ROLES: readonly string[] = ["abbr", "gloss"]
 
 /**
  * The best `country`-placetype row for a bare toponym span, or null. `scopedCountry` is the same hard filter the
- * locality query ran under — an EXPLICIT caller scope therefore bounds this race too (a foreign country row cannot
+ * locality query ran under — an explicit caller scope therefore bounds this race too (a foreign country row cannot
  * outrank inside an explicit scope), while the bare-locality posture's withheld scope leaves it worldwide. Exact
  * matches only: the fuzzy tier exists for typo recovery on address spans, and a fuzzy country is a guess this race must
  * never promote. Abbreviation/gloss alias rows never enter ({@link BARE_RACE_EXCLUDED_NAME_ROLES}).
@@ -91,7 +91,7 @@ export async function bareCountryCandidate(
 
 		// The placetype check is required rather than paranoia: a backend that ignores the filter
 		// (several test stubs, and any future partial implementation) would otherwise hand this
-		// race a LOCALITY row wearing a country costume, and the repick would demote the real pick.
+		// race a locality row wearing a country costume, and the repick would demote the real pick.
 		return top && top.placetype === "country" && top.exactMatch !== false ? top : null
 	} catch {
 		// A failed side race must never abort the primary lookup — the locality answer stands.
@@ -101,10 +101,10 @@ export async function bareCountryCandidate(
 
 /**
  * The best `region`-placetype row for a bare toponym span, or null — the sibling of {@link #bareCountryCandidate} for
- * the US-state class (bare "Georgia"/"Texas" the parser tags `locality`). Same contract: the locality query's own
+ * the US-state class (bare "Georgia"/"Texas" the parser tags `locality`). Same interface: the locality query's own
  * country filter bounds it, exact matches only with abbreviation/gloss rows excluded, and the placetype check guards
  * partial backends. (The `place_abbr`-staged region abbreviations — bare "TX"/"CA" — are role-NULL primaries and stay
- * fully reachable. the exclusion removes only the names-table abbreviation ALIASES like Toledo's "TO".)
+ * fully reachable. the exclusion removes only the names-table abbreviation aliases like Toledo's "TO".)
  */
 export async function bareRegionCandidate(
 	backend: ResolverBackend,

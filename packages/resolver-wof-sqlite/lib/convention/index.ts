@@ -11,8 +11,8 @@
  *   region → … → locality, most-specific winning — and the backend dispatches the named strategies
  *   in `candidateStrategies`, first to return candidates wins.
  *
- *   This module is the backend-agnostic core: the convention TYPES, the deep-merge, and the seed
- *   source. The strategy IMPLEMENTATIONS are SQL-bound and live in `lookup.ts`, registered by
+ *   This module is the backend-agnostic core: the convention types, the deep-merge, and the seed
+ *   source. The strategy implementations are SQL-bound and live in `lookup.ts`, registered by
  *   name.
  *
  *   For the existing EU locales (DE/FR/GB/NL) the seed source is empty, so every query resolves to
@@ -138,7 +138,7 @@ export function mergeConventions(base: Convention, ...overrides: Array<Conventio
 }
 
 /**
- * Resolve the effective convention for a place given its ancestor chain, ordered MOST-GENERAL → MOST-SPECIFIC (country,
+ * Resolve the effective convention for a place given its ancestor chain, ordered most-general → most-specific (country,
  * region, …, locality). Starts from `WORLD_DEFAULT` so every field is defined regardless of which (if any) ancestors
  * carry an override.
  */

@@ -7,13 +7,13 @@
  *   former express `server/`'s handler bodies — `GeocodeRouter.getDeps` + its retired `/api/geocode`,
  *   `/api/batch`, `/api/resolve-tree`, `/api/reload` handlers, `AddressRouter`'s retired `/parse`
  *   handler, and `HealthRouter`'s `/health` data block — onto the engine-agnostic `@mailwoman/api`
- *   contract's live routes (`/v1/parse`, `/v1/geocode`, `/v1/batch`, `/v1/resolve`, `/v1/reload`).
+ *   interface's live routes (`/v1/parse`, `/v1/geocode`, `/v1/batch`, `/v1/resolve`, `/v1/reload`).
  *   `mailwoman/server/` is deleted — this file is its sole successor, a fresh port rather
  *   than a thin wrapper.
  *
  *   `createServeEngine` builds the shared stack once, at boot, instead of express's lazy
  *   first-request memoized promise — the CLI's `serve` command awaits it before listening, so a
- *   misconfigured deployment fails FRIENDLY at boot (the #1009 pattern the drop-ins already use)
+ *   misconfigured deployment fails friendly at boot (the #1009 pattern the drop-ins already use)
  *   instead of a runtime 503 on the first request. `parse` speaks native neural output (`ParseOutcome`
  *   = ordered components + the decoded `AddressTree`, the same language `/v1/resolve` speaks) — it
  *   needs only the model weights, loaded once here and reused by the geocode stack below, so it is
@@ -246,7 +246,7 @@ export interface ServeEngine {
  */
 export async function createServeEngine(): Promise<ServeEngine> {
 	// `health` reads files best-effort and never throws — wired unconditionally, matching `HealthRouter`'s "answers even
-	// when broken" contract.
+	// when broken" interface.
 	const health: MailwomanAPIEngine["health"] = () => buildHealthData()
 
 	// Parse needs only the model weights — not the gazetteer. Load them independently of the WOF-data check below so
@@ -305,7 +305,7 @@ export async function createServeEngine(): Promise<ServeEngine> {
 	// still scopes. FTS backend keeps the US default. (#170) A candidate DB alone (no WOF admin database) is a valid boot
 	// configuration — `createResolverBackend` prefers it over `wofPaths` — so the preflight check below checks both,
 	// mirroring the drop-ins' `!candidateDB && wofPaths.length === 0` condition rather than `GeocodeRouter`'s WOF-only check.
-	// This check governs geocode/batch/resolveTree/reload ONLY — `parse` is already wired above and unaffected.
+	// This check governs geocode/batch/resolveTree/reload only — `parse` is already wired above and unaffected.
 	const candidateDB = await resolveCandidateDBPath()
 
 	if (!paths.length && !candidateDB) {

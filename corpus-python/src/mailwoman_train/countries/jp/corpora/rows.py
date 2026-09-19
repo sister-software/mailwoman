@@ -30,7 +30,7 @@ SOURCE = "overture-jp"
 
 _COMPACT = re.compile(r"^[0-9]+(?:-[0-9]+)*$")
 
-# The registers. Weights are renormalized over whatever is AVAILABLE for a row (a street with no
+# The registers. Weights are renormalized over whatever is available for a row (a street with no
 # chōme cannot render `arabic_chome` or `compact_folded`), and the build report prints the counts
 # that actually landed rather than the intent.
 REGISTER_WEIGHTS: dict[str, float] = {

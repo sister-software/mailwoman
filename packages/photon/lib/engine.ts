@@ -3,9 +3,9 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   The Photon engine contract + wire types the router delegates to. Feature/collection
+ *   The Photon engine interface + wire types the router delegates to. Feature/collection
  *   construction lives here too (`photonFeature`, `photonCollection`) since every projection
- *   builds on them. the RESOLVED-place → {@link PhotonProperties} projection itself lives in
+ *   builds on them. the resolved-place → {@link PhotonProperties} projection itself lives in
  *   `projection.ts`.
  */
 

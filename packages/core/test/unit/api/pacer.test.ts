@@ -117,7 +117,7 @@ describe("RequestPacer", () => {
 
 		// `VirtualClock.advance` mutates `now()` before its first internal await flushes the microtask
 		// queue, so an already-resolved `acquire()` whose continuation is still queued would record the
-		// POST-advance time. Flush to quiescence first, at every point where that could happen.
+		// post-advance time. Flush to quiescence first, at every point where that could happen.
 		for (let i = 0; i < SERIAL_CALLS; i++) {
 			const pending = recordedAcquire()
 

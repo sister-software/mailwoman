@@ -35,7 +35,7 @@ scoreFallback(shape: QueryShapeLike): LocaleCandidate[]
 query-shape → locale-hint → kind-classifier → phrase-grouper → classifier → ...
 ```
 
-Stage 2 in the [Staged Pipeline Contract](https://github.com/sister-software/mailwoman/blob/main/docs/engineering/reference/STAGES.mdx).
+Stage 2 in the [Staged Pipeline Interface](https://github.com/sister-software/mailwoman/blob/main/docs/engineering/reference/STAGES.mdx).
 
 ## Design
 
@@ -53,8 +53,8 @@ Stage 2 in the [Staged Pipeline Contract](https://github.com/sister-software/mai
 - [`@mailwoman/query-shape`](../query-shape) — feeds `QueryShape` into this stage
 - [`@mailwoman/kind-classifier`](../kind-classifier) — Stage 2.5, also consumes `QueryShape`
 - [`@mailwoman/core`](../core) — `LocaleTag` type and pipeline infrastructure
-- [Staged Pipeline Contract](https://github.com/sister-software/mailwoman/blob/main/docs/engineering/reference/STAGES.mdx)
+- [Staged Pipeline Interface](https://github.com/sister-software/mailwoman/blob/main/docs/engineering/reference/STAGES.mdx)
 
 ## License
 
-[AGPL-3.0-only](https://www.gnu.org/licenses/agpl-3.0.html)
+[AGPL-3.0-only](https://www.gnu.org/licenses/AGPL-3.0.html)

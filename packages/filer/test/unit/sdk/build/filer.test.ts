@@ -271,7 +271,7 @@ describe("buildFilerDatabase", () => {
 			expect(edge.source_vintage.length).toBeGreaterThan(0)
 			expect(edge.assertion).toBe("authoritative")
 			expect(edge.valid_from.length).toBeGreaterThan(0)
-			// sourceVintage above ("2026-Q1") is deliberately NOT ISO — valid_from must never inherit that shape
+			// sourceVintage above ("2026-Q1") is deliberately not ISO — valid_from must never inherit that shape
 			//: every edge's valid_from is ISO YYYY-MM-DD regardless of source.
 			expect(edge.valid_from).toMatch(/^\d{4}-\d{2}-\d{2}$/)
 		}
@@ -586,7 +586,7 @@ describe("buildFilerDatabase", () => {
 
 			// Every edge belongs to the second build's vintage — none of the first build's rows survived
 			// alongside it as additional rows (that would be cross-build accumulation, which this artifact
-			// deliberately does not support — see the module docstring's MINOR-B note).
+			// deliberately does not support — see the module docstring's minor-B note).
 			expect(edges.length).toBeGreaterThan(0)
 			expect(edges.every((e) => e.source_vintage === "2026-Q2")).toBe(true)
 
@@ -722,7 +722,7 @@ describe("buildFilerDatabase", () => {
 				expect(family.source_vintage).toBe("2026-05-01")
 				expect(family.valid_from).toBe("2026-05-01")
 				expect(family.valid_to).toBeNull()
-				// A 499 row naming its own holding company is the filing — nothing was matched. The EDGAR
+				// A 499 row naming its own holding company is the filing — nothing was matched. The edgar
 				// block below pins the opposite grading from the same builder.
 				expect(family.assertion).toBe(FilerEdgeAssertion.Authoritative)
 				expect(family.match_score).toBeNull()
@@ -1003,7 +1003,7 @@ describe("buildFilerDatabase", () => {
 			expect(familyRows).toHaveLength(1)
 
 			// The family row carries the same grading as the edge above — `source` alone
-			// cannot supply it, because this very build also writes an AUTHORITATIVE `edgar-exhibit-21`
+			// cannot supply it, because this very build also writes an authoritative `edgar-exhibit-21`
 			// disclosure edge, so the source name spans both grades.
 			expect(familyRows[0]).toMatchObject({
 				naming_node_id: cikNodeID,
@@ -1048,7 +1048,7 @@ describe("buildFilerDatabase", () => {
 			const familyRows = await db.selectFrom("filer_family").selectAll().where("family_id", "=", cikNodeID).execute()
 			expect(familyRows).toHaveLength(0)
 
-			// The disclosure edge still stands — abstention is about the CORROBORATION only.
+			// The disclosure edge still stands — abstention is about the corroboration only.
 			const disclosureEdges = await db
 				.selectFrom("filer_edge")
 				.selectAll()
@@ -1059,7 +1059,7 @@ describe("buildFilerDatabase", () => {
 		})
 
 		/**
-		 * The subsidiary→FRN score must not be a constant. The join is on the CANONICALIZED name, and
+		 * The subsidiary→FRN score must not be a constant. The join is on the canonicalized name, and
 		 * `canonicalizeOrganizationName` maps `"American Broadband LLC"`, `"American Broadband, Inc."` and `"American
 		 * Broadband Corp"` all to `"american broadband"` (`record/organization.test.ts` pins the collapse), so a single
 		 * score across all three would claim a confidence the match provably cannot hold.

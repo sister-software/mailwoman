@@ -14,7 +14,7 @@
  *   corrective turn. warning-only findings return the non-blocking `systemMessage` for the agent to weigh. The
  *   `stop_hook_active` guard caps the loop at one revision pass per stop: the revised reply is not
  *   re-linted, so a false positive costs one turn at most. Every failure path is silence, same
- *   contract as `symbol-precheck.ts` — a hook that throws on an unanticipated payload is a broken
+ *   interface as `symbol-precheck.ts` — a hook that throws on an unanticipated payload is a broken
  *   session rather than a missing hint.
  *
  *   Register it in `.claude/settings.json` under `hooks.Stop`.

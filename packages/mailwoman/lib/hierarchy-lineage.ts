@@ -5,9 +5,9 @@
  *
  *   #1731 — per-node lineage provenance for the result `hierarchy`.
  *
- *   The `hierarchy` array is assembled from INDEPENDENTLY resolved parse nodes: the parsed region resolves on its own
+ *   The `hierarchy` array is assembled from independently resolved parse nodes: the parsed region resolves on its own
  *   and contributes its entry beside the locality winner, whether or not any place on earth has that containment chain.
- *   The recorded instance: `24 37 42nd St, Astoria, NY 11103` shipped a hierarchy of Astoria-the-OREGON-locality under
+ *   The recorded instance: `24 37 42nd St, Astoria, NY 11103` shipped a hierarchy of Astoria-the-oregon-locality under
  *   New-York-the-region — two correct-looking fragments composing a chain that exists nowhere. Silently mixing the
  *   winner's lineage with independently resolved fragments is the defect. this module makes the mixing explicit.
  *
@@ -73,7 +73,7 @@ const HIERARCHY_TAGS = [
 ]
 
 /**
- * The MOST-SPECIFIC resolved admin node — the lineage anchor for tiers without an admin-ladder pick (#1731 follow-up).
+ * The most-specific resolved admin node — the lineage anchor for tiers without an admin-ladder pick (#1731 follow-up).
  *
  * The first live `mwdev_diagnose` run caught the defect this fixes: on an address-point result the fallback anchor was
  * the first resolved admin node in tree order — often the region — and an ancestor chain never contains its own
@@ -111,7 +111,7 @@ export function assembleHierarchy(
 			tag: n.tag,
 			value: n.value.trim(),
 			// The resolver stamps the gazetteer's canonical name (proper casing) on `resolver_name`; fall back to the raw
-			// parsed span when a node resolved without one. #1014: consumers should DISPLAY this rather than `value`.
+			// parsed span when a node resolved without one. #1014: consumers should display this rather than `value`.
 			name: (n.metadata?.["resolver_name"] as string | undefined)?.trim() || n.value.trim(),
 			...(n.lat != null ? { lat: n.lat, lon: n.lon! } : {}),
 			...(n.placeID ? { placeID: n.placeID } : {}),

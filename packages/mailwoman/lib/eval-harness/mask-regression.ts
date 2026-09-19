@@ -9,34 +9,34 @@
  *
  *   What it adds over the load-time delta check (and why two locks):
  *
- *   - The LOAD-TIME delta check (createScorer) is REACTIVE + COARSE: it consults the model card's
+ *   - The load-time delta check (createScorer) is reactive + coarse: it consults the model card's
  *       `capabilities` block and rejects only a conventions mask that forbids a tag the card
- *       CERTIFIES, at a 5pp `maskOffF1 − maskOnF1` threshold. It fires only on EXPLICITLY-forbidden
- *       tags, and only against pre-recorded numbers — it can't see a tag the mask harms INDIRECTLY
+ *       certifies, at a 5pp `maskOffF1 − maskOnF1` threshold. It fires only on explicitly-forbidden
+ *       tags, and only against pre-recorded numbers — it can't see a tag the mask harms indirectly
  *       (e.g. forbidding `street_suffix` shifts probability mass and depresses `street`), nor a
  *       regression on a tag no `forbiddenTags` row names.
- *   - This check is PROACTIVE + FINE: it RE-RUNS the model (mask-off vs mask-auto/on) per locale under
- *       the full SHIP-CONFIG (anchor-on + gazetteer-on) and fails if any tag's F1 drops by more
- *       than a TIGHTER 2pp threshold (per the DeepSeek consult) under the conventions mask —
+ *   - This check is proactive + fine: it RE-runs the model (mask-off vs mask-auto/on) per locale under
+ *       the full ship-config (anchor-on + gazetteer-on) and fails if any tag's F1 drops by more
+ *       than a tighter 2pp threshold (per the DeepSeek consult) under the conventions mask —
  *       catching the subtler interaction harms the per-tag 5pp delta check would miss.
  *
- *   It is WEIGHT-DEPENDENT (it runs the model), so it is a RELEASE CHECK — run with weights on disk
+ *   It is weight-dependent (it runs the model), so it is a release check — run with weights on disk
  *   before publishing — not a weightless CI step (weight-dependent tests don't run in CI; #582).
  *   Hook it into the release path (`mailwoman eval promote` / the publish flow), not into Test CI.
  *
  *   Mechanics: reuses the `capability-manifest.ts` scoring implementation verbatim — `createScorer` (so
  *   the channel feed matches the ship config, the #566/#685 trap) with `overrides.conventions`
- *   toggling mask off vs auto, and the UNFOLDED exact-match per-tag F1 from `score-affix.ts`
+ *   toggling mask off vs auto, and the unfolded exact-match per-tag F1 from `score-affix.ts`
  *   (street parts split, so an affix regression is visible — the folded `per-locale-f1.ts` can't
- *   see it). The DIFFERENCE from the manifest generator: that one records `maskOnF1` only for
- *   codex-forbidden tags (the only tags the LOAD-TIME check reads); this check computes the delta for
+ *   see it). The difference from the manifest generator: that one records `maskOnF1` only for
+ *   codex-forbidden tags (the only tags the load-time check reads); this check computes the delta for
  *   every tag, because a mask can harm a tag no `forbiddenTags` row names.
  *
  *   Run (Node 26+, custom DB / anchor-on, the production default v1.5.0 int8):
  *
  *   `mailwoman eval mask-regression --model <int8.onnx> --tokenizer <spm> --model-card <json>`
  *
- *   PASS = no tag regresses more than the threshold under the mask. FAIL = at least one tag
+ *   pass = no tag regresses more than the threshold under the mask. fail = at least one tag
  *   regresses (the offending `(locale, tag, maskOff, maskOn, delta)` rows are printed).
  *
  *   `threshold` overrides the default 0.02 (2pp). `json` writes the full per-tag delta table (every
@@ -83,7 +83,7 @@ export interface MaskRegressionOptions {
 	 */
 	gazetteerLexicon?: string
 	/**
-	 * The regression threshold (pp, as a fraction). Per the DeepSeek consult, 2pp — a FINER net than the load-time delta
+	 * The regression threshold (pp, as a fraction). Per the DeepSeek consult, 2pp — a finer net than the load-time delta
 	 * check's 5pp, so subtler interaction harms surface at release. A tag whose mask-on F1 is within this band of its
 	 * mask-off F1 is considered unharmed by the mask. Default 0.02.
 	 */
@@ -97,7 +97,7 @@ export interface MaskRegressionOptions {
 //#region Locale matrix (mirrors capability-manifest.ts)
 
 /**
- * The per-tag vocabulary scored, UNFOLDED (street parts split — mirrors score-affix.ts / capability-manifest.ts). Every
+ * The per-tag vocabulary scored, unfolded (street parts split — mirrors score-affix.ts / capability-manifest.ts). Every
  * tag here gets a mask-off↔mask-on delta computed.
  */
 const TAGS = UNFOLDED_ADDRESS_TAGS
@@ -112,7 +112,7 @@ interface Delta {
 	maskOff: number
 	maskOn: number
 	/**
-	 * MaskOff − maskOn, in pp. Positive = the mask HURT the tag.
+	 * MaskOff − maskOn, in pp. Positive = the mask hurt the tag.
 	 */
 	delta: number
 	/**

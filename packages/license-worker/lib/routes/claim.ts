@@ -7,13 +7,13 @@
  *   before Stripe's webhooks do, so a session the ledger has not seen is re-read from Stripe by id and its license row
  *   created here, the same way the webhook would. a session Stripe does not know is the only 404. The refresh secret is
  *   answered by exactly one claim: the plaintext is read, then cleared by an update conditioned on the value read, so
- *   of two claims racing only the one whose clear lands a row answers it. Rate limited per client address. CORS is the
+ *   of two claims racing only the one whose clear lands a row answers it. Rate limited per client address. cors is the
  *   site's exact origin, set by the app.
  */
 
 import { createRoute, type OpenAPIHono, z } from "@hono/zod-openapi"
 
-import { ClaimResponseSchema } from "#claim-contract"
+import { ClaimResponseSchema } from "#claim-interface"
 import type { LicenseWorkerEnv } from "#env"
 import { ensureLicenseFromCheckoutSession, type FulfilDependencies } from "#fulfil"
 import { currentToken, findLicenseByCheckoutSession, takePendingRefreshSecret } from "#ledger/licenses"

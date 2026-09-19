@@ -15,10 +15,10 @@
  */
 
 /**
- * Fold a name to its ASCII match key: lower-cased, accents stripped, every run of non-alphanumerics collapsed to a
+ * Fold a name to its ascii match key: lower-cased, accents stripped, every run of non-alphanumerics collapsed to a
  * single space.
  *
- * This is the aggressive fold used to match a user's surface form against a codex table — `"Québec"` and `"QUEBEC"` and
+ * This is the aggressive fold used to match a user's surface form against a codex table — `"Québec"` and `"quebec"` and
  * `"quebec"` all become `"quebec"`. It is lossy by design and never used to render anything back to a user.
  */
 export function foldName(s: string): string {

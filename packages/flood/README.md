@@ -5,7 +5,7 @@ layer: acquisition, the `flood.db` build, and the reader that answers what the a
 assigns at a coordinate.
 
 Design record: [`docs/superpowers/specs/2026-08-27-flood-layer-survey.md`](../../docs/superpowers/specs/2026-08-27-flood-layer-survey.md).
-Contract: [`docs/engineering/reference/layer-contract.mdx`](../../docs/engineering/reference/layer-contract.mdx).
+Interface: [`docs/engineering/reference/layer-interface.mdx`](../../docs/engineering/reference/layer-interface.mdx).
 
 ## What it reports, and what it refuses to
 
@@ -53,7 +53,7 @@ which is why the index has to handle both ends: a center-containment polyfill lo
 column entirely, and a fixed fine resolution overruns h3's allocator on the last.
 
 **The rings are stored as `float64` pairs, unsimplified — 16 bytes a vertex, so the geometry tier
-is about 5.3 GB before SQLite's own overhead.** That is the size the two-tier contract accepts:
+is about 5.3 GB before SQLite's own overhead.** That is the size the two-tier interface accepts:
 geometry is the truth table, and a rooftop answer at a zone boundary has no cheaper defensible source.
 A fixed-point encoding at 1e-7° would halve it, and is deliberately not done here — the source
 publishes 0.1 mm precision and quantizing to 11 mm is a change to the authority's data, which needs

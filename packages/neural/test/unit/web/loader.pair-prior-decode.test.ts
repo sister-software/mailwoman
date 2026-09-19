@@ -5,9 +5,9 @@
  *
  *   End-to-end decode proof for the #1278 browser pair-prior wiring: a loader-built classifier (real
  *   `NeuralAddressClassifier` + real fixture tokenizer, only onnxruntime-web mocked) must thread a
- *   country-matched index's emission matrix and its TRANSITION-BETA adjustments into the shared decode
+ *   country-matched index's emission matrix and its transition-beta adjustments into the shared decode
  *   (`buildPlacetypePairPriors` → `viterbi` — the same one-decoder-two-hosts path the node classifier
- *   runs), and must be BYTE-STABLE when no index matches the eval.
+ *   runs), and must be byte-stable when no index matches the eval.
  *
  *   The fixture is `neural/test/placetype-pair-decode.test.ts`'s task-8 path-fusion lattice on the same
  *   fixture tokenizer: "Shoreditch London" → ['▁Shore','d','itch','▁London'], with a fused street run
@@ -183,7 +183,7 @@ describe("loader-built classifier — pair prior in the shared decode (#1278)", 
 		fusedLatticeSession() // fresh canned session for the second load
 		const priorFree = await loadNeuralClassifierFromURLs(baseOpts([]))
 
-		// Phase 2: the gb index is LIVE + retained (not conditional to null), but no posture pin + a text that
+		// Phase 2: the gb index is live + retained (not conditional to null), but no posture pin + a text that
 		// detects `us` (no UK postcode) means nothing selects it — byte-stable.
 		expect(loaded.pairIndexes).toHaveLength(1)
 		expect(loaded.pairIndexes[0]!.resolver).not.toBeNull()

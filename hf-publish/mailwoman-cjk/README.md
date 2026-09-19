@@ -1,5 +1,5 @@
 ---
-license: agpl-3.0
+license: AGPL-3.0
 language:
   - ja
   - ko

@@ -11,7 +11,7 @@
  *   `cli.ts` just calls them.
  *
  *   - `openBDCDatabaseIfPresent` / `openPlausibilityPOIDeps` — `mailwoman_plausibility_check`'s `bdcDB`/`poi` deps
- *     (`PlausibilityDeps`) are each OPTIONAL, so a missing/absent path degrades to `undefined`, which
+ *     (`PlausibilityDeps`) are each optional, so a missing/absent path degrades to `undefined`, which
  *     `plausibilityCheck` (`@mailwoman/bdc`) already turns into a typed abstain evidence entry
  *     (`{type:"abstain", reason:"requires_bdc_layer"|"requires_build_local_layer"}`) — never a raw sqlite throw.
  *   - `assertBDCDatabaseExists` — `mailwoman_bdc_filing_landscape` requires bdc.db unconditionally (no optional-dep
@@ -31,7 +31,7 @@ import type { POIDatabase } from "@mailwoman/resolver-wof-sqlite/poi"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
 
 /**
- * Open a bdc.db, or return `undefined` when `databasePath` is unset or the file is missing — NEVER a raw sqlite throw.
+ * Open a bdc.db, or return `undefined` when `databasePath` is unset or the file is missing — never a raw sqlite throw.
  * See the module header.
  */
 export async function openBDCDatabaseIfPresent(
@@ -47,9 +47,9 @@ export async function openBDCDatabaseIfPresent(
  * `undefined` here becomes the `{type:"abstain", reason:"requires_build_local_layer"}` entry `plausibilityCheck`
  * already produces when a claimed technology's physical-plant categories can't be searched. `POILookup` is dynamically
  * imported (matching `cli.ts`'s existing `resolver-wof-sqlite` laziness) since it's only ever needed when a caller
- * actually wires a poi.db. `lookup` and `contractDB` share one `DatabaseSync` handle (the AGENTS.md "one connection,
+ * actually wires a poi.db. `lookup` and `schemadb` share one `DatabaseSync` handle (the agents.md "one connection,
  * shared" convention) — a real poi.db's rows and its `layer_manifest`/`layer_coverage` tables live in the same file in
- * production, so disposing `contractDB` (which closes the shared handle) is enough; `POILookup` never owns it
+ * production, so disposing `schemadb` (which closes the shared handle) is enough; `POILookup` never owns it
  * (constructed with `{database}`, not `{databasePath}` — see `poi-lookup.ts`), so it never double-closes.
  */
 export async function openPlausibilityPOIDeps(databasePath: string | undefined): Promise<PlausibilityDeps["poi"]> {
@@ -60,7 +60,7 @@ export async function openPlausibilityPOIDeps(databasePath: string | undefined):
 
 	return {
 		lookup: new POILookup({ database }),
-		contractDB: database,
+		schemadb: database,
 	}
 }
 
@@ -76,7 +76,7 @@ export async function assertBDCDatabaseExists(toolName: string, databasePath: st
 }
 
 /**
- * Open a filer.db, or return `undefined` when `databasePath` is unset or the file is missing — NEVER a raw sqlite throw
+ * Open a filer.db, or return `undefined` when `databasePath` is unset or the file is missing — never a raw sqlite throw
  * (mirroring {@link openBDCDatabaseIfPresent}). Used by `cli.ts`'s `mailwoman_filer_lookup` handler after
  * {@link assertFilerDatabaseExists} has already confirmed the file is present.
  */

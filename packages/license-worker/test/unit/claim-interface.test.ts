@@ -4,10 +4,10 @@
  * @author Teffen Ellis, et al.
  */
 
-import { parseClaimResponse } from "@mailwoman/license-worker/claim-contract"
+import { parseClaimResponse } from "@mailwoman/license-worker/claim-interface"
 import { describe, expect, it } from "vitest"
 
-describe("the claim contract", () => {
+describe("the claim interface", () => {
 	it("admits each of the three answers and hands back the fields it names", () => {
 		const issued = {
 			status: "issued",

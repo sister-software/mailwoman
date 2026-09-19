@@ -2,10 +2,10 @@
  * @copyright Sister Software
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
- * @file The working tree's own git state: HEAD, the current branch, dirty tracked files, tracked paths.
+ * @file The working tree's own git state: head, the current branch, dirty tracked files, tracked paths.
  *
  *   Every reader here is one `git` invocation with its output shaped for the caller, so the seven sites that each
- *   spelled `git rev-parse HEAD` through their own wrapper share one. Cloning and pulling a resource repository is a
+ *   spelled `git rev-parse head` through their own wrapper share one. Cloning and pulling a resource repository is a
  *   different concern and lives in `resources/git.ts`.
  */
 
@@ -21,7 +21,7 @@ async function git(repoRoot: PathBuilderLike, args: string[], maxBuffer?: number
 }
 
 /**
- * The commit HEAD names, as a full SHA (or the short form the `--short` flag abbreviates to).
+ * The commit head names, as a full SHA (or the short form the `--short` flag abbreviates to).
  */
 export async function gitHead(repoRoot: PathBuilderLike, options: { short?: boolean } = {}): Promise<string> {
 	const args = options.short ? ["rev-parse", "--short", "HEAD"] : ["rev-parse", "HEAD"]
@@ -30,14 +30,14 @@ export async function gitHead(repoRoot: PathBuilderLike, options: { short?: bool
 }
 
 /**
- * The checked-out branch name, or `HEAD` when the tree is detached.
+ * The checked-out branch name, or `head` when the tree is detached.
  */
 export async function currentBranch(repoRoot: PathBuilderLike): Promise<string> {
 	return (await git(repoRoot, ["rev-parse", "--abbrev-ref", "HEAD"])).trim()
 }
 
 /**
- * `git status --porcelain` lines for TRACKED files with uncommitted changes. Untracked files are excluded on purpose:
+ * `git status --porcelain` lines for tracked files with uncommitted changes. Untracked files are excluded on purpose:
  * materialized weights binaries and compiled `out/` trees are gitignored, and a publish path creates both before it
  * publishes. Pathspecs narrow the reading to the paths named.
  */
@@ -52,7 +52,7 @@ export async function dirtyTrackedFiles(repoRoot: PathBuilderLike, pathspecs: st
  * Every `git status --porcelain` line, staged and unstaged and untracked alike.
  *
  * The sibling {@linkcode dirtyTrackedFiles} answers a publish path's question — which committed files have moved — and
- * excludes what a build creates. This answers a CACHE's question: has anything at all changed since a derived artifact
+ * excludes what a build creates. This answers a cache's question: has anything at all changed since a derived artifact
  * was built. A key built from the narrower reading goes stale over a staged edit and over a new file, and a stale index
  * reports that a helper written an hour ago does not exist.
  */
@@ -76,7 +76,7 @@ export async function changedFiles(repoRoot: PathBuilderLike, base: string, head
 
 /**
  * Every tracked path, repo-relative, optionally narrowed by git pathspecs. Read NUL-delimited so a path with a newline
- * or a non-ASCII byte survives. the 64 MiB buffer covers this repository's listing several times over.
+ * or a non-ascii byte survives. the 64 MiB buffer covers this repository's listing several times over.
  */
 export async function trackedFiles(repoRoot: PathBuilderLike, pathspecs: string[] = []): Promise<string[]> {
 	const output = await git(repoRoot, ["ls-files", "-z", ...pathspecs], 64 * 1024 * 1024)
@@ -92,7 +92,7 @@ export async function trackedFiles(repoRoot: PathBuilderLike, pathspecs: string[
  * from the tree and neither is a defect.
  *
  * `--no-renames` is what makes it answer the question asked. With rename detection on, `--name-only` prints a rename's
- * DESTINATION and the old path never appears, so the reading is a set of paths that all still exist. Turning detection
+ * destination and the old path never appears, so the reading is a set of paths that all still exist. Turning detection
  * off makes every move a deletion of the old path, which is the name a stale literal holds. Measured on this
  * repository: 11,696 paths over 4,398 commits in 205 ms, against 11,483 for the reading that answers the wrong set.
  */

@@ -2,14 +2,14 @@
  * @copyright Sister Software
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
- * @file Hostname handling shared by designated HTTP clients' allowlists.
+ * @file Hostname handling shared by designated http clients' allowlists.
  */
 
 import { ResourceError } from "#errors/schema"
 
 /**
  * A trailing dot makes a hostname fully qualified — `www.sec.gov.` and `www.sec.gov` reach the same server, but only
- * the latter is in an allowlist, and the WHATWG parser preserves the dot. Stripped before the lookup so the FQDN form
+ * the latter is in an allowlist, and the whatwg parser preserves the dot. Stripped before the lookup so the fqdn form
  * is admitted rather than rejected as an unknown host.
  */
 export function canonicalHostname(url: URL): string {
@@ -36,7 +36,7 @@ export interface AssertAllowedHostOptions {
 	 */
 	clientName: string
 	/**
-	 * Replaces the plain host list in the not-allowed refusal, e.g. `SEC EDGAR hosts (…)`.
+	 * Replaces the plain host list in the not-allowed refusal, e.g. `SEC edgar hosts (…)`.
 	 */
 	hostsDescription?: string
 	/**

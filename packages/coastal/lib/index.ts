@@ -6,45 +6,45 @@
  *   The `coastal-england.db` reader — what the Environment Agency's erosion mapping assigns at a coordinate,
  *   under a named scenario, and on what basis.
  *
- *   TWO READINGS, AND THE ONE THAT IS MISSING IS THE POINT.
+ *   two readings, and the one that is missing is the point.
  *
  *   1. `designated` — the authority's map places the location inside an erosion zone under the scenario
  *      asked for, and the polygon (its distance, its shoreline-management policy, its defence type) is the
  *      answer.
- *   2. `unknown` — no polygon of that scenario contains the point. THAT IS NOT AN ABSENCE READING, and this
+ *   2. `unknown` — no polygon of that scenario contains the point. that is not an absence reading, and this
  *      layer has none.
  *
  *   There is no `designated_absence` here, and its absence is the inversion the sibling flood layer taught.
  *   For flood zones the Environment Agency states England-wide coverage and the Planning Practice Guidance
  *   defines Zone 1 as the land outside Zones 2 and 3, so an empty answer inside England is a designation.
- *   NCERM publishes no coverage statement at all. A location in England with no erosion polygon is either
+ *   ncerm publishes no coverage statement at all. A location in England with no erosion polygon is either
  *   inland — most of the country, about which the product says nothing — or on the coast and outside the
  *   mapped risk area, which is the designation a caller actually wants. and the published layers cannot tell
  *   those apart. A reader that generalized the flood rule would report the whole country as not at risk of
  *   coastal erosion, which is a well-formed wrong answer nobody would question.
  *
- *   SO THE CONSTRUCTOR REFUSES A COVERAGE ROW THAT WOULD SUPPORT AN EXCLUSION. Every row must read
+ *   SO the constructor refuses A coverage row that would support an exclusion. Every row must read
  *   `source_present`; `supportsExclusion` must be false for all of them. That is not a convention this
  *   reader follows — it is a condition it checks at open time, so the day someone writes a stronger basis
  *   without settling the footprint question, the layer refuses to open rather than answering confidently.
  *
- *   NEITHER READING IS A STATEMENT ABOUT A PROPERTY. The layer reports what the authority's map assigns at a
+ *   neither reading is A statement about A property. The layer reports what the authority's map assigns at a
  *   location under a named scenario, which is a fact about the map. The Environment Agency states that its
  *   data "cannot provide details for individual properties", and this reader never claims otherwise —
  *   `limits` carries the authority's own exclusions on every answer.
  *
- *   A PROBE MUST NAME ITS SCENARIO. Twelve layers answer twelve different questions, and a reader that
+ *   A probe must name its scenario. Twelve layers answer twelve different questions, and a reader that
  *   picked one silently would let a 2105 projection be read as a present-day designation. An unknown
  *   scenario key throws rather than returning nothing, because "no such scenario" and "no zone here" are
  *   opposite facts that would otherwise look identical.
  *
- *   THE PROBE IS STRUCTURE FIRST, GEOMETRY LAST. `cellToParent` up the compacted whole-cell chain answers an
+ *   the probe is structure first, geometry last. `cellToParent` up the compacted whole-cell chain answers an
  *   interior point with primary-key probes alone. only a cell a boundary crosses reaches the ray cast, and
  *   then only against the polygons `coastal_zone_cell` already named for that cell and that scenario.
  *
- *   THE READER IS SYNCHRONOUS AND USES RAW PREPARED STATEMENTS, for the same reason the flood reader is: it
+ *   the reader is synchronous and uses RAW prepared statements, for the same reason the flood reader is: it
  *   answers one point per geocode with a bounded number of primary-key probes plus a bounded geometry read,
- *   and the ray cast it wraps is synchronous anyway. The DDL that created these tables IS Kysely — see
+ *   and the ray cast it wraps is synchronous anyway. The DDL that created these tables is Kysely — see
  *   `schema.ts`.
  */
 
@@ -172,7 +172,7 @@ export interface CoastalErosionReading {
 	containment: CoastalContainmentPath
 	/**
 	 * The coverage row for the location, when the product has data in that cell. Its basis is always `source_present`, so
-	 * it licenses PRESENCE and nothing else — an absent coverage row and a present one are both compatible with "no
+	 * it licenses presence and nothing else — an absent coverage row and a present one are both compatible with "no
 	 * erosion polygon here", and neither says the location is not at risk.
 	 */
 	coverage?: CoverageCell & { h3CellIndex: string; resolution: number }
@@ -191,7 +191,7 @@ export interface CoastalErosionReading {
 }
 
 /**
- * One ground-instability polygon containing a point. A DIFFERENT HAZARD, answered by its own method.
+ * One ground-instability polygon containing a point. A different hazard, answered by its own method.
  */
 export interface CoastalGroundInstabilityReading {
 	areaID: string
@@ -260,7 +260,7 @@ interface AreaRow {
 /**
  * Read a sealed `coastal-england.db`.
  *
- * Everything that would make the reader answer a well-formed wrong thing is refused at CONSTRUCTION rather than at
+ * Everything that would make the reader answer a well-formed wrong thing is refused at construction rather than at
  * query time: a manifest naming a different layer, a coverage table with no rows, a coverage row whose basis would
  * support an exclusion, an empty scenario vocabulary. Each of those would otherwise present as a reader that quietly
  * always answers `unknown` — or, in the exclusion case, as a reader that confidently reports England as free of coastal
@@ -292,7 +292,7 @@ export class CoastalErosionLookup implements Disposable {
 			"SELECT area_id, containment FROM coastal_zone_cell WHERE h3_cell = ? AND scenario_key = ?"
 		)
 
-		// TWO STATEMENTS, AND THE SPLIT IS THE POINT. The attributes and the bbox are read without the blob, because the
+		// two statements, and the split is the point. The attributes and the bbox are read without the blob, because the
 		// bbox is the ray cast's prefilter: pulling hundreds of thousands of vertices off disk only to reject the polygon
 		// on a rectangle would make the prefilter cost more than the test it replaces. A `whole` cell never reads the blob
 		// at all.
@@ -354,7 +354,7 @@ export class CoastalErosionLookup implements Disposable {
 	}
 
 	/**
-	 * The ground-instability polygons containing this coordinate — a DIFFERENT HAZARD from erosion, and never an answer
+	 * The ground-instability polygons containing this coordinate — a different hazard from erosion, and never an answer
 	 * to an erosion question.
 	 *
 	 * Its own method rather than a field on the erosion reading, because the two are different hazards with different
@@ -537,10 +537,10 @@ function readIdentity(database: DatabaseClient<CoastalDatabase>, databasePath: s
 		throw new Error(`coastal reader: ${databasePath} declares no h3 spine key`)
 	}
 
-	// THE EXCLUSION CHECK, AND IT IS A CONDITION RATHER THAN A CONVENTION. NCERM publishes no coverage statement, so no
+	// the exclusion check, and IT is A condition rather than A convention. ncerm publishes no coverage statement, so no
 	// row of this layer may license a claim that a location is not at risk. A stronger basis reaching a caller would let
 	// an absent polygon be read as a designation of safety over the whole of inland England. The check itself is the
-	// contract's rather than this product's. the SENTENCE saying why is this product's.
+	// interface's rather than this product's. the sentence saying why is this product's.
 	assertCoverageLicensesNoExclusion(
 		(database.prepare("SELECT DISTINCT basis FROM layer_coverage").all() as Array<{ basis: string | null }>).map(
 			(coverageRow) => coverageRow.basis
@@ -575,9 +575,9 @@ function readIdentity(database: DatabaseClient<CoastalDatabase>, databasePath: s
 		)
 	}
 
-	// THE COVERAGE RESOLUTION IS RECOVERED FROM THE CELLS rather than DECLARED. The manifest's spine key names the INDEX
+	// the coverage resolution is recovered from the cells rather than declared. The manifest's spine key names the index
 	// resolution; `layer_coverage` is keyed at a coarser one, and this layer has no footprint row to carry it (the flood
-	// layer's `flood_map_extent` and the soil layer's survey-area rows are where those two put theirs, and NCERM publishes
+	// layer's `flood_map_extent` and the soil layer's survey-area rows are where those two put theirs, and ncerm publishes
 	// no footprint at all). Recovering it is exact rather than approximate — a short cell expands to a valid index at
 	// exactly one resolution — and the shared helper throws on a table that mixes them.
 	const coverageResolution = recoverShortCellResolution(

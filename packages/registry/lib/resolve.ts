@@ -79,7 +79,7 @@ const PHONE_LEVELS: ComparisonLevel[] = [
 
 /**
  * Exact-vs-different levels for a closed-vocabulary code SET ({@link DefaultModelOptions.exactDiscriminators} — NPPES
- * taxonomy codes, license numbers). Seeds only — EM refits. `u` starts well above phone's 0.002: two RANDOM providers
+ * taxonomy codes, license numbers). Seeds only — EM refits. `u` starts well above phone's 0.002: two random providers
  * share a specialty far more often than a phone line (dermatologists cluster in dermatology buildings).
  */
 const CODE_SET_LEVELS: ComparisonLevel[] = [
@@ -116,7 +116,7 @@ export function normalizePhone(raw: string | null | undefined): string | null {
 }
 
 /**
- * {@link normalizePhone} under the probes' stricter contract: only a full line counts — the last 10 digits when the
+ * {@link normalizePhone} under the probes' stricter interface: only a full line counts — the last 10 digits when the
  * input carries at least 10, `""` otherwise (never a partial digit string). Callers guard on truthiness, so `""` reads
  * as "no comparable phone" rather than a weaker key.
  */
@@ -145,7 +145,7 @@ export interface DefaultModelOptions {
 	 */
 	addressFrequency?: TermFrequencyTable
 	/**
-	 * **A1 (#625):** collapse the redundant address-key + great-circle-distance comparisons into ONE
+	 * **A1 (#625):** collapse the redundant address-key + great-circle-distance comparisons into one
 	 * {@link spatialComparison spatial-agreement} signal — an exact-key tier (where `addressFrequency`, if set, rides)
 	 * over distance buckets. Removes the double-count that over-merges co-located providers (an exact key match already
 	 * implies distance ≈ 0).
@@ -163,7 +163,7 @@ export interface DefaultModelOptions {
 	 */
 	discriminators?: string[]
 	/**
-	 * Closed-vocabulary CODE-SET discriminators drawn from {@link SourceRecord.attributes} (#625 taxonomy change). The
+	 * Closed-vocabulary code-SET discriminators drawn from {@link SourceRecord.attributes} (#625 taxonomy change). The
 	 * attribute value is a whitespace-joined set of codes (NPPES taxonomy codes, license numbers, …); agreement = any
 	 * shared code (set overlap rather than string similarity — `207R00000X` vs `207Q00000X` are different specialties
 	 * despite near-identical text, exactly the case string similarity mis-scores). The over-merge separator: two
@@ -304,7 +304,7 @@ export interface ResolveConfig {
 	/**
 	 * Address-frequency table (over {@link addressFrequencyKey}) — down-weights address agreement by how shared the
 	 * address is (a crowded clinic/billing address is weak identity evidence). **Default-on (#625):** when omitted,
-	 * `resolveEntities` AUTO-COMPUTES the table over the INPUT records' addresses (the right scope for a single dataset —
+	 * `resolveEntities` auto-computes the table over the input records' addresses (the right scope for a single dataset —
 	 * a crowded address within the data is down-weighted). Pass your own {@link TermFrequencyTable} (e.g. a corpus-wide
 	 * one) to override, or `false` to disable (the legacy bare baseline). Ignored if `model` is supplied.
 	 */
@@ -343,13 +343,13 @@ export interface ResolveConfig {
 	 */
 	exactDiscriminators?: string[]
 	/**
-	 * Override the Fellegi-Sunter link weight with a LEARNED score (#603). When set, a candidate pair's match weight is
+	 * Override the Fellegi-Sunter link weight with a learned score (#603). When set, a candidate pair's match weight is
 	 * this function's return value (same threshold-comparable units as the FS weight) instead of {@link scorePair}'s.
 	 * Default undefined (pure FS). The blocking + clustering are unchanged, so a trained scorer can be A/B'd against the
 	 * FS baseline on the identical pipeline. The function is responsible for its own feature computation (e.g. the
 	 * agreement pattern, which is EM-independent, plus any corpus statistics it captured).
 	 *
-	 * INTERACTION with {@link requireCorroboration}: the two are independent and compose, but the corroboration check is
+	 * Interaction with {@link requireCorroboration}: the two are independent and compose, but the corroboration check is
 	 * still evaluated on the Fellegi-Sunter `contributions` (not the learned score) — so a learned-high pair with no
 	 * positive FS name/org/phone agreement is still held out. A learned scorer is normally trained to subsume
 	 * corroboration, so use one or the other. combining them lets the FS check veto the learned score, which is rarely
@@ -357,13 +357,13 @@ export interface ResolveConfig {
 	 */
 	scorer?: (a: SourceRecord, b: SourceRecord) => number
 	/**
-	 * **#603: the LEARNED gradient-boosted-tree scorer — DEFAULT-ON.** Omitted or `true` uses the bundled
+	 * **#603: the learned gradient-boosted-tree scorer — default-on.** Omitted or `true` uses the bundled
 	 * {@link DEDUP_GBT_MODEL} (trained on the NPPES NPI-truth set. beats the Fellegi-Sunter baseline ~+5pp dedup F1
 	 * held-out within a state and ~+22pp on states it never trained on, reducing the co-located over-merge). `false` opts
 	 * out to the pure FS baseline. pass your own {@link GBT} for a custom model. The scorer is built over the same
 	 * collapsed-spatial + address-frequency feature model as training (via the resolved {@link addressFrequency}),
 	 * independent of this call's comparison config. An explicit {@link scorer} takes precedence. When the bundled model
-	 * is active and you don't set {@link threshold}, its CALIBRATED link threshold
+	 * is active and you don't set {@link threshold}, its calibrated link threshold
 	 * ({@link DEDUP_GBT_META}.recommendedThreshold) is used — the GBT logit isn't in FS-weight units, so 0 would
 	 * over-merge. The model is NPPES/US-trained. for a very different domain, A/B it or pass `false`.
 	 */
@@ -390,7 +390,7 @@ export interface ResolveResult {
  * record with no confident link is its own singleton entity).
  */
 export function resolveEntities(records: readonly SourceRecord[], config: ResolveConfig = {}): ResolveResult {
-	// The proven changes are DEFAULT-ON (#625): the address-frequency down-weight (auto-computed over the
+	// The proven changes are default-on (#625): the address-frequency down-weight (auto-computed over the
 	// input records when not supplied; `false` disables) + the collapsed spatial signal (A1). A new
 	// caller gets the strong config out of the box. pass explicit values to override.
 	const addressFrequency =
@@ -416,7 +416,7 @@ export function resolveEntities(records: readonly SourceRecord[], config: Resolv
 
 	const blockingKeys = config.blockingKeys ?? defaultBlockingKeys()
 
-	// #603: the learned scorer is DEFAULT-ON. An explicit `scorer` overrides everything. otherwise
+	// #603: the learned scorer is default-on. An explicit `scorer` overrides everything. otherwise
 	// `learnedScorer === false` opts out to the FS baseline, a GBT supplies a custom model, and
 	// `true`/omitted uses the bundled DEDUP_GBT_MODEL. The scorer is built over the fixed
 	// collapsed-spatial + address-frequency feature model (matching training, independent of this call's
@@ -437,7 +437,7 @@ export function resolveEntities(records: readonly SourceRecord[], config: Resolv
 		})
 	}
 
-	// Threshold: an explicit value wins. else the bundled model's CALIBRATED threshold when it's active
+	// Threshold: an explicit value wins. else the bundled model's calibrated threshold when it's active
 	// (its logit isn't in FS-weight units, so 0 would over-merge); else 0 (FS baseline or a custom model).
 	const threshold = config.threshold ?? (usingBundledModel ? DEDUP_GBT_META.recommendedThreshold : 0)
 

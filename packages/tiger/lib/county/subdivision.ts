@@ -12,7 +12,7 @@ import type { AdminLevel1Code } from "#state"
 /**
  * Census Geographic subdivision of a county.
  *
- * @title TIGER County Subdivision
+ * @title tiger County Subdivision
  * @public
  */
 export interface TIGERCountySubdivision {
@@ -39,12 +39,12 @@ export interface TIGERCountySubdivision {
 	COUSUBFP: string
 
 	/**
-	 * @title County Subdivision GNIS Code
+	 * @title County Subdivision gnis Code
 	 *
 	 * @minLength 8
 	 * @maxLength 8
 	 * @pattern ^\d{8}$
-	 * @see {@link https://www.usgs.gov/us-board-on-geographic-names/domestic-names | USGS: Domestic Names}
+	 * @see {@link https://www.usgs.gov/us-board-on-geographic-names/domestic-names | usgs: Domestic Names}
 	 */
 	COUSUBNS: string
 	/**
@@ -59,7 +59,7 @@ export interface TIGERCountySubdivision {
 	GEOID: string
 
 	/**
-	 * Fully Qualified GEOID as used in CEDSCI and other systems.
+	 * Fully Qualified geoid as used in cedsci and other systems.
 	 *
 	 * @title Fully Qualified Geographic Identifier
 	 * @minLength 19
@@ -92,9 +92,9 @@ export interface TIGERCountySubdivision {
 	CLASSFP: TIGERClassCode
 
 	/**
-	 * MAF/TIGER Feature Class Code.
+	 * MAF/tiger Feature Class Code.
 	 *
-	 * @title MAF/TIGER Feature Class Code
+	 * @title MAF/tiger Feature Class Code
 	 *
 	 * @minLength 5
 	 * @maxLength 5

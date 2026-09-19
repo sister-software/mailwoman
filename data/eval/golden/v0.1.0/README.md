@@ -1,7 +1,7 @@
 # Golden eval set v0.1.0
 
 Hand-labeled ground truth for the Mailwoman neural classifier. **This is the
-contract for "what good looks like."** The corpus pipeline's `corpus-v0.1.0`
+interface for "what good looks like."** The corpus pipeline's `corpus-v0.1.0`
 ships paired with this golden set; eval scripts compare classifier output to
 the components in each entry.
 

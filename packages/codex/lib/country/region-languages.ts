@@ -3,7 +3,7 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   The languages a REGION's addresses are written in: the country's official languages plus the region's own
+ *   The languages a region's addresses are written in: the country's official languages plus the region's own
  *   co-official ones, in ISO 639-3 (the code the Who's On First names table carries). This is the question a corpus
  *   extraction asks when it turns a region record into the surfaces a person types, and it differs from
  *   {@link isOfficialLanguage} in two ways: it answers per region rather than per country, and it refuses the

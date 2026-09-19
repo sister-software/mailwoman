@@ -138,7 +138,7 @@ describe("profiles", () => {
 
 	it("never mixes harnesses within one profile", async () => {
 		// The bug this file shipped with on 2026-07-16: oracle-k's `v301` profile pointed its seg@1
-		// reading at a LEARNED-span-decode row (0.5768) while oracle-k computes the summed-BIO
+		// reading at a learned-span-decode row (0.5768) while oracle-k computes the summed-BIO
 		// stand-in (0.449) — two harnesses compared through one id, refusing on a healthy run.
 		// Caught by running it rather than by reading it. This test reads it.
 		//

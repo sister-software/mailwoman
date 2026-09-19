@@ -71,7 +71,7 @@ const INJECTED_FAMILY_ID = "cik:0001234567"
 let cached: Promise<FilerLinkageEvalResult> | undefined
 
 async function runEval(): Promise<FilerLinkageEvalResult> {
-	// The PROMISE is what is cached rather than its value: `??=` on an awaited call would run the eval once per concurrent
+	// The promise is what is cached rather than its value: `??=` on an awaited call would run the eval once per concurrent
 	// caller, and the point of the memo is that it runs once.
 	cached ??= filerLinkageEval({ date: PUBLISHED_LINKAGE_EVAL_DATE, printMarkdown: false })
 
@@ -174,8 +174,8 @@ describe("buildTruthFamilyGroups — the held-out ground truth", () => {
 	})
 
 	it("gives every registrant in one truth component the SAME label, including ids only a sibling named", () => {
-		// The component ROLL-UP, which the two-parents test above never reaches: that registrant's label is fully
-		// determined by its own accumulated set, so deleting the roll-up leaves it green. Here A names only P1 while B
+		// The component roll-up, which the two-parents test above never reaches: that registrant's label is fully
+		// determined by its own accumulated set. Therefore, deleting the roll-up leaves it green. Here A names only P1 while B
 		// names P1 and P2. P1 unions them into one component, so the truth partition says one family — and both labels
 		// must therefore read `P1 + P2`. Without the roll-up A reads `P1` and B reads `P2 + P1`, the strings differ, and
 		// `groupPredicateFromMap` scores them as different truth families while the union-find says they are one: a truth
@@ -221,8 +221,8 @@ describe("buildTruthFamilyGroups — the held-out ground truth", () => {
 		// Both parents are unique to this registrant, so its label depends only on its own accumulated set — no other
 		// registrant's contribution can put a dropped id back via the component roll-up and mask the bug.
 		//
-		// BOTH ORIENTATIONS are asserted, and that is the whole test. `union` merges toward the lexicographically smaller
-		// root, so exactly one ordering of any two parent names re-roots the component AWAY from the key the first id was
+		// both orientations are asserted, and that is the whole test. `union` merges toward the lexicographically smaller
+		// root, so exactly one ordering of any two parent names re-roots the component away from the key the first id was
 		// filed under — and only that one orphans anything. The first version of this test fixed the Form 499 parent as
 		// "Northbridge" and the provider parent as "Southgate", which is the safe ordering: the second union re-rooted
 		// onto the existing key, nothing was dropped, and the test passed against the unfixed code. Naming both parents
@@ -433,7 +433,7 @@ describe("filerLinkageEval — what is really in the artifacts", () => {
 
 describe("the standing guarantee: this baseline CAN be beaten", () => {
 	/**
-	 * The three Cascade registrants, joined to one ownership family by a relationship the BUILDER never emits —
+	 * The three Cascade registrants, joined to one ownership family by a relationship the builder never emits —
 	 * `subsidiary`, the shape a corporate-filing importer is specified to produce. Injected into the withheld artifact
 	 * after the leakage check has already passed on the untouched build, so the check stays armed while the probe runs.
 	 */
@@ -559,9 +559,9 @@ describe("the standing guarantee: this baseline CAN be beaten", () => {
 		const form499Rows = buildLinkageEvalForm499Rows()
 		const providerRows = buildLinkageEvalProviderRows()
 
-		// The plan and this eval's own page both assert, as a measured fact, that wiring EDGAR in as inferred
-		// `Subsidiary` EDGES leaves recall at 0.000 and only `filer_family` rows move it — with nothing in-repo to
-		// re-derive it from. This test is that artifact: the exact edge shape an EDGAR importer emits.
+		// The plan and this eval's own page both assert, as a measured fact, that wiring edgar in as inferred
+		// `Subsidiary` edges leaves recall at 0.000 and only `filer_family` rows move it — with nothing in-repo to
+		// re-derive it from. This test is that artifact: the exact edge shape an edgar importer emits.
 		const injected = await runLinkagePass({
 			inputs: buildFilteredEvalInputs(),
 			registrants: buildTruthRegistrants(form499Rows, providerRows),
@@ -580,7 +580,7 @@ describe("the standing guarantee: this baseline CAN be beaten", () => {
 						.values({
 							from_node_id: `frn:${frn}`,
 							to_node_id: INJECTED_FAMILY_ID,
-							// ParentCompany rather than Subsidiary: `schema.ts` defines the TARGET as what it is TO the source, and
+							// ParentCompany rather than Subsidiary: `schema.ts` defines the target as what it is TO the source, and
 							// `build-filer.ts` follows that convention. `from: frn → to: cik` with `Subsidiary` would assert the
 							// CIK is the FRN's subsidiary — the inverse of what a parent-CIK importer means.
 							relationship: FilerRelationship.ParentCompany,
@@ -609,9 +609,9 @@ describe("the standing guarantee: this baseline CAN be beaten", () => {
 		const providerRows = buildLinkageEvalProviderRows()
 
 		// `OWNERSHIP_BY_RELATIONSHIP` is a plain object literal, so a bare `map[relationship]` lookup inherits
-		// `Object.prototype`: "constructor" resolves to a FUNCTION — truthy, and never nullish, so `??` never fires. That
-		// made `assertsOwnership("constructor")` true, which both SCORED an unclassifiable assertion and double-counted
-		// the row, so the three census splits summed to 8 against a published total of 5.
+		// `Object.prototype`: "constructor" resolves to a function — truthy, and never nullish, so `??` never fires. That
+		// made `assertsOwnership("constructor")` true, which both scored an unclassifiable assertion and double-counted
+		// the row. Therefore, the three census splits summed to 8 against a published total of 5.
 		const injected = await runLinkagePass({
 			inputs: buildFilteredEvalInputs(),
 			registrants: buildTruthRegistrants(form499Rows, providerRows),
@@ -633,7 +633,7 @@ describe("the standing guarantee: this baseline CAN be beaten", () => {
 	})
 
 	it("refuses to report a withheld build carrying a relationship it cannot classify", () => {
-		// The check's default must be the OPPOSITE of the prediction's. The prediction ignores what it does not understand
+		// The check's default must be the opposite of the prediction's. The prediction ignores what it does not understand
 		// (never score an unrecognized assertion); the check must refuse it (an assertion this eval cannot classify, in a
 		// build it did not write, is exactly what a leakage check exists to stop). One predicate cannot serve both.
 		expect(() =>

@@ -25,8 +25,8 @@ export function resolvePairIndexCountry(country: string | undefined): string {
 }
 
 /**
- * Fetch + construct the PIX1 placetype-pair indexes TOLERANTLY (the {@link loadPostcodeAnchorLookup} contract): each
- * `pair-index-<cc>.bin` is OPTIONAL, so a 404/network failure/corrupt binary (bad magic, truncated header) is skipped
+ * Fetch + construct the PIX1 placetype-pair indexes tolerantly (the {@link loadPostcodeAnchorLookup} interface): each
+ * `pair-index-<cc>.bin` is optional, so a 404/network failure/corrupt binary (bad magic, truncated header) is skipped
  * with a loud `console.warn` naming the URL — never a rejection that blocks the classifier load. Older HF release
  * versions ship no pair indexes at all, and the prior is a soft decode channel rather than a required model input.
  *
@@ -60,7 +60,7 @@ export async function loadPairIndexes(urls: readonly string[], fetchImpl: typeof
 }
 
 /**
- * Detect the placetype-pair country subtag for one input from its STRUCTURAL shape (#1278 phase 2). Runs the two
+ * Detect the placetype-pair country subtag for one input from its structural shape (#1278 phase 2). Runs the two
  * browser-safe Stage-2 modules the runtime pipeline uses — `@mailwoman/query-shape`'s `computeQueryShape` then
  * `@mailwoman/locale-hint`'s `detectLocale` — and reduces the resulting `LocaleHint.locale` (e.g. "en-GB") to its
  * country subtag ("gb") via {@link resolvePairIndexCountry}.

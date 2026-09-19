@@ -8,7 +8,7 @@
  *   Every function takes plain numbers and returns plain GeoJSON, so the whole module runs (and is
  *   tested) under bare node — see `geometry.node.test.ts`.
  *
- *   WHY NOT `@mailwoman/spatial`: the only truly-spatial primitive here is the bbox half-diagonal (a
+ *   why not `@mailwoman/spatial`: the only truly-spatial primitive here is the bbox half-diagonal (a
  *   great-circle-ish distance). `@mailwoman/spatial` exposes `haversineKm`, but only via its root barrel,
  *   which pulls `@mailwoman/core` + `h3-js` + `wkx` — a heavy, partly node-only graph — into what must
  *   stay a lightweight, browser-only map bundle (the `@mailwoman/react/map` subpath). The original

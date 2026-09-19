@@ -30,10 +30,10 @@ import {
 
 export const description =
 	"Report every database in the data root and whether it records how it was built. `layer_manifest` is " +
-	"the contract (docs/engineering/reference/layer-contract.mdx); this says how much of the root implements it."
+	"the interface (docs/engineering/reference/layer-interface.mdx); this says how much of the root implements it."
 
 /**
- * Native command-line contract consumed by the filesystem command router.
+ * Native command-line interface consumed by the filesystem command router.
  */
 export const spec = {
 	name: "inventory",

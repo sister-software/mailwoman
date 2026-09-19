@@ -31,7 +31,7 @@ export interface AddressSystemConventions {
 	readonly forbiddenTags?: readonly ComponentTag[]
 	/**
 	 * The system's canonical postcode shape. A decoded postcode span that is a strict sub-match of a pattern-valid string
-	 * in the raw text is shape-INVALID for this system and eligible for the snap-only repair (extend/clip to the valid
+	 * in the raw text is shape-invalid for this system and eligible for the snap-only repair (extend/clip to the valid
 	 * match — never invent a span).
 	 */
 	readonly postcodePattern?: RegExp
@@ -43,7 +43,7 @@ export interface AddressSystemConventions {
  */
 export const ADDRESS_SYSTEM_CONVENTIONS: Partial<Record<SystemCode, AddressSystemConventions>> = {
 	/**
-	 * France (La Poste / AFNOR NF Z 10-011): the street TYPE is a LEADING particle of the street name ("Rue de Rivoli",
+	 * France (La Poste / afnor NF Z 10-011): the street type is a leading particle of the street name ("Rue de Rivoli",
 	 * "Avenue des Champs-Élysées", "Cours Lafayette") and is labeled `street_prefix` — French addresses do carry a
 	 * street_prefix, just never a trailing USPS-style street_suffix (the libpostal French dictionaries have no trailing
 	 * street-suffix class. Pub-28's suffix decomposition has no French counterpart).
@@ -52,7 +52,7 @@ export const ADDRESS_SYSTEM_CONVENTIONS: Partial<Record<SystemCode, AddressSyste
 	 * leading "Rue" as a US-style `street_suffix` (RUE is a Pub-28 suffix variant) — the 2026-06-10 v1.1.0 promotion eval
 	 * — so #511 forbade both affix tags to stop that leakage. That forbid was correct for that model but became a live
 	 * production bug for the current one: the shipped model (v1.5.0) emits the FR `street_prefix` correctly, but the
-	 * conventions mask was a hard −1e9 on every B-/I-street_prefix emission, so the detected-FR parse could never KEEP a
+	 * conventions mask was a hard −1e9 on every B-/I-street_prefix emission, so the detected-FR parse could never keep a
 	 * prefix — it destroyed `street_prefix` wholesale (measured on data/eval/external/ fr-street-prefix-real.jsonl at
 	 * conventions=auto: F1 0.0 with the forbid on → 80.0 with it off. the larger real-FR eval reported the same collapse,
 	 * ~96 → ~0.6). We keep only `street_suffix` forbidden: the current model with the forbid off shows zero FR
@@ -67,10 +67,10 @@ export const ADDRESS_SYSTEM_CONVENTIONS: Partial<Record<SystemCode, AddressSyste
 
 	/**
 	 * United Kingdom (Royal Mail / UK-gov postcode shape — see `gb/postcode.ts` for the full provenance note): the
-	 * postcode is variable-length ALPHANUMERIC, outward + inward (`SW1A 1AA`, `M1 1AE`, `SK11 9PD`), the most complex
+	 * postcode is variable-length alphanumeric, outward + inward (`SW1A 1AA`, `M1 1AE`, `SK11 9PD`), the most complex
 	 * shape of any system in the codex. That very shape is what makes the snap repair valuable: the model fragments it
 	 * (`SK11 9PD` → region "S" + postcode "K11 9PD") and a fragment is a strict sub-match of the pattern-valid string in
-	 * the raw text — exactly the shape-INVALID class `postcodePattern` exists to flag.
+	 * the raw text — exactly the shape-invalid class `postcodePattern` exists to flag.
 	 *
 	 * Provenance (#1275, 2026-07-24): on the GB golden board's 106 postcode rows under the en-gb bundle, the clip class
 	 * (parsed postcode = proper suffix of the truth) was 44/106 with this row absent — the repair check never opened
@@ -85,7 +85,7 @@ export const ADDRESS_SYSTEM_CONVENTIONS: Partial<Record<SystemCode, AddressSyste
 }
 
 /**
- * Look up conventions for a system. Absent row = no constraints KNOWN (parse unconstrained).
+ * Look up conventions for a system. Absent row = no constraints known (parse unconstrained).
  */
 export function conventionsForSystem(system: SystemCode | null | undefined): AddressSystemConventions | null {
 	if (!system) return null

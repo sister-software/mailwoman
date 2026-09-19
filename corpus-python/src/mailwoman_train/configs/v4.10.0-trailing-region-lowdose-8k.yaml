@@ -1,13 +1,13 @@
-# v4.10.0 — trailing-region LOW REPS (#1748 / #1821)
+# v4.10.0 — trailing-region LOW reps (#1748 / #1821)
 #
-# THE THIRD RECIPE SHAPE AT ~10% SHARE, AND THE THIRD FAILURE. Graded on the 649-row board:
+# the third recipe shape AT ~10% share, and the third failure. Graded on the 649-row board:
 #
-#   v4.7.0  17,908 rows, 10.5% share   DO-NOT-SHIP (370/383)
+#   v4.7.0  17,908 rows, 10.5% share   do-not-ship (370/383)
 #   v4.8.0  32,125 rows,  9.4% share   7 improved / 25 regressed — 12 venue-led
 #   v4.9.0  31,815 rows,  9.4% share   11 improved / 31 regressed — 15 venue-led, +7 bare-street
 #
 # v4.9.0 fixed a real data defect (GeoNames column 3 is a street rather than the city) and its target country
-# moved — IN went 2 improved / 0 regressed. It still graded WORSE overall, and the way it got worse is
+# moved — IN went 2 improved / 0 regressed. It still graded worse overall, and the way it got worse is
 # the finding: adding a dependent locality moved the "first named segment" binding from `locality` to
 # `dependent_locality`, so bare-street rows started reading as dependent localities (`Calle de Alcala`,
 # `Corso Vittorio Emanuele II`, `Madison Square West`) while the venue class did not recover.
@@ -20,13 +20,13 @@
 # share at weight 5.02, against v4.9.0's 9.4% at 15.93. The recipe output is byte-identical to v4.9.0's —
 # corpus v0.26.0 unchanged — so a difference here is attributable to reps per row alone.
 #
-# WHAT THIS RUN CAN CONCLUDE. If the regressions scale down and IN's two improvements survive, the
+# what this RUN can conclude. If the regressions scale down and IN's two improvements survive, the
 # recipe output is shippable at low reps. If the regressions persist at a third the exposure, exposure is not the
 # change and the recipe needs venue/street rows before it can ship at all — which is a corpus-authoring
 # task rather than an exposure sweep, and the right place to stop.
 #
 # Why v4.8.0 failed, measured rather than guessed. It graded 7 improved / 25 regressed on the 649-row
-# board, and 11 of the 25 were VENUE-LED rows across seven countries:
+# board, and 11 of the 25 were venue-LED rows across seven countries:
 #
 #   Ye Three Lords, 27 Minories, London EC3N 1DE
 #     shipped   venue "Ye Three Lords" | locality London | street Minories
@@ -39,29 +39,29 @@
 # `Sawai, Andaman & Nicobar Islands 744301` alike — and the recipe output contained no venue, no street and no
 # dependent locality. At a 9.4%% share that taught "the first named segment is the locality". Even the
 # IN row it targeted regressed, `locality` sliding from Bengaluru to Indiranagar. The house-number
-# prefix is not a counter-distribution: a NUMBER before the locality does not teach that a NAME can
+# prefix is not a counter-distribution: a number before the locality does not teach that a name can
 # precede one. `no-fragment.ts`'s header records the same trap from the other side.
 #
-# TWO FIXES, both correctness rather than compensation:
+# two fixes, both correctness rather than compensation:
 #
 # 1. GeoNames column 3 is not the locality. It is the finest-grained named place for the code, and for
-#    560001 that is `Mahatma Gandhi Road` — a STREET — while the city, `Bengaluru`, is column 5
+#    560001 that is `Mahatma Gandhi Road` — a street — while the city, `Bengaluru`, is column 5
 #    (admin2). MX is the same (`Roma Norte` is a colonia inside `Cuauhtemoc`), so is PT (`Abrigada`
-#    inside `Alenquer`). v4.8.0 therefore trained street names and colonias AS CITIES. admin2 is now
+#    inside `Alenquer`). v4.8.0 therefore trained street names and colonias AS cities. admin2 is now
 #    the locality, admin1 the region, column 3 the dependent_locality.
-# 2. That same change supplies the missing left context: 62%% of rows now carry a NAME before the
+# 2. That same change supplies the missing left context: 62%% of rows now carry a name before the
 #    locality (`Srikakulam Town, Srikakulam, Andhra Pradesh 532001, India`), against 0%% in v4.8.0.
 #
 # 31,815 rows: 16,803 leading (FR DE ES IT NL PT MX) + 16,000 after_region (IN).
 #
-# PRE-REGISTERED CHECK, tightened by what v4.8.0 measured:
+# PRE-registered check, tightened by what v4.8.0 measured:
 #   1. the 11 venue-led rows v4.8.0 regressed must all hold — that is the defect this run exists to fix;
 #   2. FR, GB and DE show no regression anywhere (D-rule, iron rule 6);
 #   3. net improved-minus-regressed >= 0 on the full board;
-#   4. the 4 ve_city_postcode_trailing_state rows remain the IMPROVEMENT metric rather than the check.
+#   4. the 4 ve_city_postcode_trailing_state rows remain the improvement metric rather than the check.
 #
-# What v4.7.0 got wrong, and it was not the exposure. Its recipe emitted the postcode only at the HEAD
-# (`const head = ... ${postcode} `), so every one of its 17,908 rows was postcode-LEADING. That was
+# What v4.7.0 got wrong, and it was not the exposure. Its recipe emitted the postcode only at the head
+# (`const head = ... ${postcode} `), so every one of its 17,908 rows was postcode-leading. That was
 # correct for its four source countries — FR, DE, ES and IT all write the code first — and it silently
 # decided which countries the recipe output could teach, because the same digits change TAG with position.
 #
@@ -75,7 +75,7 @@
 # `Sandton 2196` vs `2196 Sandton` behaves the same way. No decode-time change moves it:
 # postcodeShapeCoherence=true leaves all eight VE board rows byte-identical. So this is corpus.
 #
-# WHAT IS ADDED: synth-trailing-region-structured v25 — 32,125 rows from 32,435 real
+# what is added: synth-trailing-region-structured v25 — 32,125 rows from 32,435 real
 # (postcode, locality, region) triples, in two placements, each attested by a gauntlet board row:
 #   leading       16,435 rows  FR DE ES IT NL PT MX   "8600-315 Lagos, Algarve, Portugal"     (pt_structured)
 #   after_region  16,000 rows  IN                     "Bengaluru, Karnataka 560038, India"    (in_structured)
@@ -88,13 +88,13 @@
 # carries a VE postcode. Whether IN's after_region rows generalize to VE's after_locality is the
 # question this run exists to answer, against 4 ve_city_postcode_trailing_state rows already on the board.
 #
-# KNOWN LIMITATION for the model card: all 16,000 trailing rows are IN. The run cannot distinguish
+# known limitation for the model card: all 16,000 trailing rows are IN. The run cannot distinguish
 # "learned after_region" from "learned India" using the trailing arm alone. The VE rows separate them.
 #
-# EXTRACTION is committed now (packages/corpus/lib/tools/postcode-triples.ts); v0.24.0's was a one-off
+# extraction is committed now (packages/corpus/lib/tools/postcode-triples.ts); v0.24.0's was a one-off
 # that never landed, which is why the recipe output was unbuildable for a new country. Route notes in its
 # docstring: parent_id joins for FR/DE/ES/IT/NL only, GeoNames carries the triple inline for PT/MX/IN,
-# and nearest-locality-centroid was measured (13.5-81.1% agreement) and REJECTED.
+# and nearest-locality-centroid was measured (13.5-81.1% agreement) and rejected.
 #
 # COUNTRY_WEIGHTS is now 134 codes, up from 25. `data_loader.py:301` drops any country absent from the
 # map, so the old 25 was the exhaustive training-country list and everything else was silently dropped
@@ -106,7 +106,7 @@
 # #288 validates JP/KR/TW together. admitting two of the three would teach the model that Korean and
 # Taiwanese toponyms are not places.
 #
-# COST of the expansion, measured rather than assumed: 0.778% of every epoch. country_weights is a
+# cost of the expansion, measured rather than assumed: 0.778% of every epoch. country_weights is a
 # per-row admission check applied inside each source's stream, and the source multinomial fixes each
 # source's draw share — so admitting CN's 11.36M rows does not add CN 1.7% of the run. CN's rows live
 # almost entirely in wof-admin, which is 1.155% of draws, so CN lands at 0.368%.
@@ -115,21 +115,21 @@
 # intent; `country_census_raw`'s completeness audit reports them as "0 rows seen", which is correct and not
 # a failure. The two that matter and are not inert: IN (this source's 16,000 rows) and NZ (11,957).
 #
-# ADMITTED FOR THE FIRST TIME, with rows: CN 11,357,947 | JP 2,092,821 | KR 1,083,156 | TW 678,660 |
+# admitted FOR the first time, with rows: CN 11,357,947 | JP 2,092,821 | KR 1,083,156 | TW 678,660 |
 # NZ 11,957 | TR 1,124 | LB 1,117 | JO 1,101 | GE 1,071 | AS 5. All are 0.0% street-level wof-admin
 # toponyms. This is not the JP work: #296 and the v8-jp-full corpus teach JP block structure under the
 # 47-label `stage3-jp` set (STAGE3_TAGS + JP_FINE_TAGS), which needs a wider head and an additive
 # fine-tune. Admitting JP here teaches toponym recognition only.
 #
-# EXPOSURE: 3 reps/row x 32,125 rows against 155.0 other-source total over 8,000 x 128 = 1,024,000 samples
+# exposure: 3 reps/row x 32,125 rows against 155.0 other-source total over 8,000 x 128 = 1,024,000 samples
 # -> 16.10, a 9.4% share. v4.7.0 was 6 reps x 17,908 -> 18.17 at 10.5%. Nearly the same exposure, twice the
 # surface breadth, and six reps is now arithmetically impossible at this row count.
 #
-# PRE-REGISTERED CHECK (set before the run):
+# PRE-registered check (set before the run):
 #   1. the conditional fraction does not lose a row;
 #   2. FR and DE show no regression anywhere - iron rule 6, the D-rule;
-#   3. the 4 ve_city_postcode_trailing_state rows are the IMPROVEMENT metric rather than the check;
-#   4. WATCH: tier-1 must not regress from the 134-country admission. If it does, the expansion and the
+#   3. the 4 ve_city_postcode_trailing_state rows are the improvement metric rather than the check;
+#   4. watch: tier-1 must not regress from the 134-country admission. If it does, the expansion and the
 #      placement change are separable - re-run with the 25-country map to attribute.
 
 data:
@@ -272,7 +272,7 @@ data:
     VU: 1.0
     ZA: 1.0
   source_weights:
-    # REPS-FIRST (#1677): weight = target_reps x rows x total / (samples - target_reps x rows).
+    # reps-first (#1677): weight = target_reps x rows x total / (samples - target_reps x rows).
     # 6 reps/row x 17,908 rows against 155.0 total over 8,000 x 128 = 1,024,000 samples -> 18.17,
     # a 10.5% share. Parity with the bare trailing-region sources, measured at 7.7 and 5.2 reps/row.
     # For contrast, the weight that collapsed v4.6.0 was 1.0 and bought 165 reps/row.

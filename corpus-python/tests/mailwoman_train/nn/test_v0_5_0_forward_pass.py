@@ -120,10 +120,10 @@ def _stub_phrase_features(bsz: int, seq_len: int) -> torch.Tensor:
 # region Forward-pass: phrase-prior conditioning
 
 
-def test_phrase_kind_taxonomy_matches_ts_contract():
+def test_phrase_kind_taxonomy_matches_ts_interface():
     """Drift guard: the Python-side PHRASE_KINDS must match the TS-side ``PhraseKind`` union.
 
-    Order is the encoding contract — the i-th kind here is the same kind that downstream
+    Order is the encoding interface — the i-th kind here is the same kind that downstream
     corpus loaders one-hot at slot ``PHRASE_BIE_DIM + i``. If TS adds a new kind, this
     list and ``core/pipeline/types.ts``'s ``PhraseKind`` must move together in the same
     commit. otherwise the model card's ``phrase_kind_vocab`` silently mis-aligns.
@@ -315,7 +315,7 @@ def test_predict_top_k_with_back_compat_encoder_still_works():
 def test_save_load_roundtrip_preserves_phrase_prior_config(tmp_path):
     """Round-trip: building a phrase-prior encoder, saving to disk, and loading it back
     must reconstruct an identical encoder. Pins the v0.5.0 model card's
-    ``use_phrase_priors`` + ``phrase_feature_dim`` keys as load-side contract.
+    ``use_phrase_priors`` + ``phrase_feature_dim`` keys as load-side interface.
     """
     m = _build_encoder(use_phrase_priors=True)
     m.save_pretrained(tmp_path)
@@ -334,7 +334,7 @@ def test_save_load_roundtrip_preserves_phrase_prior_config(tmp_path):
 def test_load_v0_4_0_card_back_compat(tmp_path):
     """A model card written by v0.4.0 (no ``use_phrase_priors`` key) must still load —
     defaults to False, no phrase-prior projection layer. Pins the backwards-compat
-    contract: old weights packages keep loading on v0.5.0 codebase."""
+    interface: old weights packages keep loading on v0.5.0 codebase."""
     import json
 
     m = _build_encoder(use_phrase_priors=False)
@@ -356,7 +356,7 @@ def test_load_v0_4_0_card_back_compat(tmp_path):
 
 
 def test_v0_5_0_smoke_config_loads_and_matches_thread_c_scope():
-    """Pins the scaffold's training-config contract to the Thread C-s scope:
+    """Pins the scaffold's training-config interface to the Thread C-s scope:
 
     - phrase priors on (the headline change)
     - hidden_size unchanged at the v0.3.0/v0.4.0 baseline (256) — the bump is out of scope
@@ -379,7 +379,7 @@ def test_v0_5_0_smoke_config_loads_and_matches_thread_c_scope():
     assert cfg.model.use_crf is True
     assert cfg.model.crf_normalization == "per_token"  # v0.4.0 dual-loss setting is retained
     # The config is a historical STAGE2-era artifact: its class_weights cover exactly the
-    # 21-label STAGE2 vocabulary, which rides intact inside the current (STAGE3) ACTIVE set.
+    # 21-label STAGE2 vocabulary, which rides intact inside the current (STAGE3) active set.
     weights = set(cfg.model.class_weights or {})
     assert weights == set(STAGE2_BIO_LABELS)
     assert weights <= set(ACTIVE_BIO_LABELS)

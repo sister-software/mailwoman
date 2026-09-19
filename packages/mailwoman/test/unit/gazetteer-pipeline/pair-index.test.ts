@@ -31,7 +31,7 @@ describe("PairIndexBuilder", () => {
 	it("records the caller's parent tag per row, not one derived from the child tag (PIX2)", () => {
 		const b = new PairIndexBuilder()
 
-		// The US WOF source's two parent shapes on the same child tag: a locality parent and a BOROUGH
+		// The US WOF source's two parent shapes on the same child tag: a locality parent and a borough
 		// parent. `WESTERN_PARENT_OF.dependent_locality` is `["locality"]`, so a derivation could only ever
 		// produce the first — the second is the edge PIX2 exists to be able to state.
 		b.addRow("Astoria", "New York", "locality")

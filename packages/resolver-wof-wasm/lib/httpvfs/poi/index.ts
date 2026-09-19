@@ -3,18 +3,18 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   A SECOND sql.js-httpvfs worker, byte-ranged over the published `poi.db` (`poiLayerURL()`) —
+ *   A second sql.js-httpvfs worker, byte-ranged over the published `poi.db` (`poiLayerURL()`) —
  *   category-only k-ring search for a live POI explorer. Independent of
  *   `resolver.ts`'s admin-gazetteer worker: a POI search opens its own worker over a
  *   different DB, over the same staged sql.js-httpvfs UMD/worker/wasm assets.
  *
- *   The k-ring walk + h3 packing REPLICATE `resolver-wof-sqlite/poi-lookup.ts`'s Node reader exactly
- *   — `latLngToCell` → `shortCellToInt` (the SHARED `@mailwoman/spatial` 48-bit packer, never
+ *   The k-ring walk + h3 packing replicate `resolver-wof-sqlite/poi-lookup.ts`'s Node reader exactly
+ *   — `latLngToCell` → `shortCellToInt` (the shared `@mailwoman/spatial` 48-bit packer, never
  *   reimplemented), then the same per-cell probe SQL, ring-by-ring dedup, and a final haversine sort.
  *   Keep the two readers in lockstep. a probe-semantics cross-check against the Node reader lives in
  *   the PR description rather than in this tree (throwaway verification script rather than shipped).
  *
- *   CATEGORY-ONLY, matching the runbook: no FTS name search, no brand search — the multi-hop demo
+ *   category-only, matching the runbook: no FTS name search, no brand search — the multi-hop demo
  *   path is deliberately excluded from this tester.
  */
 
@@ -27,7 +27,7 @@ import { rowsFromExec } from "#httpvfs/rows"
 export { resolveAnchorCenter, type AnchorCenter } from "#httpvfs/poi/anchor"
 
 /**
- * Resolution the published `poi.db`'s `h3_cell` column is keyed at — MUST match the builder (poi-lookup.ts's
+ * Resolution the published `poi.db`'s `h3_cell` column is keyed at — must match the builder (poi-lookup.ts's
  * `POI_H3_RESOLUTION`).
  */
 const POI_H3_RESOLUTION = 9
@@ -84,7 +84,7 @@ export interface POISearchOpts {
 	center: { lat: number; lon: number }
 	/**
 	 * Ring budget (default 6, k reaches 5 — empirically ~1 km against the sealed layer: a live cross-check against a real
-	 * Springfield-IL cafe cluster found its NEAREST hit only at k=3, so a smaller default returned zero results for a
+	 * Springfield-IL cafe cluster found its nearest hit only at k=3, so a smaller default returned zero results for a
 	 * perfectly ordinary query). Still well under the Node reader's 12-ring/~4 km default — the tester issues one
 	 * explicit-click search rather than a per-keystroke probe, so the request count stays bounded either way.
 	 */
@@ -137,9 +137,9 @@ export async function searchPOICategory(worker: POIHTTPVFSWorker, opts: POISearc
 			const shortCell = shortCellToInt(cell as H3Cell)
 
 			// Country is appended to the per-cell probe (beyond the spec's literal 4-column SQL) so the
-			// tester's results list can show it — same WHERE/ORDER/LIMIT + packing, one extra column.
+			// tester's results list can show it — same where/order/limit + packing, one extra column.
 			// `category_id IN (…)` unions the fan-out leaves in one probe per cell (the ids are dictionary ints, never
-			// user input — no injection surface). LIMIT still caps the per-cell pull. the outer ring loop + final sort
+			// user input — no injection surface). limit still caps the per-cell pull. the outer ring loop + final sort
 			// trim to the nearest `limit`.
 			const sql =
 				`SELECT name, latitude, longitude, confidence, country FROM poi ` +

@@ -3,11 +3,11 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   A GB board in the FRAGMENT register — the one register that can see the Option-A evidence bundle.
+ *   A GB board in the fragment register — the one register that can see the Option-A evidence bundle.
  *
- *   WHY IT HAD TO EXIST. Restoring the evidence channels to the en-gb overlay (#1511, ROAD_TO_V9 §1 A4)
+ *   why IT had TO exist. Restoring the evidence channels to the en-gb overlay (#1511, ROAD_TO_V9 §1 A4)
  *   is a default-on change, so the D-rule wants a before/after on GB. Run against `gb-golden.jsonl`
- *   through the production pipeline, the two arms come back BYTE-IDENTICAL — same span sha256, all
+ *   through the production pipeline, the two arms come back byte-identical — same span sha256, all
  *   three boards unmoved. That is not evidence of safety: every gb-golden row is a full address, the
  *   kind classifier calls it `formatted`, and the register check (Decision A, `classifier.ts`'s
  *   `evidenceOn`) withholds both evidence channels in that register by design. The board is blind to
@@ -22,7 +22,7 @@
  *   - `place` — `dependent_locality, locality`. The locality-surface channel's register, and the one
  *     the shipped bundle's homonym wins were measured in.
  *
- *   Rows whose fragment does not classify as `fragmented` are SKIPPED and counted rather than silently graded
+ *   Rows whose fragment does not classify as `fragmented` are skipped and counted rather than silently graded
  *   in the wrong register — the mistake this file exists to correct.
  *
  *   Usage: node packages/mailwoman/lib/dev-tools/gb-fragment-board.run.ts --cache-root <dir> --label <name>
@@ -72,7 +72,7 @@ const SHAPES = [
 		tag: "street",
 		build: (c: Record<string, string>) =>
 			c.street ? [c.house_number, c.street].filter((part) => part != null && part.length).join(" ") : undefined,
-		// The model emits the street as a FAMILY (prefix/name/particle/suffix); assemble it the way
+		// The model emits the street as a family (prefix/name/particle/suffix); assemble it the way
 		// `score-anchor-v2-boards.run.ts` does before comparing to the whole-name gold.
 		emit: STREET_FAMILY_TAGS,
 	},

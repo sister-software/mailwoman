@@ -59,8 +59,8 @@ Rue de Rome          →  locality ✗        (Rome IS a city)
 ```
 
 The prefix isn't the variable — **toponym identity is**, and a house number is what breaks the tie.
-"Montmartre" votes locality, which is what the training distribution taught it to do: bare street
-fragments are rare in the corpus and bare localities are not, so the prior is doing exactly its job
+"Montmartre" votes locality. The training distribution taught it to do that: bare street fragments
+are rare in the corpus and bare localities are common, so the prior is doing exactly its job
 and the job is wrong. Nothing in the objective makes propagating the prefix's implication cheaper
 than ignoring it.
 

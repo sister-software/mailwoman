@@ -7,11 +7,11 @@
  *   country name, so the class is out of the model's training distribution and the tag is a coin
  *   flip: measured on the 2026-08-13 panel, France/Germany/United States/New Zealand parsed
  *   `country` while Japan/China/Nigeria/Australia/Deutschland parsed `locality`. The retrieval-side
- *   bare-country race (#1651) covers the answer either way. this recipe closes the PARSE half so the
+ *   bare-country race (#1651) covers the answer either way. this recipe closes the parse half so the
  *   tag itself is right.
  *
  *   Source is the codex country table — every ISO canonical English name plus the curated surface
- *   forms (endonyms and long-form names). The 2–3 letter CODES are deliberately excluded: a bare
+ *   forms (endonyms and long-form names). The 2–3 letter codes are deliberately excluded: a bare
  *   `JP` or `GER` is an abbreviation register with its own ambiguity surface (`IN`, `DE`, `TO` are
  *   English words), and teaching it here would be an unmeasured claim. Case augmentation is the
  *   loader's job, as everywhere.

@@ -3,7 +3,7 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Read ONE POI class out of an already-sealed POI layer, as the second inventory a capture-recapture
+ *   Read one POI class out of an already-sealed POI layer, as the second inventory a capture-recapture
  *   estimate needs. Read-only by construction: the handle is opened `readOnly`, so pointing this at the
  *   shipped `poi.db` cannot reopen or patch it.
  *
@@ -30,7 +30,7 @@ export interface ReferenceInventoryQuery {
 	 */
 	category: string
 	/**
-	 * Coarse pre-clip. Must CONTAIN the region of interest — the caller clips exactly, on the H3 cell set.
+	 * Coarse pre-clip. Must contain the region of interest — the caller clips exactly, on the H3 cell set.
 	 */
 	bbox: BBox
 }

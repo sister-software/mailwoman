@@ -1,52 +1,52 @@
-# === v3.10.0-gb-probe — GB locale add + dependent_locality dead-tag resurrection. 2k PROBE. ===
+# === v3.10.0-gb-probe — GB locale add + dependent_locality dead-tag resurrection. 2k probe. ===
 # Clone of v3.8.5-latam-8k.yaml (the shipped v385/6.6.0 CA/MX Overture recipe) with exactly the
 # deltas below — one-variable discipline, everything else verbatim.
 #
-# 2026-07-22 RUN B (this launch): run A (`output-v3100-gb-probe-s42`) was a VERIFIED INSTRUMENT
-# FAILURE rather than a result — the volume-side `config.py` predated commit 78adb380
+# 2026-07-22 RUN B (this launch): run A (`output-v3100-gb-probe-s42`) was a verified instrument
+# failure rather than a result — the volume-side `config.py` predated commit 78adb380
 # (`reinit_label_rows` + `classifier_learning_rate`), so its `_merge` hasattr check silently
 # dropped both keys and the probe ran as a plain fine-tune (adjudicated from classifier rows 7/8
-# reading ~unchanged vs v385 rather than from the loss curve). The corpus overlay + this YAML DID reach
+# reading ~unchanged vs v385 rather than from the loss curve). The corpus overlay + this YAML did reach
 # the volume correctly in run A. Run B re-syncs `corpus-python/src/` (`sync_src_gb`, verified both
 # `train.py` and `config.py` on the volume now contain `reinit_label_rows`) and launches the
 # identical recipe into a fresh output dir — same recipe, sources fixed, one variable (the
 # instrument) corrected.
 #
-# THE VARIABLES (three, bundled because each alone is a known no-op — #456/#1100 dead-tag history):
+# the variables (three, bundled because each alone is a known no-op — #456/#1100 dead-tag history):
 #   1. data.corpus_dir -> v0.14.0-gb (v0.13.0-latam base + the new synth-gb-v1 recipe output, 800k rows,
 #      32.8% B-dependent_locality) + data.source_weights.synth-gb: 6.0 (the same tier as the other
 #      locale-add sources, synth-german/synth-nl-postcode).
-#   2. model.class_weights B-/I-dependent_locality 0.3 -> 1.0. Task 4a's fix made GB actually EMIT
-#      the tag in the corpus. a 0.3 downweight on top of a near-zero classifier row is the THIRD
+#   2. model.class_weights B-/I-dependent_locality 0.3 -> 1.0. Task 4a's fix made GB actually emit
+#      the tag in the corpus. a 0.3 downweight on top of a near-zero classifier row is the third
 #      suppressor and would mute the very signal this probe is testing.
 #   3. train.reinit_label_rows (rows 7/8, mean-of-live re-init) + train.classifier_learning_rate
 #      1.0e-3 (a dedicated hot param group on `classifier.` — Adam's update is scale-invariant, so
 #      only a real param group moves a baked-negative row. see train.py build_optimizer/
 #      reinit_label_rows, #1100 Task 6).
 #
-# ⚠️ LAUNCH DISCIPLINE: this recipe must launch with `--resume none`. `reinit_label_rows` and
+# ⚠️ launch discipline: this recipe must launch with `--resume none`. `reinit_label_rows` and
 # `init_from` both live in the train.py `else` branch of the resume/init_from fork — a `--resume
 # auto` run takes the `if resume_from:` branch instead and never evaluates `reinit_label_rows` at
 # all (silent no-op rather than an error). See train.py L433-456.
 #
 # init_from: the verified v385 (6.6.0, shipped npm 7.1.0) step-008000 checkpoint. The v3.8.5 config's
-# own `output_dir` string (`output-v384-latam-probe-s42`) is a REUSED name from the v384 2k probe —
+# own `output_dir` string (`output-v384-latam-probe-s42`) is a reused name from the v384 2k probe —
 # do not read it as v385's identity. Verified on the volume 2026-07-22: `modal volume ls
 # mailwoman-training /output-v384-latam-probe-s42/checkpoints/` lists step-001000..step-008000 (8
 # checkpoints, matching the v3.8.5 recipe's max_steps 8000 / save_every_steps 1000), and
 # `/output-v384-latam-probe-s42/model.onnx` + `train_log.csv` are both present at the dir root
 # (the exported-and-shipped artifact), corroborating neural-weights-en-us/model-card.json's v385
 # provenance (recipe v3.8.5-latam-8k.yaml, init_from v381 step-8000, best_step 8000). No
-# `output-v385-*` directory exists on the volume — v385 IS output-v384-latam-probe-s42.
+# `output-v385-*` directory exists on the volume — v385 is output-v384-latam-probe-s42.
 #
-# PRE-REGISTERED READ (written before the numbers exist. verbatim from
+# PRE-registered read (written before the numbers exist. verbatim from
 # docs/superpowers/plans/2026-07-22-en-gb-locale-arc.md Task 7):
-#   PRIMARY : dependent_locality emission on the 246-row NZ board + GB board.
-#   GUARDS  : golden us/fr noise, digit + FR fragment boards, 6 demo presets byte-identical.
-#   FALLBACK: locality-mapped ship, no knob-spinning.
+#   primary : dependent_locality emission on the 246-row NZ board + GB board.
+#   guards  : golden us/fr noise, digit + FR fragment boards, 6 demo presets byte-identical.
+#   fallback: locality-mapped ship, no knob-spinning.
 #
-# 2k PROBE (not a ship candidate). On a pass: operator decides whether to escalate to 8k. On a
-# PRIMARY miss: invoke the pre-registered fallback (locality-mapped) — do not iterate the knobs.
+# 2k probe (not a ship candidate). On a pass: operator decides whether to escalate to 8k. On a
+# primary miss: invoke the pre-registered fallback (locality-mapped) — do not iterate the knobs.
 #
 # Launch: cd corpus-python && modal run -d -m launch.train_remote --config v3.10.0-gb-probe.yaml --resume none
 
@@ -90,7 +90,7 @@ data:
     usgov-hrsa-fqhc: 2.0
     usgov-imls-pls: 2.0
     usgov-nad: 1.0
-    state-ia-contractors: 2.0
+    state-ia-builders: 2.0
     state-tx-notaries: 1.5
     state-ny-notaries: 2.0
     deepseek-kryptonite: 3.0
@@ -110,9 +110,9 @@ data:
     synth-no-street-led: 0.0
     synth-cz-pcfirst-preposition: 12.0
     synth-nl-postcode: 6.0
-    # PROBE 1: the fragment/autocomplete source (assay weight — moderate precedent).
+    # probe 1: the fragment/autocomplete source (assay weight — moderate precedent).
     synth-fragment: 6.0
-    # #727 T2 NEW — the one variable. 12.0 = the targeted-fix precedent (fr-bare-street,
+    # #727 T2 new — the one variable. 12.0 = the targeted-fix precedent (fr-bare-street,
     # si-bare-village, no-street-led are all 12.0). Streets with no house number + the
     # bare-locality counter.
     synth-fr-fragment: 12.0
@@ -159,12 +159,12 @@ model: # Verbatim from v2.4.1.
   use_postcode_anchor: true
   use_gazetteer_anchor: true
   gazetteer_feature_dim: 5
-  # #1104 country channel ON — dedicated 2-dim [country_surface, country_ambiguous] soft feed with its
+  # #1104 country channel on — dedicated 2-dim [country_surface, country_ambiguous] soft feed with its
   # own projection + confidence (must equal the lexicon's feature_dim). Default-False elsewhere, so a
   # resume from a pre-country checkpoint stays byte-identical until this flips.
   use_country_anchor: true
   country_feature_dim: 2
-  # #1104 homograph-guard SOFTENER — the one variable vs v263. Scales the country_ambiguous dim by 0.5
+  # #1104 homograph-guard softener — the one variable vs v263. Scales the country_ambiguous dim by 0.5
   # before the country_projection (bakes into the exported ONNX. no lexicon/inference change). v263's
   # hard guard (scale 1.0) over-suppressed homograph countries Georgia/Jordan (country-homograph F1
   # 89.8->82.6); softening should recover homograph recall without giving back the country F1 the
@@ -228,8 +228,8 @@ train: # Same-vocab init_from fine-tune off the shipped v385 (fresh optimizer; -
   csv_log_path: "{output_dir}/../train_log.csv"
   lr_schedule: constant
   gazetteer_curriculum: false
-  classifier_learning_rate: 1.0e-3 # DELTA — NEW. The dead-tag resurrection hot param group (#1100 Task 6); see header.
-  reinit_label_rows: ["B-dependent_locality", "I-dependent_locality"] # DELTA — NEW. Mean-of-live re-init of the baked-dead rows. requires init_from and --resume none (see header).
+  classifier_learning_rate: 1.0e-3 # DELTA — new. The dead-tag resurrection hot param group (#1100 Task 6); see header.
+  reinit_label_rows: ["B-dependent_locality", "I-dependent_locality"] # DELTA — new. Mean-of-live re-init of the baked-dead rows. requires init_from and --resume none (see header).
   trackio_project: mailwoman
   trackio_run_name: v3.10.0-gb-probe-b-s42
 

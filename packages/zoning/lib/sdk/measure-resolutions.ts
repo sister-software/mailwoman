@@ -3,20 +3,20 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   The index resolution is a MEASUREMENT this layer takes rather than a number argued to — and for this subject the
- *   inherited size contract's own statistic is not the one that decides it.
+ *   The index resolution is a measurement this layer takes rather than a number argued to — and for this subject the
+ *   inherited size interface's own statistic is not the one that decides it.
  *
  *   The `partial` share carries no signal here, and that was measured. Computed over all 85,330 Irish
  *   features, the median zoning polygon is 4,497 m² against an average res-9 cell of 105,333 m²: 95.7% of
  *   them are smaller than a res-9 cell, 75.1% smaller than a res-10 cell and 34.5% smaller than a res-11 one.
  *   So the `partial` share sits near 100% at every candidate and cannot choose between them.
  *
- *   TWO NUMBERS CAN. CANDIDATES PER CELL is what a probe pays — a cell naming eight polygons is eight
- *   bounding-box tests and up to eight ray casts — and the POLYFILL-ONLY ZERO-CELL COUNT is how many features
+ *   two numbers can. candidates PER cell is what a probe pays — a cell naming eight polygons is eight
+ *   bounding-box tests and up to eight ray casts — and the polyfill-only zero-cell count is how many features
  *   the obvious index would have dropped, each of which would read downstream as an absence of zoning. Both
  *   are reported per resolution and the `partial` share rides beside them.
  *
- *   ONE STREAM, EVERY RESOLUTION. Re-reading the export per candidate costs a full pass each and buys
+ *   one stream, every resolution. Re-reading the export per candidate costs a full pass each and buys
  *   nothing — the classification is per feature, so every candidate index folds the same feature in turn. The
  *   cost is memory: each resolution holds its own cell sets, and the finest candidate dominates. A caller that
  *   runs out of headroom runs the candidates in separate invocations.
@@ -80,7 +80,7 @@ export async function measureZoningCellResolutions(
 		}
 	}
 
-	// A RANGE or an authority selector narrows the population on purpose, so the declared total is only a check on a whole
+	// A range or an authority selector narrows the population on purpose, so the declared total is only a check on a whole
 	// pass. Narrowed runs report what they read and assert nothing about it.
 	const narrowed =
 		options.limit !== undefined || options.authorityCode !== undefined || options.objectIDFrom !== undefined

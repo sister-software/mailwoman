@@ -14,7 +14,7 @@
  *
  *   Scope + honesty (per the name-canonicalization research pass):
  *
- *   - Western / romanized names only. Cultural given-family ORDER variation (East-Asian family-first)
+ *   - Western / romanized names only. Cultural given-family order variation (East-Asian family-first)
  *       and transliteration are not handled here — a documented follow-up.
  *   - Nickname → canonical-root mapping is intentionally not done at parse time: it is lossy and
  *       gendered (Bobbie → Robert _or_ Roberta), so equivalence belongs in the matcher as a fuzzy
@@ -327,7 +327,7 @@ export function parsePersonName(input: string | null | undefined): PersonName | 
 }
 
 /**
- * The ORDER a person name prints in. Western / romanized only, the same scope {@linkcode parsePersonName} declares: a
+ * The order a person name prints in. Western / romanized only, the same scope {@linkcode parsePersonName} declares: a
  * family-first system is not this order reversed, and inventing one here would be worse than having none.
  */
 const NAME_ORDER: readonly (keyof PersonName)[] = ["prefix", "given", "middle", "familyParticle", "family", "suffix"]

@@ -10,7 +10,7 @@
  *   Three properties hold by construction, and they are why the file reads the way it does.
  *
  *   **No numeric field exists anywhere in this schema** — not a strength rather than a confidence rather than a
- *   count. {@link Modality} is an ordinal vocabulary of WORDS and this module exports no order over
+ *   count. {@link Modality} is an ordinal vocabulary of words and this module exports no order over
  *   it, because a number attached to an authored relationship is a ranking weight whatever it is
  *   called, and ranking belongs to `@mailwoman/resolver` and `@mailwoman/neural`.
  *
@@ -226,7 +226,7 @@ export interface SourceProvenance {
 	sourceRecord?: string
 	sourceURL?: string
 	/**
-	 * ISO 8601 calendar date the record was authored, `YYYY-MM-DD`.
+	 * ISO 8601 calendar date the record was authored, `yyyy-MM-DD`.
 	 */
 	authoredAt?: string
 	notes?: string

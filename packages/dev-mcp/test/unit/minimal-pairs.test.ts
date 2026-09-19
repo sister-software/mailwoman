@@ -3,7 +3,7 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   The ladder diff, tested against a FAKE engine.
+ *   The ladder diff, tested against a fake engine.
  *
  *   The registry is stubbed on purpose: what is under test is whether the diff reports gained, lost and changed as
  *   three different facts and finds the first rung that moves — not whether the parser is right about Spain. A test

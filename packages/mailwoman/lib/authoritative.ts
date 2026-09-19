@@ -4,13 +4,13 @@
  * @author Teffen Ellis, et al.
  *
  *   Threads a configured authoritative provider's answer onto a geocode result (#1901). The block is
- *   ADDITIVE and SEPARATE: the provider's assertions ride beside Mailwoman's own answer, and nothing
+ *   additive and separate: the provider's assertions ride beside Mailwoman's own answer, and nothing
  *   here rewrites the open result's coordinate, components, or tier — a consumer that wants the
  *   provider's identity reads the block and decides for itself. That separation is what makes the
  *   byte-equivalence guarantee trivial: with no provider configured, this module is never called and
  *   the result is the one every caller already gets.
  *
- *   A provider that THROWS is a transport failure (network, auth, timeout) and is reported as
+ *   A provider that throws is a transport failure (network, auth, timeout) and is reported as
  *   `status: "transport_error"` with the message — never silently dropped, because a dropped failure
  *   is indistinguishable from "the provider was not configured", and that is the
  *   measurement-boundary lie this repository keeps finding.
@@ -87,7 +87,7 @@ const EVIDENCE_TAGS: ReadonlyArray<[keyof AuthoritativeEvidence, ComponentTag]> 
 
 /**
  * Build the provider query from the assembled result's components. Spans are deliberately absent here — the flat result
- * no longer carries them, and the contract marks them optional for exactly this assembly.
+ * no longer carries them, and the interface marks them optional for exactly this assembly.
  */
 export function authoritativeQueryFrom(
 	rawQuery: string,

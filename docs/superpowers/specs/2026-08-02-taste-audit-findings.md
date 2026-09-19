@@ -245,7 +245,7 @@ mailwoman/eval-harness/gauntlet/harness.ts
 neural-weights-en-{gb,us}/scripts/link-dev-weights.ts   (see A1)
 ```
 
-Check `address-id/index.ts` before touching it — the address primary key is a wire contract and its
+Check `address-id/index.ts` before touching it — the address primary key is a wire interface and its
 digest construction may be deliberate.
 
 **Cost of leaving it: low.** **Cost of fixing it: low**, except `address-id`.
@@ -341,7 +341,7 @@ home"; PIP is the gap that makes the claim untrue.
 ```
 corpus/src/adapters/fcc-bdc/adapter.ts:78                        corpus/src/adapters/usgov-hrsa-fqhc/adapter.ts:78
 corpus/src/adapters/state-hi-schools/adapter.ts:52               corpus/src/adapters/usgov-imls-pls/adapter.ts:41
-corpus/src/adapters/state-ia-contractors/adapter.ts:39           corpus/src/adapters/usgov-irs-bmf/adapter.ts:41
+corpus/src/adapters/state-ia-builders/adapter.ts:39           corpus/src/adapters/usgov-irs-bmf/adapter.ts:41
 corpus/src/adapters/state-ny-notaries/adapter.ts:37              corpus/src/adapters/usgov-nppes/adapter.ts:44
 corpus/src/adapters/state-tx-notaries/adapter.ts:38              corpus/src/adapters/usgov-samhsa-treatment-locator/adapter.ts:69
 ```
@@ -602,12 +602,12 @@ them.
 
 4. **`api-kit/metrics.ts:52 percentile`** — a different function despite the name: takes a
    **pre-sorted** array, returns `0` (not `null`) on empty, rounds to two decimals. Written for a hot
-   metrics path. Merging it into `core/utils/stats.ts` needs a judgment call about the contract, so it
+   metrics path. Merging it into `core/utils/stats.ts` needs a judgment call about the interface, so it
    is not part of A2's mechanical sweep.
 
 5. **`libpostal` / `nominatim` / `photon` error envelopes** — `{ error: "…" }` shapes that look like
    they should use `api-kit`'s `apiError`. They must not: these are drop-in replacements and their
-   wire shape is the upstream project's contract. `libpostal/app.ts:21` records the decision
+   wire shape is the upstream project's interface. `libpostal/app.ts:21` records the decision
    explicitly ("a recorded free choice, shaped to match"). Route _plumbing_ can still be shared —
    see B10.
 

@@ -1,40 +1,40 @@
-# v5.5.0 — v5.4.0's corpus and mixture, with two SUPERSEDED source generations swapped for the current ones
+# v5.5.0 — v5.4.0's corpus and mixture, with two superseded source generations swapped for the current ones
 #
 # Control: v5.4.0-target-families-60k.yaml at seed 42. This config differs from it in four lines of
 # `source_weights` and nothing else, so every difference between the two arms is the generation swap.
 #
-# WHAT WAS WRONG. `by_source` in `data_loader.py` is keyed by the row's `source` string verbatim, and a
+# what was wrong. `by_source` in `data_loader.py` is keyed by the row's `source` string verbatim, and a
 # source the weights never name is filtered out — no error, because the guard above it only raises when a
-# POSITIVE weight has no rows. The v0.29.0 corpus carries two generations of two synthetic sources:
+# positive weight has no rows. The v0.29.0 corpus carries two generations of two synthetic sources:
 #
 #   synth-cz-pcfirst-preposition        8,501 rows   weighted 12.0
-#   synth-cz-pcfirst-preposition-v21   51,037 rows   NOT NAMED -> dropped
+#   synth-cz-pcfirst-preposition-v21   51,037 rows   not named -> dropped
 #   synth-fr-bare-street               10,803 rows   weighted 12.0
-#   synth-fr-bare-street-v22           64,122 rows   NOT NAMED -> dropped
+#   synth-fr-bare-street-v22           64,122 rows   not named -> dropped
 #
 # So 115,159 rows never reached training, and the 12.0 weights landed entirely on the superseded vintages.
 # v4.6.0-admin-surfaces-smoke-500.yaml already names every generation and zeroes the superseded ones,
-# with `# SUPERSEDED by -v22` beside each. the v5 lineage lost that block at v5.0.0 and has trained CZ
+# with `# superseded by -v22` beside each. the v5 lineage lost that block at v5.0.0 and has trained CZ
 # postcode-first and FR bare-street on the old vintages ever since.
 #
-# WHAT IT COST, MEASURED. Of 685,187,151 corpus rows, the bare two-token `NNN NN` shape appears zero
+# what IT cost, measured. Of 685,187,151 corpus rows, the bare two-token `NNN NN` shape appears zero
 # times, so `100 00` is out of distribution and the reading is generalization. The in-context `NNN NN`
 # rows labelled postcode are 12,759 of them, all in the dropped `-v21`. Samples per epoch teaching that
 # opening under v5.4.0's mixture: postcode 0.0, house_number 443.7. v5.3.0 read it as a postcode against
-# a 393:0 gradient and v5.4.0 does not — 31/32 held-out CZ/SK postcodes under v5.0.0, v5.2.0 AND v5.3.0,
+# a 393:0 gradient and v5.4.0 does not — 31/32 held-out CZ/SK postcodes under v5.0.0, v5.2.0 and v5.3.0,
 # then 0/32 under v5.4.0, with the seed pair agreeing at 31/32 so the collapse is not seed noise.
 #
 # The epoch-mixture audit was reporting this from the other side the whole time: 12.0 over 8,501 rows is 8.3
-# reps/row, which it flags as a REPS OUTLIER against a 0.2 median. Over the full 59,538-row generation
+# reps/row, which it flags as a reps outlier against a 0.2 median. Over the full 59,538-row generation
 # the same weight is 1.2 reps/row. Expect the outlier list to lose both entries. that is the fix landing,
 # not a mixture change to explain away.
 #
-# WEIGHTS UNCHANGED, DELIBERATELY. Both families keep 12.0 — the number v4.6.0 also gives `-v21`. Only
+# weights unchanged, deliberately. Both families keep 12.0 — the number v4.6.0 also gives `-v21`. Only
 # which generation receives it changes, so the arm has one variable.
 #
-# PRE-REGISTERED WATCH. Grade these before any target metric:
+# PRE-registered watch. Grade these before any target metric:
 #
-#   1. The held-out spaced-postcode sweep — 32 CZ/SK `NNN NN` and 24 NL `NNNN LL` codes, none on the
+#   1. The held-out spaced-postcode sweep — 32 CZ/SK `NNN NN` and 24 NL `nnnn LL` codes, none on the
 #      board. v5.3.0 reads 31/32 and 24/24. v5.4.0 reads 0/32 and 15/24. This arm must recover CZ/SK
 #      without losing NL, and a partial recovery is a partial result rather than a pass.
 #   2. `fr.bare_street_intact` in the promotion battery, which reads 95 against a floor of 75 while

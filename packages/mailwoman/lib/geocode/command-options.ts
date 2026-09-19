@@ -31,8 +31,8 @@ export interface GeocodeCommandOptions {
 	 */
 	adminContainmentRerank: boolean
 	/**
-	 * Capital-status ranking axis (#1880). Deliberately TRI-STATE with no entry in {@link createGeocodeCommandOptions}:
-	 * unstated flows through as absent so the SESSION default (ON, with the missing-reference degrade) applies —
+	 * Capital-status ranking axis (#1880). Deliberately TRI-state with no entry in {@link createGeocodeCommandOptions}:
+	 * unstated flows through as absent so the session default (on, with the missing-reference degrade) applies —
 	 * `--capital-tier` demands the reference loudly, `--no-capital-tier` opts out.
 	 */
 	capitalTier?: boolean

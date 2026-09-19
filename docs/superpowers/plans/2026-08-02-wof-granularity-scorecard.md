@@ -1,6 +1,6 @@
 # WOF Granularity Scorecard Implementation Plan
 
-> **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
+> **For agentic workers:** required sub-skill: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
 **Goal:** Ship `mailwoman gazetteer granularity` — a per-country depth ladder over the admin gazetteer that answers "where does the gazetteer bottom out?" for all 244 countries, plus the projection-table extension it depends on.
 
@@ -64,7 +64,7 @@ deliberately uncounted — with comments saying why. Do not invent a tag for eit
 
 Replace the whole `describe("PLACETYPE_PROJECTION", …)` block at `placetype-census.test.ts:62-76`.
 Note the third test: the old file asserted `expect("wing" in PLACETYPE_PROJECTION).toBe(false)`,
-which this task deliberately makes false, so it is replaced with a placetype that is in fact not in
+which this task deliberately makes false. Therefore, it is replaced with a placetype that is in fact not in
 the WOF vocabulary.
 
 ```typescript

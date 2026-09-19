@@ -1,4 +1,4 @@
-# Exhibit 21 parser contract
+# Exhibit 21 parser interface
 
 SEC Exhibit 21 filings are semi-structured HTML rather than one stable format. This parser deliberately recognizes a
 small set of measured table, list, and plain-text shapes; it is not a general HTML parser. Uncertain rows increment

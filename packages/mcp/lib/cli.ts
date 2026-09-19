@@ -9,7 +9,7 @@
  *   `mailwoman/poi-overpass`'s `emitOverpassQL` for the export tool, `@mailwoman/core/layers` for the layer
  *   manifest tool, and `@mailwoman/bdc`'s `filingLandscape`/`plausibilityCheck` for the two BDC tools.
  *
- *   Deps are LAZY: nothing here loads the neural weights or opens a gazetteer db at startup — an MCP client
+ *   Deps are lazy: nothing here loads the neural weights or opens a gazetteer db at startup — an MCP client
  *   connects, lists tools, and may never call one (or may call only the layer-database tools, none of which touch the
  *   classifier). The shared classifier+resolver are built once, on the first call to any tool that needs them, and
  *   cached for the process lifetime. `mailwoman_overpass_export` does need them despite never executing a query — it
@@ -51,7 +51,7 @@
 import { filingLandscape, plausibilityCheck, type BDCDatabase } from "@mailwoman/bdc"
 import type { PipelineResult } from "@mailwoman/core"
 import { pathExists } from "@mailwoman/core/fs/readers"
-import { readLayerManifest, type LayerContractDatabase } from "@mailwoman/core/layers"
+import { readLayerManifest, type layerschemadatabase } from "@mailwoman/core/layers"
 import type { Resolver } from "@mailwoman/core/resolver"
 import { parseArguments } from "@mailwoman/core/scripting/arguments"
 import { mailwomanDataRoot, wofExtractPaths } from "@mailwoman/core/utils"
@@ -276,7 +276,7 @@ const deps: MCPToolDeps = {
 	},
 
 	async layerManifest(databasePath) {
-		using db = new DatabaseClient<LayerContractDatabase>(databasePath, { readOnly: true })
+		using db = new DatabaseClient<layerschemadatabase>(databasePath, { readOnly: true })
 
 		const manifest = await readLayerManifest(db)
 
@@ -320,7 +320,7 @@ const deps: MCPToolDeps = {
 			)
 		} finally {
 			bdcDB?.destroy()
-			poi?.contractDB.destroy()
+			poi?.schemadb.destroy()
 		}
 	},
 

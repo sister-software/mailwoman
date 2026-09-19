@@ -28,7 +28,7 @@ export const JSON_PARSE: RestrictedProperty = {
 	property: "parse",
 	message:
 		'Prefer `tryParsingJSON` from "@mailwoman/core/objects" — typed, non-throwing, explicit fallback. ' +
-		"If a throw on corrupt input is the contract here, import and use `parseJSONStrict` instead.",
+		"If a throw on corrupt input is the interface here, import and use `parseJSONStrict` instead.",
 }
 
 /**

@@ -3,7 +3,7 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   The native-surface engine contract. Engine-agnostic like the drop-ins: the `mailwoman` CLI
+ *   The native-surface engine interface. Engine-agnostic like the drop-ins: the `mailwoman` CLI
  *   wires the real parse/geocode/resolve stack (phase 4b); tests inject fixtures. `format` is the
  *   exception — it's wired in-package from `@mailwoman/formatter` (the surface exists to expose it).
  */

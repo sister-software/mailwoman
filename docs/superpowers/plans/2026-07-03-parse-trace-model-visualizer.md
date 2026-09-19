@@ -4,7 +4,7 @@
 
 # Parse Trace + ModelVisualizer Implementation Plan
 
-> **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
+> **For agentic workers:** required sub-skill: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
 **Goal:** A serializable `NeuralParseTrace` produced by the shared decode path (`traceParse` on `NeuralAddressClassifier`), rendered by a docs `<ModelVisualizer>` component fed from production assets.
 
@@ -152,7 +152,7 @@ describe("NeuralAddressClassifier.traceParse", () => {
 
 		expect(queryShapePrior).toEqual({ kind: "queryShape", applied: false })
 
-		// The span proposer is default-ON; whether it fires depends on the text. The contract
+		// The span proposer is default-ON; whether it fires depends on the text. The interface
 		// here is presence + a boolean rather than a specific value.
 		for (const kind of ["queryShape", "fst", "streetMorphology", "spanProposer", "conventionsMask"]) {
 			expect(bare.priors.map((p) => p.kind)).toContain(kind)
@@ -342,7 +342,7 @@ export interface TracePiece {
 
 /**
  * The full trace of one `traceParse` call. Field-by-field provenance lives in the spec's trace
- * contract table; the one deviation from that table is that vocab ids ride on `pieces[].id`
+ * interface table; the one deviation from that table is that vocab ids ride on `pieces[].id`
  * rather than a parallel `ids` array (same information, one fewer alignment invariant).
  */
 export interface NeuralParseTrace {

@@ -8,7 +8,7 @@
  *   owns resolution (`runCascade`, a street tier, an anchor fallback) and the staged progress ticks.
  */
 
-// STATIC on purpose: a dynamic-import destructure of this barrel gets tree-shaken by webpack's
+// static on purpose: a dynamic-import destructure of this barrel gets tree-shaken by webpack's
 // usedExports analysis, which once shipped the WOF cascade as `TypeError: i is not a function`.
 // Static named imports are fully analyzable. do not re-dynamize.
 import { type FlatTreeNode, flattenTreeNodes } from "@mailwoman/core/decoder"
@@ -52,7 +52,7 @@ export const DEFAULT_ADDRESS = "1600 Pennsylvania Ave NW, Washington, DC 20500"
 /**
  * Demo preset addresses. Each carries its `country` (ISO code) — the placetype-pair-prior country pin (#1278 phase 2's
  * `{country}` override): structural routing (locale-check) genuinely can't detect every locale from text shape (NZ's
- * 4-digit postcode isn't distinctive), so a preset PINS its country and {@link pairCountryForInput} hands it to
+ * 4-digit postcode isn't distinctive), so a preset pins its country and {@link pairCountryForInput} hands it to
  * `selectPairIndexForText` when the input still equals the preset text. Free-typed input (no exact preset match) falls
  * back to structural detection — GB-with-postcode auto-fires. NZ free-text stays unfired (the accepted consequence of
  * structural routing, the #1308-sibling reality).
@@ -81,7 +81,7 @@ export const EXAMPLE_ADDRESSES: Array<{ label: string; address: string; country:
 		country: "gb",
 	},
 	// NZ dependent_locality (en-nz pair-prior arc) — Plimmerton is a suburb (dependent_locality) of Porirua. Postcode
-	// DELIBERATELY OMITTED: a trailing "Porirua 5026" puts the postcode in the parent's comma-field, so segment mode
+	// deliberately omitted: a trailing "Porirua 5026" puts the postcode in the parent's comma-field, so segment mode
 	// folds "porirua 5026" and misses the index's bare "porirua" key (the shipped GB artifact misses the same way) —
 	// tracked as #1308. The `country: "nz"` pin is required here: locale-check can't structurally detect NZ (4-digit
 	// postcode isn't a distinctive format), so only the preset pin selects the nz index — free-typed NZ stays unfired.
@@ -91,7 +91,7 @@ export const EXAMPLE_ADDRESSES: Array<{ label: string; address: string; country:
 /**
  * The placetype-pair country PIN for one input (#1278 phase 2's `{country}` override). Returns a preset's `country`
  * when `input` still exactly equals that preset's text (trimmed), else `undefined` → the caller lets structural
- * detection decide. This is the stale-pin rule: the pin is tied to the preset's IDENTITY (its text), so the instant the
+ * detection decide. This is the stale-pin rule: the pin is tied to the preset's identity (its text), so the instant the
  * user edits the input it no longer matches and the parse drops to structural locale-check detection — clean and
  * stateless (no "active preset" tracking to drift). GB-with-postcode still auto-fires structurally. NZ free-text stays
  * unfired.
@@ -144,7 +144,7 @@ export interface ClassifyStageResult {
  */
 /**
  * Per-parse placetype-pair prior selector (placetype-pair-prior arc, #1278), the shape the web loader's
- * `LoadResult.selectPairIndexForText` exposes. Given the input text it runs locale-check over the text SHAPE (postcode
+ * `LoadResult.selectPairIndexForText` exposes. Given the input text it runs locale-check over the text shape (postcode
  * format / script, never place names) and returns the matching loaded index wrapped as an opaque `placetypePair` opt —
  * or `undefined` when no loaded index matches (byte-stable no-prior). Typed opaquely here because the docs bundle
  * carries no neural type dependency; `runClassifyStage` threads the result verbatim into the pipeline's `placetypePair`
@@ -206,7 +206,7 @@ export async function runClassifyStage(
 
 	hooks.onClassifierStart?.()
 
-	// Placetype-pair prior (#1278): pick the per-parse index. A preset PINS its country (pairCountryForInput) — the
+	// Placetype-pair prior (#1278): pick the per-parse index. A preset pins its country (pairCountryForInput) — the
 	// phase-2 `{country}` override — so a locale structural routing can't detect from text (NZ: 4-digit postcode isn't
 	// distinctive) still fires while the input equals the preset text. the moment the user edits, the pin drops and we
 	// fall back to structural locale-check detection (GB-with-postcode auto-fires. NZ free-text stays unfired, the

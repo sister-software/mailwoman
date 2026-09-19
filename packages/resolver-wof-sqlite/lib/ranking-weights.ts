@@ -45,7 +45,7 @@ export interface RankingWeights {
 	 */
 	proximityBoost: number
 	/**
-	 * Magnitude of the bias-hint term inside the exact-tier PROMINENCE sort (the `bias`/viewport path). Deliberately
+	 * Magnitude of the bias-hint term inside the exact-tier prominence sort (the `bias`/viewport path). Deliberately
 	 * population-scale (default = populationBoost) so a candidate near the map view / the user beats a distant-but-bigger
 	 * namesake — "the map view wins" is the feature. same-region ties (all candidates far from every hint) still fall to
 	 * population.
@@ -71,12 +71,12 @@ export interface RankingWeights {
 	 * Tier candidates with an exact name/alias match above candidates that only match partially, before the weighted-sum
 	 * score is consulted. Default true.
 	 *
-	 * Why this is needed (and why it ALIGNS with — rather than overrides — the population/importance signal): the
+	 * Why this is needed (and why it aligns with — rather than overrides — the population/importance signal): the
 	 * weighted sum adds population as a large additive boost (`populationBoost`, up to +4) so that famous places surface
 	 * for unambiguous full-name queries. But population is a _prominence prior_ — its job is to break ties among
-	 * candidates that match the query EQUALLY WELL (e.g. "Springfield" → Springfield IL over Springfield MA, both exact
-	 * name matches). It was never meant to promote a place that matches the query WORSE. For a 2-letter region
-	 * abbreviation that backfires: querying "ME" returns Maine (which has the exact alias `ME`) AND Missouri/
+	 * candidates that match the query equally well (e.g. "Springfield" → Springfield IL over Springfield MA, both exact
+	 * name matches). It was never meant to promote a place that matches the query worse. For a 2-letter region
+	 * abbreviation that backfires: querying "ME" returns Maine (which has the exact alias `ME`) and Missouri/
 	 * Michigan/etc. (which do not), and Missouri's larger population (+4) overcomes Maine's bm25 edge — so "Portland, ME"
 	 * resolves its region to Missouri and the locality then cascades to the wrong state. Tiering restores the intended
 	 * ordering: **match quality is the primary key, prominence (population) the secondary key within a tier.**
@@ -90,9 +90,9 @@ export interface RankingWeights {
 	 */
 	exactMatchTiering: boolean
 	/**
-	 * #936 option 3 — official-language names are names. When true, a candidate holding the query as an OFFICIAL name
+	 * #936 option 3 — official-language names are names. When true, a candidate holding the query as an official name
 	 * (`names.official = 1`: a preferred-form name in an official language of its country, stamped at ingest) joins the
-	 * NAME-exact sub-tier rather than the alias-exact one, provided its population clears {@link officialNameExactFloor}.
+	 * name-exact sub-tier rather than the alias-exact one, provided its population clears {@link officialNameExactFloor}.
 	 * Fixes unscoped "Åbo" → Turku (its official Swedish name) over a hamlet literally named Åbo; population still orders
 	 * within the sub-tier, so Paris → Paris FR is untouched.
 	 *
@@ -135,7 +135,7 @@ export const DEFAULT_WEIGHTS: RankingWeights = {
 	//
 	// Note: this resolver uses `place_population` directly. The separate `place_importance` table
 	// (Wikipedia-derived) is consumed by the FST layer rather than here. See
-	// docs/articles/concepts/importance-vs-population.md for the two-signal contract.
+	// docs/articles/concepts/importance-vs-population.md for the two-signal interface.
 	populationBoost: 4,
 	populationScaleLog10: 6,
 	// Exact name/alias match outranks partial match before the weighted sum (incl. population) is
@@ -164,7 +164,7 @@ export function populationScaleTerm(
 /**
  * The additive population boost: `populationBoost * populationScaleTerm(...)`, capped at `populationBoost` magnitude at
  * `10^populationScaleLog10` people. Missing population contributes 0 — never a penalty. The one formula behind the Node
- * weighted sum and the WASM re-rank, so the two backends cannot drift.
+ * weighted sum and the wasm re-rank, so the two backends cannot drift.
  */
 export function populationBoostTerm(
 	population: number | null | undefined,

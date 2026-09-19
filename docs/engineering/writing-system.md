@@ -104,11 +104,11 @@ Nine standards were assessed. The verdict column is binding.
 
 | Standard                                                                          | Verdict                          | Scope taken                                                                                    | Grounding                                                                                                                                                                                                                                          |
 | --------------------------------------------------------------------------------- | -------------------------------- | ---------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| [Diátaxis](https://diataxis.fr/)                                                  | Adopt, structural                | Page-role split; one purpose per page                                                          | Already the six-role frontmatter contract (four Diátaxis roles plus `landing` and `evidence`). Geocode Earth's flat sidebar mixing read-once with look-up-repeatedly survives only at roughly 25 pages.                                            |
+| [Diátaxis](https://diataxis.fr/)                                                  | Adopt, structural                | Page-role split; one purpose per page                                                          | Already the six-role frontmatter interface (four Diátaxis roles plus `landing` and `evidence`). Geocode Earth's flat sidebar mixing read-once with look-up-repeatedly survives only at roughly 25 pages.                                           |
 | [ASD-STE100](https://asd-ste100.org/)                                             | Adapt, reference register only   | One instruction per sentence, active voice, one word one meaning, no rhetorical language       | Applied to `reference` pages. The controlled dictionary is rejected: it cannot carry geo and ML vocabulary, and no surveyed contemporary uses one. Tutorials and guides are exempt; flattening them would discard the field's best warm registers. |
 | [ISO 19100](https://www.iso.org/committee/54904.html)                             | Adapt, terminology seed only     | An ISO term where it is already the natural codebase term, such as coordinate reference system | The field speaks GeoJSON (`feature`, `properties`, `geometry` at both Mapbox and Geocode Earth), which is also the wire reality here. No wholesale adoption.                                                                                       |
 | [UPU S42](https://www.upu.int/)                                                   | Adapt, postal shelf terminology  | Postal component vocabulary: delivery point, postcode, address component                       | Used in the postal shelf and codex-adjacent reference. Plain language on first mention, then the term.                                                                                                                                             |
-| [RFC 7322](https://www.rfc-editor.org/rfc/rfc7322)                                | Adopt, organization principles   | Facts separated from rationale, stable section hierarchy, consistent terminology               | Contract first, rationale after. This is the ordering that lets a reference page be skimmed by a reader who already knows why.                                                                                                                     |
+| [RFC 7322](https://www.rfc-editor.org/rfc/rfc7322)                                | Adopt, organization principles   | Facts separated from rationale, stable section hierarchy, consistent terminology               | Interface first, rationale after. This is the ordering that lets a reference page be skimmed by a reader who already knows why.                                                                                                                    |
 | [Microsoft Writing Style Guide](https://learn.microsoft.com/style-guide/)         | Adopt, primary style base        | Sentence-case headings, second person, contractions in guides, bias-free language              | Tie-breaker for anything the rules above leave open. It matches the observed field register across all five surveys.                                                                                                                               |
 | [Google developer style](https://developers.google.com/style)                     | Adapt, API-reference conventions | Placeholder style, code formatting, HTTP-reference patterns                                    | Secondary to Microsoft, consulted where Microsoft is silent.                                                                                                                                                                                       |
 | [Ordnance Survey](https://www.ordnancesurvey.co.uk/)                              | Reject as style authority        | GB place-name spellings only                                                                   | A lookup resource rather than a register.                                                                                                                                                                                                          |
@@ -121,8 +121,8 @@ for the GeoJSON term when the wire format already uses it.
 
 ## Register by role
 
-The six roles are the ones the frontmatter contract enforces
-(`docs/scripts/docs/frontmatter/contract.ts`). Register is a property of the role rather than of the author.
+The six roles are the ones the frontmatter interface enforces
+(`docs/scripts/docs/frontmatter/metadata.ts`). Register is a property of the role rather than of the author.
 
 | Role          | Person                 | Contractions | Sentence length    | Examples                                    |
 | ------------- | ---------------------- | ------------ | ------------------ | ------------------------------------------- |
@@ -298,14 +298,14 @@ Adding a rule means adding a fixture. `config/vale/fixtures/dirty.md` carries on
 count and at least one hit from every rule file, and it runs in the docs CI job. That script also carries
 negative assertions: `full-text search` in plain prose must stay quiet, because the `text search` swap is
 guarded so the FTS vocabulary this repo ships survives the rule, and a backticked `promotion-eval.ts` or
-`mailwoman eval promote` must stay quiet, because a name tied to a contract in backticks is exempt by design.
+`mailwoman eval promote` must stay quiet, because a name tied to a interface in backticks is exempt by design.
 
 ## Templates
 
 One per role, in [`page-templates/`](./page-templates/): [tutorial](./page-templates/tutorial.md),
 [how-to](./page-templates/how-to.md), [reference](./page-templates/reference.md),
 [explanation](./page-templates/explanation.md), [landing](./page-templates/landing.md),
-[evidence](./page-templates/evidence.md). Each carries a frontmatter skeleton that satisfies the contract in
-`docs/scripts/docs/frontmatter/contract.ts`, the section order for its role, the opening move, and one
+[evidence](./page-templates/evidence.md). Each carries a frontmatter skeleton that satisfies the interface in
+`docs/scripts/docs/frontmatter/metadata.ts`, the section order for its role, the opening move, and one
 exemplar paragraph in this voice. Start a new page by copying the template for its role rather than by copying a
 neighboring page.

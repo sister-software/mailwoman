@@ -57,7 +57,7 @@ export interface SubVenueTagRule {
  * harmless — it picks the same answer either way. There is no pair of rules with different designators that a single
  * real feature can satisfy, because each pair requires a different value for a key a feature carries once.
  *
- * PROVENANCE, per rule, all documented OSM tags:
+ * Provenance, per rule, all documented OSM tags:
  *
  * - `aeroway=terminal` / `aeroway=gate` — the two `OSM_AEROWAY_STRUCTURE_DESIGNATORS` already in the span proposer's
  *   vocabulary. This is the class that motivated the whole arc.
@@ -67,7 +67,7 @@ export interface SubVenueTagRule {
  *   rail specifically because their naming conventions differ (`Concourse B` vs `Platform 3`).
  * - `aeroway=aerodrome`, `railway=station`, `public_transport=station` — the containing venues.
  * - `amenity=university` / `amenity=college` / `amenity=hospital` — mapped to `campus`, which is a WOF placetype already
- *   in `WOF_VENUE_STRUCTURE_PLACETYPES`. `wof-osm-placetype-map.mdx` rates the WOF↔OSM mapping for `campus` as MODERATE
+ *   in `WOF_VENUE_STRUCTURE_PLACETYPES`. `wof-osm-placetype-map.mdx` rates the WOF↔OSM mapping for `campus` as moderate
  *   confidence (no single tag. these three amenities plus `landuse=education`), so treat these rows as the weakest in
  *   the table.
  *
@@ -97,7 +97,7 @@ export const SUBVENUE_TAG_RULES: SubVenueTagRule[] = [
 export const SUBVENUE_LAYERS = ["points", "multipolygons"] as const
 
 /**
- * Tag keys GDAL's default `osmconf.ini` promotes to real OGR fields, PER LAYER. See the module docstring for why this
+ * Tag keys gdal's default `osmconf.ini` promotes to real OGR fields, PER layer. See the module docstring for why this
  * cannot be one flat set the way `extract-poi.ts`'s can. Only the keys this extractor reads are listed. the real
  * `attributes=` lines are longer.
  */
@@ -115,11 +115,11 @@ export function distinctSubVenueTagKeys(rules: readonly SubVenueTagRule[]): stri
 }
 
 /**
- * Build the OGRSQL SELECT+WHERE for one layer.
+ * Build the ogrsql select+where for one layer.
  *
  * Selects `name` and `ref` (the identifier half of `Gate A12` lives in `ref` far more reliably than in `name`), every
- * key the rule table references, and `other_tags` WHOLESALE for the `name:<lang>` harvest. The WHERE is an `OR` of the
- * table's AND-groups, pushed down so GDAL scans rather than this process. The pushdown is an optimization only: a GDAL
+ * key the rule table references, and `other_tags` wholesale for the `name:<lang>` harvest. The where is an `or` of the
+ * table's and-groups, pushed down so gdal scans rather than this process. The pushdown is an optimization only: a gdal
  * dialect quirk could narrow what it matches but never widen it, and {@link matchSubVenueTagRule} re-checks the same
  * table in JS before any row is yielded, so no false positive survives even if the predicate were imprecise.
  *
@@ -155,7 +155,7 @@ export function buildSubVenueSQL(layer: string, rules: readonly SubVenueTagRule[
 
 /**
  * Pure tag-rule matcher: the first rule whose `all` conjunction is fully satisfied by `tags` wins, `null` when none do.
- * `tags` is a plain key → value dict, so this is unit-testable over synthetic dicts with no GDAL involved.
+ * `tags` is a plain key → value dict, so this is unit-testable over synthetic dicts with no gdal involved.
  */
 export function matchSubVenueTagRule(
 	tags: Readonly<Record<string, string | undefined>>,

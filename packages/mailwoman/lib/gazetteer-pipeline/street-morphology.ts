@@ -6,22 +6,22 @@
  *   Street-morphology FST artifact build (`mailwoman gazetteer build street-morphology`) — the
  *   sealed `fst-street-morphology.bin` behind the #1315 street-context check.
  *
- *   THE MOVE (static-index survey candidate 1, 2026-07-26): the street-type affix matcher was built
+ *   the move (static-index survey candidate 1, 2026-07-26): the street-type affix matcher was built
  *   from the libpostal `street_types.txt` dictionaries per process at three duplicate node call
  *   sites, and never in the browser — the demo silently ran without the street-context check the node
- *   runtimes apply by default (SCOPE invariant 2 violation). Serializing the matcher once, at build
- *   time, through the EXISTING FST wire format gives every runtime — node and web — the same sealed
+ *   runtimes apply by default (scope invariant 2 violation). Serializing the matcher once, at build
+ *   time, through the existing FST wire format gives every runtime — node and web — the same sealed
  *   artifact to deserialize, and the per-process builds become the degrade path
  *   (`street-morphology-fst-loader.ts`), not the default.
  *
- *   The artifact is locale-GENERAL: one binary covering every locale that ships a
+ *   The artifact is locale-general: one binary covering every locale that ships a
  *   `street_types.txt`, entries mapped to the synthetic `street_affix` placetype (see
  *   `resolver-wof-sqlite/street-morphology-fst-builder.ts` for the trie construction + the
  *   `minVariantLength` collision guard). Build provenance (locales ingested, counts, source dir)
  *   rides the artifact trailer via `serializeFST`, readable back with `readFSTProvenance` /
  *   `readFSTProvenanceWeb`.
  *
- *   Output defaults to `$MAILWOMAN_DATA_ROOT/wof/fst-street-morphology.bin` — staged BESIDE the
+ *   Output defaults to `$MAILWOMAN_DATA_ROOT/wof/fst-street-morphology.bin` — staged beside the
  *   per-locale FST dir (`fst-per-locale/`), never inside it. Sealed-artifact discipline: write to a
  *   staging sibling, rename into place (a previously-sealed 0444 file can't be overwritten
  *   in-place), then seal read-only.

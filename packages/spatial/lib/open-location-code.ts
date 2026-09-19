@@ -9,11 +9,11 @@
  *   published spec (https://github.com/google/open-location-code/blob/main/docs/specification.md);
  *   no dependency, no I/O.
  *
- *   A FULL code (8 digits, a `+`, then 2–3 more) decodes directly. A SHORT code (2–6 leading digits
+ *   A full code (8 digits, a `+`, then 2–3 more) decodes directly. A short code (2–6 leading digits
  *   removed, e.g. `VFQ6+92P`) is only meaningful near a reference point — the removed prefix is
  *   recovered from the reference, then the candidate cell is shifted by whole prefix-resolutions if
  *   a neighboring cell sits closer (the spec's `recoverNearest`). The reference in an address is the
- *   RESOLVED LOCALITY, which is why the geocode wiring recovers after the admin walk.
+ *   resolved locality, which is why the geocode wiring recovers after the admin walk.
  */
 
 /**
@@ -56,7 +56,7 @@ export function isFullPlusCode(token: string): boolean {
 }
 
 /**
- * A syntactically-valid SHORT plus code: 2, 4, or 6 leading digits removed — so 6, 4, or 2 digits before the `+`. The
+ * A syntactically-valid short plus code: 2, 4, or 6 leading digits removed — so 6, 4, or 2 digits before the `+`. The
  * 4-before-`+` form (`VFQ6+92P`) is the one Google prints on place cards.
  */
 export function isShortPlusCode(token: string): boolean {
@@ -131,7 +131,7 @@ function encodePairDigits(lat: number, lon: number, length: number): string {
 }
 
 /**
- * Recover a SHORT plus code against a reference coordinate, per the spec's `recoverNearest`: prepend the reference's
+ * Recover a short plus code against a reference coordinate, per the spec's `recoverNearest`: prepend the reference's
  * prefix at the missing precision, then shift the candidate cell by whole prefix-resolutions when a neighboring cell
  * center sits closer to the reference. Returns the decoded nearest cell, or null for an invalid short code.
  */

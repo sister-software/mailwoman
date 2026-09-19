@@ -43,7 +43,7 @@ concentrated exactly where it should be — the all-caps sources, where #690 fix
 | fcc-rhc-commitments (mixed-case) |       205 |       208 |              208 | +3 (byte-stable) |
 
 The mixed-case source barely moves (detection doesn't fire), and the result changes the most in
-rooftop precision — exactly the #690 contract, delivered directly once the input is delimited.
+rooftop precision — exactly the #690 interface, delivered directly once the input is delimited.
 
 ## The flip
 

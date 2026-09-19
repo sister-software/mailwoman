@@ -5,13 +5,13 @@
  *
  *   Tests for the coverage-manifest drawer (survey candidate #2). Three obligations:
  *
- *   1. BYTE-IDENTITY of the measured record vs the code constants it supersedes — the safelist
+ *   1. byte-identity of the measured record vs the code constants it supersedes — the safelist
  *        derived from {@link MEASURED_COUNTRY_COVERAGE} must equal `HARD_PLACE_COUNTRY_SAFELIST`, and
  *        {@link MEASURED_COUNTRY_BBOXES} must equal `COUNTRY_BBOX`, so a rebuilt artifact behaves
  *        exactly like the constants until a promote deliberately grows the record.
- *   2. ROUND-TRIP through a real candidate build: emit → read → `WOFCandidateTableLookup` exposes
+ *   2. round-trip through a real candidate build: emit → read → `WOFCandidateTableLookup` exposes
  *        `artifactCoverage`; a legacy DB (no manifest) reads `undefined` (the constant-fallback signal).
- *   3. MEANING-OF-ZERO: measured-and-failed (FI) is a present row, distinguishable from
+ *   3. meaning-OF-zero: measured-and-failed (FI) is a present row, distinguishable from
  *        never-measured (absent).
  */
 
@@ -74,7 +74,7 @@ async function buildFixtureCandidate(): Promise<string> {
 	return output
 }
 
-describe("byte-identity of the measured record vs the code constants (the fallback contract)", () => {
+describe("byte-identity of the measured record vs the code constants (the fallback interface)", () => {
 	test("the derived safelist equals HARD_PLACE_COUNTRY_SAFELIST exactly", () => {
 		const derived = hardCountrySafelistFromCoverage(MEASURED_COUNTRY_COVERAGE)
 
@@ -140,14 +140,14 @@ describe("emit → read round-trip through a real candidate build", () => {
 
 		const manifest = readGazetteerCoverageManifest(db)!
 
-		// FI: MEASURED and failed the check — a first-class negative result, off the safelist.
+		// FI: measured and failed the check — a first-class negative result, off the safelist.
 		const fi = manifest.countryCoverage.get("FI")
 		expect(fi).toBeDefined()
 		expect(fi?.hardFilterSafe).toBe(false)
 		expect(fi?.hardResolveRate).toBeCloseTo(0.695, 3)
 		expect(manifest.hardCountrySafelist.has("FI")).toBe(false)
 
-		// NZ: never measured — ABSENT rather than "failed". The two states must be distinguishable.
+		// NZ: never measured — absent rather than "failed". The two states must be distinguishable.
 		expect(manifest.countryCoverage.has("NZ")).toBe(false)
 		expect(manifest.countryCoverage.has("FI")).not.toBe(manifest.countryCoverage.has("NZ"))
 	})

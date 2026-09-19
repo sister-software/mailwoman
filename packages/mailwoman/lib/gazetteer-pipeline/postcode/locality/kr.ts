@@ -3,19 +3,19 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Build a KR postcode → WOF locality table by POINT-PRIMARY match (#293, Direction E / CJK arena).
+ *   Build a KR postcode → WOF locality table by point-primary match (#293, Direction E / CJK arena).
  *
  *   This is the South-Korea sibling of `build-postcode-locality-cjk.ts` (Japan). It emits the same
  *   `postcode_locality` table, so the existing `postcode_area_resolution` resolver strategy
  *   consumes it unchanged — that is the whole point of the CJK arena: one strategy, many builds.
- *   But KR's data shape is the INVERSE of Japan's, so the build is inverted too:
+ *   But KR's data shape is the inverse of Japan's, so the build is inverted too:
  *
- *   Japan (name-primary): postcode --KEN_ALL--> municipality NAME (romaji) ; GeoNames --> point ;
- *   match NAME (+ proximity tiebreak) against romanized `spr.name`. -> 94.9% Korea (point-primary):
+ *   Japan (name-primary): postcode --KEN_ALL--> municipality name (romaji) ; GeoNames --> point ;
+ *   match name (+ proximity tiebreak) against romanized `spr.name`. -> 94.9% Korea (point-primary):
  *   GeoNames postal file already carries postcode -> (place_name, admin1, lat, lon) in one source.
  *   `spr.name` is romanized, but the WOF `names` table carries Hangul (`kor` + Hangul-containing
- *   `und`) variants. So we resolve by NEAREST locality POINT (always available, sub-km dense) and
- *   use the Hangul name as an authoritative CONFIRMATION signal where it exists.
+ *   `und`) variants. So we resolve by nearest locality point (always available, sub-km dense) and
+ *   use the Hangul name as an authoritative confirmation signal where it exists.
  *
  *   Tiering (same schema/semantics as the JP builder):
  *
@@ -31,10 +31,10 @@
  *   --admin-db $MAILWOMAN_DATA_ROOT/wof/dbs-per-country/admin-kr.db\
  *   --output $MAILWOMAN_DATA_ROOT/wof/postcode-locality-kr.db
  *
- *   PORT NOTE (from scripts/build-postcode-locality-kr.py): faithful TypeScript port. No polygons, so
+ *   port note (from scripts/build-postcode-locality-kr.py): faithful TypeScript port. No polygons, so
  *   no PIP. Matching is point-nearest via `@mailwoman/spatial`'s `haversineKm` (asin form, matching Python)
- *   with proximity-constrained Hangul name confirmation. The output is written DIRECTLY to
- *   `--output` (the Python `DROP TABLE …` then `CREATE TABLE` full single-country rebuild),
+ *   with proximity-constrained Hangul name confirmation. The output is written directly to
+ *   `--output` (the Python `drop table …` then `create table` full single-country rebuild),
  *   preserving behavior.
  */
 

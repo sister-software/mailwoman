@@ -3,20 +3,20 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Smoke test for the `--debug` non-TTY path ({@link runStaticDebug} in `command.tsx`). Runs IN PROCESS — no CLI
+ *   Smoke test for the `--debug` non-TTY path ({@link runStaticDebug} in `command.tsx`). Runs IN process — no CLI
  *   spawn — so it needs both prerequisites the compiled CLI would otherwise hide behind a subprocess: the neural
  *   weights ({@link resolveWeights}, same probe `mailwoman doctor` and `geocode-session.ts` use) and a WOF admin
  *   SQLite distribution. Guard mirrors `commands/geocode.test.ts`'s `hasWOFDB` predicate exactly (same env var,
  *   same convention path) so the two suites skip and run together rather than disagreeing about the environment.
  *
- *   The `--debug-size` floor, empty-input, and `--debug` format-guard tests below all run UNCONDITIONALLY (no guard):
+ *   The `--debug-size` floor, empty-input, and `--debug` format-guard tests below all run unconditionally (no guard):
  *   each rejection fires before `runStaticDebug` ever calls `createGeocodeSession`, so none of the three needs
  *   weights or a database.
  *
- *   EVERY FRAME IS STRIPPED OF ANSI BEFORE IT IS MATCHED. The frame has two outputs and the assertions below are about
+ *   every frame is stripped OF ansi before IT is matched. The frame has two outputs and the assertions below are about
  *   only one of them: chalk emits a dim/reset pair around each evidence label, so `/system\s+us/` cannot match a
  *   coloured frame — `\s+` does not span the reset sequence sitting between the label and its value. chalk's level
- *   follows `FORCE_COLOR`, which several terminals and `tmux`/`direnv` setups set and nothing here clears, so a test
+ *   follows `FORCE_COLOR`. It several terminals and `tmux`/`direnv` setups set and nothing here clears. Therefore, a test
  *   that matches the raw capture passes or fails by the environment it happens to run in.
  */
 

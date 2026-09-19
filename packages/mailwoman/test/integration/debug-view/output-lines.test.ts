@@ -106,7 +106,7 @@ describe("outputLines", () => {
 	})
 
 	it("reads the resolved place off the DEEPEST hierarchy entry, not the candidate head", () => {
-		// On a rooftop tier the candidate head is the resolver's primary NODE (often the region), which is not the
+		// On a rooftop tier the candidate head is the resolver's primary node (often the region), which is not the
 		// place the query resolved to. Regression for showing "Oregon" as the resolved place of a Portland address.
 		const result = {
 			...RESULT,

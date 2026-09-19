@@ -7,33 +7,33 @@
  *   or swapping an apostrophe for its typographic twin must not change what the pipeline answered. Pure — no
  *   model, no I/O beyond reading the committed suite.
  *
- *   WHY IT IS A PRODUCT COMMITMENT. Punctuation is the part of an address a user supplies inconsistently and a
+ *   why IT is A product commitment. Punctuation is the part of an address a user supplies inconsistently and a
  *   tool rewrites behind their back. A phone keyboard emits a straight apostrophe, a word processor turns the
  *   same keystroke into `’`, a CSV export turns it back, a hand-typed line drops every comma, an address book
  *   writes `Str.` where a form writes `Str`, and a sentence-shaped paste ends in a full stop. All of them name
  *   the same building as the punctuated form a curator typed into the board, and Stage 1 exists to make them
  *   one string.
  *
- *   PUNCTUATION IS SOMETIMES FORMATTING AND SOMETIMES PART OF A NAME, so this law is deliberately narrow. Four
+ *   punctuation is sometimes formatting and sometimes part OF A name, so this law is deliberately narrow. Four
  *   marks, five named transformations, and three declared reasons a row may refuse an arm. What it will not do
- *   is claim invariance for every punctuation change a user could make: `COMER parís.méxico` carries a point
+ *   is claim invariance for every punctuation change a user could make: `comer parís.méxico` carries a point
  *   inside its own name, and removing it writes a string nobody sends.
  *
- *   TWO GUARDS, ANSWERING DIFFERENT QUESTIONS. {@linkcode punctuationBlindKey} decides whether a pair differs
- *   by punctuation AND NOTHING ELSE: every letter, digit, mark and WHITESPACE character survives in order, so
+ *   two guards, answering different questions. {@linkcode punctuationBlindKey} decides whether a pair differs
+ *   by punctuation and nothing else: every letter, digit, mark and whitespace character survives in order, so
  *   case, spacing and Unicode-normalization drift cannot enter this law wearing its name. That is also why no
  *   transformation here may rewrite whitespace — turning `Saint-Honoré` into `Saint Honoré` would be a spacing
  *   change carrying a punctuation label, and the key refuses it. {@linkcode punctuationApplicability} then
  *   decides whether the transformation had anything safe to act on in the row's own text and on the row's own
  *   comparator, which the key cannot say.
  *
- *   THE HYPHEN IS OUT OF THIS LAW, AND THE REASON IS THAT NO SAFE OPERATION EXISTS ON IT. Every hyphen the
+ *   the hyphen is OUT OF this LAW, and the reason is that no safe operation exists on IT. Every hyphen the
  *   corpus carries is intra-token — `Bonneuil-sur-Marne`, `Stockton-on-Tees`, the house-number range `2-6`.
  *   Deleting it merges two tokens and replacing it with a space inserts a boundary, so one breaks token text
  *   and the other is a spacing change. A hyphen-to-`U+2010` swap is safe and inert: nothing a keyboard or a
  *   word processor emits produces that codepoint, so the row would measure a string nobody sends.
  *
- *   THE VARIANT IS DERIVED, NEVER AUTHORED. Every committed row's `variant` is exactly the named
+ *   the variant is derived, never authored. Every committed row's `variant` is exactly the named
  *   transformation applied to its `base`, and {@linkcode auditPunctuationSuite} re-derives it. A hand-typed
  *   variant is how a "punctuation" row quietly acquires a dropped accent, and the law then measures something
  *   else under its own name.
@@ -59,12 +59,12 @@ export const PUNCTUATION_LAW = "punctuation-invariance"
 /**
  * The five punctuation transformations this law states, and the only five a committed row may use.
  *
- * - `comma-removed` — every separating comma deleted (`Portland, OR` → `Portland OR`). The headline register: a user who
+ * - `comma-removed` — every separating comma deleted (`Portland, or` → `Portland or`). The headline register: a user who
  *   types an address as a phrase rather than as fields. The comma goes and the spacing stays, so the tokens keep their
  *   text and their order and only the field separator is gone.
  * - `period-removed` — every separating point deleted (`Neusser Str. 12` → `Neusser Str 12`). The abbreviation register,
  *   where one source writes `Str.` / `Jr.` / `Co.` and the next writes it bare.
- * - `terminal-period` — one full stop appended (`Portland, OR` → `Portland, OR.`). The sentence register, and the
+ * - `terminal-period` — one full stop appended (`Portland, or` → `Portland, or.`). The sentence register, and the
  *   executable statement that Stage 1's trailing trim still takes the sentence punctuation a user appends.
  * - `apostrophe-typographic` — every `'` replaced by `’`: what a word processor does to a straight apostrophe.
  * - `apostrophe-ascii` — every `’` replaced by `'`: what a plain keyboard and a CSV export produce instead.
@@ -113,7 +113,7 @@ const REMOVED_MARK: Partial<Record<PunctuationTransformationName, string>> = {
 /**
  * The comparators that read the query's own text back out of the result.
  *
- * `parse_whole_strict` and `component_map` both grade component VALUES, and a component value is the span the parser
+ * `parse_whole_strict` and `component_map` both grade component values, and a component value is the span the parser
  * quoted from the query — so a transformation that rewrites a token rewrites the value with it, and the comparator
  * reports the transformation rather than anything the pipeline decided. `resolution_identity` reads namespaced place
  * ids and `assembled_coordinate` reads a coordinate. neither can carry a mark.
@@ -121,7 +121,7 @@ const REMOVED_MARK: Partial<Record<PunctuationTransformationName, string>> = {
 const TEXT_ECHOING_COMPARATORS = new Set<OutcomeComparatorName>(["parse_whole_strict", "component_map"])
 
 /**
- * The removal transformations whose mark belongs to a TOKEN rather than to the space between two.
+ * The removal transformations whose mark belongs to a token rather than to the space between two.
  *
  * A point followed by whitespace terminates the word in front of it — there is no address convention in which a lone
  * point separates two fields — so the parser's own span carries it: 18 of the corpus's 1,502 expected component values
@@ -132,7 +132,7 @@ const TEXT_ECHOING_COMPARATORS = new Set<OutcomeComparatorName>(["parse_whole_st
 const TOKEN_TEXT_REMOVALS = new Set<PunctuationTransformationName>(["period-removed"])
 
 /**
- * Delete every SEPARATING run of `mark` and leave the intra-token ones byte-identical.
+ * Delete every separating run of `mark` and leave the intra-token ones byte-identical.
  *
  * A run is separating when whitespace or the end of the query follows it, which is the decidable form of "this mark
  * sits at a token's edge". `parís.méxico` keeps its point, `and more...,` keeps its ellipsis, and `Str. 12` loses one.
@@ -190,7 +190,7 @@ export const PUNCTUATION_TRANSFORMATION_BY_NAME: Record<PunctuationTransformatio
  * non-punctuation codepoint. `\p{P}` rather than the four marks the transformations act on, for the same reason the
  * spacing law's key takes all of `\s`: the key is a comparison surface rather than a transformation, and a pair that
  * swapped a hyphen for a dash must still come out equal here so {@linkcode classifyPunctuationTransformation} can
- * refuse it BY NAME rather than by looking like a different law.
+ * refuse it BY name rather than by looking like a different law.
  */
 export function punctuationBlindKey(text: string): string {
 	return text.replaceAll(/\p{P}/gu, "")
@@ -217,8 +217,8 @@ export function classifyPunctuationTransformation(base: string, variant: string)
  *
  * - `identity-transformation` — the transformation returns the text unchanged because the query holds nothing of the kind
  *   it acts on: no comma to drop, no straight apostrophe to curl, a query that already ends in a full stop. Such a row
- *   is the IDENTITY law wearing a punctuation label — it would hold whatever the pipeline does with punctuation.
- * - `mark-inside-token` — the query does carry the mark, and every occurrence sits inside a token (`COMER parís.méxico`,
+ *   is the identity law wearing a punctuation label — it would hold whatever the pipeline does with punctuation.
+ * - `mark-inside-token` — the query does carry the mark, and every occurrence sits inside a token (`comer parís.méxico`,
  *   `and more...,`). Removing it would rewrite the token's text and change what the query names, which is the opt-out
  *   this law's narrowness exists for. Reported apart from the identity reading because "this query has no point" and
  *   "this query's point is part of a name" are different absences.
@@ -256,7 +256,7 @@ export interface PunctuationApplicabilityContext {
 	/**
 	 * The row's own `outcomeComparator`. Absent skips the {@linkcode PUNCTUATION_APPLICABILITY_RULES}
 	 * `text-echoing-comparator` reading, which is what the suite audit does: the audit knows the comparator but not the
-	 * spans, so it applies the declared half of the rule and the suite test applies the corpus-grounded half.
+	 * spans. Therefore, it applies the declared half of the rule and the suite test applies the corpus-grounded half.
 	 */
 	comparator?: OutcomeComparatorName
 	/**
@@ -343,7 +343,7 @@ export const PUNCTUATION_SUITE_PATH: string = resolvePackagePath(
  *
  * Returns one message per problem, each naming the fixture. Empty means the suite states this law and only this law.
  *
- * The `caseCountry` requirement is not bookkeeping: a row graded with no country routes through the BASE en-US weights
+ * The `caseCountry` requirement is not bookkeeping: a row graded with no country routes through the base en-US weights
  * package rather than its own overlay, so a punctuation violation would be reported for an instrument that was never
  * pointed at the row's locale.
  *

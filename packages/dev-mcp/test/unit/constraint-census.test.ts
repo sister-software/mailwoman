@@ -3,7 +3,7 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   The constraint census, tested against a FAKE engine and a FAKE candidate table.
+ *   The constraint census, tested against a fake engine and a fake candidate table.
  *
  *   What is under test is the accounting — reachability kept apart from coverage, an eval called inert only when it
  *   never accompanied a pick — not whether the resolver is right about any particular place. A test that loaded the

@@ -3,7 +3,7 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Tests for the Gauntlet's RESOLVER-pin pin (#42, 2026-08-05) — the plumbing that lets the check grade a resolver
+ *   Tests for the Gauntlet's resolver-pin pin (#42, 2026-08-05) — the plumbing that lets the check grade a resolver
  *   configuration rather than just a model.
  *
  *   These assert a mapping, deliberately: `run options → layer options → geocode deps`. The check itself needs the ~9 GB
@@ -178,7 +178,7 @@ describe("runResolverPins forwards BOTH halves of the prior tri-state", () => {
 	// The bug this pins: while the prior was opt-in, the builder forwarded only the truthy half
 	// (`...(options.gazetteerPrior ? { gazetteerPrior: true } : {})`). After the default-on flip that silently
 	// discarded `--gazetteer-prior-off`, so the off arm graded the default configuration while its log said
-	// `gazetteerPrior=OFF` — the exact "two pin logs that differ only in a flag someone typed" failure the pins
+	// `gazetteerPrior=off` — the exact "two pin logs that differ only in a flag someone typed" failure the pins
 	// line exists to prevent. Caught by running the off arm and reading the board rather than by a test.
 	it("keeps an explicit false", () => {
 		expect(runResolverPins({ gazetteerPrior: false })).toEqual({ gazetteerPrior: false })
@@ -195,7 +195,7 @@ describe("runResolverPins forwards BOTH halves of the prior tri-state", () => {
 
 describe("adminContainmentRerank pin (#1717 stage 2)", () => {
 	// Two-sided from day one — the #1706 class: a one-sided forwarding compiles, passes every other test, and
-	// produces an OFF-labelled log that graded the default arm.
+	// produces an off-labelled log that graded the default arm.
 	it("maps the ON pin onto the geocode dep of the same name", () => {
 		expect(resolverPinDeps({ adminContainmentRerank: true })).toEqual({ adminContainmentRerank: true })
 	})
@@ -243,7 +243,7 @@ describe("spanRescoreRequireContextRemainder — #2266's pin", () => {
 	})
 
 	it("is named in the run banner, both directions, and absent when unset", () => {
-		// An OFF/ON pair whose logs are indistinguishable is not evidence about the pin.
+		// An off/on pair whose logs are indistinguishable is not evidence about the pin.
 		expect(describeResolverPins({ spanRescoreRequireContextRemainder: true })).toContain(
 			"spanRescoreRequireContextRemainder=ON"
 		)

@@ -4,7 +4,7 @@
  * @author Teffen Ellis, et al.
  *
  *   The regression for the debug view's input field, driven through a real pty because the defect it covers is about
- *   BYTES: what a terminal sends for alt+backspace, and what Ink's keypress parser makes of it. A component test can
+ *   bytes: what a terminal sends for alt+backspace, and what Ink's keypress parser makes of it. A component test can
  *   only assert what the harness decides to pass `useInput`, which is the same assumption that let the bug ship.
  *
  *   What the probe measured against `ink-text-input` 6.0.0 (the field this replaced), Ink 7.1.1, 2026-08-13:
@@ -19,7 +19,7 @@
  *   Both sequences must now delete the word before the cursor, and neither may leave a letter behind.
  *
  *   `script` is util-linux's, and the `-e` / `-c` spelling is too. the suite skips where that isn't the `script` on
- *   PATH, exactly like `map-tui/cli.pty.test.ts`, which this harness is modelled on.
+ *   path, exactly like `map-tui/cli.pty.test.ts`, which this harness is modelled on.
  */
 
 import { isExecutable } from "@mailwoman/core/fs/readers"
@@ -104,7 +104,7 @@ async function driveInput(keys: string[]): Promise<string> {
 }
 
 /**
- * Every `VALUE=[…]` the probe rendered, in stream order — the field's edit history. Not de-duplicated: the same value
+ * Every `value=[…]` the probe rendered, in stream order — the field's edit history. Not de-duplicated: the same value
  * can be reached twice (both word deletes here land on `hello `), and a `Set` would hide the second behind the first,
  * which is exactly the assertion this test needs to make about the last frame.
  */

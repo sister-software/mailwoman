@@ -5,24 +5,24 @@
  *
  *   `@mailwoman/zoning/test-kit` — hand-built geometry for the fixture rung: zones in two plans over the same
  *   ground, one with a hole encoded the way this service encodes them, one smaller than a cell, and one the
- *   authority states as UNZONED.
+ *   authority states as unzoned.
  *
- *   A PACKAGE SUBPATH RATHER THAN A `test/` FILE, for the same reason `packages/mailwoman/lib/test-kit` is one:
+ *   A package subpath rather than A `test/` file, for the same reason `packages/mailwoman/lib/test-kit` is one:
  *   the observation route's suite lives in another workspace, and a relative import across two TypeScript
  *   projects is refused outright (`TS2878`) because the compiled layout would not match the source layout.
  *
- *   NO NETWORK AND NO GDAL. The builder takes a {@linkcode ZoningFeatureSource}, so a fixture is a list of
+ *   no network and no gdal. The builder takes a {@linkcode ZoningFeatureSource}, so a fixture is a list of
  *   features — which is what lets this rung exercise the ring-role resolution, the vocabulary census, the cell
  *   classification, the coverage rows, the manifest and the seal on every machine rather than only the ones
  *   with ogr2ogr.
  *
- *   THE EXTERIOR RING IS THE CLOCKWISE ONE, WHICH IS THE INVERSE OF THE GEOJSON CONVENTION AND OF EVERY
- *   SIBLING FIXTURE. `@mailwoman/spatial`'s `rectangleRing` winds counter-clockwise and its `reversedRing`
+ *   the exterior ring is the clockwise one, which is the inverse OF the geojson convention and OF every
+ *   sibling fixture. `@mailwoman/spatial`'s `rectangleRing` winds counter-clockwise and its `reversedRing`
  *   clockwise, so this file aliases them the other way round from the flood and coastal test kits: under this
- *   service a clockwise ring is the EXTERIOR and a counter-clockwise one is a HOLE. A fixture that used the
+ *   service a clockwise ring is the exterior and a counter-clockwise one is a hole. A fixture that used the
  *   sibling naming would build geometry the ingest reads inside-out, and every assertion on it would pass.
  *
- *   THE COORDINATES ARE IN THE IRISH SEA east of Dublin — inside the Department's declared extent, so a
+ *   the coordinates are IN the irish SEA east of Dublin — inside the Department's declared extent, so a
  *   fixture stays in the coordinate space the product occupies, and clear of every real zoning polygon.
  */
 
@@ -113,7 +113,7 @@ export function fixtureFeature(
 		crosswalkDescription: "Existing residential",
 		crosswalkRollup: "RE",
 		...overrides,
-		// RESOLVED THROUGH THE REAL RESOLVER, never hand-assembled: a fixture that nested its own holes would test the
+		// resolved through the real resolver, never hand-assembled: a fixture that nested its own holes would test the
 		// assertion rather than the resolution, and the resolution is the part of this layer no sibling already has.
 		rings: resolveRingRoles(polygons, String(objectID)),
 	}
@@ -123,7 +123,7 @@ export function fixtureFeature(
  * The fixture set: two adjacent zones, one of them holed the way this service encodes holes. a second plan over the
  * same ground as the first. a zone smaller than a cell. and a zone the authority states as unzoned.
  *
- * THE OVERLAP BETWEEN PLANS IS THE POINT. A point inside the first zone must answer with both rows, each naming its own
+ * The overlap between plans is the point. A point inside the first zone must answer with both rows, each naming its own
  * plan — which is what proves a plan is part of the claim rather than a parameter of it.
  */
 export function fixtureFeatures(): ZoningSourceFeature[] {
@@ -132,7 +132,7 @@ export function fixtureFeatures(): ZoningSourceFeature[] {
 	const zoneA = exteriorRing(lon, lat, lon + FIXTURE_SIDE, lat + FIXTURE_SIDE)
 	const zoneB = exteriorRing(lon + FIXTURE_SIDE, lat, lon + 2 * FIXTURE_SIDE, lat + FIXTURE_SIDE)
 
-	// THE HOLE IS A SEPARATE PART rather than a nested ring — which is how the real service encodes it on the features that carry
+	// the hole is A separate part rather than a nested ring — which is how the real service encodes it on the features that carry
 	// one, and the encoding a nesting-aware reader turns into a second zoned area.
 	const holed: MultiPolygonRings = [
 		[exteriorRing(lon, lat + 2 * FIXTURE_SIDE, lon + FIXTURE_SIDE, lat + 3 * FIXTURE_SIDE)],
@@ -174,7 +174,7 @@ export function fixtureFeatures(): ZoningSourceFeature[] {
 			crosswalkCode: "N1.1",
 			crosswalkDescription: "Road",
 		}),
-		// The authority states unzoned land POSITIVELY, and uses a code its own domain never declares for it.
+		// The authority states unzoned land positively, and uses a code its own domain never declares for it.
 		fixtureFeature(5, [[unzoned]], {
 			localCode: GZT_UNZONED_LOCAL_CODE,
 			localDescription: "Unzoned",

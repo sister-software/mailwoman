@@ -17,7 +17,7 @@
  *   The aggregation runs inside DuckDB and only the grouped counts cross into JS. The train split is 681,901,687 rows
  *   over 718 parquet files and 40 GB, which the grouped query reads in 45,519 ms at six threads.
  *
- *   This measures the POOL rather than the exposure. A training run draws from each source under `source_weights` and
+ *   This measures the pool rather than the exposure. A training run draws from each source under `source_weights` and
  *   `source_reps` in its config, so a source's region spread bounds what the run can see and does not state it. Read
  *   this table beside the config's weights.
  *
@@ -117,7 +117,7 @@ interface SourceComposition {
 const bySource = new Map<string, SourceComposition>()
 
 /**
- * Per region: rows, how many carry a `street` span anywhere, and what tag OPENS the row.
+ * Per region: rows, how many carry a `street` span anywhere, and what tag opens the row.
  *
  * The opening tag is the one the trace points at. The bare admin surface writes the locality first, and a region whose
  * rows open on a street has shown the model a street in the position the probe puts a locality in. The unconditioned
@@ -132,7 +132,7 @@ const streetShapes = new Map<
 		bareAdmin: number
 		/**
 		 * Rows writing the region as its two-letter code rather than its name, and how many of those are the bare admin
-		 * surface. The model reads a SURFACE: `Arkansas` and `AR` are one region to a counter and two strings to it, so a
+		 * surface. The model reads a surface: `Arkansas` and `AR` are one region to a counter and two strings to it, so a
 		 * count that folds them cannot say what the code token was seen in company with.
 		 */
 		codeForm: number

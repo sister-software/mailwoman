@@ -7,11 +7,11 @@
  *   3166-2:CA code.
  *
  *   The informative contrast with `de/bundesland.ts` and `us/state.ts`: a Canadian subdivision is
- *   officially BILINGUAL, so each unit carries two equally-canonical names — an English one and a
+ *   officially bilingual, so each unit carries two equally-canonical names — an English one and a
  *   French one — and the gap between them is wide (`Nova Scotia` / `Nouvelle-Écosse`, `British
  *   Columbia` / `Colombie-Britannique`). That mirrors the German English-exonym pattern (`Bavaria`
  *   / `Bayern`), except here the French name is not a foreign exonym but a co-official form a real
- *   address can be written in. And like a US two-letter state code, the ISO code (`ON`, `QC`, `BC`)
+ *   address can be written in. And like a US two-letter state code, the ISO code (`on`, `QC`, `BC`)
  *   is the abbreviation people actually write on the address line — so unlike German or French
  *   regions, the Canadian code is a surface form rather than just a resolver key.
  */
@@ -23,7 +23,7 @@ import { foldName } from "#normalize"
  */
 export interface CanadianProvinceInfo {
 	/**
-	 * ISO 3166-2:CA subdivision code without the `CA-` prefix (e.g. `ON` for `CA-ON`).
+	 * ISO 3166-2:CA subdivision code without the `CA-` prefix (e.g. `on` for `CA-on`).
 	 */
 	code: string
 	/**
@@ -57,7 +57,7 @@ export const CA_PROVINCES = {
 } as const satisfies Record<string, CanadianProvinceInfo>
 
 /**
- * An ISO 3166-2:CA province/territory code (`AB`, `ON`, `QC`, …).
+ * An ISO 3166-2:CA province/territory code (`AB`, `on`, `QC`, …).
  */
 export type CanadianProvinceCode = keyof typeof CA_PROVINCES
 

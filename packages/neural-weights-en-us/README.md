@@ -1,5 +1,5 @@
 ---
-license: agpl-3.0
+license: AGPL-3.0
 language:
   - en
 library_name: onnx
@@ -195,9 +195,9 @@ inference.
 
 ## License & links
 
-- **License:** [AGPL-3.0-only](https://www.gnu.org/licenses/agpl-3.0.html).
+- **License:** [AGPL-3.0-only](https://www.gnu.org/licenses/AGPL-3.0.html).
 - **Docs & concepts:** https://mailwoman.ai
 - **Loader / scorer API:** `@mailwoman/neural` (`createScorer`).
-- The functional contract for this bundle is `model-card.json` (versions,
+- The functional interface for this bundle is `model-card.json` (versions,
   lineage, labels, calibration, `requires`); this `README.md` is the
   HuggingFace-facing card.

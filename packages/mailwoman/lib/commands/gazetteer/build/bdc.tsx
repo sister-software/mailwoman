@@ -21,7 +21,7 @@
  *
  *   Both paths are `existsSync`-guarded before any download/build work starts:
  *   `populateBDCProviderTable` only runs after `writeLayerManifest`, i.e. at the very END
- *   of a full build — an unguarded typo'd `--provider-list-path` would otherwise surface as a raw ENOENT
+ *   of a full build — an unguarded typo'd `--provider-list-path` would otherwise surface as a raw enoent
  *   only after a nationwide availability ingest had already finished, discarding hours of work.
  *   `--filer-db-path` given without `--provider-list-path` is a loud error rather than a silent no-op:
  *   filer.db is only ever read to resolve a multi-FRN primary FRN, so it does nothing without a provider
@@ -39,7 +39,7 @@ import { type CommandSpec, CommandTaskResult, type CommandComponent, useCommandT
 import { buildSHA as resolveBuildSHA } from "#gazetteer-pipeline/stamp-manifest"
 
 /**
- * Native command-line contract consumed by the filesystem command router.
+ * Native command-line interface consumed by the filesystem command router.
  */
 export const spec = {
 	name: "bdc",
@@ -151,7 +151,7 @@ const GazetteerBuildBDC: CommandComponent<typeof spec> = ({ options }) => {
 
 		// --provider-list-path (decision 6) opts into populating bdc_provider — omitted, `providers`/
 		// `filerDB` stay undefined and buildBDCDatabase runs its default path. Both paths were already
-		// existsSync-validated above, so this can't ENOENT.
+		// existsSync-validated above, so this can't enoent.
 		let filerDB: DatabaseClientHandle<FilerDatabase> | undefined
 
 		if (filerDBPath) {

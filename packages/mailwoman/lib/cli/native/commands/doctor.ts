@@ -9,7 +9,7 @@ import { prettyJSON } from "@mailwoman/core/json"
 import { booleanValue, type CommandSpec, runNativeCommand } from "#cli/native/spec"
 
 /**
- * Native installation diagnostic contract.
+ * Native installation diagnostic interface.
  */
 export const spec = {
 	name: "doctor",

@@ -36,12 +36,12 @@ export type RouteHandler<Env = TileWorkerEnv, Pattern extends string = string> =
 ) => Response | Promise<Response>
 
 /**
- * Allowed HTTP methods for route delegation.
+ * Allowed http methods for route delegation.
  */
 export type HTTPMethod = "GET" | "HEAD" | "POST" | "PUT" | "DELETE" | "CONNECT" | "OPTIONS" | "TRACE" | "PATCH"
 
 /**
- * Allowed HTTP methods for route delegation.
+ * Allowed http methods for route delegation.
  */
 const DefaultAllowedMethods: ReadonlySet<HTTPMethod> = new Set(["GET", "HEAD", "OPTIONS"])
 

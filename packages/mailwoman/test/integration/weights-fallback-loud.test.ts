@@ -7,14 +7,14 @@
  *   structural fallback so `npx mailwoman parse …` quick demos still produce output.
  *
  *   These integration tests drive the compiled CLI (`mailwoman/out/cli.js`) with weights forced absent
- *   (a locale with no weights workspace package + an empty $HOME so the user weights cache is empty too)
+ *   (a locale with no weights workspace package + an empty $home so the user weights cache is empty too)
  *   or a bad explicit `--model`/`--tokenizer` (the corrupt/partial-bundle surrogate — a load error that
  *   `resolveWeights` raises deterministically, without needing a real onnx graph). Each asserts that:
  *
- *   1. a warning lands on STDERR (never STDOUT — piped stdout parsing must stay clean), and
- *   2. degraded structural output is still produced on STDOUT with exit 0 (the fallback is kept rather than
+ *   1. a warning lands on stderr (never stdout — piped stdout parsing must stay clean), and
+ *   2. degraded structural output is still produced on stdout with exit 0 (the fallback is kept rather than
  *      turned into a hard-fail), and
- *   3. weights-ABSENT ("not found — install …") is distinguished from a weights LOAD error ("failed to
+ *   3. weights-absent ("not found — install …") is distinguished from a weights load error ("failed to
  *      load — Encoder error: …", the underlying cause surfaced rather than swallowed).
  *
  *   The two silence points the audit named: (a) `tryLoadNeural`'s bare `try/catch` returned undefined
@@ -47,7 +47,7 @@ const ABSENT_LOCALE = "pt-BR"
 const ABSENT_PACKAGE = "@mailwoman/neural-weights-pt-br"
 
 /**
- * An empty $HOME so the user weights cache (`~/.cache/mailwoman/weights`) is empty for the child too.
+ * An empty $home so the user weights cache (`~/.cache/mailwoman/weights`) is empty for the child too.
  */
 let homeStub: TemporaryDirectory
 /**
@@ -69,7 +69,7 @@ afterAll(() => {
 })
 
 /**
- * Child env with weights forced absent: empty $HOME + quiet node.
+ * Child env with weights forced absent: empty $home + quiet node.
  */
 function absentEnv(extra: Record<string, string | undefined> = {}): NodeJS.ProcessEnv {
 	return childEnv({ HOME: homeStub.path.toString(), NODE_NO_WARNINGS: "1", ...extra })
@@ -94,7 +94,7 @@ async function runCLI(
 }
 
 /**
- * Strip ANSI/ink-spinner noise and parse the JSON payload (object or array) out of CLI stdout.
+ * Strip ansi/ink-spinner noise and parse the JSON payload (object or array) out of CLI stdout.
  */
 function parseStdoutJSON(stdout: string): unknown {
 	const cleaned = stdout.replaceAll(/\[[0-9;]*[a-zA-Z]/gu, "").trim()

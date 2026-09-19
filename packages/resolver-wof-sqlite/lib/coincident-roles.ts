@@ -6,7 +6,7 @@
  *   `buildCoincidentRoles` — derives the **coincident-roles relation** (#403, epic #402) into the
  *   unified gazetteer.
  *
- *   Many places occupy MULTIPLE admin tiers under one name: German city-states (Berlin/Hamburg/Bremen
+ *   Many places occupy multiple admin tiers under one name: German city-states (Berlin/Hamburg/Bremen
  *   = city == state), Italian provinces named after their capital (Milano, Varese…), Spanish
  *   provinces-after-capitals, UK unitary authorities, JP prefectures, NL province-capitals
  *   (Utrecht/Groningen), Shanghai. When an address surfaces only the admin role (the parser drops
@@ -15,7 +15,7 @@
  *   with the gazetteer's own structure, so the runtime is an O(1) membership lookup with no
  *   distance math.
  *
- *   V1 is REGION-tier only (admin.placetype = `region`): the ~124 places matching the census across 9
+ *   V1 is region-tier only (admin.placetype = `region`): the ~124 places matching the census across 9
  *   countries (IT/ES/GB/JP/KR/FR/DE/NL/CN). County-tier same-name coincidences are deliberately
  *   excluded — they're dominated by French cantons and JP counties (admin subdivisions named after
  *   a seat town rather than dual-role cities) that don't hit the parser-drops-locality failure. genuine
@@ -24,7 +24,7 @@
  *
  *   A pair `(admin, locality)` is recorded when all hold: same `name` (case-insensitive), the
  *   locality is a `descendant` of the admin (via the `ancestors` table), and their centroids are
- *   within a RELATIVE tolerance — `toleranceFraction × admin-bbox-diagonal`, floored at
+ *   within a relative tolerance — `toleranceFraction × admin-bbox-diagonal`, floored at
  *   `minToleranceKm`. The relative term lets a large Italian province admit a city ~tens of km from
  *   its centroid while a tiny city-state stays tight. the floor catches city-states whose bbox is
  *   small (Bremen's centroids sit 9.3 km apart). The tolerance lives only here at build time — it
@@ -129,7 +129,7 @@ export function buildCoincidentRoles(
 
 	// Raw DDL by design: this is a sync builder consumed by a sync CLI (build-coincident-roles-cli) and
 	// 6 sync unit tests, so routing one table through async Kysely would cascade async through all of
-	// them for no real gain. See AGENTS.md "Database / inline SQL". (The SELECT + INSERT loop below are
+	// them for no real gain. See agents.md "Database / inline SQL". (The select + insert loop below are
 	// likewise the raw hot path.)
 	db.exec(`
 		CREATE TABLE IF NOT EXISTS ${COINCIDENT_ROLES_TABLE} (
@@ -145,8 +145,8 @@ export function buildCoincidentRoles(
 
 	onProgress("scanning")
 
-	// Admin (region/county tier) ⋈ same-name DESCENDANT locality. `place_population` is optional (LEFT
-	// JOIN → 0 when absent). The relative-tolerance filter + relationship classification happen in JS so
+	// Admin (region/county tier) ⋈ same-name descendant locality. `place_population` is optional (left
+	// join → 0 when absent). The relative-tolerance filter + relationship classification happen in JS so
 	// the SQL stays a plain join. `spr` exposes the bbox columns we need for the diagonal.
 	const candidates = allRows<CandidateRow>(
 		db.prepare(
@@ -217,7 +217,7 @@ export function coincidentRolesExists<DB>(db: DatabaseClient<DB>): boolean {
 
 /**
  * Load the relation into an in-memory map keyed by `admin_id` for O(1) runtime lookup (#405). Each admin may map to
- * MULTIPLE same-name descendants. the consumer disambiguates (min distance → population → abstain). Returns an empty
+ * multiple same-name descendants. the consumer disambiguates (min distance → population → abstain). Returns an empty
  * map when the table is absent.
  */
 export function loadCoincidentRoles<DB>(db: DatabaseClient<DB>): Map<number, CoincidentRole[]> {

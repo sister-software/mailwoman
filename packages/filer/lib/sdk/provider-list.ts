@@ -16,8 +16,8 @@
  *   Decision 6 is the entire point of this file, so it bears repeating exactly what not to copy: Nexus's
  *   `parseBDCProvidersFiles` folds every row sharing a `provider_id` into one `BroadbandProvider` via a
  *   `Map<ProviderID, BroadbandProvider>` — a later row's FRN is added to a `Set` (cardinality preserved
- *   there, incidentally) but its `holdingCompany` silently OVERWRITES the previous value, only warning
- *   to the console when the two strings differ. That fold happens at PARSE time, before anything
+ *   there, incidentally) but its `holdingCompany` silently overwrites the previous value, only warning
+ *   to the console when the two strings differ. That fold happens at parse time, before anything
  *   downstream ever sees the discarded string. {@linkcode parseProviderList} does none of that: it is a
  *   flat streaming pass with no `Map` keyed by `provider_id`, no dedup, and no last-wins — every row in
  *   the file is yielded exactly once, in file order. A `provider_id` appearing on N rows yields N
@@ -37,7 +37,7 @@ import { toFRN, type FRN } from "#frn"
 
 /**
  * The three provider-list CSV columns this parser actually reads, named after Nexus's `RawProviderRecord`
- * (`sync/scripts/registrations.ts`). Looked up by NAME against the file's own header row — not by position — so extra
+ * (`sync/scripts/registrations.ts`). Looked up by name against the file's own header row — not by position — so extra
  * or reordered columns in the real FCC file don't break parsing.
  */
 const REQUIRED_PROVIDER_LIST_COLUMNS = ["frn", "provider_id", "holding_company"] as const satisfies readonly string[]
@@ -139,7 +139,7 @@ function toProviderListRow(
  * malformed.
  *
  * Decision 6 (repeated from the module docstring because it is the entire point of this function): a `provider_id`
- * appearing on multiple rows is yielded once PER ROW, exactly as it appears in the file. No dedup, no last-wins, no
+ * appearing on multiple rows is yielded once PER row, exactly as it appears in the file. No dedup, no last-wins, no
  * folding into a `Map` keyed by `provider_id` — the crosswalk graph is where that cardinality belongs rather than
  * here.
  */

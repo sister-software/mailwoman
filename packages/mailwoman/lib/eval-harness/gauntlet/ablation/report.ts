@@ -3,7 +3,7 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   RENDERING for the ablation map — the markdown artifact and the two cell formatters, split out of `ablation.ts` so
+ *   rendering for the ablation map — the markdown artifact and the two cell formatters, split out of `ablation.ts` so
  *   the runner stays a runner.
  *
  *   One rule governs every line here and it is the only one a reader of the finished table can be misled by: a cell
@@ -37,7 +37,7 @@ export function formatAblationCell(cell: AblationCell | undefined): string {
 }
 
 /**
- * Render one cell under the EXPECTATION model: `trueFail/ladderGraded`. Absence has one more source here than in
+ * Render one cell under the expectation model: `trueFail/ladderGraded`. Absence has one more source here than in
  * {@linkcode formatAblationCell} — a cell can have real support and still have nothing the ladder could grade (no
  * gazetteer, or an anchor that resolved no place id). That is `ladderGradedCount: 0`, and it renders as
  * {@linkcode ABLATION_ABSENT} rather than `0/0`, which would read as "nothing failed here".
@@ -55,7 +55,7 @@ function cellKey(component: string, locale: string): string {
 /**
  * Render the map: a global per-component summary, then the component × locale matrix over the locales carrying at least
  * `minLocaleRows` rows, then the tail locales in long form. The matrix is bounded on purpose — 29 countries × 9
- * components is a table nobody reads, and folding the tail is only acceptable because it is PRINTED rather than
+ * components is a table nobody reads, and folding the tail is only acceptable because it is printed rather than
  * dropped.
  */
 export function renderAblationMarkdown(
@@ -193,7 +193,7 @@ export function renderAblationMarkdown(
 		const byReason = new Map<string, number>()
 
 		for (const s of meta.skips) {
-			// Reasons carry the offending value inline. bucket by the leading clause so the report counts CLASSES.
+			// Reasons carry the offending value inline. bucket by the leading clause so the report counts classes.
 			const cls = s.reason.split(":")[0]!.split(" inside")[0]!
 
 			byReason.set(cls, (byReason.get(cls) ?? 0) + 1)

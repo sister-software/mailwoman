@@ -15,7 +15,7 @@
  *   - `mailwoman_parse` — the runtime pipeline's parse (optionally POI-aware).
  *   - `mailwoman_geocode` — the street-level geocode cascade (`mailwoman/geocode-core`).
  *   - `mailwoman_poi_search` — POI-intent extraction + (when a poi.db is wired) execution.
- *   - `mailwoman_overpass_export` — OverpassQL EXPORT emitter (`mailwoman/poi-overpass`) — "we print the query.
+ *   - `mailwoman_overpass_export` — OverpassQL export emitter (`mailwoman/poi-overpass`) — "we print the query.
  *     we never run it".
  *   - `mailwoman_layer_manifest` — read a spatial-layer database's provenance manifest + coverage summary
  *     (`@mailwoman/core/layers`).

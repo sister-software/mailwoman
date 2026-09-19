@@ -46,7 +46,7 @@ const ROAD_WIDTH_THRESHOLD = 14
 
 const roadWidth = (zoom: number) => (zoom >= ROAD_WIDTH_THRESHOLD ? 2 : 1)
 
-// At braille scale every road is one dot wide and every fill is stipple, so CLASS has to ride on color instead of
+// At braille scale every road is one dot wide and every fill is stipple, so class has to ride on color instead of
 // geometry: arteries brighten toward amber, paths dim toward the vegetation green, and urban landuse runs warmer and
 // brighter than vegetation so a city reads as denser texture. Luminance is required — asciify's ordered dither
 // turns it into stipple density.

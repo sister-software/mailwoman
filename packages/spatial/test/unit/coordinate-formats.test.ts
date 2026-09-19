@@ -68,7 +68,7 @@ test("sunTimes: polar day has no sunrise/sunset, only solar noon", () => {
 })
 
 test("toMGRS: Washington Monument matches Wikipedia's vector (~4m); zone+band elsewhere; empty in polar bands", () => {
-	// Wikipedia MGRS article cites 18S UJ 23487 06483 for the monument. we match to ~4m.
+	// Wikipedia mgrs article cites 18S UJ 23487 06483 for the monument. we match to ~4m.
 	expect(toMGRS(38.88949, -77.03524)).toBe("18SUJ2348306482")
 	expect(toMGRS(-33.8688, 151.2093).startsWith("56H")).toBe(true) // Sydney, zone 56 band H
 	expect(toMGRS(85, 0)).toBe("") // above 84°N — MGRS bands stop

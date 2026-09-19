@@ -5,7 +5,7 @@
  *
  *   The client for the license worker's two customer routes: the per-license status a lid answers, and the refresh that
  *   trades a lid and its secret for the current token. Kept outside the `license` barrel like `publication.ts`, because
- *   it carries the HTTP client and the barrel sits on the CLI launcher's path. `unreachable` is a network answer rather than a
+ *   it carries the http client and the barrel sits on the CLI launcher's path. `unreachable` is a network answer rather than a
  *   verdict: offline verification stands, and every caller says so.
  */
 
@@ -59,7 +59,7 @@ const HTTP_NOT_FOUND = 404
 const STATUS_WORDS: ReadonlySet<string> = new Set<LicenseStatusAnswer>(["active", "lapsed", "revoked", "unknown"])
 
 /**
- * A POST with the interceptor's per-request cache switch off: neither route's answer may be served from a cache.
+ * A post with the interceptor's per-request cache switch off: neither route's answer may be served from a cache.
  */
 function uncachedPost(url: string, data: unknown): CacheRequestConfig {
 	return { url, method: "POST", data, cache: false }

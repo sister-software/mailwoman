@@ -3,13 +3,13 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   The ablation layer's DATA SHAPES — the deletion map's cell, its per-row record, and the vocabulary they are keyed
+ *   The ablation layer's data shapes — the deletion map's cell, its per-row record, and the vocabulary they are keyed
  *   by. Their own module because three files need them (the runner, the renderer, the tests) and a shape shared by a
  *   producer and a consumer that also import each other is an import cycle waiting to be discovered by a linter.
  *
  *   `AblationCell`'s first eleven fields are specified by the suggestion layer's design doc
  *   (`docs/superpowers/plans/2026-08-05-suggestion-layer.md` §C.5) and are owed exactly. everything after them is marked
- *   ADDITIVE and says why it exists.
+ *   additive and says why it exists.
  */
 
 import type { ComponentTag } from "@mailwoman/codex/component"
@@ -55,14 +55,14 @@ export const DEFAULT_ABLATION_TOLERANCE_KM = 5
 export interface AblationCell {
 	component: AblatableComponent
 	/**
-	 * ISO-3166 alpha-2, matching the board's own `country` column — STATED by the corpus row, never inferred from the
+	 * ISO-3166 alpha-2, matching the board's own `country` column — stated by the corpus row, never inferred from the
 	 * input. (The design doc allows BCP-47 "matching whatever the board keys by"; this board keys by country.)
 	 */
 	locale: string
 	/**
-	 * Board rows that CARRY this component in this locale — the denominator behind every rate below. A cell with
-	 * `support: 0` means NOT MEASURED HERE, and a consumer must represent that as absence rather than as a zero score
-	 * (the meaning-of-zero rule). This runner never EMITS a zero-support cell: a (component, locale) pair with no rows is
+	 * Board rows that carry this component in this locale — the denominator behind every rate below. A cell with
+	 * `support: 0` means not measured here, and a consumer must represent that as absence rather than as a zero score
+	 * (the meaning-of-zero rule). This runner never emits a zero-support cell: a (component, locale) pair with no rows is
 	 * absent from the array, and {@linkcode formatAblationCell} renders a missing lookup and a zero-support one
 	 * identically.
 	 */
@@ -99,51 +99,51 @@ export interface AblationCell {
 	boardID: string
 	measuredAt: string
 	/**
-	 * ADDITIVE (not in §C.5): rows where the ablated arm re-emitted the same value the deletion removed — the resolver
+	 * Additive (not in §C.5): rows where the ablated arm re-emitted the same value the deletion removed — the resolver
 	 * recovered it from the gazetteer. Without this, `substitutedCount` would have to mean "refilled by anything" and a
 	 * recovery would read as a hazard. 0 of 139 on S-2's postcode column, which is itself the finding.
 	 */
 	recoveredCount: number
 	/**
-	 * ADDITIVE: rows excluded from the displacement percentiles because the row's own anchor never resolved. Not a
+	 * Additive: rows excluded from the displacement percentiles because the row's own anchor never resolved. Not a
 	 * failure of the deletion — there was nothing to measure against. Named so `gradedCount < support` is attributable.
 	 */
 	anchorUnresolvedCount: number
 	/**
-	 * ADDITIVE: rows where both arms resolved — the denominator of `displacementKmP50` / `P90`.
+	 * Additive: rows where both arms resolved — the denominator of `displacementKmP50` / `P90`.
 	 */
 	gradedCount: number
 	/**
-	 * ADDITIVE (the 2026-08-05 expectation model): rows this cell could grade against a DEGRADATION LADDER — the
+	 * Additive (the 2026-08-05 expectation model): rows this cell could grade against a degradation ladder — the
 	 * denominator of every `grades` count below. `0` means the expectation model never spoke here (no gazetteer, or the
-	 * anchor resolved no gazetteer place), and a consumer must render that as ABSENCE exactly as it does `support: 0` —
+	 * anchor resolved no gazetteer place), and a consumer must render that as absence exactly as it does `support: 0` —
 	 * {@linkcode formatAblationLadderCell} is the enforcement.
 	 */
 	ladderGradedCount: number
 	/**
-	 * ADDITIVE: the full verdict histogram, keyed by {@linkcode AblationGrade}. Every key is present so a reader never has
+	 * Additive: the full verdict histogram, keyed by {@linkcode AblationGrade}. Every key is present so a reader never has
 	 * to tell "no rows in this class" from "this runner does not emit that class" — within a cell that already has
 	 * `ladderGradedCount > 0`, a zero is a measurement.
 	 */
 	grades: Record<AblationGrade, number>
 	/**
-	 * ADDITIVE: the headline three. `trueFailCount` is everything {@linkcode PASSING_GRADES} does not cover — the number
+	 * Additive: the headline three. `trueFailCount` is everything {@linkcode PASSING_GRADES} does not cover — the number
 	 * that replaces `brokenCount` as the operator's "what is actually wrong here".
 	 */
 	trueFailCount: number
 	correctlyDegradedCount: number
 	/**
-	 * ADDITIVE: the honest half of the old `unresolvedCount`. Its complement is `grades.lost`.
+	 * Additive: the honest half of the old `unresolvedCount`. Its complement is `grades.lost`.
 	 */
 	correctlyAbstainedCount: number
 	/**
-	 * ADDITIVE: how far down the ladder the passing rows landed (0 = held at the base). `null` when no row in this cell
+	 * Additive: how far down the ladder the passing rows landed (0 = held at the base). `null` when no row in this cell
 	 * was graded against a ladder — never 0, which would read as "nothing degraded".
 	 */
 	degradedRungsP50: number | null
 	degradedRungsMax: number | null
 	/**
-	 * ADDITIVE: rows where the model DECLINED to constrain the answer because a venue or street survived the deletion and
+	 * Additive: rows where the model declined to constrain the answer because a venue or street survived the deletion and
 	 * it has no index for either ({@linkcode UNCONSTRAINED_RUNG}). Those rows still fail on leaving the ladder, but their
 	 * passes are weaker evidence than the rest of the cell's — a cell whose `ladderGradedCount` is mostly this is a cell
 	 * to read with suspicion, and the only way to know that is for the count to be here.
@@ -186,8 +186,8 @@ export interface AblationRowOutcome {
 	 */
 	emitted: string | null
 	/**
-	 * ADDITIVE (the expectation model). `expectedRung` is `abstain`, `base`, or the WOF placetype of the rung the
-	 * SURVIVING components still pin; `expectedWhy` is the derivation in one sentence, so any verdict can be argued with
+	 * Additive (the expectation model). `expectedRung` is `abstain`, `base`, or the WOF placetype of the rung the
+	 * surviving components still pin; `expectedWhy` is the derivation in one sentence, so any verdict can be argued with
 	 * from the artifact alone.
 	 */
 	expectedRung: string
@@ -198,13 +198,13 @@ export interface AblationRowOutcome {
 	 */
 	expectedSource: "derived" | "override" | "no-ladder"
 	/**
-	 * What rung 0 of the ladder IS: the corpus's asserted coordinate, or (weaker) the pipeline's undeleted answer for a
+	 * What rung 0 of the ladder is: the corpus's asserted coordinate, or (weaker) the pipeline's undeleted answer for a
 	 * row that asserts none. `null` when there is no ladder. A verdict read without this can't tell a claim graded
 	 * against the corpus from one graded against the parser's own opinion.
 	 */
 	ladderAnchor: "corpus-expected" | "pipeline-anchor" | null
 	/**
-	 * The rung the UNDELETED answer reached — the floor this variant was judged from. `null` = the anchor is off its own
+	 * The rung the undeleted answer reached — the floor this variant was judged from. `null` = the anchor is off its own
 	 * ladder, which makes the row `ungraded`.
 	 */
 	anchorRungDepth: number | null
@@ -256,7 +256,7 @@ export interface AblationVariant {
  * One component's roll-up across every locale — the shared source for the console summary and the markdown report,
  * which had drifted apart by re-deriving these sums independently.
  *
- * Sums come from the CELLS. the displacement percentiles come from the pooled ROWS, because percentiles do not
+ * Sums come from the cells. the displacement percentiles come from the pooled rows, because percentiles do not
  * aggregate — a global p90 has to be taken over the pooled displacements, never over the per-cell p90s.
  */
 export interface AblationComponentAggregate {

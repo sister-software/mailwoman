@@ -6,7 +6,7 @@
  *   Stream one large file to disk through a `.part` rename — the shape every layer acquisition uses, and the
  *   one thing about it that is a correctness rule rather than a convenience.
  *
- *   THIS IS A FILE TRANSFER rather than AN API REQUEST, AND IT IS RAW `fetch` ON PURPOSE. The repo's rule sends HTTP
+ *   this is A file transfer rather than an API request, and IT is RAW `fetch` on purpose. The repo's rule sends http
  *   clients through `@mailwoman/core/api`'s `APIClient`, and the rule draws its line at what that class is
  *   for: pacing, bounded retry, response caching and error mapping over small bodies and repeated calls. None
  *   of it applies to a multi-hundred-megabyte archive. Caching one through a JSON-validating disk cache would
@@ -19,7 +19,7 @@
  *   rather than as a failure. The rename is atomic within a filesystem, so a file at the final path is a file
  *   that finished.
  *
- *   SHARED BY EVERY LAYER ACQUISITION rather than copied into each, because it is stream plumbing that knows
+ *   shared BY every layer acquisition rather than copied into each, because it is stream plumbing that knows
  *   nothing about any product. What stays with each caller is where the URL came from, what the cache is keyed
  *   on, and what to do with the bytes afterwards.
  */

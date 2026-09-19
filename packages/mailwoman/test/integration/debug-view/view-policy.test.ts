@@ -3,7 +3,7 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   The opening zoom, against correctly-ordered hierarchies. `GeocodeResult.hierarchy` is MOST SPECIFIC FIRST, and
+ *   The opening zoom, against correctly-ordered hierarchies. `GeocodeResult.hierarchy` is most specific first, and
  *   reading the other end is a silent defect of exactly this shape: every value it returns is a legal zoom, the map
  *   still renders, and the only symptom is that a resolved city opens on a view of the continent.
  */

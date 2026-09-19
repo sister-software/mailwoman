@@ -13,7 +13,7 @@
  *   manufactured by the decision to hold state at all.
  *
  *   So it is answered rather than accepted. The fingerprint covers the newest mtime across the workspaces an engine
- *   imports, plus `HEAD` and the dirty set, and a change makes the engine UNREACHABLE rather than wrong.
+ *   imports, plus `head` and the dirty set, and a change makes the engine unreachable rather than wrong.
  */
 
 import { statPath } from "@mailwoman/core/fs/readers"
@@ -45,7 +45,7 @@ export const FINGERPRINTED_WORKSPACES = [
 
 /**
  * Directory names that never affect behaviour but change constantly. `out/` is excluded on purpose and is the important
- * one: the daemon imports SOURCE, so a recompile must not read as a source edit.
+ * one: the daemon imports source, so a recompile must not read as a source edit.
  */
 const SKIP_DIRECTORIES = new Set(["node_modules", "out", ".git", "test", "__pycache__"])
 
@@ -121,7 +121,7 @@ async function newestSourceMtime(root: string): Promise<{ mtimeMs: number; path:
 }
 
 /**
- * Run git and return its stdout with only the TRAILING newline removed.
+ * Run git and return its stdout with only the trailing newline removed.
  *
  * Leading whitespace is required for `--porcelain`, whose first two columns are the index and worktree status: an
  * unstaged modification is `" M path"`, and a full trim eats column one of the first line only — after which a

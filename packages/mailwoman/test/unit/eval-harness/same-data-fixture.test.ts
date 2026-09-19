@@ -3,19 +3,19 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   The same-data benchmark's evidence contract (#2261). Four properties, in the order a wrong one would
+ *   The same-data benchmark's evidence interface (#2261). Four properties, in the order a wrong one would
  *   hurt:
  *
- *   1. EQUAL EVIDENCE IS CHECKED OVER WHAT THE ARMS READ. Every arm's observation of a row must agree on
+ *   1. equal evidence is checked over what the arms read. Every arm's observation of a row must agree on
  *      the digest, the pool size, the candidate ids and the candidate field names — and the check must
  *      fail when one arm is handed a row the others were not.
- *   2. A REPLAY MISS RAISES. The backend answers only from the fixture. a key it does not hold is an
+ *   2. A replay miss raises. The backend answers only from the fixture. a key it does not hold is an
  *      error, never `[]`, because the resolver absorbs `[]` silently and the arm would then report an
  *      abstention the fixture produced.
- *   3. THE WITHHELD VERDICTS STAY OUT. A candidate carrying `containedByQualifier` and its four siblings
+ *   3. the withheld verdicts stay OUT. A candidate carrying `containedByQualifier` and its four siblings
  *      is refused: each is a verdict about the query, and shipping one hands every arm a partly solved
  *      row.
- *   4. THE POOL IS THE CANONICAL UNION. A hand-edited pool that drops or reorders a candidate is refused,
+ *   4. the pool is the canonical union. A hand-edited pool that drops or reorders a candidate is refused,
  *      because the pool is the ordered candidate set every arm is judged to have received.
  */
 
@@ -86,7 +86,7 @@ const PANEL: SameDataPanelRow[] = [
 	},
 ]
 
-describe("same-data fixture contract (#2261)", () => {
+describe("same-data fixture interface (#2261)", () => {
 	it("accepts a well-formed fixture", () => {
 		expect(validateFixture(PANEL, [fixtureRow()])).toEqual([])
 	})

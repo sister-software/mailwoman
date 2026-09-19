@@ -3,7 +3,7 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   `<ResultPanel>` — the demo's parse+resolve result block, assembled from the SHARED pipeline
+ *   `<ResultPanel>` — the demo's parse+resolve result block, assembled from the shared pipeline
  *   presentational units (it does not re-implement any of them): `KindBadge`, `ComponentTable`,
  *   `ResolvedPlace`, `CandidatePicker`, plus the `CopyButton` + `buildParsePayload` copy affordance. This
  *   is the standalone, story-testable unit the demo's floating panel renders (the map analogue of the
@@ -11,7 +11,7 @@
  *   the marker/table/candidate glue. Heavy host visualizers (span highlight, tree, timing) slot in via
  *   `extras`; the no-resolve diagnostic via `failure`.
  *
- *   NODE-SAFE: pure React + the shared units, no maplibre.
+ *   node-safe: pure React + the shared units, no maplibre.
  */
 
 import type { ParseResult, ResolvedPlaceView } from "@mailwoman/core/pipeline/client-result"

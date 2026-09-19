@@ -3,7 +3,7 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   The tool table — the tested contract. `server.ts` only adapts it to the SDK's envelope.
+ *   The tool table — the tested interface. `server.ts` only adapts it to the SDK's envelope.
  *
  *   Each tool module owns its MCP metadata and wiring. measurements live beside the package root.
  *
@@ -24,12 +24,12 @@ import { benchTool } from "#tools/bench"
 import { censusTool } from "#tools/census"
 import { compareTool } from "#tools/compare"
 import { constraintsTool } from "#tools/constraints"
-import { contractTool } from "#tools/contract"
 import { coverageTool } from "#tools/coverage"
 import { daemonTool } from "#tools/daemon"
 import { diagnoseTool } from "#tools/diagnose"
 import { diffParseTool } from "#tools/diff-parse"
 import { inputsTool } from "#tools/inputs"
+import { interfaceTool } from "#tools/interface"
 import { lookupTool } from "#tools/lookup"
 import { minimalPairsTool } from "#tools/minimal-pairs"
 import { parseCompareTool } from "#tools/parse-compare"
@@ -61,7 +61,7 @@ const FACTORIES = [
 	benchTool,
 	censusTool,
 	constraintsTool,
-	contractTool,
+	interfaceTool,
 	diagnoseTool,
 	minimalPairsTool,
 	reliabilityTool,

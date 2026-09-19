@@ -216,15 +216,15 @@ export async function resurrectCurrencyHoles(ctx: {
 			const dLat = Number(d.latitude)
 			const dLon = Number(d.longitude)
 
-			// A live row blocks only when it is AT LEAST AS COARSE as the dead one. The original check compared name and
+			// A live row blocks only when it is AT least AS coarse as the dead one. The original check compared name and
 			// distance alone, on the premise that a nearby same-name row means "the place is alive under another
-			// placetype" — true for a place recorded twice, false for a placetype DEMOTION, which is the shape that
+			// placetype" — true for a place recorded twice, false for a placetype demotion, which is the shape that
 			// actually occurs: WOF retired `Gillingham` the locality (pop 101,187) and kept `Gillingham` the
-			// neighbourhood 3.2 km away, and the check read the surviving CHILD as covering its own dead parent.
+			// neighbourhood 3.2 km away, and the check read the surviving child as covering its own dead parent.
 			// Sixteen of seventeen GB refusals had exactly that shape (#1746).
 			//
-			// An UNRANKED placetype blocks, which is the conservative direction: this check's failure mode is inventing
-			// a place, so a row we cannot rank is treated as covering rather than waved through.
+			// An unranked placetype blocks, which is the conservative direction: this check's failure mode is inventing
+			// a place. Therefore, a row we cannot rank is treated as covering rather than waved through.
 			const liveNear = liveStmt.all(cc, name).some((row) => {
 				if (haversineKm(dLat, dLon, Number(row.latitude), Number(row.longitude)) > CURRENCY_BACKFILL_RADIUS_KM) {
 					return false

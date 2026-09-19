@@ -6,15 +6,15 @@
  *   Shared core of the reply prose check: run a finished agent reply through the Mailwoman Vale
  *   rules and render one verdict. The platform adapters — `vale-response-check.ts` (Claude Code)
  *   and `vale-response-check-codex.ts` (Codex) — own payload parsing, the loop guard, and the
- *   output JSON. the POLICY (which config, which severities block, how findings read) lives here
- *   so the two hooks cannot drift apart the way parallel copies do.
+ *   output JSON. the policy (which config, which severities block, how findings read) lives here
+ *. Therefore, the two hooks cannot drift apart the way parallel copies do.
  *
  *   The rule set is `config/vale/.vale-chat.ini`: the shared Mailwoman style plus the MailwomanChat
  *   additions, fixture-tested by `config/vale/check-rules.ts`. The config path resolves
  *   relative to this module, so a worktree checkout lints with its own rules.
  *
  *   Severity picks the mechanism. Error-severity findings render a `block` verdict — that tier is
- *   curated to near-zero legitimate use, and the correction must REPLACE the judgment with the
+ *   curated to near-zero legitimate use, and the correction must replace the judgment with the
  *   concrete claim rather than merely delete the flagged word. Warning-only findings render a `context`
  *   verdict: those rules (opaque IDs, minted metaphors, vague praise) need judgment a regex does
  *   not have, so the agent weighs them.
@@ -45,7 +45,7 @@ export async function lintReply(reply: string): Promise<ValeAlert[]> {
 	const configPath = repoRootPath("config", "vale", ".vale-chat.ini")
 
 	// Vale exits 1 when error-severity alerts exist, so the exit code carries no failure signal —
-	// an unparseable stdout is the failure, and that reads as "no findings" per the silence contract.
+	// an unparseable stdout is the failure, and that reads as "no findings" per the silence interface.
 	const result = spawnProcessSync(vale.file, [...vale.argv, "--config", configPath, "--output=JSON", "--ext=.md"], {
 		input: reply,
 		encoding: "utf8",
@@ -84,7 +84,7 @@ function ruleGuidance(alert: ValeAlert): string {
 }
 
 function formatAlerts(alerts: ValeAlert[], opening: string): string {
-	// One line per RULE: the matches with their reply line numbers, then the guidance once. The
+	// One line per rule: the matches with their reply line numbers, then the guidance once. The
 	// alerts arrive errors-first, so insertion order keeps error groups above advisory ones.
 	const hasErrors = alerts.some((alert) => alert.Severity === "error")
 	const groups = new Map<string, { guidance: string; severity: string; hits: { match: string; line: number }[] }>()

@@ -3,7 +3,7 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   #1731 pins. The field is tri-state and the absent states are the contract: a missing sidecar or a place-less entry
+ *   #1731 pins. The field is tri-state and the absent states are the interface: a missing sidecar or a place-less entry
  *   must stay ungraded — `false` is a measured contradiction, never a default.
  */
 
@@ -22,7 +22,7 @@ function entry(placeID?: string): HierarchyLineageEntry {
 
 describe("annotateHierarchyLineage (#1731)", () => {
 	it("marks the recorded Astoria chimera: the out-of-lineage region grades false, the winner true", () => {
-		// The pre-fix shape: locality resolved to Astoria OREGON (wof:101715747, chain Clatsop → Oregon → US)
+		// The pre-fix shape: locality resolved to Astoria oregon (wof:101715747, chain Clatsop → Oregon → US)
 		// while the parsed region resolved independently to New York (wof:85688543).
 		const locality = entry("wof:101715747")
 		const region = entry("wof:85688543")
@@ -78,7 +78,7 @@ describe("annotateHierarchyLineage (#1731)", () => {
 
 		expect(lineageAnchorNode([region, locality])?.placeID).toBe("wof:85931779")
 
-		// With the locality anchoring, the region grades TRUE through the locality's own chain.
+		// With the locality anchoring, the region grades true through the locality's own chain.
 		const entries = [
 			{ placeID: "wof:85931779" } as HierarchyLineageEntry,
 			{ placeID: "wof:85688741" } as HierarchyLineageEntry,

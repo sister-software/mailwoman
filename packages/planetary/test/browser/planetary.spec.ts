@@ -67,7 +67,7 @@ test("the footer carries the docs link and the commit the build was made from", 
 		"https://mailwoman.ai/docs"
 	)
 
-	// The commit link resolves against build.json, which only a built deployment serves — so this asserts the shape
+	// The commit link resolves against build.json. It only a built deployment serves. Therefore, this asserts the shape
 	// rather than a particular sha.
 	const commit = footer.locator("a[href*='/commit/']")
 
@@ -82,7 +82,7 @@ test("the footer carries the docs link and the commit the build was made from", 
 /**
  * MapLibre parses vector tiles and rasterizes glyph ranges inside a web worker. only raster tiles decode on the main
  * thread. So a worker that never runs leaves the hillshade drawing and every label missing, and it says nothing: the
- * worker's script URL is served by the SPA fallback as index.html at status 200, and parsing HTML as a module fails
+ * worker's script URL is served by the SPA fallback as index.html at status 200, and parsing html as a module fails
  * inside the worker where no page listener sees it. These assertions read the two observable consequences.
  */
 test("the map worker runs: nomenclature tiles and glyph ranges are requested", async ({ page }) => {
@@ -119,7 +119,7 @@ test("the map worker runs: nomenclature tiles and glyph ranges are requested", a
 		.poll(() => glyphRanges.length, { timeout: 60_000, message: "no glyph range was requested, so no label drew" })
 		.toBeGreaterThan(0)
 
-	// A worker script answered with HTML is the SPA fallback standing in for an asset the build never emitted.
+	// A worker script answered with html is the SPA fallback standing in for an asset the build never emitted.
 	for (const body of workerBodies) {
 		expect(body.contentType, `${body.url} is served as HTML, so the worker cannot parse it`).not.toContain("text/html")
 	}

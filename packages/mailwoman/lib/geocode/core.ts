@@ -65,7 +65,7 @@ import {
 import { shouldDropInferredScope } from "#inferred-scope"
 import { thingQueryRefusalMarkers } from "#intent-refusal"
 import { interpCalibrationForRegion, type InterpCalibrationTable } from "#interp-calibration"
-// Everything this file takes from the observation surface comes from its BARREL rather than from the individual
+// Everything this file takes from the observation surface comes from its barrel rather than from the individual
 // modules: the three route types are the same kind of thing here — an optional, already-open spatial layer — and the one
 // conversion that reads them takes all three, so a fourth layer costs no import at this call site.
 import { layerDesignationMarkers, type LayerDesignationRoutes } from "#observations/index"
@@ -84,7 +84,7 @@ export type { GeocodeClassifier } from "#geocode/classifier"
 export interface GeocodeDeps extends LayerDesignationRoutes {
 	/**
 	 * Poi.db reader for the fork→entity probe (`fork-entity.ts`). Absent = the probe never runs (tolerate-and-degrade,
-	 * like every optional artifact). Both this AND {@link isStreetGeneric} are required for a probe.
+	 * like every optional artifact). Both this and {@link isStreetGeneric} are required for a probe.
 	 */
 	poiLookup?: POIExecutorLookup
 	/**
@@ -111,14 +111,14 @@ export interface GeocodeDeps extends LayerDesignationRoutes {
 	 */
 	streetMorphology?: import("@mailwoman/core/pipeline").FSTMatcherLike
 	/**
-	 * True when {@link defaultCountry} was INFERRED from the locale rather than user-declared. The street-miss fallback
+	 * True when {@link defaultCountry} was inferred from the locale rather than user-declared. The street-miss fallback
 	 * retries a mis-tagged bare toponym as a locality, and a bare-locality retry must run under the #912 posture — the
-	 * inferred scope withheld — while an EXPLICIT scope stays supreme. Only the caller knows which. the CLI threads it.
+	 * inferred scope withheld — while an explicit scope stays supreme. Only the caller knows which. the CLI threads it.
 	 */
 	defaultCountryIsInferred?: boolean
 	/**
 	 * Lexicon-aware kind classifier (#1649) — `createKindClassifier({ poiLexicon })` from `@mailwoman/kind-classifier`.
-	 * When present it gets first refusal on the query: a top-slot POI/category/near-me verdict ABSTAINS from the address
+	 * When present it gets first refusal on the query: a top-slot POI/category/near-me verdict abstains from the address
 	 * lanes with the intent markers attached, instead of manufacturing a confident wrong answer from a thing-query.
 	 * Absent → byte-identical geocoding (the sync register derivation is untouched either way — the kind-intent
 	 * invariance receipt covers both classifiers).
@@ -142,21 +142,21 @@ export interface GeocodeDeps extends LayerDesignationRoutes {
 	/**
 	 * Authoritative national open-register rooftop databases keyed by ISO-3166 alpha-2 country (#1012) — the government
 	 * address registers (BAN-FR today, 26M points). Consulted only when no US per-state situs database matched (a non-US
-	 * parse), and AHEAD of {@link osmDatabases}: a national register is denser + coordinate-authoritative, so it outranks
+	 * parse), and ahead of {@link osmDatabases}: a national register is denser + coordinate-authoritative, so it outranks
 	 * the community OSM fallback. Inject from `@mailwoman/ban`'s `BANRegionDatabaseProvider`; absent = no national tier.
-	 * Licence Ouverte/Etalab (permissive) — see `ban/README.md`. The shape generalises to other national registers.
+	 * Licence Ouverte/Etalab (permissive) — see `ban/readme.md`. The shape generalises to other national registers.
 	 */
 	nationalDatabases?: (country: string) => RegionDatabases
 	/**
 	 * OSM rooftop databases keyed by ISO-3166 alpha-2 country (#247) — the opt-in international precision tier. Consulted
 	 * only when no US per-state situs database matched (a non-US parse) and no {@link nationalDatabases} register covered
 	 * the country, so the US path is untouched and BAN wins where it exists. Inject from `@mailwoman/osm`'s
-	 * `OSMRegionDatabaseProvider`; absent = no OSM tier. ODbL — see `osm/README.md`.
+	 * `OSMRegionDatabaseProvider`; absent = no OSM tier. ODbL — see `osm/readme.md`.
 	 */
 	osmDatabases?: (country: string) => RegionDatabases
 	/**
 	 * A configured authoritative provider (#1901) — OS Places, an OS NGD-backed service, or any adapter implementing
-	 * `@mailwoman/core/resolver`'s contract. Absent = the geocode result is byte-identical to a run without the field
+	 * `@mailwoman/core/resolver`'s interface. Absent = the geocode result is byte-identical to a run without the field
 	 * existing (the consult never happens, the `authoritative` block never appears). When present, the provider is
 	 * consulted after the open result is assembled and its answer is carried beside that result, never merged into it.
 	 */
@@ -166,7 +166,7 @@ export interface GeocodeDeps extends LayerDesignationRoutes {
 	 */
 	defaultCountry?: string
 	/**
-	 * #27 — the LOCALE's country as a soft ranking prior (`ResolveOpts.localeCountryPrior`), for the query shape where
+	 * #27 — the locale's country as a soft ranking prior (`ResolveOpts.localeCountryPrior`), for the query shape where
 	 * {@link defaultCountry} is deliberately withheld: a bare toponym.
 	 *
 	 * The #912 guard in `mailwoman/commands/geocode.tsx` drops the locale-inferred country for a bare-locality tree,
@@ -185,20 +185,20 @@ export interface GeocodeDeps extends LayerDesignationRoutes {
 	/**
 	 * #1880 — capital status of a candidate (2 national capital, 1 admin-1 seat, 0 neither), for the resolver's bounded
 	 * capital promotion on the bare-toponym class (`ResolveOpts.capitalLevel`). The session builds it from the capitals
-	 * reference by default (`capitalTier`, ON); undefined — an opted-out session, or a reference-less artifact under the
+	 * reference by default (`capitalTier`, on); undefined — an opted-out session, or a reference-less artifact under the
 	 * degrade path — leaves resolution byte-identical.
 	 */
 	capitalLevel?: (place: { name: string; country?: string; lat: number; lon: number }) => number
 	/**
-	 * #1585 — the locale hint's country, scoping the backend's TYPO-FUZZY tier only (`ResolveOpts.fuzzyCountryScope`).
+	 * #1585 — the locale hint's country, scoping the backend's typo-fuzzy tier only (`ResolveOpts.fuzzyCountryScope`).
 	 * Unlike {@link localeCountryPrior} this is not opt-in and not a ranking prior: exact matches stay worldwide, a typo
-	 * CORRECTION stays inside the hinted country, and a scoped-empty correction abstains instead of falling through to a
+	 * correction stays inside the hinted country, and a scoped-empty correction abstains instead of falling through to a
 	 * world-fuzzy candidate. Threaded even when {@link defaultCountry} is set (harmless — the hard scope is already
 	 * narrower).
 	 */
 	fuzzyCountryScope?: string
 	/**
-	 * Title-case all-caps ASCII input before the model (#690), detection-restricted so mixed-case + non-Latin pass
+	 * Title-case all-caps ascii input before the model (#690), detection-restricted so mixed-case + non-Latin pass
 	 * through untouched. **Default `true`** — validated-beneficial on this geocode/resolveTree path (#619: TX-facility
 	 * locality 90.1 → 99.7%). The #694 comma-less crater was the space-join rather than the casing, so on comma-joined
 	 * input it is a clean win. Set `false` to restore the legacy raw-case parse.
@@ -220,11 +220,11 @@ export interface GeocodeDeps extends LayerDesignationRoutes {
 	parsedTree?: AddressTree
 	/**
 	 * Interpolation-radius conformal calibration (#374) so reported radii are an honest ~90% bound. The multiplier is a
-	 * property of the calibration set the ARTIFACT was built against, so a database that carries one in its
+	 * property of the calibration set the artifact was built against, so a database that carries one in its
 	 * `interp_calibration` metadata table is self-calibrating (`InterpolationLookup.radiusCalibration`, read at database
 	 * open — the pair-index δ precedent) and this option is not consulted for it. The two remaining roles:
 	 *
-	 * - A per-region {@link InterpCalibrationTable} — the LEGACY-DATABASE fallback, selected by the parsed region (DC 1.44
+	 * - A per-region {@link InterpCalibrationTable} — the legacy-database fallback, selected by the parsed region (DC 1.44
 	 *   … AZ 3.12, `default` otherwise, #584), applied only when the database predates the metadata table (the artifact
 	 *   is silent).
 	 * - A single number — an explicit instrument override forced everywhere, artifact value included (the CLI's
@@ -236,7 +236,7 @@ export interface GeocodeDeps extends LayerDesignationRoutes {
 	/**
 	 * Coarse country router (#244, soft prior). A `(text) → { country, confidence }` predictor. A confident IN-MAP guess
 	 * becomes an `anchorPosterior` the resolver's #369 re-rank boosts (never filters); abstain (`null`) / off-map
-	 * (`OTHER`) are no-ops, and an explicit {@link defaultCountry} still wins (we never overwrite a caller-set
+	 * (`other`) are no-ops, and an explicit {@link defaultCountry} still wins (we never overwrite a caller-set
 	 * posterior).
 	 *
 	 * **Default-on (#244 M2, after the misroute check):**
@@ -253,8 +253,8 @@ export interface GeocodeDeps extends LayerDesignationRoutes {
 	 */
 	bias?: Array<{ lat: number; lon: number; weight?: number }>
 	/**
-	 * #743/#194: promote a CONFIDENT placer guess to a hard country filter (empty→unresolved) for coverage-safelisted
-	 * countries — see {@link hardCountryFor}. **DEFAULT-ON** (#743): a pure win on well-covered countries
+	 * #743/#194: promote a confident placer guess to a hard country filter (empty→unresolved) for coverage-safelisted
+	 * countries — see {@link hardCountryFor}. **default-on** (#743): a pure win on well-covered countries
 	 * (US/ES/IT/NL/DE/FR), soft (no-op) for the rest. Pass `false` to opt out.
 	 */
 	hardPlaceCountry?: boolean
@@ -265,10 +265,10 @@ export interface GeocodeDeps extends LayerDesignationRoutes {
 	 */
 	hardCountrySafelist?: ReadonlySet<string>
 	/**
-	 * #928: when the parsed postcode's FORMAT unambiguously implies a country ({@link POSTCODE_FORMAT_COUNTRY} — GB `E4
-	 * 9AZ`, CA `K2P 1L4`), use it as the country prior IN PLACE OF the coarse placer, which conflates GB/CA with US on
+	 * #928: when the parsed postcode's format unambiguously implies a country ({@link POSTCODE_FORMAT_COUNTRY} — GB `E4
+	 * 9AZ`, CA `K2P 1L4`), use it as the country prior IN place OF the coarse placer, which conflates GB/CA with US on
 	 * shared English patterns and mis-routes them to US namesakes at high confidence (London E4 → London, Ohio).
-	 * **DEFAULT-ON** (promoted 2026-07-06. check: GB 63→90% ok, CA 42→67%, US byte-identical 0/150 — the formats never
+	 * **default-on** (promoted 2026-07-06. check: GB 63→90% ok, CA 42→67%, US byte-identical 0/150 — the formats never
 	 * match a US ZIP / NL / FR code). Only fires when no explicit `defaultCountry`. Pass `false` to opt out (the
 	 * pre-promote behavior). A format is a stronger, unforgeable signal than the language model.
 	 */
@@ -285,7 +285,7 @@ export interface GeocodeDeps extends LayerDesignationRoutes {
 	 */
 	resolveTraceSink?: import("@mailwoman/core/resolver").ResolveOpts["traceSink"]
 	/**
-	 * Re-probe a resolved-nothing lookup across the other admin bands and record which hold it (#1741/#1756). DIAGNOSTIC
+	 * Re-probe a resolved-nothing lookup across the other admin bands and record which hold it (#1741/#1756). diagnostic
 	 * — the answer never changes, only the record of why it was not found. Requires `resolveTraceSink`.
 	 */
 	diagnoseUnreachable?: boolean
@@ -301,7 +301,7 @@ export interface GeocodeDeps extends LayerDesignationRoutes {
 	 * Postcode-country coherence (#42, `ResolveOpts.postcodeCountryCoherence`) — let a (postcode, locality) pair that is
 	 * geographically consistent in exactly one country override a wrong {@link defaultCountry}. `12 Rue de Rivoli, 75001
 	 * Paris` under the en-US locale otherwise lands in Texas, and with the postal databases attached in Addison.
-	 * **Default ON** (operator-promoted 2026-08-05 — gauntlet zero newly-failing conditional cases pinned either way,
+	 * **Default on** (operator-promoted 2026-08-05 — gauntlet zero newly-failing conditional cases pinned either way,
 	 * 56,000 pair evaluations across both backends at zero false positives. see
 	 * `docs/records/evals/2026-08-05-postcode-coherence-default-on-evidence.md`). Pass `false` to opt out.
 	 *
@@ -314,8 +314,8 @@ export interface GeocodeDeps extends LayerDesignationRoutes {
 	postcodeCountryCoherence?: boolean
 	/**
 	 * Postcode-shape coherence (#31, Mechanism 1, `ResolveOpts.postcodeShapeCoherence`) — shape as confidence and
-	 * EXCLUSION: a postcode span whose codex shape intersects no confident sibling system is demoted (digit-only →
-	 * `house_number`; letter-containing → stamped `postcode_shape_excluded`). **Default OFF** — demotion is the failure
+	 * exclusion: a postcode span whose codex shape intersects no confident sibling system is demoted (digit-only →
+	 * `house_number`; letter-containing → stamped `postcode_shape_excluded`). **Default off** — demotion is the failure
 	 * mode with teeth. pass `true` to opt in (the pre-registered B1 criterion set lives in
 	 * `resolver/postcode-shape-coherence.ts`).
 	 */
@@ -323,30 +323,30 @@ export interface GeocodeDeps extends LayerDesignationRoutes {
 	/**
 	 * Postcode-containment coherence (#31, Mechanism 2, `ResolveOpts.postcodeContainmentCoherence`) — re-rank locality
 	 * candidates by proximity to the postcode's own centroid (25 km check, the same value the country pass measures at).
-	 * **Default OFF**; pass `true` to opt in.
+	 * **Default off**; pass `true` to opt in.
 	 */
 	postcodeContainmentCoherence?: boolean
 	/**
 	 * Admin-containment re-rank (#1717 stage 2, `ResolveOpts.adminContainmentRerank`) — a parsed region qualifier
-	 * participates in locality-candidate selection: candidates the ancestors sidecar vouches sit UNDER the qualifier rank
+	 * participates in locality-candidate selection: candidates the ancestors sidecar vouches sit under the qualifier rank
 	 * ahead of (and can be surfaced past a locale-inferred country scope over) the ones it cannot vouch for. **Default
-	 * OFF** (D-rule); pass `true` to opt in.
+	 * off** (D-rule); pass `true` to opt in.
 	 */
 	adminContainmentRerank?: boolean
 	/**
 	 * Span-rescore context remainder (#2266, `ResolveOpts.spanRescoreRequireContextRemainder`) — a recovered sub-span may
-	 * drop CONTEXT but never a word of the name, so a fragment of a multi-word locality stops being enumerated as a
-	 * candidate in its own right. **Default OFF** (D-rule); pass `true` to opt in.
+	 * drop context but never a word of the name, so a fragment of a multi-word locality stops being enumerated as a
+	 * candidate in its own right. **Default off** (D-rule); pass `true` to opt in.
 	 */
 	spanRescoreRequireContextRemainder?: boolean
 	/**
-	 * Weak-resolution reading (#2264, `ResolveOpts.spanRescoreWeakResolution`). **Default UNSET**, the shipped brake.
+	 * Weak-resolution reading (#2264, `ResolveOpts.spanRescoreWeakResolution`). **Default unset**, the shipped brake.
 	 */
 	spanRescoreWeakResolution?: WeakResolutionReading
 	/**
 	 * Postcode-prefix prior (#31, Mechanism 3, `ResolveOpts.postcodePrefixPrior` + `.postcodePrefixIndex`) — on a
-	 * `postalcode` miss, resolve the code's PREFIX from the injected PFX1 index (GB outward / US section) so an
-	 * ungazetted unit still contributes its district + centroid. **Default OFF** (the PCN1 posture — data + loader +
+	 * `postalcode` miss, resolve the code's prefix from the injected PFX1 index (GB outward / US section) so an
+	 * ungazetted unit still contributes its district + centroid. **Default off** (the PCN1 posture — data + loader +
 	 * offline probe, no decode wiring); pass `true` plus the index to opt in.
 	 */
 	postcodePrefixPrior?: boolean
@@ -393,7 +393,7 @@ export function geocodeParseInputs(
 	deps: Pick<GeocodeDeps, "normalizeInput" | "normalizeCase" | "inputMode" | "fst" | "streetMorphology"> &
 		Partial<Pick<GeocodeDeps, "classifier">>
 ): GeocodeParseInputs {
-	// #1002: expandAbbreviations with the locale-UNKNOWN safe set (Bd/Bvd/Av/Imp → the expanded street
+	// #1002: expandAbbreviations with the locale-unknown safe set (Bd/Bvd/Av/Imp → the expanded street
 	// type). The model mis-parses undertrained FR abbreviations ("2 Bd du Palais" → house_number "2 Bd",
 	// which then fails the point-tier number match); the EN suffixes are deliberately not expanded (the
 	// model is trained-robust on them, and St/Dr are ambiguous with Saint/Doctor). The locale isn't known
@@ -405,7 +405,7 @@ export function geocodeParseInputs(
 	// servers (nominatim/photon `/api`) + the geocode CLI — diverged from the pipeline: a detected known-format span
 	// (`nl_postcode` → `B-postcode`, …) or a US region abbreviation never biased the emissions here. Computed on
 	// `parseInput` (the exact text handed to the model), matching the pipeline (which computes it on the normalized
-	// text, before the classifier's internal case-normalization). It is a NO-OP whenever the shape carries no known
+	// text, before the classifier's internal case-normalization). It is a no-OP whenever the shape carries no known
 	// format and no region abbreviation (the bare `street, city` class) — `buildEmissionPriors` returns an all-zeros
 	// matrix — so both bare-form and well-formed inputs are byte-stable. it warrants its keep only on the ambiguous
 	// digit-span / region-abbrev cases the model isn't already confident about.
@@ -413,7 +413,7 @@ export function geocodeParseInputs(
 
 	// Decision A: explicit register wins. otherwise the kind verdict decides (same derivation as the
 	// runtime pipeline — the drop-ins + geocode CLI reach parse through here rather than runPipeline). The kind
-	// classifier stays UNCALLED under an explicit register, exactly as before the split.
+	// classifier stays uncalled under an explicit register, exactly as before the split.
 	let inputMode = deps.inputMode
 	let kind: QueryKindResult | undefined
 
@@ -469,7 +469,7 @@ export async function parseForGeocode(
 	// before the resolve — see recognizeBarePostcode for why nothing downstream can recover it.
 	const tree = recognizeBarePostcode(recognizeUSRegions(await classifier.parse(parseInput, opts)))
 
-	// #1735: the multi-node generalization of #22 — a letter-digit postcode span the model SPLIT into
+	// #1735: the multi-node generalization of #22 — a letter-digit postcode span the model split into
 	// street + house_number ("KT2 6AB") is repaired from the shape stage's own span. Runs here, before
 	// any caller derives scope from the tree: the session's bare-postcode guard must see the repaired
 	// tree, or a locale-inferred country filter starves the lookup the repair exists to enable.
@@ -489,7 +489,7 @@ export async function parseForGeocode(
  * should catch per-row.
  */
 export async function geocodeAddress(input: string, deps: GeocodeDeps): Promise<GeocodeOutcomeLike> {
-	// #1649 first refusal — BEFORE the resolve and before the register-flip retry rider, so a refused
+	// #1649 first refusal — before the resolve and before the register-flip retry rider, so a refused
 	// thing-query can neither resolve nor be retried into nonsense. See intent-refusal.ts.
 	if (deps.classifyKind && !deps.inputMode) {
 		const parseInput =
@@ -508,10 +508,10 @@ export async function geocodeAddress(input: string, deps: GeocodeDeps): Promise<
 			//
 			// No extra parse on any production path — the session computes the tree once and threads it as
 			// `parsedTree` (geocode-session.ts:679). The fallback only runs for a direct `geocodeAddress` caller
-			// on a refused input, and this branch RETURNS, so nothing can parse twice.
+			// on a refused input, and this branch returns, so nothing can parse twice.
 			//
 			// The tree has not been resolved here, so no node carries a coordinate and the outcome is
-			// coordinate-free by construction rather than by nulling. The abstain contract is graded on the
+			// coordinate-free by construction rather than by nulling. The abstain interface is graded on the
 			// coordinate alone (`check-case.ts`'s `expect_abstain`), and none of the six abstain board rows
 			// declares `expectComponents` — so this adds what was understood without weakening the refusal.
 			const tree = deps.parsedTree ?? (await parseForGeocode(input, deps))
@@ -523,16 +523,16 @@ export async function geocodeAddress(input: string, deps: GeocodeDeps): Promise<
 		}
 	}
 
-	// The Decision-A retry rider (a zero-hit in a DERIVED register earned one attempt in the flipped one)
+	// The Decision-A retry rider (a zero-hit in a derived register earned one attempt in the flipped one)
 	// lived here from 2026-07-28 to 2026-08-19 and was retired under the #486 repair-retirement policy with
 	// a measured record of exactly zero: no effect on the full board, none on its 199-row failure subset
-	// (counterfactual sweep), and none on 300 fresh BAN + 300 fresh FDIC register records — the misrouted-
+	// (counterfactual sweep), and none on 300 fresh BAN + 300 fresh fdic register records — the misrouted-
 	// record class it was specced for. #1694 holds the receipts.
 	return geocodeAddressOnce(input, deps)
 }
 
 /**
- * Thread the address's COUNTRY EVIDENCE into the walk's options — one path for the whole precedence chain: an explicit
+ * Thread the address's country evidence into the walk's options — one path for the whole precedence chain: an explicit
  * caller scope is supreme. an inferred scope yields to the #1684 check. postcode-format countries (#1589) reach the
  * scoped `postalcode` probe. the fuzzy tier's locale scope (#1585) and the soft locale prior (#27) thread beneath.
  */
@@ -542,8 +542,8 @@ function applyCountryEvidence(opts: ResolveOpts, tree: AddressTree, deps: Geocod
 	const formatCountries = countriesFromPostcodeFormat(treePostcodeValue(tree))
 
 	if (deps.defaultCountry) {
-		// #1684 conditional scope: a locale-INFERRED scope yields to the model's own confident contrary
-		// read of the text, or to a postcode FORMAT that excludes the inferred country (see
+		// #1684 conditional scope: a locale-inferred scope yields to the model's own confident contrary
+		// read of the text, or to a postcode format that excludes the inferred country (see
 		// shouldDropInferredScope). The scope is dropped, never re-pointed — the worldwide race with
 		// cross-country primary preference + fame decides, which is the behavior the graded scope=none
 		// arm measured on exactly this class ("Nanjing Road, Huangpu, Shanghai" was a West Virginia
@@ -554,7 +554,7 @@ function applyCountryEvidence(opts: ResolveOpts, tree: AddressTree, deps: Geocod
 		} else {
 			opts.defaultCountry = deps.defaultCountry
 
-			// The resolver withholds an INFERRED scope from `country`-placetype lookups only (see
+			// The resolver withholds an inferred scope from `country`-placetype lookups only (see
 			// `ResolveOpts.defaultCountryIsInferred`) — without this thread, bare "Germany" under the
 			// default locale filters out the DE country row and falls to a US alias locality.
 			if (deps.defaultCountryIsInferred === true) {
@@ -628,12 +628,12 @@ async function geocodeAddressOnce(input: string, deps: GeocodeDeps): Promise<Geo
 
 	const opts: ResolveOpts = {
 		// Admin descendant-consistency (#263) — joint-consistency resolve over the gazetteer's containment
-		// graph. Default-ON at the core resolver too since #895 (drift D1 settled); the explicit propagation
+		// graph. Default-on at the core resolver too since #895 (drift D1 settled); the explicit propagation
 		// here keeps `deps.adminCoherence: false` an effective opt-out (an unset ResolveOpts field would
 		// otherwise re-default on downstream). Fixes the "Portland, ME → Messina IT" class structurally,
 		// without a prior or safelist.
 		adminCoherence: deps.adminCoherence !== false,
-		// Lineage attachment (#404) — default-ON here so the admin-coherence verdicts (#1717) check the
+		// Lineage attachment (#404) — default-on here so the admin-coherence verdicts (#1717) check the
 		// winner's real ancestry instead of reporting `unverifiable` wholesale. Explicit propagation for
 		// the same reason as `adminCoherence` above. The resolver still guards on the backend actually
 		// serving `ancestors()`, so an artifact predating the sidecar stays byte-identical.
@@ -648,13 +648,13 @@ async function geocodeAddressOnce(input: string, deps: GeocodeDeps): Promise<Geo
 		opts.bias = deps.bias
 	}
 
-	// Coarse country router (#244, soft prior) — DEFAULT-ON (#244 M2). undefined → the bundled placer.
+	// Coarse country router (#244, soft prior) — default-on (#244 M2). undefined → the bundled placer.
 	// a function → that placer. false → disabled. A confident in-map guess feeds the resolver's
-	// anchorPosterior re-rank. abstain/OTHER are no-ops and an explicit defaultCountry isn't disturbed.
+	// anchorPosterior re-rank. abstain/other are no-ops and an explicit defaultCountry isn't disturbed.
 	const placeCountry: PlaceCountryFn | null =
 		deps.placeCountry === false ? null : (deps.placeCountry ?? (await loadDefaultPlaceCountry()))
 
-	// The placer's country (in-map, non-OTHER) — reused below to select an OSM rooftop database for a non-US parse.
+	// The placer's country (in-map, non-other) — reused below to select an OSM rooftop database for a non-US parse.
 	let placedCountry: string | null = null
 
 	// The placer's prediction, computed once and unrestricted (so it's available even for a bare-locality tree, where the
@@ -666,7 +666,7 @@ async function geocodeAddressOnce(input: string, deps: GeocodeDeps): Promise<Geo
 	const streetPlacerCountry =
 		placerResult?.country && placerResult.country !== "OTHER" ? placerResult.country.toLowerCase() : null
 
-	// #928: a distinctive postcode FORMAT outranks the language-based placer (which conflates GB/US → US
+	// #928: a distinctive postcode format outranks the language-based placer (which conflates GB/US → US
 	// namesakes). When conditioned on and no explicit defaultCountry, set the country prior from the parsed
 	// postcode's format. the placer block below then no-ops via its `!opts.anchorPosterior` guard. Confidence
 	// 1.0 — a matched format is unambiguous. hardCountry still checks on the safelist (GB isn't on it yet, so
@@ -704,7 +704,7 @@ async function geocodeAddressOnce(input: string, deps: GeocodeDeps): Promise<Geo
 	// #912 change 1: the placer abstains on a single bare locality — OOD input, and the wrong soft
 	// posterior overrides the resolver's better-informed exact-tier/population ranking (see
 	// isBareLocalityTree). Explicit defaultCountry / anchorPosterior from the caller are untouched.
-	// #1589 extends the abstention to a bare POSTCODE: the placer's language model reading `SW1A 1AA`
+	// #1589 extends the abstention to a bare postcode: the placer's language model reading `SW1A 1AA`
 	// as English placed US at safelist confidence, and the resulting hardCountry filtered the GB row
 	// out before the format-implied probe could run. The code's own format says more than its script.
 	if (placeCountry && placerResult && !isBareLocalityTree(tree) && !isBarePostcodeTree(tree)) {
@@ -715,9 +715,9 @@ async function geocodeAddressOnce(input: string, deps: GeocodeDeps): Promise<Geo
 			// #1738's disagreement test, hoisted. It used to sit inside the hardCountry branch below and
 			// check the hard filter only, which left the soft posterior unrestricted — and the soft posterior is
 			// enough on its own: the within-tier sort key is `(prominence ?? score) + w·posterior[country]`
-			// at w = 1, so on `Queen Street, Bristol` a 0.9261 posterior gap overturns GB Bristol's 0.884776
+			// at w = 1. Therefore, on `Queen Street, Bristol` a 0.9261 posterior gap overturns GB Bristol's 0.884776
 			// prominence lead and the answer moves 5,274 km to Connecticut (#1751). The placer reads the
-			// STREET TOKEN — `King Street, Bristol` reads GB 0.5227 and survives, `Queen` does not — and
+			// street token — `King Street, Bristol` reads GB 0.5227 and survives, `Queen` does not — and
 			// nothing else in the tree names a country.
 			//
 			// One probe, read by both checks. An unknown or fuzzy bearer is not disagreement, and a resolver
@@ -755,10 +755,10 @@ async function geocodeAddressOnce(input: string, deps: GeocodeDeps): Promise<Geo
 
 			if (hardCountry) {
 				// #1738: a language read is not a country verdict. The placer's languages are pluricentric —
-				// French text licenses {FR, CA, BE, CH, …} — and hardening on the language's home country
+				// French text licenses {FR, CA, be, CH, …} — and hardening on the language's home country
 				// exiled the francophone-CA class ("1001 Boulevard Saint-Laurent, Montréal" answered
 				// Montréal-la-Cluse, Ain: the FR hard filter excluded Québec before any race ran). The
-				// promotion therefore yields when the tree's own locality names a place whose DOMINANT
+				// promotion therefore yields when the tree's own locality names a place whose dominant
 				// bearer (population-first, unscoped, exact) lives in a different country: Paris under
 				// French text still hardens (the dominant Paris is in FR); Montréal does not, and the
 				// placer's posterior stays the soft anchor the worldwide race weighs. An unknown or fuzzy
@@ -776,11 +776,11 @@ async function geocodeAddressOnce(input: string, deps: GeocodeDeps): Promise<Geo
 	// Rooftop tier for a NON-US parse, in precedence order:
 	//
 	//   1. National open-register (#1012) — an authoritative government address register (BAN-FR today), denser +
-	//      coordinate-authoritative, so it goes AHEAD of OSM.
+	//      coordinate-authoritative, so it goes ahead of OSM.
 	//   2. OSM (#247) — the community fallback, only when no national register covered the country.
 	//
-	// Bbox fall-through is on for both: the rows carry postcode + commune but the QUERY often doesn't ("181 Rue du
-	// Chevaleret, Paris" — no postcode, and BAN communes are INSEE-arrondissement-granular so the locality probe keys
+	// Bbox fall-through is on for both: the rows carry postcode + commune but the query often doesn't ("181 Rue du
+	// Chevaleret, Paris" — no postcode, and BAN communes are insee-arrondissement-granular so the locality probe keys
 	// "paris" ≠ "paris 13e arrondissement"). The resolved locality's box then scopes the (street, number) probe.
 	// measured safe — zero ambiguous (street, number) pairs across Paris arrondissements in the 2026-05-18 BAN database.
 	//
@@ -818,10 +818,10 @@ async function geocodeAddressOnce(input: string, deps: GeocodeDeps): Promise<Geo
 		opts.addressPoints = addressPoints
 	}
 
-	// National street-centroid tier (#1042): wire the country-keyed street-centroid PROVIDER (BAN-FR today) + the
-	// pre-resolution country hints so a STREET-ONLY query (no house number) — which no rooftop tier can serve — gets a
+	// National street-centroid tier (#1042): wire the country-keyed street-centroid provider (BAN-FR today) + the
+	// pre-resolution country hints so a street-only query (no house number) — which no rooftop tier can serve — gets a
 	// street-level coordinate instead of the commune centroid. The resolver's applyStreetCentroid self-checks on
-	// no-house-number (a numbered query is byte-identical) and unions these hints with the RESOLVED-tree countries,
+	// no-house-number (a numbered query is byte-identical) and unions these hints with the resolved-tree countries,
 	// because the pre-resolution country of a bare thoroughfare is unreliable (bare-locality tree / placer mis-route).
 	// US never supplies a street database, so `provider("us")` is undefined and the US path stays byte-stable.
 	const streetHints: string[] = []
@@ -847,7 +847,7 @@ async function geocodeAddressOnce(input: string, deps: GeocodeDeps): Promise<Geo
 		// #374 doctrine: a database that carries its own conformal multiplier (the `interp_calibration`
 		// metadata table, read at open — `radiusCalibration`) is self-calibrating. the resolver reads it
 		// directly and this path passes nothing. Two carve-outs preserve the ladder:
-		//   1. an explicit caller NUMBER (`deps.interpCalibration` — the CLI's --interp-calibration
+		//   1. an explicit caller number (`deps.interpCalibration` — the CLI's --interp-calibration
 		//      instrument flag) still overrides the artifact, and
 		//   2. a database predating the metadata table (the shipped fleet) falls back to the in-code
 		//      per-region table selected by the parsed region (`stateSlug`) — byte-identical to before.
@@ -860,13 +860,13 @@ async function geocodeAddressOnce(input: string, deps: GeocodeDeps): Promise<Geo
 
 		const calibration = explicit ?? fallback
 
-		// A factor of 1 is a no-op — skipped, EXCEPT as an explicit override of an artifact value ("force raw").
+		// A factor of 1 is a no-op — skipped, except as an explicit override of an artifact value ("force raw").
 		if (calibration && (calibration !== 1 || (explicit !== undefined && interpolation.radiusCalibration != null))) {
 			opts.interpolationRadiusCalibration = calibration
 		}
 	}
 
-	// #42 postcode-country coherence, default-ON at the core resolver. Propagated explicitly for the same reason
+	// #42 postcode-country coherence, default-on at the core resolver. Propagated explicitly for the same reason
 	// `adminCoherence` is — so `deps.postcodeCountryCoherence: false` stays an effective opt-out rather than an unset
 	// field that re-defaults on downstream. The resolver owns the verdict, and its answer is read back off the tree.
 	opts.postcodeCountryCoherence = deps.postcodeCountryCoherence !== false
@@ -877,7 +877,7 @@ async function geocodeAddressOnce(input: string, deps: GeocodeDeps): Promise<Geo
 		}
 	}
 
-	// #1717 stage 2 is promoted default-ON, so an explicit `false` is the only thing that withholds it. The resolver
+	// #1717 stage 2 is promoted default-on, so an explicit `false` is the only thing that withholds it. The resolver
 	// core keeps its byte-stable `=== true` read, so the default lives here and in the session, where every promotion's does.
 	if (deps.adminContainmentRerank !== false) {
 		opts.adminContainmentRerank = true
@@ -894,7 +894,7 @@ async function geocodeAddressOnce(input: string, deps: GeocodeDeps): Promise<Geo
 
 	let resolved = await deps.resolver.resolveTree(tree, opts)
 
-	// Second pass, whenever the RESOLVE settled a different country than the databases were selected for. Rooftop +
+	// Second pass, whenever the resolve settled a different country than the databases were selected for. Rooftop +
 	// street-centroid databases are selected before the resolve (they have to be — they're resolver inputs), off a
 	// country that can be corrected by any of several mechanisms mid-resolve: the #42 coherence override and the
 	// #1735 explicit pre-scope stamp receipts, but the placer and the #1684 dropped-scope worldwide race do not —
@@ -954,7 +954,7 @@ async function geocodeAddressOnce(input: string, deps: GeocodeDeps): Promise<Geo
 	// ROAD_TO_V9 §4 marker assembly — the verdict itself is computed above the street-miss fallback.
 	const markers = [...(verdict.intentMarkers ?? [])]
 
-	// The two resolve-time readings, side by side because they are the same question from opposite ends: too MANY
+	// The two resolve-time readings, side by side because they are the same question from opposite ends: too many
 	// answers for the query is `declared_ambiguity`, too FEW is `declared_coarser_answer`. Only the first existed, so a
 	// street parsed and a locality centroid returned came back as an ordinary admin answer, indistinguishable from a
 	// correct answer to the locality alone. Each returns `null` when its rule did not fire.
@@ -982,7 +982,7 @@ async function geocodeAddressOnce(input: string, deps: GeocodeDeps): Promise<Geo
 	// opt-in venue tier, extracted as one unit — see applyEntityTiers.
 	applyEntityTiers(result, markers, parseInput, resolved.roots, deps)
 
-	// #1989 / #1991: what each ATTACHED spatial layer designates for the coordinate this answer reached, recorded beside
+	// #1989 / #1991: what each attached spatial layer designates for the coordinate this answer reached, recorded beside
 	// it. Every route reads a finished result and returns a record — no candidate, no ordering, no abstain — and each
 	// contributes nothing when absent, so an unconfigured session produces the identical marker list.
 	result.intent_markers = [...markers, ...layerDesignationMarkers(deps, result.lat, result.lon, verdict)]

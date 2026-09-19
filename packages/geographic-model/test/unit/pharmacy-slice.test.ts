@@ -6,19 +6,19 @@
  *   The authored records — the frozen pharmacy record set and the wave-1 set amended onto it — read through
  *   the artifact a consumer would read.
  *
- *   Every assertion below is made against the COMMITTED artifact or against a fresh compile of the
+ *   Every assertion below is made against the committed artifact or against a fresh compile of the
  *   committed authoring files — never against a fixture built in this file. A fixture would prove that
  *   the compiler works, which `compile.test.ts` already covers. what is unproven until here is that the
  *   records someone actually authored say what the frozen record set says they say.
  *
- *   WAVE 1 IS COMPLETE. All three records are authored — the `drugstore` concept, its US-scoped
+ *   wave 1 is complete. All three records are authored — the `drugstore` concept, its US-scoped
  *   assertion, and the `poi-taxonomy` mapping that was held back until the POI branch could search a
  *   union rather than narrow to one id (#1980). So `obtain_medication` reaches two mapped kinds, and the
  *   tests below assert that the second one is reachable through the same external-identifier lookup the
  *   first is: a mapping nothing can translate through would state the semantics and reach no rows.
  *
- *   The freshness check compares PARSED values rather than bytes. A committed artifact is the
- *   generator's output run through `oxfmt`, which inlines short arrays, so a byte comparison against
+ *   The freshness check compares parsed values rather than bytes. A committed artifact is the
+ *   generator's output run through `oxfmt`. It inlines short arrays. Therefore, a byte comparison against
  *   `serializeCompiledModel` would fail on formatting the repository itself applies. Byte determinism
  *   is asserted where it is meaningful instead: between two compiles, and between the committed
  *   artifact and a fresh compile once both are canonically serialized.
@@ -90,9 +90,9 @@ describe("the authored pharmacy records", () => {
 		])
 	})
 
-	// `defeasible` is the wave-1 vocabulary correction, and it is a statement about the RELATION: whether `affords`
+	// `defeasible` is the wave-1 vocabulary correction, and it is a statement about the relation: whether `affords`
 	// assertions admit exceptions at all. Under `hard` semantics an exception is a defect in the record set, which is a
-	// claim only `necessary` and `prohibited` make — so a `strongly_expected` assertion had no defined reading beside a
+	// claim only `necessary` and `prohibited` make . Therefore, a `strongly_expected` assertion had no defined reading beside a
 	// `necessary` one until this moved.
 	it("declares `affords` as a defeasible establishment→activity relation", async () => {
 		const relation = (await compileAuthoredGeographicModel()).relations.find((entry) => entry.id === AFFORDS)
@@ -177,7 +177,7 @@ describe("the committed artifact", () => {
 		expect(closure.get(String(PHARMACY))).toEqual(["establishment", "healthcare_facility", "place"])
 		expect(closure.get(String(OBTAIN_MEDICATION))).toEqual(["activity"])
 
-		// `drugstore` is a kind of `establishment` DIRECTLY. The external hierarchy puts it under `retail`, disjoint
+		// `drugstore` is a kind of `establishment` directly. The external hierarchy puts it under `retail`, disjoint
 		// from `health_and_medical`, and `healthcare_facility` is premises that exist to provide healthcare — which
 		// retail premises with a dispensing counter do not. Placing it there would give every later healthcare class
 		// a retail ancestor.
@@ -225,7 +225,7 @@ describe("the wave-1 records", () => {
 		expect(assertion?.id).toBe("drugstore-affords-obtain-medication")
 		expect(assertion?.target).toBe(OBTAIN_MEDICATION)
 
-		// Not `necessary`: the attested material says a US drugstore CHARACTERISTICALLY dispenses, and neither a
+		// Not `necessary`: the attested material says a US drugstore characteristically dispenses, and neither a
 		// locale-scoped synonym nor a row count is a census of dispensing.
 		expect(assertion?.modality).toBe(Modality.StronglyExpected)
 
@@ -307,7 +307,7 @@ describe("reading the record set through the runtime lookups", () => {
 	})
 
 	// The two kinds `obtain_medication` reaches, read off the committed artifact rather than off the route. Each
-	// external identifier translates into ITS OWN concept and not into the other: the mapping table states which id
+	// external identifier translates into its own concept and not into the other: the mapping table states which id
 	// names which class, and nothing in it states a preference between the two.
 	it("reaches two mapped kinds for one activity, each from its own external identifier", async () => {
 		const index = createGeographicModelIndex(await readCompiledGeographicModel())

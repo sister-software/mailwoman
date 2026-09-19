@@ -22,7 +22,7 @@ import { normalizeLocalityForKey } from "#street/normalize"
  * `Intl.DisplayNames` already knows every one — ~280 regions, ~5,244 surfaces, from the same ICU the runtime uses for
  * every other locale-sensitive operation. No download, no vendored corpus, no snapshot to drift.
  *
- * `is_primary = 0`: these are NAMES THE WORLD USES rather than the country's canonical name. The display `name` stays
+ * `is_primary = 0`: these are names the world uses rather than the country's canonical name. The display `name` stays
  * whatever the gazetteer already had, so resolving `格鲁吉亚` answers with the Georgia country row rather than renaming
  * it.
  *
@@ -67,7 +67,7 @@ export function stageCountryDisplayNames(ctx: {
 
 		const k = normalizeLocalityForKey(name)
 
-		// The country's own key is already staged as its primary. INSERT OR IGNORE at materialization dedupes the
+		// The country's own key is already staged as its primary. insert or ignore at materialization dedupes the
 		// rest, so this only skips the obvious self-alias.
 		if (!k || k === target.a.pkey) continue
 

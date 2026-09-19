@@ -3,7 +3,7 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   `mailwoman placer probe-frontier` — the #822 frontier probe: can the DEPLOYED coarse placer
+ *   `mailwoman placer probe-frontier` — the #822 frontier probe: can the deployed coarse placer
  *   (#244) emit the placer-recoverable countries? Emits the branch verdict (data gap /
  *   under-confident / low-quality signal / no change) that drives the Phase-2 fix choice.
  */
@@ -15,7 +15,7 @@ import { type CommandSpec, CommandTaskResult, type CommandComponent, reportToStd
 export const description = "Probe whether the deployed coarse placer (#244) covers the recoverable tranche (#822)"
 
 /**
- * Native command-line contract consumed by the filesystem command router.
+ * Native command-line interface consumed by the filesystem command router.
  */
 export const spec = {
 	name: "probe-frontier",

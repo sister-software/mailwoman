@@ -26,7 +26,7 @@ The `comment_triage_lead` table contains low-confidence leads for `outdated`, `s
 | id                            | what it reads                                                                                                                                                                                                 | spawns  |
 | ----------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------- |
 | `version-sync`                | every `.release-it.json` workspace's manifest version against the root's                                                                                                                                      | —       |
-| `test-contract`               | every tracked test sits under `test/{unit,integration,full}/` (plus `browser`, `build`, `e2e` where a `playwright.config.ts` runs them) and imports by package name                                           | —       |
+| `test-interface`              | every tracked test sits under `test/{unit,integration,full}/` (plus `browser`, `build`, `e2e` where a `playwright.config.ts` runs them) and imports by package name                                           | —       |
 | `node-modules-reacharound`    | no `join`/`resolve` argument spells a `node_modules` layout outside the reasoned allowlist                                                                                                                    | —       |
 | `runtime-flags`               | every flag in `docs/engineering/reference/runtime-flags.mdx` is touched by a test                                                                                                                             | —       |
 | `no-root-scripts`             | no root `scripts/` directory, no path built into one, no CI target running one or a bare `lib/*.ts`                                                                                                           | —       |
@@ -61,7 +61,7 @@ replacement stays in the family the author wrote — a `#` import stays private,
 relative path stays relative. A specifier with no candidate that resolves refuses the whole plan.
 
 A move rewrites three kinds of reference: module specifiers, `exports`/`imports` TARGETS (never a subpath key — that
-is the package's contract, and a file moving underneath it is not a consumer's business), and repo-relative paths
+is the package's interface, and a file moving underneath it is not a consumer's business), and repo-relative paths
 written as text in a hook command, a lint glob or a `Usage:` line. Dated records under `docs/superpowers/` keep their
 paths, because a plan describes what was true on its date.
 

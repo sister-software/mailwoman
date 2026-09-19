@@ -5,7 +5,7 @@
  *
  *   The three `DatabaseClient` construction forms, pinned.
  *
- *   The constructor discriminates at RUNTIME (`typeof source === "string"`, then `"database" in source`), so the
+ *   The constructor discriminates at runtime (`typeof source === "string"`, then `"database" in source`), so the
  *   overload list proves nothing about which branch a call actually takes — every form below compiled before it worked.
  *   The no-options path is the one that failed: forwarding an absent second argument as an explicit `undefined` throws
  *   inside `node:sqlite`, which typechecks perfectly and breaks every caller that passes only a path.

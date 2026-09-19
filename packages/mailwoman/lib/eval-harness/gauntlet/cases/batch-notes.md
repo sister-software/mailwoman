@@ -168,7 +168,7 @@ Singapore 068815`), and the official line (`108 Jalan Rajah Singapore 320108`). 
 > they're honorifics, digit-words, slashes, CJK script, and one Korean city. Seven of thirteen
 > resolve to the BAN rooftop TODAY (verified 2026-07-24, shipped model md5 700f3cf4, tier
 > address_point, uncertainty 1 m): the BAN tier keys on house_number+street+postcode, which all
-> parse cleanly, so the resolution is insensitive to the venue span. The six exceptions are counted
+> parse cleanly. Therefore, the resolution is insensitive to the venue span. The six exceptions are counted
 > as improvement_target: venue-delta-restaurant-paris-6 (the venue's 'Paris 6' arrondissement
 > number
 > is grabbed as the house_number — rooftop still lands), venue-bangkok-factory-boulogne ('Bis'
@@ -556,7 +556,7 @@ Heathrow Airport` collapses to locality="Terminal" + house_number=5 with the air
 
 2 rows · `cases/gb/`
 
-> Appended by the operator after the first 53 were graded — same contract, same instrument.
+> Appended by the operator after the first 53 were graded — same interface, same instrument.
 
 <details><summary>Rows</summary>
 
@@ -634,7 +634,7 @@ Heathrow Airport` collapses to locality="Terminal" + house_number=5 with the air
 > string, wrong place": `expectComponents.locality` graded GREEN on every one of these rows while the
 > resolver returned an Austrian hamlet, and only a coordinate 8,045 km away said so — an impostor inside the
 > 25 km bar would have passed silently. The rows grade off `hierarchy[0].name` (the gazetteer's canonical
-> `resolver_name`), never `GauntletResult.locality`, which echoes the parsed query span and therefore agrees
+> `resolver_name`), never `GauntletResult.locality`, which echoes the parsed query span and. Therefore, agrees
 > with the input no matter what resolved. Five now pass outright; `dj-cs-djibouti` (65.9 km) and
 > `cg-cs-brazzaville` (453.1 km) fail on coordinate alone with the place identity green, which is exactly the
 > separation the assertion exists to draw.

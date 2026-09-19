@@ -6,7 +6,7 @@
  *   The batched path's arithmetic — the one part a fixture build cannot reach, and the one whose failure
  *   produces a well-formed artifact.
  *
- *   A CHUNK HERE IS ONE SCENARIO, AND EVERY SCENARIO COVERS THE SAME COAST. So a coverage cell appears in
+ *   A chunk here is one scenario, and every scenario covers the same coast. So a coverage cell appears in
  *   twelve chunks and the counts must ADD. taking the last chunk's value would report a cell as holding one
  *   scenario's polygons, which is a twelfth of what is there — a number that looks entirely plausible on a
  *   receipt.
@@ -104,7 +104,7 @@ describe("aggregateChunks", () => {
 			}),
 		])
 
-		// The two spellings stay APART in the census: the fold is what the domain check compares on, and folding the
+		// The two spellings stay apart in the census: the fold is what the domain check compares on, and folding the
 		// receipt too would hide the source's own inconsistency from the reader who has to see it.
 		expect(result.defenceTypeCounts).toEqual([
 			["Sheet piles", 1350],

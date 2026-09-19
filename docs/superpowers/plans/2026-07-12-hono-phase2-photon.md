@@ -1,6 +1,6 @@
 # Hono API surface, Phase 2: api-kit geo atoms + photon migration — Implementation Plan
 
-> **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
+> **For agentic workers:** required sub-skill: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
 **Goal:** Land the GeoJSON wire atoms in `@mailwoman/api-kit` (first consumer) and migrate `@mailwoman/photon` from express to Hono + `@hono/zod-openapi` with the OpenAPI document emitted from the route table, retiring `photon/openapi.yaml` through the same parity check as phase 1.
 
@@ -11,7 +11,7 @@
 ## Global Constraints
 
 - **Vendor wire shapes are immutable.** Photon's error/degenerate envelope is an empty FeatureCollection plus message: `{"type":"FeatureCollection","features":[],"message":"…"}` — never `{error}`. Exact messages: `"q is required"`, `"lat and lon are required"`, `"lat must be in [-90, 90] and lon in [-180, 180]"`, `"internal error"`, `"search not implemented"`, `"reverse not implemented"`. Statuses 200/400/500/501. CORS methods list is `GET, OPTIONS` (no POST — differs from libpostal).
-- **Repeatable params are contract**: `osm_tag` and `layer` accept repeated values (arrays). Do not dedup them, and do not copy phase 1's `canonicalizeQueryParams`/`canonicalizeJSONBody` — photon has no POST surface and its duplicate-param behavior is observable (see the `legacyQuery` adapter).
+- **Repeatable params are interface**: `osm_tag` and `layer` accept repeated values (arrays). Do not dedup them, and do not copy phase 1's `canonicalizeQueryParams`/`canonicalizeJSONBody` — photon has no POST surface and its duplicate-param behavior is observable (see the `legacyQuery` adapter).
 - **Engine and projection exports move verbatim** — public API, zero signature changes: `PhotonEngine`, `PhotonSearchParams`, `PhotonReverseParams`, `PhotonProperties`, `PhotonFeature`, `PhotonFeatureCollection`, `PhotonForwardInput`, `PhotonForwardResult`, `photonFeature`, `photonCollection`, `photonOSMTags`, `photonForwardProperties`, `photonForwardFeature`, `photonForwardCollection`, `photonFeatureToSchemaOrg`, `photonToSchemaOrg`, `DEFAULT_LIMIT` behavior (15). `createPhotonRouter`/`PhotonRouterOptions` are deleted, no shim (operator decision, phase 1 precedent).
 - **Adjudication consistency with phase 1** (ledger + memory): same calls for the same questions; where photon's legacy behavior differs (repeated params), legacy wins — that's the point of the adapter.
 - `erasableSyntaxOnly`; `.ts` relative imports; acronym casing (whole camelCase components); both exports maps on any changed `package.json`; no raw `process.env`/`process.argv`; compile before running anything against `out/`; `yarn oxfmt` before committing; commit lockfile deltas with the change that caused them (phase-1 lesson).
@@ -174,7 +174,7 @@ git commit -m "feat(api-kit): GeoJSON wire atoms (Point/Feature/FeatureCollectio
 
 - [ ] **Step 2: tsconfig.** In `photon/tsconfig.json` `compilerOptions` add `"resolveJsonModule": true`; add top-level `"files": ["./package.json"]` alongside `include`; set `"references": [{ "path": "../api-kit" }]` (phase-1 lesson — tsc's composite TS6307 check requires the literal files entry for the self-referencing package.json import that Task 3's `app.ts` performs).
 
-- [ ] **Step 3: Move the engine block** (index.ts lines ~20–104: the two param interfaces, the three wire types, `PhotonEngine`, `photonFeature`, `photonCollection` — note `photonFeature`/`photonCollection` live further down in index.ts, lines ~272–280; move them into `engine.ts` with the types) into `photon/engine.ts`, verbatim, with the standard header. Docstring: the engine contract + wire types; projection lives in `projection.ts`.
+- [ ] **Step 3: Move the engine block** (index.ts lines ~20–104: the two param interfaces, the three wire types, `PhotonEngine`, `photonFeature`, `photonCollection` — note `photonFeature`/`photonCollection` live further down in index.ts, lines ~272–280; move them into `engine.ts` with the types) into `photon/engine.ts`, verbatim, with the standard header. Docstring: the engine interface + wire types; projection lives in `projection.ts`.
 
 - [ ] **Step 4: Move the projection block** (index.ts lines ~282–478: `PhotonForwardInput` through `photonToSchemaOrg`, plus `FORWARD_TAG_PROJECTION`/`DEFAULT_OSM_TAGS` from ~321–342) into `photon/projection.ts`, verbatim, importing `type PhotonFeature, type PhotonFeatureCollection, type PhotonProperties, photonFeature, photonCollection` from `./engine.ts` and keeping the `@mailwoman/annotations` import. Every `#1014`/`#1041`/`#1050`/`#1052` comment moves intact.
 
@@ -187,7 +187,7 @@ git commit -m "feat(api-kit): GeoJSON wire atoms (Point/Feature/FeatureCollectio
  * @author Teffen Ellis, et al.
  *
  *   Zod wire schemas for the Photon-compatible surface. Key names and envelopes are the vendor
- *   contract — immutable. Query schemas are validator-proof by construction (unions accepting
+ *   interface — immutable. Query schemas are validator-proof by construction (unions accepting
  *   string or repeated values) with doc-exact `.openapi()` overrides: validation can never fail,
  *   and every wire decision stays in the handlers (see routes.ts's legacyQuery adapter).
  */
@@ -305,7 +305,7 @@ git commit -m "refactor(photon): split engine, projection, and zod wire schemas 
   - `registerPhotonRoutes(app: OpenAPIHono, engine: PhotonEngine): void`.
   - `createPhotonRouter`/`PhotonRouterOptions` no longer exist.
 
-**The wire-parity core — the `legacyQuery` adapter.** Express's `req.query` yields `string` for a single value and `string[]` for repeats; all legacy parsing (`asString`, `asStringArray`, `Number(...)`) keyed off that shape, and its degenerate behaviors are observable contract: repeated `q` → `asString(array)` → undefined → 400; repeated `lat` on `/reverse` → `Number(array)` → NaN → 400 (`"lat and lon are required"`); `Number(["1"])` → 1. Reproduce the shape, then move the original logic verbatim on top of it:
+**The wire-parity core — the `legacyQuery` adapter.** Express's `req.query` yields `string` for a single value and `string[]` for repeats; all legacy parsing (`asString`, `asStringArray`, `Number(...)`) keyed off that shape, and its degenerate behaviors are observable interface: repeated `q` → `asString(array)` → undefined → 400; repeated `lat` on `/reverse` → `Number(array)` → NaN → 400 (`"lat and lon are required"`); `Number(["1"])` → 1. Reproduce the shape, then move the original logic verbatim on top of it:
 
 ```ts
 /**
@@ -313,8 +313,8 @@ git commit -m "refactor(photon): split engine, projection, and zod wire schemas 
  * parsing helpers (`asString`, `asStringArray`, `Number(...)`) — and their observable degenerate
  * behaviors (repeated `q` → 400, repeated `lat` → NaN → 400) — key off exactly this shape, so the
  * handlers consume it unchanged. Do NOT dedup or canonicalize here: photon's repeatable params
- * (`osm_tag`, `layer`) are contract, and its duplicate-param 400s are contract too (unlike
- * libpostal, where duplicates were never-contract — see the phase-1 adjudications).
+ * (`osm_tag`, `layer`) are interface, and its duplicate-param 400s are interface too (unlike
+ * libpostal, where duplicates were never-interface — see the phase-1 adjudications).
  */
 function legacyQuery(c: Context): Record<string, string | string[]> {
 	const out: Record<string, string | string[]> = {}
@@ -560,7 +560,7 @@ export function registerPhotonRoutes(app: OpenAPIHono, engine: PhotonEngine): vo
 
 - [ ] **Step 5: Implement `photon/app.ts`** — mirrors phase 1's `libpostal/app.ts` shape exactly: `OpenAPIHono` + `cors({ origin: "*", allowMethods: ["GET", "OPTIONS"], allowHeaders: ["*"], maxAge: 86400 })` when `options.cors !== false` (NOTE: no POST in the methods list — photon is GET-only), `app.onError((_e, c) => c.json({ type: "FeatureCollection", features: [], message: "internal error" }, 500))` (photon's envelope rather than `{error}`), `registerPhotonRoutes(app, engine)`, `attachOpenAPIDocs(app, { title: packageJson.name, version: packageJson.version })` with the self-referencing `import packageJson from "@mailwoman/photon/package.json" with { type: "json" }`. Doc comment for `PhotonAppOptions.cors` carries the full #1017 rationale from the old `PhotonRouterOptions.cors`.
 
-- [ ] **Step 6: Gut `photon/index.ts`** — header docstring updated (`createPhotonApp` replaces `createPhotonRouter`; Hono app; engine contract in `engine.ts`, projection in `projection.ts`), then four re-exports: `./app.ts`, `./engine.ts`, `./projection.ts`, `./schema.ts`.
+- [ ] **Step 6: Gut `photon/index.ts`** — header docstring updated (`createPhotonApp` replaces `createPhotonRouter`; Hono app; engine interface in `engine.ts`, projection in `projection.ts`), then four re-exports: `./app.ts`, `./engine.ts`, `./projection.ts`, `./schema.ts`.
 
 - [ ] **Step 7: Minimal `photon/cli.ts` compile fix** — swap `createPhotonRouter` + express boot for `createPhotonApp` + `serveNode` (api-kit), keeping every flag, gazetteer-resolution branch, #1009 error, and banner line as-is. Flag it in your report; Task 5 reconciles fully.
 
@@ -602,7 +602,7 @@ git commit -m "feat(photon)!: express Router -> Hono app with emitted OpenAPI do
  * @author Teffen Ellis, et al.
  *
  *   ONE-TIME migration check (deleted once adjudicated): the emitted OpenAPI document must cover
- *   the handwritten openapi.yaml's contract — every path, method, parameter, and status code.
+ *   the handwritten openapi.yaml's interface — every path, method, parameter, and status code.
  */
 
 import { readFileSync } from "node:fs"
@@ -756,7 +756,7 @@ git commit -m "feat(photon): serve via api-kit serveNode; emitted OpenAPI at /op
 
 ```bash
 git push -u origin feat/hono-photon
-gh pr create --title "feat!: Hono API surface, phase 2 — api-kit geo atoms + photon migration" --body "<spec/plan links; geo atoms; legacyQuery adapter rationale (why photon does NOT get phase 1's canonicalizers — repeatable params and duplicate-param 400s are contract here); parity-check adjudications; smoke receipts; breaking note (createPhotonRouter removed, no shim); next-major-train constraint. End with the Claude Code attribution line.>"
+gh pr create --title "feat!: Hono API surface, phase 2 — api-kit geo atoms + photon migration" --body "<spec/plan links; geo atoms; legacyQuery adapter rationale (why photon does NOT get phase 1's canonicalizers — repeatable params and duplicate-param 400s are interface here); parity-check adjudications; smoke receipts; breaking note (createPhotonRouter removed, no shim); next-major-train constraint. End with the Claude Code attribution line.>"
 ```
 
 ⚠ Do not merge the PR — operator's call. NOTE for the controller rather than the implementer: the hosted `mailwoman-photon.service` systemd unit runs the old express CLI; redeploy is a post-merge operator step (standing plan: drop-in servers redeploy post-POSAIS).

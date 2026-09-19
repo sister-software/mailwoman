@@ -3,7 +3,7 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   The Photon-compatible Hono app: CORS + error safety net + routes + the emitted OpenAPI
+ *   The Photon-compatible Hono app: cors + error safety net + routes + the emitted OpenAPI
  *   document. Engine-agnostic — the CLI wires the real engine. tests inject fixtures.
  */
 
@@ -20,10 +20,10 @@ import { registerPhotonRoutes } from "#routes"
  */
 export interface PhotonAppOptions {
 	/**
-	 * Emit permissive CORS headers (`Access-Control-Allow-Origin: *`) on every response and answer preflight `OPTIONS`
-	 * with `204`. Default `true` — upstream komoot/photon serves permissive CORS, and the map-widget use case
+	 * Emit permissive cors headers (`Access-Control-Allow-Origin: *`) on every response and answer preflight `options`
+	 * with `204`. Default `true` — upstream komoot/photon serves permissive cors, and the map-widget use case
 	 * (leaflet-control-geocoder, @openrunner/photon-geocoder, …) needs it: a browser's cross-origin XHR is blocked
-	 * without it (#1017). Set `false` when a reverse proxy already owns the CORS headers.
+	 * without it (#1017). Set `false` when a reverse proxy already owns the cors headers.
 	 */
 	cors?: boolean
 
@@ -67,8 +67,8 @@ export const PHOTON_DOC_INFO: OpenAPIDocInfo = {
 export function createPhotonApp(engine: PhotonEngine, options: PhotonAppOptions = {}): OpenAPIHono {
 	const app = new OpenAPIHono()
 
-	// Browser-embedded widgets need CORS or their cross-origin XHR is blocked before the request completes (#1017).
-	// GET-only — photon has no mutating routes, so unlike libpostal's CORS there is no POST in the methods list.
+	// Browser-embedded widgets need cors or their cross-origin XHR is blocked before the request completes (#1017).
+	// GET-only — photon has no mutating routes, so unlike libpostal's cors there is no post in the methods list.
 	if (options.cors !== false) {
 		app.use(cors({ origin: "*", allowMethods: ["GET", "OPTIONS"], allowHeaders: ["*"], maxAge: 86_400 }))
 	}
@@ -78,7 +78,7 @@ export function createPhotonApp(engine: PhotonEngine, options: PhotonAppOptions 
 	}
 
 	// Safety net: malformed input or an engine fault returns an empty FeatureCollection, never a crash (photon's
-	// envelope — NOT `{error}`, which is the libpostal/nominatim shape).
+	// envelope — not `{error}`, which is the libpostal/nominatim shape).
 	app.onError((_error, c) => c.json({ type: "FeatureCollection", features: [], message: "internal error" }, 500))
 
 	registerPhotonRoutes(app, engine, options.engine)

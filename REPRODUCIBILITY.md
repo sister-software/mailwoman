@@ -37,7 +37,7 @@ modal volume get mailwoman-training output-v101-runB-s42/model.onnx ./model-fp32
 # 3. Quantize int8 (local, PINNED toolchain — see below; verify the md5 is deterministic by running twice)
 corpus-python/.venv/bin/python -m mailwoman_train.cli quantize --input ./model-fp32.onnx --output ./model-int8.onnx
 
-# 4. Check (one command — the check spec is the contract)
+# 4. Check (one command — the check spec is the interface)
 node mailwoman/out/cli.js eval check --model ./model-fp32.onnx --int8 ./model-int8.onnx --spec mailwoman/eval-harness/specs/v4.2.0-ship.json
 ```
 

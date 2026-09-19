@@ -4,7 +4,7 @@
  * @author Teffen Ellis, et al.
  *
  *   The engine stamp: which mailwoman produced a response, and under which license branch. It rides in JSON bodies as
- *   `engine`, in two HTTP headers, and as a two-line stderr notice. It is built once per process from two inputs the
+ *   `engine`, in two http headers, and as a two-line stderr notice. It is built once per process from two inputs the
  *   doctor also reads — the package's license expression and the configured key's offline verification — so the doctor
  *   and every stamped output agree on the branch by construction.
  *
@@ -24,7 +24,7 @@ import { appliedLicenseBranch } from "#license/obligations"
 export const LICENSE_PAGE_PATH = "/license"
 
 /**
- * The obligation the notice states, in the doctor's vocabulary: the AGPL source offer to network users, which is the
+ * The obligation the notice states, in the doctor's vocabulary: the agpl source offer to network users, which is the
  * one a network deployment carries and the one the commercial agreement waives.
  */
 const NOTICE_OBLIGATION = "modified or network-served copies must offer their source."

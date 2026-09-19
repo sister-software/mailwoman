@@ -9,7 +9,7 @@
  *   and this terminal's stdio, so npm prints its `https://www.npmjs.com/auth/cli/…` approval URL
  *   here and polls while you approve it elsewhere. That is what makes a hardware security key work
  *   over SSH: the key never has to be attached to the machine running this operation — open the URL
- *   wherever the key lives and touch it there. If the account's second factor is still TOTP, npm
+ *   wherever the key lives and touch it there. If the account's second factor is still totp, npm
  *   prompts for the code on stdin instead. Either way this operation does not broker it.
  *
  *   To save you moving that URL by hand, it is also pushed to the terminal's clipboard over OSC 52
@@ -173,7 +173,7 @@ async function packAndPublish(dir: string, options: BlessPackageOptions): Promis
 	const pkg = await readPkg(dir)
 
 	if (options.version) {
-		// npm's default follows the bump with an arborist install of the workspace ROOT,
+		// npm's default follows the bump with an arborist install of the workspace root,
 		// which cannot parse the yarn-only protocol `workspace:*`
 		// `--no-workspaces-update` prevents it.
 

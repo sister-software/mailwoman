@@ -4,7 +4,7 @@
  * @author Teffen Ellis, et al.
  *
  *   Span-level parse dump for a named row set under one weights arm, so two arms can be diffed line for
- *   line. Built for the v4.2.0-base-anchor-v2 (Run B) regression triage: the gauntlet reports a COORD or a
+ *   line. Built for the v4.2.0-base-anchor-v2 (Run B) regression triage: the gauntlet reports a coord or a
  *   single-tag miss, which cannot distinguish "the parse moved" from "the resolver ranked differently".
  *   This dumps the parse alone (classifier-only pipeline, no resolver, exactly the gauntlet's parse half).
  *

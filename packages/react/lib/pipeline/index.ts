@@ -2,7 +2,7 @@
  * @copyright Sister Software
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
- * @file Pipeline explorer components, visualizers, hooks, and contracts.
+ * @file Pipeline explorer components, visualizers, hooks, and interfaces.
  */
 
 export { About } from "../common/About.tsx"

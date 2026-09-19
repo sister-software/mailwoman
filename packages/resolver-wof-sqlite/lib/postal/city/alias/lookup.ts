@@ -3,7 +3,7 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Node reader over the POSTAL-CITY ALIAS table (`postal-city-alias-<cc>.db`) — the observed
+ *   Node reader over the postal-city alias table (`postal-city-alias-<cc>.db`) — the observed
  *   `postal_city → geo_locality` aliases per postcode (`build-postal-city-alias.ts`). Consumed by
  *   {@link WOFSQLitePlaceLookup}'s coordinate-first locality scorer: a user-typed postal city
  *   ("Antioch", postcode 37013) becomes a name-match alias for the geographic locality the postcode
@@ -50,7 +50,7 @@ export interface PostalCityAlias {
 }
 
 /**
- * Reader over `postal_city_alias`. The only query is a postcode-scoped probe for DIVERGENT rows (where the postal name
+ * Reader over `postal_city_alias`. The only query is a postcode-scoped probe for divergent rows (where the postal name
  * differs from the geographic name — the rows that carry alias signal), issued via the typed Kysely query builder
  * against {@link PostalCityAliasDatabase}.
  */

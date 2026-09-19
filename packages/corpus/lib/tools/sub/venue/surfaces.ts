@@ -19,12 +19,12 @@ import type { SubVenueSurface } from "#tools/sub/venue/table"
 const CASE_FOLDING_SCRIPT = /^[\p{Script=Latin}\p{Script=Cyrillic}\p{Script=Greek}\d\s\p{P}]+$/u
 
 /**
- * Scripts written without spaces between words, where a token split cannot find a designator and a SUBSTRING test is
+ * Scripts written without spaces between words, where a token split cannot find a designator and a substring test is
  * the correct operator. Han, Hiragana, Katakana. Hangul is excluded because Korean does space its words.
  *
  * The Germanic-compound argument that keeps {@link nameContainsSurfaces} token-bounded for Latin script does not
  * transfer here — there is no `-gate`/`-hall` street-name suffix class in Japanese, and `第1ターミナル` is unreachable by any
- * token split. Measured on the Japan extract: see the harvest counts in `corpus/data/PROVENANCE.md`.
+ * token split. Measured on the Japan extract: see the harvest counts in `corpus/data/provenance.md`.
  */
 const NON_SPACING_SCRIPT = /[\p{Script=Han}\p{Script=Hiragana}\p{Script=Katakana}]/u
 
@@ -68,7 +68,7 @@ export function buildSurfaceIndex(surfaces: readonly SubVenueSurface[]): Surface
  * Nordic street naming, which is exactly the confound class `Briggate`/`Kirkgate` represents.
  *
  * For Han/Kana names that rule finds nothing at all, because the script has no word boundaries: `第1ターミナル` splits into
- * one token that matches no surface. There the LONGEST known substring is the correct operator, and the compound
+ * one token that matches no surface. There the longest known substring is the correct operator, and the compound
  * objection does not transfer — Japanese has no `-gate` street-name suffix class.
  */
 export function nameContainsSurfaces(name: string, index: SurfaceIndex): string[] {

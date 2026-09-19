@@ -413,7 +413,7 @@ describe("the place binding of a country-scoped claim (#1999)", () => {
 const HERMETIC = { placeCountry: false as const, streetEvidence: false as const }
 
 describe("createRuntimePipeline poiQueryKind flag", () => {
-	// #1177: default-ON since 2026-07-20 (promotion battery: 0/4,507 golden misroutes, 6/6 demo presets
+	// #1177: default-on since 2026-07-20 (promotion battery: 0/4,507 golden misroutes, 6/6 demo presets
 	// byte-identical — docs/articles/evals/2026-07-20-poi-promotion-battery.md). `undefined` behaves like
 	// `true` (intent-only mode) without the caller opting in.
 	it("ON by default: a category phrase takes the poi path without opting in", async () => {

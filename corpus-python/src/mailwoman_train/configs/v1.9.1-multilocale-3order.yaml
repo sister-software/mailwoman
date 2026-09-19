@@ -1,28 +1,28 @@
-# === v1.9.1-multilocale-3order (#148 — the ORDER-OVERFIT FIX) ==================================
-# v1.9.0 FAILED: it added the overture-multilocale source (150k real Overture rows each across 16 EU
-# locales, ~2.4M total) but the recipe output was 100% CANONICAL order ("STREET HN, PC TOWN" — town always
-# LAST). overture is the SOLE EU-format teacher (base = US sources + ban=FR + synth-german=DE +
-# synth-fr-*=FR. WOF teaches place NAMES rather than full-address FORMAT), so the model learned the positional
-# shortcut "locality = last token-group" and emitted the STREET as locality on the eval's pc-first /
+# === v1.9.1-multilocale-3order (#148 — the order-overfit FIX) ==================================
+# v1.9.0 failed: it added the overture-multilocale source (150k real Overture rows each across 16 EU
+# locales, ~2.4M total) but the recipe output was 100% canonical order ("street HN, PC town" — town always
+# last). overture is the sole EU-format teacher (base = US sources + ban=FR + synth-german=DE +
+# synth-fr-*=FR. WOF teaches place names rather than full-address format), so the model learned the positional
+# shortcut "locality = last token-group" and emitted the street as locality on the eval's pc-first /
 # city-first orders. Resolve rate regressed on every in-source locale (PT 52->35, PL 53->39, AT 50->45,
 # CZ 43->31, IT 79->63. FR held 80->81 rather than in the source). Diagnosed via scripts/eval/locality-emit-diff.ts
-# (dump-and-read). Not a grain mismatch. not a weight problem — source_weights is a MULTINOMIAL over
-# SOURCES (5.7% of rows at weight 3.0 regardless of row count), so only the RENDERING fixes it.
+# (dump-and-read). Not a grain mismatch. not a weight problem — source_weights is a multinomial over
+# sources (5.7% of rows at weight 3.0 regardless of row count), so only the rendering fixes it.
 #
-# THE FIX (one knob): the same 2.4M rows, re-rendered in 3 orders (canonical/pc-first/city-first,
+# the FIX (one knob): the same 2.4M rows, re-rendered in 3 orders (canonical/pc-first/city-first,
 # rotated i%3. scripts/rerender-overture-multiorder.mjs) so the locality appears in every position.
 # Everything else is identical to v1.9.0 (overture weight stays 3.0. same rows/components/source_id) —
 # a clean single-variable A/B. SK has no locality field -> stays canonical (no shortcut to break).
 #
-# CRITICAL (data_loader.py:244): country_weights.get(country) is None -> the row is EXCLUDED. All 22
+# critical (data_loader.py:244): country_weights.get(country) is None -> the row is excluded. All 22
 # countries listed below at 1.0 (acceptance filter relative to max_weight rather than a 1/N split).
 #
-# GOAL / CHECK: grade the ASSEMBLED coordinate, never label-F1. Diagnostic-first: at step-2000/4000 run
+# goal / check: grade the assembled coordinate, never label-F1. Diagnostic-first: at step-2000/4000 run
 # scripts/eval/nonus-coord-panel.ts — the in-source locales (PT/PL/AT/CZ/IT) resolve rate must recover
 # toward / above the v1.8.0 baseline (PT 52, PL 53, AT 50, CZ 43, IT 79), and the US per-locale-F1
 # guardrail must hold (not worse >1pp) + FR centroid flat. If in-source resolve is still below v1.8.0 at
-# 2-4k, KILL (the order fix didn't take). Not promoted without operator GO (model swap).
-# CORPUS: corpus-v0.8.0 base (verbatim) + overture-multilocale 3-ORDER overlay -> R2 -> sync_v091.
+# 2-4k, kill (the order fix didn't take). Not promoted without operator GO (model swap).
+# corpus: corpus-v0.8.0 base (verbatim) + overture-multilocale 3-order overlay -> R2 -> sync_v091.
 # Launch: cd corpus-python && modal run -d -m launch.train_remote --config v1.9.1-multilocale-3order.yaml --resume none
 data:
   corpus_dir: /data/corpus/versioned/v0.9.1-multilocale/corpus-v0.9.1-multilocale
@@ -60,7 +60,7 @@ data:
     usgov-hrsa-fqhc: 2.0
     usgov-imls-pls: 2.0
     usgov-nad: 1.0
-    state-ia-contractors: 2.0
+    state-ia-builders: 2.0
     state-tx-notaries: 1.5
     state-ny-notaries: 2.0
     deepseek-kryptonite: 3.0

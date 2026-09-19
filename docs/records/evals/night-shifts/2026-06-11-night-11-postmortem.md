@@ -34,8 +34,8 @@
 - **P2.5 DE holdout**: Saarland + Mecklenburg-Vorpommern added to `defaultHoldouts()` — takes
   effect at the next base rebuild (a holdout added after a corpus is built is
   leakage-laundering rather than a holdout). 1500 corpus tests green.
-- **P2.8 pipeline contract**: the decode-time constraint layers (conventions mask + span bridge)
-  documented as the ship-config decode contract. The angle lint narrowed to its measured
+- **P2.8 pipeline interface**: the decode-time constraint layers (conventions mask + span bridge)
+  documented as the ship-config decode interface. The angle lint narrowed to its measured
   breakage class (digit prose) after false-positiving on legitimate JSX.
 
 ## What went well
@@ -99,7 +99,7 @@
 - S6 drafted here: the next check spec (v4.5.0-class) promotes the two watch lenses to floors
   with one release of history behind them — proposed bars: VT-intersection golden a/b ≥ 90
   (v4.4.0 measured 94.9/96.1) and glue-rows region/postcode recall ≥ 85 (measured 93/97).
-  Stated-change comment required in the spec per the no-drift contract.
+  Stated-change comment required in the spec per the no-drift interface.
 
 ## Numbers
 

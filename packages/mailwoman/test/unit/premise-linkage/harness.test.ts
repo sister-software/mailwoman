@@ -3,11 +3,11 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   #1902's acceptance criteria, one named test each. Every case runs on the shipped SYNTHETIC fixture
+ *   #1902's acceptance criteria, one named test each. Every case runs on the shipped synthetic fixture
  *   — invented addresses, invented identifiers in the reserved 0-prefixed range, no model, no
  *   gazetteer, no network — so the suite runs anywhere and no licensed row can reach it.
  *
- *   What the suite pins is the SHAPE of the report rather than any prose about it: a numerator and its
+ *   What the suite pins is the shape of the report rather than any prose about it: a numerator and its
  *   denominator for every rate, an outcome vocabulary neither arm can privately redefine, and a writer
  *   that refuses before it opens a file.
  */
@@ -341,7 +341,7 @@ describe("#1902: the public-report writer refuses an injected disclosure", () =>
 
 		injected.arms[0]!.providerName = `graded ${run.inputs[0]!} in 4 ms`
 
-		// The one check that PROVES a disclosure — this string was read from the run's own input — is the
+		// The one check that proves a disclosure — this string was read from the run's own input — is the
 		// one reported, ahead of the two heuristics the same value also trips.
 		expect(refusalFrom(() => publishableReport({ ...run, report: injected })).reason).toBe(
 			PremiseLinkageRedactionReason.InputSubstring
@@ -489,7 +489,7 @@ describe("#1902: the Mailwoman-only arm uses the production pipeline, unchanged"
 	})
 })
 
-describe("#1902: the authoritative arm consumes the #1901 provider contract", () => {
+describe("#1902: the authoritative arm consumes the #1901 provider interface", () => {
 	it("hands the fixture provider the assembled #1901 query, once per row", async () => {
 		const log: AuthoritativeQuery[] = []
 		const rows = await collectRows(syntheticFixtureAdapter())

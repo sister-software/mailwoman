@@ -3,18 +3,18 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   The CAPITAL-STATUS reference index (#1880) — answers, for one resolved candidate, "is this
+ *   The capital-status reference index (#1880) — answers, for one resolved candidate, "is this
  *   place the national capital or an admin-1 seat of its country?". The consumer is the resolver's
  *   bounded capital promotion (`@mailwoman/resolver`'s `promoteCapitals`, applied after the fame
  *   key on the bare-toponym class); this module only matches, it never ranks. Pure and
  *   platform-free (the #861 parity discipline).
  *
- *   Matching is an IDENTITY test with three conjuncts: same country, within
+ *   Matching is an identity test with three conjuncts: same country, within
  *   {@link CAPITAL_MATCH_RADIUS_KM} of the reference point, and the candidate's own folded name a
  *   member of the reference entry's folded name set (name + romanization + the source's alternate
  *   names, so exonym rows — "Vienna" for Wien — still match). All three are required. The
  *   iteration-1 board run matched on country + coordinate alone, and the 25 km radius promoted
- *   capital-ADJACENT namesakes instead of capitals: North Salt Lake beside the Utah seat, a Gujarat
+ *   capital-adjacent namesakes instead of capitals: North Salt Lake beside the Utah seat, a Gujarat
  *   Indiranagar beside Gandhinagar, Via delle Parti beside Perugia. The name set is what makes the
  *   radius a centroid-drift allowance rather than a catchment.
  */

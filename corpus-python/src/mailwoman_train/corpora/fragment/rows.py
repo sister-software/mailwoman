@@ -36,9 +36,9 @@ COUNTRY_NAMES = {
 # Country surfaces come from @mailwoman/codex (COUNTRY_SURFACE_FORMS + ISO2_TO_NAME), not re-derived
 # here — the codex is the single source of truth. `codex/tools/export-country-surfaces.ts` snapshots it
 # across the TS→Python boundary into the data file below (regenerate it when the codex changes). Filter
-# to word-forms (len ≥ 3) so an address TAIL is "USA" / "United States", never the bare "US" alpha-2
+# to word-forms (len ≥ 3) so an address tail is "USA" / "United States", never the bare "US" alpha-2
 # code (ambiguous with a US state code at the tail). Golden gold is the surface, e.g.
-# "6220 SE Salmon St, Portland, OR 97215, USA" → country="USA".
+# "6220 SE Salmon St, Portland, or 97215, USA" → country="USA".
 _COUNTRY_SURFACES_RAW = json.loads(package_path("data", "country-surfaces.json").read_text(encoding="utf-8"))[
     "surfaces"
 ]

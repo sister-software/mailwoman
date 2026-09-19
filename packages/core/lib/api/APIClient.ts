@@ -2,8 +2,8 @@
  * @copyright Sister Software
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
- * @file The default base for HTTP clients in this repo. Raw `fetch` duplicates throttling, caching, and
- *   error mapping that live here. new clients extend or instantiate this instead (see `AGENTS.md`).
+ * @file The default base for http clients in this repo. Raw `fetch` duplicates throttling, caching, and
+ *   error mapping that live here. new clients extend or instantiate this instead (see `agents.md`).
  */
 
 import { isAsyncDisposable } from "async-init"
@@ -54,7 +54,7 @@ export interface APIClientConfig {
 	caching?: CacheOptions
 
 	/**
-	 * How many requests to make per minute before enforcing a cooldown: a BUDGET model — spend `requestsPerMinute`
+	 * How many requests to make per minute before enforcing a cooldown: a budget model — spend `requestsPerMinute`
 	 * dispatches, then stall until the cooldown lapses.
 	 *
 	 * This cannot express a flat per-second rate, which is what most fair-access policies actually publish. For that use
@@ -65,7 +65,7 @@ export interface APIClientConfig {
 	/**
 	 * The minimum spacing between two dispatches, in milliseconds — strict pacing with no burst allowance.
 	 *
-	 * Set this when an upstream publishes a flat rate (SEC EDGAR: 10 requests/second, enforced): `1000 / rate`. Unlike
+	 * Set this when an upstream publishes a flat rate (SEC edgar: 10 requests/second, enforced): `1000 / rate`. Unlike
 	 * {@linkcode requestsPerMinute}, the bound applies under arbitrary concurrency — grants are reserved synchronously, so
 	 * N callers racing in one turn are still spaced one interval apart. A token bucket cannot do this: capacity C admits
 	 * `C + rate * 1s` inside a sliding second, so no non-zero capacity honors a flat cap.
@@ -104,8 +104,8 @@ export class APIClient<C extends APIClientConfig = APIClientConfig> extends Even
 	#cooldownWithResolvers: PromiseWithResolvers<void> | null = null
 	#requestCountWithinCooldown = 0
 	/**
-	 * When the CURRENT budget window opened — the instant of its first dispatch rather than of the last one. The cooldown
-	 * is measured from here, which is what makes `requestsPerMinute` mean requests per MINUTE.
+	 * When the current budget window opened — the instant of its first dispatch rather than of the last one. The cooldown
+	 * is measured from here, which is what makes `requestsPerMinute` mean requests per minute.
 	 */
 	#windowStartedAt = 0
 
@@ -135,14 +135,14 @@ export class APIClient<C extends APIClientConfig = APIClientConfig> extends Even
 		this.#retryPolicy = resolveRetryPolicy(config.retry)
 		this.#pacer = config.minRequestIntervalMs ? new RequestPacer(config.minRequestIntervalMs, this.#clock) : null
 
-		// THE PACING LIMIT LIVES IN THE ADAPTER rather than in `fetch()`.
+		// the pacing limit lives IN the adapter rather than in `fetch()`.
 		//
 		// `axios-cache-interceptor` short-circuits a cache HIT by replacing `config.adapter` with its own
 		// `cachedAdapter`, so anything installed here is reached only when the request is actually going
-		// to the network. Restricting in `fetch()` instead put the cache interceptor DOWNSTREAM of the check and
+		// to the network. Restricting in `fetch()` instead put the cache interceptor downstream of the check and
 		// made every cache hit burn a full pacer sleep: measured 1 dispatch, 5 hits, five 111ms sleeps for
 		// zero network traffic. `/Archives/` documents are cached for a century by design, so warm re-runs
-		// are the EXPECTED mode for a bulk crawl — at 100k cached documents that is ~3 hours of sleeping
+		// are the expected mode for a bulk crawl — at 100k cached documents that is ~3 hours of sleeping
 		// against an empty network. The client this replaced also paced only on a miss.
 		//
 		// Retries are unaffected: each attempt re-enters `this.axios(...)`, so each re-enters this adapter
@@ -202,13 +202,13 @@ export class APIClient<C extends APIClientConfig = APIClientConfig> extends Even
 		// the un-stripped form: a client at `minRequestIntervalMs: 5000` issuing three concurrent `fetch({ url, adapter })`
 		// calls made 3 dispatches, took 0 grants and slept 0 times.
 		//
-		// The cache interceptor swaps the adapter too, and that one is INTENDED — it is how a cache hit skips the check
+		// The cache interceptor swaps the adapter too, and that one is intended — it is how a cache hit skips the check
 		// without spending a grant. The difference is that it swaps on the merged config from inside the interceptor
 		// chain, after this method has already handed the request over. Stripping it here closes the caller-supplied
 		// door without touching the interceptor's.
 		//
 		// Latent when found — no shipped client passes an adapter — which is exactly how the cooldown/pacer composition
-		// bug survived too. Closing it before `bdc/sdk/client.ts` is written against this contract.
+		// bug survived too. Closing it before `bdc/sdk/client.ts` is written against this interface.
 		const { adapter: _callerAdapter, ...safeOptions } = options
 
 		for (let attempt = 1; ; attempt++) {
@@ -239,7 +239,7 @@ export class APIClient<C extends APIClientConfig = APIClientConfig> extends Even
 	 * Acquire permission to dispatch one request, clearing both limits. Each reserves synchronously with respect to its
 	 * own state, so concurrency cannot defeat either of them.
 	 *
-	 * The bug this replaced: `fetch()` awaited a single `$cooldown` read and the request was only COUNTED by a response
+	 * The bug this replaced: `fetch()` awaited a single `$cooldown` read and the request was only counted by a response
 	 * interceptor. N callers invoked in the same turn all cleared the limit before any response came back to set a
 	 * cooldown — measured at 40 dispatches inside 3ms against a configured budget of 2/minute, and 40 against 10/minute.
 	 *
@@ -287,7 +287,7 @@ export class APIClient<C extends APIClientConfig = APIClientConfig> extends Even
 
 		const now = this.#clock.now()
 
-		// The first dispatch after a reset OPENS the window. Everything below measures from that instant.
+		// The first dispatch after a reset opens the window. Everything below measures from that instant.
 		if (this.#requestCountWithinCooldown === 0) {
 			this.#windowStartedAt = now
 		}
@@ -295,10 +295,10 @@ export class APIClient<C extends APIClientConfig = APIClientConfig> extends Even
 		this.#requestCountWithinCooldown++
 
 		if (this.#requestCountWithinCooldown >= requestsPerMinute) {
-			// Wait out the REMAINDER OF THE MINUTE rather than `MS_PER_MINUTE / requestsPerMinute`.
+			// Wait out the remainder OF the minute rather than `MS_PER_MINUTE / requestsPerMinute`.
 			//
 			// The original computed `(60000 / N) - elapsed`, which is the spacing between two requests rather than the length
-			// of the budget window — so N dispatches went out back to back and the client waited 60/N seconds before
+			// of the budget window . Therefore, N dispatches went out back to back and the client waited 60/N seconds before
 			// releasing another N. Measured on a bare client at `requestsPerMinute: 10`, 20-call fan-out: arrivals
 			// `[0 x10, 6000 x10]` — 20 inside one sliding minute against a budget of 10, a sustained 100/minute. A
 			// caller trusting the docstring would have hammered an upstream at 10x its stated limit.

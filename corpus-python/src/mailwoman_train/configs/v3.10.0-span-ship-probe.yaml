@@ -1,4 +1,4 @@
-# v3.10.0-span-ship-probe — #727 STAGE 2, STEP 4 (plan #1134): the span-scorer head on the shipped
+# v3.10.0-span-ship-probe — #727 stage 2, step 4 (plan #1134): the span-scorer head on the shipped
 # v381 recipe. 2k probe. Two variables vs v3.8.1 (v381), each with its own pre-registered read leg:
 #
 #   1. model.use_span_scorer + train.span_head_learning_rate 1.0e-3 — the stage-2 semi-CRF span head
@@ -6,27 +6,27 @@
 #      weights. The phase-1 lesson is baked in: a fresh head gets its own param group at 1e-3 while
 #      the pretrained encoder stays at 1e-5 (v3.0.0 was mis-specified without it — span NLL never
 #      converged at 2k).
-#   2. data.augment_upper_case_prob 0.15 — P3 (#829/#690): ALL-CAPS training copies mirroring
+#   2. data.augment_upper_case_prob 0.15 — P3 (#829/#690): all-caps training copies mirroring
 #      lowercase_row semantics (b3d741bd). Read is off-manifold for leg 1 (case vs span structure),
 #      so cross-contamination risk is low. the joint recipe is what would ship regardless.
 #
-# PRE-REGISTERED READS (2k):
+# PRE-registered reads (2k):
 #   LEG 1 (span) — span NLL converging toward O(1) (v301 precedent: 26.4 -> ~2 by 2k with the LR
-#     group); seg@1 > token@1 on the starved python check (scripts/eval_seg_at_1.py — RELATIVE read,
+#     group); seg@1 > token@1 on the starved python check (scripts/eval_seg_at_1.py — relative read,
 #     both heads share the starved encoder. absolutes are not the JS harness numbers).
 #   LEG 2 (all-caps) — uppercase-perturbed golden-us subset (n>=200), exact-match with
 #     normalizeCase off, package-shaped int8: probe must beat v381 on the same rows by >=5pp
 #     (v381 has zero all-caps training signal. anything less says the augment is inert -> drop it
 #     and keep the #690 shim).
-#   GUARDS (noise-read at 2k, binding at 8k): golden us/fr micro within noise of v381. FR fragment
+#   guards (noise-read at 2k, binding at 8k): golden us/fr micro within noise of v381. FR fragment
 #     board + digit board no worse than -2pp. BIO decode quality unchanged on presets (the span head
-#     is an ADDITIONAL output — the token path must stay byte-stable-ish under the shared encoder).
+#     is an additional output — the token path must stay byte-stable-ish under the shared encoder).
 #   Not a promote check. The 8k full run pre-registers the standing battery (golden 2pp check,
 #   gauntlet, metamorphic, fragment boards) + oracle@5 / seg@1 on the JS harness via the PR #1154
 #   decode surface + the isotonic ambiguity-check fit (plan req 4).
 #
 # fp32 partition math enforced inside span_scorer.py regardless of autocast (v0.5.0 bf16 CRF scar).
-# Same corpus + tokenizer as v381 -> all F1 comparisons vs v381 are VALID.
+# Same corpus + tokenizer as v381 -> all F1 comparisons vs v381 are valid.
 data:
   corpus_dir: /data/corpus/versioned/v0.11.0-no-fragment/corpus-v0.11.0-no-fragment
   tokenizer_dir: /data/models/tokenizer/v0.9.0-multisplice
@@ -64,7 +64,7 @@ data:
     usgov-hrsa-fqhc: 2.0
     usgov-imls-pls: 2.0
     usgov-nad: 1.0
-    state-ia-contractors: 2.0
+    state-ia-builders: 2.0
     state-tx-notaries: 1.5
     state-ny-notaries: 2.0
     deepseek-kryptonite: 3.0
@@ -84,9 +84,9 @@ data:
     synth-no-street-led: 0.0
     synth-cz-pcfirst-preposition: 12.0
     synth-nl-postcode: 6.0
-    # PROBE 1: the fragment/autocomplete source (assay weight — moderate precedent).
+    # probe 1: the fragment/autocomplete source (assay weight — moderate precedent).
     synth-fragment: 6.0
-    # #727 T2 NEW — the one variable. 12.0 = the targeted-fix precedent (fr-bare-street,
+    # #727 T2 new — the one variable. 12.0 = the targeted-fix precedent (fr-bare-street,
     # si-bare-village, no-street-led are all 12.0). Streets with no house number + the
     # bare-locality counter.
     synth-fr-fragment: 12.0
@@ -103,7 +103,7 @@ data:
   # copy per row so the model segments street/locality without leaning on the comma. Closes the gauntlet
   # comma-drop INV (White House + FR Rue du Chevaleret). One new variable vs v373.
   augment_punct_drop_prob: 0.3
-  # P3 (#829): ALL-CAPS copies, mirroring lowercase_row (skip-row on multi-char case-folds, tokens too).
+  # P3 (#829): all-caps copies, mirroring lowercase_row (skip-row on multi-char case-folds, tokens too).
   augment_upper_case_prob: 0.15
   anchor_lookup_path: /data/anchor/pilot-anchor-lookup.json
   gazetteer_lexicon_path: /data/gazetteer/anchor-lexicon-v1.json
@@ -139,12 +139,12 @@ model: # Verbatim from v2.4.1.
   use_postcode_anchor: true
   use_gazetteer_anchor: true
   gazetteer_feature_dim: 5
-  # #1104 country channel ON — dedicated 2-dim [country_surface, country_ambiguous] soft feed with its
+  # #1104 country channel on — dedicated 2-dim [country_surface, country_ambiguous] soft feed with its
   # own projection + confidence (must equal the lexicon's feature_dim). Default-False elsewhere, so a
   # resume from a pre-country checkpoint stays byte-identical until this flips.
   use_country_anchor: true
   country_feature_dim: 2
-  # #1104 homograph-guard SOFTENER — the one variable vs v263. Scales the country_ambiguous dim by 0.5
+  # #1104 homograph-guard softener — the one variable vs v263. Scales the country_ambiguous dim by 0.5
   # before the country_projection (bakes into the exported ONNX. no lexicon/inference change). v263's
   # hard guard (scale 1.0) over-suppressed homograph countries Georgia/Jordan (country-homograph F1
   # 89.8->82.6); softening should recover homograph recall without giving back the country F1 the

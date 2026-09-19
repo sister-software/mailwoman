@@ -9,7 +9,7 @@ import { smartSnakeCase } from "@mailwoman/core"
 import { TIGERProperty } from "#index"
 
 /**
- * Default column selections for TIGER tabulated block entities.
+ * Default column selections for tiger tabulated block entities.
  *
  * @internal
  */

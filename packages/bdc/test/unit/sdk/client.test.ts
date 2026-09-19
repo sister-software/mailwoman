@@ -5,7 +5,7 @@
  * @file Tests for {@linkcode createBDCClient} — the FCC BDC public-API client, now built on
  *   `@mailwoman/core/api`'s {@linkcode APIClient}.
  *
- *   Every test drives a stub Axios ADAPTER and, where timing matters, an injected `ClockLike`. No test
+ *   Every test drives a stub Axios adapter and, where timing matters, an injected `ClockLike`. No test
  *   here performs a live network call or a real wall-clock sleep, and at ten requests per minute the
  *   second half of that matters more than anywhere else in the repo: one real throttle grant costs six
  *   seconds, so a suite that slept would take longer than the ingestion it models. Cache-expiry tests
@@ -25,7 +25,7 @@ import type { BDCFile, RawBDCFile } from "@mailwoman/bdc/sdk/common"
 import type { FCCAsOfDateEntry } from "@mailwoman/bdc/sdk/filing-dates"
 import { createFakeClock, maxCountInSlidingWindow, VirtualClock } from "@mailwoman/core/api/test-clocks"
 import { type StubOutcome, stubTransport, type StubTransport } from "@mailwoman/core/api/test-transport"
-// `ResourceError` is used both as a VALUE (`toBeInstanceOf`) and as a TYPE (`as ResourceError`). The value
+// `ResourceError` is used both as a value (`toBeInstanceOf`) and as a type (`as ResourceError`). The value
 // arrives via the post-reset dynamic import below. a `const` carries no type side, so the type position
 // needs its own static import. Type-only, so it never evaluates the mocked module chain.
 import type { ResourceError as ResourceErrorShape } from "@mailwoman/core/errors"
@@ -37,7 +37,7 @@ import { join } from "path-ts"
 import { Globerator } from "spliterator/node/fs"
 import { afterAll, afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 
-// `$private` (`@mailwoman/core/env`) is a LIVE getter over `{ ...dotEnv, ...process.env }` — `dotEnv` is
+// `$private` (`@mailwoman/core/env`) is a live getter over `{ ...dotEnv, ...process.env }` — `dotEnv` is
 // read from the repo's real `.env` once at module load, so `vi.stubEnv(..., undefined)` alone can't hide
 // real FCC_MAP_USERNAME/FCC_MAP_API_KEY values committed there: the merge falls back to `dotEnv`'s value
 // regardless of what the test stubs on `process.env`. Mock the module directly so the no-credentials test
@@ -106,7 +106,7 @@ beforeEach(async () => {
 	dataRoot = await temporaryDirectory("bdc-client-test-")
 	cacheDir = dataRoot.resolve("http-cache")
 
-	// Created up front so "the cache is empty" is a readable directory rather than an ENOENT — the
+	// Created up front so "the cache is empty" is a readable directory rather than an enoent — the
 	// distinction the never-cached assertions below depend on.
 	await makeDirectoryExclusive(cacheDir)
 	vi.stubEnv("MAILWOMAN_DATA_ROOT", dataRoot.path.toString())
@@ -238,10 +238,10 @@ describe("createBDCClient: the 10 requests/minute throttle", () => {
 	})
 
 	it("never lets more than the configured budget arrive inside any sliding minute", async () => {
-		// ARRIVALS, timestamped inside the adapter — not `clock.sleepCalls`. The grant schedule is not what a
+		// arrivals, timestamped inside the adapter — not `clock.sleepCalls`. The grant schedule is not what a
 		// rate limiter sees, and asserting it is how a throttle bug hides: sleeps can be spaced correctly
 		// while requests still land in a burst. `runUntilSettled` is required because the throttle sits
-		// DOWNSTREAM of the on-disk cache lookup, so each request spends real event-loop turns in `readFile`
+		// downstream of the on-disk cache lookup, so each request spends real event-loop turns in `readFile`
 		// before it registers its sleep.
 		const FAN_OUT = 12
 
@@ -311,11 +311,11 @@ describe("createBDCClient: the throttle meter", () => {
 
 	it("unions concurrent waits instead of summing them, so waiting can never exceed elapsed", async () => {
 		// Under a fan-out every caller sleeps at once and each wait is longer than the last (6s, 12s, …),
-		// so SUMMING them reports more waiting than the run took: the first version of this meter printed
+		// so summing them reports more waiting than the run took: the first version of this meter printed
 		// `78m 0s (2000%)` for a 40-call fan-out that finished in 3m54s. What the operator is assessing is
-		// what SHARE of the wall clock went to the throttle, which only the union answers.
+		// what share of the wall clock went to the throttle, which only the union answers.
 		//
-		// Deliberately UNDER `BDC_DEFAULT_REQUESTS_PER_MINUTE`, so only the interval limit fires and `waits` is exactly
+		// Deliberately under `BDC_DEFAULT_REQUESTS_PER_MINUTE`, so only the interval limit fires and `waits` is exactly
 		// one per call after the first. At 12 this also crossed the per-minute budget, and once that limit's cooldown was
 		// corrected to a full window (it had been releasing N back to back every `60000/N` ms — a 10x overrun) the extra
 		// budget waits made the count ambiguous. Union-vs-sum is what this test is for. isolate it.
@@ -335,7 +335,7 @@ describe("createBDCClient: the throttle meter", () => {
 	})
 
 	it("counts a per-minute budget cooldown once the budget is spent", async () => {
-		// The BUDGET limit (`requestsPerMinute`) is declared alongside the interval limit. this is what proves
+		// The budget limit (`requestsPerMinute`) is declared alongside the interval limit. this is what proves
 		// it is actually wired, since the interval limit alone produces identical arrival spacing.
 		const BUDGET = 2
 
@@ -350,10 +350,10 @@ describe("createBDCClient: the throttle meter", () => {
 
 	/**
 	 * The composed steady state of both limits, at the shipped defaults — pinned because `createBDCClient` and
-	 * {@link BDCThrottleStats.cooldowns} both describe it in prose, and both used to describe it WRONGLY: they claimed
+	 * {@link BDCThrottleStats.cooldowns} both describe it in prose, and both used to describe it wrongly: they claimed
 	 * the budget's cooldown "computes to <= 0" / is of "near-zero duration" once the interval limit has spaced the
 	 * dispatches, so the budget was said to cost nothing. It is a real 6 s wait. `APIClient` measures the cooldown to the
-	 * end of the MINUTE the window opened in, and after nine 6 s intervals only 54 s of that minute is spent.
+	 * end of the minute the window opened in, and after nine 6 s intervals only 54 s of that minute is spent.
 	 *
 	 * Nothing checked either claim, which is how they survived. This is the check.
 	 */
@@ -375,7 +375,7 @@ describe("createBDCClient: the throttle meter", () => {
 			96_000, 102_000, 108_000, 114_000, 120_000, 132_000,
 		])
 
-		// One cooldown per budget's worth of requests, and it is a WAIT rather than a zero-length rollover marker.
+		// One cooldown per budget's worth of requests, and it is a wait rather than a zero-length rollover marker.
 		expect(client.throttleStats().cooldowns).toBe(WINDOWS)
 
 		// The composed rate lands below the published limit — conservative, which is why the two limits are left
@@ -549,7 +549,7 @@ describe("createBDCClient: the binary download path", () => {
 	})
 
 	it("copies out of a POOLED buffer rather than handing over its neighbours' bytes", async () => {
-		// Node pools small `Buffer.allocUnsafe` allocations, so a short body arrives as a VIEW at a
+		// Node pools small `Buffer.allocUnsafe` allocations, so a short body arrives as a view at a
 		// non-zero `byteOffset` into a shared 8 KiB backing store (measured: offset 88). Returning
 		// `.buffer` directly there would hand the caller the whole pool. The zero-copy branch is only
 		// correct for the exactly-sized allocation `Buffer.concat` makes past the pool threshold, which is
@@ -607,7 +607,7 @@ describe("downloadBDCFile: end to end over the migrated client", () => {
 	})
 })
 
-// The contract an ingestion run depends on. Each branch is decided from `status` and
+// The interface an ingestion run depends on. Each branch is decided from `status` and
 // `isTransientResourceError()` alone — never from message text.
 describe("createBDCClient: the caller's failure taxonomy, decided without reading any message", () => {
 	async function failureFor(outcomes: StubOutcome[], maxAttempts = 2): Promise<unknown> {
@@ -688,7 +688,7 @@ describe("createBDCClient: the caller's failure taxonomy, decided without readin
 
 		const transport = bdcTransport([{ status: 429, statusText: "Too Many Requests" }, { body: { data: [1] } }], clock)
 
-		// A backoff far SHORTER than the throttle interval, so only the throttle can produce the observed
+		// A backoff far shorter than the throttle interval, so only the throttle can produce the observed
 		// spacing — a test with a long backoff would pass with the throttle deleted.
 		const client = clientFor(transport, { clock, maxAttempts: 3, baseRetryDelayMs: 500 })
 
@@ -799,7 +799,7 @@ describe("the SDK callers, over the migrated client", () => {
 
 /**
  * ZIP local-file-header, central-directory and end-of-central-directory signatures, and the fixed byte lengths of the
- * two headers this builder emits (30 and 46, per APPNOTE 4.3.7/4.3.12).
+ * two headers this builder emits (30 and 46, per appnote 4.3.7/4.3.12).
  */
 const ZIP_LOCAL_SIGNATURE = 0x04_03_4b_50
 const ZIP_CENTRAL_SIGNATURE = 0x02_01_4b_50
@@ -810,7 +810,7 @@ const ZIP_EOCD_BYTES = 22
 const ZIP_VERSION = 20
 
 /**
- * Build a single-entry, STORED (uncompressed) zip archive — the shape an FCC availability download has, minus the
+ * Build a single-entry, stored (uncompressed) zip archive — the shape an FCC availability download has, minus the
  * deflate. Hand-assembled rather than pulled from a fixture file or a new dependency: `yauzl-promise` (the extractor
  * under test) reads zips and does not write them, and a committed binary fixture would be unreadable in review.
  */

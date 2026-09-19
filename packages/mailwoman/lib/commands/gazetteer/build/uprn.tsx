@@ -3,8 +3,8 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   `mailwoman gazetteer build uprn` — the OS Open UPRN spatial layer (`uprn.db`): every GB Unique
- *   Property Reference Number with OS's own WGS84 point, under the layer contract. Acquires the
+ *   `mailwoman gazetteer build uprn` — the OS Open uprn spatial layer (`uprn.db`): every GB Unique
+ *   Property Reference Number with OS's own WGS84 point, under the layer interface. Acquires the
  *   archive from the open OS Downloads API (same product family as Code-Point Open), verifies it
  *   against OS's published md5, and writes a sealed, atomically-swapped artifact. The layer is an
  *   interoperability key source — nothing on the parse/resolve path reads it.
@@ -24,7 +24,7 @@ import { Box, Text } from "ink"
 import { type CommandSpec, CommandTaskResult, type CommandComponent, phaseReporter, useCommandTask } from "#cli-kit"
 
 /**
- * Native command-line contract consumed by the filesystem command router.
+ * Native command-line interface consumed by the filesystem command router.
  */
 export const spec = {
 	name: "uprn",

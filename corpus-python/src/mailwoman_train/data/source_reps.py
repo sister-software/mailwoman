@@ -69,7 +69,7 @@ def derive_source_weights(
 
     missing = sorted(src for src in source_reps if not rows_by_source.get(src))
     if missing:
-        # An unreadable row count is an UNKNOWN exposure rather than zero reps per row. deriving a weight from it would
+        # An unreadable row count is an unknown exposure rather than zero reps per row. deriving a weight from it would
         # be the silent-mixture defect in a new costume.
         raise ValueError(f"reps-targeted sources have no readable train rows in the corpus: {missing}")
 
@@ -117,7 +117,7 @@ def format_derivation(derived: list[DerivedReps]) -> str:
         return ""
     lines = ["source_reps → source_weights (#1677):"]
     for d in derived:
-        # Three decimals rather than one: a probe holds the full run's mixture SHARE by dividing its reps targets by
+        # Three decimals rather than one: a probe holds the full run's mixture share by dividing its reps targets by
         # the step ratio, so its exposures are legitimately fractional and `%.1f` printed every one of them as
         # `0.0` — the launch log hiding the exact number this whole mechanism exists to put in front of someone.
         lines.append(

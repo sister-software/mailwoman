@@ -6,7 +6,7 @@
  *   The PCB1 postcode-binary derivation, extracted from `mailwoman/commands/gazetteer/postcode-binary.tsx`
  *   so it can be tested without a database and a terminal (#1509).
  *
- *   WHY IT MOVED. The command's GB branch derived the outward district by splitting `name` on a SPACE.
+ *   why IT moved. The command's GB branch derived the outward district by splitting `name` on a space.
  *   That was written against `postalcode-gb.db` (the retired GeoNames-lineage database), whose `name`
  *   carries the spaced display form. The licence-clean Code-Point Open database
  *   (`postalcode-gb-codepoint.db`, OGL v3.0) stores `name` already space-stripped (`AB101AB`), so the
@@ -16,14 +16,14 @@
  *     mailwoman gazetteer postcode-binary --locale GB:postalcode-gb-codepoint.db
  *       → GB: 0 codes (0 placed) → postcode-gb.bin (0.00 MB)   [exit 0]
  *
- *   Both halves of the fix live here. {@linkcode gbOutwardFromKey} derives the outward by SHAPE — the
+ *   Both halves of the fix live here. {@linkcode gbOutwardFromKey} derives the outward by shape — the
  *   inward code is always the trailing three characters of the space-stripped form, so the same rule
  *   reads both databases. {@linkcode keyFloorViolation} makes an empty or catastrophically-degraded build
- *   a REFUSAL: a magnitude never carries its own absence, so zero keys is a failure rather than a product.
+ *   a refusal: a magnitude never carries its own absence, so zero keys is a failure rather than a product.
  *
- *   The GB key set is a deliberate mirror of the TRAINING lookup's GB half
+ *   The GB key set is a deliberate mirror of the training lookup's GB half
  *   (`mailwoman/gazetteer-pipeline/anchor-lookup.ts::loadGBCodePoint` + `addGBOutwardKeys`): every unit
- *   that matches the unit-key shape, plus one outward key per district placed at the MEAN of its PLACED
+ *   that matches the unit-key shape, plus one outward key per district placed at the mean of its placed
  *   units' centroids. Decoded through `PostcodeBinaryResolver.toAnchorLookup()` that reproduces the
  *   training lookup's GB entries up to the format's i16 centroid quantization (~300 m).
  */
@@ -31,9 +31,9 @@
 import type { PostcodeBinaryEntry } from "@mailwoman/neural/postcode"
 
 /**
- * A GB unit postcode in the SPACE-STRIPPED key form the train painter writes (`SW1A2AA`) — outward glued to inward.
+ * A GB unit postcode in the space-stripped key form the train painter writes (`SW1A2AA`) — outward glued to inward.
  * Verbatim from `anchor-lookup.ts`; keep the three copies (here, `anchor-lookup.ts`, `neural/anchor-inference.ts`) in
- * lockstep, they are the same contract read from three sides.
+ * lockstep, they are the same interface read from three sides.
  */
 const GB_UNIT_KEY = /^[A-Z]{1,2}\d[A-Z\d]?\d[A-Z]{2}$/
 
@@ -44,7 +44,7 @@ const GB_UNIT_KEY = /^[A-Z]{1,2}\d[A-Z\d]?\d[A-Z]{2}$/
 const GB_INWARD_LENGTH = 3
 
 /**
- * GB key granularity. `unit` is the TRAIN-FAITHFUL set the anchor-v2 lookup carries (1,746,976 units + 2,863 outward
+ * GB key granularity. `unit` is the train-faithful set the anchor-v2 lookup carries (1,746,976 units + 2,863 outward
  * districts = 1,749,839 keys, 20.0 MB) — the unit centroid is what painted the training spans, so a model trained
  * against `pilot-anchor-lookup-v2` needs it. `outward` is the districts alone (2,863 keys, 0.03 MB), which is the only
  * thing that fits a browser bundle. it was the command's original behaviour and stays available for that reason.
@@ -75,7 +75,7 @@ export interface PostcodeBinarySource {
 /**
  * The per-country sources `mailwoman gazetteer postcode-binary` builds by default, in emission order. Shared with the
  * `--locale <CC>:<db>` override path only through {@linkcode PostcodeBinarySource.browserGranularity}: an override
- * replaces the DATABASE, never the country's browser rule.
+ * replaces the database, never the country's browser rule.
  *
  * Every database here is a member of `DEFAULT_POSTCODE_DATABASES` (`gazetteer-pipeline/index.ts`), and the key floors
  * in {@linkcode POSTCODE_BINARY_KEY_FLOORS} were measured against these same files — a country added to one table
@@ -100,7 +100,7 @@ export function browserGranularityFor(country: string): GBGranularity | undefine
 }
 
 /**
- * A raw database row, as the command's `SELECT name, latitude, longitude` returns it.
+ * A raw database row, as the command's `select name, latitude, longitude` returns it.
  */
 export interface PostcodeDatabaseRow {
 	name: string
@@ -139,7 +139,7 @@ export function postcodeBinaryKey(country: string, name: string): string {
 }
 
 /**
- * The outward district of a GB unit postcode, derived by SHAPE from either database's storage form (`AB101AB` and `AB10
+ * The outward district of a GB unit postcode, derived by shape from either database's storage form (`AB101AB` and `AB10
  * 1AB` both yield `AB10`). `null` when the input is not a GB unit shape — an already-outward code, a numeric system's
  * key, or noise.
  */
@@ -153,7 +153,7 @@ export function gbOutwardFromKey(name: string): string | null {
 
 /**
  * True when a centroid is a real placement rather than the `(0, 0)` placeholder the WOF ingest writes for an unplaced
- * record. Outward means are taken over PLACED units only, mirroring `addGBOutwardKeys`.
+ * record. Outward means are taken over placed units only, mirroring `addGBOutwardKeys`.
  */
 function isPlaced(lat: number, lon: number): boolean {
 	return lat !== 0 || lon !== 0
@@ -228,15 +228,15 @@ export function buildPostcodeBinaryEntries(
 /**
  * Per-country key floors — the "this build did not silently collapse" check (#1509).
  *
- * MEASURED 2026-08-06 against the shipped databases, `SELECT COUNT(*) FROM spr WHERE placetype='postalcode' AND
- * is_current!=0 AND country=?`:
+ * Measured 2026-08-06 against the shipped databases, `select count(*) from spr where placetype='postalcode' and
+ * is_current!=0 and country=?`:
  *
  *     US 42,318 (postalcode-us.db)          NL 371,628 (postalcode-intl.db)
  *     FR 27,119 (postalcode-intl.db)        DE  29,694 (postalcode-intl.db)
  *     ES 11,331 (postalcode-intl.db)        IT   4,936 (postalcode-intl.db)
  *     GB 1,746,976 units (postalcode-gb-codepoint.db) → 1,749,839 keys with the 2,863 outward districts
  *
- * Each floor is HALF the measured count, rounded down to a round number. Half, because these floors exist to catch a
+ * Each floor is half the measured count, rounded down to a round number. Half, because these floors exist to catch a
  * collapse (a derivation that stopped matching the database's storage form, a country filter that stopped selecting) —
  * not to pin a count that legitimately moves with every upstream refresh. A build that comes back at 51% of what the
  * database holds is still wrong, but it is wrong in a way a human reads in the roll-up. a build at 0% is the one that

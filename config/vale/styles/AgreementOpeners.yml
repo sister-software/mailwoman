@@ -13,7 +13,7 @@
 ## sentence scope keeps the terminal punctuation in the matched text, which
 ## is what lets `[.!,]` distinguish "Perfect." from "Perfect forwarding".
 extends: existence
-message: "'%s' opens with a grade, not the result — lead with what happened."
+message: "'%s' opens with a grade rather than the result — lead with what happened."
 level: error
 ignorecase: true
 scope: sentence

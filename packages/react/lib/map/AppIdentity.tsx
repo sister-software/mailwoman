@@ -11,11 +11,11 @@
  *   grow separately.
  *
  *   The commit is what a bug report cannot otherwise carry. These deploy from `main` on every push that reaches them,
- *   so "the site" is whichever revision was HEAD at build time and a visitor describing a behaviour has no way to say
+ *   so "the site" is whichever revision was head at build time and a visitor describing a behaviour has no way to say
  *   which one they saw. `build.json` is that record, and its absence — a dev server, an offline first paint — renders
  *   the name alone rather than a dangling link.
  *
- *   NODE-SAFE: pure React, no maplibre.
+ *   node-safe: pure React, no maplibre.
  */
 
 import type { ReactNode } from "react"
@@ -46,7 +46,7 @@ export interface AppIdentityProps {
 	 */
 	buildInfoURL?: string
 	/**
-	 * Build the href for a commit. INJECTED rather than written here: the repository's URL belongs to the deployment, and
+	 * Build the href for a commit. injected rather than written here: the repository's URL belongs to the deployment, and
 	 * `@mailwoman/react` publishes to npm while `@mailwoman/site-kit` — which owns `commitURL` beside the record that
 	 * carries the sha — is private, so this package cannot import it. `commitURL` takes the sha for this reason: every
 	 * caller passes it directly, so no app writes an adapter and the URL keeps a single home. Without this prop the

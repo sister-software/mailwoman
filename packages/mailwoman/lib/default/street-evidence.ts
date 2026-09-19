@@ -4,14 +4,14 @@
  * @author Teffen Ellis, et al.
  *
  *   The default street-name evidence index (#727 phase-4c) for the user-facing parse surfaces. When a
- *   v3+ span-head model is loaded, `createRuntimePipeline` reranks the STREET on this bundled FR index
+ *   v3+ span-head model is loaded, `createRuntimePipeline` reranks the street on this bundled FR index
  *   (BAN `street-centroids-fr.db`) unless the caller passes their own `streetEvidence` or opts out with
  *   `streetEvidence: false`. The rerank is positive-evidence-only — it can add an atlas-confirmed street,
  *   never remove a model call (golden-safe: 0.000 golden regression, +16.9pp FR fragment street).
  *
- *   Loaded LAZILY + cached once per process. `@mailwoman/resolver-wof-sqlite` is an OPTIONAL peer dep, so
+ *   Loaded lazily + cached once per process. `@mailwoman/resolver-wof-sqlite` is an optional peer dep, so
  *   the import is dynamic — a stripped install that lacks it (or the database) yields `null` and the pipeline
- *   runs rerank-OFF (byte-stable) instead of throwing. The SQLite handle is `readOnly` + memory-mapped, so
+ *   runs rerank-off (byte-stable) instead of throwing. The SQLite handle is `readOnly` + memory-mapped, so
  *   "loading" is a cheap file-open + prepared statements rather than a 563 MB read.
  */
 

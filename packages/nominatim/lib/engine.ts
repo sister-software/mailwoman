@@ -3,7 +3,7 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   The Nominatim engine contract + wire types the router delegates to. The RESOLVED-address →
+ *   The Nominatim engine interface + wire types the router delegates to. The resolved-address →
  *   {@link NominatimResult} formatter (`toNominatimResult`, `toFeatureCollection`,
  *   `nominatimResultToSchemaOrg`) lives in `format.ts`.
  */
@@ -119,7 +119,7 @@ export interface NominatimStatusArtifact {
 	 */
 	reason?: string
 	/**
-	 * When the artifact was BUILT, as its own manifest records it.
+	 * When the artifact was built, as its own manifest records it.
 	 */
 	built?: string
 	/**
@@ -138,7 +138,7 @@ export interface NominatimStatusArtifact {
  */
 export interface NominatimStatusExtension {
 	/**
-	 * Every artifact this process opened, INCLUDING the ones that carry no manifest — an unstamped artifact reports its
+	 * Every artifact this process opened, including the ones that carry no manifest — an unstamped artifact reports its
 	 * own absence rather than being omitted, because an omission cannot be told apart from an artifact nobody opened.
 	 */
 	artifacts: NominatimStatusArtifact[]
@@ -160,7 +160,7 @@ export interface NominatimStatus {
 
 /**
  * A freshness report as this surface consumes it — structurally `mailwoman/freshness`'s `FreshnessReport`, declared
- * here so the wire contract keeps no import from the engine implementation.
+ * here so the wire interface keeps no import from the engine implementation.
  */
 export interface NominatimFreshnessReport {
 	dataUpdated?: string
@@ -170,12 +170,12 @@ export interface NominatimFreshnessReport {
 /**
  * Compose the `/status` payload from a freshness report.
  *
- * A FUNCTION rather than four lines at the one call site, because the CLI and the test that checks this response would
+ * A function rather than four lines at the one call site, because the CLI and the test that checks this response would
  * otherwise each hold their own copy of the same mapping — and the field this mapping exists to get right is one that
- * is OMITTED under a condition, which is exactly what two copies stop agreeing about first.
+ * is omitted under a condition, which is exactly what two copies stop agreeing about first.
  *
  * `data_updated` is dropped when no artifact carried a build date. Nominatim declares the field optional, so leaving it
- * out is the contract's own way of saying the deployment cannot date its data. filling it with a boot time or a file
+ * out is the interface's own way of saying the deployment cannot date its data. filling it with a boot time or a file
  * mtime would answer with something that looks measured and is not.
  */
 export function nominatimStatus(freshness: NominatimFreshnessReport): NominatimStatus {

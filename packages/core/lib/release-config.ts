@@ -57,7 +57,7 @@ export interface CharWeightsRecipe {
 	lineage?: string
 	/**
 	 * The data-only overlays that inherit this family's graph through `mailwoman.baseWeights` (`ja-jp`, `zh-cn`): each
-	 * ships its locale FST and nothing of the model, and is staged and fetched under the FAMILY's bucket directory.
+	 * ships its locale FST and nothing of the model, and is staged and fetched under the family's bucket directory.
 	 */
 	overlays?: string[]
 }
@@ -100,13 +100,13 @@ export function shippingLocales(config: Pick<ReleaseConfig, "locales" | "charWei
 }
 
 /**
- * Country → the locale package that scopes it, DERIVED from {@link shippingLocales} rather than restated.
+ * Country → the locale package that scopes it, derived from {@link shippingLocales} rather than restated.
  *
  * The region subtag of a locale package is the country it scopes — `en-au` scopes AU, `zh-cn` scopes CN — so a
  * hand-written table is a second copy of `release.config.json`'s two lists, and the copy is what goes stale when a
  * locale ships. `repo-health`'s `locale-tables` check exists because that copy existed.
  *
- * Existence is not training: a country here has a package that SCOPES it, which says nothing about whether the corpus
+ * Existence is not training: a country here has a package that scopes it, which says nothing about whether the corpus
  * carries rows for it. A tag with no region subtag contributes nothing rather than a blank key.
  */
 export function weightsPackageByCountry(config: Pick<ReleaseConfig, "locales" | "charWeights">): Map<string, string> {
@@ -124,7 +124,7 @@ export function weightsPackageByCountry(config: Pick<ReleaseConfig, "locales" | 
 }
 
 /**
- * The lexicons that are COMMITTED to the repository, by the name they take in a weights package and the `softFeed` key
+ * The lexicons that are committed to the repository, by the name they take in a weights package and the `softFeed` key
  * that names their repo-relative source. The locality-surface lexicon is not here: it is built, lives in the data root,
  * and is resolved by `softFeed.localitySurfaceLexicon` against that root instead.
  */

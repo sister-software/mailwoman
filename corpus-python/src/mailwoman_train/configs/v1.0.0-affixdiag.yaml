@@ -1,5 +1,5 @@
-# === v1.0.0-consolidation (#466) — the v0-PARITY FLAG-PLANT ======================================
-# One model carrying every PROVEN parity change, at a LARGER step budget (the cumulative-dilution
+# === v1.0.0-consolidation (#466) — the v0-parity flag-plant ======================================
+# One model carrying every proven parity change, at a larger step budget (the cumulative-dilution
 # lesson: never stack N sources into a fixed 20k budget — give them room). This is not a single-variable
 # experiment. it's the integration run. Changes folded in:
 #   - unit          (shipped v4.1.0)                      → synth-unit 1.5
@@ -7,9 +7,9 @@
 #   - country       (balanced recipe output, #464)        → synth-country 2.0 (corpus v0.4.10-country-bal)
 #   - gazetteer anchor (#464, knowledge-ladder rung 3.2)  → use_gazetteer_anchor + lexicon
 #   - choreography  (#468, the v0.9.12 US-postcode fix)   → data.gazetteer_choreography (first trained here)
-# po_box/cedex DEFERRED (matcher-proven 100%; coverage recipes are a follow-up rather than in this flag-plant).
+# po_box/cedex deferred (matcher-proven 100%; coverage recipes are a follow-up rather than in this flag-plant).
 #
-# Corpus v0.4.12-consolidation = the v0.4.11-affix-ml parquet files (base+unit+german+deepseek+MULTI-LOCALE affix)
+# Corpus v0.4.12-consolidation = the v0.4.11-affix-ml parquet files (base+unit+german+deepseek+multi-locale affix)
 # + the v0.4.10-country-bal balanced country parquet file, referenced verbatim (pure manifest concat. every
 # parquet already on the volume). Recipe inherits v0.9.13 (gazetteer anchor + country class-weight 3.5).
 #
@@ -19,19 +19,19 @@
 #      budget is the prescribed fix. 40k ≈ 2x exposure per source.
 #   2. gazetteer_curriculum is off and gazetteer_choreography is on. The curriculum (random clue zero-out) only
 #      recovered +0.6 of the −3.7 US-postcode dip in v0.9.13. The choreography (zero the clue on tokens
-#      ADJACENT to a postcode-anchor hit, train+inference paired) is the targeted, DeepSeek-diagnosed
+#      adjacent to a postcode-anchor hit, train+inference paired) is the targeted, DeepSeek-diagnosed
 #      fix — and this run is its first training test. Stacking both suppressions would over-zero the
 #      clue, so curriculum is dropped.
 #
-# PRE-REGISTERED CHECK (stop at 40k), fp32-to-fp32 vs v4.1.0 (+ the solo-change banks):
+# PRE-registered check (stop at 40k), fp32-to-fp32 vs v4.1.0 (+ the solo-change banks):
 #   - country ≥ v0.9.12 (83.3 F1 on country-homograph-real), P high, over-fire 0.
 #   - affix: street_prefix ≥ 78, street_suffix ≥ 67 (score-affix, real-affix eval).
 #   - unit ≥ 92 (unit-real-designators).
 #   - US postcode back to baseline (≥ 97, fp32) — the choreography must absorb the v0.9.12 −3.7.
-#   - FR postcode ≥ 99.5 AND FR house_number ≥ 91 (the v0.9.14 watch-item — confirm the bigger budget
+#   - FR postcode ≥ 99.5 and FR house_number ≥ 91 (the v0.9.14 watch-item — confirm the bigger budget
 #     recovers it).
 #   - US spine (street/locality/region/house_number) ≥ v0.9.8. DE native-order locality ≥ 83.8.
-#   DECISION: all hold → v0-parity FLAG-PLANT. ship candidate (int8 → v4.2.0). Any tag short → the
+#   decision: all hold → v0-parity flag-plant. ship candidate (int8 → v4.2.0). Any tag short → the
 #     dilution isn't budget-bound. fall back to weight-merge (#466's titled approach) or raise that
 #     source's weight/budget. Measure: score-country-homograph.ts + score-affix.ts (incl. unit) +
 #     per-locale-f1.ts (US/FR, --tokenizer + --model-anchor-lookup + --gazetteer-lexicon) +
@@ -64,7 +64,7 @@ data:
     usgov-hrsa-fqhc: 2.0
     usgov-imls-pls: 2.0
     usgov-nad: 1.0
-    state-ia-contractors: 2.0
+    state-ia-builders: 2.0
     state-tx-notaries: 1.5
     state-ny-notaries: 2.0
     deepseek-kryptonite: 3.0
@@ -73,7 +73,7 @@ data:
     synth-german: 6.0
     # Every proven change rides at its solo-validated weight.
     synth-unit: 1.5
-    # DIAGNOSTIC: affix at 10x the consolidation weight (2.0 -> 20.0). DeepSeek's scheduling-vs-capacity
+    # diagnostic: affix at 10x the consolidation weight (2.0 -> 20.0). DeepSeek's scheduling-vs-capacity
     # probe — resume the consolidated step-040000 for 2k steps with only affix sampling raised. If affix
     # recovers sharply (>50) without postcode/street dropping >0.5 → prevalence/scheduling problem (Run A
     # works). If it stalls <40 while others hold → real capacity competition.
@@ -155,7 +155,7 @@ train:
   weight_decay: 0.01
   warmup_steps: 1000
   grad_clip_norm: 1.0
-  # RESUME the consolidated step-040000 (output_dir below is the consolidation dir) for 2k more steps.
+  # resume the consolidated step-040000 (output_dir below is the consolidation dir) for 2k more steps.
   # lr_schedule constant → lr stays 1.5e-4 on resume. checkpoints 41000/42000 land beside the preserved
   # 040000. Launch: cd corpus-python && modal run -d -m launch.train_remote --config v1.0.0-affixdiag.yaml --resume auto
   max_steps: 42000

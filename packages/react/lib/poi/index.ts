@@ -2,7 +2,7 @@
  * @copyright Sister Software
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
- * @file POI explorer components, hooks, runtime, and contracts.
+ * @file POI explorer components, hooks, runtime, and interfaces.
  */
 
 export { AbstainPanel } from "./AbstainPanel.tsx"

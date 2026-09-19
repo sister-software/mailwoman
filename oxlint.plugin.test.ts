@@ -202,7 +202,7 @@ function forLoop(options: {
 }
 
 /**
- * `base[index]`. `property` carries its `type` because the rule reads it: a swap of two VARIABLE indices is a shuffle,
+ * `base[index]`. `property` carries its `type` because the rule reads it: a swap of two variable indices is a shuffle,
  * a swap where one index is a literal is heapsort's extraction phase.
  */
 function indexRead(base: string, index: string): TestNode {
@@ -310,7 +310,7 @@ test("prefer-home stays silent on loops that are not a shuffle", () => {
 	expect(reportsFor("prefer-home", forLoop({ body: across }))).toEqual([])
 
 	// Heapsort's extraction phase: counts down from the last index, stops at 1, swaps two computed indices of one array.
-	// It satisfies every clause except that one index is the literal 0 — a shuffle swaps the loop variable with a DRAWN
+	// It satisfies every clause except that one index is the literal 0 — a shuffle swaps the loop variable with a drawn
 	// index, and neither is a constant.
 	const heapsort: TestNode = {
 		type: "BlockStatement",

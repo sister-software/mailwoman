@@ -4,7 +4,7 @@
  * @author Teffen Ellis, et al.
  * @file The check between a name match and a database write.
  *
- *   `resolveCIKCandidates` (`edgar-filings.ts`) scores a company name against EDGAR's registrant index
+ *   `resolveCIKCandidates` (`edgar-filings.ts`) scores a company name against edgar's registrant index
  *   and deliberately returns every candidate above a threshold, never a winner, because two different
  *   companies can canonicalize to the same name. Something still has to decide, and deciding on the score
  *   alone is measurably wrong: taking the top candidate for 24 telecom registrant names on 2026-08-03
@@ -15,19 +15,19 @@
  *   | `Altice USA, Inc.`     | AlTi Global, Inc. — SIC 6282, investment advice | 0.829 |
  *   | `WideOpenWest, Inc.`   | WidePoint Corp — SIC 7373, systems design   | 0.886 |
  *
- *   Both are vendored under their TRUE registrant names in `test-fixtures/edgar/` as evidence. A name
+ *   Both are vendored under their true registrant names in `test-fixtures/edgar/` as evidence. A name
  *   score of 0.886 is not a weak signal — it is a confident one, pointing at the wrong company. No
- *   threshold fixes that, because the scores are not the problem: a second, INDEPENDENT signal is what
+ *   threshold fixes that, because the scores are not the problem: a second, independent signal is what
  *   was missing.
  *
- *   **SIC is that signal, and it is already free.** EDGAR's submissions payload — the same document
+ *   **SIC is that signal, and it is already free.** edgar's submissions payload — the same document
  *   `fetchTenKFilings` reads — carries the registrant's Standard Industrial Classification. Both false
  *   matches above fall outside the communications range. the real carriers land inside it.
  *
  *   **The check is honest about what it costs.** Measured over the same 24 registrants, an SIC-only rule
  *   rejects 2 of 2 false matches and accepts 6 of 8 real carriers. The two it wrongly rejects are
- *   Bandwidth Inc. (SIC 7372, prepackaged software — a CLEC whose own Exhibit 21 lists
- *   `Bandwidth.com CLEC, LLC`) and Ooma, Inc. (SIC 7374). SEC files VoIP and CPaaS carriers under
+ *   Bandwidth Inc. (SIC 7372, prepackaged software — a clec whose own Exhibit 21 lists
+ *   `Bandwidth.com clec, LLC`) and Ooma, Inc. (SIC 7374). SEC files VoIP and CPaaS carriers under
  *   software classifications routinely, and widening the allowlist far enough to admit them readmits
  *   WidePoint at 7373. So the allowlist stays narrow and {@link CIKCorroborationOptions.pinnedCIKs}
  *   carries the exceptions: a pin is a named, auditable decision about one registrant, where a widened
@@ -60,7 +60,7 @@ export const TELECOM_SIC_CODES: ReadonlySet<string> = new Set([
 /**
  * Why a candidate was or was not corroborated. A caller reporting a run needs to distinguish these — a `pinned`
  * acceptance is an operator decision to audit, an `sic` acceptance is a source agreeing, and `no-sic` is a gap in what
- * EDGAR published rather than a judgment about the company.
+ * edgar published rather than a judgment about the company.
  */
 export const CIKCorroborationBasis = {
 	/**
@@ -76,7 +76,7 @@ export const CIKCorroborationBasis = {
 	 */
 	NonTelecomSIC: "non-telecom-sic",
 	/**
-	 * EDGAR published no SIC for this registrant. Nothing to corroborate against. not a judgment.
+	 * Edgar published no SIC for this registrant. Nothing to corroborate against. not a judgment.
 	 */
 	NoSIC: "no-sic",
 } as const
@@ -105,7 +105,7 @@ export interface CIKCorroborationOptions {
 	pinnedCIKs?: ReadonlySet<string>
 	/**
 	 * SIC codes accepted as corroborating. Defaults to {@linkcode TELECOM_SIC_CODES}. Overridable so a caller working a
-	 * different vertical does not have to fork the check — NOT so a telecom run can quietly widen it.
+	 * different vertical does not have to fork the check — not so a telecom run can quietly widen it.
 	 */
 	acceptedSICCodes?: ReadonlySet<string>
 }
@@ -113,8 +113,8 @@ export interface CIKCorroborationOptions {
 /**
  * Decide whether a name-matched CIK is corroborated by a second signal.
  *
- * `sic` is the registrant's SIC exactly as EDGAR's submissions payload states it (`sic` field, a 4-digit string);
- * `null`/`undefined`/empty all mean EDGAR published none.
+ * `sic` is the registrant's SIC exactly as edgar's submissions payload states it (`sic` field, a 4-digit string);
+ * `null`/`undefined`/empty all mean edgar published none.
  *
  * Never throws, and never consults the name score — the score is what this exists to be independent of.
  */

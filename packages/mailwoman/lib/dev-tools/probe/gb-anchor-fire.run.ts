@@ -3,18 +3,18 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Does the GB postcode-anchor binary actually FIRE on the gb-golden board, and by which route?
+ *   Does the GB postcode-anchor binary actually fire on the gb-golden board, and by which route?
  *
  *   The instrument `docs/records/evals/2026-08-05-en-gb-anchor-off.md` used ("anchor fired on 106/120
- *   rows") replayed `buildAnchorFeatures`'s DEFAULT recognizer — alphanumeric run → `lookup.get(UPPER)`.
+ *   rows") replayed `buildAnchorFeatures`'s default recognizer — alphanumeric run → `lookup.get(upper)`.
  *   A model trained against the widened anchor-v2 lookup serves under `span_mode: "shaped"` instead, so
  *   this replays that recognizer: `collectMatches` shape spans, keyed
  *   `span.replaceAll(" ", "").toUpperCase()`, with `buildAnchorFeatures`'s GB outward fallback.
  *
  *   Reported per register, because the shape detector reads the raw text and the register is the first
  *   thing that could silently cost a span. Three failure modes are distinguished, and they have
- *   different diagnoses: NO SHAPED SPAN (the detector never proposed one — a `collectMatches` gap),
- *   SPAN BUT NO KEY (the detector proposed one and the lookup does not carry it — a coverage gap, e.g.
+ *   different diagnoses: no shaped span (the detector never proposed one — a `collectMatches` gap),
+ *   span but no KEY (the detector proposed one and the lookup does not carry it — a coverage gap, e.g.
  *   a Northern Ireland `BT` code Code-Point Open does not carry), and a hit via the outward fallback
  *   rather than the unit (the unit is absent but its district anchors the span).
  *
@@ -24,7 +24,7 @@
 // `@mailwoman/neural` exports neither `./postcode-repair` nor `./case-normalize` as a subpath, and both
 // are required here: `collectMatches` is the exact span source `buildAnchorFeatures`'s shaped mode
 // reads, and `normalizeInputCase` is what the text has been through by the time the anchor sees it
-// (#690, default-ON in `parse`). Re-implementing either is the one thing that must not drift, so this
+// (#690, default-on in `parse`). Re-implementing either is the one thing that must not drift, so this
 // repo-local diagnostic imports the modules directly.
 import { readLocalBuffer } from "@mailwoman/core/fs/readers"
 import { stringifyJSON } from "@mailwoman/core/json"
@@ -58,8 +58,8 @@ const rows = await JSONSpliterator.fromAsync<{ raw: string; components: Record<s
 ).toArray()
 
 /**
- * `parse` builds the anchor from the CASE-NORMALIZED text rather than the raw input. That matters more here than
- * anywhere else: the alphanumeric shape patterns require UPPERCASE letters by design, so on the raw text a lowercased
+ * `parse` builds the anchor from the case-normalized text rather than the raw input. That matters more here than
+ * anywhere else: the alphanumeric shape patterns require uppercase letters by design, so on the raw text a lowercased
  * GB unit yields no shaped span at all and the channel is silently dead. `normalizeInputCase` is what saves it — it
  * restores postcode casing in both the all-caps and all-lower registers. Probing the raw text would report a register
  * asymmetry that production does not have. probing the normalized text is the serving truth.

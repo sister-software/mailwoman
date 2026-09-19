@@ -191,7 +191,7 @@ def _stationary_mixture(
         except StopIteration:
             # A pass that yielded nothing can never yield on a rerun (same rows, same
             # filters) — a positive-weight source with zero selectable rows is a recipe/
-            # corpus contract violation, the runtime sibling of the unreachable-positive-
+            # corpus interface violation, the runtime sibling of the unreachable-positive-
             # weight guard in `_raw_row_stream`. Loud, never a silent drop.
             if pass_rows[chosen] == 0:
                 raise ValueError(
@@ -277,7 +277,7 @@ def _raw_row_stream(
 
     logger.info("Indexing %d parquet files by source...", len(paths))
     by_source = _index_by_source(paths)
-    # ``source_weights`` describes the desired TRAIN mixture. Validation corpora intentionally
+    # ``source_weights`` describes the desired train mixture. Validation corpora intentionally
     # contain only a small fixed source subset, so requiring every positive training source there
     # would make the first scheduled validation fail even though its own files are healthy. Keep
     # the stale-config guard on the split where the recipe makes its coverage claim.

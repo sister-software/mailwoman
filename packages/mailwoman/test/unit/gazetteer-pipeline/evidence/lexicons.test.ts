@@ -97,7 +97,7 @@ describe("three-law selectivity — pure units", () => {
 	it("law 4 (v5): US region vocabulary carries the census flip surfaces", () => {
 		const region = loadUSRegionVocabulary()
 
-		// The evidence→REGION rotation rows: Washington DC, Missouri Break Ln, Frannie Wyoming, Vermont 05454.
+		// The evidence→region rotation rows: Washington DC, Missouri Break Ln, Frannie Wyoming, Vermont 05454.
 		for (const s of ["washington", "wyoming", "vermont", "missouri", "wy", "ct", "dc", "north dakota"]) {
 			expect(region.has(s), s).toBe(true)
 		}
@@ -182,7 +182,7 @@ describe("street-type lexicon build", () => {
 		expect(built.skippedRegionVocabulary).toBeGreaterThanOrEqual(4)
 		const j = await readLocalJSONFile<StreetTypeLexicon>(tmp)
 
-		// "MOUNTAIN WAY WY 82601" / "SUSIE CT WY 83101" — the state token must carry no street evidence.
+		// "mountain WAY WY 82601" / "susie CT WY 83101" — the state token must carry no street evidence.
 		for (const code of ["WY", "CT", "KY", "MT", "PR"]) {
 			expect(j.code_entries[code], code).toBeUndefined()
 		}

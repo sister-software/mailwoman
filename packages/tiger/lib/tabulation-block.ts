@@ -10,7 +10,7 @@ import type { TIGERProperty, TIGERPropertyRecord } from "#constants"
 import type { GeoIDPart, FIPSBlockGeoID, ParsedGeoIDBlockLevel } from "#geoid"
 
 /**
- * The properties of a tabulated block from the TIGER/Line dataset.
+ * The properties of a tabulated block from the tiger/Line dataset.
  */
 export type TIGERTabulatedBlockProperties = Pick<
 	TIGERPropertyRecord<FIPSBlockGeoID>,
@@ -47,7 +47,7 @@ export interface TIGERBlockFeatureCollection {
 }
 
 /**
- * A tabulated block from the TIGER/Line dataset.
+ * A tabulated block from the tiger/Line dataset.
  *
  * @public
  */

@@ -3,7 +3,7 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   GeoJSON wire atoms shared by the geo-shaped HTTP surfaces (photon, nominatim). Envelope
+ *   GeoJSON wire atoms shared by the geo-shaped http surfaces (photon, nominatim). Envelope
  *   builders only — surface-specific property schemas live with their routes, per the anti-meta
  *   guardrails in the 2026-07-12 design spec.
  */

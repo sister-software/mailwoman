@@ -23,7 +23,7 @@ describe.skipIf(!hasCorpus)("audit — integration", () => {
 	it("emits a report without throwing on the v0.3.0 corpus + v0.4.0 config", async () => {
 		// audit() prints to stdout/stderr — we test that it doesn't throw and produces a stat line.
 		// More substantive output assertions are bypass-able since the printed report is the artifact.
-		// a successful run is the contract.
+		// a successful run is the interface.
 		await using tmpDirectory = await temporaryDirectory("audit-test-")
 		const tmp = tmpDirectory.path
 		const configPath = join(tmp, "v0_4_0.yaml")

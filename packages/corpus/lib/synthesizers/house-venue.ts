@@ -66,7 +66,7 @@ export interface SynthesizedHouseVenueRow {
 //#region Venue pool
 
 /**
- * PLAIN venue names, carrying no street-typing tokens. This recipe output teaches house_number + venue coexistence
+ * Plain venue names, carrying no street-typing tokens. This recipe output teaches house_number + venue coexistence
  * rather than decompose-mode pressure — adversarial venue names live in `no-street.ts`.
  */
 const PLAIN_VENUES: ReadonlyArray<string> = [
@@ -105,7 +105,7 @@ const PLAIN_VENUES: ReadonlyArray<string> = [
 
 /**
  * GB-flavored venue names (#1366): institutional forms (Club/Centre/House/Arms/Station), the "Ye" archaic register, and
- * brand–dash–place compounds — INCLUDING directional-led names, because the target class is venues that open with
+ * brand–dash–place compounds — including directional-led names, because the target class is venues that open with
  * compass words ("New North Health Centre", "Southfields Station") and the base model reads those as locality/street
  * evidence. The six #1366 gauntlet fixtures' own venue names are deliberately absent — the fixtures stay held-out.
  */
@@ -224,7 +224,7 @@ export function synthesizeHouseVenueRow(
 	const locale = countryToLocale(base.country)
 	const template = opts.forceTemplate ?? (random() < 0.5 ? "venue-after-street" : "venue-before-street")
 
-	// FR renders postcode-before-locality with no region ("MR & MRS CRAB, 20 Rue de la Huchette,
+	// FR renders postcode-before-locality with no region ("MR & MRS crab, 20 Rue de la Huchette,
 	// 75005 Paris" — the v4.0.0 gauntlet's venue-led failure family, the run-2 contingency's exact
 	// target shape). GB (#1366) renders locality-then-postcode with no region and no comma between
 	// them ("Ye Three Lords, 27 Minories, London EC3N 1DE" — the third tail the recipe output must teach).
@@ -233,7 +233,7 @@ export function synthesizeHouseVenueRow(
 	const veOrder = base.country === "VE"
 
 	// An admin surface belongs here rather than in a standalone admin recipe, and that is measured: three
-	// trailing-region recipe outputs carrying only admin segments all graded DO-NOT-SHIP, and the way they failed was by
+	// trailing-region recipe outputs carrying only admin segments all graded do-not-ship, and the way they failed was by
 	// damaging the classes they did not contain — v4.8.0 turned `Ye Three Lords, 27 Minories, London EC3N 1DE` into
 	// `locality: "Ye Three Lords"`, losing the venue and the street. Every row this synthesizer emits carries a venue, a
 	// street and a house number, so the surface is taught with the alternatives present rather than against them.
@@ -257,7 +257,7 @@ export function synthesizeHouseVenueRow(
 	}
 
 	// The admin tail is the country's own, from codex's layout table, and the row carries the components that layout
-	// PRINTED — France and Great Britain write no region, so emitting one would label text that is not in `raw`.
+	// printed — France and Great Britain write no region, so emitting one would label text that is not in `raw`.
 	const components: CanonicalRow["components"] = {
 		house_number: houseNumber,
 		street,
@@ -269,7 +269,7 @@ export function synthesizeHouseVenueRow(
 
 	// The four tails are hand-written rather than taken from a codex layout, and GB is why. `London EC3N 1DE` is what
 	// #1366 pinned and what three tests assert; `formatAddressRow(…, { singleLine: true })` answers
-	// `London, EC3N 1DE`, because the GB layout puts the locality and the postcode on separate LINES and the country's
+	// `London, EC3N 1DE`, because the GB layout puts the locality and the postcode on separate lines and the country's
 	// single-line join is one separator for every break. Both registers are attested — `wof-postalcode` carries
 	// 3,265,642 GB rows with the comma against 10,282,560 without — so this is a codex question about which the layout
 	// writes rather than a defect to route around here.
@@ -305,7 +305,7 @@ export function synthesizeHouseVenueRow(
 }
 
 /**
- * Contract: every synthesized row carries both house_number and venue (the co-occurrence signal that synth-no-street's
+ * Interface: every synthesized row carries both house_number and venue (the co-occurrence signal that synth-no-street's
  * distributional shift cost the model). Used by tests + downstream consumers.
  */
 export function hasHouseNumberAndVenue(components: CanonicalRow["components"]): boolean {

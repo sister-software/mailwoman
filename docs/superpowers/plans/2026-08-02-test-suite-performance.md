@@ -1,6 +1,6 @@
 # Test suite performance Implementation Plan
 
-> **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
+> **For agentic workers:** required sub-skill: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
 **Goal:** Reduce `test.yml` green wall-clock from 6m29s to ~2m00–2m15s, and make the evidence-lexicons check invariant to gazetteer size.
 
@@ -1097,7 +1097,7 @@ afterEach(async () => {
 /**
  * Build against the fixture and return the emitted surface map plus the build's counters.
  *
- * NAMING TRAP, called out because both halves are called "entries": `built.entries` is a COUNT
+ * naming trap, called out because both halves are called "entries": `built.entries` is a COUNT
  * (`BuiltLexicon.entries: number`) while the lexicon file's `entries` is the surface→bitmask MAP.
  * This returns the map as `surfaces` so the two can never be confused at a call site.
  */

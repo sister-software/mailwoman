@@ -70,4 +70,4 @@ import { canonicalizeOrganizationName, type CanonicalizeOrgOpts } from "@mailwom
 
 ## License
 
-[AGPL-3.0-only](https://www.gnu.org/licenses/agpl-3.0.html)
+[AGPL-3.0-only](https://www.gnu.org/licenses/AGPL-3.0.html)

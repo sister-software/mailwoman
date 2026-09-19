@@ -5,12 +5,12 @@
  * @file The vocabulary an SEC Exhibit 21 filing states about its own columns and rows.
  *
  *   Every label, pattern and predicate here is US SEC filing vocabulary — "state or other jurisdiction of
- *   incorporation" is a phrase from a disclosure form rather than a fact about HTML tables. It sits in `@mailwoman/filer`
+ *   incorporation" is a phrase from a disclosure form rather than a fact about html tables. It sits in `@mailwoman/filer`
  *   beside the parser that reads it, and the generic grid machinery it is applied to sits in
  *   `@mailwoman/core/html/tables` with no knowledge of any of it.
  *
  *   `carriesLegalDesignation` is why this separation is required rather than tidy: it reaches
- *   `@mailwoman/record`, which depends on `@mailwoman/formatter`, which depends on `@mailwoman/core` — so the same
+ *   `@mailwoman/record`. It depends on `@mailwoman/formatter`, which depends on `@mailwoman/core`. Therefore, the same
  *   predicate inside core closes an import cycle across three packages.
  */
 
@@ -28,7 +28,7 @@ const DECORATIVE_ONLY_PATTERN = /^[^a-z0-9]*$/i
 const LETTER_OR_DIGIT_PATTERN = /[a-z0-9]/i
 
 /**
- * Column labels that name a JURISDICTION column. Exactly one of these in a header row is what licenses a column mapping
+ * Column labels that name a jurisdiction column. Exactly one of these in a header row is what licenses a column mapping
  * — the document says which column means what, so reading it is not guessing.
  */
 export const JURISDICTION_HEADER_LABELS = new Set<string>([
@@ -76,7 +76,7 @@ export const OTHER_HEADER_LABELS = new Set<string>([
 ])
 
 /**
- * Column labels that name the ENTITY NAME column, plus the section headings and document titles EDGAR filings state as
+ * Column labels that name the entity name column, plus the section headings and document titles edgar filings state as
  * a `<td>` row of their own ("Domestic Subsidiaries", "Subsidiaries of the Registrant").
  */
 const NAME_HEADER_LABELS = new Set<string>([
@@ -115,7 +115,7 @@ const KNOWN_HEADER_LABELS = new Set<string>([
  * substring/keyword sniffing, which would misfire on a company literally named e.g. "Subsidiary Holdings LLC". Two
  * narrow checks, both applied to every non-blank value: pure decoration (no letter or digit anywhere in it, which no
  * legal entity name can be), or an exact case-insensitive match against the short fixed list of literal boilerplate
- * phrases EDGAR Exhibit 21 filings actually use. All-blank input is not a header/decoration row (that is the
+ * phrases edgar Exhibit 21 filings actually use. All-blank input is not a header/decoration row (that is the
  * empty-row/blank-name handling's job rather than this one's).
  */
 export function isHeaderOrDecorationRow(values: readonly string[]): boolean {
@@ -154,7 +154,7 @@ export function carriesLegalDesignation(value: string): boolean {
  * …"` against a jurisdiction of `"Delaware Delaware Delaware Colorado Delaware"`, which is five fabricated claims
  * rather than one. Decision 6: the row states more than this parser can align, so it abstains.
  *
- * A block boundary alone is not enough, and this is the rule's whole difficulty: EDGAR's Word/Workiva exporters also
+ * A block boundary alone is not enough, and this is the rule's whole difficulty: edgar's Word/Workiva exporters also
  * emit a soft line wrap as a block boundary, so `att-2025.htm` states one name as `<div>Illinois Bell
  * Telephone</div><div>&#160.&#160.Company, LLC</div>` — text in both blocks, one entity. What separates the two is that
  * each half of a genuine multi-value cell is a whole legal name carrying its own designation
@@ -162,7 +162,7 @@ export function carriesLegalDesignation(value: string): boolean {
  * name's designation off the front half (`"Illinois Bell Telephone"` carries none). Ten of AT&T's nineteen subsidiaries
  * are stated on wrapped rows.
  *
- * Each side is CUMULATIVE rather than the adjacent block: a name may itself wrap across two blocks, and the question is
+ * Each side is cumulative rather than the adjacent block: a name may itself wrap across two blocks, and the question is
  * whether the cell can be split in two rather than whether two neighbours happen to look complete.
  */
 export function isMultiValueCell(blocks: readonly string[]): boolean {

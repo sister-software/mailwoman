@@ -1,5 +1,5 @@
 # v2.9.0-country-counterweight — #1104 fix. One variable vs v257: the fragment recipe output now carries
-# COUNTRY-ending rows (full address + a codex country surface tail, comma'd + comma-free) so the
+# country-ending rows (full address + a codex country surface tail, comma'd + comma-free) so the
 # country-sparse fine-tune stops eroding country recall (88.6%→82.0% on v257. bisected to the source,
 # not the tokenizer, via v242). Same recipe as v2.5.7 (init_from multisplice-expanded, 8k, gentle
 # lr 1e-5); only the corpus overlay changes (v0.10.6-fragment-v5 → v0.10.7-fragment-v6). Grade: golden
@@ -41,7 +41,7 @@ data:
     usgov-hrsa-fqhc: 2.0
     usgov-imls-pls: 2.0
     usgov-nad: 1.0
-    state-ia-contractors: 2.0
+    state-ia-builders: 2.0
     state-tx-notaries: 1.5
     state-ny-notaries: 2.0
     deepseek-kryptonite: 3.0
@@ -61,7 +61,7 @@ data:
     synth-no-street-led: 12.0
     synth-cz-pcfirst-preposition: 12.0
     synth-nl-postcode: 6.0
-    # PROBE 1: the fragment/autocomplete source (assay weight — moderate precedent).
+    # probe 1: the fragment/autocomplete source (assay weight — moderate precedent).
     synth-fragment: 6.0
   train_rows_per_epoch: 1000000
   val_rows: 4096

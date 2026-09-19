@@ -3,7 +3,7 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Every per-segment rule must stay LINEAR in segment length, including on the input shape that makes it work
+ *   Every per-segment rule must stay linear in segment length, including on the input shape that makes it work
  *   hardest: a long run of capitalized tokens, every one of which is candidate place-name content.
  *
  *   `scoreLocalityPhrase` walks forward from each start index to measure the run it could propose. That walk has to
@@ -12,7 +12,7 @@
  *   identical result.
  *
  *   Correctness tests cannot catch that: bounded and unbounded walks emit the same proposals, which is what makes the
- *   waste invisible. Only the growth curve separates them. The curve is measured by OPERATION COUNT — the number of
+ *   waste invisible. Only the growth curve separates them. The curve is measured by operation count — the number of
  *   token reads a rule makes, observed through a `Proxy` over the token array — rather than by wall clock: a token
  *   read is what the walk spends, it is exact, and it does not move with whatever else the host is running — a
  *   wall-clock ratio on a shared host cannot tell a load change between its two measurements from a complexity change.

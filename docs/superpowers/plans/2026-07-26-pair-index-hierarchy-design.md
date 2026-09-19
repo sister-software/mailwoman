@@ -39,7 +39,7 @@ cover.
 
 1. **Calibration is per-edge.** `delta` (and `transitionBeta`) live in the header as scalars — the
    whole point of the artifact-header calibration discipline. A multi-edge file needs a per-edge δ
-   map, which breaks the `PairIndexLike` contract (`readonly delta?: number`) and every consumer of
+   map, which breaks the `PairIndexLike` interface (`readonly delta?: number`) and every consumer of
    it. Different edges will calibrate differently: a (locality, region) hit is weaker evidence than
    a register-built (dependent_locality, locality) hit — region names are a tiny closed set that
    co-occurs with almost any locality.

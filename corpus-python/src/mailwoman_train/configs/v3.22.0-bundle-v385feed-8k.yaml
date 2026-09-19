@@ -1,41 +1,41 @@
-# === v3.22.0-bundle-v385feed-8k — PRODUCTION BUNDLE CANDIDATE, INCREMENT 4 (Option-A Phase 3). ===
+# === v3.22.0-bundle-v385feed-8k — production bundle candidate, increment 4 (Option-A Phase 3). ===
 # (Claude-owned. operator go 2026-07-28 "alright let's continue", after the Decision-B analysis.)
 #
-# WHAT THE DECISION-B ANALYSIS SHOWED (record: .superpowers/sdd/progress.md 2026-07-28): the two
-# ablated-column golden deficits are FEED-PASSENGER damage rather than bundle damage — (1) the po-box
+# what the decision-B analysis showed (record: .superpowers/sdd/progress.md 2026-07-28): the two
+# ablated-column golden deficits are feed-passenger damage rather than bundle damage — (1) the po-box
 # regression is Canadian alphanumeric-postcode rows (box number stolen as postcode. 93-vs-9
-# asymmetric), diluted by +22u of probe-era source mass; (2) us.street losses are ALL
+# asymmetric), diluted by +22u of probe-era source mass; (2) us.street losses are all
 # trailing-directional reduces ("74TH ST SE"→"74TH ST") — the GB boundary habit from synth-gb 10.0,
-# a source weighted for the FALSIFIED dep-loc resurrection arc. Punct-drop was tested and
+# a source weighted for the falsified dep-loc resurrection arc. Punct-drop was tested and
 # exonerated (control fails comma-intact rows too). The deploc feed was probe tooling inherited
 # for comparability. production owes it nothing.
 #
-# ONE NAMED DELTA vs v3.21.0:
+# one named delta vs v3.21.0:
 #   data: = the shipped v385 recipe's data section verbatim (v3.8.5-latam-8k: corpus
 #   v0.13.0-latam, its source_weights, its augment probs incl. punct_drop 0.3) + the two bundle
-#   lexicon paths. CONSTRUCTION GOAL: the ablated column reproduces v385's golden profile because
+#   lexicon paths. construction goal: the ablated column reproduces v385's golden profile because
 #   it eats v385's food — Decision B dissolves. The deploc additions (gb/nz/es-pedania/fr-lieudit
-#   + punct_drop 0.6) return LATER one at a time, each with its own promotion case.
+#   + punct_drop 0.6) return later one at a time, each with its own promotion case.
 #
-# PRE-REGISTERED CHECKS — reshaped by the operator's Decision A (inputMode fragmented|formatted;
-# formatted runs channels-OFF, so the SHIP columns are:)
-#   G1 fragment bars (fed, P0 grid --lexicon v5 --street-lexicon v2, every save): homonym ON−OFF
+# PRE-registered checks — reshaped by the operator's Decision A (inputMode fragmented|formatted;
+# formatted runs channels-off, so the ship columns are:)
+#   G1 fragment bars (fed, P0 grid --lexicon v5 --street-lexicon v2, every save): homonym on−off
 #      ≥ +0.050 asis and ≥ +0.25 lower+heal. house-number classes ≥ −0.020 asis raw. lowercase-heal
-#      ALL ≥ +0.015. NAMED RISK: bare-locality classes lose the es-pedania/fr-lieudit feeders —
+#      all ≥ +0.015. named risk: bare-locality classes lose the es-pedania/fr-lieudit feeders —
 #      if a bare-locality bar alone misses, add back just those two sources as one named delta.
 #   G2 ablation: channels-off column vs the v385 same-grader reference only (the feed control is
 #      deploc-specific and retires with the feed).
 #   G3 invariance (int8, --baseline v385): zero new classes.
 #   G4 gauntlet ×3 (fed weights-cache).
-#   G5 golden ABLATED (the formatted-mode ship column): all v6.0.0-shipped-baseline floors — no
+#   G5 golden ablated (the formatted-mode ship column): all v6.0.0-shipped-baseline floors — no
 #      named-watch exemptions this time. v385's food means v385's floors, full stop.
 #   G5b golden FED (recorded rather than ship-blocking under Decision A): the fragment-mode-on-formatted
 #      read. feeds the future misroute-cost check (misroute rate × this harm).
 #   G6 canary: recorded under both modes. zero-flip required only in the formatted/ablated mode
 #      (Decision A routes these full-address rows there in production).
-#   VERDICT: G1-G5 + G6-formatted ⇒ the promotion battery + the inputMode implementation arc.
-#   Ablated-column golden failure ⇒ the feed-passenger diagnosis is FALSIFIED — bundle training
-#   itself erodes base competence. STOP, architecture question (from-scratch vs shelve) to the
+#   verdict: G1-G5 + G6-formatted ⇒ the promotion battery + the inputMode implementation arc.
+#   Ablated-column golden failure ⇒ the feed-passenger diagnosis is falsified — bundle training
+#   itself erodes base competence. stop, architecture question (from-scratch vs shelve) to the
 #   operator. No knob iteration inside the run.
 #
 # Launch: cd corpus-python && modal run -d -m launch.train_remote --config v3.22.0-bundle-v385feed-8k.yaml --resume none
@@ -80,7 +80,7 @@ data:
     usgov-hrsa-fqhc: 2.0
     usgov-imls-pls: 2.0
     usgov-nad: 1.0
-    state-ia-contractors: 2.0
+    state-ia-builders: 2.0
     state-tx-notaries: 1.5
     state-ny-notaries: 2.0
     deepseek-kryptonite: 3.0
@@ -100,9 +100,9 @@ data:
     synth-no-street-led: 0.0
     synth-cz-pcfirst-preposition: 12.0
     synth-nl-postcode: 6.0
-    # PROBE 1: the fragment/autocomplete source (assay weight — moderate precedent).
+    # probe 1: the fragment/autocomplete source (assay weight — moderate precedent).
     synth-fragment: 6.0
-    # #727 T2 NEW — the one variable. 12.0 = the targeted-fix precedent (fr-bare-street,
+    # #727 T2 new — the one variable. 12.0 = the targeted-fix precedent (fr-bare-street,
     # si-bare-village, no-street-led are all 12.0). Streets with no house number + the
     # bare-locality counter.
     synth-fr-fragment: 12.0
@@ -153,12 +153,12 @@ model: # Verbatim from v2.4.1.
   use_postcode_anchor: true
   use_gazetteer_anchor: true
   gazetteer_feature_dim: 5
-  # #1104 country channel ON — dedicated 2-dim [country_surface, country_ambiguous] soft feed with its
+  # #1104 country channel on — dedicated 2-dim [country_surface, country_ambiguous] soft feed with its
   # own projection + confidence (must equal the lexicon's feature_dim). Default-False elsewhere, so a
   # resume from a pre-country checkpoint stays byte-identical until this flips.
   use_country_anchor: true
   country_feature_dim: 2
-  # P-A street-type channel ON — a dedicated 1-dim street_type soft feed with its own projection +
+  # P-A street-type channel on — a dedicated 1-dim street_type soft feed with its own projection +
   # confidence (must equal the lexicon's feature_dim=1). Separate from the gazetteer, so init_from v385
   # loads clean (v385 lacks street_type_* → strict=False leaves only those fresh).
   use_street_type_anchor: true
@@ -166,7 +166,7 @@ model: # Verbatim from v2.4.1.
   # v3.16.0 — the locality-surface channel is on (the bundle).
   use_locality_surface_anchor: true
   locality_surface_feature_dim: 2
-  # #1104 homograph-guard SOFTENER — the one variable vs v263. Scales the country_ambiguous dim by 0.5
+  # #1104 homograph-guard softener — the one variable vs v263. Scales the country_ambiguous dim by 0.5
   # before the country_projection (bakes into the exported ONNX. no lexicon/inference change). v263's
   # hard guard (scale 1.0) over-suppressed homograph countries Georgia/Jordan (country-homograph F1
   # 89.8->82.6); softening should recover homograph recall without giving back the country F1 the

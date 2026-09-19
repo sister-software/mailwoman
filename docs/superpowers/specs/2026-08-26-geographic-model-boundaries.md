@@ -29,7 +29,7 @@ the responsibilities named in §3 and nothing beyond them.
 ## 1. Why an inventory comes first
 
 The repository already holds a POI category vocabulary, a phrase→category lexicon, a POI intent and
-execution path, a per-cell coverage contract with an exclusion predicate, a committed POI board, and
+execution path, a per-cell coverage interface with an exclusion predicate, a committed POI board, and
 a mechanism-account vocabulary. Every one of those is a boundary a semantic layer is tempted to
 duplicate, and two of them (`@mailwoman/poi-taxonomy`, `@mailwoman/core/layers`) are close enough to
 "world knowledge" that an implementer could reasonably grow one into a general ontology without
@@ -86,10 +86,10 @@ single-valued synonym cannot hold a set. This is the gap the program opens, and 
 
 | What                                 | Where                                                                                                              |
 | ------------------------------------ | ------------------------------------------------------------------------------------------------------------------ |
-| Contract tables + DDL                | `packages/core/lib/layers/schema.ts` (`LayerManifestTable`, `LayerCoverageTable`, `LayerTier`, `CoverageBasis`)    |
+| Interface tables + DDL               | `packages/core/lib/layers/schema.ts` (`LayerManifestTable`, `LayerCoverageTable`, `LayerTier`, `CoverageBasis`)    |
 | Parsed face + read/write + the check | `packages/core/lib/layers/manifest.ts` (`LayerManifest`, `CoverageCell`, `supportsExclusion`, `readLayerCoverage`) |
 | Barrel                               | `packages/core/lib/layers/index.ts`                                                                                |
-| Contract prose for layer authors     | `docs/engineering/reference/layer-contract.mdx`                                                                    |
+| Interface prose for layer authors    | `docs/engineering/reference/layer-interface.mdx`                                                                   |
 | Cell-vs-scope coverage design        | `docs/superpowers/specs/2026-08-11-coverage-register-design.md`                                                    |
 
 `supportsExclusion(cell)` returns true only for `CoverageBasis.Designated` or
@@ -119,7 +119,7 @@ capability.
 | Intent execution              | `packages/mailwoman/lib/poi-executor.ts` (`createPOIExecutor`)                                                               |
 | Backend probe                 | `packages/resolver-wof-sqlite/lib/poi-lookup.ts` (`POILookup.search`, `#searchKRing`)                                        |
 | Wiring                        | `packages/mailwoman/lib/runtime-pipeline.ts` (`poiQueryKind`, default-on)                                                    |
-| Contract types                | `packages/core/lib/pipeline/types.ts` (`POIIntent`, `POIResult`, `POIIntentOutcome`)                                         |
+| Interface types               | `packages/core/lib/pipeline/types.ts` (`POIIntent`, `POIResult`, `POIIntentOutcome`)                                         |
 | Layer build                   | `packages/mailwoman/lib/gazetteer-pipeline/poi/build-poi.ts`                                                                 |
 | Committed board + fixtures    | `packages/mailwoman/lib/eval-harness/poi-board.ts`, `packages/mailwoman/lib/eval-harness/fixtures/poi-board.jsonl` (51 rows) |
 
@@ -144,12 +144,12 @@ The abstain vocabulary is small and already structured: `POIIntentOutcome` is
 | What                           | Where                                                                                                                                        |
 | ------------------------------ | -------------------------------------------------------------------------------------------------------------------------------------------- |
 | Decode-time grammar + tree     | `packages/core/lib/decoder/` (`build-tree.ts`, `validate-tree.ts`, `types.ts`)                                                               |
-| Grammar contract               | `docs/engineering/reference/decoder-grammar.mdx`                                                                                             |
+| Grammar interface              | `docs/engineering/reference/decoder-grammar.mdx`                                                                                             |
 | Inference + decode-time priors | `packages/neural/` (`scorer.ts`, `viterbi.ts`, `semi-markov-decode.ts`, `placetype-pair-prior.ts`, `fst-prior.ts`, `gazetteer-inference.ts`) |
 | Candidate ordering             | `packages/resolver/lib/toponym-prior.ts` (`rankByImportance`), `packages/resolver/lib/admin-containment.ts`                                  |
 
 This is the boundary the program must not reach into. The standing doctrine is that registries are soft
-priors supplying **positive evidence only**, and the decoder grammar contract states which terms the
+priors supplying **positive evidence only**, and the decoder grammar interface states which terms the
 shipped decoder maximizes. A world-model record that emitted a boost, a penalty, or a candidate order
 would be authoring policy at the one place where the system is supposed to learn its own.
 
@@ -162,7 +162,7 @@ would be authoring policy at the one place where the system is supposed to learn
 | Warm-engine measuring tools                                       | `packages/dev-mcp/lib/tools/`                                              |
 | Mechanism-account shapes                                          | `packages/dev-mcp/lib/diagnose.ts` (`DIAGNOSE_SHAPES`, `SHAPE_PREDICATES`) |
 | Diagnosis conventions                                             | `docs/superpowers/specs/2026-08-17-mechanism-accounts.md`                  |
-| Conformance-law fixture contract (#1918)                          | `packages/mailwoman/lib/eval-harness/conformance/`                         |
+| Conformance-law fixture interface (#1918)                         | `packages/mailwoman/lib/eval-harness/conformance/`                         |
 | Law-suite register (what a default run covers)                    | `packages/mailwoman/lib/eval-harness/conformance/suites.ts`                |
 | Law-suite runner (`mailwoman eval conformance`)                   | `packages/mailwoman/lib/eval-harness/conformance/command.ts`               |
 
@@ -171,7 +171,7 @@ would be authoring policy at the one place where the system is supposed to learn
 in that directory: `case-folding`, `whitespace`, `punctuation`, `nfc-nfd` (the canonical-form law) and
 `refinement-monotonicity`. The last of those reads the resolver's own candidate tables through
 `packages/mailwoman/lib/eval-harness/conformance/candidate-admissibility.ts` (#1923), which is a set of
-candidate accounts rather than a sixth suite. The paragraph below describes the fixture contract, and
+candidate accounts rather than a sixth suite. The paragraph below describes the fixture interface, and
 it is unchanged.
 
 The conformance module is the boundary a law suite plugs into: a fixture names a base query, one context, a
@@ -179,7 +179,7 @@ variant query, a law, one of five closed outcome comparators, and the relation t
 stand in. A row also carries a `status`: `pass` checks the run, `known_fail` / `improvement_target`
 report without blocking, following the Gauntlet regression layer's own three-way reading — a violated
 row is tracked rather than deleted, and never re-stated as `expect: diverges`, which would make the
-suite assert the defect. Each law declares an APPLICABILITY contract beside its transformations, so an
+suite assert the defect. Each law declares an APPLICABILITY interface beside its transformations, so an
 arm absent from a row names the rule that refuses it rather than going missing: case folding excludes a
 locale-conditional casing (Turkish dotted/dotless `i`), whitespace excludes a space that belongs to a
 structured identifier (`N7 0BT`). Its `mechanism_shape` comparator reads the `DIAGNOSE_SHAPES` vocabulary in the row above but
@@ -210,7 +210,7 @@ by it.
 Two dependency rules follow, and both are required:
 
 - **`@mailwoman/core` must not depend on `@mailwoman/geographic-model`** without a later integration
-  decision that demonstrates the direction is necessary. Core ships the pipeline contract and ~9 MB of
+  decision that demonstrates the direction is necessary. Core ships the pipeline interface and ~9 MB of
   reference data to every consumer; a world-semantics dependency there is a dependency every drop-in
   API inherits whether or not it asked for one.
 - **The geographic model and #1683 share identifiers rather than statistics.** The geographic model owns

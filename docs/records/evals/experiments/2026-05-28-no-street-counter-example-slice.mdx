@@ -32,7 +32,7 @@ counter-distribution extract.
   - `country-only` (2%) — `"United States"`.
 - `corpus/src/synthesize-no-street.test.ts` — 8 unit tests covering each
   template, including a 500-iteration "never emits any street-side tag"
-  contract check and a 1000-iteration template-distribution sanity check.
+  interface check and a 1000-iteration template-distribution sanity check.
 - `scripts/build-no-street-extract.mjs` — mirrors `build-po-box-extract.mjs`:
   reads `{locality, region, postcode, country}` tuples from JSONL stdin and
   emits aligned `LabeledRow` JSONL ready for the parquet extract routing step.

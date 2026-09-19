@@ -70,7 +70,7 @@ For the address scope key, an observed `addr:suburb` outranks `addr:city`. This 
 where queries commonly name the suburb while `addr:city` names the wider metropolitan authority. City-only
 queries still reach the same row through the resolved locality bbox fallback.
 
-## Contract migration requirements
+## Interface migration requirements
 
 The builder extends the shared legacy `address_point` table so the existing lookup can consume a locally
 built database immediately. Every OSM row also carries a res-9 H3 spine, and the database embeds `layer_manifest`

@@ -3,7 +3,7 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   The bodies this pipeline builds, with the conventions their USGS products use. A body is explicit in every record
+ *   The bodies this pipeline builds, with the conventions their usgs products use. A body is explicit in every record
  *   and artifact. nothing here treats Earth as the reference.
  */
 
@@ -35,7 +35,7 @@ const metresPerDegree = (radiusKm: number): number => (2 * Math.PI * radiusKm * 
 
 /**
  * The two bodies the pipeline builds, keyed by id. The reference bodies, control networks and longitude conventions are
- * the ones the USGS nomenclature shapefiles declare (`GCS_Moon_2000`, `GCS_Mars_2000`); the radii come from
+ * the ones the usgs nomenclature shapefiles declare (`GCS_Moon_2000`, `GCS_Mars_2000`); the radii come from
  * `@mailwoman/spatial`, so a distance on either body scales by the same number the app measures with.
  */
 export const BODIES = {

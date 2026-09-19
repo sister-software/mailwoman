@@ -18,7 +18,7 @@
  *   the cells rows happened to land in — an infra-only extract is sparse by category, so "no plant in a
  *   well-surveyed cell" needs its own zero-observed-rows coverage row rather than silent absence. The manifest
  *   swaps to `tier: build-local`, `license: ODbL-1.0`, OSM attribution — the default Overture branch
- *   below is UNTOUCHED and stays byte-identical when `--source` is omitted.
+ *   below is untouched and stays byte-identical when `--source` is omitted.
  */
 
 import { formatFileSize } from "@mailwoman/core/fs/readers"
@@ -41,7 +41,7 @@ import { buildSHA as resolveBuildSHA } from "#gazetteer-pipeline/stamp-manifest"
 const DEFAULT_COUNTRIES = "US,CA,MX,FR"
 
 /**
- * Native command-line contract consumed by the filesystem command router.
+ * Native command-line interface consumed by the filesystem command router.
  */
 export const spec = {
 	name: "poi",
@@ -110,8 +110,8 @@ const GazetteerBuildPOI: CommandComponent<typeof spec> = ({ options }) => {
 			// twice, once here to derive coverage, once as buildPOIDatabase's `rows` injection point.
 			const rows: POISourceRow[] = []
 
-			// DYNAMIC import, required: @mailwoman/osm is UNPUBLISHED (ODbL counsel sign-off
-			// pending — see osm/README.md), and this dependency belongs only on the selected build path,
+			// dynamic import, required: @mailwoman/osm is unpublished (ODbL counsel sign-off
+			// pending — see osm/readme.md), and this dependency belongs only on the selected build path,
 			// so a top-level import breaks the whole published CLI on a clean install — the smoke
 			// test's clean-install leg is what catches it. The osm source branch is build-local by
 			// design. it may only resolve its SDK when actually invoked.
