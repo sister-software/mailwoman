@@ -609,7 +609,7 @@
 		"@mailwoman/codex": "workspace:*",
 		"@mailwoman/evidence": "workspace:*",
 		"@mailwoman/sqlite": "workspace:*",
-		"adm-zip": "^0.6.0",
+		"adm-zip": "^0.6.1",
 		"async-init": "^1.0.0",
 		"axios": "^1.20.0",
 		"axios-cache-interceptor": "^1.12.3",
