@@ -28,13 +28,15 @@ describe("withoutPostcodeSpans", () => {
 	it("removes a postcode matched by several formats at once", () => {
 		// `26292` is reported three times — us_zip, fr_postcode, de_postcode — at identical offsets. Removing each hit
 		// in turn deletes 15 characters instead of 5 and shifts every later offset.
-		const leading = "26292 Thomas, WV"
+		const text = "Thomas, WV 26292"
 
-		expect(withoutPostcodeSpans(leading, computeQueryShape(leading))).toBe("Thomas WV")
+		expect(withoutPostcodeSpans(text, computeQueryShape(text))).toBe("Thomas WV")
+	})
 
-		const trailing = "Thomas, WV 26292"
+	it("leaves a hit outside the last segment in place", () => {
+		const text = "3215 SE Clinton St, Portland OR"
 
-		expect(withoutPostcodeSpans(trailing, computeQueryShape(trailing))).toBe("Thomas WV")
+		expect(withoutPostcodeSpans(text, computeQueryShape(text))).toBe(text)
 	})
 
 	it("returns input carrying no postcode unchanged", () => {
@@ -73,8 +75,14 @@ describe("an admin tail carrying a postcode", () => {
 		expect(kindOf("Paris")).toBe("locality_only")
 	})
 
-	it("classifies a postcode-led admin tail, whose leading digits are not a house number", () => {
-		expect(kindOf("26292 Thomas, WV")).toBe("locality_only")
+	it("declines when the postcode hit falls outside the last segment", () => {
+		// The detectors are speculative and multi-country. `3215 SE` reports as an nl_postcode, and removing it would
+		// leave `Clinton St, Portland OR` — alpha, and a locality query where a street address was typed.
+		expect(kindOf("3215 SE Clinton St, Portland OR")).toBe("structured_address")
+
+		// The same restriction declines a postcode-led tail, which no US address writes and which cannot be told from
+		// the case above by any property this stage reads.
+		expect(kindOf("26292 Thomas, WV")).not.toBe("locality_only")
 	})
 
 	it("declines input carrying no letter, which the character class alone calls alpha", () => {

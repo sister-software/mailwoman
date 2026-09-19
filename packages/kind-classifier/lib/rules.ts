@@ -201,10 +201,22 @@ export function carriesLetter(text: string): boolean {
  * This runs on every classify, so it allocates nothing until a postcode hit exists.
  */
 function mergedPostcodeSpans(shape: QueryShapeLike): Array<{ start: number; end: number }> {
+	// Only a hit inside the last segment counts. The detectors are speculative and multi-country, so a leading house
+	// number attracts one: `3215 SE Clinton St, Portland OR` reports `3215 SE` as an nl_postcode, and removing that
+	// leaves `Clinton St, Portland OR`, which reads alpha and turns a full street address into a locality query. An
+	// admin tail carries its postcode in its last segment, which is the property that separates the two.
+	//
+	// A shape stating no segment spans gets no removal, which is the reading these rules had before #2342.
+	const tail = shape.segments?.at(-1)?.span
+
+	if (!tail) return []
+
 	const merged: Array<{ start: number; end: number }> = []
 
 	for (const hit of shape.knownFormats) {
 		if (!isPostcodeFormat(hit.format)) continue
+
+		if (hit.span.start < tail.start || hit.span.end > tail.end) continue
 
 		merged.push({ start: hit.span.start, end: hit.span.end })
 	}
@@ -324,8 +336,7 @@ export function scorePostcodeOnly(input: NormalizedInputLite, shape: QueryShapeL
  * that separate a place name from a street name (#2342).
  */
 export function scoreLocalityOnly(input: NormalizedInputLite, shape: QueryShapeLike): number {
-	// A non-postcode format hit is evidence of some other structure. A postcode carries no such evidence, and the
-	// remainder below has it removed.
+	// A non-postcode format hit is evidence of some other structure, and nothing removes it.
 	let carriesPostcode = false
 
 	for (const hit of shape.knownFormats) {
@@ -337,6 +348,13 @@ export function scoreLocalityOnly(input: NormalizedInputLite, shape: QueryShapeL
 
 		return 0
 	}
+
+	// A postcode this rule cannot place in the last segment is a format hit like any other, so it rejects — the
+	// reading this rule had before #2342. Treating it as absent instead would admit an input whose postcode sits
+	// wherever the detector found it, which is what the last-segment restriction exists to refuse.
+	const removable = carriesPostcode ? mergedPostcodeSpans(shape) : []
+
+	if (carriesPostcode && !removable.length) return 0
 
 	const withoutPostcode = carriesPostcode ? withoutPostcodeSpans(input.normalized, shape) : input.normalized
 	const len = withoutPostcode.length
