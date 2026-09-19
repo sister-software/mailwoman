@@ -12,6 +12,7 @@
 
 import { NAME_PRONE_US_SUFFIXES, US_STREET_SUFFIX_LOOKUP } from "@mailwoman/codex/us/street-suffix"
 import type { NormalizedInputLite, QueryShapeSegmentsView as QueryShapeLike } from "@mailwoman/query-shape"
+import { classifyTokens, foldInputClass } from "@mailwoman/query-shape/character-class"
 import { isPostcodeFormat } from "@mailwoman/query-shape/known-formats"
 /**
  * Longest input still plausible as a bare venue or landmark name. Beyond it the query is carrying an address as well,
@@ -150,6 +151,50 @@ export function isDisqualifyingStreetSuffix(word: string): boolean {
 }
 
 /**
+ * The input with every postcode span removed, and the separators the removal orphaned collapsed away.
+ *
+ * A postcode is the one digit run that carries no information about whether the query names a street. Read over
+ * `Thomas, WV 26292` the whole-input character class is `alphanumeric` and the shape reports a known-format hit, and
+ * both readings describe the postcode rather than the name in front of it. Read over what this returns — `Thomas, WV` —
+ * the class is `alpha`, which is the question the locality rules mean to ask (#2342).
+ *
+ * Non-postcode formats are left in place: they are evidence of some other structure, and removing them would hide it.
+ */
+export function withoutPostcodeSpans(text: string, shape: QueryShapeLike): string {
+	// One digit run matches several postcode formats at the same offsets — `26292` is a us_zip, an fr_postcode and a
+	// de_postcode — so the hits merge into disjoint intervals before any text is removed. Removing each hit separately
+	// deletes the same span once per format and shifts everything after it: `26292 Thomas, WV` came back as `V`.
+	// Removal runs last-to-first so an earlier removal cannot move a later span's offsets.
+	const merged: Array<{ start: number; end: number }> = []
+
+	for (const hit of shape.knownFormats
+		.filter((entry) => isPostcodeFormat(entry.format))
+		.map((entry) => entry.span)
+		.toSorted((left, right) => left.start - right.start)) {
+		const last = merged.at(-1)
+
+		if (last && hit.start <= last.end) {
+			last.end = Math.max(last.end, hit.end)
+
+			continue
+		}
+
+		merged.push({ start: hit.start, end: hit.end })
+	}
+
+	let remainder = text
+
+	for (const span of merged.toReversed()) {
+		remainder = remainder.slice(0, span.start) + remainder.slice(span.end)
+	}
+
+	return remainder
+		.replaceAll(/[\s,]+/gu, " ")
+		.replace(/[\s,]+$/u, "")
+		.trim()
+}
+
+/**
  * `landmark` rule (venue/named-place variant): short capitalized input with no street suffixes, no postcode hits, and
  * no region abbreviations. Captures "Pier 39", "Empire State Building", "Wrigley Field", "Grand Central Terminal".
  *
@@ -231,19 +276,39 @@ export function scorePostcodeOnly(input: NormalizedInputLite, shape: QueryShapeL
 }
 
 /**
- * `locality_only` rule: short input, alpha-class, single segment, no format hits.
+ * `locality_only` rule: a place name and at most an admin tail, with no street material.
  *
- * Examples: `"Paris"`, `"NYC NY"`, `"Tokyo"`. Distinguishes from `structured_address` (multiple segments) and `vague`
- * (long or mixed-class).
+ * Examples: `"Paris"`, `"NYC NY"`, `"Tokyo"`, `"Thomas, WV 26292"`. Distinguishes from `structured_address` (carries a
+ * house number, or more segments than an admin tail needs) and `vague` (long or mixed-class).
+ *
+ * Every test below reads the input with its postcode spans removed. Reading the whole input instead made a postcode
+ * decide the verdict: it flips the character class to `alphanumeric` and registers a known-format hit, so `Thomas, WV
+ * 26292` scored 0 here while `Thomas, WV` scored 0.85, and the two differ by nothing that bears on whether a street is
+ * present. That verdict chooses the parse register, and the register decides whether the decoder is fed the lexicons
+ * that separate a place name from a street name (#2342).
  */
 export function scoreLocalityOnly(input: NormalizedInputLite, shape: QueryShapeLike): number {
-	const len = input.normalized.length
+	const withoutPostcode = withoutPostcodeSpans(input.normalized, shape)
+	const len = withoutPostcode.length
 
 	if (len === 0 || len > MAX_LOCALITY_ONLY_LENGTH) return 0
 
-	if (shape.characterClass !== "alpha") return 0
+	// A non-postcode format hit is evidence of some other structure. A postcode carries no such evidence, and
+	// `withoutPostcode` has already removed it.
+	if (shape.knownFormats.some((hit) => !isPostcodeFormat(hit.format))) return 0
 
-	if (shape.knownFormats.length) return 0
+	// `foldInputClass` answers `alpha` for input carrying no classified token at all — `"???"` and `""` both read alpha
+	// — so a locality name has to be asserted rather than inferred from the fold alone.
+	if (!/\p{L}/u.test(withoutPostcode)) return 0
+
+	// The same fold `computeQueryShape` runs to derive `characterClass`, applied to the postcode-free remainder rather
+	// than to the whole input. Calling the shape's own function is what keeps the two readings from drifting apart.
+	//
+	// A house number leaves digits in the remainder, so this one test also rejects every street-led input: the
+	// remainder of `153 Holloway Rd, London N7 8LX` is `153 Holloway Rd London`, which folds to alphanumeric. A
+	// separate leading-digit test would be unreachable here, and applied to the RAW input it would reject
+	// `26292 Thomas, WV`, whose leading digits are the postcode rather than a house number.
+	if (foldInputClass(classifyTokens(withoutPostcode)) !== "alpha") return 0
 	// Locality-only inputs typically have 1-3 segments (e.g. "New York" is 1 segment, "Paris, FR" is 2).
 	// We allow up to 2 segments before deciding it's structured.
 	const segCount = shape.segments?.length ?? 1
@@ -262,9 +327,14 @@ export function scoreStructuredAddress(input: NormalizedInputLite, shape: QueryS
 
 	if (len === 0) return 0
 	const segCount = shape.segments?.length ?? 1
+	// Digits that survive removing the postcode — a house number, a unit, a numbered street. A postcode alone is not
+	// evidence of street material, so an admin tail must not reach the 0.9 branch on the strength of it. Without this
+	// test the branch returns 0.9 for `Thomas, WV 26292`, which outranks `locality_only`'s 0.85 and leaves the fix in
+	// `scoreLocalityOnly` with no effect (#2342).
+	const carriesNonPostcodeDigits = /\d/u.test(withoutPostcodeSpans(input.normalized, shape))
 
 	// Multi-segment input with mixed character class = high confidence structured.
-	if (segCount >= 2 && shape.characterClass === "alphanumeric") return 0.9
+	if (segCount >= 2 && shape.characterClass === "alphanumeric" && carriesNonPostcodeDigits) return 0.9
 
 	// Single-segment but reasonably long and alphanumeric = moderate confidence.
 	if (len >= ALPHANUMERIC_POSTCODE_MIN_LENGTH && shape.characterClass === "alphanumeric") return 0.75
