@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+
 /**
  * @copyright Sister Software
  * @license AGPL-3.0
@@ -6,8 +7,10 @@
  * @file The tracked-file entry point for the repository's Vale prose surfaces.
  *
  *   The package scripts stay declarative. This file owns the pathspecs, asks the shared git reader for the index's
- *   file set, and invokes Vale through the shared process boundary. No shell parses a file list here.
+ *   file set, and invokes Vale through the shared process boundary.
  */
+
+/// <reference types="node" />
 
 import { trackedFiles } from "@mailwoman/core/git"
 import { repoRootPath } from "@mailwoman/core/paths"
@@ -20,43 +23,45 @@ type Surface = "docs" | "docs-vocab" | "code"
 
 const REPO_ROOT = repoRootPath()
 
+const prependExclude = (path: string) => `:(exclude)${path}`
+
 const DOC_EXCLUDES = [
-	":(exclude)config/vale/fixtures/**",
-	":(exclude).agents/skills/**",
-	":(exclude)corpus-python/**/AGENTS.md",
-	":(exclude)corpus-python/**/CLAUDE.md",
-	":(exclude)packages/**/AGENTS.md",
-	":(exclude)packages/**/CLAUDE.md",
-	":(exclude)CHANGELOG.md",
-	":(exclude)**/CHANGELOG.md",
-	":(exclude)LICENSE.md",
-	":(exclude)**/LICENSE.md",
-	":(exclude)COMMERCIAL-LICENSE.md",
-	":(exclude)**/COMMERCIAL-LICENSE.md",
-	":(exclude)CODE_OF_CONDUCT.md",
-	":(exclude)**/CODE_OF_CONDUCT.md",
-	":(exclude)SECURITY.md",
-	":(exclude)**/SECURITY.md",
-	":(exclude)THIRD_PARTY_NOTICES.md",
-	":(exclude)**/THIRD_PARTY_NOTICES.md",
-	":(exclude)packages/**/data/PROVENANCE.md",
-	":(exclude)packages/**/lib/**/*.md",
-	":(exclude)packages/mailwoman/skills/**",
-	":(exclude)packages/mailwoman/lib/eval-harness/**",
-	":(exclude)packages/resolver-wof-sqlite/CONVENTION.md",
-	":(exclude)packages/resolver-wof-sqlite/POSTCODE-*.md",
-]
+	"config/vale/fixtures/**",
+	".agents/skills/**",
+	"corpus-python/**/AGENTS.md",
+	"corpus-python/**/CLAUDE.md",
+	"packages/**/AGENTS.md",
+	"packages/**/CLAUDE.md",
+	"CHANGELOG.md",
+	"**/CHANGELOG.md",
+	"LICENSE.md",
+	"**/LICENSE.md",
+	"COMMERCIAL-LICENSE.md",
+	"**/COMMERCIAL-LICENSE.md",
+	"CODE_OF_CONDUCT.md",
+	"**/CODE_OF_CONDUCT.md",
+	"SECURITY.md",
+	"**/SECURITY.md",
+	"THIRD_PARTY_NOTICES.md",
+	"**/THIRD_PARTY_NOTICES.md",
+	"packages/**/data/PROVENANCE.md",
+	"packages/**/lib/**/*.md",
+	"packages/mailwoman/skills/**",
+	"packages/mailwoman/lib/eval-harness/**",
+	"packages/resolver-wof-sqlite/CONVENTION.md",
+	"packages/resolver-wof-sqlite/POSTCODE-*.md",
+].map(prependExclude)
 
 const CODE_EXCLUDES = [
-	":(exclude)config/vale/**",
-	":(exclude)docs/**/test-fixtures/**",
-	":(exclude)packages/**/test-fixtures/**",
-	":(exclude)packages/neural/test/fixtures/**",
-	":(exclude)packages/mailwoman/lib/eval-harness/conformance/fixture.ts",
-	":(exclude).yarnrc.yml",
-	":(exclude)docker/docker-compose.yml",
-	":(exclude)docs/tags.yml",
-]
+	"config/vale/**",
+	"docs/**/test-fixtures/**",
+	"packages/**/test-fixtures/**",
+	"packages/neural/test/fixtures/**",
+	"packages/mailwoman/lib/eval-harness/conformance/fixture.ts",
+	".yarnrc.yml",
+	"docker/docker-compose.yml",
+	"docs/tags.yml",
+].map(prependExclude)
 
 function surface(value: string | undefined): Surface {
 	if (value === "docs" || value === "docs-vocab" || value === "code") return value
@@ -65,19 +70,25 @@ function surface(value: string | undefined): Surface {
 }
 
 function pathspecsFor(value: Surface): string[] {
-	return value === "code"
-		? ["*.ts", "*.tsx", "*.py", "*.yaml", "*.yml", ...CODE_EXCLUDES]
-		: ["*.md", "*.mdx", ...DOC_EXCLUDES]
+	switch (value) {
+		case "code":
+			return ["*.ts", "*.tsx", "*.py", "*.yaml", "*.yml", ...CODE_EXCLUDES]
+		default:
+			return ["*.md", "*.mdx", ...DOC_EXCLUDES]
+	}
 }
 
 /**
  * The surface's files narrowed to the ones a caller named.
  *
- * The intersection is taken HERE rather than by handing the paths to git beside the exclude pathspecs. Git's default
- * pathspec magic lets a star cross a slash, and a literal path combined with the recursive `test-fixtures` exclude in
- * `DOC_EXCLUDES` selects nothing at all: measured on `packages/core/lib/module/compiled-freshness.ts`, which that
- * exclude cannot name, the pair answered zero files. A narrowed run would then report clean on a file it never opened,
- * which is the reading this whole surface exists to prevent. Comparing strings has no such rule.
+ * We intersect here instead of passing the caller paths to git with the exclude pathspecs.
+ *
+ * Why: git pathspec rules can produce false negatives when literals and recursive excludes are combined. In practice, a
+ * literal path plus the recursive `test-fixtures` exclude in `DOC_EXCLUDES` can return zero matches even when the
+ * literal file is unrelated to that exclude (for example `packages/core/lib/module/compiled-freshness.ts`).
+ *
+ * If we trusted that result, a narrowed run could report clean for a file Vale never read. String-set intersection
+ * avoids that pathspec behavior and keeps narrowing deterministic.
  */
 function narrowTo(files: readonly string[], narrowing: readonly string[]): string[] {
 	if (!narrowing.length) return [...files]
@@ -88,11 +99,14 @@ function narrowTo(files: readonly string[], narrowing: readonly string[]): strin
 }
 
 function configFor(value: Surface): string {
-	return value === "code"
-		? "config/vale/.vale-code.ini"
-		: value === "docs"
-			? "config/vale/.vale.ini"
-			: "config/vale/.vale-vocab.ini"
+	switch (value) {
+		case "code":
+			return "config/vale/.vale-code.ini"
+		case "docs":
+			return "config/vale/.vale.ini"
+		case "docs-vocab":
+			return "config/vale/.vale-vocab.ini"
+	}
 }
 
 async function main(args: readonly string[]): Promise<number> {
