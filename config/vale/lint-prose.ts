@@ -61,13 +61,30 @@ const CODE_EXCLUDES = [
 function surface(value: string | undefined): Surface {
 	if (value === "docs" || value === "docs-vocab" || value === "code") return value
 
-	throw new Error("Usage: node config/vale/lint-prose.ts <docs|docs-vocab|code>")
+	throw new Error("Usage: node config/vale/lint-prose.ts <docs|docs-vocab|code> [path ...]")
 }
 
 function pathspecsFor(value: Surface): string[] {
 	return value === "code"
 		? ["*.ts", "*.tsx", "*.py", "*.yaml", "*.yml", ...CODE_EXCLUDES]
 		: ["*.md", "*.mdx", ...DOC_EXCLUDES]
+}
+
+/**
+ * The surface's files narrowed to the ones a caller named.
+ *
+ * The intersection is taken HERE rather than by handing the paths to git beside the exclude pathspecs. Git's default
+ * pathspec magic lets a star cross a slash, and a literal path combined with the recursive `test-fixtures` exclude in
+ * `DOC_EXCLUDES` selects nothing at all: measured on `packages/core/lib/module/compiled-freshness.ts`, which that
+ * exclude cannot name, the pair answered zero files. A narrowed run would then report clean on a file it never opened,
+ * which is the reading this whole surface exists to prevent. Comparing strings has no such rule.
+ */
+function narrowTo(files: readonly string[], narrowing: readonly string[]): string[] {
+	if (!narrowing.length) return [...files]
+
+	const wanted = new Set(narrowing.map((path) => path.replace(/^\.\//, "")))
+
+	return files.filter((file) => wanted.has(file))
 }
 
 function configFor(value: Surface): string {
@@ -80,9 +97,19 @@ function configFor(value: Surface): string {
 
 async function main(args: readonly string[]): Promise<number> {
 	const selectedSurface = surface(args[0])
-	const files = await trackedFiles(REPO_ROOT, pathspecsFor(selectedSurface))
+	// Narrowing paths, for a caller that has just edited a file and wants the same verdict CI would give it. They are
+	// intersected with the surface's pathspecs rather than linted directly, so an excluded path stays excluded and the
+	// caller never has to carry a second copy of the exclusion list.
+	const narrowing = args.slice(1)
+	const surfaceFiles = await trackedFiles(REPO_ROOT, pathspecsFor(selectedSurface))
 
-	if (!files.length) throw new Error(`No tracked files matched the ${selectedSurface} Vale surface`)
+	if (!surfaceFiles.length) throw new Error(`No tracked files matched the ${selectedSurface} Vale surface`)
+
+	const files = narrowTo(surfaceFiles, narrowing)
+
+	// A narrowed run matching nothing is the ordinary answer for a path this surface excludes, or for one git does not
+	// track yet, so it reports clean rather than raising.
+	if (!files.length) return 0
 
 	const vale = await valeCommand(import.meta.url)
 

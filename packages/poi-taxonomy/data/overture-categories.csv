@@ -1859,7 +1859,7 @@ appellate_practice_lawyers; [professional_services,lawyer,appellate_practice_law
 bankruptcy_law; [professional_services,lawyer,bankruptcy_law]
 business_law; [professional_services,lawyer,business_law]
 civil_rights_lawyers; [professional_services,lawyer,civil_rights_lawyers]
-interface_law; [professional_services,lawyer,interface_law]
+contract_law; [professional_services,lawyer,contract_law]
 criminal_defense_law; [professional_services,lawyer,criminal_defense_law]
 disability_law; [professional_services,lawyer,disability_law]
 divorce_and_family_law; [professional_services,lawyer,divorce_and_family_law]

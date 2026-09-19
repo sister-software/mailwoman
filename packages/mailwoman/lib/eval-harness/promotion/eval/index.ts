@@ -69,13 +69,15 @@
  */
 
 import { dataRootPath } from "@mailwoman/core/data-root"
-import { pathExists, readLocalBuffer, readLocalJSONFile, statPath } from "@mailwoman/core/fs/readers"
+import { pathExists, readLocalBuffer, readLocalJSONFile } from "@mailwoman/core/fs/readers"
 import { makeDirectories, toLinesText, writeLocalFile, writeLocalTextFile } from "@mailwoman/core/fs/writers"
 import { md5File } from "@mailwoman/core/hash"
+import { checkCompiledFreshness } from "@mailwoman/core/module/compiled-freshness"
 import { resolvePackagePath } from "@mailwoman/core/module/resolvers"
+import { repoRootPath } from "@mailwoman/core/paths"
 import { isoSeconds } from "@mailwoman/core/utils"
 import { weightsCachePackageDir } from "@mailwoman/neural/weights"
-import { basename, dirname, join, resolvePath, type PathBuilderLike } from "path-ts"
+import { basename, dirname, resolvePath, type PathBuilderLike } from "path-ts"
 import { Globerator } from "spliterator/node/fs"
 
 import { deOrderEval } from "#eval-harness/de-order-eval"
@@ -196,6 +198,25 @@ export interface PromotionEvalOptions {
  */
 const SPECS_DIR = resolvePackagePath("mailwoman", "lib", "eval-harness", "specs")
 
+/**
+ * The workspaces whose compiled output this battery loads, and therefore the ones whose staleness would change a
+ * verdict. Naming too few buys a `fresh` the run has not earned, so this is the parse and resolve path end to end
+ * rather than the two packages the previous check happened to look at.
+ */
+const EVAL_HARNESS_WORKSPACES = [
+	"packages/mailwoman",
+	"packages/core",
+	"packages/neural",
+	"packages/resolver",
+	"packages/resolver-wof-sqlite",
+	"packages/normalize",
+	"packages/query-shape",
+	"packages/locale-hint",
+	"packages/kind-classifier",
+	"packages/phrase-grouper",
+	"packages/codex",
+] as const
+
 export async function resolveThresholdSpecPath(check: string): Promise<string> {
 	if (await pathExists(check)) return check
 
@@ -254,28 +275,17 @@ async function runLoreGuards(env: {
 		return 2
 	}
 
-	// Refuse to evaluate artifacts older than their source inputs.
-	// Was `find packages/core -maxdepth 2 -name '*.ts' -newer packages/core/out -print -quit`. The two patterns cover
-	// those same two levels. Iteration stops at the first newer file, matching `find -quit` without collecting entries.
-	if (await pathExists("packages/core/out")) {
-		const reference = (await statPath("packages/core/out")).mtimeMs
+	// Refuse to evaluate artifacts older than their source inputs. The battery imports the compiled tree, so a stale
+	// `out/` grades code that has been replaced and reports a verdict rather than an error.
+	//
+	// The rule lives in `@mailwoman/core/module/compiled-freshness` because the dev-MCP needs the same one for the CLI
+	// it spawns, and the two copies disagreed. This one compared every source against the mtime of the
+	// `packages/core/out` DIRECTORY. `tsc` overwrites files in place and never advances that mtime, so the check warned
+	// after every successful compile. Its source glob also matched `out/*.d.ts`, comparing the emit against itself.
+	const freshness = await checkCompiledFreshness(String(repoRootPath()), EVAL_HARNESS_WORKSPACES)
 
-		const staleSource = await (async (): Promise<string | undefined> => {
-			for await (const relativePath of Globerator.from(["*.ts", "*/*.ts"], {
-				cwd: "packages/core",
-				absolute: false,
-			})) {
-				const sourcePath = join("packages/core", relativePath)
-
-				if ((await statPath(sourcePath)).mtimeMs > reference) return sourcePath
-			}
-
-			return undefined
-		})()
-
-		if (staleSource) {
-			console.error("⚠ core/ sources newer than core/out — run 'yarn compile' or the harness grades stale code")
-		}
+	if (!freshness.fresh && freshness.reason) {
+		console.error(`⚠ ${freshness.reason}`)
 	}
 
 	// Record the exact artifact provenance used for this evaluation.

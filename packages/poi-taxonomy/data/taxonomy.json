@@ -3578,9 +3578,9 @@
 			"source": "overture"
 		},
 		{
-			"id": "interface_law",
-			"label": "Interface law",
-			"hierarchy": ["professional_services", "lawyer", "interface_law"],
+			"id": "contract_law",
+			"label": "Contract law",
+			"hierarchy": ["professional_services", "lawyer", "contract_law"],
 			"basicLabel": null,
 			"source": "overture"
 		},

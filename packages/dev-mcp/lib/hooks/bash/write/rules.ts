@@ -141,7 +141,7 @@ const PATH_WRITERS: Readonly<Record<string, "all" | "last">> = {
  * index: no tracked path matches, so removing one deletes nothing a commit holds, and `tsc -b` or `yarn install`
  * restores it. `.yarn/` is not here — it carries the pinned yarn binary, which is tracked.
  *
- * The exemption is granted to {@link remover} alone, and the asymmetry is the point: removing derived output restores
+ * The exemption is granted to {@link REMOVER} alone, and the asymmetry is the point: removing derived output restores
  * the derived state, while writing one by hand fabricates it. A hand-written `out/<subpath>.d.ts` answers for a source
  * file that does not exist, because every subpath map lists `types` first.
  */
@@ -162,7 +162,7 @@ const WRAPPER_ARGUMENT = /^(?:-|\d)/u
 
 /**
  * What to do instead of launching a Modal run from Bash, carried by the two rules that need it rather than by
- * {@link guidance}, which talks about the Write and Edit tools and would be the wrong advice here.
+ * {@link GUIDANCE}, which talks about the Write and Edit tools and would be the wrong advice here.
  */
 const DETACHED_LAUNCH_GUIDANCE =
 	"Launch it through `node packages/mailwoman/lib/dev-tools/launch-detached.run.ts --log <file> -- modal run …`, " +
@@ -172,7 +172,7 @@ const DETACHED_LAUNCH_GUIDANCE =
 	"open. A run that did die continues with `--resume auto` from its last save."
 
 /**
- * What to do instead of removing a repository path, carried by the {@link remover} refusal. {@link guidance} names the
+ * What to do instead of removing a repository path, carried by the {@link REMOVER} refusal. {@link GUIDANCE} names the
  * Write and Edit tools, and neither of them deletes anything.
  */
 const REMOVAL_GUIDANCE =

@@ -34,6 +34,17 @@
 						"timeout": 15
 					}
 				]
+			},
+			{
+				"matcher": "Write|Edit",
+				"hooks": [
+					{
+						"type": "command",
+						"command": "node \"$CLAUDE_PROJECT_DIR/packages/dev-mcp/lib/hooks/vale/edit/check.ts\"",
+						"timeout": 30,
+						"statusMessage": "Prose check"
+					}
+				]
 			}
 		],
 		"SessionStart": [
