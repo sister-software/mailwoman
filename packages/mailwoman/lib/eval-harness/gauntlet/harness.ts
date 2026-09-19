@@ -13,7 +13,7 @@ import { dataRootPath } from "@mailwoman/core/data-root"
 import { pathExists, readLocalBuffer, readLocalTextFile } from "@mailwoman/core/fs/readers"
 import { md5Hex } from "@mailwoman/core/hash"
 import { tryParsingJSON } from "@mailwoman/core/json"
-import type { QueryKind } from "@mailwoman/core/pipeline"
+import { deriveInputMode, type QueryKind } from "@mailwoman/core/pipeline"
 import type { ResolveNodeTrace, WeakResolutionReading } from "@mailwoman/core/resolver"
 import { mailwomanDataRoot, wofExtractPaths } from "@mailwoman/core/utils"
 import { createKindClassifier } from "@mailwoman/kind-classifier"
@@ -106,11 +106,15 @@ export interface GauntletDepsOptions {
 	/**
 	 * Replace the kind classifier's top verdict on every input this deps object geocodes.
 	 *
-	 * A declared ablation, and never a shipping configuration. The verdict is what the coordinator routes on, so forcing
-	 * it holds the input and every other stage fixed while changing only the route. It exists because three arms on the
-	 * `«locality», «REGION» «postcode»` surface each moved something upstream of the verdict and read the effect
-	 * downstream of it. None of them established that the verdict is what limits the decode. This one does, or refuses
-	 * to.
+	 * A declared ablation, and never a shipping configuration. It exists because three arms on the `«locality», «REGION»
+	 * «postcode»` surface each moved something upstream of the verdict and read the effect downstream of it. None of them
+	 * established that the verdict is what limits the decode. This one does, or refuses to.
+	 *
+	 * Forcing the verdict means forcing the parse REGISTER, which is the whole of what the verdict decides on this path.
+	 * `geocodeParseInputs` derives the register from its own `classifyKindSync` call and consults `deps.classifyKind`
+	 * only for the thing-query refusal, so replacing the classifier alone leaves the decode byte-identical — measured at
+	 * 633/1,132 in both arms on the shape panel, which reads exactly like a real null. `deps.inputMode` is therefore set
+	 * from {@link deriveInputMode} as well, and it wins over the internal call.
 	 */
 	forceQueryKind?: QueryKind
 	/**
@@ -684,6 +688,8 @@ export async function buildGauntletDeps(opts: GauntletDepsOptions = {}): Promise
 			classifier: caseClassifier,
 			// #1649: same lexicon-aware kind classifier the CLI session wires — the harness grades the user's path.
 			classifyKind: poiKindClassifier,
+			// Unset on every shipping path, so the register comes from the verdict as production derives it.
+			...(opts.forceQueryKind ? { inputMode: deriveInputMode(opts.forceQueryKind) } : {}),
 			resolver,
 			databases: regionDatabaseProvider.for,
 			nationalDatabases: banProvider.for,

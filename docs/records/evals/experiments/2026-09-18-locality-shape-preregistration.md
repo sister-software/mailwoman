@@ -187,4 +187,98 @@ on the 603-city panel alone.
 
 ## Result
 
-Pending. The run is 60,000 steps from scratch on an A100-40GB.
+v5.9.0 does not replace the shipped model. Bars 1, 2 and 3 pass. Bar 5 fails on Massachusetts and
+Kansas. Bar 5 is a stated requirement rather than a watch, so the arm fails whatever bar 4 reads.
+`release.config.json` still names `models/quantized/model-v440-suffix-boundary-v2-step-060000-int8.onnx`.
+
+The run finished 60,000 steps from scratch on an A100-40GB. Final training validation reads
+`val_loss=0.7255`, `macro_f1=0.9104` at n=4,096. Those are validation-set readings of the training
+objective and decide none of the five bars.
+
+### Receipts
+
+Every reading below is read back from a receipt under
+`$MAILWOMAN_DATA_ROOT/eval/receipts/2026-09-19-v590/`. Each receipt carries the commit it ran at, the
+count of dirty tracked files at that commit, the argument vector, the panel's sha256, and the md5 of
+the `model.onnx` the resolver opened for that run. The md5 is what distinguishes the arms: a staged
+candidate's `model-card.json` is a symlink into the shared data root, so both arms read card 9.1.0.
+
+| receipt                                        | model md5                          | panel                       | panel sha256 |
+| ---------------------------------------------- | ---------------------------------- | --------------------------- | ------------ |
+| `v570-us-shape-stratified.json`                | `e72b0cbb38754c5b07116870aeee04a4` | `us-shape-stratified.jsonl` | `af671e35…`  |
+| `v590-us-shape-stratified.json`                | `8287d3790adf4a07824fcb3ac5bdbe10` | `us-shape-stratified.jsonl` | `af671e35…`  |
+| `v570-us.json`                                 | `e72b0cbb38754c5b07116870aeee04a4` | `us.jsonl`                  | `45a509a1…`  |
+| `v590-us.json`                                 | `8287d3790adf4a07824fcb3ac5bdbe10` | `us.jsonl`                  | `45a509a1…`  |
+| `paired-us-shape-stratified-v570-vs-v590.json` | both, named inside                 | derived                     | —            |
+
+All four ran at commit `60ad48217` with zero dirty tracked files, through
+`locality-region-postcode-arms.run.ts`. The `us.jsonl` panel had no recorded hash before this run;
+it is `45a509a1908466a454e6a549170f782803a23d8e950c27732da1a4eb2de16cb6`.
+
+Both arms were staged with the same nine weights packages — the seven the board routes, plus the
+published but unrouted `fr-fr` and `en-au`. The two cache roots differ in the base `model.onnx`
+bytes and in nothing besides. The earlier v5.7.0 and v5.9.0 caches carried seven packages and the
+v5.8.0 grading carried eight, so an FR reading taken across those three caches compares three
+different stages.
+
+### The five bars
+
+| bar | measure                                   |          v5.7.0 |          v5.9.0 | requirement  | result    |
+| --- | ----------------------------------------- | --------------: | --------------: | ------------ | --------- |
+| 1   | shape panel, bare arm, suffix-word bucket | 123/379 (32.5%) | 288/379 (76.0%) | must rise    | pass      |
+| 2   | same panel, other multi-word              | 189/358 (52.8%) | 307/358 (85.8%) | may not fall | pass      |
+| 2   | same panel, single word                   | 321/395 (81.3%) | 328/395 (83.0%) | may not fall | pass      |
+| 3   | `us.jsonl` 603-city panel, bare arm       | 555/603 (92.0%) | 591/603 (98.0%) | may not fall | pass      |
+| 3   | same panel, `street_only` reverse arm     |         594/603 |         597/603 | may not fall | pass      |
+| 4   | US `postcode` per-tag F1, n=2,660         |           95.6% |       see bar 4 | must hold    | see below |
+| 4   | D-rule regressions on FR, GB, DE          |               — |       see bar 4 | none         | see below |
+| 5   | shape panel, bare arm, MO                 |     1/29 (3.4%) |  29/29 (100.0%) | must rise    | pass      |
+| 5   | same panel, AR                            |     1/23 (4.3%) |   21/23 (91.3%) | must rise    | pass      |
+| 5   | same panel, TX                            |   11/53 (20.8%) |   16/53 (30.2%) | must rise    | pass      |
+| 5   | same panel, MA                            |  21/21 (100.0%) |   19/21 (90.5%) | may not fall | **fail**  |
+| 5   | same panel, KS                            |  24/24 (100.0%) |   13/24 (54.2%) | may not fall | **fail**  |
+
+Bar 2 separates a shape result from a row-count result, and it separates them. The corpus change
+added 1,922 suffix-word rows and nothing to the other two buckets. Suffix-word rose 43.5pp, other
+multi-word rose 33.0pp and single word rose 1.7pp, so the buckets did not move together and the
+stratification carries a result of its own.
+
+### What the pooled rate hides
+
+Pooled shape-panel bare matching rose from 633/1,132 (55.9%) to 923/1,132 (81.5%), a gain of
+25.6pp. Of the 1,132 paired rows, 354 were fixed and 64 regressed, for a net of 290.
+
+Eighteen states carry at least one regression. The eight that lost ground overall:
+
+| state | panel rows | v5.7.0 | v5.9.0 |   change | fixed | regressed |
+| ----- | ---------: | -----: | -----: | -------: | ----: | --------: |
+| WV    |         25 |  60.0% |   0.0% | −60.0 pp |     0 |        15 |
+| SC    |         17 |  58.8% |   0.0% | −58.8 pp |     0 |        10 |
+| KS    |         24 | 100.0% |  54.2% | −45.8 pp |     0 |        11 |
+| MN    |         27 |  55.6% |  25.9% | −29.6 pp |     0 |         8 |
+| VT    |          8 | 100.0% |  75.0% | −25.0 pp |     0 |         2 |
+| ME    |         13 | 100.0% |  76.9% | −23.1 pp |     0 |         3 |
+| MA    |         21 | 100.0% |  90.5% |  −9.5 pp |     0 |         2 |
+| CT    |         11 |  63.6% |  54.5% |  −9.1 pp |     1 |         2 |
+
+South Carolina loses every one of its 17 rows and sits outside bar 5, which named the five states at
+the ends of v5.7.0's pre-result spread. Bar 5 is therefore a sample of the region-level requirement
+rather than the whole of it, and this table is the reason to write the next one over every state
+carrying enough rows to read.
+
+The complete fixed and regressed lists, with each row's expected locality and what each arm answered,
+are in `paired-us-shape-stratified-v570-vs-v590.json`.
+
+### Reproducing it
+
+```sh
+node packages/mailwoman/lib/dev-tools/us/locality-region-postcode-arms.run.ts \
+  --eval $MAILWOMAN_DATA_ROOT/eval/coord/us-shape-stratified.jsonl \
+  --weights-cache $MAILWOMAN_DATA_ROOT/candidates/v590-cache-published \
+  --out-json <receipt>
+```
+
+Stage a matched cache with
+`stage-candidate-cache.run.ts --model <int8.onnx> --out <root> --locales en-us,en-gb,en-nz,de-de,en-in,es-es,it-it,fr-fr,en-au`.
+Read the receipt's `provenance` block before comparing two of them: two receipts whose
+`weightsModelMD5` agree are the same arm under two names.
