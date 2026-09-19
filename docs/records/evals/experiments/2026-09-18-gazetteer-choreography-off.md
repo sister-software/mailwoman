@@ -61,10 +61,10 @@ One change, three symptoms:
    95.0% (n=2660).
 
    The FR half of that line reports a denominator the measurement does not have. `n=1546` is the row
-   count of `fr.jsonl`, and 1 of those rows carries a gold venue, so the FR venue reading is `tp: 1,
-fp: 1, fn: 0` and 66.7% → 50.0% is one row moving. The US half stands: 970 of the 2,660 rows carry
-   a gold venue. FR and GB venue behavior is graded by the regression board alone, so the seven
-   regressions above are the evidence for this point and the FR F1 is not.
+   count of `fr.jsonl`, and 1 of those rows carries a gold venue, so the FR venue reading is
+   `tp: 1, fp: 1, fn: 0` and 66.7% → 50.0% is one row moving. The US half stands: 970 of the 2,660
+   rows carry a gold venue. FR and GB venue behavior is graded by the regression board alone, so the
+   seven regressions above are what this point rests on rather than the FR F1.
 
 The clue fires where the locality lexicon holds the name and is silent where it does not, and when it
 is silent the name's shape decides. Lexicon coverage tracks the direction — IL 91.3% (63/69) and CA
