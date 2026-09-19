@@ -146,7 +146,7 @@
 		"spliterator": "^7.11.0"
 	},
 	"devDependencies": {
-		"@types/node": "^26.4.1",
+		"@types/node": "^26.6.1",
 		"path-ts": "^2.4.1",
 		"playwright": "^1.63.0"
 	}

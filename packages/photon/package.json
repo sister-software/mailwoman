@@ -61,8 +61,8 @@
 		"@mailwoman/resolver": "workspace:*",
 		"@mailwoman/resolver-wof-sqlite": "workspace:*",
 		"@mailwoman/sqlite": "workspace:*",
-		"hono": "^4.13.7",
+		"hono": "^4.13.8",
 		"mailwoman": "workspace:*",
-		"zod": "^4.5.4"
+		"zod": "^4.6.5"
 	}
 }
