@@ -1,11 +1,10 @@
-# Codex reads at most `project_doc_max_bytes` of AGENTS.md and truncates the rest, where Claude Code
-# reads the whole file. The root file is 43,066 bytes, above the 32 KiB default; 48 KiB covers it and
-# starts truncating once it grows past that, which is the signal to move a section into the package
-# it belongs to rather than to raise this number again.
-project_doc_max_bytes = 49152
+# The root file routes specialized work to scoped instructions. This limit covers the longest
+# root-to-directory instruction chain and makes unexpected growth visible before it crowds out a
+# nested file.
+project_doc_max_bytes = 32768
 
 [mcp_servers]
 [mcp_servers.mailwoman-dev]
 command = "node"
 args = ["packages/dev-mcp/lib/cli/index.ts"]
-
+cwd = ".."

@@ -18,14 +18,15 @@ asks for one. The number of steps does not grant permission to write to GitHub.
 
 ## Step 1 — write the plan as a todo list FIRST
 
-State the steps before touching anything. Two situations, and say which you are in:
+State the steps before touching anything. Use the branch for the active client:
 
-- **The session has the task tools** (`TodoWrite`, or `TaskCreate`/`TaskUpdate`). Use them; the hook
-  below mirrors `TodoWrite` into the linked issue automatically.
-- **It does not** — Claude Code leaves the task tools out of sessions on Fable 5 / Opus 4.8 /
-  Sonnet 5 and later by default. Then the ISSUE's task list is the todo list: keep it current with
-  `gh issue edit` as steps complete. Opting a session back in is `CLAUDE_CODE_ENABLE_TODO_TOOLS=1`
-  in the session env — the operator's call rather than yours.
+- **Codex:** The issue's task list is the durable task list. Update it with `gh issue edit` as work
+  completes. Codex lifecycle events do not expose Claude Code's `TodoWrite` payload to this repository's
+  synchronization hook.
+- **Claude Code with `TodoWrite`:** Use `TodoWrite`; the hook below mirrors its list into the linked
+  issue automatically.
+- **Claude Code without task tools:** Keep the issue's task list current with `gh issue edit`. Enabling
+  the task tools through `CLAUDE_CODE_ENABLE_TODO_TOOLS=1` is an operator decision.
 
 ## Step 2 — create the issue from the template's fields
 
@@ -77,8 +78,10 @@ For a bug, the headings are: `Failing input` (exact string, original spelling), 
 mkdir -p .claude/state && echo <issue-number> > .claude/state/linked-issue
 ```
 
-From here every `TodoWrite` rewrites the issue's marker-delimited block via the
-`packages/dev-mcp/lib/hooks/todo-issue-sync.ts` PostToolUse hook. Its interface:
+The `.claude/state` name is shared integration state rather than a Claude Code-only instruction. Claude
+Code's `packages/dev-mcp/lib/hooks/todo-issue-sync.ts` PostToolUse hook rewrites the marker-delimited
+block after `TodoWrite`. Codex and Claude Code sessions without `TodoWrite` update the issue directly.
+The hook's interface is:
 
 - **Fail-open and silent** — it never blocks a turn, and the `gh` work runs detached.
 - **Markers required** — it never writes into an issue whose body lacks both
