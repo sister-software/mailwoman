@@ -60,6 +60,12 @@ One change, three symptoms:
    that used to extract and now returns null. FR venue F1 66.7% → 50.0% (n=1546); US venue 96.9% →
    95.0% (n=2660).
 
+   The FR half of that line reports a denominator the measurement does not have. `n=1546` is the row
+   count of `fr.jsonl`, and 1 of those rows carries a gold venue, so the FR venue reading is `tp: 1,
+fp: 1, fn: 0` and 66.7% → 50.0% is one row moving. The US half stands: 970 of the 2,660 rows carry
+   a gold venue. FR and GB venue behavior is graded by the regression board alone, so the seven
+   regressions above are the evidence for this point and the FR F1 is not.
+
 The clue fires where the locality lexicon holds the name and is silent where it does not, and when it
 is silent the name's shape decides. Lexicon coverage tracks the direction — IL 91.3% (63/69) and CA
 68.2% (15/22) both gain; VT 57.0% (81/142) and MT 48.1% (51/106) both lose. Across the panel the rows
