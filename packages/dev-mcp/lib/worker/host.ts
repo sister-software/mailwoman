@@ -85,6 +85,20 @@ const CRASH_WINDOW_MS = 60_000
  */
 const TERM_GRACE_MS = 5000
 
+/**
+ * A job the restart killed, named so the caller can relaunch it.
+ *
+ * The command is the whole of what a relaunch needs, and it is read from the worker before the kill — afterwards the
+ * registry is gone with the module graph, so `mwdev_job` answers "no job job-3" and the loss is indistinguishable from
+ * a job id that never existed. A caller who learns that by polling has already lost the run's wall-clock.
+ */
+export interface KilledJob {
+	job_id: string
+	label: string
+	elapsed_s: number
+	command: string
+}
+
 export interface RestartReport {
 	previous_pid: number | null
 	previous_boot_fingerprint: string | null
@@ -92,6 +106,13 @@ export interface RestartReport {
 	new_boot_fingerprint: string
 	tools_changed: boolean
 	aborted_calls: number
+	/**
+	 * Empty when the worker held no running job. A failure to ask is reported in {@link killed_jobs_note} rather than as
+	 * an empty list, because "nothing was running" and "I could not find out" are different facts and only one of them
+	 * means a relaunch is unnecessary.
+	 */
+	killed_jobs: KilledJob[]
+	killed_jobs_note?: string
 }
 
 export class WorkerHost implements AsyncDisposable {
@@ -212,6 +233,10 @@ export class WorkerHost implements AsyncDisposable {
 		// The full metas rather than the names: a restart that adds a parameter changes what a client may send, and a
 		// name-only compare suppressed the tools/list_changed the client needed to drop its stale schema.
 		const previousTools = stringifyJSON(this.tools)
+		// Asked before the kill, while there is still a registry to ask. A restart is usually run to pick up a source
+		// edit, which says nothing about whether a long job is in flight, and the caller has no other way to find out:
+		// after the kill the id resolves to nothing.
+		const { jobs: killedJobs, note: killedJobsNote } = await this.#runningJobs()
 
 		const aborted = this.#rejectPending(
 			new Error("The worker was restarted; this call died with the old module graph. Re-run it.")
@@ -231,6 +256,44 @@ export class WorkerHost implements AsyncDisposable {
 			new_boot_fingerprint: this.bootFingerprint!,
 			tools_changed: stringifyJSON(this.tools) !== previousTools,
 			aborted_calls: aborted,
+			killed_jobs: killedJobs,
+			...(killedJobsNote ? { killed_jobs_note: killedJobsNote } : {}),
+		}
+	}
+
+	/**
+	 * The jobs the worker is running right now, for the restart to name before it kills them.
+	 *
+	 * Every failure answers with a note rather than an empty list. A degraded or already-dead worker cannot be asked, and
+	 * reporting that as "no jobs were running" would tell the caller the one thing that makes a relaunch look
+	 * unnecessary.
+	 */
+	async #runningJobs(): Promise<{ jobs: KilledJob[]; note?: string }> {
+		if (!this.#child?.connected) return { jobs: [], note: "the worker was not running, so its jobs could not be read" }
+
+		if (this.#degraded) {
+			return { jobs: [], note: `the worker was degraded (${this.#degraded}), so its jobs could not be read` }
+		}
+
+		try {
+			// Structural rather than imported: the host is the half that survives a worker holding a tree too broken to
+			// boot, so it reads the worker's answer as data and never shares a module with it.
+			const answer = (await this.call("mwdev_job", { action: "list" })) as {
+				jobs?: Array<{ job_id: string; label: string; state: string; elapsed_s: number; command: string }>
+			}
+
+			return {
+				jobs: (answer.jobs ?? [])
+					.filter((job) => job.state === "running")
+					.map((job) => ({
+						job_id: job.job_id,
+						label: job.label,
+						elapsed_s: job.elapsed_s,
+						command: job.command,
+					})),
+			}
+		} catch (error) {
+			return { jobs: [], note: `the job list could not be read: ${error instanceof Error ? error.message : error}` }
 		}
 	}
 

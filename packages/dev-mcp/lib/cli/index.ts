@@ -75,8 +75,11 @@ const RESTART_TOOL = {
 		"disk, so edited code goes live WITHOUT restarting the MCP client. Run it after any merge or source edit the " +
 		"daemon's staleness guard complains about. Costs: in-flight tool calls are rejected (they ran against the old " +
 		"graph), background jobs die with the worker, and engines rebuild lazily on the next call. The result names " +
-		"both boot fingerprints and whether the tool list changed. Also the deliberate recovery path when the worker " +
-		"is degraded after repeated crashes.",
+		"both boot fingerprints, whether the tool list changed, and `killed_jobs` — every job that was still running, " +
+		"with the command to relaunch it, read before the kill because afterwards its id resolves to nothing. A " +
+		"`killed_jobs_note` means the list could not be read, which is not the same as nothing having been running. " +
+		"Check `mwdev_job list` first when a long check is in flight. Also the deliberate recovery path when the " +
+		"worker is degraded after repeated crashes.",
 	inputSchema: { type: "object", properties: {}, additionalProperties: false } as Record<string, unknown>,
 }
 
