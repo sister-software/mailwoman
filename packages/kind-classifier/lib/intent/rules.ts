@@ -25,7 +25,7 @@
 
 import type { NormalizedInputLite, QueryShapeSegmentsView as QueryShapeLike } from "@mailwoman/query-shape"
 
-import { isDisqualifyingStreetSuffix, MAX_LOCALITY_ONLY_LENGTH, wordsOf } from "#rules"
+import { carriesLetter, isDisqualifyingStreetSuffix, MAX_LOCALITY_ONLY_LENGTH, wordsOf } from "#rules"
 /**
  * `locality_only` scores 0.85. Both refinement kinds sit under it by a whole confidence step so no float-comparison
  * accident can flip the top slot, and so the gap reads as deliberate to the next person.
@@ -212,8 +212,10 @@ function bareNameWords(input: NormalizedInputLite, shape: QueryShapeLike): strin
 	if (shape.knownFormats.length) return null
 
 	// `alpha` excludes every house number and every postcode by construction — the cheapest available statement of
-	// "no address grammar", and it costs no lexicon.
-	if (shape.characterClass !== "alpha") return null
+	// "no address grammar", and it costs no lexicon. It is silent about whether a name is present, so the letter test
+	// stands beside it: `foldInputClass` answers `alpha` for input carrying no classified token, and `"???"` would
+	// otherwise reach this rule as a bare toponym.
+	if (shape.characterClass !== "alpha" || !carriesLetter(text)) return null
 
 	// A comma is the admin-context marker ("Paris, FR"). One segment, or the name is not bare.
 	if ((shape.segments?.length ?? 1) !== 1) return null

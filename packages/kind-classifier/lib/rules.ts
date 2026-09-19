@@ -161,30 +161,16 @@ export function isDisqualifyingStreetSuffix(word: string): boolean {
  * Non-postcode formats are left in place: they are evidence of some other structure, and removing them would hide it.
  */
 export function withoutPostcodeSpans(text: string, shape: QueryShapeLike): string {
-	// One digit run matches several postcode formats at the same offsets — `26292` is a us_zip, an fr_postcode and a
-	// de_postcode — so the hits merge into disjoint intervals before any text is removed. Removing each hit separately
-	// deletes the same span once per format and shifts everything after it: `26292 Thomas, WV` came back as `V`.
-	// Removal runs last-to-first so an earlier removal cannot move a later span's offsets.
-	const merged: Array<{ start: number; end: number }> = []
+	const merged = mergedPostcodeSpans(shape)
 
-	for (const hit of shape.knownFormats
-		.filter((entry) => isPostcodeFormat(entry.format))
-		.map((entry) => entry.span)
-		.toSorted((left, right) => left.start - right.start)) {
-		const last = merged.at(-1)
-
-		if (last && hit.start <= last.end) {
-			last.end = Math.max(last.end, hit.end)
-
-			continue
-		}
-
-		merged.push({ start: hit.start, end: hit.end })
-	}
+	if (!merged.length) return text
 
 	let remainder = text
 
-	for (const span of merged.toReversed()) {
+	// Last-to-first, so an earlier removal cannot move a later span's offsets.
+	for (let index = merged.length - 1; index >= 0; index--) {
+		const span = merged[index]!
+
 		remainder = remainder.slice(0, span.start) + remainder.slice(span.end)
 	}
 
@@ -192,6 +178,56 @@ export function withoutPostcodeSpans(text: string, shape: QueryShapeLike): strin
 		.replaceAll(/[\s,]+/gu, " ")
 		.replace(/[\s,]+$/u, "")
 		.trim()
+}
+
+/**
+ * True when the text carries at least one letter in any script.
+ *
+ * The rules that admit a place name read `characterClass === "alpha"` to mean "no address grammar", and that reading is
+ * silent about whether any name is present: `foldInputClass` answers `alpha` for input carrying no classified token at
+ * all, so `"???"` and `""` both read alpha. A name has to be asserted rather than inferred from the class.
+ */
+export function carriesLetter(text: string): boolean {
+	return /\p{L}/u.test(text)
+}
+
+/**
+ * The postcode hits as disjoint intervals, ascending, or an empty array when the shape reports none.
+ *
+ * One digit run matches several postcode formats at the same offsets — `26292` is a us_zip, an fr_postcode and a
+ * de_postcode — so the hits must merge before any text is removed. Removing each hit separately deletes the same span
+ * once per format and shifts everything after it, which returned `V` for `26292 Thomas, WV`.
+ *
+ * This runs on every classify, so it allocates nothing until a postcode hit exists.
+ */
+function mergedPostcodeSpans(shape: QueryShapeLike): Array<{ start: number; end: number }> {
+	const merged: Array<{ start: number; end: number }> = []
+
+	for (const hit of shape.knownFormats) {
+		if (!isPostcodeFormat(hit.format)) continue
+
+		merged.push({ start: hit.span.start, end: hit.span.end })
+	}
+
+	if (merged.length < 2) return merged
+
+	merged.sort((left, right) => left.start - right.start)
+
+	const disjoint: Array<{ start: number; end: number }> = [merged[0]!]
+
+	for (const span of merged.slice(1)) {
+		const last = disjoint.at(-1)!
+
+		if (span.start <= last.end) {
+			last.end = Math.max(last.end, span.end)
+
+			continue
+		}
+
+		disjoint.push(span)
+	}
+
+	return disjoint
 }
 
 /**
@@ -288,27 +324,45 @@ export function scorePostcodeOnly(input: NormalizedInputLite, shape: QueryShapeL
  * that separate a place name from a street name (#2342).
  */
 export function scoreLocalityOnly(input: NormalizedInputLite, shape: QueryShapeLike): number {
-	const withoutPostcode = withoutPostcodeSpans(input.normalized, shape)
+	// A non-postcode format hit is evidence of some other structure. A postcode carries no such evidence, and the
+	// remainder below has it removed.
+	let carriesPostcode = false
+
+	for (const hit of shape.knownFormats) {
+		if (isPostcodeFormat(hit.format)) {
+			carriesPostcode = true
+
+			continue
+		}
+
+		return 0
+	}
+
+	const withoutPostcode = carriesPostcode ? withoutPostcodeSpans(input.normalized, shape) : input.normalized
 	const len = withoutPostcode.length
 
 	if (len === 0 || len > MAX_LOCALITY_ONLY_LENGTH) return 0
 
-	// A non-postcode format hit is evidence of some other structure. A postcode carries no such evidence, and
-	// `withoutPostcode` has already removed it.
-	if (shape.knownFormats.some((hit) => !isPostcodeFormat(hit.format))) return 0
+	if (!carriesLetter(withoutPostcode)) return 0
 
-	// `foldInputClass` answers `alpha` for input carrying no classified token at all — `"???"` and `""` both read alpha
-	// — so a locality name has to be asserted rather than inferred from the fold alone.
-	if (!/\p{L}/u.test(withoutPostcode)) return 0
-
-	// The same fold `computeQueryShape` runs to derive `characterClass`, applied to the postcode-free remainder rather
-	// than to the whole input. Calling the shape's own function is what keeps the two readings from drifting apart.
+	// The remainder must fold to `alpha`. Two readings answer that without re-tokenizing, and this rule runs on every
+	// classify, so it reaches the fold only when neither shortcut applies:
 	//
-	// A house number leaves digits in the remainder, so this one test also rejects every street-led input: the
-	// remainder of `153 Holloway Rd, London N7 8LX` is `153 Holloway Rd London`, which folds to alphanumeric. A
-	// separate leading-digit test would be unreachable here, and applied to the RAW input it would reject
-	// `26292 Thomas, WV`, whose leading digits are the postcode rather than a house number.
-	if (foldInputClass(classifyTokens(withoutPostcode)) !== "alpha") return 0
+	// - An input the shape already calls `alpha` stays alpha once characters are removed from it.
+	// - An input carrying no postcode has an empty remainder-to-input difference, so the shape's own class is the
+	//   answer, which is what this rule read before #2342.
+	//
+	// Otherwise the fold runs on the remainder through the same function `computeQueryShape` uses, which is what keeps
+	// the two readings from drifting apart. A house number leaves digits in the remainder, so this test also rejects
+	// every street-led input: the remainder of `153 Holloway Rd, London N7 8LX` is `153 Holloway Rd London`, which
+	// folds to alphanumeric. A separate leading-digit test would be unreachable here, and applied to the raw input it
+	// would reject `26292 Thomas, WV`, whose leading digits are the postcode rather than a house number.
+	if (shape.characterClass !== "alpha") {
+		if (!carriesPostcode) return 0
+
+		if (foldInputClass(classifyTokens(withoutPostcode)) !== "alpha") return 0
+	}
+
 	// Locality-only inputs typically have 1-3 segments (e.g. "New York" is 1 segment, "Paris, FR" is 2).
 	// We allow up to 2 segments before deciding it's structured.
 	const segCount = shape.segments?.length ?? 1
@@ -327,14 +381,21 @@ export function scoreStructuredAddress(input: NormalizedInputLite, shape: QueryS
 
 	if (len === 0) return 0
 	const segCount = shape.segments?.length ?? 1
-	// Digits that survive removing the postcode — a house number, a unit, a numbered street. A postcode alone is not
-	// evidence of street material, so an admin tail must not reach the 0.9 branch on the strength of it. Without this
-	// test the branch returns 0.9 for `Thomas, WV 26292`, which outranks `locality_only`'s 0.85 and leaves the fix in
-	// `scoreLocalityOnly` with no effect (#2342).
-	const carriesNonPostcodeDigits = /\d/u.test(withoutPostcodeSpans(input.normalized, shape))
 
 	// Multi-segment input with mixed character class = high confidence structured.
-	if (segCount >= 2 && shape.characterClass === "alphanumeric" && carriesNonPostcodeDigits) return 0.9
+	//
+	// The branch additionally requires digits that survive removing the postcode — a house number, a unit, a numbered
+	// street. A postcode alone is not evidence of street material, so an admin tail must not reach 0.9 on the strength
+	// of it: without that test the branch returns 0.9 for `Thomas, WV 26292`, which outranks `locality_only`'s 0.85 and
+	// leaves the change in `scoreLocalityOnly` with no effect (#2342). The remainder is built only here, because the
+	// other branches never consult it and this rule runs on every classify.
+	if (
+		segCount >= 2 &&
+		shape.characterClass === "alphanumeric" &&
+		/\d/u.test(withoutPostcodeSpans(input.normalized, shape))
+	) {
+		return 0.9
+	}
 
 	// Single-segment but reasonably long and alphanumeric = moderate confidence.
 	if (len >= ALPHANUMERIC_POSTCODE_MIN_LENGTH && shape.characterClass === "alphanumeric") return 0.75

@@ -37,10 +37,12 @@ describe("withoutPostcodeSpans", () => {
 		expect(withoutPostcodeSpans(trailing, computeQueryShape(trailing))).toBe("Thomas WV")
 	})
 
-	it("leaves input carrying no postcode unchanged apart from separator collapse", () => {
+	it("returns input carrying no postcode unchanged", () => {
+		// Nothing was removed, so no separator was orphaned and none is collapsed. Returning the input verbatim also
+		// keeps the length `scoreLocalityOnly` measures identical to the one it measured before this rule existed.
 		const text = "Thomas, WV"
 
-		expect(withoutPostcodeSpans(text, computeQueryShape(text))).toBe("Thomas WV")
+		expect(withoutPostcodeSpans(text, computeQueryShape(text))).toBe(text)
 	})
 })
 
@@ -73,6 +75,13 @@ describe("an admin tail carrying a postcode", () => {
 
 	it("classifies a postcode-led admin tail, whose leading digits are not a house number", () => {
 		expect(kindOf("26292 Thomas, WV")).toBe("locality_only")
+	})
+
+	it("declines input carrying no letter, which the character class alone calls alpha", () => {
+		// `computeQueryShape("???")` reports `alpha`, because `foldInputClass` answers `alpha` for input carrying no
+		// classified token. Neither `locality_only` nor its `bare_toponym` refinement may read that as a place name.
+		expect(kindOf("???")).toBe("vague")
+		expect(kindOf("!!!")).toBe("vague")
 	})
 })
 
