@@ -8,8 +8,10 @@ import { readLocalTextFile, readLocalJSONFile } from "@mailwoman/core/fs/readers
 import { temporaryDirectory, type TemporaryDirectory } from "@mailwoman/core/fs/temporary"
 import { writeLocalTextFile } from "@mailwoman/core/fs/writers"
 import {
+	type CountryHoldout,
 	defaultHoldouts,
 	hashBucket,
+	type HoldoutPolicy,
 	splitForRow,
 	splitRows,
 	writeSplitManifests,
@@ -22,8 +24,17 @@ interface MinRow {
 	source_id: string
 	country: string
 	corpus_version: string
-	components: { region?: string }
+	components: { region?: string; postcode?: string; locality?: string; street?: string; house_number?: string }
 }
+
+/**
+ * A country's holdout as a policy object, with a bare array read as its region list — the same reading `splitForRow`
+ * makes, so these assertions hold whichever form `defaultHoldouts` returns.
+ */
+const policyOf = (holdout: CountryHoldout | undefined): HoldoutPolicy =>
+	Array.isArray(holdout) ? { regions: holdout } : ((holdout ?? {}) as HoldoutPolicy)
+
+const regionsOf = (holdout: CountryHoldout | undefined): readonly string[] => policyOf(holdout).regions ?? []
 
 /**
  * The fields these assertions read off a written `SPLIT_MANIFEST.json`.
@@ -156,8 +167,56 @@ describe("defaultHoldouts", () => {
 		expect(d.US).toContain("Vermont")
 		expect(d.US).toContain("Wyoming")
 		expect(d.US).toContain("North Dakota")
-		expect(d.FR).toContain("Corse")
-		expect(d.FR).toContain("Creuse")
+		expect(regionsOf(d.FR)).toContain("Corse")
+		expect(regionsOf(d.FR)).toContain("Creuse")
+	})
+
+	it("names the three French departments by postcode prefix as well as by region", () => {
+		// The same three places, in the component BAN emits. Corse 20, Creuse 23, Lozère 48.
+		expect(policyOf(defaultHoldouts().FR).postcodePrefixes).toEqual(["20", "23", "48"])
+	})
+})
+
+describe("the holdout predicate reaches a row whose source emits no region (#2353)", () => {
+	/**
+	 * BAN's shape: a street row carrying a postcode and a locality, and no region at all. 96.9% of FR train rows are
+	 * this, and a region-only predicate holds out none of them however many departments it names.
+	 */
+	const banRow = (id: string, postcode: string): MinRow => ({
+		source_id: id,
+		country: "FR",
+		corpus_version: "0.1.0",
+		components: { postcode, locality: "Ajaccio", street: "Cours Napoléon", house_number: "12" },
+	})
+
+	it("holds out a BAN row whose postcode names a held-out department", () => {
+		expect(splitForRow(banRow("ban-corse", "20000"))).not.toBe("train")
+		expect(splitForRow(banRow("ban-creuse", "23000"))).not.toBe("train")
+		expect(splitForRow(banRow("ban-lozere", "48000"))).not.toBe("train")
+	})
+
+	it("trains on a BAN row from any other department", () => {
+		expect(splitForRow(banRow("ban-paris", "75001"))).toBe("train")
+		expect(splitForRow(banRow("ban-lyon", "69001"))).toBe("train")
+		// 02 is Aisne. A prefix match reads the first two digits, so a leading zero stays distinct from 20.
+		expect(splitForRow(banRow("ban-aisne", "02000"))).toBe("train")
+	})
+
+	it("still holds out a wof-admin row by its region, with no postcode present", () => {
+		expect(splitForRow(row("wof-corse", "FR", "Corse"))).not.toBe("train")
+	})
+
+	it("reads a bare array as a region list, which is what every manifest built before this carries", () => {
+		expect(splitForRow(row("us-vt", "US", "Vermont"), { US: ["Vermont"] })).not.toBe("train")
+		expect(splitForRow(row("us-or", "US", "Oregon"), { US: ["Vermont"] })).toBe("train")
+	})
+
+	it("holds out nothing for a country whose policy declares no matcher", () => {
+		expect(splitForRow(banRow("ban-corse", "20000"), { FR: {} })).toBe("train")
+	})
+
+	it("matches a locality when one is declared", () => {
+		expect(splitForRow(banRow("ban-ajaccio", "75001"), { FR: { localities: ["Ajaccio"] } })).not.toBe("train")
 	})
 })
 

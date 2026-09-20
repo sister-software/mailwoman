@@ -16,6 +16,14 @@
  *   - **US**: Vermont, Wyoming, North Dakota
  *   - **FR**: Corse, Lozère, Creuse
  *
+ *   A holdout names a place. Which component carries that place is a property of the source, so the predicate reads
+ *   more than one: the region a US address source emits, the postcode prefix a French one emits, or a locality.
+ *   Reading the region alone held out no BAN row at all, and BAN is 96.9% of FR, so FR's validation split carried zero
+ *   street rows however many French departments were named (#2353).
+ *
+ *   A holdout added after a corpus is built is leakage-laundering rather than a holdout, so a change here takes effect
+ *   at the next corpus rebuild. Every versioned corpus keeps the `SPLIT_MANIFEST.json` it was built with.
+ *
  *   Held-out rows are deterministically split 50/50 between val and test by hashing the row's
  *   `source_id`. Non-held-out rows go to train. The 90/5/5 ratio is approximate — what matters is
  *   the locality boundary rather than the exact split percentages.
@@ -36,13 +44,47 @@ import type { CanonicalRow, LabeledRow } from "#types"
 
 export type SplitName = "train" | "val" | "test"
 
+/**
+ * Which component values name the places one country holds out.
+ *
+ * A holdout is a place, so the model cannot generalize by memorizing a neighborhood. Which component carries that place
+ * differs by source, and that is why more than one matcher exists: `usgov-nad` and `tiger` emit a `region`, so a
+ * held-out state reaches US street rows, while BAN emits `house_number|street_prefix|street|postcode|locality` and no
+ * `region` at all. A region-only predicate cannot hold out a single BAN row, whichever French departments it names, and
+ * BAN is 96.9% of FR (#2353).
+ *
+ * A row is held out when any declared matcher fires. Declaring none holds out nothing.
+ */
+export interface HoldoutPolicy {
+	/**
+	 * Exact values matched against `row.components.region`.
+	 */
+	regions?: readonly string[]
+	/**
+	 * Prefixes matched against `row.components.postcode`. A prefix is only usable where it names a place on its own: a
+	 * French postcode's first two digits are its department, so `20` is Corse and nothing else.
+	 */
+	postcodePrefixes?: readonly string[]
+	/**
+	 * Exact values matched against `row.components.locality`.
+	 */
+	localities?: readonly string[]
+}
+
+/**
+ * One country's holdout, as a bare region list or as a {@link HoldoutPolicy}.
+ *
+ * The bare array keeps meaning "these region values", which is what every committed `SPLIT_MANIFEST.json` echoes and
+ * what every existing caller passes.
+ */
+export type CountryHoldout = readonly string[] | HoldoutPolicy
+
 export interface SplitOptions {
 	/**
-	 * Region-name → holdout policy, keyed by ISO 3166-1 alpha-2 country. The values are the region-component strings the
-	 * splitter looks for in `row.components.region`. Override to change the holdout for an experiment. defaults to
+	 * Holdout policy keyed by ISO 3166-1 alpha-2 country. Override to change the holdout for an experiment. Defaults to
 	 * `defaultHoldouts()`.
 	 */
-	holdouts?: Record<string, readonly string[]>
+	holdouts?: Record<string, CountryHoldout>
 }
 
 /**
@@ -53,9 +95,10 @@ export interface SplitManifest {
 	val: string[]
 	test: string[]
 	/**
-	 * Echoes the holdouts used, so the manifest is self-describing.
+	 * Echoes the holdouts used, so the manifest is self-describing. A country declaring regions alone echoes the bare
+	 * array every manifest built before #2353 carries.
 	 */
-	holdouts: Record<string, readonly string[]>
+	holdouts: Record<string, CountryHoldout>
 	/**
 	 * Corpus version stamped onto the manifest. Read from the first row.
 	 */
@@ -77,12 +120,27 @@ export interface SplitManifest {
  *   corpora keep their committed SPLIT_MANIFESTs (a holdout added after a corpus is built is leakage-laundering rather
  *   than a holdout).
  */
-export function defaultHoldouts(): Record<string, readonly string[]> {
+export function defaultHoldouts(): Record<string, CountryHoldout> {
 	return {
 		US: ["Vermont", "VT", "Wyoming", "WY", "North Dakota", "ND"],
-		FR: ["Corse", "Lozère", "Lozere", "Creuse"],
+		FR: {
+			regions: ["Corse", "Lozère", "Lozere", "Creuse"],
+			// The same three departments, named in the component BAN emits. A French postcode's first two digits are its
+			// department: Corse 20, Creuse 23, Lozère 48. Without these the FR holdout reaches `wof-admin` rows alone.
+			// Those rows carry a region and no street, so FR validates on locality and region rows only (#2353).
+			postcodePrefixes: ["20", "23", "48"],
+		},
 		DE: ["Saarland", "SL", "Mecklenburg-Vorpommern", "MV"],
 	}
+}
+
+/**
+ * The declared matchers for one country, with a bare array read as its region list.
+ */
+function policyFor(holdout: CountryHoldout | undefined): HoldoutPolicy {
+	if (!holdout) return {}
+
+	return Array.isArray(holdout) ? { regions: holdout } : (holdout as HoldoutPolicy)
 }
 
 type SplitInputRow = Pick<CanonicalRow, "source_id" | "country" | "corpus_version" | "components">
@@ -94,11 +152,15 @@ type SplitInputRow = Pick<CanonicalRow, "source_id" | "country" | "corpus_versio
  */
 export function splitForRow(
 	row: Pick<SplitInputRow, "source_id" | "country" | "components">,
-	holdouts: Record<string, readonly string[]> = defaultHoldouts()
+	holdouts: Record<string, CountryHoldout> = defaultHoldouts()
 ): SplitName {
-	const region = row.components.region
-	const countryHoldouts = holdouts[row.country] ?? []
-	const isHeldOut = region !== undefined && countryHoldouts.includes(region)
+	const policy = policyFor(holdouts[row.country])
+	const { region, postcode, locality } = row.components
+
+	const isHeldOut =
+		(region !== undefined && (policy.regions?.includes(region) ?? false)) ||
+		(postcode !== undefined && (policy.postcodePrefixes?.some((prefix) => postcode.startsWith(prefix)) ?? false)) ||
+		(locality !== undefined && (policy.localities?.includes(locality) ?? false))
 
 	if (!isHeldOut) return "train"
 
@@ -210,7 +272,7 @@ export async function writeSplitManifestsFromLabeledFiles(opts: {
 	outputDir: PathBuilderLike
 	corpusVersion: string
 	counts: Record<SplitName, number>
-	holdouts?: Record<string, readonly string[]>
+	holdouts?: Record<string, CountryHoldout>
 }): Promise<SplitManifest["counts"]> {
 	await makeDirectories(opts.outputDir)
 	const holdouts = opts.holdouts ?? defaultHoldouts()
