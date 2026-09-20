@@ -58,6 +58,7 @@ import { defaultAdapterRegistry } from "#adapters/utils"
 import { $public } from "#env"
 import { type ParquetManifest, writeParquetSplits } from "#parquet/writers"
 import { once, runAdapter, type AdapterRunManifest } from "#runner"
+import { ingestEligibilityProblems, readAddressSourceRegister } from "#source-register/index"
 import { defaultAugmentationsForCountry, synthesizeRow } from "#synthesizers/utils"
 import type { AdapterOptions, CanonicalRow, CorpusAdapter, LabeledRow } from "#types"
 import { alignRow } from "#utils/align"
@@ -123,6 +124,52 @@ export interface BuildCorpusOptions {
 	 * passes the share-alike set (`--exclude-share-alike`).
 	 */
 	excludeLicenses?: readonly RegExp[]
+	/**
+	 * What this corpus is being built for. Defaults to {@linkcode BuildProfile.Exploratory}.
+	 */
+	profile?: BuildProfile
+}
+
+/**
+ * What a corpus build is for, which decides whether a source has to be eligible before its rows enter.
+ *
+ * The two differ in one place and it is the place that matters. An exploratory build answers whether a source is worth
+ * having and must be able to read a source nobody has reviewed. A release-eligible build produces rows that reach a
+ * published model, so every source in it has to carry an elected grant permitting the acts ingest performs.
+ *
+ * Splitting them keeps the second from resting on the first's permissiveness. `excludeLicenses` is unchanged and
+ * orthogonal: it drops a row whose license string matches a pattern an operator named, which is a refusal rather than a
+ * positive eligibility.
+ */
+export const BuildProfile = {
+	/**
+	 * Include every row an adapter yields. What the build has always done, and the profile a measurement runs under.
+	 */
+	Exploratory: "exploratory",
+	/**
+	 * Include a row only when the register says its source is eligible for ingest. A source whose terms nobody read is
+	 * refused here, which is the state all 389 register sources are in today.
+	 */
+	ReleaseEligible: "release-eligible",
+} as const
+
+export type BuildProfile = (typeof BuildProfile)[keyof typeof BuildProfile]
+
+/**
+ * Every register source's ingest-eligibility reasons, keyed by the adapter id its rows carry.
+ *
+ * Read once per build rather than per row. An empty array means eligible, and that is the only value a caller may read
+ * as permission — a source the map does not carry is one the register never named, which the caller refuses rather than
+ * admits.
+ *
+ * The join is on the register's `sourceID`, which is what an adapter stamps into a row's `source`. A register source
+ * whose id no adapter emits contributes nothing here and is not an error: the register lists sources that have been
+ * researched, and most have no adapter yet.
+ */
+async function readSourceEligibility(): Promise<ReadonlyMap<string, readonly string[]>> {
+	const register = await readAddressSourceRegister()
+
+	return new Map(register.sources.map((source) => [source.sourceID, ingestEligibilityProblems(source, register)]))
 }
 
 /**
@@ -143,6 +190,21 @@ export interface BuildCorpusManifest {
 	 */
 	licenses: Record<string, number>
 	excluded_by_license: number
+	/**
+	 * The profile this build ran under, so a consumer reading the manifest can tell a corpus whose sources were checked
+	 * from one whose sources were not. Absent from a manifest written before profiles existed.
+	 */
+	profile: BuildProfile
+	/**
+	 * Rows dropped because the register does not call their source eligible. Always zero under
+	 * {@linkcode BuildProfile.Exploratory}, which asks nothing of the register.
+	 */
+	excluded_by_eligibility: number
+	/**
+	 * Every source refused under {@linkcode BuildProfile.ReleaseEligible}, with the reasons the register gave, so a
+	 * blocked build says what to fix rather than only that it stopped.
+	 */
+	ineligible_sources: Record<string, readonly string[]>
 }
 
 /**
@@ -239,6 +301,36 @@ export async function buildCorpus(opts: BuildCorpusOptions): Promise<BuildCorpus
 	const licenseCounts = new Map<string, number>()
 	let excludedByLicense = 0
 
+	const profile = opts.profile ?? BuildProfile.Exploratory
+	const eligibility = profile === BuildProfile.ReleaseEligible ? await readSourceEligibility() : null
+	const ineligibleSources = new Map<string, readonly string[]>()
+	let excludedByEligibility = 0
+
+	/**
+	 * Why a row's source may not enter a release-eligible corpus, or `null` when it may.
+	 *
+	 * Keyed on the adapter id the row carries. A source the register does not name at all is refused rather than
+	 * admitted: the register is the record of what has been reviewed, and a name absent from it is a source nobody
+	 * reviewed.
+	 */
+	const ineligibleBecause = (row: CanonicalRow): readonly string[] | null => {
+		if (!eligibility) return null
+
+		const cached = ineligibleSources.get(row.source)
+
+		if (cached) return cached
+
+		const problems = eligibility.get(row.source) ?? [
+			`the register names no source ${stringifyJSON(row.source)}, so nothing has been reviewed for it`,
+		]
+
+		if (!problems.length) return null
+
+		ineligibleSources.set(row.source, problems)
+
+		return problems
+	}
+
 	const writeQuarantine = (row: CanonicalRow, reason: string): void => {
 		quarantineStream.write(`${stringifyJSON({ row, reason })}\n`)
 	}
@@ -255,6 +347,19 @@ export async function buildCorpus(opts: BuildCorpusOptions): Promise<BuildCorpus
 			// set reflects what the corpus actually contained, and `excluded_by_license` what was removed.
 			if (licenseExcluded(row.license, excludeLicenses)) {
 				excludedByLicense++
+
+				continue
+			}
+
+			// Positive eligibility, and it runs before augmentation on purpose. A synthetic row carries its ancestor's
+			// `source`, so refusing the ancestor here refuses every row fanned from it. Checking after the fan-out would
+			// let an ineligible source re-enter as the base of a synthesized row.
+			const ineligible = ineligibleBecause(row)
+
+			if (ineligible) {
+				excludedByEligibility++
+
+				writeQuarantine(row, `source-ineligible:${ineligible.join("; ")}`)
 
 				continue
 			}
@@ -364,6 +469,9 @@ export async function buildCorpus(opts: BuildCorpusOptions): Promise<BuildCorpus
 		total_aligned_rows: aligned,
 		licenses: Object.fromEntries(licenseSummary),
 		excluded_by_license: excludedByLicense,
+		profile,
+		excluded_by_eligibility: excludedByEligibility,
+		ineligible_sources: Object.fromEntries(ineligibleSources),
 	}
 
 	await writeLocalJSONFile(manifest, opts.outputDir, "MANIFEST.json")
