@@ -65,6 +65,7 @@ const { values } = parseArguments({
  */
 interface EpochMixtureAudit {
 	emitted_level?: { by_country?: Record<string, number> }
+	meta?: { config?: string }
 }
 
 /**
@@ -72,8 +73,17 @@ interface EpochMixtureAudit {
  *
  * A country absent from `by_country` stays absent from the map rather than reading zero. The funnel then leaves its
  * `sampled` stage `unknown`: the audit reports the countries it drew, and a name it never mentions was not measured.
+ *
+ * Refuses an audit produced from a config other than the one the `admitted` stage reads. Both stages describe one
+ * training arm, and reading them from two configs puts two arms in one column: a run of this tool read `admitted` from
+ * the shipped Latin config, which admits 25 countries, beside a `sampled` stage from `v5.9.0-locality-shape-60k.yaml`,
+ * which admits 135 — so `sampled` reported 38 countries drawn while `admitted` reported 25, and a country could appear
+ * in the second and not the first.
  */
-async function readMixtureAudit(path: string): Promise<{ rows: Map<string, number>; total: number }> {
+async function readMixtureAudit(
+	path: string,
+	configPath: string
+): Promise<{ rows: Map<string, number>; total: number }> {
 	const audit = await readLocalJSONFile<EpochMixtureAudit>(path)
 	const byCountry = audit.emitted_level?.by_country
 
@@ -81,6 +91,18 @@ async function readMixtureAudit(path: string): Promise<{ rows: Map<string, numbe
 		throw new Error(
 			`${path} carries no \`emitted_level.by_country\`. That is the field this reads, and a file without it is ` +
 				"either a different report or a truncated one — either way it cannot answer the sampled stage."
+		)
+	}
+
+	// The audit runs on the volume and records an absolute path under `/data`, so only the filename is comparable.
+	const audited = audit.meta?.config?.split("/").at(-1)
+	const wanted = configPath.split("/").at(-1)
+
+	if (audited && wanted && audited !== wanted) {
+		throw new Error(
+			`the mixture audit was produced from ${audited} and the admitted stage reads ${wanted}. Those are two ` +
+				"training arms, and reporting them in one table would put a country in `sampled` that `admitted` " +
+				`excludes. Re-run the audit against ${wanted}, or pass --config ${audited}.`
 		)
 	}
 
@@ -107,7 +129,7 @@ const report = await censusCoverage({
 	casesRoot: String(repoRootPath("packages", "mailwoman", "lib", "eval-harness", "gauntlet", "cases")),
 })
 
-const mixture = values["mixture-audit"] ? await readMixtureAudit(values["mixture-audit"]) : undefined
+const mixture = values["mixture-audit"] ? await readMixtureAudit(values["mixture-audit"], configPath) : undefined
 
 const funnel = await readCoverageFunnel({
 	coverage: report.countries,
