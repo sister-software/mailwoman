@@ -1,0 +1,188 @@
+---
+title: Artifact and rights inventory
+description: What every published package ships, whose rights govern it, and which provenance questions are unresolved.
+---
+
+# Artifact and rights inventory
+
+What each published package ships, which party grants rights to it, and where the record is
+incomplete. Observed on `main` on 2026-09-20 by reading manifests, model cards and rights documents
+in the checkout.
+
+Three records are kept apart throughout, because conflating them is how a corpus measurement becomes
+a claim about a released model:
+
+1. **Current corpus composition** — what the corpus on the training volume contains today.
+2. **Historical training inputs** — which records trained a particular released checkpoint.
+3. **Runtime datasets and dependencies** — what an operator downloads separately.
+
+Only the first is measured here. The second is unresolved for every published package, and this
+document states that rather than implying otherwise.
+
+## Rights chain
+
+| role                | party                                            | stated in                                                                       |
+| ------------------- | ------------------------------------------------ | ------------------------------------------------------------------------------- |
+| Copyright holder    | Teffen Ellis (DBA Sister Software)               | `LICENSE.md` line 3                                                             |
+| Commercial licensor | Teffen Ellis (DBA Sister Software)               | `COMMERCIAL-LICENSE.md` line 15, `commercial-2026-10.mdx` line 24               |
+| Services operator   | Nirrus LLC, a Delaware limited liability company | `docs/src/pages/privacy/index.mdx`, `docs/src/pages/terms-of-service/index.mdx` |
+
+The licensor and the services operator are different parties, and the repository states both
+consistently. Nirrus LLC appears in the website Terms and Privacy Policy and in no rights document.
+Operating the services does not make it the copyright holder.
+
+Two commercial documents exist and each says which it is. `COMMERCIAL-LICENSE.md` opens with a
+template notice stating it does not execute. `commercial-2026-10.mdx` states that acceptance is
+recorded by Stripe Checkout when a buyer ticks the box, and that the page is not edited after
+publication.
+
+**Inconsistency to repair:** `docs/src/pages/license.mdx` line 32 says `COMMERCIAL-LICENSE.md`
+"carries the same terms in the repository". The two differ in execution mechanism, so the page
+overstates their relationship. The repair belongs on the page. Neither agreement should be edited.
+
+**Already correct, and worth propagating:** `COMMERCIAL-LICENSE.md` line 31 already limits the
+grant's scope.
+
+> This grant covers only the code and model artifacts authored by Licensor. It does not extend to
+> third-party components bundled with Mailwoman … Any attribution, share-alike, or other obligations
+> attaching to those third-party components continue to apply and are not waived or relicensed by
+> this Agreement.
+
+The public license page carries no equivalent sentence.
+
+## Published packages
+
+Thirteen `neural-weights-*` workspaces. Twelve publish; `base-latn` is private.
+
+| package     | manifest | model card | SPDX field                               | declared artifacts | recorded digests | attribution entries | base    |
+| ----------- | -------- | ---------- | ---------------------------------------- | -----------------: | ---------------: | ------------------: | ------- |
+| `base-latn` | 7.8.1    | —          | `AGPL-3.0-only OR LicenseRef-Commercial` |                  8 |                0 |                   0 | —       |
+| `cjk`       | 10.0.0   | 0.0.3      | `AGPL-3.0-only OR LicenseRef-Commercial` |                  4 |                2 |                   0 | —       |
+| `de-de`     | 10.0.0   | 7.0.0      | `AGPL-3.0-only OR LicenseRef-Commercial` |                  7 |                0 |                   0 | `en-us` |
+| `en-au`     | 10.0.0   | 9.0.0      | `AGPL-3.0-only OR LicenseRef-Commercial` |                  6 |                0 |                   0 | `en-us` |
+| `en-gb`     | 10.0.0   | 9.0.0      | `AGPL-3.0-only OR LicenseRef-Commercial` |                 10 |                0 |                   0 | `en-us` |
+| `en-in`     | 10.0.0   | 7.0.0      | `AGPL-3.0-only OR LicenseRef-Commercial` |                  7 |                0 |                   0 | `en-us` |
+| `en-nz`     | 10.0.0   | 6.6.3      | `AGPL-3.0-only OR LicenseRef-Commercial` |                  8 |                0 |                   0 | `en-us` |
+| `en-us`     | 10.0.0   | 9.1.0      | `AGPL-3.0-only OR LicenseRef-Commercial` |                 14 |                4 |                  10 | —       |
+| `es-es`     | 10.0.0   | 7.0.0      | **`AGPL-3.0`**                           |                  7 |                0 |                   0 | `en-us` |
+| `fr-fr`     | 10.0.0   | 6.5.0      | `AGPL-3.0-only OR LicenseRef-Commercial` |                 10 |                0 |                   0 | `en-us` |
+| `it-it`     | 10.0.0   | 7.0.0      | **`AGPL-3.0`**                           |                  7 |                0 |                   0 | `en-us` |
+| `ja-jp`     | 10.0.0   | 7.0.0      | **`AGPL-3.0`**                           |                  3 |                0 |                   0 | `cjk`   |
+| `zh-cn`     | 10.0.0   | 7.0.0      | **`AGPL-3.0`**                           |                  3 |                0 |                   0 | `cjk`   |
+
+### Four packages omit the commercial branch
+
+`es-es`, `it-it`, `ja-jp` and `zh-cn` declare `AGPL-3.0`. The other nine, and every other workspace
+in the repository including `@mailwoman/core` and `@mailwoman/codex`, declare
+`AGPL-3.0-only OR LicenseRef-Commercial`.
+
+Two defects in one field. `AGPL-3.0` is a deprecated SPDX identifier, superseded by `AGPL-3.0-only`
+and `AGPL-3.0-or-later`, so it does not state which. And `docs/src/pages/license.mdx` line 11 says
+"every release ships under both", which those four manifests contradict.
+
+### Twelve model cards disagree with their manifest
+
+Every published package's model-card version differs from its manifest version, `fr-fr` most widely
+at 6.5.0 against 10.0.0.
+
+A package version and a model version describe different things, and an overlay's card describes an
+inherited model rather than its own. Neither field says which it is, so a reader cannot tell a
+deliberate difference from drift. The repair is to state the meaning of each field and leave the
+values free to differ where they describe different things.
+
+### Artifact digests are recorded for 6 of about 100 shipped artifacts
+
+`en-us` records four in `files_md5` — `model.onnx`, `tokenizer.model`,
+`street-type-lexicon-v3.json`, `locality-surface-lexicon-v7.json` — of fourteen declared artifacts.
+`cjk` records two. The remaining eleven packages record none.
+
+`en-us` ships artifacts with separate lineages: a trained model, a SentencePiece tokenizer, two
+lexicon files, a US postcode binary, a placetype-pair index built from the Who's On First admin
+hierarchy, and two FST binaries. One `data_attribution` list covers the package.
+
+### One package carries training attribution
+
+`en-us` has ten `data_attribution` entries. The other twelve have none, `cjk` included, which ships
+its own `model.onnx` rather than inheriting one.
+
+No package ships a `LICENSE.md`.
+
+## Attributed sources for `en-us`, as recorded
+
+Eight of ten entries name a license. Reproduced as stated in the card, without interpretation.
+
+|   # | source                                     | license as named                          |
+| --: | ------------------------------------------ | ----------------------------------------- |
+|   1 | HM Land Registry — Price Paid Data         | OGL v3.0                                  |
+|   2 | LINZ-derived OpenAddresses NZ              | CC-BY 4.0                                 |
+|   3 | OpenAddresses ES tuples                    | CC-BY per OA source                       |
+|   4 | BAN — Base Adresse Nationale (DINUM / IGN) | Licence Ouverte 2.0                       |
+|   5 | Overture Maps Foundation — Addresses theme | CDLA-Permissive-2.0                       |
+|   6 | OpenAddresses CZ — ČÚZK RÚIAN              | CC-BY 4.0                                 |
+|   7 | OpenAddresses PL — GUGiK / PRG             | **none named** — "public, BDOT-derived"   |
+|   8 | OpenAddresses SK — MINV/ZBGIS              | CC-0/CC-BY per OA source                  |
+|   9 | OpenAddresses SI — GURS                    | CC-BY per OA source                       |
+|  10 | OpenAddresses / GeoNames / Who's On First  | **a pointer** to `THIRD_PARTY_NOTICES.md` |
+
+Entry 10 resolves to statements that do not name a single license:
+
+> **OpenAddresses.** Per-source licenses differ; many require attribution and share-alike.
+> **OpenStreetMap — ODbL.** OpenStreetMap data (via Who's On First and Overture) is licensed under ODbL.
+> **Who's On First.** WOF data draws on several sources with their own licenses.
+
+So one attribution entry covers three source families whose per-record licenses the notices
+describe as differing.
+
+## Corpus composition, measured
+
+Full scans of `v0.32.0-locality-shape` on the training volume, 2026-09-20. **This is record 1. It
+describes the corpus on the volume today and states nothing about which records trained a released
+checkpoint.**
+
+| locale |  train rows | `wof-*` rows | share | `overture` |
+| ------ | ----------: | -----------: | ----: | ---------: |
+| GB     |  15,644,707 |   14,812,000 | 94.7% |          0 |
+| DE     |   2,891,912 |    2,503,713 | 86.6% |    150,000 |
+| FR     | 149,866,617 |    4,233,176 |  2.8% |          0 |
+
+Who's On First supplies most rows for GB and DE in this corpus.
+
+**What this does not establish.** It does not show that any OSM-derived record is present, because
+Who's On First is mixed-provenance and our own notices say it draws on several sources. It does not
+show that any of these rows trained a published checkpoint. It does not classify a `wof-*` row as
+ODbL, and it does not classify one as unrestricted.
+
+Resolving it needs record-level lineage on the training extracts: the source files, their lineage
+fields and license metadata, and the transformations applied. Where lineage cannot be recovered, the
+correct record is unresolved.
+
+## Publication control
+
+`packages/corpus/lib/utils/license.ts` states the posture:
+
+> exclusion is a deliberate act rather than a silent default. The build includes every row an
+> adapter yields … Nothing is dropped on a license string unless the operator named it.
+
+`build.ts` line 238 is `const excludeLicenses = opts.excludeLicenses ?? []`, and no caller in the
+repository passes it. `--exclude-share-alike` is an opt-in build flag.
+
+The flag is neither necessary nor sufficient as evidence about a released model. It does not record
+which sources contributed, and passing it does not establish that an indirectly included or
+misclassified source was caught. A release control needs a reproducible source manifest and an
+explicit eligibility decision per input, including inherited checkpoints and auxiliary artifacts.
+
+## Unresolved
+
+Recorded as open rather than answered.
+
+| question                                                              | affects                   | why it is open                                     |
+| --------------------------------------------------------------------- | ------------------------- | -------------------------------------------------- |
+| Which records trained each released checkpoint                        | 12 published packages     | No frozen training manifest exists for any release |
+| Whether OSM-derived records are present in historical training inputs | GB, DE most directly      | Who's On First lineage is not traced to the record |
+| What license governs `OpenAddresses PL — GUGiK / PRG`                 | `en-us`                   | The card names none                                |
+| Which per-source licenses the OpenAddresses rows carry                | `en-us` and the corpus    | The notices say they differ                        |
+| Whether obligations attach to weights trained on share-alike sources  | all                       | Reserved for legal determination                   |
+| Whether contributor grants cover dual distribution                    | all first-party artifacts | Not audited here                                   |
+
+No package in this inventory is recorded as cleared. Missing evidence is recorded as missing, and it
+is neither evidence of compliance nor evidence of infringement.
