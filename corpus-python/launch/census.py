@@ -542,6 +542,16 @@ def piece_prior(
         print(f"    {dl:>6d}  {t:>9,}   {top}")
 
 
+SEQUENCE_RECEIPT_CAP = 5000
+"""How many distinct component sequences a receipt records per split.
+
+Every country measured so far holds far fewer — 42 for GB, 31 for US — so the cap bounds a receipt
+for a country whose label vocabulary turns out to be large, and truncates nothing today.
+`component_sequences_recorded` states how many the receipt actually holds beside
+`distinct_component_sequences`, so a truncated receipt says so.
+"""
+
+
 @app.function(
     volumes={VOL_MOUNT: vol},
     image=training_image,
@@ -620,7 +630,7 @@ def locale_supply_census(
         record_ids: set[int] = set()
         sequences: Counter[str] = Counter()
         by_source: Counter[str] = Counter()
-        rows = street_rows = synth_rows = 0
+        rows = street_rows = synth_rows = street_and_region_rows = 0
 
         started = time.monotonic()
         dataset = ds.dataset([str(path) for path in files], format="parquet")
@@ -651,8 +661,16 @@ def locale_supply_census(
                 present = tuple(span_tags or ())
                 sequences["|".join(present)] += 1
 
-                if "street" in present or "house_number" in present:
+                has_street = "street" in present or "house_number" in present
+
+                if has_street:
                     street_rows += 1
+
+                # The split assignment holds a row out by its `region` component, so a street row carrying no region
+                # can never reach the validation or test split however the holdouts are declared. This counter is the
+                # ceiling on street-level validation a region holdout could ever draw for this country (#2353).
+                if has_street and "region" in present:
+                    street_and_region_rows += 1
 
         elapsed = time.monotonic() - started
 
@@ -661,17 +679,23 @@ def locale_supply_census(
             "seconds": round(elapsed, 1),
             "rows": rows,
             "street_rows": street_rows,
+            "street_and_region_rows": street_and_region_rows,
             "synth_rows": synth_rows,
             "distinct_surfaces": len(surfaces),
             "distinct_source_ids": len(record_ids),
             "distinct_component_sequences": len(sequences),
-            "top_sequences": dict(sequences.most_common(12)),
+            # Every sequence the split carries. A country's sequence vocabulary is small — 42 for GB, 31 for US — and
+            # the question the receipt gets asked is which shapes a country never teaches, which a truncated list
+            # cannot answer. The cap bounds the receipt for a country whose vocabulary turns out to be large.
+            "component_sequences": dict(sequences.most_common(SEQUENCE_RECEIPT_CAP)),
+            "component_sequences_recorded": min(len(sequences), SEQUENCE_RECEIPT_CAP),
             "by_source": dict(by_source.most_common()),
         }
 
         print(f"\n=== {want} / {split} — {len(files)} parquet files, {elapsed:,.0f}s ===")
         print(f"  rows                          {rows:>12,}")
         print(f"  of those, street or house no. {street_rows:>12,}")
+        print(f"  of those, also with a region  {street_and_region_rows:>12,}")
         print(f"  of those, synthesized         {synth_rows:>12,}")
         print(f"  distinct raw surfaces         {len(surfaces):>12,}")
         print(f"  distinct source ids           {len(record_ids):>12,}")
