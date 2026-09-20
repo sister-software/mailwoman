@@ -19,12 +19,14 @@
  *   The audit runs before the write. A register that fails it is never committed, which is the point of having one.
  */
 
+import { pathExists, readLocalJSONFile } from "@mailwoman/core/fs/readers"
 import { writeLocalFile } from "@mailwoman/core/fs/writers"
 import { prettyJSON, stringifyJSON } from "@mailwoman/core/json"
 import type { PathBuilderLike } from "path-ts"
 
 import { readCSVRecords } from "#recipes/scaffold"
 import {
+	applyLicenseDecisions,
 	auditAddressSourceRegister,
 	BackboneState,
 	JurisdictionResearchState,
@@ -35,8 +37,10 @@ import {
 	UNRESOLVED_FIELDS,
 	type AddressSourceRecord,
 	type AddressSourceRegister,
+	type ElectedLicense,
 	type JurisdictionRecord,
 	type LicenseDecision,
+	type RefusedLicense,
 	type RegisterSector,
 	type UncheckedLicense,
 } from "#source-register/index"
@@ -222,6 +226,15 @@ export interface BuildSourceRegisterOptions {
 	 */
 	sourcesPath: PathBuilderLike
 	outPath: PathBuilderLike
+	/**
+	 * Licence decisions somebody made by reading a publisher's terms, applied over the `unchecked` defaults this build
+	 * derives from the research pass's access labels.
+	 *
+	 * An input rather than an edit of the output. The register is generated and {@linkcode buildSourceRegister} rewrites
+	 * it whole, so a decision recorded in the output would be erased by the next rebuild with no error — the loss this
+	 * separation exists to prevent (#2351). A path that does not exist is read as no decisions recorded.
+	 */
+	decisionsPath?: PathBuilderLike
 	version: string
 	/**
 	 * ISO 8601 calendar date the research pass was taken, `yyyy-MM-DD`.
@@ -402,6 +415,44 @@ async function readSources(
  * @throws When an input row carries a vocabulary this build has no mapping for, when a declared rewrite never fires, or
  *   when the finished register fails {@linkcode auditAddressSourceRegister}.
  */
+/**
+ * The shape `license-decisions.json` carries: licence id to the decision minus its own id.
+ *
+ * The id lives in the key rather than the value so one licence cannot carry two, which is the failure a flat array of
+ * records invites and the audit would only catch afterwards.
+ */
+interface LicenseDecisionsFile {
+	decisions?: Record<string, Omit<ElectedLicense, "licenseID"> | Omit<RefusedLicense, "licenseID">>
+}
+
+/**
+ * Licence decisions read from `decisionsPath`, keyed by licence id.
+ *
+ * An absent file answers an empty map, because no decision recorded is the current state of this register and a build
+ * on a checkout without the file is not a different build. A file that exists and cannot be parsed raises: it was put
+ * there on purpose and reading it as empty would silently drop somebody's recorded work.
+ *
+ * This function validates no decision it reads. `auditAddressSourceRegister` already refuses an elected record missing
+ * its terms, retrieved copy or reason, and a refused record missing its reason, and `buildSourceRegister` throws when
+ * that audit fails, so an incomplete decision fails the build either way. Checking here as well would give one rule two
+ * homes.
+ */
+async function readLicenseDecisions(decisionsPath: PathBuilderLike | undefined): Promise<Map<string, LicenseDecision>> {
+	if (!decisionsPath || !(await pathExists(decisionsPath))) return new Map()
+
+	const file = await readLocalJSONFile<LicenseDecisionsFile>(decisionsPath)
+
+	// The id comes from the key, so a record cannot disagree with the licence it is filed under. The assertion is the
+	// JSON parse boundary's: the file is data on disk, and `auditAddressSourceRegister` is what decides whether what it
+	// carries is a well-formed decision.
+	return new Map(
+		Object.entries(file.decisions ?? {}).map(([licenseID, decision]) => [
+			licenseID,
+			{ ...decision, licenseID } as LicenseDecision,
+		])
+	)
+}
+
 export async function buildSourceRegister(options: BuildSourceRegisterOptions): Promise<SourceRegisterBuildResult> {
 	const fired = new Set<string>()
 	const licenseByStatement = new Map(LICENSE_DECISIONS.map(([statement, licenseID]) => [statement, licenseID]))
@@ -416,11 +467,13 @@ export async function buildSourceRegister(options: BuildSourceRegisterOptions): 
 
 	const used = new Set(sources.map((source) => source.license))
 
-	const licenses: LicenseDecision[] = LICENSE_DECISIONS.filter(([, licenseID]) => used.has(licenseID))
+	const generated: LicenseDecision[] = LICENSE_DECISIONS.filter(([, licenseID]) => used.has(licenseID))
 		.map(([statement, licenseID, note]): UncheckedLicense => {
 			return { licenseID, state: LicenseReviewState.Unchecked, publisherStatement: statement, note }
 		})
 		.toSorted((left, right) => left.licenseID.localeCompare(right.licenseID))
+
+	const licenses = applyLicenseDecisions(generated, await readLicenseDecisions(options.decisionsPath))
 
 	const register: AddressSourceRegister = {
 		registerID: "address-source-register",

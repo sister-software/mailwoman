@@ -22,6 +22,13 @@ under `.notes/`, which is not committed — the same arrangement as the sub-venu
 `.osm.pbf` inputs are not committed either. The register is the committed record, and it carries
 every field a reader needs to check a row: the publisher, the retrieved URL, and the research pass.
 
+There is a third input, and it is committed: `--decisions` defaults to `license-decisions.json`
+beside this file, and holds every licence decision somebody made by reading a publisher's terms. The
+build derives each decision as `unchecked` from the research pass's access labels and applies the
+recorded ones over that, so a decision survives a rebuild. Recording one in the register instead
+would be erased by the next run with no error, because the write below replaces the file whole
+(#2351). The file is empty today, which is why every decision in the register reads `unchecked`.
+
 The `oxfmt` pass is required — committed JSON is oxfmt-clean, which `JSON.stringify` cannot
 reproduce. The generator is deterministic, so the artifact is reproducible from the same inputs.
 
@@ -97,6 +104,27 @@ would admit a source on a sentence about price.
 what `elected` records: the terms, the retrieved copy, the version, and why that grant rather than
 another. `electedLicenseLabel()` is what the mechanical prefix filter in `utils/license.ts` reads,
 and it answers `undefined` for anything not elected.
+
+## `license-decisions.json` — licence decisions somebody made by reading terms (#2351)
+
+Hand-written, and the only file in this directory that is. `address-source-register.json` is
+generated and rewritten whole on every build, so a decision recorded there is erased by the next run
+with no error and a normal-looking count. This file is an input to that build instead.
+
+Each key is a `licenseID` the register already declares. Each value is an `ElectedLicense` or a
+`RefusedLicense` minus its `licenseID`, which the build fills from the key so one licence cannot carry
+two decisions. `buildSourceRegister` applies these over the `unchecked` defaults it derives from the
+research pass's access labels, and refuses a decision naming a licence no source points at.
+
+An election records four things, which the corpus acceptance rules ask for: the elected terms, the
+copy they were read from, that copy's version where the publisher gives one, and why this grant and
+not another. `auditAddressSourceRegister` refuses an incomplete record and the build refuses a
+register that fails its audit, so an incomplete entry never reaches the committed artifact.
+
+**The file is empty.** Every one of the register's 12 decisions therefore reads `unchecked`. Electing
+them is necessary and not sufficient: `ingestEligibilityProblems` also refuses all 389 sources for an
+unresolved `addressRole` and unmeasured `coverage`, which no licence decision touches, so clearing
+this alone moves the ingest-eligible count from 0 to 0.
 
 ## `reviewed-ve-postcode-tuples.json` — reviewed Venezuelan postcode placement (#1821)
 

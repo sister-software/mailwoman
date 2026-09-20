@@ -5,6 +5,7 @@
  */
 
 import {
+	applyLicenseDecisions,
 	auditAddressSourceRegister,
 	electedLicenseLabel,
 	ingestEligibilityProblems,
@@ -14,6 +15,7 @@ import {
 	SourceStatus,
 	UNRESOLVED_FIELDS,
 	type AddressSourceRegister,
+	type LicenseDecision,
 } from "@mailwoman/corpus/source-register"
 import { beforeAll, describe, expect, it } from "vitest"
 
@@ -212,5 +214,140 @@ describe("electedLicenseLabel", () => {
 				electedBecause: "attribution only; the ODbL option's share-alike defeats a proprietary-weights build",
 			})
 		).toBe("etalab-2.0")
+	})
+})
+
+describe("applyLicenseDecisions", () => {
+	const generated: readonly LicenseDecision[] = [
+		{
+			licenseID: "unchecked-national-terms",
+			state: LicenseReviewState.Unchecked,
+			publisherStatement: "CHECK NATIONAL / DATASET TERMS",
+			note: "the research pass did not open them",
+		},
+		{
+			licenseID: "unchecked-access-free",
+			state: LicenseReviewState.Unchecked,
+			publisherStatement: "Free",
+			note: "an access label",
+		},
+	]
+
+	const elected: LicenseDecision = {
+		licenseID: "unchecked-national-terms",
+		state: LicenseReviewState.Elected,
+		electedTerms: "Licence Ouverte 2.0",
+		spdx: "etalab-2.0",
+		retrievedCopy: "data/licenses/ban-licence-ouverte-2.0.txt",
+		electedBecause: "attribution only, and the dual grant's other half carries share-alike",
+	}
+
+	it("replaces a generated decision and leaves every other one alone", () => {
+		const applied = applyLicenseDecisions(generated, new Map([[elected.licenseID, elected]]))
+
+		expect(applied).toHaveLength(generated.length)
+		expect(applied[0]).toEqual(elected)
+		expect(applied[1]).toEqual(generated[1])
+	})
+
+	it("preserves every field of the recorded decision, which is what a rebuild used to lose", () => {
+		// The register is generated and rewritten whole, so before this merge a decision recorded in the OUTPUT was
+		// erased by the next build with no error. Each of these four fields is one the corpus acceptance rules require.
+		const applied = applyLicenseDecisions(generated, new Map([[elected.licenseID, elected]]))
+		const survivor = applied[0] as typeof elected
+
+		expect(survivor.electedTerms).toBe("Licence Ouverte 2.0")
+		expect(survivor.spdx).toBe("etalab-2.0")
+		expect(survivor.retrievedCopy).toBe("data/licenses/ban-licence-ouverte-2.0.txt")
+		expect(survivor.electedBecause).toContain("attribution only")
+	})
+
+	it("carries a refusal through as readily as an election", () => {
+		const refused: LicenseDecision = {
+			licenseID: "unchecked-access-free",
+			state: LicenseReviewState.Refused,
+			refusedBecause: "the terms forbid redistribution of a derived dataset",
+		}
+
+		const applied = applyLicenseDecisions(generated, new Map([[refused.licenseID, refused]]))
+
+		expect(applied[1]).toEqual(refused)
+	})
+
+	it("returns the generated decisions unchanged when nothing is recorded", () => {
+		expect(applyLicenseDecisions(generated, new Map())).toEqual(generated)
+	})
+
+	it("refuses a decision naming a licence the register does not carry", () => {
+		// Such a decision licenses nothing. Applying it silently would leave the register asserting a grant no source
+		// points at, which is the shape a typo or a removed source takes.
+		expect(() =>
+			applyLicenseDecisions(generated, new Map([["no-such-licence", { ...elected, licenseID: "no-such-licence" }]]))
+		).toThrow(/does not carry/u)
+	})
+
+	/**
+	 * The smallest register the audit accepts, so these cases read the audit's verdict on the applied decision rather
+	 * than on the rest of the fixture.
+	 */
+	function registerWith(licenses: readonly LicenseDecision[]): AddressSourceRegister {
+		return {
+			registerID: "test",
+			version: "0.0.0",
+			provenance: { source: "test" },
+			unresolved: ["addressRole", "upstreamLineage", "coverage"],
+			licenses,
+			jurisdictions: [
+				{
+					iso2: "ZZ",
+					name: "Testland",
+					backboneState: "C",
+					researchState: JurisdictionResearchState.Seeded,
+					bestPath: "G0",
+					assertionPlan: "IDENTITY + OBSERVATION",
+					note: "a fixture",
+				},
+			],
+			sources: [
+				{
+					sourceID: "zz-health-1",
+					iso2: "ZZ",
+					sector: "health",
+					name: "Testland facility register",
+					status: SourceStatus.VerifiedAuthority,
+					asserts: ["identity", "observation"],
+					authorityBasis: "national health ministry",
+					geometry: "unresolved",
+					license: "unchecked-national-terms",
+					researchPass: "2026-09-18-web-research",
+				},
+			],
+		}
+	}
+
+	it("keeps the applied register passing its own audit", () => {
+		const applied = applyLicenseDecisions([generated[0] as LicenseDecision], new Map([[elected.licenseID, elected]]))
+
+		expect(auditAddressSourceRegister(registerWith(applied))).toEqual([])
+	})
+
+	it("fails the audit when the recorded decision is incomplete, so the build refuses it", () => {
+		// `buildSourceRegister` throws when the audit reports a problem, so an incomplete decision never reaches the
+		// committed register. This is why the merge validates nothing itself.
+		const incomplete = {
+			licenseID: "unchecked-national-terms",
+			state: LicenseReviewState.Elected,
+		} as LicenseDecision
+
+		const applied = applyLicenseDecisions(
+			[generated[0] as LicenseDecision],
+			new Map([["unchecked-national-terms", incomplete]])
+		)
+
+		expect(auditAddressSourceRegister(registerWith(applied))).toEqual([
+			'license "unchecked-national-terms" is elected and names no terms',
+			'license "unchecked-national-terms" is elected and names no retrieved copy',
+			'license "unchecked-national-terms" is elected and gives no reason',
+		])
 	})
 })

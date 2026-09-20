@@ -12,6 +12,7 @@
 
 export {
 	addressSourceRegisterPath,
+	applyLicenseDecisions,
 	auditAddressSourceRegister,
 	electedLicenseLabel,
 	ingestEligibilityProblems,

@@ -64,6 +64,39 @@ export function electedLicenseLabel(decision: LicenseDecision): string | undefin
 }
 
 /**
+ * The generated decisions with any recorded decision applied over them.
+ *
+ * The register's build derives one `unchecked` decision per access label the research pass recorded, which is the
+ * honest default: that pass wrote down what a register costs to reach and opened nobody's terms. A decision somebody
+ * made by reading those terms replaces the default here.
+ *
+ * It is a merge rather than an edit of the built register because the register is generated and rewritten whole. A
+ * decision recorded in the output would be erased by the next rebuild, with no error and a normal-looking count
+ * (#2351).
+ *
+ * @throws When a recorded decision names a licence the generated set does not carry. That decision licenses nothing —
+ *   either a typo or a source that has been removed — and applying it silently would leave the register asserting a
+ *   grant no source points at.
+ */
+export function applyLicenseDecisions(
+	generated: readonly LicenseDecision[],
+	recorded: ReadonlyMap<string, LicenseDecision>
+): LicenseDecision[] {
+	const known = new Set(generated.map((decision) => decision.licenseID))
+
+	for (const licenseID of recorded.keys()) {
+		if (!known.has(licenseID)) {
+			throw new Error(
+				`a recorded licence decision names ${stringifyJSON(licenseID)}, which the register does not carry. ` +
+					"A decision that licenses nothing is a typo or a source that has been removed."
+			)
+		}
+	}
+
+	return generated.map((decision) => recorded.get(decision.licenseID) ?? decision)
+}
+
+/**
  * Every reason a source may not enter a training corpus, or an empty array when it may.
  *
  * It answers with the reasons rather than a boolean because "not eligible" is four different situations and a caller
