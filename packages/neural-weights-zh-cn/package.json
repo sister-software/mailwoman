@@ -10,6 +10,8 @@
 	},
 	"files": [
 		"model-card.json",
+		"LICENSE.md",
+		"PROVENANCE.json",
 		"fst-zh-cn.bin",
 		"README.md",
 		"*.ts",

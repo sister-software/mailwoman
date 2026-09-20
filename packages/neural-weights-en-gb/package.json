@@ -10,6 +10,8 @@
 	},
 	"files": [
 		"model-card.json",
+		"LICENSE.md",
+		"PROVENANCE.json",
 		"postcode-gb.bin",
 		"pair-index-gb.bin",
 		"fst-en-gb.bin",

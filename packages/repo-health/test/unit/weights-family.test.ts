@@ -14,7 +14,7 @@
 import { temporaryDirectory } from "@mailwoman/core/fs/temporary"
 import { writeLocalJSONFile } from "@mailwoman/core/fs/writers"
 import { collectRepoContext, type RepoContext } from "@mailwoman/repo-health"
-import { weightsFamilyCheck } from "@mailwoman/repo-health/checks/weights-family"
+import { weightsFamilyCheck } from "@mailwoman/repo-health/checks/weights/family"
 import { expect, test } from "vitest"
 
 /**

@@ -28,6 +28,7 @@ import { smokeCleanInstallOperation } from "#operations/smoke/clean-install"
 import { smokeGetStartedOperation } from "#operations/smoke/get-started"
 import { stageWeightsCacheOperation } from "#operations/stage-weights-cache"
 import { verifyMetadata } from "#operations/verify-metadata"
+import { writeRightsFiles } from "#operations/write-rights-files"
 
 /**
  * Every release operation, in the order an adapter lists them: the plan first, then the read-only checks, the local
@@ -40,6 +41,7 @@ export const operations: ReadonlyArray<ReleaseOperation<unknown, unknown>> = [
 	cleanOperation,
 	prepareVersion,
 	generatedSurfaces,
+	writeRightsFiles,
 	copyWeightsOperation,
 	fetchHFWeightsOperation,
 	preflight,

@@ -96,15 +96,28 @@ that declares no license, declares an identifier the obligations table does not 
 expression other than the root's. The four packages have not been republished, so the versions on npm
 still carry the old field.
 
-### Twelve model cards disagree with their manifest
+### Twelve model cards carry a version their manifest does not, and the card says which series it is
 
 Every published package's model-card version differs from its manifest version, `fr-fr` most widely
 at 6.5.0 against 10.0.0.
 
-A package version and a model version describe different things, and an overlay's card describes an
-inherited model rather than its own. Neither field says which it is, so a reader cannot tell a
-deliberate difference from drift. The repair is to state the meaning of each field and leave the
-values free to differ where they describe different things.
+**Correcting an earlier reading in this document.** The first version of this section called all
+twelve a release-engineering defect. For the graph packages that reading is wrong. Two version series
+exist by design and `docs/records/site-2026-08/releases.mdx` states them, with the current row reading
+`**10.0.0** (current) · model 9.1.0 (unchanged)` — a code-only release over unchanged model bytes.
+`mwops release verify-metadata` keys its three surface checks off the card version rather than the npm
+version for exactly that reason, and `fetch-hf-weights` names the Hugging Face directory
+`<family>/v<card version>/`. Forcing the numbers equal would break both.
+
+What the cards did not state is which series a given number belongs to. Two packages ship a model
+graph: `en-us` at card 9.1.0 and `cjk` at card 0.0.3. Ten are data-only overlays declaring
+`mailwoman.baseWeights`, and an overlay's card version names that overlay's own artifacts while the
+graph its rows decode through is the base package's. Nothing in a published tarball said which of the
+two a reader was holding.
+
+**Repaired.** Each published package's generated `PROVENANCE.json` carries `version_series`, derived
+from `mailwoman.baseWeights` rather than asserted, together with a sentence stating what that series
+means and how it relates to `package_version`. The numbers are left free to differ.
 
 ### Artifact digests are recorded for 6 of about 100 shipped artifacts
 
@@ -121,7 +134,28 @@ hierarchy, and two FST binaries. One `data_attribution` list covers the package.
 `en-us` has ten `data_attribution` entries. The other twelve have none, `cjk` included, which ships
 its own `model.onnx` rather than inheriting one.
 
-No package ships a `LICENSE.md`.
+One of those ten entries attributes an artifact that ships in a different package. Entry 1 names
+`pair-index-gb.bin` in `neural-weights-en-gb`, attributing it to HM Land Registry Price Paid Data
+under OGL v3.0 with Crown copyright and attribution required. `neural-weights-en-gb`'s own card has no
+`training` section at all. A consumer who installs the overlay alone receives the binary and no
+attribution.
+
+No package shipped a `LICENSE.md`.
+
+**Repaired.** Every published weights package now carries two generated files, written by
+`mwops release write-rights-files` and held current by the `weights-rights` repository check.
+`LICENSE.md` states the terms this repository grants, that the commercial grant covers only the code
+and model artifacts Sister Software authors, and that third-party obligations continue to apply.
+`PROVENANCE.json` records each declared artifact with its digest or `unrecorded`, each attribution
+entry with the license it names or `null`, and an `unresolved` list. A package whose card records no
+attribution reads `none-recorded-in-this-package` rather than reading as a package with nothing to
+attribute. The cross-package case above appears in `en-gb`'s record under
+`attribution_recorded_in_another_package`, found by matching each package's artifact filenames against
+every other package's attribution text rather than by hand.
+
+Generating the files does not discharge the obligation. `pair-index-gb.bin`'s attribution is still
+recorded in another package's card, and the repair for that is to put the entry where the artifact
+ships.
 
 ## Attributed sources for `en-us`, as recorded
 
@@ -226,6 +260,11 @@ Recorded as open rather than answered.
 | Which per-source licenses the OpenAddresses rows carry                | `en-us` and the corpus    | The notices say they differ                        |
 | Whether obligations attach to weights trained on share-alike sources  | all                       | Reserved for legal determination                   |
 | Whether contributor grants cover dual distribution                    | all first-party artifacts | Not audited here                                   |
+| Where `pair-index-gb.bin`'s attribution belongs                       | `en-gb`                   | The entry sits in `en-us`'s card                   |
+| What refuses a Hugging Face upload of an unrecorded artifact          | model releases            | `release hf` reads no rights record                |
+
+Each package's `PROVENANCE.json` carries the subset of these questions that bears on it, so the
+record travels with the tarball rather than staying in this document.
 
 No package in this inventory is recorded as cleared. Missing evidence is recorded as missing, and it
 is neither evidence of compliance nor evidence of infringement.

@@ -55,6 +55,26 @@ Every name it prints needs a reason you can state. `mwops release scaffold-weigh
 
 A new workspace joins SEVEN registers, and only the first one fails loudly. The root `workspaces` array is what `yarn install` reads, so missing it breaks immediately. The others do not: the release list above, or — when the workspace is held out — `SANCTIONED_RELEASE_ABSENCES` in `packages/release-kit/lib/release/stage.ts`, which is where "a reason you can state" stops being prose and starts being data (`checkReleaseListIdentity` refuses an absence that is in neither, and its `publishCount` pin in `packages/release-kit/test/integration/release-stage.test.ts` moves with either edit); both root `tsconfig.json` reference entries — `./packages/<name>` and `./packages/<name>/tsconfig.test.json`; `mwops release smoke-clean-install`'s pack set (`packages/release-kit/lib/release/smoke/clean-install.ts`), which silently skips a workspace it does not name; and, for a brand-new npm name, the `bless-package` first publish before the name may enter the release list at all (an unblessed name fails the whole release at that workspace with a bare `E404`). Skip the tsconfig pair and `tsc -b` never builds the workspace, so `out/` stays empty and every test-project reference to it fails with `TS6305: Output file has not been built from source file` — which reads as a broken test rather than an unregistered project.
 
+## Every published weights workspace carries two generated rights files
+
+`LICENSE.md` and `PROVENANCE.json` are written by `mwops release write-rights-files`
+(`packages/release-kit/lib/weights/rights/`) from the workspace's `package.json` and `model-card.json`, and both are
+committed. `LICENSE.md` states the terms this repository grants and what the commercial branch does not reach.
+`PROVENANCE.json` records each declared artifact with its digest or `unrecorded`, the card's attribution entries with
+the license each one names, and the questions the record leaves open.
+
+Editing a model card changes what a package owes and what it can show, and the compiler reads neither file. The
+`weights-rights` repository check holds the committed bytes equal to the writer's output and refuses a workspace whose
+`files` array omits either name, so a card edit either regenerates them or fails. Adding an overlay means running the
+writer and committing what it produces; `scaffold-weights-overlay` does not write them.
+
+The record makes three distinctions on purpose. A package whose card records no attribution reads
+`none-recorded-in-this-package`, which states what the card holds rather than that the artifacts have no attributable
+inputs. An artifact with no digest reads `unrecorded` rather than verified. And
+`attribution_recorded_in_another_package` names the case the single-card layout produced: `pair-index-gb.bin` ships in
+`@mailwoman/neural-weights-en-gb`, and the entry attributing it to HM Land Registry Price Paid Data under OGL v3.0 sits
+in `@mailwoman/neural-weights-en-us`'s card.
+
 ## Recovering from a partial release
 
 The runbook is in [`RELEASING.md`](../../RELEASING.md#recovering-from-a-partial-release).

@@ -10,6 +10,8 @@
 	},
 	"files": [
 		"model-card.json",
+		"LICENSE.md",
+		"PROVENANCE.json",
 		"anchor-lexicon-v1.json",
 		"locality-surface-lexicon-v7.json",
 		"street-type-lexicon-v3.json",

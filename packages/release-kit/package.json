@@ -98,6 +98,21 @@
 			"types": "./out/weights/weights-recipe.d.ts",
 			"node": "./lib/weights/weights-recipe.ts",
 			"default": "./out/weights/weights-recipe.js"
+		},
+		"./weights/rights/files": {
+			"types": "./out/weights/rights/files.d.ts",
+			"node": "./lib/weights/rights/files.ts",
+			"default": "./out/weights/rights/files.js"
+		},
+		"./weights/rights/record": {
+			"types": "./out/weights/rights/record.d.ts",
+			"node": "./lib/weights/rights/record.ts",
+			"default": "./out/weights/rights/record.js"
+		},
+		"./weights/rights/write": {
+			"types": "./out/weights/rights/write.d.ts",
+			"node": "./lib/weights/rights/write.ts",
+			"default": "./out/weights/rights/write.js"
 		}
 	},
 	"dependencies": {
