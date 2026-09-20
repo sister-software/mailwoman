@@ -71,8 +71,11 @@ interface EpochMixtureAudit {
 /**
  * Rows sampled per country in one audited epoch, and the epoch's total.
  *
- * A country absent from `by_country` stays absent from the map rather than reading zero. The funnel then leaves its
- * `sampled` stage `unknown`: the audit reports the countries it drew, and a name it never mentions was not measured.
+ * A country absent from `by_country` stays absent from the map rather than being written in as zero, and the funnel
+ * decides what that absence means. `by_country` enumerates every country the audit drew, so a country the audit never
+ * mentions drew zero of the audit's own denominator. An admitted country therefore reads `blocked` with that
+ * denominator beside it, which is a measured zero rather than an unknown. A country the config never admitted reads
+ * `absent`, since it had nothing to draw.
  *
  * Refuses an audit produced from a config other than the one the `admitted` stage reads. Both stages describe one
  * training arm, and reading them from two configs puts two arms in one column: a run of this tool read `admitted` from
