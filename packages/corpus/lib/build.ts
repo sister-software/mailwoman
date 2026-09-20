@@ -58,7 +58,8 @@ import { defaultAdapterRegistry } from "#adapters/utils"
 import { $public } from "#env"
 import { type ParquetManifest, writeParquetSplits } from "#parquet/writers"
 import { once, runAdapter, type AdapterRunManifest } from "#runner"
-import { ingestEligibilityProblems, readAddressSourceRegister } from "#source-register/index"
+import { ingestEligibilityProblems, readAddressSourceRegister, type LicenseDecision } from "#source-register/index"
+import { freezeTrainingManifest } from "#source-register/training-manifest"
 import { defaultAugmentationsForCountry, synthesizeRow } from "#synthesizers/utils"
 import type { AdapterOptions, CanonicalRow, CorpusAdapter, LabeledRow } from "#types"
 import { alignRow } from "#utils/align"
@@ -75,6 +76,11 @@ import {
  * Stage tags surfaced to `onProgress`.
  */
 export type BuildStage = "adapter-run" | "align" | "split" | "parquet" | "manifest"
+
+/**
+ * The frozen source record's filename, beside the build's own `MANIFEST.json`.
+ */
+export const TRAINING_MANIFEST_FILE = "TRAINING_SOURCES.json"
 
 /**
  * Per-invocation options for `buildCorpus`.
@@ -173,6 +179,22 @@ async function readSourceEligibility(): Promise<ReadonlyMap<string, readonly str
 }
 
 /**
+ * The register's license decisions keyed by the label a row carries, for freezing into the training manifest.
+ *
+ * Keyed on the decision's `licenseID` because that is what a register source's `license` field holds. An adapter
+ * stamping its own label — `CC0-1.0`, `Public Domain` — matches no key, and the frozen record says so with a `null`
+ * decision rather than inventing one.
+ *
+ * Read even under the exploratory profile, since the manifest records what was known at build time whichever profile
+ * ran, and a build that recorded nothing would be indistinguishable from one whose sources had no decisions.
+ */
+async function readRegisterDecisions(): Promise<ReadonlyMap<string, LicenseDecision>> {
+	const register = await readAddressSourceRegister()
+
+	return new Map(register.licenses.map((decision) => [decision.licenseID, decision]))
+}
+
+/**
  * Top-level manifest tying every stage together.
  */
 export interface BuildCorpusManifest {
@@ -205,6 +227,11 @@ export interface BuildCorpusManifest {
 	 * blocked build says what to fix rather than only that it stopped.
 	 */
 	ineligible_sources: Record<string, readonly string[]>
+	/**
+	 * The `contentDigest` of the `TRAINING_SOURCES.json` written beside this manifest, which is the frozen record of
+	 * which sources contributed and under which terms.
+	 */
+	training_manifest_digest: string
 }
 
 /**
@@ -303,6 +330,8 @@ export async function buildCorpus(opts: BuildCorpusOptions): Promise<BuildCorpus
 
 	const profile = opts.profile ?? BuildProfile.Exploratory
 	const eligibility = profile === BuildProfile.ReleaseEligible ? await readSourceEligibility() : null
+	const rowsBySource = new Map<string, { rows: number; license: string }>()
+	const registerDecisions = await readRegisterDecisions()
 	const ineligibleSources = new Map<string, readonly string[]>()
 	let excludedByEligibility = 0
 
@@ -363,6 +392,12 @@ export async function buildCorpus(opts: BuildCorpusOptions): Promise<BuildCorpus
 
 				continue
 			}
+
+			// Counted after both refusals, so the frozen manifest records what a source contributed rather than what it
+			// offered. A source dropped entirely appears under `refused` with its reasons instead.
+			const contributed = rowsBySource.get(row.source)
+
+			rowsBySource.set(row.source, { rows: (contributed?.rows ?? 0) + 1, license: row.license })
 
 			const fanned: CanonicalRow[] = [row]
 
@@ -455,8 +490,21 @@ export async function buildCorpus(opts: BuildCorpusOptions): Promise<BuildCorpus
 				: " | NO license exclusion applied (all rows kept)")
 	)
 
-	// 6. Top-level manifest.
+	// 6. Top-level manifest, and the frozen source record beside it.
 	opts.onProgress?.("manifest", "writing top-level MANIFEST.json")
+
+	// Frozen from what this build observed rather than re-derived from the register later. The register moves as
+	// somebody reviews terms, and a record re-derived tomorrow would describe a build that never happened.
+	const trainingManifest = freezeTrainingManifest({
+		corpusVersion: opts.corpusVersion,
+		builtAt: built_at,
+		profile,
+		rowsBySource,
+		decisionsByLicense: registerDecisions,
+		refused: ineligibleSources,
+	})
+
+	await writeLocalJSONFile(trainingManifest, opts.outputDir, TRAINING_MANIFEST_FILE)
 
 	const manifest: BuildCorpusManifest = {
 		corpus_version: opts.corpusVersion,
@@ -472,6 +520,11 @@ export async function buildCorpus(opts: BuildCorpusOptions): Promise<BuildCorpus
 		profile,
 		excluded_by_eligibility: excludedByEligibility,
 		ineligible_sources: Object.fromEntries(ineligibleSources),
+		/**
+		 * The digest of the frozen source record written beside this manifest. A consumer quotes it to say which build's
+		 * sources it is talking about.
+		 */
+		training_manifest_digest: trainingManifest.contentDigest,
 	}
 
 	await writeLocalJSONFile(manifest, opts.outputDir, "MANIFEST.json")

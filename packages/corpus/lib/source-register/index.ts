@@ -37,4 +37,13 @@ export {
 	UNRESOLVED_FIELDS,
 } from "#source-register/types"
 
+export {
+	auditTrainingManifest,
+	freezeTrainingManifest,
+	sourcesNotPermitting,
+	trainingManifestDigest,
+} from "#source-register/training-manifest"
+
+export type { TrainingManifest, TrainingSourceRecord } from "#source-register/training-manifest"
+
 export type * from "#source-register/types"
