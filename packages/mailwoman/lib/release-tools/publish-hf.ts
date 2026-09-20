@@ -35,7 +35,7 @@
 import { APIClient, isSuccessStatus } from "@mailwoman/core/api"
 import { tempRootPath } from "@mailwoman/core/data-root"
 import { ByteFormatter } from "@mailwoman/core/fs/formatters"
-import { pathExists, statPath } from "@mailwoman/core/fs/readers"
+import { pathExists, readLocalJSONFile, statPath } from "@mailwoman/core/fs/readers"
 import { writeLocalJSONFile } from "@mailwoman/core/fs/writers"
 import { extractDelimited } from "@mailwoman/core/scripting/arguments"
 import { CommandError } from "@mailwoman/core/scripting/command"
@@ -265,6 +265,48 @@ async function verifyRequiredFiles(args: PublishHFOptions): Promise<void> {
 	}
 }
 
+/**
+ * Refuse a model release whose card records no training attribution, and print the gaps in the records it does carry.
+ *
+ * Uploading is publication. Attribution and share-alike conditions attach to a source and survive redistribution, so
+ * the moment to establish that a record exists is before the bytes leave, while somebody can still answer what the
+ * model was trained on. This path used to upload `model.onnx`, `tokenizer.model`, `model-card.json` and the FST and
+ * postcode binaries after reading only their sizes.
+ *
+ * The refusal turns on presence alone. An entry that names no license is printed and allowed through, because missing
+ * evidence about a source is a gap to record while a finding against the source is a conclusion somebody has to reach —
+ * the distinction the per-package `PROVENANCE.json` exists to keep. A release that records nothing at all is the one
+ * this refuses.
+ */
+export async function verifyTrainingProvenance(cardPath: string): Promise<void> {
+	const card = await readLocalJSONFile<{ training?: { data_attribution?: unknown } }>(cardPath)
+	const entries = card.training?.data_attribution
+
+	if (!Array.isArray(entries) || !entries.length) {
+		fail(
+			`${cardPath} records no training.data_attribution, so this upload would publish a model whose sources nothing states. ` +
+				"Record the sources the run trained on in the card before publishing. " +
+				"See docs/engineering/reference/artifact-rights-inventory.mdx."
+		)
+	}
+
+	console.error(`  ✓ training.data_attribution: ${entries.length} entries`)
+
+	// A parenthetical carrying a version number or a known family name is how the cards state a license. An entry
+	// without one is reported with its text, so the operator sees which source is unaccounted for at the moment of
+	// publication rather than in a later audit.
+	for (const entry of entries) {
+		const text = String(entry)
+		const parenthetical = /\(([^()]{1,120})\)/u.exec(text)
+		const inner = parenthetical?.[1]?.trim() ?? ""
+		const namesLicense = /\d/u.test(inner) || /\b(?:CC0|CC-BY|CC|ODbL|OGL|MIT|Apache|Licence|License)\b/iu.test(inner)
+
+		if (namesLicense) continue
+
+		console.error(`  ! names no license: ${text}`)
+	}
+}
+
 export async function publishReleaseToHF(args: PublishHFOptions): Promise<void> {
 	if (!args.version) {
 		fail("version argument required (e.g. mailwoman release hf v5.9.0 …)")
@@ -297,6 +339,10 @@ export async function publishReleaseToHF(args: PublishHFOptions): Promise<void> 
 
 	// Verify every required local artifact before uploading.
 	await verifyRequiredFiles(args)
+
+	// And that the card being uploaded records where the model's training inputs came from. Runs after the file checks
+	// so a missing card reports as a missing card rather than as an unreadable record.
+	await verifyTrainingProvenance(args.modelCard!)
 
 	// Optional postcode binaries for the anchor channel (#240): comma-separated --postcodes paths
 	// (e.g. postcode-us.bin,postcode-de.bin). Uploaded under the version dir by basename. the demo

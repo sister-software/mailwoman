@@ -167,6 +167,11 @@
 			"node": "./lib/dev-tools/*.ts",
 			"default": "./out/dev-tools/*.js"
 		},
+		"./release-tools/*": {
+			"types": "./out/release-tools/*.d.ts",
+			"node": "./lib/release-tools/*.ts",
+			"default": "./out/release-tools/*.js"
+		},
 		"./eval-harness/*": {
 			"types": "./out/eval-harness/*.d.ts",
 			"node": "./lib/eval-harness/*.ts",

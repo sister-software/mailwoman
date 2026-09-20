@@ -243,10 +243,28 @@ carry.
 
 **What this control does not do.** It refuses a workspace by name. It does not decide whether an
 artifact's inputs permit publication, and it does not read a provenance record, because no frozen
-training manifest exists to read. The Hugging Face path, `mailwoman release hf` in
-`packages/mailwoman/lib/release-tools/publish-hf.ts`, uploads `model.onnx`, `tokenizer.model`,
-`model-card.json` and the FST and postcode binaries. It calls `assertWorkspacePublishable` nowhere,
-and it reads no rights record before uploading.
+training manifest exists to read.
+
+### A model upload states its training sources or it does not go out
+
+`mailwoman release hf` in `packages/mailwoman/lib/release-tools/publish-hf.ts` uploads `model.onnx`,
+`tokenizer.model`, `model-card.json` and the FST and postcode binaries. It read those files' sizes and
+nothing else about them. Uploading is publication, and attribution and share-alike conditions attach
+to a source and survive redistribution, so the moment to establish that a record exists is before the
+bytes leave.
+
+**Repaired.** `verifyTrainingProvenance` runs after the artifact checks and refuses a card whose
+`training.data_attribution` is absent or empty, naming the card and saying to record the sources the
+run trained on in it. Entries that name no
+license are printed with their text rather than refused, so the operator sees which source is
+unaccounted for at the moment of publication. Missing evidence about a source is a gap to record,
+while a finding against a source is a conclusion somebody has to reach, and a release control is not
+the place to reach it.
+
+**Consequence to act on.** `neural-weights-cjk` carries a `training` section recording its corpus and
+no `data_attribution` at all. A character-path model release is refused today until that card records
+the sources the run trained on. `neural-weights-en-us` passes with ten entries, two of which name no
+license: the OpenAddresses PL entry and the pointer to `THIRD_PARTY_NOTICES.md`.
 
 ## Unresolved
 
@@ -261,7 +279,7 @@ Recorded as open rather than answered.
 | Whether obligations attach to weights trained on share-alike sources  | all                       | Reserved for legal determination                   |
 | Whether contributor grants cover dual distribution                    | all first-party artifacts | Not audited here                                   |
 | Where `pair-index-gb.bin`'s attribution belongs                       | `en-gb`                   | The entry sits in `en-us`'s card                   |
-| What refuses a Hugging Face upload of an unrecorded artifact          | model releases            | `release hf` reads no rights record                |
+| Which sources the character-path model trained on                     | `cjk`, `ja-jp`, `zh-cn`   | Its card records a corpus and no attribution       |
 
 Each package's `PROVENANCE.json` carries the subset of these questions that bears on it, so the
 record travels with the tarball rather than staying in this document.
