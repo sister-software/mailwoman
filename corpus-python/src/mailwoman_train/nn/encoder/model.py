@@ -258,12 +258,18 @@ class MailwomanCoarseEncoder(
 
         h = self.final_ln(h)
 
-        # PR3 self-conditioning: infer a locale posterior from the whole sequence, then let it
-        # reshape the per-token reps before the BIO head. This is the "globally, before per-token
-        # labels" step the design calls for — and the reason it warrants its keep is the probe: the
-        # postcode alone settles the country <50% of the time, so the model has to read the city
-        # and street to know where it is, then condition on that. Runs at inference too (predict()
-        # routes through here), so the conditioning shapes real emissions rather than just the loss.
+        # PR3 self-conditioning. One pooled sequence representation feeds two independent
+        # projections: ``locale_head`` predicts the country logits, and ``locale_film`` derives the
+        # FiLM scale and shift that reshape the per-token reps before the BIO head. The posterior
+        # does not enter ``locale_film`` — no softmax, no selected locale id. What couples them is
+        # the auxiliary locale loss, which pushes country information into the pooled vector both
+        # projections read. This is therefore self-conditioning on a representation trained to carry
+        # locale, rather than parameter selection keyed on a locale verdict.
+        #
+        # The design reason for conditioning globally before per-token labels is the probe: the
+        # postcode alone settles the country under half the time, so the model has to read the
+        # locality and street to place the input. Runs at inference too (predict() routes through
+        # here), so the modulation shapes emissions rather than only the loss.
         locale_logits: torch.Tensor | None = None
         if self.use_locale_conditioning and self.locale_head is not None and self.locale_film is not None:
             # Mean-pool over real (non-pad) tokens. fp32 reduction on principle — the v0.6.0 CRF

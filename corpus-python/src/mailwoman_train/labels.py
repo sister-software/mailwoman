@@ -278,9 +278,10 @@ IGNORE_INDEX: Final[int] = -100
 # region Locale conditioning (PR3 / self-conditioning)
 
 # Country (ISO 3166-1 alpha-2) → locale class id for the auxiliary self-conditioning head.
-# The head predicts which country an address belongs to from the pooled sequence. that
-# posterior conditions the per-token labeling (model.py FiLM) and is the LocalePosterior the
-# resolver consumes. The probe behind PR3 showed the postcode alone pins the country only
+# The head predicts which country an address belongs to from the pooled sequence, and it is the
+# LocalePosterior the resolver consumes. The posterior does not feed the FiLM path: model.py sends
+# the same pooled vector through a sibling projection, so the aux loss shapes what both read rather
+# than one selecting the other. The probe behind PR3 showed the postcode alone pins the country only
 # 28–44% of the time, so the model must infer it from the whole string — this map is the
 # aux head's target vocabulary.
 #
