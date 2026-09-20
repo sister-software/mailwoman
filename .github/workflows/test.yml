@@ -413,6 +413,32 @@ jobs:
       - name: Install ripgrep (dev-mcp symbol index)
         run: sudo apt-get update -qq && sudo apt-get install -y -qq ripgrep
 
+      # `packages/dev-mcp/test/unit/vale/**` spawns Vale, so this leg needs the binary the same way
+      # the `static` leg does. The postinstall downloads it from `api.github.com` with no
+      # Authorization header and answers 403 once the runner's address has spent its anonymous
+      # quota, and `.yarnrc.yml` filters that to a warning so the install still succeeds. Without
+      # the binary those tests read empty output and fail with `JSONParseError: Expected JSON input,
+      # got `, which names neither Vale nor the download.
+      #
+      # Same key as the `static` leg, so whichever job runs first fills the cache for both.
+      - name: Read the Vale package version
+        id: vale-version
+        run: echo "version=$(node -p "require('./node_modules/@vvago/vale/package.json').version")" >> "$GITHUB_OUTPUT"
+
+      - name: Restore the Vale binary
+        id: vale-cache
+        uses: actions/cache/restore@v6
+        with:
+          path: node_modules/@vvago/vale/native
+          key: vale-${{ runner.os }}-${{ steps.vale-version.outputs.version }}
+
+      - name: Save the Vale binary
+        if: steps.vale-cache.outputs.cache-hit != 'true' && hashFiles('node_modules/@vvago/vale/native/vale') != ''
+        uses: actions/cache/save@v6
+        with:
+          path: node_modules/@vvago/vale/native
+          key: vale-${{ runner.os }}-${{ steps.vale-version.outputs.version }}
+
       # No weights materialization — this leg excludes every suite that loads the model or
       # hits a WOF DB (neural/test/**, mailwoman/test/**, resolver-wof-sqlite/**,
       # evidence-lexicons, geocode CLI). The 313-file sweep finishes in ~15s. suite-only
