@@ -31,7 +31,11 @@ const PATTERNS: ReadonlyArray<FormatPattern> = [
 	// Unambiguous single-token patterns first.
 	{ format: "us_zip4", pattern: /^\d{5}-\d{4}$/, tokenSpan: 1, confidence: 0.95 },
 	{ format: "ca_postcode", pattern: /^[A-Z]\d[A-Z]\d[A-Z]\d$/i, tokenSpan: 1, confidence: 0.95 },
-	{ format: "jp_postcode", pattern: /^\d{3}-\d{4}$/, tokenSpan: 1, confidence: 0.95 },
+	// The leading 〒 (U+3012 POSTAL MARK) is optional because it is how a Japanese postcode is ordinarily written, and
+	// the tokenizer keeps it attached to the digits. Anchoring without it read `〒150-0001 Tokyo, Shibuya` as carrying
+	// no known format at all while the same address written `Tokyo 150-0001` scored `jp_postcode` at 0.95 — the more
+	// explicitly Japanese spelling was the one the detector could not see.
+	{ format: "jp_postcode", pattern: /^〒?\d{3}-\d{4}$/, tokenSpan: 1, confidence: 0.95 },
 	// UK postcode is 2 tokens when split on space (e.g. "SW1A 1AA"), 1 token otherwise.
 	{ format: "uk_postcode", pattern: /^[A-Z]{1,2}\d[A-Z\d]?\d[A-Z]{2}$/i, tokenSpan: 1, confidence: 0.9 },
 	{ format: "uk_postcode", pattern: /^[A-Z]{1,2}\d[A-Z\d]? \d[A-Z]{2}$/i, tokenSpan: 2, confidence: 0.9 },
