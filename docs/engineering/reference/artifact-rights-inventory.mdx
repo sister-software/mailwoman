@@ -210,6 +210,67 @@ Resolving it needs record-level lineage on the training extracts: the source fil
 fields and license metadata, and the transformations applied. Where lineage cannot be recovered, the
 correct record is unresolved.
 
+### Who's On First record-level lineage, measured
+
+Full scan of the four bundles in the local data root — `whosonfirst-data-admin-us`,
+`whosonfirst-data-admin-fr`, `whosonfirst-data-postalcode-us`, `whosonfirst-data-postalcode-fr` —
+on 2026-09-20. 485,498 records after the `**/*-alt-*.geojson` exclusion `walkFeatures` applies. Zero
+unreadable, zero unparseable, zero without properties.
+
+Two fields answer two different questions, and running them together is what made the lineage look
+unrecoverable.
+
+**Where a record's geometry came from.** `src:geom` is present on 484,537 of 485,498 records, 99.80%.
+42 distinct values across the four bundles.
+
+| `src:geom`        | records | share |
+| ----------------- | ------: | ----: |
+| `geonames`        | 137,456 | 28.3% |
+| `frgov`           |  76,599 | 15.8% |
+| `qs_pg`           |  71,164 | 14.7% |
+| `mz`              |  40,578 |  8.4% |
+| `uscensus`        |  36,473 |  7.5% |
+| `uszcta`          |  32,988 |  6.8% |
+| `geoplanet`       |  30,397 |  6.3% |
+| `quattroshapes`   |  28,399 |  5.8% |
+| `whosonfirst`     |  21,955 |  4.5% |
+| `zetashapes`      |   4,182 |  0.9% |
+| 32 further values |   5,346 |  1.1% |
+| absent            |     961 |  0.2% |
+
+**Where the strings the corpus carries came from.** The adapters emit `wof:name`, the `name:*`
+localized variants and ancestor names. They emit no geometry, so the table above describes a field no
+corpus row carries.
+
+Who's On First's own `LICENSE.md`, shipped in each bundle, gives `name:chi_p`, `name:ger_p` and
+`name:kor_p` as its examples of a localized name sourced from GeoPlanet, the `_p` suffix marking it.
+Zero of 7,189,494 `name:*` variant keys across the four bundles carry that suffix. Both postalcode
+bundles carry no `name:*` variant at all: the admin bundles carry only `_x_preferred` and `_x_variant`
+forms, on 195,165 of 293,572 US records (66.5%) and 97,891 of 122,485 FR records (79.9%).
+
+**No record in any bundle declares `src:geom: osm`.** The search was verified with a control that
+found `geonames` records using the same pattern, against the on-disk form `"src:geom":"frgov"`.
+`THIRD_PARTY_NOTICES.md` states that OpenStreetMap data reaches us "via Who's On First and Overture".
+These four bundles do not support the Who's On First half of that sentence. The Overture half is a
+separate adapter and is unmeasured here.
+
+**Lineage is recoverable.** `source_id` is `wof-<adapter>-<wof_id>-<slot>-<variant>`, so every
+`wof-*` corpus row carries the id of the Who's On First record it came from, and that record carries
+`src:geom`. `WOFRecord` in `packages/corpus/lib/utils/wof-json.ts` projects a feature to id, parent,
+name, placetype, country and name variants, which is where the provenance properties stop travelling.
+
+**What the adapters assert.** `packages/corpus/lib/adapters/wof/admin/json/adapter.ts` and
+`packages/corpus/lib/adapters/wof/postalcode-json/adapter.ts` both set
+`defaultLicense: "CC0-1.0"`, so every `wof-*` row carries that label, and
+`packages/core/lib/license/obligations.ts` reads `CC0-1.0` as carrying no obligation. The bundles'
+`LICENSE.md` says Creative Commons Zero covers Mapzen's original work, that the dataset is also a
+modification of existing open data, that some of those projects do require attribution, and that
+"linking back to this License is required". Whether the emitted strings fall inside the original-work
+part is a reading this document does not make.
+
+**Scope.** Only the US and FR bundles are in the local data root. GB and DE, the two locales whose
+corpus rows are most `wof-*`, are not measured here.
+
 ## Publication control
 
 `packages/corpus/lib/utils/license.ts` states the posture:
@@ -266,23 +327,13 @@ no `data_attribution` at all. A character-path model release is refused today un
 the sources the run trained on. `neural-weights-en-us` passes with ten entries, two of which name no
 license: the OpenAddresses PL entry and the pointer to `THIRD_PARTY_NOTICES.md`.
 
-## Unresolved
+## What the record leaves open
 
-Recorded as open rather than answered.
+Each published package's `PROVENANCE.json` carries the questions that bear on it, so the record
+travels with the tarball rather than staying in this document. A package with no recorded training
+attribution reads `none-recorded-in-this-package`. An artifact with no recorded digest reads
+`unrecorded`.
 
-| question                                                              | affects                   | why it is open                                     |
-| --------------------------------------------------------------------- | ------------------------- | -------------------------------------------------- |
-| Which records trained each released checkpoint                        | 12 published packages     | No frozen training manifest exists for any release |
-| Whether OSM-derived records are present in historical training inputs | GB, DE most directly      | Who's On First lineage is not traced to the record |
-| What license governs `OpenAddresses PL — GUGiK / PRG`                 | `en-us`                   | The card names none                                |
-| Which per-source licenses the OpenAddresses rows carry                | `en-us` and the corpus    | The notices say they differ                        |
-| Whether obligations attach to weights trained on share-alike sources  | all                       | Reserved for legal determination                   |
-| Whether contributor grants cover dual distribution                    | all first-party artifacts | Not audited here                                   |
-| Where `pair-index-gb.bin`'s attribution belongs                       | `en-gb`                   | The entry sits in `en-us`'s card                   |
-| Which sources the character-path model trained on                     | `cjk`, `ja-jp`, `zh-cn`   | Its card records a corpus and no attribution       |
-
-Each package's `PROVENANCE.json` carries the subset of these questions that bears on it, so the
-record travels with the tarball rather than staying in this document.
-
-No package in this inventory is recorded as cleared. Missing evidence is recorded as missing, and it
-is neither evidence of compliance nor evidence of infringement.
+No package is recorded as cleared. Missing evidence is recorded as missing, and it is neither evidence
+of compliance nor evidence of infringement. Which license a given upstream value implies, and which
+obligations follow from it, are readings this document does not make.
