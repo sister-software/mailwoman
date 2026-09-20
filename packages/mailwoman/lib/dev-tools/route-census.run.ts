@@ -63,7 +63,13 @@ import { parseArguments } from "@mailwoman/core/scripting/arguments"
 import { formatPercent } from "@mailwoman/core/stats"
 import { isoSeconds } from "@mailwoman/core/utils"
 import { detectLocale, scoreByPostcode, scoreByScript } from "@mailwoman/locale-hint"
-import { FAMILIES, familyForLocale, routeFamilyForText, routeFamilyWithLeadingRun } from "@mailwoman/neural"
+import {
+	FAMILIES,
+	familyForLocale,
+	routeFamilyForText,
+	routeFamilyWithLeadingRun,
+	routeFamilyWithPostcode,
+} from "@mailwoman/neural"
 import { computeQueryShape } from "@mailwoman/query-shape"
 import { join } from "path-ts"
 import { JSONSpliterator } from "spliterator"
@@ -242,6 +248,26 @@ interface MovedRow {
 }
 
 const movedByLeadingRun: MovedRow[] = []
+const movedByPostcode: MovedRow[] = []
+
+/**
+ * The candidate readings this tool measures, each tried after the shipped router and only where that router abstained.
+ *
+ * Reported separately rather than as one arm. They are different classes of evidence — one reads where a script sits,
+ * one reads a postal format — and a combined count would not say which reading claimed a row.
+ */
+const CANDIDATES: ReadonlyArray<{ name: string; route: (text: string) => string; moved: MovedRow[] }> = [
+	{
+		name: "leading family-script run",
+		route: (text) => routeFamilyWithLeadingRun(text).family ?? CALLER,
+		moved: movedByLeadingRun,
+	},
+	{
+		name: "postcode format",
+		route: (text) => routeFamilyWithPostcode(text).family ?? CALLER,
+		moved: movedByPostcode,
+	},
+]
 
 let labeledByTags = 0
 
@@ -290,15 +316,18 @@ for (const dir of countryDirs) {
 			const script = routeFamilyForText(row.input).family ?? CALLER
 			const hint = localeHintAnswer(row.input)
 			const localeHint = hint.family
-			const leading = routeFamilyWithLeadingRun(row.input).family ?? CALLER
 
-			if (leading !== script) {
-				movedByLeadingRun.push({
+			for (const candidate of CANDIDATES) {
+				const answered = candidate.route(row.input)
+
+				if (answered === script) continue
+
+				candidate.moved.push({
 					id: row.id ?? "(no id)",
 					country: row.country,
 					status: row.status ?? "(none)",
 					from: resolved(script),
-					to: resolved(leading),
+					to: resolved(answered),
 					input: row.input,
 				})
 			}
@@ -390,20 +419,28 @@ if (misroutes.length) {
 	console.log(`The shipped router sends every one of them to a family that can emit their tags.`)
 }
 
-// The candidate arm, reported on the whole board rather than on the rows the proposal was built from. `#2350` states
-// the reading as a hypothesis with four rows it must move and four it must not, and the board is hand-authored, so the
-// count that decides anything is over every row rather than over those eight.
-console.log(
-	`\n## Candidate reading — the leading family-script run, measured and unshipped\n\n` +
-		`It would move ${movedByLeadingRun.length} of ${graded} rows ` +
-		`(${formatPercent(movedByLeadingRun.length, graded, 1)}) to a different graph. Nothing serving reads it: ` +
-		`\`routeFamilyWithLeadingRun\` tries it only where the shipped router abstained, so this list is the whole ` +
-		`difference between the two arms.\n`
-)
+// The candidate arms, reported on the whole board rather than on the rows each proposal was built from. `#2350` states
+// its readings as hypotheses with rows they must move and rows they must not, and the board is hand-authored, so the
+// count that decides anything is over every row rather than over those.
+console.log(`\n## Candidate readings — measured and unshipped\n`)
 
-if (movedByLeadingRun.length) {
-	const movedMisroutes = movedByLeadingRun.filter((moved) => misroutes.some((entry) => entry.id === moved.id)).length
-	const movedChecking = movedByLeadingRun.filter((moved) => moved.status === "pass").length
+for (const candidate of CANDIDATES) {
+	console.log(
+		`### ${candidate.name}\n\n` +
+			`It would move ${candidate.moved.length} of ${graded} rows ` +
+			`(${formatPercent(candidate.moved.length, graded, 1)}) to a different graph. Nothing serving reads it, and ` +
+			`it is tried only where the shipped router abstained, so this list is the whole difference between the two ` +
+			`arms.\n`
+	)
+
+	if (!candidate.moved.length) {
+		console.log(`No row on this board reads differently under it.\n`)
+
+		continue
+	}
+
+	const movedMisroutes = candidate.moved.filter((moved) => misroutes.some((entry) => entry.id === moved.id)).length
+	const movedChecking = candidate.moved.filter((moved) => moved.status === "pass").length
 
 	console.log(
 		`${movedMisroutes} of the ${misroutes.length} rows the label sets grade as mis-routed are among them. ` +
@@ -417,14 +454,14 @@ if (movedByLeadingRun.length) {
 	console.log(`| id | status | country | from | to | input |`)
 	console.log(`| --- | --- | --- | --- | --- | --- |`)
 
-	for (const entry of movedByLeadingRun) {
+	for (const entry of candidate.moved) {
 		console.log(
 			`| \`${entry.id}\` | ${entry.status} | ${entry.country} | ${entry.from} | ${entry.to} | ` +
 				`${entry.input.replaceAll("|", "\\|")} |`
 		)
 	}
-} else {
-	console.log(`No row on this board reads differently under it.`)
+
+	console.log()
 }
 
 console.log(`\n## What each router answers\n`)

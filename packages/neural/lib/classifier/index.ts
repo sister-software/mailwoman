@@ -76,6 +76,7 @@ export {
 	carriesFamilySegment,
 	routeFamilyForText,
 	routeFamilyWithLeadingRun,
+	routeFamilyWithPostcode,
 	ScriptRoutedClassifier,
 	scriptFamilyForText,
 	type ScriptRoutedClassifierOpts,

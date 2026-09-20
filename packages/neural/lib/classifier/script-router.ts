@@ -32,7 +32,7 @@
  */
 
 import type { AddressTree } from "@mailwoman/core/decoder"
-import { scoreByScript } from "@mailwoman/locale-hint"
+import { scoreByPostcode, scoreByScript } from "@mailwoman/locale-hint"
 import { computeQueryShape, type QueryShape } from "@mailwoman/query-shape"
 
 import { scriptFamilyBase } from "#char-encoder"
@@ -42,6 +42,7 @@ import type { NeuralParseTrace } from "#trace"
 import {
 	carriesFamilySegmentFor,
 	FAMILIES,
+	familyForLocale,
 	leadsWithFamilyScriptFor,
 	type RoutingDecision,
 	RouteSource,
@@ -102,6 +103,50 @@ export function routeFamilyWithLeadingRun(text: string): RoutingDecision {
 
 	return shipped
 }
+
+/**
+ * What {@linkcode routeFamilyForText} would answer with the postcode reading added, without changing what it answers
+ * today.
+ *
+ * The second candidate for measurement, and the only class of reading that reaches an input written wholly in Latin
+ * script. Two board rows are romaji Japanese — `4-chōme-12-10 Jingūmae, Shibuya, Tokyo 150-0001, Japan` and `Rinrin, 3
+ * Chome-57 Tenmanmachi, Takayama, Gifu 506-0025, Japan` — and no script predicate can claim either, because there is no
+ * non-Latin character in them to read.
+ *
+ * `scoreByPostcode` maps four unambiguous formats to locales, and `jp_postcode` is the only one whose locale belongs to
+ * a family declaring routing scripts. `us_zip4`, `uk_postcode` and `ca_postcode` name Latin locales, and the Latin
+ * family is reached through the caller rather than through a predicate, so a postcode reading that named it would be
+ * indistinguishable from abstaining. The ambiguous five-digit fallback is excluded by the confidence floor.
+ *
+ * Tried last and only on an abstention, for the same reason {@linkcode routeFamilyWithLeadingRun} is: the difference
+ * between the arms is then exactly the rows the reading adds.
+ */
+export function routeFamilyWithPostcode(text: string): RoutingDecision {
+	const shipped = routeFamilyForText(text)
+
+	if (shipped.family) return shipped
+
+	const candidate = scoreByPostcode(computeQueryShape(text))
+
+	if (!candidate || candidate.confidence < POSTCODE_ROUTE_CONFIDENCE) return shipped
+
+	const family = familyForLocale(candidate.locale)
+
+	// A family with no routing predicate is reached through the caller's locale, so naming it here would report a route
+	// where nothing moved.
+	if (!family?.routingScripts) return shipped
+
+	return { family: family.family, source: RouteSource.Locale, confidence: candidate.confidence }
+}
+
+/**
+ * The confidence a postcode reading must carry before it may name a family.
+ *
+ * `scoreByPostcode` answers 0.95 for a format it calls unambiguous and 0.5 for the five-digit fallback it resolves to
+ * `en-US` as a global plurality. A floor between them admits the first and refuses the second, so a bare five-digit
+ * group never decides which graph reads an address.
+ */
+const POSTCODE_ROUTE_CONFIDENCE = 0.9
 
 /**
  * The family this text routes to, and the reading that named it.
