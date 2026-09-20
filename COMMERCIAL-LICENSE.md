@@ -46,7 +46,11 @@ Licensee may NOT:
 
 ## 4. Attribution
 
-Attribution is not required in end-user-facing software unless mutually agreed in writing.
+Attribution to Licensor is not required in end-user-facing software unless mutually agreed in writing.
+
+This waiver is limited to Licensor's own attribution. It does not reach the attribution required by any third-party
+component distributed with Mailwoman. Those obligations are described in Section 2 and continue to apply, and Licensor
+has no power to waive them.
 
 ---
 

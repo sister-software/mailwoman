@@ -28,6 +28,7 @@ import { packageLicenseCheck } from "#checks/package-license"
 import { prefixDirectoriesCheck } from "#checks/prefix-directories"
 import { privateNameShadowsCheck } from "#checks/private-name-shadows"
 import { pythonPrefixDirectoriesCheck } from "#checks/python-prefix-directories"
+import { rightsChainCheck } from "#checks/rights-chain"
 import { runtimeFlagsCheck } from "#checks/runtime-flags"
 import { stalePathLiteralsCheck } from "#checks/stale-path-literals"
 import { stylesheetCheck } from "#checks/stylesheet-check"
@@ -46,6 +47,7 @@ import { weightsRightsCheck } from "#checks/weights/rights"
 export const checks: ReadonlyArray<RepoCheck> = [
 	versionSyncCheck,
 	packageLicenseCheck,
+	rightsChainCheck,
 	licenseRegisterCheck,
 	localeTablesCheck,
 	localeScopeCheck,
