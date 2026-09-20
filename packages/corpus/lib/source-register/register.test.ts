@@ -9,17 +9,28 @@ import { writeLocalJSONFile } from "@mailwoman/core/fs/writers"
 import {
 	applyLicenseDecisions,
 	auditAddressSourceRegister,
+	BackboneState,
 	electedLicenseLabel,
 	ingestEligibilityProblems,
 	JurisdictionResearchState,
 	LicenseReviewState,
+	MODEL_RELEASE_OPERATIONS,
+	OperationPermission,
+	PermissionBasis,
+	permissionFor,
 	readAddressSourceRegister,
 	registerContentDigest,
+	ResearchPass,
+	SourceGeometry,
+	SourceOperation,
 	SourceStatus,
 	UNRESOLVED_FIELDS,
+	type AddressSourceRecord,
 	type AddressSourceRegister,
+	type ElectedLicense,
 	type LicenseDecision,
 } from "@mailwoman/corpus/source-register"
+import { AddressRole } from "@mailwoman/corpus/types"
 import { beforeAll, describe, expect, it } from "vitest"
 
 describe("the committed address-source register", () => {
@@ -375,5 +386,137 @@ describe("applyLicenseDecisions", () => {
 			'license "unchecked-national-terms" is elected and names no retrieved copy',
 			'license "unchecked-national-terms" is elected and gives no reason',
 		])
+	})
+})
+
+describe("permission by operation", () => {
+	const source: AddressSourceRecord = {
+		sourceID: "zz-health-1",
+		iso2: "ZZ",
+		sector: "health",
+		name: "Testland facility register",
+		status: SourceStatus.VerifiedCorpus,
+		asserts: ["identity", "observation"],
+		authorityBasis: "national health ministry",
+		geometry: SourceGeometry.Unresolved,
+		license: "terms-under-review",
+		researchPass: ResearchPass.WebResearch,
+		addressRole: AddressRole.Premise,
+		coverage: "measured national, 2026-09",
+	}
+
+	function registerWith(decision: LicenseDecision): AddressSourceRegister {
+		return {
+			registerID: "test",
+			version: "0.0.0",
+			contentDigest: "",
+			provenance: { source: "test" },
+			unresolved: ["addressRole", "upstreamLineage", "coverage"],
+			licenses: [decision],
+			jurisdictions: [
+				{
+					iso2: "ZZ",
+					name: "Testland",
+					backboneState: BackboneState.Unverified,
+					researchState: JurisdictionResearchState.Seeded,
+					bestPath: "G0",
+					assertionPlan: "IDENTITY + OBSERVATION",
+					note: "a fixture",
+				},
+			],
+			sources: [source],
+		}
+	}
+
+	const permits = (because: string) => ({
+		permission: OperationPermission.Permitted,
+		basis: PermissionBasis.PublisherGrant,
+		because,
+	})
+
+	/**
+	 * A grant permitting every act ingest performs and silent on publishing a model trained on it. That is the ordinary
+	 * shape of a national open-data license, which addresses reuse of the data rather than redistribution of a
+	 * statistical model derived from it.
+	 */
+	const ingestOnly: ElectedLicense = {
+		licenseID: "terms-under-review",
+		state: LicenseReviewState.Elected,
+		electedTerms: "Testland Open Data Licence 1.0",
+		retrievedCopy: "data/licenses/testland-1.0.txt",
+		electedBecause: "the only grant the publisher offers",
+		operations: {
+			[SourceOperation.Fetch]: permits("§2 permits copying the published file"),
+			[SourceOperation.Extract]: permits("§2 permits copying the published file"),
+			[SourceOperation.Transform]: permits("§3 permits adaptation"),
+			[SourceOperation.Train]: permits("§3 permits adaptation"),
+		},
+	}
+
+	it("admits a source for ingest when the terms permit every act ingest performs", () => {
+		expect(ingestEligibilityProblems(source, registerWith(ingestOnly))).toEqual([])
+	})
+
+	it("refuses model release on that same grant, because the terms never mention it", () => {
+		// A permissive dataset may be used without becoming publication-cleared. The grant is unchanged and the act
+		// being asked about is different.
+		const problems = ingestEligibilityProblems(source, registerWith(ingestOnly), MODEL_RELEASE_OPERATIONS)
+
+		expect(problems).toHaveLength(2)
+		expect(problems[0]).toContain("unreviewed for redistribute-model")
+		expect(problems[1]).toContain("unreviewed for commercial-sublicense")
+	})
+
+	it("reads an operation the elected terms omit as unreviewed rather than permitted", () => {
+		const reading = permissionFor(ingestOnly, SourceOperation.RedistributeModel)
+
+		expect(reading.permission).toBe(OperationPermission.Unreviewed)
+		expect(reading.because).toContain("do not state whether redistribute-model is permitted")
+	})
+
+	it("reads every operation as unreviewed while the decision is unchecked", () => {
+		const unchecked: LicenseDecision = {
+			licenseID: "terms-under-review",
+			state: LicenseReviewState.Unchecked,
+			publisherStatement: "Free",
+			note: "an access label",
+		}
+
+		for (const operation of Object.values(SourceOperation)) {
+			expect(permissionFor(unchecked, operation).permission).toBe(OperationPermission.Unreviewed)
+		}
+	})
+
+	it("blocks the refused act alone and quotes the reviewer's reason", () => {
+		const refusesCommercial: ElectedLicense = {
+			...ingestOnly,
+			operations: {
+				...ingestOnly.operations,
+				[SourceOperation.RedistributeModel]: permits("§5 permits redistribution of derived works"),
+				[SourceOperation.CommercialSublicense]: {
+					permission: OperationPermission.Refused,
+					because: "§6 restricts reuse to non-commercial purposes",
+				},
+			},
+		}
+
+		expect(ingestEligibilityProblems(source, registerWith(refusesCommercial))).toEqual([])
+
+		expect(ingestEligibilityProblems(source, registerWith(refusesCommercial), MODEL_RELEASE_OPERATIONS)).toEqual([
+			"the elected terms read refused for commercial-sublicense: §6 restricts reuse to non-commercial purposes",
+		])
+	})
+
+	it("fails the audit when a permission names no basis", () => {
+		const unsupported: ElectedLicense = {
+			...ingestOnly,
+			operations: {
+				[SourceOperation.Train]: { permission: OperationPermission.Permitted, because: "it seems fine" },
+			},
+		}
+
+		expect(auditAddressSourceRegister(registerWith(unsupported))).toContain(
+			'license "terms-under-review" permits train and names no basis for the permission'
+		)
 	})
 })

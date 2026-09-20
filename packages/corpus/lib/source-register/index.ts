@@ -15,7 +15,10 @@ export {
 	applyLicenseDecisions,
 	auditAddressSourceRegister,
 	electedLicenseLabel,
+	INGEST_OPERATIONS,
 	ingestEligibilityProblems,
+	MODEL_RELEASE_OPERATIONS,
+	permissionFor,
 	readAddressSourceRegister,
 	registerContentDigest,
 } from "#source-register/register"
@@ -24,9 +27,12 @@ export {
 	BackboneState,
 	JurisdictionResearchState,
 	LicenseReviewState,
+	OperationPermission,
+	PermissionBasis,
 	REGISTER_SECTORS,
 	ResearchPass,
 	SourceGeometry,
+	SourceOperation,
 	SourceStatus,
 	UNRESOLVED_FIELDS,
 } from "#source-register/types"

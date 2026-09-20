@@ -210,6 +210,91 @@ export interface UncheckedLicense {
 }
 
 /**
+ * The acts this repository performs on a source, each of which a grant permits or does not.
+ *
+ * One `license` field answers all of them at once, and a grant rarely does. A publisher may permit copying its file and
+ * say nothing about redistributing a model trained on it. Another may permit non-commercial reuse, which covers
+ * training and refuses the commercial license sold over the result. Recording one decision per source makes the
+ * narrowest of those the answer for every act, or the widest. Which of the two it made is invisible in the record.
+ *
+ * The list is the acts named in the license review, in the order a row moves through them.
+ */
+export const SourceOperation = {
+	/**
+	 * Bulk copy the published dataset into `$MAILWOMAN_DATA_ROOT`.
+	 */
+	Fetch: "fetch",
+	/**
+	 * Read postal addresses out of the copied file.
+	 */
+	Extract: "extract",
+	/**
+	 * Relabel extracted rows into a token and tag corpus.
+	 */
+	Transform: "transform",
+	/**
+	 * Train a statistical model on the transformed rows.
+	 */
+	Train: "train",
+	/**
+	 * Republish the rows themselves, raw or transformed — a packaged database, a lexicon, an index.
+	 */
+	RedistributeData: "redistribute-data",
+	/**
+	 * Publish weights trained on the rows.
+	 */
+	RedistributeModel: "redistribute-model",
+	/**
+	 * Sell a commercial license over the result.
+	 */
+	CommercialSublicense: "commercial-sublicense",
+} as const
+
+export type SourceOperation = (typeof SourceOperation)[keyof typeof SourceOperation]
+
+/**
+ * What a grant says about one operation.
+ *
+ * `Unreviewed` is the default for an operation a decision does not name, and it is not a synonym for refused: it says
+ * nobody has read the terms against this act. A control refuses on it, and a reviewer can tell it apart from a term
+ * somebody read and rejected.
+ */
+export const OperationPermission = {
+	Permitted: "permitted",
+	Refused: "refused",
+	Unreviewed: "unreviewed",
+} as const
+
+export type OperationPermission = (typeof OperationPermission)[keyof typeof OperationPermission]
+
+/**
+ * Where a permission comes from. A grant is the ordinary case. The other two exist so a permission resting on something
+ * other than the publisher's own words says so rather than reading as one.
+ */
+export const PermissionBasis = {
+	PublisherGrant: "publisher-grant",
+	StatutoryException: "statutory-exception",
+	OtherDocumented: "other-documented",
+} as const
+
+export type PermissionBasis = (typeof PermissionBasis)[keyof typeof PermissionBasis]
+
+/**
+ * One operation's reading, with what it rests on.
+ */
+export interface OperationDecision {
+	permission: OperationPermission
+	/**
+	 * Required when the permission is `permitted`. A permission with no stated basis is a claim with no source.
+	 */
+	basis?: PermissionBasis
+	/**
+	 * The sentence in the terms, or the reason for a refusal. Read by a later reviewer rather than re-derived.
+	 */
+	because: string
+}
+
+/**
  * A source whose terms were read and one grant elected. The four required fields are what the corpus acceptance rules
  * ask for: which terms, the copy they were read from, their version where the publisher gives one, and why this grant
  * rather than another. BAN is the case that shaped it — dual-licensed, and the build elects the attribution-only half.
@@ -236,6 +321,14 @@ export interface ElectedLicense {
 	 * Why this grant. A dual-licensed source has an election to explain. A single-grant source says so here.
 	 */
 	electedBecause: string
+	/**
+	 * What the elected terms permit, per operation. An operation this omits reads `unreviewed`, never `permitted`.
+	 *
+	 * Electing terms establishes which grant applies rather than what every act under it is allowed. A publisher
+	 * permitting bulk download and silent on model redistribution has one elected grant and two different answers, and
+	 * the omission is the honest record of the second.
+	 */
+	operations?: Partial<Record<SourceOperation, OperationDecision>>
 }
 
 /**

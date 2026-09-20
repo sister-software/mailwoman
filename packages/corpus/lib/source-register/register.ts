@@ -23,14 +23,17 @@ import {
 	BackboneState,
 	JurisdictionResearchState,
 	LicenseReviewState,
+	OperationPermission,
 	REGISTER_SECTORS,
 	SourceGeometry,
+	SourceOperation,
 	SourceStatus,
 	UNRESOLVED_FIELDS,
 	type AddressSourceRecord,
 	type AddressSourceRegister,
 	type ElectedLicense,
 	type LicenseDecision,
+	type OperationDecision,
 } from "#source-register/types"
 
 /**
@@ -103,9 +106,55 @@ export function applyLicenseDecisions(
  * It answers with the reasons rather than a boolean because "not eligible" is four different situations and a caller
  * told only `false` would have to guess which one it met.
  */
+/**
+ * The operations bringing a source into the corpus performs.
+ *
+ * Redistributing the rows or the weights, and selling a commercial license over either, are separate acts that happen
+ * at publish time rather than at ingest. Asking for them here would refuse a source for an act this build does not
+ * perform, and a control that refuses the wrong act teaches a reader to route around it.
+ */
+export const INGEST_OPERATIONS: readonly SourceOperation[] = [
+	SourceOperation.Fetch,
+	SourceOperation.Extract,
+	SourceOperation.Transform,
+	SourceOperation.Train,
+]
+
+/**
+ * The operations publishing a model trained on a source performs, over and above ingest.
+ */
+export const MODEL_RELEASE_OPERATIONS: readonly SourceOperation[] = [
+	SourceOperation.RedistributeModel,
+	SourceOperation.CommercialSublicense,
+]
+
+/**
+ * What an elected grant says about one operation, with `unreviewed` for an operation it does not name.
+ *
+ * The default is the whole point. An elected grant establishes which terms apply rather than that every act under them
+ * is allowed, so an unnamed operation is one nobody read the terms against. Returning `permitted` for it would turn the
+ * act of electing terms into a blanket permission, which is the reading the per-operation record exists to refuse.
+ */
+export function permissionFor(decision: LicenseDecision, operation: SourceOperation): OperationDecision {
+	if (decision.state !== LicenseReviewState.Elected) {
+		return {
+			permission: OperationPermission.Unreviewed,
+			because: `the decision reads ${decision.state}, so no operation has been read against terms`,
+		}
+	}
+
+	return (
+		decision.operations?.[operation] ?? {
+			permission: OperationPermission.Unreviewed,
+			because: `the elected terms do not state whether ${operation} is permitted`,
+		}
+	)
+}
+
 export function ingestEligibilityProblems(
 	source: AddressSourceRecord,
-	register: AddressSourceRegister
+	register: AddressSourceRegister,
+	operations: readonly SourceOperation[] = INGEST_OPERATIONS
 ): readonly string[] {
 	const problems: string[] = []
 	const decision = register.licenses.find((entry) => entry.licenseID === source.license)
@@ -116,6 +165,14 @@ export function ingestEligibilityProblems(
 		problems.push(
 			`license ${stringifyJSON(source.license)} is ${decision.state}, and only elected terms admit a source`
 		)
+	} else {
+		for (const operation of operations) {
+			const reading = permissionFor(decision, operation)
+
+			if (reading.permission === OperationPermission.Permitted) continue
+
+			problems.push(`the elected terms read ${reading.permission} for ${operation}: ${reading.because}`)
+		}
 	}
 
 	if (source.status === SourceStatus.RetainedOriginal) {
@@ -270,6 +327,30 @@ function auditElected(decision: ElectedLicense, named: string): string[] {
 
 	if (!decision.electedBecause) {
 		problems.push(`license ${named} is elected and gives no reason`)
+	}
+
+	for (const [operation, reading] of Object.entries(decision.operations ?? {})) {
+		if (!reading.because) {
+			problems.push(`license ${named} reads ${reading.permission} for ${operation} and gives no reason`)
+		}
+
+		// A permission is a claim about somebody else's terms, and one with no stated basis cannot be checked against
+		// them. A refusal needs none: it withholds rather than asserts.
+		if (reading.permission === OperationPermission.Permitted && !reading.basis) {
+			problems.push(`license ${named} permits ${operation} and names no basis for the permission`)
+		}
+
+		if (!(Object.values(OperationPermission) as string[]).includes(reading.permission)) {
+			problems.push(
+				`license ${named} reads an unknown permission ${stringifyJSON(reading.permission)} for ${operation}`
+			)
+		}
+
+		if (!(Object.values(SourceOperation) as string[]).includes(operation)) {
+			problems.push(
+				`license ${named} names ${stringifyJSON(operation)}, which is not an operation this repository performs`
+			)
+		}
 	}
 
 	return problems
