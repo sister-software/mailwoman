@@ -32,6 +32,23 @@ would be erased by the next run with no error, because the write below replaces 
 The `oxfmt` pass is required — committed JSON is oxfmt-clean, which `JSON.stringify` cannot
 reproduce. The generator is deterministic, so the artifact is reproducible from the same inputs.
 
+### What no check can establish about this file (#2352)
+
+Regeneration is the only thing that catches a hand edit to a generated artifact, and regeneration
+needs the two `.notes/` CSVs, which `.gitignore:3` excludes. No CI runner has them. So the register's
+correctness rests on whoever last ran the command above, and `auditAddressSourceRegister` does not
+change that: it checks the file's structure, and a publisher's name rewritten to something that names
+no institution is structurally sound.
+
+A committed digest would not close it either. A sweep that edits the artifact and the digest together
+passes, and one that edits only the artifact fails without saying which side is right.
+
+This is the arrangement that let a prose sweep rewrite `Contracts Finder / Find a Tender` to
+`Interfaces Finder / Find a Tender` and `National Database of Public Contracts` to
+`National Database of Public Interfaces`, and let it stand until somebody regenerated. Both are
+restored, and a reader who finds a name here that resolves to no institution should regenerate before
+concluding the publisher renamed itself.
+
 ### Inputs, as of the committed build
 
 | file                                           |  rows | what is read                                                           |

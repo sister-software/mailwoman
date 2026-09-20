@@ -106,6 +106,27 @@ Run `yarn lint` for lint, formatting, prose, dependency, and repository-health c
 `yarn typecheck` for build and test type checking. Run the narrow package tests during iteration and
 the affected workspace's complete tests before handoff. Do not claim a command passed unless it ran.
 
+## Sweeping a word across the tree
+
+A vocabulary rule governs how this repository writes prose. It does not govern a string the repository
+stores, quotes, or sends. Before applying one beyond the file in front of you, decide which of those
+each match is.
+
+Four kinds of match are data rather than prose, and each has been corrupted by a sweep. An external
+name, where the publisher's own spelling is the correct one: Iowa's `Active Construction Contractor
+Registrations`, the UK's `Contracts Finder`, an Overture category id. A wire identifier, which is the
+`source` string on every row of a built corpus and the key a training config's `source_weights` map
+addresses. A recorded fact in a golden answer key, a preregistration, an eval receipt or a released
+SBOM, where the record's value is that it says what it said at the time. And a verbatim quotation of
+someone else's text, including a clause of a license agreement.
+
+State the file types a sweep touched in its commit message, so a later reader can tell whether a
+generated artifact was in its path. A generated file is reproduced from its inputs rather than edited,
+and `packages/corpus/data/PROVENANCE.md` records which of those inputs are not committed.
+
+`config/vale/styles/` holds the rules and their repairs. `lint-prose.ts` reads `.ts`, `.tsx`, `.py`,
+`.yaml`, `.yml`, `.md` and `.mdx`, so a JSON or JSONL file it changed was changed by hand.
+
 ## Moving a workspace
 
 After moving a workspace, search quoted path literals whose first segment is the old workspace name.
