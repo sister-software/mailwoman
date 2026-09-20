@@ -41,6 +41,7 @@ import { isoDate } from "@mailwoman/core/utils"
 import { resolvePath } from "path-ts"
 
 import { readMailwomanManifest } from "#cli/kit/metadata"
+import { attributionReport, renderAttributionReport } from "#cli/native/commands/license/attribution"
 import {
 	booleanValue,
 	CLIError,
@@ -60,7 +61,11 @@ export const spec = {
 	description:
 		"Mint, issue, verify, adopt and refresh commercial license keys. `keygen` writes an Ed25519 signing pair under $MAILWOMAN_CONFIG_ROOT/license and prints the public key with its id; `issue` signs a key for a licensee; `verify` checks a token offline against the public keys this build trusts; `register` prints the well-known key file the shipped register derives; `adopt <token> --secret <s>` writes a purchased key to $MAILWOMAN_CONFIG_ROOT/license/key and its refresh secret beside it; `refresh` fetches the current key after a renewal. Without a key the AGPL-3.0-only branch applies — `mailwoman doctor` says which branch applies and why.",
 	positionals: [
-		{ name: "action", description: "One of: keygen, issue, verify, register, adopt, refresh.", required: true },
+		{
+			name: "action",
+			description: "One of: keygen, issue, verify, register, adopt, refresh, attribution.",
+			required: true,
+		},
 		{ name: "argument", description: "adopt: the token to adopt.", required: false },
 	],
 	options: {
@@ -420,6 +425,26 @@ async function verifyCommand(parsed: ParsedCommand): Promise<number> {
 	return ok ? 0 : 1
 }
 
+/**
+ * `license attribution` — what this installation owes upstream, read off the packages it has.
+ *
+ * An action on `license` rather than a command of its own, because it answers a question about the same subject and a
+ * new top-level name would need a design nobody has asked for. It reads no key and changes no verification path.
+ */
+async function attributionCommand(parsed: ParsedCommand): Promise<number> {
+	const report = await attributionReport((await readMailwomanManifest()).license)
+
+	if (booleanValue(parsed.values, "json")) {
+		process.stdout.write(`${prettyJSON(report)}\n`)
+
+		return 0
+	}
+
+	process.stdout.write(`${renderAttributionReport(report).join("\n")}\n`)
+
+	return 0
+}
+
 async function registerCommand(parsed: ParsedCommand): Promise<number> {
 	const document = prettyJSON(publishedLicenseKeys())
 
@@ -454,9 +479,11 @@ export async function run(args: readonly string[]): Promise<number> {
 				return await adopt(parsed)
 			case "refresh":
 				return await refresh(parsed)
+			case "attribution":
+				return await attributionCommand(parsed)
 			default:
 				throw new CLIUsageError(
-					`Unknown action ${stringifyJSON(action)}. Expected keygen, issue, verify, register, adopt or refresh.`
+					`Unknown action ${stringifyJSON(action)}. Expected keygen, issue, verify, register, adopt, refresh or attribution.`
 				)
 		}
 	})

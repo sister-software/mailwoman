@@ -297,6 +297,11 @@
 			"node": "./lib/cli/native/spec.ts",
 			"default": "./out/cli/native/spec.js"
 		},
+		"./cli-native/license-attribution": {
+			"types": "./out/cli/native/commands/license/attribution.d.ts",
+			"node": "./lib/cli/native/commands/license/attribution.ts",
+			"default": "./out/cli/native/commands/license/attribution.js"
+		},
 		"./commands/parse": {
 			"types": "./out/commands/parse.d.ts",
 			"node": "./lib/commands/parse.tsx",
