@@ -85,6 +85,25 @@ export async function trackedFiles(repoRoot: PathBuilderLike, pathspecs: string[
 }
 
 /**
+ * Every path in the working tree that git would carry, repo-relative: the tracked ones and the untracked ones an ignore
+ * rule does not cover, optionally narrowed by git pathspecs.
+ *
+ * The set a checker over the repository's own contents wants. {@linkcode trackedFiles} answers what is committed, so a
+ * file written a minute ago is absent from it — and a checker reading that list reports a clean result for a file it
+ * never opened. `--exclude-standard` applies `.gitignore`, so a build output stays out and only a file somebody intends
+ * to commit comes in.
+ */
+export async function workingTreeFiles(repoRoot: PathBuilderLike, pathspecs: string[] = []): Promise<string[]> {
+	const output = await git(
+		repoRoot,
+		["ls-files", "-z", "--cached", "--others", "--exclude-standard", ...pathspecs],
+		64 * 1024 * 1024
+	)
+
+	return output.split("\0").filter((path) => path.length)
+}
+
+/**
  * Every path this repository has ever renamed away from or deleted, across all refs.
  *
  * The set that separates a reference to something that moved from a reference to something that never existed — the
