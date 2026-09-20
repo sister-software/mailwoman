@@ -62,7 +62,7 @@ Thirteen `neural-weights-*` workspaces. Twelve publish; `base-latn` is private.
 | package     | manifest | model card | SPDX field                               | declared artifacts | recorded digests | attribution entries | base    |
 | ----------- | -------- | ---------- | ---------------------------------------- | -----------------: | ---------------: | ------------------: | ------- |
 | `base-latn` | 7.8.1    | —          | `AGPL-3.0-only OR LicenseRef-Commercial` |                  8 |                0 |                   0 | —       |
-| `cjk`       | 10.0.0   | 0.0.3      | `AGPL-3.0-only OR LicenseRef-Commercial` |                  4 |                2 |                   0 | —       |
+| `cjk`       | 10.0.0   | 0.0.3      | `AGPL-3.0-only OR LicenseRef-Commercial` |                  4 |                2 |                   6 | —       |
 | `de-de`     | 10.0.0   | 7.0.0      | `AGPL-3.0-only OR LicenseRef-Commercial` |                  7 |                0 |                   0 | `en-us` |
 | `en-au`     | 10.0.0   | 9.0.0      | `AGPL-3.0-only OR LicenseRef-Commercial` |                  6 |                0 |                   0 | `en-us` |
 | `en-gb`     | 10.0.0   | 9.0.0      | `AGPL-3.0-only OR LicenseRef-Commercial` |                 10 |                0 |                   0 | `en-us` |
@@ -129,10 +129,15 @@ means and how it relates to `package_version`. The numbers are left free to diff
 lexicon files, a US postcode binary, a placetype-pair index built from the Who's On First admin
 hierarchy, and two FST binaries. One `data_attribution` list covers the package.
 
-### One package carries training attribution
+### Two packages carry training attribution, under two different keys
 
-`en-us` has ten `data_attribution` entries. The other twelve have none, `cjk` included, which ships
-its own `model.onnx` rather than inheriting one.
+`en-us` has ten entries at `training.data_attribution`. `cjk` has six at a top-level `attribution`.
+Those are the two packages that ship a model graph. The ten overlays record none, which is consistent
+with inheriting a graph and says nothing about the artifacts each overlay ships itself.
+
+The table above counted `en-us` alone, because the first reading of these cards looked at
+`training.data_attribution` and stopped. Reading one spelling reports the other package as recording
+nothing.
 
 One of those ten entries attributes an artifact that ships in a different package. Entry 1 names
 `pair-index-gb.bin` in `neural-weights-en-gb`, attributing it to HM Land Registry Price Paid Data
@@ -322,10 +327,21 @@ unaccounted for at the moment of publication. Missing evidence about a source is
 while a finding against a source is a conclusion somebody has to reach, and a release control is not
 the place to reach it.
 
-**Consequence to act on.** `neural-weights-cjk` carries a `training` section recording its corpus and
-no `data_attribution` at all. A character-path model release is refused today until that card records
-the sources the run trained on. `neural-weights-en-us` passes with ten entries, two of which name no
-license: the OpenAddresses PL entry and the pointer to `THIRD_PARTY_NOTICES.md`.
+**Correcting a false absence this control first reported.** The first version read
+`training.data_attribution` alone and refused `neural-weights-cjk` as recording nothing. That card
+records six entries under a top-level `attribution` key instead, naming the Overture CDLA terms, the
+National Tax Agency's 利用規約, KOGL Type 1 for the Korean road-name address database, the Korean
+permit registry's 이용허락범위 제한 없음, and the Taiwanese Open Government Data License v1.0 together
+with the fifteen civil affairs bureaux whose 顯名聲明 that license makes a condition of the grant.
+
+Two spellings exist because the two graph packages were written apart, and both are read. A control
+that answers a false absence refuses a release nobody needed to block, and the absence it reports
+cannot be told from a real one.
+
+Both graph packages pass. `en-us` records ten entries, eight naming a license; the two that do not are
+the OpenAddresses PL entry, whose parenthetical reads `public, BDOT-derived`, and the pointer to
+`THIRD_PARTY_NOTICES.md`. `cjk` records six, four naming a license; the two that do not state their
+terms outside a parenthetical rather than stating none.
 
 ## What the record leaves open
 

@@ -279,18 +279,25 @@ async function verifyRequiredFiles(args: PublishHFOptions): Promise<void> {
  * this refuses.
  */
 export async function verifyTrainingProvenance(cardPath: string): Promise<void> {
-	const card = await readLocalJSONFile<{ training?: { data_attribution?: unknown } }>(cardPath)
-	const entries = card.training?.data_attribution
+	const card = await readLocalJSONFile<{ attribution?: unknown; training?: { data_attribution?: unknown } }>(cardPath)
 
-	if (!Array.isArray(entries) || !entries.length) {
+	// Both spellings the two graph packages use. `en-us` records its entries at `training.data_attribution` and `cjk`
+	// at a top-level `attribution`, so reading one reports the other as recording nothing — a false absence, and the
+	// one answer a control like this must never give.
+	const entries = [card.training?.data_attribution, card.attribution]
+		.filter((candidate): candidate is unknown[] => Array.isArray(candidate))
+		.map((candidate) => candidate.filter((entry): entry is string => typeof entry === "string"))
+		.find((candidate) => candidate.length)
+
+	if (!entries) {
 		fail(
-			`${cardPath} records no training.data_attribution, so this upload would publish a model whose sources nothing states. ` +
+			`${cardPath} records attribution at neither training.data_attribution nor attribution, so this upload would publish a model whose sources nothing states. ` +
 				"Record the sources the run trained on in the card before publishing. " +
 				"See docs/engineering/reference/artifact-rights-inventory.mdx."
 		)
 	}
 
-	console.error(`  ✓ training.data_attribution: ${entries.length} entries`)
+	console.error(`  ✓ recorded training sources: ${entries.length} entries`)
 
 	// A parenthetical carrying a version number or a known family name is how the cards state a license. An entry
 	// without one is reported with its text, so the operator sees which source is unaccounted for at the moment of

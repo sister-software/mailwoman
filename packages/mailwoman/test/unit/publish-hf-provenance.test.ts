@@ -19,21 +19,21 @@ import { verifyTrainingProvenance } from "mailwoman/release-tools/publish-hf"
 import { join, resolvePath } from "path-ts"
 import { describe, expect, it } from "vitest"
 
-async function cardWith(training: object | undefined): Promise<{ path: string; dispose: () => Promise<void> }> {
+async function cardWith(card: object): Promise<{ path: string; dispose: () => Promise<void> }> {
 	const directory = await temporaryDirectory("mw-hf-provenance-")
 	const path = join(directory.path, "model-card.json")
 
-	await writeLocalJSONFile({ name: "fixture", version: "1.0.0", ...(training ? { training } : {}) }, path)
+	await writeLocalJSONFile({ name: "fixture", version: "1.0.0", ...card }, path)
 
 	return { path: String(path), dispose: async () => void (await directory[Symbol.asyncDispose]()) }
 }
 
 describe("verifyTrainingProvenance", () => {
 	it("refuses a card with no training section", async () => {
-		const card = await cardWith(undefined)
+		const card = await cardWith({})
 
 		try {
-			await expect(verifyTrainingProvenance(card.path)).rejects.toThrow(/records no training.data_attribution/)
+			await expect(verifyTrainingProvenance(card.path)).rejects.toThrow(/records attribution at neither/)
 		} finally {
 			await card.dispose()
 		}
@@ -41,11 +41,30 @@ describe("verifyTrainingProvenance", () => {
 
 	it("refuses a card whose training section records an empty attribution list", async () => {
 		// The distinction this pins: a card can carry a full training section — corpus, recipe, hardware — and still
-		// state nothing about where the rows came from. `neural-weights-cjk` is in exactly that state.
-		const card = await cardWith({ corpus_version: "v0.32.0-locality-shape", data_attribution: [] })
+		// state nothing about where the rows came from.
+		const card = await cardWith({
+			training: { corpus_version: "v0.32.0-locality-shape", data_attribution: [] },
+		})
 
 		try {
-			await expect(verifyTrainingProvenance(card.path)).rejects.toThrow(/records no training.data_attribution/)
+			await expect(verifyTrainingProvenance(card.path)).rejects.toThrow(/records attribution at neither/)
+		} finally {
+			await card.dispose()
+		}
+	})
+
+	it("reads the top-level attribution key, which the character-path card uses", async () => {
+		// Reading `training.data_attribution` alone reported `neural-weights-cjk` as recording nothing, when its card
+		// carries six entries under `attribution`. A control that answers a false absence refuses a release nobody
+		// needed to block, and the absence it reports is indistinguishable from a real one.
+		const card = await cardWith({
+			attribution: [
+				"Korean road-name address data (주소DB): 행정안전부, 공공누리 제1유형 (KOGL Type 1) — attribution required.",
+			],
+		})
+
+		try {
+			await expect(verifyTrainingProvenance(card.path)).resolves.toBeUndefined()
 		} finally {
 			await card.dispose()
 		}
@@ -53,7 +72,9 @@ describe("verifyTrainingProvenance", () => {
 
 	it("admits an entry that names no license, because a gap in the record is not a finding against the source", async () => {
 		const card = await cardWith({
-			data_attribution: ["OpenAddresses PL — GUGiK / PRG (public, BDOT-derived): tokenizer-splice training text"],
+			training: {
+				data_attribution: ["OpenAddresses PL — GUGiK / PRG (public, BDOT-derived): tokenizer-splice training text"],
+			},
 		})
 
 		try {
@@ -69,9 +90,9 @@ describe("verifyTrainingProvenance", () => {
 		await expect(verifyTrainingProvenance(String(card))).resolves.toBeUndefined()
 	})
 
-	it("refuses the character-path card, which records its corpus and none of its sources", async () => {
+	it("admits the character-path card, whose six entries sit under the other spelling", async () => {
 		const card = resolvePath(repoRootPath(), "packages/neural-weights-cjk/model-card.json")
 
-		await expect(verifyTrainingProvenance(String(card))).rejects.toThrow(/records no training.data_attribution/)
+		await expect(verifyTrainingProvenance(String(card))).resolves.toBeUndefined()
 	})
 })

@@ -107,7 +107,8 @@ export interface WeightsRightsRecord {
 	baseWeights: string | null
 	artifacts: ArtifactRecord[]
 	/**
-	 * The card's `training.data_attribution` entries. An empty array means the card records none.
+	 * The card's attribution entries, from whichever of the two spellings it uses. An empty array means the card records
+	 * none under either.
 	 */
 	attribution: AttributionRecord[]
 	foreignAttribution: ForeignAttribution[]
@@ -122,7 +123,14 @@ export interface WeightsRightsRecord {
 interface ModelCard {
 	version?: unknown
 	files_md5?: unknown
+	/**
+	 * The spelling `cjk` uses.
+	 */
+	attribution?: unknown
 	training?: {
+		/**
+		 * The spelling `en-us` uses.
+		 */
 		data_attribution?: unknown
 		corpus_version?: unknown
 		tokenizer_version?: unknown
@@ -130,22 +138,57 @@ interface ModelCard {
 }
 
 /**
+ * The attribution entries a card holds, under either spelling the two graph packages use.
+ *
+ * `en-us` records them at `training.data_attribution` and `cjk` at a top-level `attribution`. Reading one spelling
+ * reports the other package as recording nothing, which is the reading this whole record exists to refuse: `cjk`
+ * carries six entries, each naming its license, including the Taiwanese Open Government Data License that voids without
+ * its 顯名聲明 and the fifteen civil affairs bureaux that license names.
+ *
+ * Both are read rather than one being migrated to the other, because a model card is a published artifact: the twelve
+ * on npm carry the spelling they were published with, and a reader of this repository has to match them.
+ */
+function attributionEntries(card: ModelCard | null): string[] {
+	const candidates = [card?.training?.data_attribution, card?.attribution]
+
+	for (const candidate of candidates) {
+		if (!Array.isArray(candidate)) continue
+
+		const entries = candidate.filter((entry): entry is string => typeof entry === "string")
+
+		if (entries.length) return entries
+	}
+
+	return []
+}
+
+/**
  * The license a card's attribution entry names, from the parenthetical the entries use — `LINZ-derived OpenAddresses NZ
- * (CC-BY 4.0): …` names `CC-BY 4.0`. `null` when the entry has no such parenthetical, which includes the OA PL entry
- * whose parenthetical reads `public, BDOT-derived` and names no license at all.
+ * (CC-BY 4.0): …` yields `CC-BY 4.0`. `null` when no parenthetical in the entry holds one, which includes the OA PL
+ * entry whose parenthetical reads `public, BDOT-derived`.
+ *
+ * A `null` here reports what this reader found rather than what the entry grants. Two of `cjk`'s entries state their
+ * terms as 利用規約 and 이용허락범위 제한 없음, outside any parenthetical, so they read `null` while naming terms. The entry text
+ * travels verbatim beside this field for that reason.
  */
 export function licenseNamedIn(entry: string): string | null {
-	const parenthetical = /\(([^()]{1,120})\)/u.exec(entry)
+	// Every parenthetical rather than the first. An entry commonly opens with the dataset's own name — `Korean
+	// road-name address data (주소DB): 행정안전부 …, 공공누리 제1유형 (KOGL Type 1)` — and reading only the first reports an entry
+	// that names KOGL Type 1 as naming no license at all.
+	for (const match of entry.matchAll(/\(([^()]{1,120})\)/gu)) {
+		const inner = match[1]!.trim()
 
-	if (!parenthetical) return null
+		// A license identifier carries a version number, or a family name this repository recognizes, or the word
+		// `license` in one of its spellings. `public, BDOT-derived` carries none of the three and describes access
+		// rather than a grant.
+		const namesLicense =
+			/\d/u.test(inner) ||
+			/\b(?:CC0|CC-BY|CC|ODbL|PDDL|OGL|OGDL|KOGL|CDLA|Etalab|MIT|Apache|Licence|License|Lizenz)\b/iu.test(inner)
 
-	const inner = parenthetical[1]!.trim()
+		if (namesLicense) return inner
+	}
 
-	// A license identifier carries a version, a `CC`/`OGL`/`CC0` family name, or the word `license`. `public,
-	// BDOT-derived` carries none of the three and is a description of access rather than a grant.
-	const namesLicense = /\d/u.test(inner) || /\b(?:CC0|CC-BY|CC|ODbL|OGL|MIT|Apache|Licence|License)\b/iu.test(inner)
-
-	return namesLicense ? inner : null
+	return null
 }
 
 /**
@@ -195,9 +238,7 @@ export async function readWeightsRightsRecord(repoRoot: string, workspace: strin
 			return { path, md5, digest: md5 ? "recorded" : "unrecorded" }
 		})
 
-	const attributionEntries = Array.isArray(card?.training?.data_attribution)
-		? card.training.data_attribution.filter((entry): entry is string => typeof entry === "string")
-		: []
+	const attribution = attributionEntries(card)
 
 	return {
 		workspace,
@@ -208,7 +249,7 @@ export async function readWeightsRightsRecord(repoRoot: string, workspace: strin
 		versionSeries: baseWeights ? VersionSeries.Overlay : VersionSeries.Model,
 		baseWeights,
 		artifacts,
-		attribution: attributionEntries.map((text) => ({ text, licenseNamed: licenseNamedIn(text) })),
+		attribution: attribution.map((text) => ({ text, licenseNamed: licenseNamedIn(text) })),
 		foreignAttribution: [],
 		corpusVersion: stringOrNull(card?.training?.corpus_version),
 		tokenizerVersion: stringOrNull(card?.training?.tokenizer_version),
