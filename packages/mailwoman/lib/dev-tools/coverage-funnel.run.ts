@@ -15,8 +15,15 @@
  *     node packages/mailwoman/lib/dev-tools/coverage-funnel.run.ts
  *     node packages/mailwoman/lib/dev-tools/coverage-funnel.run.ts --out-json <path>
  *     node packages/mailwoman/lib/dev-tools/coverage-funnel.run.ts --config <training config> --rows
+ *     node packages/mailwoman/lib/dev-tools/coverage-funnel.run.ts --mixture-audit <epoch-mixture-audit.json>
+ *
+ * `--mixture-audit` takes what `python -m mailwoman_train.audits.epoch_mixture --json` writes and fills the `sampled`
+ * stage. Without it that stage reads `unknown` for all 250, because how many rows a country contributes to an epoch is
+ * a property of a run.
  */
 
+import { POSTAL_REGIMES } from "@mailwoman/codex/postal-regimes"
+import { readLocalJSONFile } from "@mailwoman/core/fs/readers"
 import { writeLocalJSONFile } from "@mailwoman/core/fs/writers"
 import { dirtyTrackedFiles, gitHead } from "@mailwoman/core/git"
 import { repoRootPath } from "@mailwoman/core/paths"
@@ -38,9 +45,42 @@ const { values } = parseArguments({
 	options: {
 		"out-json": { type: "string" },
 		config: { type: "string" },
+		"mixture-audit": { type: "string" },
 		rows: { type: "boolean", default: false },
 	},
 })
+
+/**
+ * What `mailwoman_train.audits.epoch_mixture --json` writes, down to the two fields this reads.
+ *
+ * The emitted level is the one that answers the stage. Draw level counts what the sampler pulled, and emitted level
+ * counts what survived augmentation to fill the trainer's row budget — the rows a run actually trains on.
+ */
+interface EpochMixtureAudit {
+	emitted_level?: { by_country?: Record<string, number> }
+}
+
+/**
+ * Rows sampled per country in one audited epoch, and the epoch's total.
+ *
+ * A country absent from `by_country` stays absent from the map rather than reading zero. The funnel then leaves its
+ * `sampled` stage `unknown`: the audit reports the countries it drew, and a name it never mentions was not measured.
+ */
+async function readMixtureAudit(path: string): Promise<{ rows: Map<string, number>; total: number }> {
+	const audit = await readLocalJSONFile<EpochMixtureAudit>(path)
+	const byCountry = audit.emitted_level?.by_country
+
+	if (!byCountry) {
+		throw new Error(
+			`${path} carries no \`emitted_level.by_country\`. That is the field this reads, and a file without it is ` +
+				"either a different report or a truncated one — either way it cannot answer the sampled stage."
+		)
+	}
+
+	const rows = new Map(Object.entries(byCountry))
+
+	return { rows, total: [...rows.values()].reduce((sum, count) => sum + count, 0) }
+}
 
 /**
  * The training config the `admitted` stage reads when the caller names none.
@@ -71,10 +111,14 @@ const report = await censusCoverage({
 
 const scope = await readScopeConfig(repoRoot)
 
+const mixture = values["mixture-audit"] ? await readMixtureAudit(values["mixture-audit"]) : undefined
+
 const funnel = await readCoverageFunnel({
 	coverage: report.countries,
 	tieredCountries: [...tieredCountries(scope)],
 	protectedCountries: dRuleCountries(scope).map((entry) => entry.country),
+	...(values["mixture-audit"] ? { mixtureAudit: values["mixture-audit"] } : {}),
+	...(mixture ? { sampledRows: mixture.rows, sampledTotal: mixture.total } : {}),
 })
 
 console.log(`\n# Coverage funnel — ${funnel.provenance.jurisdictions} jurisdictions`)
@@ -131,6 +175,28 @@ for (const entry of OPPORTUNITY_INPUTS) {
 console.log(
 	`\nExisting package and board coverage is deliberately absent from that list. It lowers what work costs and is ` +
 		`not evidence of need.`
+)
+
+// The funnel counts jurisdictions, and a jurisdiction is not always the parser unit. A regime reported here is one
+// whose addresses the funnel's row for its parent country says nothing about: SH's row describes one place where
+// three postal systems live, and a BFPO address is counted under GB while nothing parses it as GB.
+console.log(`\n## Postal regimes — where the parser unit is not the ISO country code\n`)
+console.log(`| regime | kind | ISO | coverage | parent jurisdictions' stages reached |`)
+console.log(`| --- | --- | --- | --- | --- |`)
+
+const reachedByCountry = new Map(funnel.rows.map((row) => [row.iso2, row.reached]))
+
+for (const regime of POSTAL_REGIMES) {
+	const parents = regime.iso2.map((code) => `${code}:${reachedByCountry.get(code) ?? "—"}`).join(" ")
+
+	console.log(`| ${regime.regimeID} | ${regime.kind} | ${regime.iso2.join(" ")} | ${regime.coverage} | ${parents} |`)
+}
+
+const unmodeled = POSTAL_REGIMES.filter((regime) => regime.coverage !== "modeled").length
+
+console.log(
+	`\n${unmodeled} of ${POSTAL_REGIMES.length} regimes are not modeled. An address written in one of those parses ` +
+		`as an ordinary address of its parent country, and the parent's funnel row says nothing about that.`
 )
 
 if (values.rows) {

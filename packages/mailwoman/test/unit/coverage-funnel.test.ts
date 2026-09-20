@@ -11,10 +11,14 @@
  */
 
 import {
+	type AddressSourceRecord,
 	type AddressSourceRegister,
 	BackboneState,
+	type JurisdictionRecord,
 	JurisdictionResearchState,
 	LicenseReviewState,
+	ResearchPass,
+	SourceGeometry,
 	SourceStatus,
 } from "@mailwoman/corpus/source-register"
 import { AssertedProposition } from "@mailwoman/evidence/status"
@@ -22,7 +26,7 @@ import type { CountryCoverage } from "mailwoman/coverage"
 import { FUNNEL_STAGES, incumbencyGroups, readCoverageFunnel, StageState } from "mailwoman/eval-harness/coverage-funnel"
 import { describe, expect, it } from "vitest"
 
-function jurisdiction(iso2: string, overrides: Record<string, unknown> = {}) {
+function jurisdiction(iso2: string, overrides: Partial<JurisdictionRecord> = {}): JurisdictionRecord {
 	return {
 		iso2,
 		name: iso2,
@@ -35,18 +39,18 @@ function jurisdiction(iso2: string, overrides: Record<string, unknown> = {}) {
 	}
 }
 
-function source(iso2: string, licenseID: string) {
+function source(iso2: string, licenseID: string): AddressSourceRecord {
 	return {
 		sourceID: `${iso2.toLowerCase()}-health-1`,
 		iso2,
-		sector: "health" as const,
+		sector: "health",
 		name: `${iso2} facility register`,
 		status: SourceStatus.VerifiedAuthority,
 		asserts: [AssertedProposition.Identity],
 		authorityBasis: "national",
-		geometry: "unresolved" as const,
+		geometry: SourceGeometry.Unresolved,
 		license: licenseID,
-		researchPass: "2026-09-18-web-research" as const,
+		researchPass: ResearchPass.WebResearch,
 		access: "portal",
 		publisher: `${iso2} ministry`,
 		sourceURL: "https://example.invalid",
@@ -86,7 +90,7 @@ function testRegister(): AddressSourceRegister {
 			jurisdiction("IO", { researchState: JurisdictionResearchState.Unexamined }),
 		],
 		sources: [source("US", "elected-open"), source("KE", "unchecked-national-terms")],
-	} as unknown as AddressSourceRegister
+	}
 }
 
 const US_COVERAGE: CountryCoverage = {
@@ -177,20 +181,31 @@ describe("readCoverageFunnel", () => {
 		}
 	})
 
-	it("reads a country admitted but sampling zero rows as blocked once an audit supplies it", async () => {
+	it("reads an admitted country the audit never drew as a measured zero, not an unknown", async () => {
+		// An audit's `by_country` enumerates every country it drew, so KE — admitted, and absent from the audit — drew
+		// zero of the 250,000 rows sampled. Measured on the audit's own denominator rather than unknown. This is the
+		// shape the real v5.9.0 audit reports for 97 of 135 admitted countries.
 		const report = await funnel({
-			sampledRows: new Map([
-				["US", 250_000],
-				["KE", 0],
-			]),
+			sampledRows: new Map([["US", 250_000]]),
 			sampledTotal: 250_000,
 		})
 
+		const kenya = report.rows.find((row) => row.iso2 === "KE")
+
 		expect(report.rows.find((row) => row.iso2 === "US")?.stages.sampled.state).toBe(StageState.Reached)
-		expect(report.rows.find((row) => row.iso2 === "KE")?.stages.sampled.state).toBe(StageState.Blocked)
-		// A jurisdiction the audit never mentions stays unknown: the audit reports what it sampled, and a name absent
-		// from it was not measured rather than measured at zero.
-		expect(report.rows.find((row) => row.iso2 === "AQ")?.stages.sampled.state).toBe(StageState.Unknown)
+		expect(kenya?.stages.sampled.state).toBe(StageState.Blocked)
+		expect(kenya?.stages.sampled.detail).toContain("250000")
+	})
+
+	it("reads a country the config never admitted as absent rather than blaming the sampler", async () => {
+		// AQ carries no census row, so it is not admitted. It cannot draw, and reporting it as a sampling failure would
+		// attribute the admission filter's decision to the sampler.
+		const report = await funnel({
+			sampledRows: new Map([["US", 250_000]]),
+			sampledTotal: 250_000,
+		})
+
+		expect(report.rows.find((row) => row.iso2 === "AQ")?.stages.sampled.state).toBe(StageState.Absent)
 	})
 
 	it("counts every jurisdiction once per stage, across all four states", async () => {

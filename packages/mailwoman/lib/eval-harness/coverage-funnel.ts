@@ -3,8 +3,8 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   The funnel from every jurisdiction the source register knows to the few a release check protects, over one
- *   denominator.
+ *   The funnel from every jurisdiction the source register knows to the few a named release check would fail a
+ *   regression on, over one denominator.
  *
  *   `#coverage/census` already assembles five registers — corpus rows, `country_weights` admission, the gauntlet
  *   board, the serving gazetteer, and the published weights packages — into one row per country, and names five ways
@@ -132,7 +132,7 @@ export interface CoverageFunnelInput {
 	 */
 	tieredCountries: readonly string[]
 	/**
-	 * Countries a named release check protects: tier 1 plus `dRuleProtected`.
+	 * Countries a named release check fails a regression on: tier 1 plus `dRuleProtected`.
 	 */
 	protectedCountries: readonly string[]
 	/**
@@ -189,7 +189,8 @@ export async function readCoverageFunnel(input: CoverageFunnelInput): Promise<Co
 				: { state: StageState.Absent, detail: "no source to license" }
 
 		// The census counts a country's rows from the corpus manifest. A jurisdiction absent from the census report is
-		// absent from all five of its registers, which includes the corpus, so zero rows is the measured reading.
+		// absent from all five of its registers. The corpus is one of those five, so zero rows here is a measured
+		// reading rather than a gap in this instrument.
 		const corpusRows: StageReading = country?.corpusRows
 			? {
 					state: StageState.Reached,
@@ -201,25 +202,34 @@ export async function readCoverageFunnel(input: CoverageFunnelInput): Promise<Co
 			? { state: StageState.Reached, detail: "named in the training config's country_weights" }
 			: { state: StageState.Absent, detail: "absent from the training config's country_weights" }
 
-		// How many rows a country contributes to an epoch is decided by the sampler at run time, not by the config: a
-		// country admitted at weight 1.0 whose sources hold no rows samples nothing. Printing `absent` without a mixture
-		// audit would claim that outcome for every country.
+		// The sampler decides at run time how many rows a country contributes. The config states a weight, and a country
+		// admitted at weight 1.0 whose sources hold no rows still draws nothing.
+		//
+		// An audit's `by_country` enumerates every country it drew, so a country missing from it drew zero of the audit's
+		// own denominator. That is a measured zero over a stated sample rather than an unknown, which is why an admitted
+		// country absent from the audit reads `blocked` and carries the denominator. A country the config never admitted
+		// reads `absent` instead: it cannot draw, and reporting it as a sampling failure would blame the sampler for the
+		// admission filter's decision.
 		const sampledCount = input.sampledRows?.get(iso2)
 
-		const sampled: StageReading =
-			sampledCount === undefined
+		const sampled: StageReading = !input.sampledRows
+			? {
+					state: StageState.Unknown,
+					detail: "no audit_epoch_mixture output supplied — pass one to answer this stage",
+				}
+			: sampledCount
 				? {
-						state: StageState.Unknown,
-						detail: "no audit_epoch_mixture output supplied — pass one to answer this stage",
+						state: StageState.Reached,
+						detail: `${sampledCount} row(s) drawn of ${input.sampledTotal ?? "an unreported number"} audited`,
 					}
-				: sampledCount > 0
+				: country?.admitted
 					? {
-							state: StageState.Reached,
-							detail: `${sampledCount} row(s) sampled of ${input.sampledTotal ?? "an unreported"} in the epoch`,
+							state: StageState.Blocked,
+							detail: `admitted, and drew 0 of the ${input.sampledTotal ?? "audited"} rows sampled`,
 						}
 					: {
-							state: StageState.Blocked,
-							detail: "admitted and sampled zero rows in the audited epoch",
+							state: StageState.Absent,
+							detail: "not admitted by the training config, so it has nothing to draw",
 						}
 
 		const boardRows = country?.boardRows ?? 0

@@ -162,6 +162,11 @@
 			"node": "./lib/postcode/systems.ts",
 			"default": "./out/postcode/systems.js"
 		},
+		"./postal-regimes": {
+			"types": "./out/postal-regimes.d.ts",
+			"node": "./lib/postal-regimes.ts",
+			"default": "./out/postal-regimes.js"
+		},
 		"./us/floor-designator": {
 			"types": "./out/us/floor-designator.d.ts",
 			"node": "./lib/us/floor-designator.ts",

@@ -73,6 +73,12 @@ def _index_by_source(paths: list[Path]) -> dict[str, list[Path]]:
     A file that is missing or unreadable is skipped and named. one with a non-string source raises, because that is
     a --golden (label-less) file used as a train file and it used to fail later with a cryptic "'<' not supported
     between NoneType and str" from `sorted()`.
+
+    Why a file carries more than one source at all: `packages/corpus/lib/parquet/writers.ts` closes a part at
+    `rowsPerFile` rows (default 1,000,000) and opens the next one, and it does not break a part at a source boundary.
+    A source therefore ends wherever its row count leaves it, and the next source continues in the same part. Nothing
+    asserts one source per file on the writing side, so this function may not assume one on the reading side — that
+    assumption is the defect it replaced.
     """
     by_source: dict[str, list[Path]] = {}
     skipped: list[tuple[Path, str]] = []

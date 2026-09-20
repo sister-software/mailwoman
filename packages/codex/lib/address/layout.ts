@@ -63,6 +63,37 @@ export type AddressAtom = AddressSlot | AddressConnector | AddressAlternation | 
  */
 export interface AddressLayout {
 	readonly lines: ReadonlyArray<readonly AddressAtom[]>
+	/**
+	 * Line indices whose preceding break collapses to a space on one line rather than taking the system's join.
+	 *
+	 * A system can need two different joins between its own lines. Great Britain prints the post town and the postcode on
+	 * separate lines, which is Royal Mail's form and what the multi-line render must keep, while one line is written `27
+	 * Minories, London EC3N 1DE` — a comma after the street and a space before the postcode. One join per system cannot
+	 * say that, and the single-line render answered `London, EC3N 1DE`.
+	 *
+	 * Keyed by the line a break PRECEDES rather than the one it follows, because `evaluateLines` drops a line no
+	 * component filled. An index counted from the left survives that drop, and a count of breaks does not.
+	 */
+	readonly softBreakBefore?: ReadonlySet<number>
+}
+
+/**
+ * The same layout, with the break before the line that starts with `tag` marked soft.
+ *
+ * Named by tag rather than by index so the mark survives an edit to the lines above it. A layout with no line starting
+ * on `tag` is returned unchanged: the caller is describing a line that is not there, and silently marking some other
+ * break would move a separator nobody asked about.
+ */
+export function withSoftBreakBefore(layout: AddressLayout, tag: string): AddressLayout {
+	const index = layout.lines.findIndex((line) => {
+		const first = line.find((atom) => !isConnector(atom))
+
+		return Boolean(first && isSlot(first) && first.tag === tag)
+	})
+
+	if (index <= 0) return layout
+
+	return { ...layout, softBreakBefore: new Set([...(layout.softBreakBefore ?? []), index]) }
 }
 
 export function isSlot(atom: AddressAtom): atom is AddressSlot {

@@ -267,12 +267,11 @@ export function synthesizeHouseVenueRow(
 		postcode: base.postcode,
 	}
 
-	// The four tails are hand-written rather than taken from a codex layout, and GB is why. `London EC3N 1DE` is what
-	// #1366 pinned and what three tests assert; `formatAddressRow(…, { singleLine: true })` answers
-	// `London, EC3N 1DE`, because the GB layout puts the locality and the postcode on separate lines and the country's
-	// single-line join is one separator for every break. Both registers are attested — `wof-postalcode` carries
-	// 3,265,642 GB rows with the comma against 10,282,560 without — so this is a codex question about which the layout
-	// writes rather than a defect to route around here.
+	// The four tails are still hand-written, and the reason they were is gone. GB's layout now marks the break before
+	// its postcode soft, so `formatAddress(…, { singleLine: true })` answers `27 Minories, London EC3N 1DE` — the form
+	// #1366 pinned and three tests assert — while the multi-line render keeps the post town and the postcode on their
+	// own lines. Migrating these four to `formatAddress` changes what the recipe emits for every locale it covers, so
+	// it is a measured change of its own rather than a consequence of the layout decision (#2313).
 	let tail = frOrder
 		? `${base.postcode} ${base.locality}`
 		: gbOrder

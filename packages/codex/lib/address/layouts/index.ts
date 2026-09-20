@@ -44,6 +44,7 @@ import {
 	numberLastCommaStreet,
 	numberLastStreet,
 	SLOTS,
+	withSoftBreakBefore,
 } from "#address/layout"
 import {
 	GENERATED_ADDRESS_LAYOUTS,
@@ -197,14 +198,22 @@ ${dependent_locality}
 ${postcode} ${locality}
 ${country}`,
 
-	// %N%n%O%n%A%n%C%n%Z
-	GB: addr`${attention}
+	// %N%n%O%n%A%n%C%n%Z — the postcode takes its own line down the page, and a space on one line.
+	//
+	// Royal Mail prints the post town and the postcode on separate lines, which is what the multi-line render must
+	// keep. Written on one line Great Britain puts a space between them: `27 Minories, London EC3N 1DE`. #1366 pinned
+	// that form and three tests assert it, and it is the majority register in attested data — `wof-postalcode` carries
+	// 10,282,560 GB rows without the comma against 3,265,642 with. The soft break is how one layout says both.
+	GB: withSoftBreakBefore(
+		addr`${attention}
 ${venue}
 ${numberFirstStreet}
 ${dependent_locality}
 ${locality}
 ${postcode}
 ${country}`,
+		"postcode"
+	),
 
 	// %N%n%O%n%A%n%Z %C
 	DE: addr`${attention}

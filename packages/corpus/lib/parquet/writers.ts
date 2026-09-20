@@ -23,9 +23,14 @@
  *       part-0000.parquet
  *   ```
  *
- *   Each file caps at `rowsPerFile` (default 1,000,000); within a file DuckDB writes a row group every
+ *   Each file caps at `rowsPerFile` (default 1,000,000). Within a file DuckDB writes a row group every
  *   {@linkcode ROW_GROUP_SIZE} rows. The manifest captures every file's path, row count, byte size and SHA-256, the
  *   digest computed by re-reading the file once after close — cheap against the cost of writing it.
+ *
+ *   A part is closed by its row count and never by a source boundary, so one part may hold the tail of one source and
+ *   the head of the next. A reader must therefore take a file's sources from all of its rows: the training loader's
+ *   `_index_by_source` once read the first row's source as the whole file's, and two sources that opened no file of
+ *   their own trained at another source's weight (#2318).
  */
 
 import { tryStat } from "@mailwoman/core/fs/readers"

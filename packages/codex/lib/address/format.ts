@@ -68,6 +68,22 @@ function separatorFor(country: string, script: AddressScript, opts: FormatAddres
 }
 
 /**
+ * What replaces a break the layout marked soft.
+ *
+ * Down the page a soft break is an ordinary break: Great Britain prints the post town and the postcode on their own
+ * lines and must keep doing so. On one line it is a space, which is the whole reason the mark exists — `London EC3N
+ * 1DE` rather than `London, EC3N 1DE`.
+ *
+ * An explicit `separator` overrides both. A caller naming its own separator is asking for one string between every pair
+ * of lines, and answering with two would ignore what it asked for.
+ */
+function softSeparatorFor(opts: FormatAddressOptions): string {
+	if (opts.separator !== undefined) return opts.separator
+
+	return opts.singleLine ? " " : "\n"
+}
+
+/**
  * The components consulted to decide the script, in the order they are asked.
  *
  * The street leads because it is the line that distinguishes the two registers while the rest of the address often does
@@ -220,7 +236,7 @@ export function formatAddressRow(
 
 	if (!rendering.placed.length) return null
 
-	const raw = joinRendering(rendering, separatorFor(country, script, opts))
+	const raw = joinRendering(rendering, separatorFor(country, script, opts), softSeparatorFor(opts))
 
 	if (!raw) return null
 
