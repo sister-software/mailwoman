@@ -39,7 +39,13 @@ import {
 } from "@mailwoman/core/fs/readers"
 import { writeLocalJSONFile } from "@mailwoman/core/fs/writers"
 import { tryParsingJSON } from "@mailwoman/core/json"
+import { repoRootPath } from "@mailwoman/core/paths"
 import { readReleaseConfig, weightsPackageByCountry } from "@mailwoman/core/release-config"
+import {
+	type ScopeConfig,
+	shippedTrainingConfig,
+	shippedTrainingConfigs,
+} from "@mailwoman/core/scope-config"
 import { dataRootPath } from "@mailwoman/core/data-root"
 import { openParquetRowStream } from "@mailwoman/corpus/parquet/streams"
 import { allRows } from "@mailwoman/core/utils"
@@ -351,9 +357,17 @@ export async function readConfiguredCorpusVersion(configPath: string): Promise<s
  * The block is a flat `CC: weight` list, so a line scan is enough — and it preserves the one thing a YAML parser would
  * destroy here: a bare `no` key stays the string `"no"` rather than becoming the boolean `false`. That retyping is the
  * exact bug this file exists partly to surface, so the reader must not reproduce it.
+ *
+ * Throws when the path names no file. An empty set means the config admits no country, and a caller cannot tell that
+ * apart from a config nobody could open once both answer the same value.
  */
 export async function readAdmittedCountries(configPath: string): Promise<Set<string>> {
-	if (!(await pathExists(configPath))) return new Set()
+	if (!(await pathExists(configPath))) {
+		throw new Error(
+			`no training config at ${configPath}. Admission is read from that file's \`country_weights\`, so an ` +
+				"unreadable config has no admitted set — it is not a config admitting nothing."
+		)
+	}
 
 	const admitted = new Set<string>()
 	let inBlock = false
@@ -472,29 +486,96 @@ export async function readGazetteerCoverage(dbPath: string): Promise<Map<string,
 export const ROOFTOP_PUBLISHED = new Set(["US", "FR"])
 
 /**
- * The training config whose `country_weights` decides admission, chosen by modification time.
- *
- * Not by filename. The version scheme does not sort lexically and does not sort numerically either — `v8-leg2-sp.yaml`
- * wins both against `v4.8.0-trailing-region-placement-8k.yaml`, because `v8` was a corpus-line experiment and `v4.x` is
- * the current model line. Measured: the filename sort picked `v8-leg2-sp` and reported every country as dropped, which
- * reads as a catastrophic finding rather than as the wrong file.
- *
- * Mtime is a proxy and can be wrong after a checkout, so every caller names the config it used. Pass one explicitly
- * when the answer matters.
+ * How a report came to read the training config it read.
  */
-export async function newestConfig(repoRoot: string): Promise<string> {
-	const dir = `${repoRoot}/corpus-python/src/mailwoman_train/configs`
+export const ConfigProvenance = {
+	/**
+	 * The caller named the file.
+	 */
+	Given: "given",
+	/**
+	 * The file is the one `scope.config.json` records for a weights family's shipped graph.
+	 */
+	Registered: "registered",
+} as const
 
-	if (!(await pathExists(dir))) return ""
+export type ConfigProvenance = (typeof ConfigProvenance)[keyof typeof ConfigProvenance]
 
-	const named = (
-		await Globerator.files("yaml", { cwd: dir, absolute: false, recursive: false })
-			.filter((name) => !name.includes("smoke"))
-			.parallelMap(async (name) => ({ name, at: (await statPath(`${dir}/${name}`)).mtimeMs }))
-			.toArray()
-	).toSorted((a, b) => b.at - a.at)
+/**
+ * A training config a report read, and why that file.
+ */
+export interface ResolvedTrainingConfig {
+	path: string
+	provenance: ConfigProvenance
+	/**
+	 * The weights family whose shipped graph this config produced, when the register named it.
+	 */
+	family?: string
+}
 
-	return named.length ? `${dir}/${named[0]!.name}` : ""
+/**
+ * The training config whose `country_weights` decides admission, resolved from what the caller named or from the
+ * register.
+ *
+ * Discovery does not work here and the register replaced it. Sorting the directory by modification time sorts a total
+ * tie, because `git checkout` writes all 225 configs at one timestamp. One run took a config admitting 2 countries and
+ * the coverage funnel printed `admitted 2 of 250` (#2349). Sorting by filename fails differently: the version scheme is
+ * `v0.9.9-si-bare-village`, `v0.26.0-trailing-region-leftcontext` and `v8-cjk-regs` together, which orders neither
+ * lexically nor numerically.
+ *
+ * Under both sorts the premise is still wrong. Two graphs ship at once from two configs — the Latin config's
+ * `country_weights` names 25 countries and the character config's names 4 — so no single file is the newest one.
+ *
+ * `family` selects among the registered configs and defaults to the Latin family, which is the graph every untiered
+ * shipping locale resolves through. Pass `requested` to read any other file. {@linkcode ResolvedTrainingConfig.provenance}
+ * then reads `given` or `registered`, so a report can print whether its config was named by a caller or taken from the
+ * register.
+ */
+export function resolveTrainingConfig(
+	scope: ScopeConfig,
+	options: { requested?: string | undefined; family?: string } = {}
+): ResolvedTrainingConfig {
+	if (options.requested) {
+		return { path: options.requested, provenance: ConfigProvenance.Given }
+	}
+
+	const family = options.family ?? DEFAULT_ADMISSION_FAMILY
+	const registered = shippedTrainingConfig(scope, family)
+
+	return {
+		path: String(repoRootPath(...registered.config.split("/"))),
+		provenance: ConfigProvenance.Registered,
+		family,
+	}
+}
+
+/**
+ * The weights family whose config answers an admission question that names no family.
+ *
+ * The Latin family, because its `country_weights` covers every country outside the four the character family trains.
+ * The choice is recorded rather than implied: reading the character config by default would report 4 admitted countries
+ * for a repository whose shipped Latin graph admits 25.
+ */
+export const DEFAULT_ADMISSION_FAMILY = "en-us"
+
+/**
+ * Every country some shipped graph's training config admits, and which family admitted it.
+ *
+ * The union, because admission is per graph and the two graphs partition the world between them. A country in neither
+ * map trains nothing that ships today, whatever the in-flight configs promise.
+ */
+export async function admittedByShippedGraphs(scope: ScopeConfig): Promise<Map<string, string[]>> {
+	const byCountry = new Map<string, string[]>()
+
+	for (const entry of shippedTrainingConfigs(scope)) {
+		const admitted = await readAdmittedCountries(String(repoRootPath(...entry.config.split("/"))))
+
+		for (const country of admitted) {
+			byCountry.set(country, [...(byCountry.get(country) ?? []), entry.family])
+		}
+	}
+
+	return byCountry
 }
 
 /**

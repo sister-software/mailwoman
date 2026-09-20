@@ -260,12 +260,12 @@ What mailwoman parses and geocodes, per country.
 mailwoman data coverage [options]
 ```
 
-| Flag                      | Type    | Default | Description                                                           |
-| ------------------------- | ------- | ------- | --------------------------------------------------------------------- |
-| `--countries [countries]` | string  | —       | Comma-separated ISO alpha-2 codes. Omit for the countries that train. |
-| `--config [config]`       | string  | —       | Training config whose country_weights decides admission               |
-| `--refresh`               | boolean | `false` | Recount the corpus instead of reading the cache (costs minutes)       |
-| `--json`                  | boolean | `false` | Emit the full report as JSON                                          |
+| Flag                      | Type    | Default | Description                                                                                                                                     |
+| ------------------------- | ------- | ------- | ----------------------------------------------------------------------------------------------------------------------------------------------- |
+| `--countries [countries]` | string  | —       | Comma-separated ISO alpha-2 codes. Omit for the countries that train.                                                                           |
+| `--config [config]`       | string  | —       | Training config whose country_weights decides admission. Defaults to the config scope.config.json records for the Latin family's shipped graph. |
+| `--refresh`               | boolean | `false` | Recount the corpus instead of reading the cache (costs minutes)                                                                                 |
+| `--json`                  | boolean | `false` | Emit the full report as JSON                                                                                                                    |
 
 ### `mailwoman data inventory`
 

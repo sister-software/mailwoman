@@ -8,12 +8,13 @@
  */
 
 import { repoRootPath } from "@mailwoman/core/paths"
+import { readScopeConfig } from "@mailwoman/core/scope-config"
 import {
 	censusCoverage,
 	type CountryCoverage,
 	type CoverageReport,
-	newestConfig,
 	newestManifest,
+	resolveTrainingConfig,
 } from "mailwoman/coverage"
 import { z } from "zod"
 
@@ -76,11 +77,17 @@ export const coverageTool = async (_deps: DevToolDeps): Promise<DevTool> => ({
 			.string()
 			.optional()
 			.describe(
-				"Training config path whose `country_weights` decides admission. Defaults to the newest non-smoke one."
+				"Training config path whose `country_weights` decides admission. Defaults to the config `scope.config.json` " +
+					"records for the Latin family's shipped graph, which admits 25 countries. The v5.9.0 in-flight config " +
+					"admits 135, so name it when the question is what a next run would train."
 			),
 	}),
 	handler: async (args) => {
-		const configPath = (args["config"] as string | undefined) ?? (await newestConfig(String(repoRootPath())))
+		const config = resolveTrainingConfig(await readScopeConfig(), {
+			requested: args["config"] as string | undefined,
+		})
+
+		const configPath = config.path
 		const manifestPath = await newestManifest()
 
 		if (!configPath || !manifestPath) {

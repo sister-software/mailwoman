@@ -20,9 +20,6 @@
  *   is looking at.
  */
 
-import { statPath, pathExists } from "@mailwoman/core/fs/readers"
-import { Globerator } from "spliterator/node/fs"
-
 import {
 	type CommandSpec,
 	CommandTaskResult,
@@ -41,7 +38,11 @@ export const spec = {
 	description: "What mailwoman parses and geocodes, per country.",
 	options: {
 		countries: { type: "string", description: "Comma-separated ISO alpha-2 codes. Omit for the countries that train." },
-		config: { type: "string", description: "Training config whose country_weights decides admission" },
+		config: {
+			type: "string",
+			description:
+				"Training config whose country_weights decides admission. Defaults to the config scope.config.json records for the Latin family's shipped graph.",
+		},
 		refresh: {
 			type: "boolean",
 			default: false,
@@ -53,45 +54,20 @@ export const spec = {
 
 const CoverageCommand: CommandComponent<typeof spec> = ({ options }) => {
 	const state = useCommandTask(async () => {
-		const { censusCoverage } = await import("#coverage/census")
-		const { dataRootPath, repoRootPath } = await import("@mailwoman/core/utils")
+		const { censusCoverage, newestManifest, resolveTrainingConfig } = await import("#coverage/census")
+		const { repoRootPath } = await import("@mailwoman/core/utils")
+		const { readScopeConfig } = await import("@mailwoman/core/scope-config")
 
 		const repoRoot = String(repoRootPath())
-		const configDir = `${repoRoot}/corpus-python/src/mailwoman_train/configs`
 
-		// By mtime rather than filename: the version scheme sorts neither lexically nor numerically — `v8-leg2-sp.yaml` beats
-		// `v4.8.0-...` both ways, and picking it reports every country as dropped, which reads as a catastrophic
-		// finding rather than as the wrong file. The report always names the config it used.
-		let newest: string | undefined
-
-		if (await pathExists(configDir)) {
-			const pairs: Array<{ n: string; at: number }> = []
-
-			for await (const n of Globerator.files("yaml", { cwd: configDir, absolute: false, recursive: false })) {
-				if (!n.includes("smoke")) {
-					pairs.push({ n, at: (await statPath(`${configDir}/${n}`)).mtimeMs })
-				}
-			}
-
-			newest = pairs.toSorted((a, b) => b.at - a.at).at(0)?.n
-		}
-
-		const versioned = String(dataRootPath("corpus", "versioned"))
-		const manifests: Array<{ path: string; at: number }> = []
-
-		// By mtime rather than directory name. Corpus versions sort neither lexically (`v0.9.9` beats `v0.26.0`, because
-		// `9` > `2`) nor numerically (`v8-jp-full` beats both) — measured: the name sort picked `v0.9.9` and silently
-		// reported the coverage of a corpus nine versions old. The report always names the manifest it used.
-		if (await pathExists(versioned)) {
-			for await (const candidate of Globerator.from("*/*/MANIFEST.json", { cwd: versioned, absolute: true })) {
-				manifests.push({ path: candidate, at: (await statPath(candidate)).mtimeMs })
-			}
-		}
-
-		const manifestPath = manifests.toSorted((a, b) => b.at - a.at)[0]?.path ?? ""
+		// The config is named by `scope.config.json` rather than discovered. Both discovery orders are wrong here: the
+		// mtime sort sorts a total tie after a checkout, and the version scheme sorts neither lexically nor numerically.
+		// The report names the config it read either way.
+		const config = resolveTrainingConfig(await readScopeConfig(), { requested: options.config })
+		const manifestPath = await newestManifest()
 
 		const report = await censusCoverage({
-			configPath: options.config ?? (newest ? `${configDir}/${newest}` : ""),
+			configPath: config.path,
 			manifestPath,
 			casesRoot: `${repoRoot}/packages/mailwoman/lib/eval-harness/gauntlet/cases`,
 			refresh: options.refresh,

@@ -1,6 +1,6 @@
 /**
- * The ten-stage coverage funnel over every jurisdiction the source register carries, plus the incumbency grouping and
- * the inputs a work-selection ranking would read.
+ * The twelve-stage coverage funnel over every jurisdiction the source register carries, plus the incumbency grouping
+ * and the inputs a work-selection ranking would read.
  *
  * `mailwoman data coverage` reports the countries the five registers mention. This reports the 250 the register knows,
  * so a jurisdiction that appears in none of them still gets a row saying so at every stage. The difference between the
@@ -17,6 +17,11 @@
  *     node packages/mailwoman/lib/dev-tools/coverage-funnel.run.ts --config <training config> --rows
  *     node packages/mailwoman/lib/dev-tools/coverage-funnel.run.ts --mixture-audit <epoch-mixture-audit.json>
  *
+ * Without `--config` the `admitted` stage reads the config `scope.config.json` records for the Latin family's shipped
+ * graph, which admits 25 countries. The v5.9.0 in-flight config admits 135, so the stage reads a different number for
+ * the same repository depending on which question is asked. The report names the file it read either way, and prints
+ * the union across both shipped graphs beside it.
+ *
  * `--mixture-audit` takes what `python -m mailwoman_train.audits.epoch_mixture --json` writes and fills the `sampled`
  * stage. Without it that stage reads `unknown` for all 250, because how many rows a country contributes to an epoch is
  * a property of a run.
@@ -32,6 +37,7 @@ import { parseArguments } from "@mailwoman/core/scripting/arguments"
 import { formatPercent } from "@mailwoman/core/stats"
 import { isoSeconds } from "@mailwoman/core/utils"
 
+import { admittedByShippedGraphs, resolveTrainingConfig } from "#coverage/census"
 import { censusCoverage, newestManifest } from "#coverage/index"
 import {
 	FUNNEL_STAGES,
@@ -83,24 +89,15 @@ async function readMixtureAudit(path: string): Promise<{ rows: Map<string, numbe
 	return { rows, total: [...rows.values()].reduce((sum, count) => sum + count, 0) }
 }
 
-/**
- * The training config the `admitted` stage reads when the caller names none.
- *
- * Named rather than discovered. `newestConfig` picks by modification time, and on a fresh clone every config carries
- * the checkout's timestamp, so the pick is arbitrary: this run selected `v0_4_0-stableLR-cw-only.yaml`, whose
- * `country_weights` admits 2 countries, and the `admitted` row read 2 of 250 as though that were a property of the
- * repository. Which config is read decides what the whole stage means, so it is stated here and printed with the
- * report.
- */
-const DEFAULT_TRAINING_CONFIG = "corpus-python/src/mailwoman_train/configs/v5.9.0-locality-shape-60k.yaml"
-
 const repoRoot = repoRootPath()
-const configPath = values.config ?? String(repoRootPath(...DEFAULT_TRAINING_CONFIG.split("/")))
+const scope = await readScopeConfig(repoRoot)
+const config = resolveTrainingConfig(scope, { requested: values.config })
+const configPath = config.path
 const manifestPath = await newestManifest()
 
-if (!configPath || !manifestPath) {
+if (!manifestPath) {
 	throw new Error(
-		`no training config (${String(configPath)}) or corpus manifest (${String(manifestPath)}) — that is an absence of FILES, not of coverage`
+		`no corpus manifest under the data root — that is an absence of FILES, not of coverage. The config resolved to ${configPath}.`
 	)
 }
 
@@ -109,8 +106,6 @@ const report = await censusCoverage({
 	manifestPath,
 	casesRoot: String(repoRootPath("packages", "mailwoman", "lib", "eval-harness", "gauntlet", "cases")),
 })
-
-const scope = await readScopeConfig(repoRoot)
 
 const mixture = values["mixture-audit"] ? await readMixtureAudit(values["mixture-audit"]) : undefined
 
@@ -123,7 +118,27 @@ const funnel = await readCoverageFunnel({
 })
 
 console.log(`\n# Coverage funnel — ${funnel.provenance.jurisdictions} jurisdictions`)
-console.log(`\nRegister ${funnel.provenance.registerVersion}. Training config ${configPath}.`)
+console.log(
+	`\nRegister ${funnel.provenance.registerVersion}. Training config ${configPath} (${config.provenance}` +
+		`${config.family ? `, weights family ${config.family}` : ""}).`
+)
+
+// The `admitted` stage reads one config, and one config answers for one graph. Printing the shipped union beside it
+// keeps a reader from taking an in-flight config's admissions for the countries a released model trains.
+const shippedAdmitted = await admittedByShippedGraphs(scope)
+const shippedByFamily = new Map<string, number>()
+
+for (const families of shippedAdmitted.values()) {
+	for (const family of families) {
+		shippedByFamily.set(family, (shippedByFamily.get(family) ?? 0) + 1)
+	}
+}
+
+console.log(
+	`\nThe shipped graphs admit ${shippedAdmitted.size} countries between them ` +
+		`(${[...shippedByFamily].map(([family, count]) => `${family} ${count}`).join(", ")}). The \`admitted\` stage ` +
+		`below counts the one config named above, so the two differ whenever that config is not a shipped one.`
+)
 console.log(
 	`The census report carried ${funnel.provenance.censusCountries} countries, so ` +
 		`${funnel.provenance.jurisdictions - funnel.provenance.censusCountries} jurisdictions appear in none of its ` +
@@ -205,8 +220,11 @@ for (const entry of candidates) {
 const admittedAndEmpty = candidates.filter((entry) => entry.admitted).length
 
 console.log(
-	`\n${candidates.length} candidates. ${admittedAndEmpty} are admitted by the training config and still contribute ` +
-		`no row, which is a defect in the config rather than a gap in the corpus.`
+	admittedAndEmpty > 0
+		? `\n${candidates.length} candidates. ${configPath} admits ${admittedAndEmpty} of them and the corpus holds no ` +
+				`row for any of those, so the config names a country it cannot feed.`
+		: `\n${candidates.length} candidates. ${configPath} admits none of them, so every one of these would need a ` +
+				`\`country_weights\` entry as well as corpus rows.`
 )
 
 // The funnel counts jurisdictions, and a jurisdiction is not always the parser unit. A regime reported here is one
@@ -251,6 +269,8 @@ if (values["out-json"]) {
 				gitCommit: await gitHead(repoRoot),
 				gitDirtyTrackedFiles: (await dirtyTrackedFiles(repoRoot)).length,
 				configPath,
+				configProvenance: config.provenance,
+				shippedAdmittedCountries: [...shippedAdmitted.keys()].toSorted(),
 				manifestPath,
 				...funnel.provenance,
 			},

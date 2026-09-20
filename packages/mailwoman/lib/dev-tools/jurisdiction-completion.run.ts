@@ -34,10 +34,11 @@ import { ADDRESS_SYSTEM_CONVENTIONS } from "@mailwoman/codex/address-system-conv
 import { CountryISO2 } from "@mailwoman/codex/country"
 import { writeLocalJSONFile } from "@mailwoman/core/fs/writers"
 import { repoRootPath } from "@mailwoman/core/paths"
+import { readScopeConfig } from "@mailwoman/core/scope-config"
 import { parseArguments } from "@mailwoman/core/scripting/arguments"
 import { formatPercent } from "@mailwoman/core/stats"
 
-import { censusCoverage, type CountryCoverage, newestConfig, newestManifest } from "#coverage/index"
+import { censusCoverage, type CountryCoverage, newestManifest, resolveTrainingConfig } from "#coverage/index"
 
 const { values } = parseArguments({
 	options: {
@@ -97,12 +98,13 @@ interface JurisdictionRow {
 	weightsPackage?: string
 }
 
-const configPath = values.config ?? (await newestConfig(String(repoRootPath())))
+const config = resolveTrainingConfig(await readScopeConfig(), { requested: values.config })
+const configPath = config.path
 const manifestPath = await newestManifest()
 
-if (!configPath || !manifestPath) {
+if (!manifestPath) {
 	throw new Error(
-		`no training config (${String(configPath)}) or corpus manifest (${String(manifestPath)}) — that is an absence of FILES, not of coverage`
+		`no corpus manifest under the data root — that is an absence of FILES, not of coverage. The config resolved to ${configPath}.`
 	)
 }
 
@@ -182,7 +184,9 @@ if (values.missing) {
 	console.log(
 		`${n} jurisdictions: ${Object.values(CountryISO2).length} ISO 3166-1 alpha-2 codes plus ${SUB_JURISDICTIONS.length} modelled separately.`
 	)
-	console.log(`Corpus census taken ${report.corpusCensusTakenAt ?? "this run"}; config ${configPath}.\n`)
+	console.log(
+		`Corpus census taken ${report.corpusCensusTakenAt ?? "this run"}; config ${configPath} (${config.provenance}).\n`
+	)
 	console.log("| dimension | held | share |")
 	console.log("| --- | --: | --: |")
 
@@ -209,7 +213,10 @@ if (values.missing) {
 }
 
 if (values["out-json"]) {
-	await writeLocalJSONFile({ takenAt: new Date().toISOString(), configPath, rows }, values["out-json"] as string)
+	await writeLocalJSONFile(
+		{ takenAt: new Date().toISOString(), configPath, configProvenance: config.provenance, rows },
+		values["out-json"] as string
+	)
 
 	console.log(`\nwrote ${values["out-json"]}`)
 }

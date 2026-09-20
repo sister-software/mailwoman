@@ -44,6 +44,33 @@ export interface ScopeConfig {
 	 * Country code → why a shipping locale sits in no tier. Each is a debt with a stated reason.
 	 */
 	untieredShippingLocales: Record<string, string>
+	/**
+	 * Weights-family id → the training config that produced that family's shipped graph.
+	 */
+	trainingConfigs: Record<string, ShippedTrainingConfig>
+}
+
+/**
+ * The training config behind one shipped model graph.
+ *
+ * The path is repository-relative and names a file under `corpus-python/src/mailwoman_train/configs`. Its
+ * `country_weights` block is the hard admission filter every coverage report reads, so a report that reads a different
+ * file reports different admissions for the same repository.
+ */
+export interface ShippedTrainingConfig {
+	/**
+	 * Repository-relative path to the config file.
+	 */
+	config: string
+	/**
+	 * The package shipping the `model.onnx` this config produced.
+	 */
+	graphPackage: string
+	/**
+	 * Which field of that package's `model-card.json` the path was read out of. Recorded because the two cards disagree
+	 * about which of their own fields tracks the current version.
+	 */
+	readFrom: string
 }
 
 /**
@@ -66,6 +93,42 @@ export function tieredCountries(scope: ScopeConfig): Set<string> {
 	}
 
 	return countries
+}
+
+/**
+ * The training config the register names for one weights family.
+ *
+ * Throws when the family has no entry. A family whose config nobody recorded is a family whose admission numbers cannot
+ * be produced, and answering with another family's config would report one graph's admissions under another graph's
+ * name.
+ */
+export function shippedTrainingConfig(scope: ScopeConfig, family: string): ShippedTrainingConfig {
+	const entry = scope.trainingConfigs?.[family]
+
+	if (!entry) {
+		const known = Object.keys(scope.trainingConfigs ?? {}).join(", ") || "none"
+
+		throw new Error(
+			`\`scope.config.json\` names no training config for weights family "${family}". It names: ${known}. ` +
+				"Add the entry rather than reading another family's config."
+		)
+	}
+
+	return entry
+}
+
+/**
+ * Every family's shipped training config, ordered by family id.
+ *
+ * A coverage reading that wants the countries the shipped models admit reads all of these and takes the union. Reading
+ * one of them alone answers for one graph: the Latin config's `country_weights` names no CJK country, and the character
+ * config's names no Latin one.
+ */
+export function shippedTrainingConfigs(scope: ScopeConfig): Array<ShippedTrainingConfig & { family: string }> {
+	return Object.entries(scope.trainingConfigs ?? {})
+		.filter(([family]) => !family.startsWith("$"))
+		.map(([family, entry]) => ({ family, ...entry }))
+		.toSorted((left, right) => left.family.localeCompare(right.family))
 }
 
 /**
