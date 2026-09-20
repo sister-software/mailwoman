@@ -87,6 +87,7 @@ export {
 	FAMILY_VOCABULARY_ARTIFACT,
 	familyByID,
 	FamilyEncoder,
+	familyFallbackFor,
 	familyForLocale,
 	familyForScript,
 	RouteSource,

@@ -101,6 +101,46 @@ export const weightsFamilyCheck: RepoCheck = {
 			}
 		}
 
+		// A language claimed twice makes `familyForLocale`'s language fallback answer whichever family `FAMILIES` lists
+		// first, for every locale in that language. It is the same defect as a locale claimed twice, one level up.
+		const languageOwners = new Map<string, string[]>()
+
+		for (const family of FAMILIES) {
+			for (const language of family.languages ?? []) {
+				languageOwners.set(language, [...(languageOwners.get(language) ?? []), family.family])
+			}
+		}
+
+		for (const [language, families] of languageOwners) {
+			if (families.length > 1) {
+				diagnostics.push({
+					severity: DiagnosticSeverity.Error,
+					message:
+						`Language \`${language}\` is claimed by ${families.length} families (${families.join(", ")}), so ` +
+						"every unpackaged locale in it resolves to whichever is declared first.",
+					file: "packages/neural/lib/weights/families.ts",
+				})
+			}
+		}
+
+		// A language that also names another family's packaged locale would make the two paths through
+		// `familyForLocale` disagree: the packaged lookup wins, and the language list silently covers nothing.
+		for (const [language, [owner]] of languageOwners) {
+			const packagedElsewhere = FAMILIES.filter(
+				(entry) => entry.family !== owner && entry.locales.some((locale) => locale.split("-")[0] === language)
+			)
+
+			for (const entry of packagedElsewhere) {
+				diagnostics.push({
+					severity: DiagnosticSeverity.Error,
+					message:
+						`Family \`${owner}\` claims language \`${language}\`, and \`${entry.family}\` packages a locale in ` +
+						"that language. The packaged lookup wins, so the language claim would cover nothing.",
+					file: "packages/neural/lib/weights/families.ts",
+				})
+			}
+		}
+
 		// Two scripts routing to two families would make `familyForSegment`'s iteration order load-bearing.
 		const scriptOwners = new Map<string, string[]>()
 

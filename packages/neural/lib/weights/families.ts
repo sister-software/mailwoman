@@ -118,6 +118,15 @@ export interface WeightsFamily {
 	 */
 	locales: readonly string[]
 	/**
+	 * Language subtags this family serves beyond the locales it packages.
+	 *
+	 * A family whose members are decided by writing system serves every locale in those languages, packaged or not.
+	 * `ko-KR` ships no weights package and still decodes on the character graph, and so do `zh-TW` and `zh-HK`. Listing
+	 * only the packaged locales made {@linkcode familyForLocale} answer `undefined` for all three while `scriptFamilyBase`
+	 * answered `cjk`, which is the disagreement this field removes.
+	 */
+	languages?: readonly string[]
+	/**
 	 * Unicode script codes that route an input here. A family declaring none is reachable only through the caller's
 	 * locale.
 	 */
@@ -154,6 +163,7 @@ const CJK_FAMILY: WeightsFamily = {
 	graphPackage: "@mailwoman/neural-weights-cjk",
 	encoder: FamilyEncoder.Char,
 	locales: ["cjk", "ja-jp", "zh-cn"],
+	languages: ["ja", "zh", "ko"],
 	routingScripts: new Set(["Hani", "Kana", "Hira", "Hang"]),
 }
 
@@ -176,11 +186,43 @@ export function familyByID(family: string): WeightsFamily | undefined {
 /**
  * The family serving this locale, or `undefined` when no family claims it.
  *
- * A locale absent here is a locale with no declared graph. That is a finding rather than a default — the
+ * A packaged locale answers first. A locale the registry does not package answers from its language subtag, so `ko-KR`
+ * and `zh-TW` reach the character family without a weights package of their own.
+ *
+ * A locale absent from both is a locale with no declared graph. That is a finding rather than a default — the
  * `weights-family` check reports it — so callers must not read `undefined` as the Latin family.
  */
 export function familyForLocale(locale: string): WeightsFamily | undefined {
-	return FAMILY_BY_LOCALE.get(locale.toLowerCase())
+	const code = locale.toLowerCase()
+	const packaged = FAMILY_BY_LOCALE.get(code)
+
+	if (packaged) return packaged
+
+	const language = code.split("-")[0]
+
+	return FAMILIES.find((entry) => entry.languages?.includes(language as string))
+}
+
+/**
+ * The family a locale falls back to when it packages no graph of its own, or `undefined`.
+ *
+ * Three cases answer `undefined`, and they are different. A locale equal to a family id names the base itself, which
+ * falls back to nothing. A Latin overlay names its base through `mailwoman.baseWeights` in its manifest, so resolution
+ * follows that rather than a script rule. A locale no family claims has no graph at all.
+ *
+ * Kept as its own function rather than folded into {@linkcode familyForLocale} because the two answer different
+ * questions: `familyForLocale("cjk")` is the character family, and `familyFallbackFor("cjk")` is nothing, since the
+ * character family is where `cjk` already resolves.
+ */
+export function familyFallbackFor(locale: string): string | undefined {
+	const code = locale.toLowerCase()
+	const family = familyForLocale(code)
+
+	if (!family || family.family === code) return undefined
+
+	// A family with no routing predicate is reached through `mailwoman.baseWeights`, which the package manifest
+	// declares. Answering here as well would give resolution two sources for one fact.
+	return family.routingScripts ? family.family : undefined
 }
 
 /**

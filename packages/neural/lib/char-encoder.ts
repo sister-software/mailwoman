@@ -1,5 +1,7 @@
 import { stringifyJSON } from "@mailwoman/core/json"
 
+import { familyFallbackFor } from "#weights/families"
+
 /**
  * @copyright Sister Software
  * @license AGPL-3.0
@@ -214,9 +216,12 @@ export function encoderDescriptorFromCard(
  * The base package a locale falls back to when it has no package of its own: the CJK char-path base for Japanese,
  * Chinese and Korean (#2164). Latin locales have no family base — `en-us` is the Latin base, and the overlays name it
  * through `mailwoman.baseWeights` instead.
+ *
+ * The mapping used to be three language subtags written here, which is the same claim `#weights/families` makes about
+ * which locales the character family serves. Two copies disagreed: this one answered `cjk` for `ko-KR`, `zh-TW` and
+ * `zh-HK` while the registry listed only the packaged `ja-jp` and `zh-cn`. The registry now declares the languages and
+ * this delegates, so the answer has one home.
  */
 export function scriptFamilyBase(locale: string): string | undefined {
-	const language = locale.toLowerCase().split("-")[0]
-
-	return language === "ja" || language === "zh" || language === "ko" ? "cjk" : undefined
+	return familyFallbackFor(locale)
 }
