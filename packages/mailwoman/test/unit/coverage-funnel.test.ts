@@ -23,7 +23,13 @@ import {
 } from "@mailwoman/corpus/source-register"
 import { AssertedProposition } from "@mailwoman/evidence/status"
 import type { CountryCoverage } from "mailwoman/coverage"
-import { FUNNEL_STAGES, incumbencyGroups, readCoverageFunnel, StageState } from "mailwoman/eval-harness/coverage-funnel"
+import {
+	FUNNEL_STAGES,
+	incumbencyGroups,
+	opportunityCandidates,
+	readCoverageFunnel,
+	StageState,
+} from "mailwoman/eval-harness/coverage-funnel"
 import { describe, expect, it } from "vitest"
 
 function jurisdiction(iso2: string, overrides: Partial<JurisdictionRecord> = {}): JurisdictionRecord {
@@ -217,6 +223,34 @@ describe("readCoverageFunnel", () => {
 
 			expect(total, `${stage} counts ${total} of ${report.rows.length}`).toBe(report.rows.length)
 		}
+	})
+
+	it("surfaces a verified source with no corpus rows, and skips one that has rows", async () => {
+		// US carries corpus rows, so it is not a candidate however far its research got. KE carries none, and the
+		// fixture's jurisdictions default to backbone `C`, so widening the filter is what reaches it.
+		const report = await funnel()
+
+		expect(opportunityCandidates(report).map((entry) => entry.iso2)).toEqual([])
+		expect(opportunityCandidates(report, ["C"]).map((entry) => entry.iso2)).toEqual(["AQ", "IO", "KE"])
+	})
+
+	it("reports whether a candidate is admitted, which separates a config defect from a corpus gap", async () => {
+		const report = await funnel()
+		const kenya = opportunityCandidates(report, ["C"]).find((entry) => entry.iso2 === "KE")
+
+		// KE is admitted by the training config and carries no corpus row. That is the config promising a locale it
+		// cannot deliver, which is different work from a country the config never named.
+		expect(kenya?.admitted).toBe(true)
+		expect(kenya?.licensed).toBe(false)
+		expect(opportunityCandidates(report, ["C"]).find((entry) => entry.iso2 === "AQ")?.admitted).toBe(false)
+	})
+
+	it("orders by how far the source research got, not by existing coverage", async () => {
+		const report = await funnel()
+		const ordered = opportunityCandidates(report, ["C", "A"]).map((entry) => entry.backboneState)
+
+		// Every state in the requested order comes before every state after it.
+		expect(ordered).toEqual([...ordered].toSorted((left, right) => (left === right ? 0 : left === "C" ? -1 : 1)))
 	})
 
 	it("groups jurisdictions by stages reached, deepest first", async () => {

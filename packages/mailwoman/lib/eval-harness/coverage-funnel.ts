@@ -29,9 +29,10 @@
  *   describes the one training config named in the provenance block. A reader comparing two runs of this report
  *   compares their provenance blocks first.
  *
- *   Nothing here ranks. {@linkcode OPPORTUNITY_INPUTS} lists what a work-selection ranking reads and marks which of
- *   those this instrument supplies, because a ranking that scored coverage as need would reproduce the selection the
- *   funnel exists to expose.
+ *   Nothing here scores need. {@linkcode OPPORTUNITY_INPUTS} lists the five inputs a work-selection ranking reads and
+ *   marks the two this instrument supplies, and {@linkcode opportunityCandidates} filters on those two and orders by
+ *   how far a jurisdiction's source research got. Ordering by packages, boards or tiers instead would put the
+ *   jurisdictions already measured on top, which is the selection the funnel exists to expose.
  */
 
 import {
@@ -341,6 +342,59 @@ export function incumbencyGroups(funnel: CoverageFunnel): readonly IncumbencyGro
 	return [...byDepth.entries()]
 		.toSorted(([left], [right]) => right - left)
 		.map(([reached, jurisdictions]) => ({ reached, jurisdictions: jurisdictions.toSorted() }))
+}
+
+export interface OpportunityCandidate {
+	iso2: string
+	name: string
+	/**
+	 * The register's research state for this jurisdiction's own premise-address backbone. `A` is a verified open
+	 * nationwide source, `A~` a strong one that is federated or partial.
+	 */
+	backboneState: string
+	/**
+	 * Whether the training config admits the country. An admitted country with no corpus rows is a config promising a
+	 * locale it cannot deliver — `censusCoverage` calls the same shape `admittedButEmpty` — and is a different piece of
+	 * work from a country the config never named.
+	 */
+	admitted: boolean
+	licensed: boolean
+}
+
+/**
+ * Jurisdictions whose source research is furthest along and whose corpus carries nothing.
+ *
+ * A filter rather than a ranking. It reads two of the five inputs {@linkcode OPPORTUNITY_INPUTS} names — how far the
+ * source is researched, and whether any row exists — and the three it cannot read are the ones that would order the
+ * result. A caller choosing between these states the other three itself.
+ *
+ * The filter is deliberately blind to packages, boards and tiers. Ordering by those would put the jurisdictions already
+ * measured on top, which is the selection the funnel exists to expose.
+ *
+ * `backboneState` orders the output because it is a statement about the source rather than about this repository's
+ * attention: `A` means somebody verified an open nationwide premise-address source and the corpus still holds no row
+ * from it.
+ */
+export function opportunityCandidates(
+	funnel: CoverageFunnel,
+	backboneStates: readonly string[] = ["A", "A~"]
+): readonly OpportunityCandidate[] {
+	const rank = new Map(backboneStates.map((state, index) => [state, index]))
+
+	return funnel.rows
+		.filter((row) => rank.has(row.backboneState) && row.stages.corpusRows.state !== StageState.Reached)
+		.map((row) => ({
+			iso2: row.iso2,
+			name: row.name,
+			backboneState: row.backboneState,
+			admitted: row.stages.admitted.state === StageState.Reached,
+			licensed: row.stages.licensed.state === StageState.Reached,
+		}))
+		.toSorted(
+			(left, right) =>
+				(rank.get(left.backboneState) ?? 0) - (rank.get(right.backboneState) ?? 0) ||
+				left.iso2.localeCompare(right.iso2)
+		)
 }
 
 /**

@@ -37,6 +37,7 @@ import {
 	FUNNEL_STAGES,
 	incumbencyGroups,
 	OPPORTUNITY_INPUTS,
+	opportunityCandidates,
 	readCoverageFunnel,
 	StageState,
 } from "#eval-harness/coverage-funnel"
@@ -177,6 +178,30 @@ console.log(
 		`not evidence of need.`
 )
 
+const candidates = opportunityCandidates(funnel)
+
+console.log(
+	`\n## Candidates — a verified source is researched and the corpus holds no row\n\n` +
+		`A filter on two of the five inputs above, ordered by how far the source research got. The three inputs it ` +
+		`cannot read are the ones that would order these against each other.\n`
+)
+console.log(`| iso2 | jurisdiction | backbone | admitted | terms elected |`)
+console.log(`| --- | --- | --- | --- | --- |`)
+
+for (const entry of candidates) {
+	console.log(
+		`| ${entry.iso2} | ${entry.name} | ${entry.backboneState} | ${entry.admitted ? "yes" : "no"} | ` +
+			`${entry.licensed ? "yes" : "no"} |`
+	)
+}
+
+const admittedAndEmpty = candidates.filter((entry) => entry.admitted).length
+
+console.log(
+	`\n${candidates.length} candidates. ${admittedAndEmpty} are admitted by the training config and still contribute ` +
+		`no row, which is a defect in the config rather than a gap in the corpus.`
+)
+
 // The funnel counts jurisdictions, and a jurisdiction is not always the parser unit. A regime reported here is one
 // whose addresses the funnel's row for its parent country says nothing about: SH's row describes one place where
 // three postal systems live, and a BFPO address is counted under GB while nothing parses it as GB.
@@ -225,6 +250,7 @@ if (values["out-json"]) {
 			byStage: funnel.byStage,
 			incumbency: incumbencyGroups(funnel),
 			opportunityInputs: OPPORTUNITY_INPUTS,
+			opportunityCandidates: candidates,
 			rows: funnel.rows,
 		},
 		values["out-json"]
