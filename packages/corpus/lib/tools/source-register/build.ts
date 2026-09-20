@@ -117,11 +117,15 @@ const ASSERTS_BY_ROLE: Readonly<Record<string, readonly AddressSourceRecord["ass
 }
 
 /**
- * One license decision per distinct access label the research pass recorded, keyed by the label.
+ * The access labels the research pass recorded, each with the id prefix and note a decision derived from it carries.
  *
- * Every one is `unchecked`, and that is a finding rather than a placeholder: the pass recorded what a register costs to
- * reach and never opened anybody's terms. `Free` is the clearest case — it says the download is free of charge and
- * licenses nothing, so treating it as permissive would admit a source on a sentence about price.
+ * These are label kinds rather than decisions. A decision is scoped to one publisher in one jurisdiction by
+ * {@link scopedLicenseID}, so the register carries one per source and an election cannot reach past the grant it was
+ * made about.
+ *
+ * Every decision is `unchecked`, and that is a finding rather than a placeholder: the pass recorded what a register
+ * costs to reach and never opened anybody's terms. `Free` is the clearest case — it says the download is free of charge
+ * and licenses nothing, so treating it as permissive would admit a source on a sentence about price.
  *
  * The labels are the pass's own, carried through {@link rewriteRetiredVocabulary} so a word this repository has retired
  * does not enter a committed artifact through quoted data.
@@ -343,10 +347,117 @@ async function readJurisdictions(
 	return records
 }
 
+/**
+ * What one generated license decision is about: the access label the research pass recorded, and the party whose terms
+ * a reviewer would open to decide it.
+ */
+interface LicenseScope {
+	licenseID: string
+	/**
+	 * The label's own words, carried through so a reviewer sees what the pass wrote.
+	 */
+	statement: string
+	/**
+	 * The publisher whose terms this decision covers, or `null` when the row names none and the decision therefore covers
+	 * one source alone.
+	 */
+	publisher: string | null
+	scopedTo: string
+	/**
+	 * The jurisdiction and `scopedTo` folded by {@link partyKey}. Two rows whose keys agree name one party in one
+	 * jurisdiction, however they spell it.
+	 */
+	partyKey: string
+	iso2: string
+}
+
+/**
+ * A party's name reduced to the form that decides whether two spellings name the same party.
+ *
+ * Lower-cased, with every run of characters outside `a-z0-9` collapsed to one hyphen. Case and punctuation are the
+ * differences a research pass introduces writing one institution twice — `Centre de formalités des entreprises` and
+ * `Centre de Formalités des Entreprises` are one party — so folding them merges the spellings rather than issuing two
+ * decisions over one grant.
+ */
+function partyKey(value: string): string {
+	const slug = value
+		.toLowerCase()
+		.replaceAll(/[^a-z0-9]+/gu, "-")
+		.replaceAll(/^-+|-+$/gu, "")
+
+	return slug || "unnamed"
+}
+
+/**
+ * The id fragment for a party. It is the party's key, trimmed so one long ministry name does not dominate the id.
+ *
+ * Trimming is the only step that can bring two genuinely different parties to the same fragment, which is why
+ * {@link scopedLicenseID} compares the untrimmed key before accepting a match.
+ */
+const ID_FRAGMENT_LENGTH = 48
+
+function idFragment(partyKeyValue: string): string {
+	return partyKeyValue.slice(0, ID_FRAGMENT_LENGTH).replaceAll(/-+$/gu, "") || "unnamed"
+}
+
+/**
+ * The license id for one source row, scoped to the party a reviewer would read.
+ *
+ * A license decision records what somebody concluded by opening a publisher's terms, so it can only be as wide as the
+ * grant it describes. Keying it by the research pass's access label alone made one decision span every source carrying
+ * that label: `CHECK NATIONAL / DATASET TERMS` covered 247 of 389 sources across 222 publishers, and `Free` covered 99.
+ * Electing one of those would have granted every source under it on a single reading.
+ *
+ * So the id carries the publisher when the row names one, and the source id when it does not. A row with no publisher
+ * comes from the original memo, which recorded no owner column, and scoping it to itself cannot over-grant.
+ *
+ * The jurisdiction is part of the scope because a publisher name is not unique across states. The research pass wrote
+ * `Ministry of Justice` for Belarus, Lebanon and Timor-Leste, `Ministry of Commerce and Industry` for five countries,
+ * and `Commercial-registration authority` as a description rather than a name. A publisher-only scope would let one
+ * reading of a Lebanese ministry's terms grant Belarus.
+ *
+ * The cost is that a publisher genuinely serving several jurisdictions gets one decision per jurisdiction — INSEE
+ * covers mainland France and nine overseas territories, so it gets ten. A reviewer who reads INSEE's terms once records
+ * that conclusion against ten ids, which is a small explicit act. The alternative fails the other way, and an over-wide
+ * election is the failure that cannot be undone by review.
+ *
+ * This changes granularity rather than state. Every decision still reads `unchecked`, and `ingestEligibilityProblems`
+ * still refuses every source.
+ */
+function scopedLicenseID(
+	statementID: string,
+	publisher: string,
+	sourceID: string,
+	iso2: string,
+	statement: string,
+	scopes: Map<string, LicenseScope>
+): string {
+	const scopedTo = publisher || sourceID
+	const key = `${iso2.toLowerCase()}-${partyKey(scopedTo)}`
+	const licenseID = `${statementID}-${idFragment(key)}`
+	const existing = scopes.get(licenseID)
+
+	if (existing && existing.partyKey !== key) {
+		throw new Error(
+			`two license scopes collapse to ${stringifyJSON(licenseID)}: ${stringifyJSON(existing.scopedTo)} and ` +
+				`${stringifyJSON(scopedTo)}. They are different parties whose names agree over the first ` +
+				`${ID_FRAGMENT_LENGTH} characters of their id fragment. Merging them would let one reading grant both, ` +
+				"which is what scoping the id to a publisher exists to prevent."
+		)
+	}
+
+	if (!existing) {
+		scopes.set(licenseID, { licenseID, statement, publisher: publisher || null, scopedTo, partyKey: key, iso2 })
+	}
+
+	return licenseID
+}
+
 async function readSources(
 	sourcesPath: PathBuilderLike,
 	licenseByStatement: ReadonlyMap<string, string>,
-	fired: Set<string>
+	fired: Set<string>,
+	scopes: Map<string, LicenseScope>
 ): Promise<{ sources: readonly AddressSourceRecord[]; discoveryRailRowsDropped: number }> {
 	const records: AddressSourceRecord[] = []
 	const ordinalByKey = new Map<string, number>()
@@ -372,14 +483,18 @@ async function readSources(
 		ordinalByKey.set(key, ordinal)
 
 		const statement = rewriteRetiredVocabulary(required(record["license"], "license", row))
-		const licenseID = licenseByStatement.get(statement)
+		const statementID = licenseByStatement.get(statement)
 
-		if (!licenseID) {
+		if (!statementID) {
 			throw new Error(`row ${row}: license ${stringifyJSON(statement)} has no decision record in this build`)
 		}
 
+		const sourceID = `${iso2.toLowerCase()}-${sector}-${ordinal}`
+		const publisherName = rewriteRetiredVocabulary((record["owner"] ?? "").trim())
+		const licenseID = scopedLicenseID(statementID, publisherName, sourceID, iso2, statement, scopes)
+
 		const source: AddressSourceRecord = {
-			sourceID: `${iso2.toLowerCase()}-${sector}-${ordinal}`,
+			sourceID,
 			iso2,
 			sector,
 			name: rewriteRetiredVocabulary(required(record["source"], "source", row)),
@@ -392,7 +507,6 @@ async function readSources(
 		}
 
 		const access = (record["access"] ?? "").trim()
-		const publisher = (record["owner"] ?? "").trim()
 		const sourceURL = (record["source_url"] ?? "").trim()
 		const note = (record["notes"] ?? "").trim()
 
@@ -400,8 +514,8 @@ async function readSources(
 			source.access = rewriteRetiredVocabulary(access)
 		}
 
-		if (publisher) {
-			source.publisher = rewriteRetiredVocabulary(publisher)
+		if (publisherName) {
+			source.publisher = publisherName
 		}
 
 		if (sourceURL) {
@@ -525,8 +639,15 @@ async function readLicenseDecisions(decisionsPath: PathBuilderLike | undefined):
 export async function buildSourceRegister(options: BuildSourceRegisterOptions): Promise<SourceRegisterBuildResult> {
 	const fired = new Set<string>()
 	const licenseByStatement = new Map(LICENSE_DECISIONS.map(([statement, licenseID]) => [statement, licenseID]))
+	const scopes = new Map<string, LicenseScope>()
 	const jurisdictions = await readJurisdictions(options.inventoryPath, fired)
-	const { sources, discoveryRailRowsDropped } = await readSources(options.sourcesPath, licenseByStatement, fired)
+
+	const { sources, discoveryRailRowsDropped } = await readSources(
+		options.sourcesPath,
+		licenseByStatement,
+		fired,
+		scopes
+	)
 
 	for (const [from] of RETIRED_NOTE_REWRITES) {
 		if (!fired.has(from)) {
@@ -535,10 +656,23 @@ export async function buildSourceRegister(options: BuildSourceRegisterOptions): 
 	}
 
 	const used = new Set(sources.map((source) => source.license))
+	const noteByStatement = new Map(LICENSE_DECISIONS.map(([statement, , note]) => [statement, note]))
 
-	const generated: LicenseDecision[] = LICENSE_DECISIONS.filter(([, licenseID]) => used.has(licenseID))
-		.map(([statement, licenseID, note]): UncheckedLicense => {
-			return { licenseID, state: LicenseReviewState.Unchecked, publisherStatement: statement, note }
+	const generated: LicenseDecision[] = [...scopes.values()]
+		.filter((scope) => used.has(scope.licenseID))
+		.map((scope): UncheckedLicense => {
+			const label = noteByStatement.get(scope.statement) ?? ""
+
+			const scopedNote = scope.publisher
+				? `${label} Scoped to ${scope.publisher} in ${scope.iso2}, so electing it grants that publisher's sources in that jurisdiction alone.`
+				: `${label} The research pass recorded no publisher, so this decision is scoped to ${scope.scopedTo} alone.`
+
+			return {
+				licenseID: scope.licenseID,
+				state: LicenseReviewState.Unchecked,
+				publisherStatement: scope.statement,
+				note: scopedNote,
+			}
 		})
 		.toSorted((left, right) => left.licenseID.localeCompare(right.licenseID))
 

@@ -174,10 +174,27 @@ copy they were read from, that copy's version where the publisher gives one, and
 not another. `auditAddressSourceRegister` refuses an incomplete record and the build refuses a
 register that fails its audit, so an incomplete entry never reaches the committed artifact.
 
-**The file is empty.** Every one of the register's 12 decisions therefore reads `unchecked`. Electing
+**The file is empty.** Every one of the register's 389 decisions therefore reads `unchecked`. Electing
 them is necessary and not sufficient: `ingestEligibilityProblems` also refuses all 389 sources for an
 unresolved `addressRole` and unmeasured `coverage`, which no licence decision touches, so clearing
 this alone moves the ingest-eligible count from 0 to 0.
+
+### Why there are 389 of them rather than 12
+
+A decision is scoped to one publisher in one jurisdiction, so the register carries one per source.
+Keying a decision by the research pass's access label alone made it as wide as the label:
+`CHECK NATIONAL / DATASET TERMS` covered 247 of the 389 sources across 222 publishers, and `Free`
+covered 99. Recording one election against either would have granted every source under it on a
+single reading of one publisher's terms.
+
+The jurisdiction is part of the scope because a publisher name is not unique across states. The pass
+wrote `Ministry of Justice` for Belarus, Lebanon and Timor-Leste, `Ministry of Commerce and Industry`
+for five countries, and `Commercial-registration authority` as a description rather than a name.
+
+The cost falls on a publisher that genuinely serves several jurisdictions. INSEE covers mainland
+France and nine overseas territories, so it holds ten decisions, and a reviewer who reads its terms
+once records that conclusion ten times. That is the direction to err in: an over-wide election is the
+failure review cannot undo.
 
 ## `reviewed-ve-postcode-tuples.json` — reviewed Venezuelan postcode placement (#1821)
 
