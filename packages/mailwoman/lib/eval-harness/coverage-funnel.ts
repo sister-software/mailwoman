@@ -24,6 +24,11 @@
  *   country is evaluated" as "this country is not evaluated", which is the reading that makes an unmeasured
  *   jurisdiction look solved. The rule is `docs/engineering/reference/the-meaning-of-zero.mdx`.
  *
+ *   Each stage's own scope is narrower than its name, so every reading states what it read. `evaluated` and `checking`
+ *   count gauntlet board rows. `corpusRows` counts what the corpus manifest the census read carries. `admitted`
+ *   describes the one training config named in the provenance block. A reader comparing two runs of this report
+ *   compares their provenance blocks first.
+ *
  *   Nothing here ranks. {@linkcode OPPORTUNITY_INPUTS} lists what a work-selection ranking reads and marks which of
  *   those this instrument supplies, because a ranking that scored coverage as need would reproduce the selection the
  *   funnel exists to expose.
@@ -232,21 +237,27 @@ export async function readCoverageFunnel(input: CoverageFunnelInput): Promise<Co
 							detail: "not admitted by the training config, so it has nothing to draw",
 						}
 
+		// Both stages read the GAUNTLET board alone — `censusCoverage`'s `casesRoot`, which is
+		// `eval-harness/gauntlet/cases`. The golden answer keys, the coordinate panels and the per-locale probe boards
+		// are separate sets and are not counted: `golden/us.jsonl` holds 2,660 rows while the gauntlet tree holds 143
+		// for US. So `absent` here means "no gauntlet row names this country" rather than "this country has no
+		// evaluation", and a country graded only on a coordinate panel reads absent. Widening this stage means teaching
+		// the census to read those sets, which is a change to `censusCoverage` rather than to this module.
 		const boardRows = country?.boardRows ?? 0
 		const checkingRows = country?.boardPassedRows ?? 0
 
 		const evaluated: StageReading = boardRows
-			? { state: StageState.Reached, detail: `${boardRows} board row(s)` }
-			: { state: StageState.Absent, detail: "no board row names this country" }
+			? { state: StageState.Reached, detail: `${boardRows} gauntlet board row(s)` }
+			: { state: StageState.Absent, detail: "no gauntlet board row names this country" }
 
 		const checking: StageReading = checkingRows
-			? { state: StageState.Reached, detail: `${checkingRows} of ${boardRows} board row(s) check` }
+			? { state: StageState.Reached, detail: `${checkingRows} of ${boardRows} gauntlet row(s) check` }
 			: boardRows
 				? {
 						state: StageState.Blocked,
-						detail: `${boardRows} board row(s), none of which check — no regression here can fail`,
+						detail: `${boardRows} gauntlet row(s), none of which check — no regression here can fail`,
 					}
-				: { state: StageState.Absent, detail: "no board row to check" }
+				: { state: StageState.Absent, detail: "no gauntlet board row to check" }
 
 		const packaged: StageReading = country?.weightsPackage
 			? { state: StageState.Reached, detail: country.weightsPackage }
