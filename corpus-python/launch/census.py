@@ -540,3 +540,162 @@ def piece_prior(
             continue
         top = "  ".join(f"{k}pc:{v / t:.2f}" for k, v in f.most_common(3))
         print(f"    {dl:>6d}  {t:>9,}   {top}")
+
+
+@app.function(
+    volumes={VOL_MOUNT: vol},
+    image=training_image,
+    timeout=7200,
+    memory=32768,
+)
+def locale_supply_census(
+    country: str = "GB",
+    corpus_dir: str = "/data/corpus/versioned/v0.32.0-locality-shape/corpus-v0.32.0-locality-shape",
+    splits: str = "train,val,test",
+) -> None:
+    """How much INDEPENDENT address data one country has, as opposed to how many rows.
+
+    A row count answers neither question a locale-isolated graph turns on. The sampler restarts an
+    exhausted source with a fresh shuffled pass, so a small source is presented many times and its
+    row count reads as supply it does not have. And a corpus can carry one street rendered a hundred
+    ways, which is one street.
+
+    So this counts four things a row count cannot give, over a full scan rather than a sample —
+    a distinct count is the one statistic a sample cannot extrapolate:
+
+    - **rows**, per split, which is the number already in hand from the epoch-mixture audit.
+    - **distinct raw surfaces**, the strings the tokenizer actually sees. Rows over surfaces is how
+      much of the corpus is the same text written again.
+    - **distinct `source_id`s**, the underlying records. `SourceProvenance.source_id` is documented
+      stable across reruns precisely so dedup and holdout manifests are reproducible, which makes it
+      the independent-record count. Surfaces over source ids is how many ways one record is rendered.
+    - **distinct component sequences**, the tuple of `span_tags` a row carries. This is the shape
+      vocabulary the country teaches: a corpus of 800,000 rows carrying four sequences teaches four
+      forms.
+
+    Digests rather than strings in the two large sets. A full GB scan holds roughly 15.6 million raw
+    surfaces, and 8-byte digests keep the sets inside this function's memory where the strings would
+    not. A blake2b collision at this cardinality is far below the precision any decision here needs.
+
+    Natural and synthetic are counted apart. A synthesized row carries `synth_method`, and counting
+    the two together would answer "how much data is there" with a number partly produced by the
+    recipe under test.
+
+    Reads raw parquet rather than the loader, because the question is what the corpus contains. What
+    a run draws from it is `audit_epoch_mixture`, and the two answer different questions: that one
+    measures the sampler, this one measures the supply.
+    """
+    import json
+    import sys
+    import time
+    from collections import Counter
+    from hashlib import blake2b
+    from pathlib import Path
+
+    import pyarrow.compute as pc
+    import pyarrow.dataset as ds
+
+    vol.reload()
+    sys.path.insert(0, f"{VOL_MOUNT}/corpus-python/src")
+
+    from mailwoman_train.data.loader import _parquet_paths
+
+    want = country.strip().upper()
+    columns = ["country", "source", "source_id", "raw", "span_tags", "synth_method"]
+
+    # Predicate pushdown rather than reading every row and discarding most. A full scan of this corpus is
+    # 681,901,687 rows across 718 files, and one country is a small part of it. `pyarrow.dataset` skips a row
+    # group whose `country` statistics exclude the wanted value, which is most of them where a file holds one
+    # source. A row group with no usable statistics is read and filtered, so the count is the same either way.
+
+    def digest(value: str) -> int:
+        return int.from_bytes(blake2b(value.encode("utf-8"), digest_size=8).digest(), "big")
+
+    by_split: dict[str, dict[str, object]] = {}
+    report: dict[str, object] = {"country": want, "corpus_dir": corpus_dir, "splits": by_split}
+
+    for split in (s.strip() for s in splits.split(",") if s.strip()):
+        files = _parquet_paths(Path(corpus_dir), split)
+        surfaces: set[int] = set()
+        record_ids: set[int] = set()
+        sequences: Counter[str] = Counter()
+        by_source: Counter[str] = Counter()
+        rows = street_rows = synth_rows = 0
+
+        started = time.monotonic()
+        dataset = ds.dataset([str(path) for path in files], format="parquet")
+
+        for batch in dataset.to_batches(columns=columns, filter=pc.field("country") == want, batch_size=8192):
+            if not batch.num_rows:
+                continue
+
+            sources = batch.column("source").to_pylist()
+            ids = batch.column("source_id").to_pylist()
+            raws = batch.column("raw").to_pylist()
+            tags = batch.column("span_tags").to_pylist()
+            synths = batch.column("synth_method").to_pylist()
+
+            for source, source_id, raw, span_tags, synth in zip(sources, ids, raws, tags, synths, strict=True):
+                rows += 1
+                by_source[str(source)] += 1
+
+                if synth:
+                    synth_rows += 1
+
+                if raw:
+                    surfaces.add(digest(raw))
+
+                if source_id:
+                    record_ids.add(digest(f"{source}\u001f{source_id}"))
+
+                present = tuple(span_tags or ())
+                sequences["|".join(present)] += 1
+
+                if "street" in present or "house_number" in present:
+                    street_rows += 1
+
+        elapsed = time.monotonic() - started
+
+        by_split[split] = {
+            "files": len(files),
+            "seconds": round(elapsed, 1),
+            "rows": rows,
+            "street_rows": street_rows,
+            "synth_rows": synth_rows,
+            "distinct_surfaces": len(surfaces),
+            "distinct_source_ids": len(record_ids),
+            "distinct_component_sequences": len(sequences),
+            "top_sequences": dict(sequences.most_common(12)),
+            "by_source": dict(by_source.most_common()),
+        }
+
+        print(f"\n=== {want} / {split} — {len(files)} parquet files, {elapsed:,.0f}s ===")
+        print(f"  rows                          {rows:>12,}")
+        print(f"  of those, street or house no. {street_rows:>12,}")
+        print(f"  of those, synthesized         {synth_rows:>12,}")
+        print(f"  distinct raw surfaces         {len(surfaces):>12,}")
+        print(f"  distinct source ids           {len(record_ids):>12,}")
+        print(f"  distinct component sequences  {len(sequences):>12,}")
+
+        if rows and surfaces:
+            print(f"\n  rows per distinct surface     {rows / len(surfaces):>12.2f}")
+
+        if surfaces and record_ids:
+            print(f"  surfaces per distinct record  {len(surfaces) / len(record_ids):>12.2f}")
+
+        if by_source:
+            print("\n  rows by source:")
+            for source, count in by_source.most_common(12):
+                print(f"    {source:<28s} {count:>12,}")
+
+        if sequences:
+            print("\n  most common component sequences:")
+            for sequence, count in sequences.most_common(8):
+                print(f"    {count:>10,}  {sequence or '(no spans)'}")
+
+    out = Path(f"{VOL_MOUNT}/audits/locale-supply-{want.lower()}.json")
+    out.parent.mkdir(parents=True, exist_ok=True)
+    out.write_text(json.dumps(report, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
+    vol.commit()
+
+    print(f"\nwrote {out}")
