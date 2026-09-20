@@ -73,7 +73,7 @@
 		"status": "recorded",
 		"entries": [
 			{
-				"text": "HM Land Registry — Price Paid Data (OGL v3.0): the `synth-gb-v1` training extract (800,000 rows) NEW in 6.7.0, and the `pair-index-gb.bin` placetype-pair index (`neural-weights-en-gb`, this same task). Crown copyright, attribution required.",
+				"text": "HM Land Registry — Price Paid Data (OGL v3.0): the `synth-gb-v1` training extract (800,000 rows) NEW in 6.7.0. Crown copyright, attribution required. The GB placetype-pair index is built from the same source and ships in `neural-weights-en-gb`, whose own card carries its attribution.",
 				"license_named": "OGL v3.0"
 			},
 			{

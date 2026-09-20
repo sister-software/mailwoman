@@ -9,18 +9,20 @@ source's terms. Generated, **not hand-edited**.
 
 ```sh
 mailwoman corpus source-register \
-  --inventory      .notes/global-address-jurisdiction-inventory-v3.csv \
-  --sources        .notes/global-functional-authority-corpora-v2.csv \
+  --inventory      ../mailwoman-internal/research/global-address-jurisdiction-inventory-v3.csv \
+  --sources        ../mailwoman-internal/research/global-functional-authority-corpora-v2.csv \
   --register-version 0.1.0 \
   --authored-at    2026-09-18 \
   --source-version global-address-corpus-spec-v3
 yarn format
 ```
 
-That is the command that produced the committed copy. The two CSVs are research working documents
-under `.notes/`, which is not committed — the same arrangement as the sub-venue lexicon, whose
-`.osm.pbf` inputs are not committed either. The register is the committed record, and it carries
-every field a reader needs to check a row: the publisher, the retrieved URL, and the research pass.
+That is the command that produced the committed copy. The two CSVs are research working documents and
+live in the `mailwoman-internal` repository under `research/`, so regenerating needs a checkout of it
+beside this one. They were under this repository's gitignored `.notes/` until 2026-09-20, where
+nothing versioned them and a reviewer could not tell which copy produced the register. The register
+is the committed record here, and it carries every field a reader needs to check a row: the
+publisher, the retrieved URL, and the research pass.
 
 There is a third input, and it is committed: `--decisions` defaults to `license-decisions.json`
 beside this file, and holds every licence decision somebody made by reading a publisher's terms. The
@@ -35,10 +37,15 @@ reproduce. The generator is deterministic, so the artifact is reproducible from 
 ### What no check can establish about this file (#2352)
 
 Regeneration is the only thing that catches a hand edit to a generated artifact, and regeneration
-needs the two `.notes/` CSVs, which `.gitignore:3` excludes. No CI runner has them. So the register's
-correctness rests on whoever last ran the command above, and `auditAddressSourceRegister` does not
-change that: it checks the file's structure, and a publisher's name rewritten to something that names
-no institution is structurally sound.
+needs the two CSVs in `mailwoman-internal/research/`. A CI runner for this repository has no checkout
+of that one, so the register's correctness rests on whoever last ran the command above, and
+`auditAddressSourceRegister` does not change that: it checks the file's structure, and a publisher's
+name rewritten to something that names no institution is structurally sound.
+
+The inputs are now versioned, which is what changed on 2026-09-20. A reviewer can diff the CSV that
+produced the register against the one a later build reads, and a research pass that moves a
+publisher's name leaves a commit saying so. Establishing that the committed register matches its
+inputs still takes running the command with both repositories checked out.
 
 A committed digest would not close it either. A sweep that edits the artifact and the digest together
 passes, and one that edits only the artifact fails without saying which side is right.

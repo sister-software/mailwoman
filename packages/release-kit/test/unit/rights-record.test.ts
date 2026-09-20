@@ -207,17 +207,26 @@ describe("readWeightsRightsRecords", () => {
 })
 
 describe("the records this repository holds today", () => {
-	it("covers twelve published weights packages and reports en-gb's attribution as foreign", async () => {
+	it("covers twelve published weights packages, each attributing the artifacts it ships", async () => {
 		const records = await weightsRightsRecords(String(repoRootPath()))
 
 		expect(records).toHaveLength(12)
 
+		// `pair-index-gb.bin` ships here, and its OGL v3.0 attribution used to sit in `en-us`'s card, so a consumer who
+		// installed the overlay alone received the artifact without it. The entry now travels with the artifact.
 		const gb = records.find((record) => record.packageName === "@mailwoman/neural-weights-en-gb")
 
-		expect(gb?.attribution).toEqual([])
+		expect(gb?.attribution.map((entry) => entry.licenseNamed)).toEqual(["OGL v3.0"])
+		expect(gb?.attribution[0]?.text).toContain("pair-index-gb.bin")
+	})
 
-		expect(gb?.foreignAttribution.map((entry) => [entry.artifact, entry.recordedIn])).toEqual([
-			["pair-index-gb.bin", "@mailwoman/neural-weights-en-us"],
-		])
+	it("reports no artifact whose attribution sits in another package's card", async () => {
+		const records = await weightsRightsRecords(String(repoRootPath()))
+
+		const foreign = records.flatMap((record) =>
+			record.foreignAttribution.map((entry) => `${entry.artifact} ships in ${record.packageName}`)
+		)
+
+		expect(foreign).toEqual([])
 	})
 })
