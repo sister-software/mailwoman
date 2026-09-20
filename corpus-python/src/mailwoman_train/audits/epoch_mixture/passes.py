@@ -33,6 +33,18 @@ class DrawPass:
     windows: list[Counter[str]]
     totals: Counter[str]
     countries: Counter[str]
+    #: Countries drawn from each source, keyed `source`, then country code.
+    #:
+    #: `per_source` says how many rows a source contributed and `countries` says how many a country
+    #: received, and neither says which countries a source's rows belonged to. That join is what
+    #: separates a country the sampler declined from a country whose rows sit in files the sampler
+    #: never opened: `_source_iter` visits a source's parquet files in shuffled order and drains each
+    #: before opening the next, so a fixed draw per source reads only the earliest files.
+    #:
+    #: Measured on Belgium, which holds 150,000 rows, all from `overture`, all carrying a street, at
+    #: `country_weights` 1.0. Uniform sampling within `overture`'s 2,400,000 rows would give it 1,079
+    #: of that source's 17,269 draws. It appears in no count at either level (#2347).
+    countries_by_source: dict[str, Counter[str]]
     per_source: dict[str, dict[str, Any]]
     full_windows: int
     receipts: list[dict[str, Any]]
@@ -85,10 +97,12 @@ def run_draw_pass(
     n_windows = (draws + window - 1) // window
     window_counts: list[Counter[str]] = [Counter() for _ in range(n_windows)]
     draw_countries: Counter[str] = Counter()
+    countries_by_source: dict[str, Counter[str]] = {}
     receipt_counts: Counter[str] = Counter()
     for i, row in enumerate(islice(stream, draws)):
         window_counts[i // window][row["source"]] += 1
         draw_countries[row["country"]] += 1
+        countries_by_source.setdefault(row["source"], Counter())[row["country"]] += 1
         for receipt in required_receipts:
             if matches_receipt(row, receipt):
                 receipt_counts[receipt.name] += 1
@@ -124,6 +138,7 @@ def run_draw_pass(
         windows=window_counts,
         totals=draw_totals,
         countries=draw_countries,
+        countries_by_source=countries_by_source,
         per_source=per_source,
         full_windows=len(full_windows),
         receipts=[
@@ -264,6 +279,9 @@ def audit_mixture(
             "windows": [dict(w) for w in drawn.windows],
             "per_source": drawn.per_source,
             "by_country": dict(drawn.countries.most_common()),
+            "countries_by_source": {
+                src: dict(counts.most_common()) for src, counts in sorted(drawn.countries_by_source.items())
+            },
         },
         "emitted_level": {
             "totals": dict(emitted.totals),
