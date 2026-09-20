@@ -24,6 +24,7 @@ import { moduleCohesionCheck } from "#checks/module/cohesion"
 import { moduleSurfaceCheck } from "#checks/module/surface"
 import { noRootScriptsCheck } from "#checks/no-root-scripts"
 import { nodeModulesReacharoundCheck } from "#checks/node-modules-reacharound"
+import { packageLicenseCheck } from "#checks/package-license"
 import { prefixDirectoriesCheck } from "#checks/prefix-directories"
 import { privateNameShadowsCheck } from "#checks/private-name-shadows"
 import { pythonPrefixDirectoriesCheck } from "#checks/python-prefix-directories"
@@ -42,6 +43,7 @@ import { weightsFamilyCheck } from "#checks/weights-family"
  */
 export const checks: ReadonlyArray<RepoCheck> = [
 	versionSyncCheck,
+	packageLicenseCheck,
 	licenseRegisterCheck,
 	localeTablesCheck,
 	localeScopeCheck,

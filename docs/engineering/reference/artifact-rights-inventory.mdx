@@ -36,19 +36,24 @@ template notice stating it does not execute. `commercial-2026-10.mdx` states tha
 recorded by Stripe Checkout when a buyer ticks the box, and that the page is not edited after
 publication.
 
-**Inconsistency to repair:** `docs/src/pages/license.mdx` line 32 says `COMMERCIAL-LICENSE.md`
-"carries the same terms in the repository". The two differ in execution mechanism, so the page
-overstates their relationship. The repair belongs on the page. Neither agreement should be edited.
+**Repaired on the page.** `docs/src/pages/license.mdx` said `COMMERCIAL-LICENSE.md` "carries the same
+terms in the repository". The two differ in execution mechanism, so the page overstated their
+relationship. The page now names `commercial-2026-10` as the agreement that binds and describes
+`COMMERCIAL-LICENSE.md` as the reference template its own opening notice says it is. Neither
+agreement was edited.
 
-**Already correct, and worth propagating:** `COMMERCIAL-LICENSE.md` line 31 already limits the
-grant's scope.
+**Already correct, and now propagated:** `COMMERCIAL-LICENSE.md` line 31 limits the grant's scope.
 
 > This grant covers only the code and model artifacts authored by Licensor. It does not extend to
 > third-party components bundled with Mailwoman … Any attribution, share-alike, or other obligations
 > attaching to those third-party components continue to apply and are not waived or relicensed by
 > this Agreement.
 
-The public license page carries no equivalent sentence.
+The public license page carried no equivalent sentence. It now carries a section stating that the
+commercial grant covers the code and model artifacts Sister Software authors, that third-party
+components stay under their own licenses, that attribution and share-alike obligations attaching to
+them continue to apply, and that separately downloaded reference data carries the terms of whoever
+published it.
 
 ## Published packages
 
@@ -79,6 +84,17 @@ in the repository including `@mailwoman/core` and `@mailwoman/codex`, declare
 Two defects in one field. `AGPL-3.0` is a deprecated SPDX identifier, superseded by `AGPL-3.0-only`
 and `AGPL-3.0-or-later`, so it does not state which. And `docs/src/pages/license.mdx` line 11 says
 "every release ships under both", which those four manifests contradict.
+
+The repository's own admissibility function already refuses the identifier. Measured on this tree:
+`assertAdmissibleLicenseExpression("AGPL-3.0")` throws, and `summarizeLicense("AGPL-3.0")` returns
+`recognized: false` with `unrecognized: ["AGPL-3.0"]` and an empty obligation list. That function
+guarded spatial-layer manifests and nothing had applied it to a package manifest.
+
+**Repaired.** The four fields now read `AGPL-3.0-only OR LicenseRef-Commercial`, `docs/package.json`
+gained the field it lacked, and the `package-license` repository check refuses a workspace manifest
+that declares no license, declares an identifier the obligations table does not know, or declares an
+expression other than the root's. The four packages have not been republished, so the versions on npm
+still carry the old field.
 
 ### Twelve model cards disagree with their manifest
 
@@ -124,11 +140,15 @@ Eight of ten entries name a license. Reproduced as stated in the card, without i
 |   9 | OpenAddresses SI — GURS                    | CC-BY per OA source                       |
 |  10 | OpenAddresses / GeoNames / Who's On First  | **a pointer** to `THIRD_PARTY_NOTICES.md` |
 
-Entry 10 resolves to statements that do not name a single license:
+Entry 10 resolves to statements that do not name a single license. Excerpted verbatim from
+`THIRD_PARTY_NOTICES.md`, in a fenced block so the prose checks grade this document's own writing
+rather than the file it quotes:
 
-> **OpenAddresses.** Per-source licenses differ; many require attribution and share-alike.
-> **OpenStreetMap — ODbL.** OpenStreetMap data (via Who's On First and Overture) is licensed under ODbL.
-> **Who's On First.** WOF data draws on several sources with their own licenses.
+```text
+OpenAddresses. Per-source licenses differ; many require attribution and share-alike.
+OpenStreetMap — ODbL. OpenStreetMap data (via Who's On First and Overture) is licensed under ODbL.
+Who's On First. WOF data draws on several sources with their own licenses.
+```
 
 So one attribution entry covers three source families whose per-record licenses the notices
 describe as differing.
@@ -170,6 +190,29 @@ The flag is neither necessary nor sufficient as evidence about a released model.
 which sources contributed, and passing it does not establish that an indirectly included or
 misclassified source was caught. A release control needs a reproducible source manifest and an
 explicit eligibility decision per input, including inherited checkpoints and auxiliary artifacts.
+
+### The one workspace held for a rights reason had no enforced hold
+
+`packages/osm` is held out of the release pending ODbL counsel sign-off. It is not `private`, and it
+declares `publishConfig.access: public`. The hold was membership in `SANCTIONED_RELEASE_ABSENCES` in
+`packages/release-kit/lib/release/stage.ts`, a record that `checkReleaseListIdentity` reads so a
+missing workspace fails with its name. Nothing on the publish path read it. Running
+`mwops release publish-workspace --allow-unplanned` against that directory, or `npm publish` by
+hand, would have published it.
+
+**Repaired.** `assertWorkspacePublishable` refuses any workspace the record names, quoting the
+recorded reason, and both publish paths call it: `publishWorkspace` before it packs, and
+`blessPackages` across every named directory before the first publish. Publishing a held-out
+workspace now means deleting its entry, which a reviewer sees in the diff. Every entry is refused
+rather than the rights-held ones alone, so one rule cannot drift from a classification it does not
+carry.
+
+**What this control does not do.** It refuses a workspace by name. It does not decide whether an
+artifact's inputs permit publication, and it does not read a provenance record, because no frozen
+training manifest exists to read. The Hugging Face path, `mailwoman release hf` in
+`packages/mailwoman/lib/release-tools/publish-hf.ts`, uploads `model.onnx`, `tokenizer.model`,
+`model-card.json` and the FST and postcode binaries. It calls `assertWorkspacePublishable` nowhere,
+and it reads no rights record before uploading.
 
 ## Unresolved
 

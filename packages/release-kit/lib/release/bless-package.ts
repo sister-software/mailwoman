@@ -28,6 +28,7 @@ import { $, type ProcessPromise } from "zx"
 
 import { packWorkspaceForPublish } from "#pack/pack-workspace"
 import { formatTarballAudit, verifyTarball } from "#pack/verify-tarball"
+import { assertWorkspacePublishable } from "#release/stage"
 
 /**
  * The npm CLI approval URL, printed when a write op needs a second factor.
@@ -288,6 +289,12 @@ async function trust(dir: string, options: BlessPackageOptions): Promise<boolean
 export async function blessPackages(options: BlessPackageOptions): Promise<BlessPackageReport> {
 	if (!options.dirs.length) {
 		throw new Error("bless-package: --dirs <dir>[,<dir>…] is required")
+	}
+
+	// Every directory is checked before the first one publishes. A first publish is the path that would reach a held-out
+	// workspace, because it is the one operation that exists for a package the release list does not yet name.
+	for (const dir of options.dirs) {
+		assertWorkspacePublishable(dir)
 	}
 
 	$.verbose = true

@@ -42,6 +42,7 @@ import { resolvePath } from "path-ts"
 import { $private, $public } from "#env/index"
 import { dereferenceWorkspaceSymlinks, packWorkspaceForPublish } from "#pack/pack-workspace"
 import { formatTarballAudit, verifyTarball } from "#pack/verify-tarball"
+import { assertWorkspacePublishable } from "#release/stage"
 
 export interface PublishWorkspaceOptions {
 	repoRoot: string
@@ -83,6 +84,10 @@ export function releaseItWorkspaceEnvironment(): {
 
 export async function publishWorkspace(options: PublishWorkspaceOptions): Promise<PublishWorkspaceReport> {
 	const { repoRoot, workspacePath, log } = options
+
+	// Before anything is packed, and before the weights skip, so a held-out workspace is refused on every path into this
+	// function rather than on the ones that reach the npm call.
+	assertWorkspacePublishable(workspacePath)
 
 	const skipWeights = !!$public.MAILWOMAN_SKIP_WEIGHTS
 	const isWeightsWorkspace = workspacePath.startsWith("./packages/neural-weights-")

@@ -16,7 +16,11 @@ import { readPackageJSON } from "@mailwoman/core/module/resolve-from"
 import { isPresent } from "@mailwoman/core/objects"
 import { repoRootPath } from "@mailwoman/core/paths"
 import { literalFilesEntries, verifyTarball } from "@mailwoman/release-kit/pack/verify-tarball"
-import { checkReleaseListIdentity, SANCTIONED_RELEASE_ABSENCES } from "@mailwoman/release-kit/release/stage"
+import {
+	assertWorkspacePublishable,
+	checkReleaseListIdentity,
+	SANCTIONED_RELEASE_ABSENCES,
+} from "@mailwoman/release-kit/release/stage"
 import { planWeightsMaterialization } from "@mailwoman/release-kit/weights/fetch-hf-weights"
 import { join } from "path-ts"
 import { TextSpliterator } from "spliterator"
@@ -28,7 +32,7 @@ const fixtures = new AsyncDisposableStack()
 afterAll(() => fixtures.disposeAsync())
 
 describe("checkReleaseListIdentity", () => {
-	it("holds on the current tree: 61 published, every absence sanctioned by name", async () => {
+	it("holds on the current tree: 60 published, every absence sanctioned by name", async () => {
 		const identity = await checkReleaseListIdentity(String(repoRootPath()))
 
 		expect(identity.publishCount).toBe(60)
@@ -66,6 +70,29 @@ describe("checkReleaseListIdentity", () => {
 		// failure must carry its name rather than "expected 3, found 2".
 		expect(identity.unexpectedAbsences).toEqual(["packages/frozen-one"])
 		expect(identity.publishCount).toBe(2)
+	})
+})
+
+describe("assertWorkspacePublishable", () => {
+	it("refuses packages/osm and quotes the rights reason it is held for", () => {
+		expect(() => assertWorkspacePublishable("packages/osm")).toThrow(/ODbL counsel sign-off pending/)
+	})
+
+	it("refuses the release-it workspace path shape, which carries a leading ./", () => {
+		// `@release-it-plugins/workspaces` passes `./<workspace>` through
+		// RELEASE_IT_WORKSPACES_PATH_TO_WORKSPACE. Matching the record's keys literally would admit that spelling while
+		// refusing the bare one.
+		expect(() => assertWorkspacePublishable("./packages/osm")).toThrow(/ODbL counsel sign-off pending/)
+		expect(() => assertWorkspacePublishable("./packages/osm/")).toThrow(/ODbL counsel sign-off pending/)
+	})
+
+	it("refuses a private workspace as well, so one rule covers every entry", () => {
+		expect(() => assertWorkspacePublishable("packages/release-kit")).toThrow(/held out of the release/)
+	})
+
+	it("admits a workspace the release list names", () => {
+		expect(() => assertWorkspacePublishable("./packages/neural-weights-en-us")).not.toThrow()
+		expect(() => assertWorkspacePublishable("packages/core")).not.toThrow()
 	})
 })
 

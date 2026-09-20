@@ -51,6 +51,31 @@ export const SANCTIONED_RELEASE_ABSENCES: Readonly<Record<string, string>> = {
 }
 
 /**
+ * Refuse to publish a workspace this repository holds out of the release, naming the recorded reason.
+ *
+ * Membership in {@link SANCTIONED_RELEASE_ABSENCES} was a reporting record: `checkReleaseListIdentity` reads it so a
+ * missing workspace fails with a name rather than an arithmetic difference. It stopped nothing. `packages/osm` is held
+ * out for a rights reason, and it is not `private`, so nothing between an operator and npm refused it — `yarn npm
+ * publish` from that directory, or `mwops release publish-workspace --allow-unplanned` naming it, would have published
+ * ODbL-derived extraction code that counsel has not signed off.
+ *
+ * Every entry is refused rather than the rights-held ones alone. A private workspace reaching this path is a mistake
+ * too, and one rule cannot drift from a classification it does not carry. Publishing a held-out workspace means
+ * removing its entry, which is an edit a reviewer sees.
+ */
+export function assertWorkspacePublishable(workspacePath: string): void {
+	const workspace = workspacePath.replace(/^\.\//, "").replace(/\/$/, "")
+	const reason = SANCTIONED_RELEASE_ABSENCES[workspace]
+
+	if (!reason) return
+
+	throw new Error(
+		`release hold: ${workspace} is held out of the release and will not be published — ${reason}. ` +
+			`Publishing it means removing its entry from SANCTIONED_RELEASE_ABSENCES in packages/release-kit/lib/release/stage.ts and adding it to .release-it.json.`
+	)
+}
+
+/**
  * The publish set, verbatim from `.release-it.json` — the list both CI phases derive from. Throws on a missing, empty,
  * or non-string list: every caller treats this as the full bump/publish surface, and an empty read must never be
  * mistaken for zero workspaces.
